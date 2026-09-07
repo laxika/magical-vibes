@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUnti
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
@@ -1932,16 +1933,26 @@ public class LayerSystemService {
                 // only the type change, so the rest of the pass sees the animated permanent as a
                 // creature — a later layer-6 grant to "creatures you control", another layer-4
                 // effect's scope filter, and March of the Machines' noncreature test.
-                PermanentSlot animated = instance.source();
-                if (animate.scope() != GrantScope.SELF || animated == null) return;
-                CharacteristicState state = states.get(animated.permanent().getId());
-                if (state == null) return;
-                state.addCardType(CardType.CREATURE);
-                for (CardType grantedType : animate.grantedCardTypes()) {
-                    state.addCardType(grantedType);
+                List<PermanentSlot> targets;
+                if (animate.scope() == GrantScope.SELF) {
+                    PermanentSlot animated = instance.source();
+                    if (animated == null) return;
+                    targets = List.of(animated);
+                } else if (instance.floating() != null) {
+                    targets = floatingTargets(gameData, instance, slots, slotsById, board);
+                } else {
+                    return;
                 }
-                for (CardSubtype subtype : animate.grantedSubtypes()) {
-                    state.addSubtype(subtype);
+                for (PermanentSlot target : targets) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    if (state == null) continue;
+                    state.addCardType(CardType.CREATURE);
+                    for (CardType grantedType : animate.grantedCardTypes()) {
+                        state.addCardType(grantedType);
+                    }
+                    for (CardSubtype subtype : animate.grantedSubtypes()) {
+                        state.addSubtype(subtype);
+                    }
                 }
             }
             default -> {
@@ -2692,19 +2703,6 @@ public class LayerSystemService {
                 continue;
             }
             switch (instance.effect()) {
-                case SetPowerToughnessToAmountEffect setPt -> {
-                    if (instance.floating() != null && instance.source() != null) {
-                        PermanentSlot source = instance.source();
-                        AmountContext context = AmountContext.forStaticEffect(source.permanent(),
-                                instance.floating().controllerId());
-                        int power = amountEvaluationService.evaluate(gameData, setPt.power(), context);
-                        int toughness = amountEvaluationService.evaluate(gameData, setPt.toughness(), context);
-                        for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
-                            entries.add(new BasePtEntry(target.permanent().getId(), power, toughness,
-                                    instance.timestamp(), instance.position(), provenanceSourceName(instance)));
-                        }
-                    }
-                }
                 case SetBasePowerToughnessEffect setPt -> {
                     if (instance.floating() != null) {
                         for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
@@ -2721,6 +2719,20 @@ public class LayerSystemService {
                                         provenanceSourceName(instance)));
                             }
                         });
+                    }
+                }
+                case SetPowerToughnessToAmountEffect setPt -> {
+                    if (instance.floating() != null) {
+                        Permanent source = instance.source() == null ? null : instance.source().permanent();
+                        AmountContext context = AmountContext.forStaticEffect(
+                                source, instance.floating().controllerId());
+                        for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
+                            entries.add(new BasePtEntry(target.permanent().getId(),
+                                    amountEvaluationService.evaluate(gameData, setPt.power(), context),
+                                    amountEvaluationService.evaluate(gameData, setPt.toughness(), context),
+                                    instance.timestamp(), instance.position(),
+                                    provenanceSourceName(instance)));
+                        }
                     }
                 }
                 case SetBasePowerToughnessToAmountEffect ignored ->
@@ -2801,8 +2813,6 @@ public class LayerSystemService {
                         }
                     }
                 }
-                // Non-own-slot SetPowerToughnessToAmountEffect classifies into 7b but has no
-                // producer today; conditional wrappers around setters stay legacy-only.
                 default -> {
                 }
             }

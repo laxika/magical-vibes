@@ -119,6 +119,23 @@ import com.github.laxika.magicalvibes.model.CounterType;
 class GameQueryServiceTest {
 
     @Test
+    void conditionalExtraLandPlaysRequireTheirConditionAndApplyOnlyToTheirController() {
+        var condition = new com.github.laxika.magicalvibes.model.condition.ControllerTurn();
+        Card card = new Card();
+        card.addEffect(EffectSlot.STATIC, new ConditionalEffect(condition,
+                new com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect(1)));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(false);
+        assertThat(gqs.getConditionalAdditionalLandPlays(gd, player1Id)).isZero();
+        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(true);
+        assertThat(gqs.getConditionalAdditionalLandPlays(gd, player1Id)).isEqualTo(1);
+        assertThat(gqs.getConditionalAdditionalLandPlays(gd, player2Id)).isZero();
+        gd.playerBattlefields.get(player1Id).clear();
+        assertThat(gqs.getConditionalAdditionalLandPlays(gd, player1Id)).isZero();
+    }
+
+    @Test
     void urzaLandTypesAreNotCreatureTypes() {
         for (CardSubtype subtype : List.of(CardSubtype.URZAS, CardSubtype.MINE,
                 CardSubtype.POWER_PLANT, CardSubtype.TOWER)) {

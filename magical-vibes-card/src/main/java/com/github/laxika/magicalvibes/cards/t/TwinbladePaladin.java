@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "285")
+@CardRegistration(set = "FDN", collectorNumber = "503")
 public class TwinbladePaladin extends Card {
 
     public TwinbladePaladin() {

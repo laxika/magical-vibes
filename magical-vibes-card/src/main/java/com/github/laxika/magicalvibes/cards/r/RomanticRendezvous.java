@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "86")
+@CardRegistration(set = "OM1", collectorNumber = "93")
 public class RomanticRendezvous extends Card {
 
     public RomanticRendezvous() {

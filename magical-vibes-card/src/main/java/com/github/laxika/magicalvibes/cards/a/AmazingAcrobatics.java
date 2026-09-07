@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "25")
+@CardRegistration(set = "OM1", collectorNumber = "29")
 public class AmazingAcrobatics extends Card {
 
     public AmazingAcrobatics() {

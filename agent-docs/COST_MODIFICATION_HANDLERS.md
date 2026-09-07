@@ -102,6 +102,8 @@ new record. Its optional source-zone set restricts which cast sources match; Pat
 `CardTypePredicate(CREATURE)` and `SELF` scope; the boolean enables the plot-from-hand-only restriction.
 `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (Semblance Anvil) keeps its own handler because
 it compares against the imprinted card rather than a predicate.
+`ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect` (Cemetery Prowler) also keeps its own
+handler because it counts distinct card types across all cards exiled with its source permanent.
 
 **Exception — target-gated reductions.** `ReduceOwnCastCostIfTargetingPermanentEffect` (whose
 `controlledByCaster` flag covers both "targets a matching permanent" and "targets one you control"),
@@ -115,7 +117,9 @@ permanent target matches; the spell-self form continues to inspect its first tar
 
 `ReduceOwnCastCostIfTargetingGraveyardCardEffect` is the corresponding target-gated record for a
 graveyard card. Its `CardPredicate` is evaluated against the chosen first graveyard target in the
-same `CastingCostService.computeTargetBasedCostReduction` path.
+same `CastingCostService.computeTargetBasedCostReduction` path. The spell-self form checks the
+effect's zero-based `targetIndex` (defaulting to the first target), while a battlefield-carried
+effect continues to reduce once when any chosen permanent target matches.
 
 Target-gated increases use the parallel `TargetBasedCastCostIncreaseEffect` interface and
 `IncreaseOwnCastCostIfTargetingPermanentEffect` record. Their surcharge is evaluated against the

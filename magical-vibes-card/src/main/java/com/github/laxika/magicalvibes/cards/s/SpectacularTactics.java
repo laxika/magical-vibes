@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "15")
+@CardRegistration(set = "OM1", collectorNumber = "19")
 public class SpectacularTactics extends Card {
 
     public SpectacularTactics() {

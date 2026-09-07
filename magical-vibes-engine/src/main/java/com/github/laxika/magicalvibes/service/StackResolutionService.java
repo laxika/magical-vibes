@@ -701,7 +701,7 @@ public class StackResolutionService {
         // CR 702.146: a spell cast via Disturb has the characteristics of its back face while on the stack.
         Card characteristics = disturbCharacteristics(entry, card);
 
-        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
+        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, characteristics, entry.getTargetId(),
                 entry.getXValue())) {
             return;
         }
@@ -1172,6 +1172,7 @@ public class StackResolutionService {
             gameData.clearSpellCastManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
+            gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }

@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
@@ -411,6 +413,51 @@ class DeathTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("handleDeathMayPayLife")
+    class DeathMayPayLife {
+
+        @Test
+        @DisplayName("Adds the optional life payment to the stack")
+        void addsLifePaymentToStack() {
+            Card card = createCreature("Life Watcher", 2, 2);
+            var mayPay = new MayPayLifeEffect(2, new DrawCardEffect(1), "Pay 2?");
+            Permanent perm = new Permanent(card);
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+
+            assertThat(svc.handleDeathMayPayLife(match(perm, PLAYER1_ID, mayPay), mayPay, ctx)).isTrue();
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isEqualTo(mayPay);
+        }
+    }
+
+    @Nested
+    @DisplayName("handleDeathModalAtTriggerTime")
+    class DeathModalAtTriggerTime {
+
+        @Test
+        @DisplayName("Queues a triggered modal choice")
+        void queuesTriggeredModalChoice() {
+            Card card = createCreature("Shambling Ghast", 1, 1);
+            Permanent perm = new Permanent(card);
+            var choice = new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)),
+                    new ChooseOneEffect.ChooseOneOption("Gain life", new GainLifeEffect(1))));
+            var effect = new ChooseOneAtTriggerTimeEffect(choice);
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+
+            assertThat(svc.handleDeathModalAtTriggerTime(match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+            assertThat(pending.sourceCard()).isEqualTo(card);
+            assertThat(pending.controllerId()).isEqualTo(PLAYER1_ID);
+            assertThat(pending.effect()).isEqualTo(choice);
+            assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
     @DisplayName("handleLosesLifeEqualToPower")
     class LosesLifeEqualToPower {
 
@@ -606,6 +653,25 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayPayManaEffect.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("handleAllyCreatureMayPayLife")
+    class AllyCreatureMayPayLife {
+
+        @Test
+        @DisplayName("Adds the optional life payment to the stack")
+        void addsLifePaymentToStack() {
+            Card watcher = createCreature("Life Pay Watcher", 1, 1);
+            var mayPay = new MayPayLifeEffect(2, new DrawCardEffect(1), "Pay 2?");
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
+
+            assertThat(svc.handleAllyCreatureMayPayLife(match(perm, PLAYER1_ID, mayPay), mayPay, ctx)).isTrue();
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isEqualTo(mayPay);
         }
     }
 

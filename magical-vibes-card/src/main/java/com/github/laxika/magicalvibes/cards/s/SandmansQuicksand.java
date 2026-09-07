@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "63")
+@CardRegistration(set = "OM1", collectorNumber = "62")
 public class SandmansQuicksand extends Card {
 
     public SandmansQuicksand() {

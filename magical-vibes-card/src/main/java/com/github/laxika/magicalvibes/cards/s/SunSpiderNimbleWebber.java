@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "154")
+@CardRegistration(set = "OM1", collectorNumber = "130")
 public class SunSpiderNimbleWebber extends Card {
 
     public SunSpiderNimbleWebber() {

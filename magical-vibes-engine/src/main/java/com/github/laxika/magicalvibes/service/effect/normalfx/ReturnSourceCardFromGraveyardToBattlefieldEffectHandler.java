@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -68,6 +69,14 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
         Permanent permanent = new Permanent(card);
         if (e.tapped()) {
             permanent.tap();
+        }
+        if (e.enterWithCounter() != null) {
+            int counterCount = e.enterWithCounter() == CounterType.PLUS_ONE_PLUS_ONE
+                    ? gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, ownerId, 1)
+                    : 1;
+            if (counterCount > 0) {
+                permanent.setCounterCount(e.enterWithCounter(), counterCount);
+            }
         }
         permanent.setLosesAllAbilitiesPermanently(e.losesAllAbilities());
         permanent.setEnteredFromGraveyardOwnerId(ownerId);

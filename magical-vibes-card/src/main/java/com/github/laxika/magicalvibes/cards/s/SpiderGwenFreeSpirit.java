@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "90")
+@CardRegistration(set = "OM1", collectorNumber = "97")
 public class SpiderGwenFreeSpirit extends Card {
 
     public SpiderGwenFreeSpirit() {

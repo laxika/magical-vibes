@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
@@ -56,6 +57,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -103,6 +106,9 @@ import java.util.stream.IntStream;
 @Component
 public class DrawService {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
     private final ExileService exileService;
     private final GameLogService gameLogService;
@@ -292,6 +298,18 @@ public class DrawService {
         Permanent sharedFateSource = findSharedFateSource(gameData);
         if (sharedFateSource != null) {
             resolveSharedFateDrawReplacement(gameData, playerId, sharedFateSource);
+            return;
+        }
+
+        Permanent exileTopCardsSource = findExileTopCardsMayPlayThisTurnDrawReplacementSource(gameData, playerId);
+        if (exileTopCardsSource != null) {
+            resolveExileTopCardsMayPlayThisTurnDrawReplacement(gameData, playerId, exileTopCardsSource);
+            return;
+        }
+
+        Permanent exileTopCardSource = findExileTopCardFaceDownInsteadOfDrawSource(gameData, playerId);
+        if (exileTopCardSource != null) {
+            resolveExileTopCardFaceDownInsteadOfDraw(gameData, playerId, exileTopCardSource);
             return;
         }
 
@@ -822,6 +840,46 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    private Permanent findExileTopCardFaceDownInsteadOfDrawSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance);
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    /** Replaces the controller's draw with a face-down exile tracked with the source permanent. */
+    private void resolveExileTopCardFaceDownInsteadOfDraw(
+            GameData gameData, UUID playerId, Permanent source) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + "'s draw is replaced; ", source.getCard(), " exiles nothing."));
+            return;
+        }
+
+        Card exiled = deck.removeFirst();
+        exileService.exileCardFaceDown(gameData, playerId, exiled, source.getId());
+
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + " exiles a card face down with ")
+                .card(source.getCard())
+                .text(" instead of drawing.")
+                .build());
+        log.info("Game {} - {} exiles the top card of their library face down with {} instead of drawing",
+                gameData.id, playerName, source.getCard().getName());
     }
 
     /** Shared Fate replaces the draw with a face-down exile from the opponent's library. */
@@ -1757,6 +1815,12 @@ public class DrawService {
                     log.info("Game {} - {} controller-draw permanent-target trigger queued",
                             gameData.id, perm.getCard().getName());
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                            perm.getCard(), drawingPlayerId, new ArrayList<>(List.of(effect)), "draw", perm.getId()));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1912,4 +1976,60 @@ public class DrawService {
             }
         });
     }
+    private Permanent findExileTopCardsMayPlayThisTurnDrawReplacementSource(GameData gameData,
+                                                                             UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::isInstance)
+                    .map(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::cast)
+                    .anyMatch(effect -> !effect.withoutPayingManaCost());
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    private void resolveExileTopCardsMayPlayThisTurnDrawReplacement(GameData gameData, UUID playerId,
+                                                                      Permanent source) {
+        ExileTopCardsMayPlayThisTurnDrawReplacementEffect replacement = source.getCard()
+                .getEffects(EffectSlot.STATIC).stream()
+                .filter(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::isInstance)
+                .map(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::cast)
+                .filter(effect -> !effect.withoutPayingManaCost())
+                .findFirst()
+                .orElse(null);
+        if (replacement == null) {
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + "'s library is empty; ", source.getCard(), " exiles nothing."));
+            return;
+        }
+
+        int count = Math.min(amountEvaluationService.evaluate(gameData, replacement.count(),
+                new com.github.laxika.magicalvibes.service.effect.AmountContext(
+                        playerId, source, null, 0, 0)), deck.size());
+        for (int i = 0; i < count; i++) {
+            Card exiled = deck.removeFirst();
+            exileService.exileCard(gameData, playerId, exiled);
+            gameData.exilePlayPermissions.put(exiled.getId(), playerId);
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                playerName + " exiles " + count + " card" + (count == 1 ? "" : "s")
+                        + " from the top of their library with ", source.getCard(),
+                " instead of drawing and may play them this turn."));
+    }
+
 }

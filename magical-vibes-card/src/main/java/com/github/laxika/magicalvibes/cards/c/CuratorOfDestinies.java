@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "34")
+@CardRegistration(set = "FDN", collectorNumber = "305")
+@CardRegistration(set = "FDN", collectorNumber = "373")
+@CardRegistration(set = "FDN", collectorNumber = "451")
 public class CuratorOfDestinies extends Card {
 
     public CuratorOfDestinies() {

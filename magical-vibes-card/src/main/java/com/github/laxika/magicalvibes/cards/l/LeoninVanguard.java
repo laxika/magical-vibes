@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "M19", collectorNumber = "22")
+@CardRegistration(set = "FDN", collectorNumber = "499")
 public class LeoninVanguard extends Card {
 
     public LeoninVanguard() {

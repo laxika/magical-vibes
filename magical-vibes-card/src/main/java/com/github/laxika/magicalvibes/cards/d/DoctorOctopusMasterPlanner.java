@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "128")
 @CardRegistration(set = "SPM", collectorNumber = "228")
+@CardRegistration(set = "OM1", collectorNumber = "148")
 public class DoctorOctopusMasterPlanner extends Card {
 
     public DoctorOctopusMasterPlanner() {

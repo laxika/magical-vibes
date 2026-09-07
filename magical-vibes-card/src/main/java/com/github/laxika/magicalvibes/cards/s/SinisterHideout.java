@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "184")
+@CardRegistration(set = "OM1", collectorNumber = "184")
 public class SinisterHideout extends Card {
 
     public SinisterHideout() {

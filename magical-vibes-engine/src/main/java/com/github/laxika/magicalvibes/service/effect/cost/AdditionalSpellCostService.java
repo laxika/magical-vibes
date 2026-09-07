@@ -698,6 +698,9 @@ public class AdditionalSpellCostService {
                     if (availableMana + Math.min(amount, (int) matching) < amount) return false;
                 }
                 case ExileNCardsFromGraveyardCost cost -> {
+                    if (!includeFlashbackOnlyCosts && cost.onlyFromGraveyard()) {
+                        continue;
+                    }
                     long matchingCount = graveyard.stream()
                             .filter(c -> (cost.requiredType() == null || c.hasType(cost.requiredType()))
                                     && (cost.predicate() == null

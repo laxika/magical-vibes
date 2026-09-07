@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Component;
 public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
 
@@ -62,6 +65,9 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines — ", ability.sourceCard(), " enters tapped."));
                 log.info("Game {} - {} declines to reveal; {} enters tapped", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
+            }
+            if (ability.sourceCard().hasType(CardType.LAND)) {
+                battlefieldEntryService.processLandETBEffects(gameData, ability.controllerId(), ability.sourceCard());
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }

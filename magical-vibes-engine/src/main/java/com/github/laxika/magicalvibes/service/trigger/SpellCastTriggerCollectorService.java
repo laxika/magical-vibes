@@ -1249,6 +1249,11 @@ public class SpellCastTriggerCollectorService {
                     null,
                     null,
                     match.permanent().getId()));
+        } else if (!selfTarget && resolved.stream().anyMatch(e ->
+                e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    match.permanent().getCard(), match.controllerId(), resolved));
         } else {
             StackEntry entry = selfTarget
                     ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
@@ -2494,6 +2499,12 @@ public class SpellCastTriggerCollectorService {
     }
 
     private boolean effectNeedsSpellManaSpentX(CardEffect effect) {
+        if (effect instanceof CreateTokenForTriggeringPlayerEffect createToken) {
+            CreateTokenEffect token = createToken.token();
+            return amountEvaluationService.referencesXValue(token.amount())
+                    || amountEvaluationService.referencesXValue(token.power())
+                    || amountEvaluationService.referencesXValue(token.toughness());
+        }
         if (effect instanceof PutCountersOnSelfEffect putCounters
                 && putCounters.amount() != null
                 && amountEvaluationService.referencesXValue(putCounters.amount())) {

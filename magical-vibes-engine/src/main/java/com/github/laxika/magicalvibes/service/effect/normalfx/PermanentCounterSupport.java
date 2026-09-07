@@ -119,6 +119,7 @@ public class PermanentCounterSupport {
         // Remove all counters of that type
         switch (counterType) {
             case CHARGE -> self.setCounterCount(CounterType.CHARGE, 0);
+            case BLOODLINE -> self.setCounterCount(CounterType.BLOODLINE, 0);
             case HATCHLING -> self.setCounterCount(CounterType.HATCHLING, 0);
             case LANDMARK -> self.setCounterCount(CounterType.LANDMARK, 0);
             case SLIME -> self.setCounterCount(CounterType.SLIME, 0);
@@ -171,6 +172,7 @@ public class PermanentCounterSupport {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
         notifyCountersPlaced(gameData, entry, target, counters);
         notifySelfCountersPlaced(gameData, entry, target, CounterType.PLUS_ONE_PLUS_ONE, previousCount, counters);
+        recordPlusOnePlusOneCounterPlacedOnCreature(gameData, target, placingPlayerId);
         recordCounterPlacedOnCreature(gameData, target, placingPlayerId);
         recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                 gameData, target, counters, placingPlayerId);
@@ -208,6 +210,9 @@ public class PermanentCounterSupport {
                     default -> throw new IllegalArgumentException("Unsupported counter type for placement: " + counterType);
                 }
                 recordCounterPlacedOnCreature(gameData, perm, placingPlayerId);
+                if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+                    recordPlusOnePlusOneCounterPlacedOnCreature(gameData, perm, placingPlayerId);
+                }
                 notifyCountersPlaced(gameData, entry, perm, placed);
                 notifySelfCountersPlaced(gameData, entry, perm, counterType, previousCount, placed);
                 fireCounterPutOnControlledCreatureTriggers(gameData, perm, placed, placingPlayerId);
@@ -474,6 +479,7 @@ public class PermanentCounterSupport {
         notifySelfCountersPlaced(gameData, entry, target, counterType, previousCount, count);
         recordCounterPlacedOnCreature(gameData, target, counterPlacingPlayerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+            recordPlusOnePlusOneCounterPlacedOnCreature(gameData, target, counterPlacingPlayerId);
             recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                     gameData, target, count, counterPlacingPlayerId);
         }
@@ -853,6 +859,7 @@ public class PermanentCounterSupport {
         firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
         firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
                 gameData, target, 1, null, excludedSources);
+        firePlusOnePlusOneCountersPutOnControlledHumanTriggers(gameData, target);
         fireCounterPutOnControlledCreatureTriggers(gameData, target, 1, placingPlayerId);
     }
 
@@ -901,6 +908,67 @@ public class PermanentCounterSupport {
                 gameLogService.append(gameData,
                         GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             }
+        }
+    }
+
+    /** Fires Human-scoped +1/+1-counter watchers for the controller of the affected permanent. */
+    private void firePlusOnePlusOneCountersPutOnControlledHumanTriggers(
+            GameData gameData, Permanent target) {
+        if (target == null || !gameQueryService.isCreature(gameData, target)
+                || !predicateEvaluationService.matchesPermanentPredicate(target,
+                new PermanentHasSubtypePredicate(CardSubtype.HUMAN), FilterContext.of(gameData))) {
+            return;
+        }
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        for (Permanent source : new ArrayList<>(battlefield)) {
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            List<CardEffect> effectsToResolve = new ArrayList<>();
+            boolean oncePerTurnQueued = false;
+            for (CardEffect effect : effects) {
+                if (effect instanceof OncePerTurnTriggerEffect oncePerTurn) {
+                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
+                        continue;
+                    }
+                    effectsToResolve.add(oncePerTurn.wrapped());
+                    oncePerTurnQueued = true;
+                } else {
+                    effectsToResolve.add(effect);
+                }
+            }
+            if (effectsToResolve.isEmpty()) {
+                continue;
+            }
+            if (oncePerTurnQueued) {
+                gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+            }
+
+            Card card = source.getCard();
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s triggered ability",
+                    effectsToResolve,
+                    null,
+                    source.getId()
+            ));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} Human +1/+1-counter watcher fires", gameData.id, card.getName());
         }
     }
 
@@ -1285,6 +1353,13 @@ public class PermanentCounterSupport {
     public void recordCounterPlacedOnCreature(GameData gameData, Permanent target, UUID placingPlayerId) {
         if (placingPlayerId != null && target != null && gameQueryService.isCreature(gameData, target)) {
             gameData.playersWhoPutCountersOnCreaturesThisTurn.add(placingPlayerId);
+        }
+    }
+
+    public void recordPlusOnePlusOneCounterPlacedOnCreature(GameData gameData, Permanent target,
+                                                            UUID placingPlayerId) {
+        if (placingPlayerId != null && target != null && gameQueryService.isCreature(gameData, target)) {
+            gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(placingPlayerId);
         }
     }
 

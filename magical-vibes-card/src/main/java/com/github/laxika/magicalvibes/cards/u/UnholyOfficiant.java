@@ -1,0 +1,22 @@
+package com.github.laxika.magicalvibes.cards.u;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+
+import java.util.List;
+
+@CardRegistration(set = "VOW", collectorNumber = "41")
+public class UnholyOfficiant extends Card {
+
+    public UnholyOfficiant() {
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                "{4}{W}",
+                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                "{4}{W}: Put a +1/+1 counter on Unholy Officiant."
+        ));
+    }
+}

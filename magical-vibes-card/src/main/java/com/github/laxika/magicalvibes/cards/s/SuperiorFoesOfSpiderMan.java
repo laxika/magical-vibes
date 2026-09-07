@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "96")
+@CardRegistration(set = "OM1", collectorNumber = "91")
 public class SuperiorFoesOfSpiderMan extends Card {
 
     public SuperiorFoesOfSpiderMan() {

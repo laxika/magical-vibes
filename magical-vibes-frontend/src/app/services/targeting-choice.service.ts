@@ -1362,8 +1362,8 @@ export class TargetingChoiceService {
 
   // ========== Casting from exile / top of library ==========
 
-  /** Cast a card the server marked playable from exile (impulse draw, prepare
-      spells, ExileCast cards). The PLAY_CARD message identifies the card by
+  /** Cast a card the server marked playable from exile or outside the game (impulse draw, prepare
+      spells, ExileCast cards, Wish). The PLAY_CARD message identifies the card by
       fromExileCardId, so its cardIndex is unused and sent as 0. */
   startExilePlay(card: Card): void {
     if (!card.id) return;
@@ -3032,7 +3032,7 @@ export class TargetingChoiceService {
         ?? (ability.xValueFromCardsInHandColor ? 0 : 1);
       if (available < minimum) return false;
     }
-    if (ability.manaCost && !this.canPayManaCost(ability.manaCost)
+    if (ability.manaCost && !this.canPayManaCost(ability.manaCost, ability.xValueMin ?? 0)
         && !(allowPotentialMana && this.isPotentiallyPayableAbility(perm, ability))) return false;
     return true;
   }
@@ -3177,7 +3177,7 @@ export class TargetingChoiceService {
       this.choosingXValue = true;
       this.xValueCardIndex = permanentIndex;
       this.xValueCardName = perm.card.name;
-      this.xValueInput = 0;
+      this.xValueInput = ability.xValueMin ?? 0;
       // X can be paid MTGO-style by tapping more lands after announcing, so the cap is
       // the potential mana (pool + untapped sources), not just what's floating now.
       this.xValueMaximum = Math.max(this.totalManaFn(), this.potentialTotalManaFn()) - base;

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "77")
+@CardRegistration(set = "OM1", collectorNumber = "78")
 public class ElectrosBolt extends Card {
 
     public ElectrosBolt() {

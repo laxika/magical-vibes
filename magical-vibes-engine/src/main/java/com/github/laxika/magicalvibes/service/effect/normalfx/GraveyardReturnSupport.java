@@ -50,10 +50,12 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -332,7 +334,7 @@ public class GraveyardReturnSupport {
                 }
                 returnedPermanent.setAttackTarget(attackTargetId);
             }
-            applyBattlefieldReturnRiders(gameData, controllerId, targetCard, effect, entry);
+            applyBattlefieldReturnRiders(gameData, controllerId, targetCard, effect, entry, targetOwnerId);
             trackAndLinkReanimatedPermanent(gameData, entry, effect, controllerId, targetCard, targetOwnerId);
             if (returnedPermanent != null
                     && effect.createTokensIfSubtype() != null
@@ -355,6 +357,10 @@ public class GraveyardReturnSupport {
 
         if (effect.gainLifeEqualToManaValue()) {
             applyLifeGainEqualToManaValue(gameData, controllerId, targetCard);
+        }
+
+        if (effect.gainLifeEqualToReturnedToughness() && returnedPermanent != null) {
+            applyLifeGainEqualToReturnedToughness(gameData, controllerId, returnedPermanent);
         }
 
         if (effect.loseLifeEqualToManaValue()) {
@@ -464,11 +470,12 @@ public class GraveyardReturnSupport {
      */
     private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
                                               ReturnCardFromGraveyardEffect effect) {
-        applyBattlefieldReturnRiders(gameData, controllerId, card, effect, null);
+        applyBattlefieldReturnRiders(gameData, controllerId, card, effect, null, controllerId);
     }
 
     private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
-                                              ReturnCardFromGraveyardEffect effect, StackEntry entry) {
+                                              ReturnCardFromGraveyardEffect effect, StackEntry entry,
+                                              UUID cardOwnerId) {
         boolean exiledCostSubtypeMatches = effect.plusOneCountersIfExiledCostCardHasSubtype() != null
                 && entry != null
                 && entry.getExiledCostCardSnapshot() != null
@@ -506,6 +513,7 @@ public class GraveyardReturnSupport {
                 && !effect.grantHasteUntilNextTurn()
                 && (effect.grantSubtypes() == null || effect.grantSubtypes().isEmpty())
                 && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())
+                && effect.grantOnDeathEffect() == null
                 && (effect.battlefieldEffectGrants() == null || effect.battlefieldEffectGrants().isEmpty())) {
             return;
         }
@@ -569,6 +577,7 @@ public class GraveyardReturnSupport {
                 p.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new CumulativeUpkeepEffect(effect.grantCumulativeUpkeepCost()));
             }
+            grantOnDeathEffect(p, effect.grantOnDeathEffect(), cardOwnerId != null ? cardOwnerId : card.getOwnerId());
             if (effect.battlefieldEffectGrants() != null) {
                 String sourceCardName = entry == null ? card.getName() : entry.getCard().getName();
                 UUID sourcePermanentId = entry == null ? null : entry.getSourcePermanentId();
@@ -583,6 +592,18 @@ public class GraveyardReturnSupport {
             }
             break;
         }
+    }
+
+    public void grantOnDeathEffect(Permanent permanent, CardEffect effect, UUID cardOwnerId) {
+        if (permanent == null || effect == null) {
+            return;
+        }
+        CardEffect boundEffect = effect;
+        if (effect instanceof TargetPlayerLosesGameEffect losesGame && losesGame.playerId() == null
+                && cardOwnerId != null) {
+            boundEffect = new TargetPlayerLosesGameEffect(cardOwnerId);
+        }
+        permanent.addPersistentTriggeredEffect(EffectSlot.ON_DEATH, boundEffect);
     }
 
     private boolean losesAllAbilitiesBeforeEntering(ReturnCardFromGraveyardEffect effect) {
@@ -655,7 +676,7 @@ public class GraveyardReturnSupport {
                         Permanent returnedPermanent = putCardOntoBattlefield(gameData, controllerId, card,
                                 effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), false,
                                 null, false, losesAllAbilitiesBeforeEntering(effect));
-                        applyBattlefieldReturnRiders(gameData, controllerId, card, effect);
+                        applyBattlefieldReturnRiders(gameData, controllerId, card, effect, entry, controllerId);
                         queueNextUpkeepExile(gameData, entry, effect, controllerId, returnedPermanent);
                     } else {
                         permanentRemovalService.addCardToHandFromGraveyard(
@@ -735,7 +756,7 @@ public class GraveyardReturnSupport {
                                     effect.enterAttacking(), null, false,
                                     losesAllAbilitiesBeforeEntering(effect));
                         }
-                        applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
+                        applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect, entry, gyEntry.getKey());
                         queueNextUpkeepExile(gameData, entry, effect, targetPlayerId, returnedPermanent);
                     }
                     returnedCards.add(card);
@@ -1023,7 +1044,7 @@ public class GraveyardReturnSupport {
                                 effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
                                 null, false, losesAllAbilitiesBeforeEntering(effect));
                     }
-                    applyBattlefieldReturnRiders(gameData, controllerId, randomCard, effect);
+                    applyBattlefieldReturnRiders(gameData, controllerId, randomCard, effect, null, controllerId);
                 } else if (effect.battlefieldIfCreatureElseExile()) {
                     exileService.exileCard(gameData, controllerId, randomCard);
                 } else {
@@ -1130,6 +1151,9 @@ public class GraveyardReturnSupport {
         if (effect.grantSourceHasteIfSubtype() != null) {
             choice.grantSourceHasteIfSubtype(effect.grantSourceHasteIfSubtype(), entry.getSourcePermanentId());
         }
+        if (effect.grantOnDeathEffect() != null) {
+            choice.grantOnDeathEffect(effect.grantOnDeathEffect());
+        }
 
         if (effect.attachToSource()) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -1198,6 +1222,9 @@ public class GraveyardReturnSupport {
         if (effect.grantSubtype() != null) {
             choice.grantSubtype(effect.grantSubtype());
         }
+        if (effect.grantOnDeathEffect() != null) {
+            choice.grantOnDeathEffect(effect.grantOnDeathEffect());
+        }
         interactionHandlerRegistry.begin(gameData, choice.build());
     }
 
@@ -1221,17 +1248,17 @@ public class GraveyardReturnSupport {
      * @param effect   the return-to-hand effect configuration
      */
 
-    public void processTargetedGraveyardCards(GameData gameData, StackEntry entry,
-                                                BiConsumer<List<Card>, Card> cardConsumer,
-                                                String logVerbPhrase, String logSuffix) {
-        processTargetedGraveyardTargets(gameData, entry, entry.getTargetCardIds(), cardConsumer,
+    public int processTargetedGraveyardCards(GameData gameData, StackEntry entry,
+                                               BiConsumer<List<Card>, Card> cardConsumer,
+                                               String logVerbPhrase, String logSuffix) {
+        return processTargetedGraveyardTargets(gameData, entry, entry.getTargetCardIds(), cardConsumer,
                 logVerbPhrase, logSuffix);
     }
 
-    public void processTargetedGraveyardCards(GameData gameData, StackEntry entry, List<UUID> targetCardIds,
-                                                BiConsumer<List<Card>, Card> cardConsumer,
-                                                String logVerbPhrase, String logSuffix) {
-        processTargetedGraveyardTargets(gameData, entry, targetCardIds, cardConsumer,
+    public int processTargetedGraveyardCards(GameData gameData, StackEntry entry, List<UUID> targetCardIds,
+                                               BiConsumer<List<Card>, Card> cardConsumer,
+                                               String logVerbPhrase, String logSuffix) {
+        return processTargetedGraveyardTargets(gameData, entry, targetCardIds, cardConsumer,
                 logVerbPhrase, logSuffix);
     }
 
@@ -1253,13 +1280,13 @@ public class GraveyardReturnSupport {
                 "Put these cards on top of your library in any order."));
     }
 
-    public void processTargetedGraveyardTargets(GameData gameData, StackEntry entry, List<UUID> targetIds,
+    public int processTargetedGraveyardTargets(GameData gameData, StackEntry entry, List<UUID> targetIds,
                                                 BiConsumer<List<Card>, Card> cardConsumer,
                                                 String logVerbPhrase, String logSuffix) {
         UUID controllerId = entry.getControllerId();
 
         if (targetIds == null || targetIds.isEmpty()) {
-            return;
+            return 0;
         }
 
         List<Card> movedCards = new ArrayList<>();
@@ -1300,6 +1327,7 @@ public class GraveyardReturnSupport {
             gameLogService.append(gameData, builder.build());
             log.info("Game {} - {} moved {} card(s) from graveyard", gameData.id, playerName, movedCards.size());
         }
+        return movedCards.size();
     }
 
     public void moveCardToDestination(GameData gameData, UUID playerId, Card card,
@@ -1809,6 +1837,14 @@ public class GraveyardReturnSupport {
         }
     }
 
+    public void applyLifeGainEqualToReturnedToughness(GameData gameData, UUID controllerId,
+                                                       Permanent returnedPermanent) {
+        int toughness = gameQueryService.getEffectiveToughness(gameData, returnedPermanent);
+        if (toughness > 0) {
+            lifeSupport.applyGainLife(gameData, controllerId, toughness);
+        }
+    }
+
     /**
      * Reanimate's rider: the spell's controller loses life equal to the returned card's mana value.
      * Routed through {@link LifeSupport} so loses-life triggers fire.
@@ -2010,8 +2046,19 @@ public class GraveyardReturnSupport {
                                          Set<Keyword> additionalKeywords, boolean enterTapped,
                                          boolean removeLegendary) {
         UUID controllerId = entry.getControllerId();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(
-                gameData, controllerId, sourceCard.hasType(CardType.CREATURE));
+        List<CardSubtype> tokenSubtypes = new ArrayList<>();
+        if (!replaceSubtypes && sourceCard.getSubtypes() != null) {
+            tokenSubtypes.addAll(sourceCard.getSubtypes());
+        }
+        if (additionalSubtypes != null) {
+            for (CardSubtype subtype : additionalSubtypes) {
+                if (!tokenSubtypes.contains(subtype)) {
+                    tokenSubtypes.add(subtype);
+                }
+            }
+        }
+        int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                gameData, controllerId, 1, tokenSubtypes, sourceCard.hasType(CardType.CREATURE));
         Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = new Card();
@@ -2040,24 +2087,7 @@ public class GraveyardReturnSupport {
             tokenCard.setSetCode(sourceCard.getSetCode());
             tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
 
-            List<CardSubtype> subtypes = new ArrayList<>();
-            if (replaceSubtypes) {
-                if (additionalSubtypes != null) {
-                    subtypes.addAll(additionalSubtypes);
-                }
-            } else {
-                if (sourceCard.getSubtypes() != null) {
-                    subtypes.addAll(sourceCard.getSubtypes());
-                }
-                if (additionalSubtypes != null) {
-                    for (CardSubtype subtype : additionalSubtypes) {
-                        if (!subtypes.contains(subtype)) {
-                            subtypes.add(subtype);
-                        }
-                    }
-                }
-            }
-            tokenCard.setSubtypes(subtypes);
+            tokenCard.setSubtypes(new ArrayList<>(tokenSubtypes));
 
             Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
             if (sourceCard.getKeywords() != null) {

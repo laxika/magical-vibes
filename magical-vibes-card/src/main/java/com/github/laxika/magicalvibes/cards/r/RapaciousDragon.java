@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "153")
+@CardRegistration(set = "FDN", collectorNumber = "544")
 public class RapaciousDragon extends Card {
 
     public RapaciousDragon() {

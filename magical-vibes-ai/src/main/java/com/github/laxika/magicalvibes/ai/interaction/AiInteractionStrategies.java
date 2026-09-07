@@ -66,6 +66,8 @@ public final class AiInteractionStrategies {
         register(new SearchLibraryAndOrGraveyardChoiceAiStrategy());
         register(new SearchLibraryToTopChoiceAiStrategy());
         register(new IntuitionSearchChoiceAiStrategy());
+        register(new TurtlesForeverSearchChoiceAiStrategy());
+        register(new TurtlesForeverOpponentChoiceAiStrategy());
         register(new GuidedPassageChoiceAiStrategy());
         register(new PermanentAuctionChoiceAiStrategy());
         register(new IllicitAuctionBidChoiceAiStrategy());

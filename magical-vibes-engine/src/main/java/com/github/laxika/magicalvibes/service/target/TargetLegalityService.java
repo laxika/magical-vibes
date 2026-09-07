@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -303,7 +304,7 @@ public class TargetLegalityService {
             if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
                     && returnEffect.hasTotalManaValueCap()) {
                 validateTotalManaValueGraveyardTargets(gameData, playerId, returnEffect, targetCardIds,
-                        sourceCardId);
+                        sourceCardId, xValue);
                 return;
             }
         }
@@ -646,7 +647,7 @@ public class TargetLegalityService {
     private void validateTotalManaValueGraveyardTargets(
             GameData gameData, UUID playerId,
             ReturnTargetCardsFromGraveyardToBattlefieldEffect effect,
-            List<UUID> targetCardIds, UUID sourceCardId) {
+            List<UUID> targetCardIds, UUID sourceCardId, Integer xValue) {
         if (!targetCardIds.isEmpty() && !gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
             throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");
         }
@@ -657,6 +658,11 @@ public class TargetLegalityService {
             throw new IllegalStateException("Too many target cards selected");
         }
 
+        int maxTotalManaValue = effect.dynamicMaxTotalManaValue() == null
+                ? effect.maxTotalManaValue()
+                : Math.max(0, amountEvaluationService.evaluate(gameData,
+                        effect.dynamicMaxTotalManaValue(),
+                        new AmountContext(playerId, null, null, xValue == null ? 0 : xValue, 0)));
         int totalManaValue = 0;
         for (UUID cardId : targetCardIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
@@ -678,9 +684,9 @@ public class TargetLegalityService {
                         + CardPredicateUtils.describeFilter(effect.filter()));
             }
             totalManaValue += card.getManaValue();
-            if (totalManaValue > effect.maxTotalManaValue()) {
+            if (totalManaValue > maxTotalManaValue) {
                 throw new IllegalStateException("Target cards' total mana value cannot exceed "
-                        + effect.maxTotalManaValue());
+                        + maxTotalManaValue);
             }
         }
     }
@@ -2183,6 +2189,10 @@ public class TargetLegalityService {
             validateAtMostOneCreatureAndOneLand(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.DIFFERENT_MANA_VALUES) {
+            validateDifferentManaValues(gameData, targetIds);
+            return;
+        }
         if (constraint == MultiTargetConstraint.SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST) {
             validateSameCreatureOrLandTypeAsFirstAuraHost(gameData, targetIds);
             return;
@@ -2228,7 +2238,8 @@ public class TargetLegalityService {
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
-                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND -> {
+                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
+                         DIFFERENT_MANA_VALUES -> {
                         // Handled by early returns above.
                     }
                 }
@@ -2253,6 +2264,16 @@ public class TargetLegalityService {
             }
             if (card.hasType(CardType.SORCERY) && ++sorceryCount > 1) {
                 throw new IllegalStateException("You cannot choose more than one sorcery card");
+            }
+        }
+    }
+
+    private void validateDifferentManaValues(GameData gameData, List<UUID> targetIds) {
+        Set<Integer> manaValues = new HashSet<>();
+        for (UUID targetId : targetIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, targetId);
+            if (card != null && !manaValues.add(card.getManaValue())) {
+                throw new IllegalStateException("Chosen cards must have different mana values");
             }
         }
     }
@@ -2910,51 +2931,92 @@ public class TargetLegalityService {
 
     private boolean isTargetCardLegalOnResolution(GameData gameData, StackEntry entry, UUID cardId) {
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-        if (card == null) {
+        if (card != null) {
+            List<ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect> chosenTypeEffects =
+                    entry.getEffectsToResolve().stream()
+                            .filter(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::isInstance)
+                            .map(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::cast)
+                            .toList();
+            if (!chosenTypeEffects.isEmpty()) {
+                CardSubtype chosenCreatureType = entry.getChosenCreatureType();
+                UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                return chosenCreatureType != null
+                        && entry.getControllerId().equals(graveyardOwnerId)
+                        && chosenTypeEffects.stream().anyMatch(effect -> predicateEvaluationService.matchesCardPredicate(
+                        card, effect.filter(chosenCreatureType), entry.getCard().getId(), gameData, graveyardOwnerId));
+            }
+
+            List<CardEffect> declarativeGraveyardEffects = entry.getEffectsToResolve().stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .toList();
+            if (!declarativeGraveyardEffects.isEmpty()) {
+                return declarativeGraveyardEffects.stream().anyMatch(effect ->
+                        targetValidationService.checkEffectTargets(
+                                List.of(effect),
+                                new TargetValidationContext(gameData, cardId, Zone.GRAVEYARD,
+                                        entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                                        entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
+                                        entry.getTriggeringPermanentPowerAtTrigger()))
+                                .isEmpty());
+            }
+
+            SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect = entry.getEffectsToResolve().stream()
+                    .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
+                    .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (effect == null) {
+                return true;
+            }
+
+            return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
+                    .anyMatch(graveyardCard -> graveyardCard.getId().equals(cardId))
+                    && predicateEvaluationService.matchesCardPredicate(
+                    card, effect.returnFilter(), entry.getCard().getId());
+        }
+
+        Permanent permanent = findPermanentByCardId(gameData, cardId);
+        if (permanent == null) {
             return false;
         }
 
-        List<ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect> chosenTypeEffects =
-                entry.getEffectsToResolve().stream()
-                        .filter(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::isInstance)
-                        .map(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::cast)
-                        .toList();
-        if (!chosenTypeEffects.isEmpty()) {
-            CardSubtype chosenCreatureType = entry.getChosenCreatureType();
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-            return chosenCreatureType != null
-                    && entry.getControllerId().equals(graveyardOwnerId)
-                    && chosenTypeEffects.stream().anyMatch(effect -> predicateEvaluationService.matchesCardPredicate(
-                    card, effect.filter(chosenCreatureType), entry.getCard().getId(), gameData, graveyardOwnerId));
-        }
+        return entry.getEffectsToResolve().stream()
+                .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
+                .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
+                .anyMatch(effect -> isMixedZoneBattlefieldTargetLegal(gameData, entry, permanent, effect));
+    }
 
-        List<CardEffect> declarativeGraveyardEffects = entry.getEffectsToResolve().stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                .toList();
-        if (!declarativeGraveyardEffects.isEmpty()) {
-            return declarativeGraveyardEffects.stream().anyMatch(effect ->
-                    targetValidationService.checkEffectTargets(
-                            List.of(effect),
-                            new TargetValidationContext(gameData, cardId, Zone.GRAVEYARD,
-                                    entry.getCard(), entry.getXValue(), entry.getControllerId(),
-                                    entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                                    entry.getTriggeringPermanentPowerAtTrigger()))
-                            .isEmpty());
+    private boolean isMixedZoneBattlefieldTargetLegal(GameData gameData, StackEntry entry,
+                                                       Permanent permanent,
+                                                       BattlefieldAndGraveyardCardChoosingEffect effect) {
+        if (effect.mixedZoneExcludesSourcePermanent()
+                && permanent.getId().equals(entry.getSourcePermanentId())) {
+            return false;
         }
-
-        SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect = entry.getEffectsToResolve().stream()
-                .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
-                .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
-                .findFirst()
-                .orElse(null);
-        if (effect == null) {
-            return true;
+        PermanentPredicate predicate = effect.mixedZoneBattlefieldPredicate();
+        if (predicate == null) {
+            if (!gameQueryService.isCreature(gameData, permanent)) {
+                return false;
+            }
+        } else if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate)) {
+            return false;
         }
+        return isBattlefieldTargetLegalOnResolution(gameData, entry, permanent.getId(), null);
+    }
 
-        return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
-                .anyMatch(graveyardCard -> graveyardCard.getId().equals(cardId))
-                && predicateEvaluationService.matchesCardPredicate(
-                        card, effect.returnFilter(), entry.getCard().getId());
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(cardId)) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
     }
 
     public boolean isPrimaryTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId) {

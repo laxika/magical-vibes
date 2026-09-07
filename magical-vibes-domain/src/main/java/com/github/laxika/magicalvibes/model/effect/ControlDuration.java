@@ -12,6 +12,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@code PERMANENT} — indefinite control ({@code EffectDuration.PERMANENT}).</li>
  *   <li>{@code END_OF_TURN} — the effect wears off during the cleanup step
  *       ({@code EffectDuration.UNTIL_END_OF_TURN}).</li>
+ *   <li>{@code UNTIL_END_OF_YOUR_NEXT_TURN} — the effect wears off during the cleanup step at
+ *       the end of the controller's next turn ({@code EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN}).</li>
  *   <li>{@code WHILE_SOURCE_ON_BATTLEFIELD} — the effect ends when the source permanent
  *       leaves the battlefield or its creator stops controlling it
  *       ({@code EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD}).</li>
@@ -29,6 +31,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum ControlDuration {
     PERMANENT,
     END_OF_TURN,
+    UNTIL_END_OF_YOUR_NEXT_TURN,
     WHILE_SOURCE_ON_BATTLEFIELD,
     WHILE_SOURCE_REMAINS,
     WHILE_SOURCE_TAPPED,
@@ -50,6 +53,7 @@ public enum ControlDuration {
         return switch (this) {
             case PERMANENT -> EffectDuration.PERMANENT;
             case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+            case UNTIL_END_OF_YOUR_NEXT_TURN -> EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN;
             case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
             case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
             case WHILE_SOURCE_TAPPED -> EffectDuration.WHILE_SOURCE_TAPPED;

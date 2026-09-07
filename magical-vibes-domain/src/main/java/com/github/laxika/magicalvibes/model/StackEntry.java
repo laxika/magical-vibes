@@ -53,6 +53,8 @@ public class StackEntry {
     @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
     @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
+    /** Amount of Treasure-produced mana spent to activate this ability, snapshotted at activation. */
+    @Setter private int activationTreasureManaSpent;
     /** Whether mana produced by a Treasure was spent to activate this ability. */
     @Setter private boolean activationUsedTreasureMana;
     /** Mana spent to cast this spell, retained until a permanent spell enters the battlefield. */
@@ -148,6 +150,10 @@ public class StackEntry {
     @Setter private boolean collectEvidenceCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
+    /** The last-known power of the permanent or card used to pay this spell's behold cost. */
+    @Setter private int beholdPower;
+    /** The permanent used to pay this spell's behold cost, when the choice was from the battlefield. */
+    @Setter private UUID beholdPermanentId;
     /** Whether this spell's optional reveal-a-card-from-hand additional cost was paid. */
     @Setter private boolean revealCardFromHandCostPaid;
     /** Whether this spell's optional casualty additional cost was paid. */
@@ -621,6 +627,7 @@ public class StackEntry {
         this.enteringCounters.putAll(source.enteringCounters);
         this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
+        this.activationTreasureManaSpent = source.activationTreasureManaSpent;
         this.activationUsedTreasureMana = source.activationUsedTreasureMana;
         this.manaSpentToCast = source.manaSpentToCast;
         this.targetZone = source.targetZone;
@@ -657,6 +664,8 @@ public class StackEntry {
         this.putCounterCostPaid = source.putCounterCostPaid;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
+        this.beholdPower = source.beholdPower;
+        this.beholdPermanentId = source.beholdPermanentId;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.casualtyCostPaid = source.casualtyCostPaid;
         this.waterbendCostPaid = source.waterbendCostPaid;
