@@ -33,11 +33,16 @@ public class RemoveChosenCountersFromTargetPermanentEffectHandler implements Nor
             return;
         }
 
+        int amount = ((RemoveChosenCountersFromTargetPermanentEffect) effect).amount();
+        if (amount == 0) {
+            return;
+        }
+
         List<CounterType> counterTypes = counterTypesOn(target);
         if (!counterTypes.isEmpty()) {
             playerInputService.beginRemoveChosenCountersChoice(gameData, entry.getControllerId(),
                     target.getId(), entry.getCard().getName(),
-                    ((RemoveChosenCountersFromTargetPermanentEffect) effect).amount(), counterTypes);
+                    amount, counterTypes);
         }
     }
 

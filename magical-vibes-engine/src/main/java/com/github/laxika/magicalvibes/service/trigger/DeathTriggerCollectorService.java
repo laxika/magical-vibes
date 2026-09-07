@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForImprintedCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenIfDyingSourceHadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithTotalDyingCreaturesPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
@@ -104,7 +105,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyi
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
@@ -134,7 +134,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHa
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -529,14 +528,14 @@ public class DeathTriggerCollectorService {
                 snapshot.put(type, count);
             }
         }
-        if (snapshot.isEmpty()) {
+        if (snapshot.isEmpty() && effect.requiresCounters()) {
             return false;
         }
 
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                 sd.dyingCard(), sd.controllerId(),
                 new ArrayList<>(List.of(new MoveDyingSourceCountersToTargetCreatureEffect(
-                        snapshot, effect.controllerOnly())))
+                        snapshot, effect.controllerOnly(), effect.requiresCounters())))
         ));
         return true;
     }
@@ -2960,6 +2959,20 @@ public class DeathTriggerCollectorService {
         ));
         logOpponentCreatureDeath(match);
         return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenIfDyingSourceHadCounterEffect.class,
+            slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
+    boolean handleOpponentCreatureDeathCreateTokenIfDyingSourceHadCounter(
+            TriggerMatchContext match, CreateTokenIfDyingSourceHadCounterEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        Permanent dyingPermanent = cd.dyingPermanent();
+        if (dyingPermanent == null
+                || dyingPermanent.getCounterCount(effect.counterType()) < 1) {
+            return false;
+        }
+        return handleOpponentCreatureDeathDefault(match, effect.tokenTemplate(), ctx);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)

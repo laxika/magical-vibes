@@ -34,7 +34,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import lombok.RequiredArgsConstructor;
@@ -208,12 +207,27 @@ public class PlayerInputService {
                                 CardEffect thenEffect, CardPredicate thenCondition,
                                 CardPredicate enterTappedAndAttackingIf,
                                 UUID blockingAttackerId) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId, returnToHandAtEndStep, cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId, null, Set.of());
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                CardPredicate drawAndRepeatPredicate, String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                                boolean returnToHandAtEndStep, boolean cloaked,
+                                CardEffect thenEffect, CardPredicate thenCondition,
+                                CardPredicate enterTappedAndAttackingIf,
+                                UUID blockingAttackerId, UUID untapSourcePermanentId,
+                                Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                 attachEquipmentCardId, enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                 returnExiledSourceCardId, null, null, 0, returnToHandAtEndStep,
-                cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId));
+                cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId,
+                untapSourcePermanentId, untapSourceIfEnteredCardHasAnySubtype));
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
@@ -2295,12 +2309,19 @@ public class PlayerInputService {
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount, DiscardFollowUp followUp) {
         List<Card> hand = gameData.playerHands.get(playerId);
         beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.", remainingCount,
-                followUp, null, false);
+                followUp, (CardType) null, false);
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount,
                                    DiscardFollowUp followUp, CardType stopAfterDiscardingType) {
         beginDiscardChoice(gameData, playerId, remainingCount, followUp, stopAfterDiscardingType, false);
+    }
+
+    public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount,
+                                   DiscardFollowUp followUp, CardPredicate stopAfterDiscardingPredicate) {
+        List<Card> hand = gameData.playerHands.get(playerId);
+        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.", remainingCount,
+                followUp, null, stopAfterDiscardingPredicate, false);
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount,
@@ -2316,12 +2337,28 @@ public class PlayerInputService {
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, int remainingCount, DiscardFollowUp followUp) {
-        beginDiscardChoice(gameData, playerId, validIndices, prompt, remainingCount, followUp, null, false);
+        beginDiscardChoice(gameData, playerId, validIndices, prompt, remainingCount, followUp,
+                (CardType) null, false);
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                    int remainingCount, DiscardFollowUp followUp,
                                    CardType stopAfterDiscardingType, boolean declinable) {
+        beginDiscardChoice(gameData, playerId, validIndices, prompt, remainingCount, followUp,
+                stopAfterDiscardingType, null, declinable);
+    }
+
+    public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                   int remainingCount, DiscardFollowUp followUp,
+                                   CardPredicate stopAfterDiscardingPredicate, boolean declinable) {
+        beginDiscardChoice(gameData, playerId, validIndices, prompt, remainingCount, followUp,
+                (CardType) null, stopAfterDiscardingPredicate, declinable);
+    }
+
+    private void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                    int remainingCount, DiscardFollowUp followUp,
+                                    CardType stopAfterDiscardingType,
+                                    CardPredicate stopAfterDiscardingPredicate, boolean declinable) {
         if (remainingCount > 0 && !validIndices.isEmpty()
                 && !followUp.targetOpponentsDiscardThenDraw()) {
             if (gameData.discardEventPlayerId == null) {
@@ -2333,7 +2370,7 @@ public class PlayerInputService {
         }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardChoice(
                 playerId, new ArrayList<>(validIndices), remainingCount, followUp, prompt,
-                stopAfterDiscardingType, declinable));
+                stopAfterDiscardingType, stopAfterDiscardingPredicate, declinable));
     }
 
     public void processNextMayAbility(GameData gameData) {

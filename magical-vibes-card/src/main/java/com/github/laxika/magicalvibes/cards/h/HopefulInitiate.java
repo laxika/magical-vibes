@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "27")
 @CardRegistration(set = "INR", collectorNumber = "343")
+@CardRegistration(set = "VOW", collectorNumber = "20")
 public class HopefulInitiate extends Card {
 
     public HopefulInitiate() {

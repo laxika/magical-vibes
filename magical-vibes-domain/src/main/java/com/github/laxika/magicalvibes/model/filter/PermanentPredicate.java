@@ -78,6 +78,7 @@ public sealed interface PermanentPredicate permits
         PermanentInCombatWithSourcePredicate,
         PermanentIsArtifactPredicate,
         PermanentIsAttackingPredicate,
+        PermanentIsAttackingEnchantedPlayerPredicate,
         PermanentAttacksPlayerWithMostLifePredicate,
         PermanentAttacksWhileSourceControllerHasMostLifePredicate,
         PermanentIsAttackingOpponentOfSourceControllerPredicate,

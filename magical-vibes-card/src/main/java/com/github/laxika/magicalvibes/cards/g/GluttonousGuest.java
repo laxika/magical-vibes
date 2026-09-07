@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "112")
+@CardRegistration(set = "VOW", collectorNumber = "114")
 public class GluttonousGuest extends Card {
 
     public GluttonousGuest() {

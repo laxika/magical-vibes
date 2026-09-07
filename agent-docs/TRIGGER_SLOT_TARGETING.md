@@ -335,6 +335,9 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
 `ON_CONTROLLER_LOSES_LIFE`,
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
+`ON_SELF_TRAINS` (Savior of Ollenbock; fires only when training successfully puts its +1/+1 counter on the source),
+`ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN` (Cloaked Cadet; fires when one or more +1/+1
+counters are put on a Human the controller controls, including counters the Human enters with),
 `ON_SELF_COUNTERS_PUT` (fires when one or more counters are put on the source permanent; a
 `SourceCounterThreshold` conditional in this slot can fire when the source crosses the threshold),
 `ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE` (Wildwood Scourge; fires once when
@@ -618,6 +621,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "Whenever enchanted creature deals damage to a creature, ..." | `ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE` | Enchanted creature deals damage to another creature (combat or non-combat); the damaged creature is captured as a non-targeting `targetId` | Venomous Fangs |
 | "Whenever enchanted creature attacks and isn't blocked, ..." | `ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED` | Enchanted attacker ends up unblocked (declare-blockers step). Non-targeting effects use `sourcePermanentId`=enchanted attacker and `targetId`=defending player. Permanent-targeting `MayEffect`s defer target selection and use the enchanted creature's controller for the may choice | Cloak of Confusion, Farrel's Mantle |
 | "Whenever a creature is dealt damage, ..." (any creature) | `ON_ANY_CREATURE_DEALT_DAMAGE` | Any creature is dealt damage (combat or non-combat). Queued entry targets the damaged creature | Death Pits of Rath |
+| "Whenever a permanent you control is dealt damage, ..." | `ON_ANY_PERMANENT_DEALT_DAMAGE` | Any permanent is dealt damage (combat or non-combat); the watching permanent's controller chooses any target as the trigger is put on the stack | Howlpack Avenger |
 | "Whenever a creature you control fights, ..." | `ON_ALLY_CREATURE_FIGHTS` | A creature controlled by the watcher’s controller fights; the fighting creature is captured for the triggered effect | Foe-Razer Regent |
 
 **`ON_ANY_CREATURE_DEALT_DAMAGE`, `ON_OPPONENT_CREATURE_DEALT_DAMAGE`,
@@ -650,6 +654,11 @@ on the triggered entry for the normal return handler. An empty selection models 
 For `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY`, effects implementing `TriggeringSpellReferencingEffect`
 also carry the triggering spell or activated ability as an internal `STACK` reference. The source
 permanent id remains available so an Aura effect can re-derive its host at resolution.
+
+For `ON_BECOMES_TARGET_OF_SPELL`, wrap an effect in `TriggeringSpellControllerConditionalEffect`
+when the trigger should fire only for spells controlled by the source permanent's controller. The
+wrapper is evaluated while the becomes-target trigger is collected and then removed before the
+effect is put on the stack.
 
 `ON_CONTROLLER_DRAWS_SECOND_CARD` is checked by `DrawService.checkControllerDrawTriggers` after
 the controller's per-turn draw count reaches exactly two. It uses the same stack and any-target

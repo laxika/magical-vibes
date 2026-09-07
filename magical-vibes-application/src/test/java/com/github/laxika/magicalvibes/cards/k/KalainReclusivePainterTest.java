@@ -103,7 +103,6 @@ class KalainReclusivePainterTest extends BaseCardTest {
     private void createTreasure() {
         harness.setHand(player1, List.of(new WilyGoblin()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -112,7 +111,6 @@ class KalainReclusivePainterTest extends BaseCardTest {
     private void createTwoTreasures() {
         harness.setHand(player1, List.of(new WilyGoblin(), new WilyGoblin()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();

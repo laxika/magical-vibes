@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithIceCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWithCroakCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyManaTypeCastEffect;
@@ -1781,8 +1782,8 @@ public class CastingPermissionService {
     }
 
     /**
-     * Returns the set of exiled card IDs that the player can cast via
-     * {@link AllowCastFromCardsExiledWithSourceEffect} on their permanents.
+     * Returns the set of exiled card IDs that the player can play or cast via static permissions
+     * on their permanents.
      */
     public Set<UUID> getCastableExiledCardIds(GameData gameData, UUID playerId) {
         Set<UUID> castableIds = new HashSet<>();
@@ -1794,6 +1795,11 @@ public class CastingPermissionService {
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
             if (hasIceCounterPermission(gameData, playerId, entry.card().getId(), false)) {
+                castableIds.add(entry.card().getId());
+            }
+        }
+        for (ExiledCardEntry entry : gameData.exiledCards) {
+            if (hasCroakCounterPermission(gameData, playerId, entry.card().getId())) {
                 castableIds.add(entry.card().getId());
             }
         }
@@ -1884,6 +1890,7 @@ public class CastingPermissionService {
         if (findTemporaryExileCastPermission(gameData, playerId, entry, false) != null) return true;
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) return true;
         if (hasIceCounterPermission(gameData, playerId, cardId, false)) return true;
+        if (hasCroakCounterPermission(gameData, playerId, cardId)) return true;
         if (hasCollectionCounterPermission(gameData, playerId, cardId, false)) return true;
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
@@ -2286,6 +2293,13 @@ public class CastingPermissionService {
                         .filter(AllowCastFromCardsExiledWithIceCountersEffect.class::isInstance)
                         .map(AllowCastFromCardsExiledWithIceCountersEffect.class::cast)
                         .anyMatch(permission -> !anyManaTypeRequired || permission.anyManaType()));
+    }
+
+    private boolean hasCroakCounterPermission(GameData gameData, UUID playerId, UUID cardId) {
+        if (!gameData.exiledCardsWithCroakCounters.contains(cardId)) return false;
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null || !playerId.equals(entry.ownerId())) return false;
+        return controlsStatic(gameData, playerId, AllowPlayAndCastCardsExiledWithCroakCountersEffect.class);
     }
 
     private boolean canAccessExiledEntry(Permanent source, UUID sourceControllerId,

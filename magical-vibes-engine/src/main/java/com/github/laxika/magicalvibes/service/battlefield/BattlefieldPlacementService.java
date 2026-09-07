@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EnchantedPlayerCreaturesEnterTappedEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
@@ -109,6 +110,7 @@ public class BattlefieldPlacementService {
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler;
+    private final EnchantedPlayerCreaturesEnterTappedEffectHandler enchantedPlayerCreaturesEnterTappedEffectHandler;
     private com.github.laxika.magicalvibes.service.effect.normalfx.NoteControllerLifeTotalEffectHandler noteControllerLifeTotalEffectHandler;
     private LandEquilibriumSupport landEquilibriumSupport;
 
@@ -125,7 +127,8 @@ public class BattlefieldPlacementService {
                                        @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport,
                                        com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService,
                                        @Lazy PermanentRemovalService permanentRemovalService,
-                                       com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler) {
+                                       com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler,
+                                       EnchantedPlayerCreaturesEnterTappedEffectHandler enchantedPlayerCreaturesEnterTappedEffectHandler) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
@@ -139,6 +142,7 @@ public class BattlefieldPlacementService {
         this.graveyardService = graveyardService;
         this.permanentRemovalService = permanentRemovalService;
         this.becomeDayAsEntersEffectHandler = becomeDayAsEntersEffectHandler;
+        this.enchantedPlayerCreaturesEnterTappedEffectHandler = enchantedPlayerCreaturesEnterTappedEffectHandler;
     }
 
     public BattlefieldPlacementService(GameQueryService gameQueryService,
@@ -157,7 +161,8 @@ public class BattlefieldPlacementService {
                 triggerCollectionService, amountEvaluationService, conditionEvaluationService,
                 predicateEvaluationService, new EntryReplacementHandlerRegistry(List.of()),
                 permanentCounterSupport, graveyardService, permanentRemovalService,
-                becomeDayAsEntersEffectHandler);
+                becomeDayAsEntersEffectHandler,
+                new EnchantedPlayerCreaturesEnterTappedEffectHandler(gameQueryService));
     }
 
     @Autowired
@@ -232,6 +237,7 @@ public class BattlefieldPlacementService {
             applyAllPermanentsEnterTapped(gameData, permanent);
             applyGlobalFilteredEnterTappedEffects(gameData, permanent);
             applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
+            enchantedPlayerCreaturesEnterTappedEffectHandler.apply(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
             applyControlledPermanentsEnterUntapped(gameData, controllerId, permanent);
             applyControlledLandsEnterUntapped(gameData, controllerId, permanent);
@@ -265,6 +271,8 @@ public class BattlefieldPlacementService {
         }
         if (plusOnePlusOneCountersAfterEntry > plusOnePlusOneCountersBeforeEntry
                 || (plusOnePlusOneCountersBeforeEntry > 0 && plusOnePlusOneCountersAfterEntry > 0)) {
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                    gameData, permanent, controllerId);
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                     gameData, permanent, controllerId,
                     Math.max(1, plusOnePlusOneCountersAfterEntry - plusOnePlusOneCountersBeforeEntry));
@@ -1072,7 +1080,7 @@ public class BattlefieldPlacementService {
         playerInputService.beginDiscardChoice(gameData, controllerId, discardable,
                 permanent.getCard().getName() + " — Discard " + effect.description()
                         + " to have it enter (choose no card to decline).", 1,
-                DiscardFollowUp.enteringPermanent(permanent, controllerId), null, true);
+                DiscardFollowUp.enteringPermanent(permanent, controllerId), (CardType) null, true);
         return false;
     }
 

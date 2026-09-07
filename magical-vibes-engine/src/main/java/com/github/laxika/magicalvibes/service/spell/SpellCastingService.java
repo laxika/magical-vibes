@@ -340,6 +340,7 @@ public class SpellCastingService {
         triggerCollectionService.checkYouPutCountersTriggers(gameData, player.getId(), count);
         gameData.playersWhoPutCountersOnCreaturesThisTurn.add(player.getId());
         if (type == CounterType.PLUS_ONE_PLUS_ONE) {
+            gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(player.getId());
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(player.getId());
         }
         String counterName = type == CounterType.MINUS_ONE_MINUS_ONE ? "-1/-1"
@@ -2598,6 +2599,11 @@ public class SpellCastingService {
         final Card card = adventure ? preparedCard.getBackFaceCard() : preparedCard;
         if (card == null) {
             throw new IllegalStateException("Card does not have an Adventure face");
+        }
+        if (usingAlternateCost) {
+            card.getCastingOption(AlternateHandCast.class)
+                    .map(AlternateHandCast::alternateTargetFilter)
+                    .ifPresent(card::setCastTimeTargetFilter);
         }
         gameData.spellColorOverrides.remove(card.getId());
         gameData.spellColorOverridesUntilEndOfTurn.remove(card.getId());
@@ -8160,7 +8166,8 @@ public class SpellCastingService {
                 battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
             }
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace, true);
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace,
+                        Zone.EXILE, copy ? null : exiledEntry.sourcePermanentId());
                 turnProgressionService.resolveAutoPass(gameData);
             }
             return;
@@ -8382,7 +8389,8 @@ public class SpellCastingService {
         log.info("Game {} - {} casts {} from {}", gameData.id, player.getUsername(), card.getName(),
                 fromOutsideGame ? "outside the game" : "exile");
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, sourceZone);
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, sourceZone,
+                copy || exiledEntry == null ? null : exiledEntry.sourcePermanentId());
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         if (autoPass) {
@@ -8719,7 +8727,6 @@ public class SpellCastingService {
         if (additionalCosts.chooseXValueCost() != null) {
             additionalSpellCostService.validateChooseXValueCost(card, additionalCosts.chooseXValueCost(), effectiveXValue);
         }
-
         int additionalCounterCost = !freeTopPlay && !useManaValueLifeAlternative
                 ? castingPermissionService.findAdditionalCounterCostFromTopOfLibrary(
                 gameData, playerId, card).orElse(0)

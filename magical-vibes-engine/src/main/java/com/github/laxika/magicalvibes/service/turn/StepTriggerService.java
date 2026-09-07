@@ -5678,6 +5678,11 @@ public class StepTriggerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepModalTrigger.class)) {
+            processNextUpkeepModalTrigger(gameData);
+            return;
+        }
+
         if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
             return;
@@ -5786,9 +5791,14 @@ public class StepTriggerService {
         List<CardEffect> mayEffects = combatEffects.stream()
                 .filter(e -> e instanceof MayEffect && e.targetSpec() == TargetSpec.NONE)
                 .toList();
+        List<ChooseModeNotYetChosenEffect> consumedModalEffects = new ArrayList<>();
         List<ChooseOneEffect> modalEffects = new ArrayList<>();
         List<CardEffect> mandatoryEffects = new ArrayList<>();
         for (CardEffect effect : combatEffects) {
+            if (effect instanceof ChooseModeNotYetChosenEffect chooseMode) {
+                consumedModalEffects.add(chooseMode);
+                continue;
+            }
             if (effect instanceof ChooseOneEffect chooseOne) {
                 modalEffects.add(chooseOne);
                 continue;
@@ -5819,6 +5829,14 @@ public class StepTriggerService {
             } else {
                 gameData.queueMayAbility(perm.getCard(), controllerId, may, null, perm.getId());
             }
+        }
+
+        for (ChooseModeNotYetChosenEffect effect : consumedModalEffects) {
+            gameData.queueInteraction(new PermanentChoiceContext.UpkeepModalTrigger(
+                    perm.getCard(), controllerId, effect, perm.getId()));
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+            log.info("Game {} - {} beginning-of-combat trigger queued for consumed mode selection",
+                    gameData.id, perm.getCard().getName());
         }
 
         for (ChooseOneEffect effect : modalEffects) {

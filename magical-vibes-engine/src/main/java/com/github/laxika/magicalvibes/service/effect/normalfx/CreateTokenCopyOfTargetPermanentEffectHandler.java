@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -88,7 +89,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         if (effect.chooseAttackTarget()) {
             int tokenCount = gameQueryService.getTokenCreationAmount(gameData, tokenControllerId, copyCount, tokenSubtypes(targetPermanent.getCard(), effect), true);
             if (tokenCount > 0) {
-                beginAttackTargetChoice(gameData, new PermanentChoiceContext.CreateTokenCopiesAttacking(tokenControllerId, targetId, entry.getSourcePermanentId(), effect, tokenCount, List.of()));
+                beginAttackTargetChoice(gameData, new PermanentChoiceContext.CreateTokenCopiesAttacking(tokenControllerId, entry.getCard(), entry.getSourcePermanentId(), targetId, effect, tokenCount, List.of()));
             }
             return;
         }

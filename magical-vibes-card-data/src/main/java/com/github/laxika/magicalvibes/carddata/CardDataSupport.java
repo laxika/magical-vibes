@@ -147,6 +147,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Double", Keyword.DOUBLE);
         KEYWORD_MAP.put("Amass", Keyword.AMASS);
         KEYWORD_MAP.put("Plot", Keyword.PLOT);
+        KEYWORD_MAP.put("Cleave", Keyword.CLEAVE);
         KEYWORD_MAP.put("Warp", Keyword.WARP);
         KEYWORD_MAP.put("Assemble", Keyword.ASSEMBLE);
         KEYWORD_MAP.put("Waterbend", Keyword.WATERBEND);

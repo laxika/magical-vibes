@@ -101,7 +101,7 @@ public class TokenCopySupport {
         int tokenIndex = 0;
         for (Permanent tokenPermanent : tokens) {
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered);
+                gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered);
             entry.getCreatedPermanentIds().add(tokenPermanent.getId());
             createdIds.add(tokenPermanent.getId());
             if (effect.trackWithSource() && entry.getSourcePermanentId() != null) {

@@ -102,6 +102,8 @@ new record. Its optional source-zone set restricts which cast sources match; Pat
 `CardTypePredicate(CREATURE)` and `SELF` scope; the boolean enables the plot-from-hand-only restriction.
 `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (Semblance Anvil) keeps its own handler because
 it compares against the imprinted card rather than a predicate.
+`ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect` (Cemetery Prowler) also keeps its own
+handler because it counts distinct card types across all cards exiled with its source permanent.
 
 **Exception — target-gated reductions.** `ReduceOwnCastCostIfTargetingPermanentEffect` (whose
 `controlledByCaster` flag covers both "targets a matching permanent" and "targets one you control"),

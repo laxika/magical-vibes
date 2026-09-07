@@ -929,6 +929,17 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Consuming Tide: the current player chose the nonland permanent they keep. */
+    record EachPlayerChoosesNonlandPermanentThenReturnRestChoice(
+            java.util.List<UUID> playerIds, int playerIndex,
+            java.util.List<UUID> keptIds, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesNonlandPermanentThenReturnRestChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            keptIds = java.util.List.copyOf(keptIds);
+        }
+    }
+
     /** Sundering Titan: the controller chose a land for the current basic land type. */
     record ChooseLandOfEachBasicTypeThenDestroyChoice(UUID controllerId, int typeIndex,
                                                       java.util.List<UUID> chosenIds,

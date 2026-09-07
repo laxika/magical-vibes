@@ -1555,6 +1555,8 @@ public class ActivatedAbilityExecutionService {
                     permanent.setCounterCount(counters.counterType(),
                             permanent.getCounterCount(counters.counterType()) + count);
                     if (counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                        permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                                gameData, permanent, playerId);
                         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(playerId);
                     }
                     String counterName = counters.counterType().name().toLowerCase();

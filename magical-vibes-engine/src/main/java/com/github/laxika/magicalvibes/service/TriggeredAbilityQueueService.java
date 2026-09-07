@@ -2350,6 +2350,41 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.ExploitTriggerTarget pending =
                     gameData.peekPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class);
 
+            if (pending.stackFilter() == null) {
+                TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                        gameData,
+                        pending.effects(),
+                        pending.targetFilter(),
+                        pending.controllerId(),
+                        pending.sourceCard(),
+                        TriggerTargetCollector.Options.EXPLOIT);
+                if (result.validTargets().isEmpty()) {
+                    gameData.pollPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class);
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s exploit ability has no valid targets."));
+                    log.info("Game {} - {} exploit trigger skipped (no valid targets)",
+                            gameData.id, pending.sourceCard().getName());
+                    continue;
+                }
+
+                List<UUID> validPlayerIds = result.validTargets().stream()
+                        .filter(gameData.playerIds::contains)
+                        .toList();
+                List<UUID> validPermanentIds = result.validTargets().stream()
+                        .filter(id -> !gameData.playerIds.contains(id))
+                        .toList();
+                gameData.pollPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class);
+                gameData.interaction.setPermanentChoiceContext(pending);
+                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                        validPermanentIds, validPlayerIds,
+                        pending.sourceCard().getName() + "'s ability — Choose a target.");
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s exploit ability triggers — choose a target."));
+                log.info("Game {} - {} exploit trigger awaiting permanent/player target selection",
+                        gameData.id, pending.sourceCard().getName());
+                return;
+            }
+
             List<UUID> validStackCardIds = new ArrayList<>();
             for (StackEntry se : gameData.stack) {
                 StackEntryType type = se.getEntryType();

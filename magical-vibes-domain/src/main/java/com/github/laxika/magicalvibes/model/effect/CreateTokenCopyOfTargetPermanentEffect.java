@@ -44,9 +44,11 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean removeLegendary,
         DynamicAmount amount,
         boolean exileAtEndOfCombat,
-        Set<CardSupertype> additionalSupertypes
-, boolean chooseAttackTarget) implements CardEffect {
-        public CreateTokenCopyOfTargetPermanentEffect(
+        Set<CardSupertype> additionalSupertypes,
+        boolean chooseAttackTarget
+) implements CardEffect {
+
+    public CreateTokenCopyOfTargetPermanentEffect(
         List<CardSubtype> additionalSubtypes,
         Set<CardType> additionalTypes,
         Integer powerOverride,
@@ -67,11 +69,9 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean removeLegendary,
         DynamicAmount amount,
         boolean exileAtEndOfCombat,
-        Set<CardSupertype> additionalSupertypes
-) {
-            this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount, exileAtEndOfCombat, additionalSupertypes, false);
-        }
-
+        Set<CardSupertype> additionalSupertypes) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount, exileAtEndOfCombat, additionalSupertypes, false);
+    }
 
     public CreateTokenCopyOfTargetPermanentEffect(
             List<CardSubtype> additionalSubtypes, Set<CardType> additionalTypes,
@@ -251,6 +251,13 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
                 false, false, null, Set.of(), false, Map.of(), List.of(), true, false,
                 new Fixed(1), false, Set.of(), false);
+    }
+
+    public static CreateTokenCopyOfTargetPermanentEffect tappedAndAttackingWithTargetChoice() {
+        return new CreateTokenCopyOfTargetPermanentEffect(
+                List.of(), Set.of(), null, null, Map.of(), false, false, false, true,
+                false, false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                new Fixed(1), false, Set.of(), true);
     }
 
     public static CreateTokenCopyOfTargetPermanentEffect exiledAtEndOfCombat() {

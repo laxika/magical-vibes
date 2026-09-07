@@ -4236,6 +4236,8 @@ public class AbilityActivationService {
                     permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placedCount);
                     permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                             gameData, permanent, playerId, placedCount);
+                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                            gameData, permanent, playerId);
                     placed = true;
                 }
             } else if (c.powerModifier() == 0 && c.toughnessModifier() < 0) {
@@ -4281,6 +4283,8 @@ public class AbilityActivationService {
                 gameData.playersWhoPutCountersOnCreaturesThisTurn.add(playerId);
             }
             if (c.counterType() == CounterType.PLUS_ONE_PLUS_ONE && c.count() > 0) {
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                        gameData, permanent, playerId);
                 gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(playerId);
             }
             String counterLabel = c.counterType().name().toLowerCase().replace('_', ' ');

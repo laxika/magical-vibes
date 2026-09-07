@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
@@ -438,23 +439,25 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleExploitTrigger(GameData gameData, UUID cardId, PermanentChoiceContext.ExploitTriggerTarget ett) {
-        String targetName = "";
-        for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(cardId)) {
-                targetName = se.getCard().getName();
-                break;
-            }
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ett.sourceCard(),
-                ett.controllerId(),
-                ett.sourceCard().getName() + "'s exploit ability",
-                new ArrayList<>(ett.effects()),
-                cardId,
-                Zone.STACK
-        );
+        boolean targetsStack = ett.stackFilter() != null;
+        String targetName = getTargetDisplayName(gameData, cardId);
+        StackEntry entry = targetsStack
+                ? new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        ett.sourceCard(),
+                        ett.controllerId(),
+                        ett.sourceCard().getName() + "'s exploit ability",
+                        new ArrayList<>(ett.effects()),
+                        cardId,
+                        Zone.STACK)
+                : new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        ett.sourceCard(),
+                        ett.controllerId(),
+                        ett.sourceCard().getName() + "'s exploit ability",
+                        new ArrayList<>(ett.effects()),
+                        cardId,
+                        ett.sourcePermanentId());
         entry.setSacrificedPermanentSnapshot(ett.sacrificedPermanentSnapshot());
         entry.setSacrificedPower(ett.sacrificedPower());
         entry.setSacrificedColorCount(ett.sacrificedColorCount());
@@ -984,6 +987,9 @@ public class PermanentChoiceTriggerHandlerService {
                     att.sourcePermanentId()
             );
             entry.setTargetId(permanentId);
+            if (att.xValue() != null) {
+                entry.setXValue(att.xValue());
+            }
             Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
             if (source != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(source));
@@ -1085,20 +1091,24 @@ public class PermanentChoiceTriggerHandlerService {
         if (chosenTargets.size() < context.tokenCount()) {
             beginCreateTokenCopiesAttackingTargetChoice(gameData,
                     new PermanentChoiceContext.CreateTokenCopiesAttacking(
-                            context.controllerId(), context.targetPermanentId(), context.sourcePermanentId(),
-                            context.copyEffect(), context.tokenCount(), chosenTargets));
+                            context.controllerId(), context.sourceCard(), context.sourcePermanentId(),
+                            context.targetPermanentId(), context.copyEffect(), context.tokenCount(), chosenTargets));
             return;
         }
 
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
         Permanent target = gameQueryService.findPermanentById(gameData, context.targetPermanentId());
-        if (entry != null && target != null) {
-            Permanent source = context.sourcePermanentId() == null
-                    ? null
-                    : gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-            tokenCopySupport.createTokenCopies(
-                    gameData, entry, List.of(target.getCard()), source, context.controllerId(),
-                    context.copyEffect(), chosenTargets);
+        if (target != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    context.sourceCard(),
+                    context.controllerId(),
+                    context.sourceCard().getName() + "'s ability",
+                    List.of(context.copyEffect()),
+                    null,
+                    context.sourcePermanentId());
+            tokenCopySupport.createTokenCopies(gameData, entry, List.of(target.getCard()), source,
+                    context.controllerId(), context.copyEffect(), chosenTargets);
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
