@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.e.ElderDruid;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,10 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ManaVault.class, GrizzlyBears.class, ElderDruid.class})
 class ManaVaultTest extends BaseCardTest {
-
-    // ===== Mana ability =====
-
     @Test
     @DisplayName("Tapping Mana Vault produces three colorless mana")
     void tappingProducesThreeColorlessMana() {
@@ -27,9 +27,6 @@ class ManaVaultTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
-
-    // ===== Doesn't untap during untap step =====
-
     @Test
     @DisplayName("Tapped Mana Vault does not untap during controller's untap step")
     void doesNotUntapDuringUntapStep() {
@@ -39,9 +36,6 @@ class ManaVaultTest extends BaseCardTest {
 
         assertThat(vault.isTapped()).isTrue();
     }
-
-    // ===== Upkeep: may pay {4} to untap =====
-
     @Test
     @DisplayName("Paying {4} during upkeep untaps Mana Vault")
     void payingFourUntapsVault() {
@@ -53,6 +47,7 @@ class ManaVaultTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(vault.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test
@@ -67,9 +62,6 @@ class ManaVaultTest extends BaseCardTest {
 
         assertThat(vault.isTapped()).isTrue();
     }
-
-    // ===== Draw step: if tapped, deals 1 damage to controller =====
-
     @Test
     @DisplayName("A tapped Mana Vault deals 1 damage to its controller at the draw step")
     void tappedVaultDealsOneDamageAtDrawStep() {
@@ -83,6 +75,37 @@ class ManaVaultTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mana Vault does not trigger during an opponent's draw step")
+    void doesNotTriggerDuringOpponentsDrawStep() {
+        addVault(player1, true);
+        harness.setLife(player1, 20);
+
+        advanceToDraw(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Untapping Mana Vault before its draw-step trigger resolves prevents the damage")
+    void untappingBeforeDrawTriggerResolvesPreventsDamage() {
+        addCreatureReady(player1, new ElderDruid());
+        Permanent vault = addVault(player1, true);
+        harness.setLife(player1, 20);
+
+        advanceToDraw(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, vault.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(vault.isTapped()).isFalse();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("An untapped Mana Vault deals no damage at the draw step")
     void untappedVaultDealsNoDamage() {
         addVault(player1, false);
@@ -93,9 +116,6 @@ class ManaVaultTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
     }
-
-    // ===== Helpers =====
-
     private Permanent addVault(Player player, boolean tapped) {
         Permanent perm = new Permanent(new ManaVault());
         perm.setSummoningSick(false);
@@ -112,7 +132,7 @@ class ManaVaultTest extends BaseCardTest {
         harness.setLibrary(activePlayer, List.of(new GrizzlyBears()));
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // UPKEEP -> DRAW, fires draw-step trigger
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
@@ -121,8 +141,7 @@ class ManaVaultTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (untap)
+        Player nextActivePlayer = currentActivePlayer.getId().equals(player1.getId()) ? player2 : player1;
+        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
     }
 }

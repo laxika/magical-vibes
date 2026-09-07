@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.c.Channel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.m.Meekstone;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +17,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LivingArtifact.class, Meekstone.class, GrizzlyBears.class, LightningBolt.class, Channel.class})
 class LivingArtifactTest extends BaseCardTest {
 
-    /** Puts a MindStone artifact + a Living Artifact aura attached to it on player1's battlefield. */
+    /** Puts an artifact and an attached Living Artifact aura on the battlefield. */
     private Permanent enchantArtifact() {
-        Permanent artifact = new Permanent(new MindStone());
-        gd.playerBattlefields.get(player1.getId()).add(artifact);
-        Permanent aura = new Permanent(new LivingArtifact());
+        return enchantArtifact(player1, player1);
+    }
+
+    private Permanent enchantArtifact(Player auraController, Player artifactController) {
+        Permanent artifact = harness.addToBattlefieldAndReturn(artifactController, new Meekstone());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new LivingArtifact());
         aura.setAttachedTo(artifact.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 
@@ -37,9 +42,50 @@ class LivingArtifactTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities(); // Lightning Bolt resolves — 3 damage to player1
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.passBothPriorities(); // vitality-counter trigger resolves
+
+        assertThat(aura.getCounterCount(CounterType.VITALITY)).isEqualTo(3);
+    }
+
+    @Test
+    void damageToOpponentDoesNotAddVitalityCounters() {
+        Permanent aura = enchantArtifact();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.VITALITY)).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void lifeLossDoesNotAddVitalityCounters() {
+        Permanent aura = enchantArtifact();
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Channel()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.payLifeForColorlessMana(player1);
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.VITALITY)).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void damageUsesAuraController() {
+        Permanent aura = enchantArtifact(player1, player2);
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
 
         assertThat(aura.getCounterCount(CounterType.VITALITY)).isEqualTo(3);
     }
@@ -53,9 +99,7 @@ class LivingArtifactTest extends BaseCardTest {
         aura.setCounterCount(CounterType.VITALITY, 2);
         harness.setLife(player1, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.passBothPriorities(); // advance to upkeep, trigger queued
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve triggered ability → MayEffect prompts
         harness.handleMayAbilityChosen(player1, true);
 
@@ -70,9 +114,7 @@ class LivingArtifactTest extends BaseCardTest {
         aura.setCounterCount(CounterType.VITALITY, 2);
         harness.setLife(player1, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -86,9 +128,7 @@ class LivingArtifactTest extends BaseCardTest {
         Permanent aura = enchantArtifact();
         harness.setLife(player1, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -102,15 +142,28 @@ class LivingArtifactTest extends BaseCardTest {
     @DisplayName("Cannot enchant a non-artifact")
     void cannotEnchantNonArtifact() {
         // A legal artifact target exists (so the Aura is playable), but we aim at a creature.
-        Permanent artifact = new Permanent(new MindStone());
-        gd.playerBattlefields.get(player1.getId()).add(artifact);
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.addToBattlefield(player1, new Meekstone());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new LivingArtifact()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact");
+    }
+
+    @Test
+    void canEnchantOpponentsArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Meekstone());
+        harness.setHand(player1, List.of(new LivingArtifact()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof LivingArtifact
+                        && permanent.isAttached()
+                        && artifact.getId().equals(permanent.getAttachedTo()));
     }
 }

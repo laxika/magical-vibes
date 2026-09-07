@@ -12,6 +12,8 @@ public enum EffectDuration {
     UNTIL_CREATURE_SPELL_CAST,
     /** One-shot effect that wears off when its controller casts a matching spell. */
     UNTIL_MATCHING_SPELL_CAST,
+    /** One-shot effect that wears off when the identified source card is cast from exile. */
+    UNTIL_SOURCE_CARD_CAST_FROM_EXILE,
     /** One-shot effect that wears off when the combat phase ends (e.g. Jade Statue's animation).
      *  Cleared by {@link com.github.laxika.magicalvibes.model.Permanent#clearCombatState()}. */
     UNTIL_END_OF_COMBAT,

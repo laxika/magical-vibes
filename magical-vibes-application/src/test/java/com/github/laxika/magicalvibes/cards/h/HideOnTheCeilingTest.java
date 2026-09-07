@@ -77,7 +77,7 @@ class HideOnTheCeilingTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(land.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Card is not playable");
+                .hasMessage("Targets must be artifacts and/or creatures");
     }
 
     private void advanceToEndStep() {

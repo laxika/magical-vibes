@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({Triskelion.class, GrizzlyBears.class})
 class TriskelionTest extends BaseCardTest {
 
     // ===== ETB: enters with three +1/+1 counters =====
@@ -37,6 +39,20 @@ class TriskelionTest extends BaseCardTest {
         assertThat(triskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(triskelion.getEffectivePower()).isEqualTo(4);
         assertThat(triskelion.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    void hasCountersImmediatelyWhenItEnters() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Triskelion()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findTriskelion(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(3);
     }
 
     // ===== Activated ability: deal 1 damage to any target =====
@@ -111,6 +127,28 @@ class TriskelionTest extends BaseCardTest {
         assertThat(triskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
+    @Test
+    void removingACounterCanMakeMarkedDamageLethal() {
+        Permanent triskelion = addReadyTriskelion(player1);
+        triskelion.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        triskelion.setMarkedDamage(2);
+        harness.setLife(player2, 20);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof Triskelion);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof Triskelion);
+    }
+
     // ===== Cannot activate without counters =====
 
     @Test
@@ -130,11 +168,8 @@ class TriskelionTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyTriskelion(Player player) {
-        Triskelion card = new Triskelion();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new Triskelion());
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

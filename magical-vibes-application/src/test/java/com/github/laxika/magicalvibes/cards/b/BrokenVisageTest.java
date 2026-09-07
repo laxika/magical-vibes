@@ -41,8 +41,7 @@ class BrokenVisageTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, Card card) {
-        Permanent attacker = harness.addToBattlefieldAndReturn(owner, card);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, card);
         attacker.setAttacking(true);
         return attacker;
     }

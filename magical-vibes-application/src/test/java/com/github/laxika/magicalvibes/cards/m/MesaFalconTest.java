@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MesaFalcon.class, BeastWalkers.class})
+@CardUsed({MesaFalcon.class, HillGiant.class})
 class MesaFalconTest extends BaseCardTest {
 
     @Test
@@ -44,6 +44,20 @@ class MesaFalconTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Ability boosts only the Mesa Falcon whose ability resolved")
+    void boostAffectsOnlySource() {
+        Permanent falcon = addCreatureReady(player1, new MesaFalcon());
+        Permanent otherFalcon = addCreatureReady(player1, new MesaFalcon());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherFalcon)).isEqualTo(1);
     }
 
     @Test
@@ -109,12 +123,10 @@ class MesaFalconTest extends BaseCardTest {
     @DisplayName("Flying prevents a non-flying creature from blocking Mesa Falcon")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new MesaFalcon());
-        addCreatureReady(player2, new BeastWalkers());
+        addCreatureReady(player2, new HillGiant());
 
         declareAttackers(List.of(0));
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "ONS", collectorNumber = "340")
+@CardRegistration(set = "ONS", collectorNumber = "341")
 @CardRegistration(set = "LCI", collectorNumber = "289")
 @CardRegistration(set = "FIN", collectorNumber = "574")
 @CardRegistration(set = "LCI", collectorNumber = "397")
@@ -67,6 +69,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SOS", collectorNumber = "269")
 @CardRegistration(set = "SOS", collectorNumber = "276")
 @CardRegistration(set = "SOS", collectorNumber = "277")
+@CardRegistration(set = "WOE", collectorNumber = "264")
+@CardRegistration(set = "WOE", collectorNumber = "271")
+@CardRegistration(set = "WOE", collectorNumber = "272")
 @CardRegistration(set = "SOI", collectorNumber = "289")
 @CardRegistration(set = "SOI", collectorNumber = "290")
 @CardRegistration(set = "SOI", collectorNumber = "291")
@@ -287,12 +292,28 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MOM", collectorNumber = "279")
 @CardRegistration(set = "MOM", collectorNumber = "286")
 @CardRegistration(set = "MOM", collectorNumber = "287")
+@CardRegistration(set = "ONS", collectorNumber = "339")
+@CardRegistration(set = "ONS", collectorNumber = "342")
 @CardRegistration(set = "RAV", collectorNumber = "295")
 @CardRegistration(set = "RAV", collectorNumber = "296")
 @CardRegistration(set = "RAV", collectorNumber = "297")
 @CardRegistration(set = "RAV", collectorNumber = "298")
+@CardRegistration(set = "IKO", collectorNumber = "266")
+@CardRegistration(set = "IKO", collectorNumber = "267")
+@CardRegistration(set = "IKO", collectorNumber = "268")
+@CardRegistration(set = "EOE", collectorNumber = "264")
+@CardRegistration(set = "EOE", collectorNumber = "271")
+@CardRegistration(set = "EOE", collectorNumber = "272")
+@CardRegistration(set = "SNC", collectorNumber = "266")
+@CardRegistration(set = "SNC", collectorNumber = "267")
+@CardRegistration(set = "SNC", collectorNumber = "276")
+@CardRegistration(set = "SNC", collectorNumber = "277")
 @CardRegistration(set = "FRF", collectorNumber = "180")
 @CardRegistration(set = "FRF", collectorNumber = "181")
+@CardRegistration(set = "TMT", collectorNumber = "193")
+@CardRegistration(set = "DTK", collectorNumber = "256")
+@CardRegistration(set = "DTK", collectorNumber = "257")
+@CardRegistration(set = "DTK", collectorNumber = "258")
 public class Swamp extends Card {
 
     public Swamp() {

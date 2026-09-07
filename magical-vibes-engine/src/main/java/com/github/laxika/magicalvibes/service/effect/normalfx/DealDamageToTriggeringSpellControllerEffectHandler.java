@@ -28,21 +28,27 @@ public class DealDamageToTriggeringSpellControllerEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var damageEffect = (DealDamageToTriggeringSpellControllerEffect) effect;
-        var triggeringCardId = entry.getTargetId();
-        if (triggeringCardId == null) return;
-
-        for (StackEntry stackEntry : gameData.stack) {
-            if (!stackEntry.getCard().getId().equals(triggeringCardId)) continue;
-
-            if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)
-                    && damageEffect.amount() > 0) {
-                int damage = gameQueryService.applyDamageMultiplier(gameData, damageEffect.amount(), entry);
-                damageSupport.dealDamageToPlayer(gameData, entry, stackEntry.getControllerId(), damage);
+        var triggeringControllerId = entry.getTriggeringPermanentControllerId();
+        var triggeringCardId = entry.getTriggeringCardId();
+        if (triggeringControllerId == null && triggeringCardId != null) {
+            for (StackEntry stackEntry : gameData.stack) {
+                if (stackEntry.getCard().getId().equals(triggeringCardId)) {
+                    triggeringControllerId = stackEntry.getControllerId();
+                    break;
+                }
             }
-            gameOutcomeService.checkWinCondition(gameData);
+        }
+
+        if (triggeringControllerId == null) {
+            log.info("Game {} - Controller of triggering spell or ability is unavailable for damage", gameData.id);
             return;
         }
 
-        log.info("Game {} - Triggering spell or ability no longer on stack for damage", gameData.id);
+        if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)
+                && damageEffect.amount() > 0) {
+            int damage = gameQueryService.applyDamageMultiplier(gameData, damageEffect.amount(), entry);
+            damageSupport.dealDamageToPlayer(gameData, entry, triggeringControllerId, damage);
+        }
+        gameOutcomeService.checkWinCondition(gameData);
     }
 }

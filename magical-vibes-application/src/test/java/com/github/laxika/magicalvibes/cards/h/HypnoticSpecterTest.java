@@ -4,26 +4,22 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HypnoticSpecter.class, GrizzlyBears.class})
 class HypnoticSpecterTest extends BaseCardTest {
-
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     // ===== Combat damage trigger =====
 
@@ -33,7 +29,7 @@ class HypnoticSpecterTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.setHand(player2, List.of(new GrizzlyBears()));
 
-        Permanent specter = addReadyCreature(player1, new HypnoticSpecter());
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
@@ -49,7 +45,7 @@ class HypnoticSpecterTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
-        Permanent specter = addReadyCreature(player1, new HypnoticSpecter());
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
@@ -59,12 +55,12 @@ class HypnoticSpecterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No trigger when opponent has empty hand")
+    @DisplayName("No card is discarded when opponent has empty hand")
     void noDiscardWhenEmptyHand() {
         GameData gd = harness.getGameData();
         harness.setHand(player2, List.of());
 
-        Permanent specter = addReadyCreature(player1, new HypnoticSpecter());
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
@@ -80,9 +76,9 @@ class HypnoticSpecterTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player2.getId()).size();
 
-        Permanent specter = addReadyCreature(player1, new HypnoticSpecter());
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -97,7 +93,7 @@ class HypnoticSpecterTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.setHand(player2, List.of(new GrizzlyBears()));
 
-        Permanent specter = addReadyCreature(player1, new HypnoticSpecter());
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
@@ -111,7 +107,7 @@ class HypnoticSpecterTest extends BaseCardTest {
     void gameAdvancesAfterTrigger() {
         harness.setHand(player2, List.of(new GrizzlyBears()));
 
-        Permanent specter = addReadyCreature(player1, new HypnoticSpecter());
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
@@ -127,12 +123,29 @@ class HypnoticSpecterTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.setHand(player2, List.of(new GrizzlyBears()));
 
-        Permanent specter = addReadyCreature(player1, new HypnoticSpecter());
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("at random"));
     }
-}
 
+    @Test
+    @DisplayName("Noncombat damage to an opponent also triggers random discard")
+    void noncombatDamageTriggersRandomDiscard() {
+        GameData gd = harness.getGameData();
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, specter.getCard(), player1.getId(), Map.of(player2.getId(), 1)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+}

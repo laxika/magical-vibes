@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -42,12 +41,16 @@ public class SeasonOfTheWitchEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        Set<Integer> attackableIndices = new HashSet<>(
-                combatAttackService.getAttackableCreatureIndices(gameData, activePlayerId));
+        Set<UUID> ableToAttack = gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.get(activePlayerId);
+        if (ableToAttack == null) {
+            ableToAttack = combatAttackService.getAttackableCreatureIndices(gameData, activePlayerId).stream()
+                    .map(battlefield::get)
+                    .map(Permanent::getId)
+                    .collect(java.util.stream.Collectors.toSet());
+        }
         List<Permanent> toDestroy = new ArrayList<>();
-        for (int index : attackableIndices) {
-            Permanent permanent = battlefield.get(index);
-            if (!permanent.isTapped() && !permanent.isAttackedThisTurn()) {
+        for (Permanent permanent : battlefield) {
+            if (ableToAttack.contains(permanent.getId()) && !permanent.isAttackedThisTurn()) {
                 toDestroy.add(permanent);
             }
         }

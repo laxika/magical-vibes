@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "205")
+@CardRegistration(set = "DTK", collectorNumber = "156")
 public class SeismicRupture extends Card {
 
     public SeismicRupture() {

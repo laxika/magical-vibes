@@ -23,7 +23,7 @@ public class WinterBlast extends Card {
         // Tap X target creatures. Winter Blast deals 2 damage to each of those creatures with flying.
         // Single X-scaled creature target group: each targeted creature is tapped, and the damage
         // effect only hits the targeted creatures that have flying.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 100)

@@ -2,31 +2,26 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Monsoon.class, Forest.class, Island.class, SnowCoveredIsland.class})
 class MonsoonTest extends BaseCardTest {
 
     private void advanceToEndStepTrigger(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to END_STEP, trigger fires onto stack
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities(); // resolve trigger
-    }
-
-    private List<Permanent> islandsOf(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Island"))
-                .toList();
     }
 
     @Test
@@ -40,7 +35,7 @@ class MonsoonTest extends BaseCardTest {
 
         advanceToEndStepTrigger(player1);
 
-        assertThat(islandsOf(player1)).allMatch(Permanent::isTapped);
+        assertThat(findPermanents(player1, "Island")).allMatch(Permanent::isTapped);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Forest"))
                 .allMatch(p -> !p.isTapped());
@@ -54,11 +49,11 @@ class MonsoonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Island());
         harness.setLife(player1, 20);
-        islandsOf(player1).getFirst().tap();
+        findPermanents(player1, "Island").getFirst().tap();
 
         advanceToEndStepTrigger(player1);
 
-        assertThat(islandsOf(player1)).allMatch(Permanent::isTapped);
+        assertThat(findPermanents(player1, "Island")).allMatch(Permanent::isTapped);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
@@ -85,9 +80,22 @@ class MonsoonTest extends BaseCardTest {
 
         advanceToEndStepTrigger(player1);
 
-        assertThat(islandsOf(player1)).allMatch(Permanent::isTapped);
-        assertThat(islandsOf(player2)).allMatch(p -> !p.isTapped());
+        assertThat(findPermanents(player1, "Island")).allMatch(Permanent::isTapped);
+        assertThat(findPermanents(player2, "Island")).allMatch(p -> !p.isTapped());
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Counts permanents with the Island subtype, including Snow-Covered Island")
+    void countsIslandSubtypeRatherThanCardName() {
+        harness.addToBattlefield(player1, new Monsoon());
+        harness.addToBattlefield(player1, new SnowCoveredIsland());
+        harness.setLife(player1, 20);
+
+        advanceToEndStepTrigger(player1);
+
+        assertThat(findPermanent(player1, "Snow-Covered Island").isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 }

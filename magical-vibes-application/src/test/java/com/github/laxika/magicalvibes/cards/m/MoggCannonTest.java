@@ -52,6 +52,11 @@ class MoggCannonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }

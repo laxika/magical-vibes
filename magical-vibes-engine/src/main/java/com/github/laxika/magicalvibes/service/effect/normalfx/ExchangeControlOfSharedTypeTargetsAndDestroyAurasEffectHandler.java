@@ -69,7 +69,7 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
         // type. If any condition no longer holds, the exchange doesn't happen (and no Auras are destroyed).
         boolean stillLegal = ownController.equals(controllerId)
                 && !opponentController.equals(controllerId)
-                && gameQueryService.sharesArtifactCreatureOrLandType(ownTarget, opponentTarget);
+                && gameQueryService.sharesArtifactCreatureOrLandType(gameData, ownTarget, opponentTarget);
         if (!stillLegal) {
             logFizzle(gameData, entry);
             return;

@@ -48,11 +48,9 @@ class EquinoxTest extends BaseCardTest {
     @DisplayName("Does not counter a spell that destroys a nonland permanent")
     void doesNotCounterNonlandDestruction() {
         Permanent forest = attachToForest();
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getLast();
-        Permanent holyStrength = new Permanent(new HolyStrength());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent holyStrength = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
         holyStrength.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(holyStrength);
 
         Naturalize naturalize = new Naturalize();
         harness.setHand(player2, List.of(naturalize));
@@ -93,11 +91,9 @@ class EquinoxTest extends BaseCardTest {
     }
 
     private Permanent attachToForest() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent equinox = new Permanent(new Equinox());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent equinox = harness.addToBattlefieldAndReturn(player1, new Equinox());
         equinox.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(equinox);
         return forest;
     }
 }

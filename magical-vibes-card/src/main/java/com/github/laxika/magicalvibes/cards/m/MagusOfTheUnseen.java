@@ -28,8 +28,8 @@ public class MagusOfTheUnseen extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}{U}",
                 List.of(
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN, true),
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN, true),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
                 "{1}{U}, {T}: Untap target artifact an opponent controls and gain control of it until end of turn. It gains haste until end of turn. When you lose control of the artifact, tap it.",
                 new PermanentPredicateTargetFilter(

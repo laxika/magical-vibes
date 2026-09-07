@@ -24,6 +24,9 @@ public final class AiInteractionStrategies {
         register(new HandBottomExileChoiceAiStrategy());
         register(new EcologicalAppreciationSearchChoiceAiStrategy());
         register(new EcologicalAppreciationOpponentChoiceAiStrategy());
+        register(new EmergentUltimatumSearchChoiceAiStrategy());
+        register(new EmergentUltimatumOpponentSelectionChoiceAiStrategy());
+        register(new EmergentUltimatumOpponentChoiceAiStrategy());
         register(new VerdantMasterySearchChoiceAiStrategy());
         register(new VerdantMasteryLandChoiceAiStrategy());
         register(new PutCardsFromHandOnLibraryCardChoiceAiStrategy());

@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  * <p>The trigger belongs to the resolving controller and normally remains tied to the source
  * permanent, so it stops firing if that permanent leaves the battlefield. Set
  * {@code sourceMustRemainOnBattlefield} to false for delayed abilities that continue after their
- * source leaves. Activating the granting ability several times in a turn registers several
- * independent triggers, each of which fires on every matching spell.
+ * source leaves. Unless {@code oneShot} is true, activating the granting ability several times in a
+ * turn registers several independent triggers, each of which fires on every matching spell.
  *
  * @param spellFilter                  which cast spells fire the trigger; {@code null} = any spell
  * @param stackEntryFilter             optional filter evaluated against the cast stack entry

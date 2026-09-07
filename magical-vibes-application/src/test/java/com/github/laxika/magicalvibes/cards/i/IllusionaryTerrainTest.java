@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GhostQuarter;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
+import com.github.laxika.magicalvibes.cards.v.VolcanicIsland;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IllusionaryTerrain.class, Mountain.class, Plains.class, SnowCoveredMountain.class})
 class IllusionaryTerrainTest extends BaseCardTest {
 
     private Permanent terrainWithTypes(CardSubtype from, CardSubtype to) {
@@ -47,12 +50,30 @@ class IllusionaryTerrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The two chosen basic land types may be the same")
+    void mayChooseSameTypeTwice() {
+        harness.setHand(player1, List.of(new IllusionaryTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "MOUNTAIN");
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "MOUNTAIN");
+
+        Permanent terrain = findPermanent(player1, "Illusionary Terrain");
+        assertThat(terrain.getChosenSubtype()).isEqualTo(CardSubtype.MOUNTAIN);
+        assertThat(terrain.getSecondChosenSubtype()).isEqualTo(CardSubtype.MOUNTAIN);
+    }
+
+    @Test
     @DisplayName("A basic Mountain taps for blue when Mountain→Island is chosen")
     void basicMountainProducesChosenSecondTypeMana() {
         harness.addToBattlefield(player1, new Mountain());
         terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
@@ -64,7 +85,7 @@ class IllusionaryTerrainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Plains());
         terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(0);
@@ -73,28 +94,47 @@ class IllusionaryTerrainTest extends BaseCardTest {
     @Test
     @DisplayName("Also converts a basic Mountain the opponent controls")
     void convertsOpponentBasicMountain() {
-        harness.addToBattlefield(player2, new Mountain());
-        Permanent mountain = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
         terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.PLAINS);
 
-        GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, mountain);
-
-        assertThat(bonus.subtypeOverriding()).isTrue();
-        assertThat(bonus.landSubtypeOverriding()).isTrue();
-        assertThat(bonus.grantedSubtypes()).containsExactly(CardSubtype.PLAINS);
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.PLAINS);
     }
 
     @Test
-    @DisplayName("A nonbasic land is unaffected even if it would otherwise match")
+    @CardUsed(VolcanicIsland.class)
+    @DisplayName("A nonbasic dual land with the chosen type is unaffected")
     void nonbasicUnaffected() {
-        harness.addToBattlefield(player1, new GhostQuarter());
-        Permanent ghostQuarter = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent volcanicIsland = harness.addToBattlefieldAndReturn(player1, new VolcanicIsland());
         terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
 
-        GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, ghostQuarter);
+        assertThat(gqs.effectiveBasicLandTypes(gd, volcanicIsland))
+                .containsExactlyInAnyOrder(CardSubtype.ISLAND, CardSubtype.MOUNTAIN);
+    }
 
-        assertThat(bonus.landSubtypeOverriding()).isFalse();
-        assertThat(bonus.grantedSubtypes()).doesNotContain(CardSubtype.ISLAND);
+    @Test
+    @DisplayName("A basic Mountain entering later is converted")
+    void convertsBasicMountainEnteringLater() {
+        terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.ISLAND);
+    }
+
+    @Test
+    @DisplayName("Changing a snow-covered Mountain preserves its snow supertype")
+    void preservesSnowSupertype() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new SnowCoveredMountain());
+        terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
+        assertThat(gqs.hasEffectiveSupertype(gd, mountain, CardSupertype.SNOW)).isTrue();
     }
 
     @Test
@@ -104,7 +144,7 @@ class IllusionaryTerrainTest extends BaseCardTest {
         Permanent terrain = terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
 
         gd.playerBattlefields.get(player1.getId()).remove(terrain);
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(0);
@@ -160,5 +200,16 @@ class IllusionaryTerrainTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(terrain);
         harness.assertInGraveyard(player1, "Illusionary Terrain");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during Illusionary Terrain's controller's upkeep")
+    void cumulativeUpkeepOnlyTriggersDuringControllersUpkeep() {
+        Permanent terrain = harness.addToBattlefieldAndReturn(player1, new IllusionaryTerrain());
+
+        advanceToUpkeep(player2);
+
+        assertThat(terrain.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

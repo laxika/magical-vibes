@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,8 @@ public class DestroyTargetPermanentAtEndStepEffectHandler implements NormalEffec
                     return;
                 }
 
-                gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.DESTROY_AT_END_STEP));
+                gameData.queueDelayedAction(new DelayedEndStepTrigger(entry.getControllerId(), entry.getCard(),
+                        entry.getSourcePermanentId(), target.getId(), new DestroyTargetPermanentEffect()));
 
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at the beginning of the next end step."));
                 log.info("Game {} - {} scheduled for destruction at end step", gameData.id, target.getCard().getName());

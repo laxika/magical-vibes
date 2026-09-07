@@ -1,26 +1,58 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EnslavedScout;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VeteransVoice.class, EnslavedScout.class})
 class VeteransVoiceTest extends BaseCardTest {
 
     private Permanent host;
+    private Permanent aura;
     private Permanent other;
 
     private void setupAura() {
-        host = addCreatureReady(player1, new GrizzlyBears());
-        Permanent aura = harness.addToBattlefieldAndReturn(player1, new VeteransVoice());
+        host = addCreatureReady(player1, new EnslavedScout());
+        aura = harness.addToBattlefieldAndReturn(player1, new VeteransVoice());
         aura.setAttachedTo(host.getId());
 
-        other = addCreatureReady(player1, new GrizzlyBears());
+        other = addCreatureReady(player1, new EnslavedScout());
+    }
+
+    @Test
+    @DisplayName("Can enchant a creature you control")
+    void enchantsCreatureYouControl() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new EnslavedScout());
+        harness.setHand(player1, List.of(new VeteransVoice()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isAttached()
+                        && permanent.getAttachedTo().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot enchant a creature an opponent controls")
+    void cannotEnchantOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new EnslavedScout());
+        harness.setHand(player1, List.of(new VeteransVoice()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -32,6 +64,33 @@ class VeteransVoiceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(host.isTapped()).isTrue();
+        assertThat(aura.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can target a creature an opponent controls")
+    void boostsOpponentsCreature() {
+        setupAura();
+        Permanent opponentCreature = addCreatureReady(player2, new EnslavedScout());
+
+        harness.activateAbility(player1, 1, null, opponentCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The ability resolves if the Aura leaves before resolution")
+    void resolvesAfterAuraLeavesBattlefield() {
+        setupAura();
+
+        harness.activateAbility(player1, 1, null, other.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, aura));
+        harness.passBothPriorities();
+
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
     }
@@ -68,6 +127,16 @@ class VeteransVoiceTest extends BaseCardTest {
         setupAura();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, host.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(host.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A noncreature permanent is an illegal target")
+    void rejectsNoncreatureAsTarget() {
+        setupAura();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, aura.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(host.isTapped()).isFalse();
     }

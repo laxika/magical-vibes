@@ -8,6 +8,9 @@ import java.util.UUID;
 
 public interface CardEffect {
 
+    /** Whether this pending choice must finish before the next card of a draw instruction. */
+    default boolean pausesDrawInstruction() { return false; }
+
     /**
      * The declarative targeting descriptor for this effect — the single source of truth for what an
      * effect can target. Every reader consumes targeting through this ({@code targetSpec().declaredTarget()},

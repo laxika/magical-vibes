@@ -7,13 +7,16 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Recall.class, Forest.class, GrizzlyBears.class, Island.class, Mountain.class})
 class RecallTest extends BaseCardTest {
 
     @Test
@@ -83,5 +86,19 @@ class RecallTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Recall"));
+    }
+
+    @Test
+    @DisplayName("Returning cards for discarded cards cannot be declined")
+    void returningCardsIsMandatory() {
+        harness.setHand(player1, List.of(new Recall(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 3); // X=1 => {X}{X}{U}
+
+        harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

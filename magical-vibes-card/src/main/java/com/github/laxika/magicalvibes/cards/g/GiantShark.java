@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -42,12 +42,8 @@ public class GiantShark extends Card {
                 TriggerMode.PER_BLOCKER);
 
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-                    if (battlefield == null) return true;
-                    return battlefield.stream()
-                            .noneMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
-                },
+                new PermanentControllerControlsPermanentCountAtMostPredicate(
+                        0, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 List.of(new SacrificeSelfEffect()),
                 "Giant Shark's state-triggered ability"
         ));

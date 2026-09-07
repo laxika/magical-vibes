@@ -5,12 +5,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TempestEfreetAnteExchangeEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -35,6 +39,8 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final CardRevealService cardRevealService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -66,8 +72,8 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
 
     /**
      * Performs the ante exchange: the opponent reveals a card at random from their hand, that card is
-     * put into {@code controllerId}'s hand, and {@code efreetCard} (Tempest Efreet, in the
-     * controller's graveyard after being sacrificed as a cost) is put into the opponent's graveyard.
+     * put into {@code controllerId}'s hand, and {@code efreetCard} moves from its current zone into
+     * the opponent's graveyard.
      * Does nothing if the opponent's hand is empty (no card to reveal, nothing to exchange).
      */
     public void performExchange(GameData gameData, Card efreetCard, UUID controllerId, UUID opponentId) {
@@ -91,20 +97,48 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
                 GameEventFact.RevealZone.HAND,
                 List.of(revealed));
 
-        // Exchange the physical cards: revealed card to the controller's hand, Tempest Efreet from the
-        // controller's graveyard to the opponent's graveyard.
         gameData.addCardToHand(controllerId, revealed);
-        List<Card> controllerGraveyard = gameData.playerGraveyards.get(controllerId);
-        if (controllerGraveyard != null) {
-            controllerGraveyard.removeIf(c -> c.getId().equals(efreetCard.getId()));
-        }
-        List<Card> opponentGraveyard = gameData.playerGraveyards.get(opponentId);
-        if (opponentGraveyard != null) {
-            opponentGraveyard.add(efreetCard);
-        }
+        moveSourceToOpponentsGraveyard(gameData, efreetCard, opponentId);
 
         gameLogService.append(gameData, GameLog.builder().text(opponentName + " reveals ").card(revealed).text(" at random. " + controllerName + " takes it, and ").card(efreetCard).text(" goes to " + opponentName + "'s graveyard.").build());
         log.info("Game {} - {} takes {} from {}; {} to {}'s graveyard", gameData.id, controllerName,
                 revealed.getName(), opponentName, efreetCard.getName(), opponentName);
+    }
+
+    /** Follows the physical card's explicit "from anywhere" instruction, without duplicating it. */
+    private void moveSourceToOpponentsGraveyard(GameData gameData, Card card, UUID opponentId) {
+        for (var battlefield : gameData.playerBattlefields.values()) {
+            for (var permanent : List.copyOf(battlefield)) {
+                if (permanent.getOriginalCard().getId().equals(card.getId())) {
+                    permanentRemovalService.removePermanentToPlayerGraveyard(gameData, permanent, opponentId);
+                    return;
+                }
+            }
+        }
+        for (Zone zone : List.of(Zone.HAND, Zone.LIBRARY, Zone.GRAVEYARD, Zone.COMMAND)) {
+            var containers = switch (zone) {
+                case HAND -> gameData.playerHands;
+                case LIBRARY -> gameData.playerDecks;
+                case GRAVEYARD -> gameData.playerGraveyards;
+                case COMMAND -> gameData.playerCommandZones;
+                default -> throw new IllegalStateException("Unexpected card container");
+            };
+            for (var cards : containers.values()) {
+                if (cards.removeIf(candidate -> candidate.getId().equals(card.getId()))) {
+                    graveyardService.addCardToGraveyard(gameData, opponentId, card, zone);
+                    return;
+                }
+            }
+        }
+        if (gameData.removeFromExile(card.getId())) {
+            graveyardService.addCardToGraveyard(gameData, opponentId, card, Zone.EXILE);
+            return;
+        }
+        boolean removedSpell = gameData.stack.removeIf(entry -> entry.getCard().getId().equals(card.getId())
+                && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY);
+        if (removedSpell) {
+            graveyardService.addCardToGraveyard(gameData, opponentId, card, Zone.STACK);
+        }
     }
 }

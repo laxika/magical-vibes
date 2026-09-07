@@ -5,16 +5,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThroneOfBone.class, ScatheZombies.class, GrizzlyBears.class})
 class ThroneOfBoneTest extends BaseCardTest {
 
     // ===== Controller casts black spell =====
@@ -23,13 +23,11 @@ class ThroneOfBoneTest extends BaseCardTest {
     @DisplayName("Controller casts black spell, pays {1}, gains 1 life")
     void controllerCastsBlackSpellAndPays() {
         harness.addToBattlefield(player1, new ThroneOfBone());
-        harness.setHand(player1, List.of(new DuskImp()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
 
         // Trigger goes on the stack unconditionally
         GameData gd = harness.getGameData();
@@ -45,37 +43,34 @@ class ThroneOfBoneTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
     @DisplayName("Controller casts black spell, declines to pay, no life gain")
     void controllerCastsBlackSpellAndDeclines() {
         harness.addToBattlefield(player1, new ThroneOfBone());
-        harness.setHand(player1, List.of(new DuskImp()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Accepting without enough mana gains no life")
     void acceptWithoutManaNoLife() {
         harness.addToBattlefield(player1, new ThroneOfBone());
-        harness.setHand(player1, List.of(new DuskImp()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        // No spare mana to pay {1}
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -95,12 +90,9 @@ class ThroneOfBoneTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new DuskImp()));
-        harness.addMana(player2, ManaColor.BLACK, 3);
-
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new ScatheZombies(), "{2}{B}");
 
         // Resolve the trigger (controller of Throne of Bone chooses)
         harness.passBothPriorities();
@@ -111,6 +103,7 @@ class ThroneOfBoneTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     // ===== Non-black spell does NOT trigger =====
@@ -119,10 +112,8 @@ class ThroneOfBoneTest extends BaseCardTest {
     @DisplayName("Non-black spell does not trigger Throne of Bone")
     void nonBlackSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new ThroneOfBone());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY

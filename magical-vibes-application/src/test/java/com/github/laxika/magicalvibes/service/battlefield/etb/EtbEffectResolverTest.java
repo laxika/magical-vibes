@@ -88,6 +88,13 @@ class EtbEffectResolverTest {
     }
 
     @Test
+    void resolutionOnlyConditionIsNotEvaluatedDuringEntry() {
+        CardEffect effect = ConditionalEffect.unless(new Metalcraft(), new DrawCardEffect(1));
+
+        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+    }
+
+    @Test
     @DisplayName("LoseGameIfNotCastFromHand: controller loses when not cast from hand")
     void loseGameNotFromHand() {
         CardEffect resolved = resolver.resolve(ctx(false, 0, false), new LoseGameIfNotCastFromHandEffect());

@@ -54,6 +54,33 @@ public class BounceSupport {
         log.info("Game {} - {} returned to hand", gameData.id, entry.getCard().getName());
     }
 
+    public int applyReturnPermanentsToHand(GameData gameData, StackEntry entry, List<Permanent> toReturn) {
+        int returnedControlledNontokens = 0;
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent permanent : toReturn) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                boolean controlledNontoken = entry.getControllerId().equals(controllerId)
+                        && !permanent.getCard().isToken();
+                boolean returned = permanentRemovalService.removePermanentToHand(gameData, permanent);
+                if (returned && controlledNontoken) {
+                    returnedControlledNontokens++;
+                }
+
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+                log.info("Game {} - {} returned to owner's hand by {}",
+                        gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
+        }
+
+        if (!toReturn.isEmpty()) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
+        return returnedControlledNontokens;
+    }
+
     public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color) {
         applyReturnAllPermanentsOfColorToHand(gameData, entry, color, null);
     }

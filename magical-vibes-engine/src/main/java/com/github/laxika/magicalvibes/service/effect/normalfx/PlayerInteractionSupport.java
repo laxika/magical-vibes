@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 
 /**
  * Shared draw/discard/reveal/choice helpers used by every PlayerInteraction effect handler
@@ -86,26 +87,33 @@ public class PlayerInteractionSupport {
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId, UUID sourceCardId) {
         applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
-                null, null, null);
+                null, null, null, ignored -> true);
+    }
+
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
+                                          UUID sourceEquipmentCardId, UUID sourceCardId,
+                                          Predicate<Card> additionalFilter) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
+                null, null, null, additionalFilter);
     }
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
                                           int xValue, UUID sourceEquipmentCardId, UUID sourceCardId,
                                           CardEffect thenEffect, CardPredicate thenCondition) {
         applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
-                thenEffect, thenCondition, null);
+                thenEffect, thenCondition, null, ignored -> true);
     }
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId, UUID sourceCardId, UUID blockingAttackerId) {
         applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
-                null, null, blockingAttackerId);
+                null, null, blockingAttackerId, ignored -> true);
     }
 
     private void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
                                            int xValue, UUID sourceEquipmentCardId, UUID sourceCardId,
                                            CardEffect thenEffect, CardPredicate thenCondition,
-                                           UUID blockingAttackerId) {
+                                           UUID blockingAttackerId, Predicate<Card> additionalFilter) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
@@ -114,6 +122,9 @@ public class PlayerInteractionSupport {
                 Card handCard = hand.get(i);
                 if (!predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), sourceCardId,
                         gameData, playerId)) {
+                    continue;
+                }
+                if (!additionalFilter.test(handCard)) {
                     continue;
                 }
                 // Mind into Matter: "mana value X or less".
@@ -214,11 +225,7 @@ public class PlayerInteractionSupport {
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt);
     }
     public void applyDrawCards(GameData gameData, UUID playerId, int amount) {
-
-        for (int i = 0; i < amount; i++) {
-            drawService.resolveDrawCard(gameData, playerId);
-        }
-
+        drawService.resolveDrawCards(gameData, playerId, amount);
     }
     /**
      * Sindbad: the player draws a card and reveals it; if the revealed card isn't a land card, it is
@@ -227,17 +234,33 @@ public class PlayerInteractionSupport {
      * card (empty library) or was consumed by a draw-replacement interaction.
      */
     public void applyDrawRevealDiscardUnlessLand(GameData gameData, UUID playerId) {
+        Integer beforeDrawCount = gameData.pendingDrawRevealDiscardDrawCounts.remove(playerId);
+        if (beforeDrawCount == null) {
+            beforeDrawCount = gameData.cardsDrawnThisTurnIds.getOrDefault(playerId, List.of()).size();
+            gameData.pendingDrawRevealDiscardDrawCounts.put(playerId, beforeDrawCount);
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            applyDrawCards(gameData, playerId, 1);
+            if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+                return;
+            }
+            gameData.pendingDrawRevealDiscardDrawCounts.remove(playerId);
+        }
+        gameData.rerunCurrentEffectAfterInteraction = false;
 
-        List<Card> hand = gameData.playerHands.get(playerId);
-        int before = hand == null ? 0 : hand.size();
-        applyDrawCards(gameData, playerId, 1);
-
-        hand = gameData.playerHands.get(playerId);
-        if (hand == null || hand.size() <= before) {
+        List<UUID> drawnCardIds = gameData.cardsDrawnThisTurnIds.getOrDefault(playerId, List.of());
+        if (drawnCardIds.size() <= beforeDrawCount) {
             return;
         }
 
-        Card drawn = hand.get(hand.size() - 1);
+        UUID drawnCardId = drawnCardIds.getLast();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        Card drawn = hand == null ? null : hand.stream()
+                .filter(card -> card.getId().equals(drawnCardId))
+                .findFirst()
+                .orElse(null);
+        if (drawn == null) {
+            return;
+        }
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals ", drawn, "."));
 
@@ -245,7 +268,7 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        hand.remove(hand.size() - 1);
+        hand.remove(drawn);
         gameData.discardCausedByOpponent = false;
         graveyardService.discardCard(gameData, playerId, drawn);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", drawn, "."));
@@ -357,6 +380,10 @@ public class PlayerInteractionSupport {
         gameLogService.append(gameData, revealBuilder.build());
         cardRevealService.revealToAllPlayers(
                 gameData, playerId, GameEventFact.RevealZone.HAND, hand);
+
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
+            return;
+        }
 
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
@@ -711,7 +738,7 @@ public class PlayerInteractionSupport {
                     .orElse("card");
             choicePrompt = (choiceOptional ? "You may choose a " : "Choose a ") + typeNames.toLowerCase()
                     + " card to " + actionVerb + ".";
-        } else if (shuffleIntoLibraryMode) {
+        } else if (shuffleIntoLibraryMode || !excludedTypes.contains(CardType.LAND)) {
             choicePrompt = (choiceOptional ? "You may choose a card to " : "Choose a card to ")
                     + actionVerb + ".";
         } else {

@@ -47,6 +47,7 @@ class CostEffectClassificationTest {
             "ExilePermanentCost",
             "ExileArtifactsWithTotalManaValueCost",
             "ExileSelfCost",
+            "ExileSourceEquipmentCost",
             "CraftMaterialCost",
             "ExileSelfFromGraveyardCost",
             "ExileNCardsFromSingleGraveyardCost",
@@ -133,6 +134,7 @@ class CostEffectClassificationTest {
             "SpreeAdditionalManaCost",
             "BeholdCost",
             "BeholdAndExileCost",
+            "ChooseCreatureOrWarpedCardCost",
             "RevealCardFromHandCost",
             "DelveCost",
             "WaterbendCost");

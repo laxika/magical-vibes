@@ -54,8 +54,8 @@ class BraveTheElementsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no white creatures the spell resolves without a color prompt")
-    void noPromptWithoutWhiteCreatures() {
+    @DisplayName("With no white creatures the spell still requires its color choice")
+    void stillChoosesColorWithoutWhiteCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new BraveTheElements()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -63,6 +63,7 @@ class BraveTheElementsTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, "RED");
     }
 }

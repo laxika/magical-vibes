@@ -25,7 +25,7 @@ public class SerpentGenerator extends Card {
         // {4}, {T}: Create a 1/1 colorless Snake artifact creature token. It has "Whenever this
         // creature deals damage to a player, that player gets a poison counter."
         Map<EffectSlot, CardEffect> tokenEffects =
-                Map.of(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER));
+                Map.of(EffectSlot.ON_DAMAGE_TO_PLAYER, new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER));
         CreateTokenEffect snakeToken = new CreateTokenEffect(CardType.CREATURE, 1, "Snake", 1, 1,
                 null, null, List.of(CardSubtype.SNAKE), Set.of(), Set.of(CardType.ARTIFACT),
                 false, false, tokenEffects, List.of(), false, false, false, 0, Set.of());

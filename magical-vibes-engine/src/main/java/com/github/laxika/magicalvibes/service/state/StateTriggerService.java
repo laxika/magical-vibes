@@ -12,9 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,11 +33,25 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class StateTriggerService {
 
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
+
+    @Autowired
+    public StateTriggerService(GameLogService gameLogService,
+                               PredicateEvaluationService predicateEvaluationService,
+                               GameQueryService gameQueryService) {
+        this.gameLogService = gameLogService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.gameQueryService = gameQueryService;
+    }
+
+    public StateTriggerService(GameLogService gameLogService,
+                               PredicateEvaluationService predicateEvaluationService) {
+        this(gameLogService, predicateEvaluationService, null);
+    }
 
     /**
      * Evaluates a state trigger's condition: a {@code sourcePredicate} goes through the
@@ -49,6 +64,28 @@ public class StateTriggerService {
                     FilterContext.of(gameData)
                             .withSourceCardId(perm.getCard().getId())
                             .withSourceControllerId(controllerId));
+        }
+        if (trigger.battlefieldPredicate() != null) {
+            int matches = 0;
+            FilterContext context = FilterContext.of(gameData)
+                    .withSourceCardId(perm.getCard().getId())
+                    .withSourceControllerId(controllerId)
+                    .withSourcePermanentId(perm.getId());
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                if (battlefield == null) {
+                    continue;
+                }
+                for (Permanent permanent : battlefield) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, trigger.battlefieldPredicate(), context)) {
+                        matches++;
+                        if (matches > trigger.maximumBattlefieldMatches()) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
         }
         return trigger.predicate().test(gameData, perm, controllerId);
     }
@@ -68,6 +105,7 @@ public class StateTriggerService {
             // Snapshot to avoid ConcurrentModificationException if a trigger modifies the list
             List<Permanent> snapshot = List.copyOf(battlefield);
             for (Permanent perm : snapshot) {
+                if (gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.STATE_TRIGGERED);
                 for (int i = 0; i < effects.size(); i++) {
                     StateTriggerEffect trigger = (StateTriggerEffect) effects.get(i);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -41,6 +42,9 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
         }
 
         UUID victimId = victimGroup.getFirst();
+        Permanent victim = e.excessDamageToControllerIfSourceHasTrample()
+                ? gameQueryService.findPermanentById(gameData, victimId)
+                : null;
 
         for (UUID sourceId : sourceGroup) {
             Permanent biter = gameQueryService.findPermanentById(gameData, sourceId);
@@ -75,7 +79,22 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
                     biter.getId());
 
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            boolean trampleSource = e.excessDamageToControllerIfSourceHasTrample()
+                    && victim != null
+                    && gameQueryService.isCreature(gameData, victim)
+                    && gameQueryService.sourceHasKeyword(gameData, damageEntry, biter, Keyword.TRAMPLE);
+            UUID victimControllerId = trampleSource
+                    ? gameQueryService.findPermanentController(gameData, victim.getId())
+                    : null;
+            int excessDamage = victimControllerId == null
+                    ? 0
+                    : damageSupport.computeExcessDamageToCreature(
+                            gameData, victim, rawDamage, victim.getMarkedDamage(),
+                            gameQueryService.sourceHasKeyword(gameData, damageEntry, biter, Keyword.DEATHTOUCH));
             damageSupport.resolveAnyTargetDamage(gameData, damageEntry, victimId, rawDamage, false);
+            if (excessDamage > 0) {
+                damageSupport.dealDamageToPlayer(gameData, damageEntry, victimControllerId, excessDamage);
+            }
         }
         gameOutcomeService.checkWinCondition(gameData);
     }

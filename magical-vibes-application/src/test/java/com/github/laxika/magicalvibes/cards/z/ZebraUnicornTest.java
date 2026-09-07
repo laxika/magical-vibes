@@ -1,30 +1,30 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Delirium;
+import com.github.laxika.magicalvibes.cards.j.JungleWurm;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ZebraUnicorn.class, JungleWurm.class})
 class ZebraUnicornTest extends BaseCardTest {
 
     private Permanent addAttacker(ZebraUnicorn card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player1, card);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
 
     private void resolveCombatAndTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // through combat damage
-        harness.passBothPriorities(); // resolve the triggered ability
+        resolveCombat();
+        harness.passBothPriorities();
     }
 
     @Test
@@ -44,15 +44,13 @@ class ZebraUnicornTest extends BaseCardTest {
     @DisplayName("Still gains life from damage dealt to a blocker even when it dies in combat")
     void gainsLifeFromCreatureDamageWhenItDies() {
         ZebraUnicorn unicorn = new ZebraUnicorn();
-        unicorn.setPower(1); // dies to the 2/2 blocker but still deals its damage
+        unicorn.setPower(1); // dies to the larger blocker but still deals its damage
         addAttacker(unicorn);
         harness.setLife(player1, 20);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new JungleWurm());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         resolveCombatAndTrigger();
 
@@ -72,5 +70,27 @@ class ZebraUnicornTest extends BaseCardTest {
         resolveCombatAndTrigger();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20); // no life gained
+    }
+
+    @Test
+    @CardUsed(Delirium.class)
+    @DisplayName("Noncombat damage also gains that much life")
+    void noncombatDamageAlsoGainsLife() {
+        Permanent unicorn = addCreatureReady(player2, new ZebraUnicorn());
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new Delirium()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, unicorn.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

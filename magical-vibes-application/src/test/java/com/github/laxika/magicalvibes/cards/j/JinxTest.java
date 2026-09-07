@@ -69,6 +69,7 @@ class JinxTest extends BaseCardTest {
 
         int handAfterResolution = gd.playerHands.get(player1.getId()).size();
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handAfterResolution + 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();

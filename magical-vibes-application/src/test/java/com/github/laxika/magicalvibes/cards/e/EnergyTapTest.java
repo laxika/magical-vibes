@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EnergyTap.class, AirElemental.class, GrizzlyBears.class})
 class EnergyTapTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,7 @@ class EnergyTapTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EnergyTap()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         assertThat(bears.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
@@ -36,8 +37,7 @@ class EnergyTapTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EnergyTap()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, elemental.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, elemental.getId());
 
         assertThat(elemental.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(5);
@@ -54,6 +54,21 @@ class EnergyTapTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, enemy.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("untapped creature you control");
+    }
+
+    @Test
+    @DisplayName("Adds no mana when the target becomes tapped before resolution")
+    void doesNotAddManaWhenTargetBecomesTappedBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EnergyTap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, bears.getId());
+        bears.tap();
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test

@@ -51,6 +51,7 @@ public enum Keyword {
     DAYBOUND,
     NIGHTBOUND,
     KICKER,
+    BARGAIN,
     CREW,
     EXPLORE,
     EXPLOIT,
@@ -74,6 +75,7 @@ public enum Keyword {
     TRAINING,
     DISTURB,
     MORPH,
+    MUTATE,
     SKULK,
     SOULBOND,
     MIRACLE,
@@ -96,6 +98,7 @@ public enum Keyword {
     MODULAR,
     PROWESS,
     DASH,
+    SNEAK,
     SUNBURST,
     PROTOTYPE,
     REBOUND,
@@ -112,12 +115,15 @@ public enum Keyword {
     CAMOUFLAGE,
     DOUBLE,
     PLOT,
+    WARP,
     AMASS,
     ASSEMBLE,
     WATERBEND,
     FIREBENDING,
     BLOW_UP,
-    DISGUISE;
+    ALLIANCE,
+    DISGUISE,
+    STATION;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

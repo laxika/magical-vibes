@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.PlaguecrafterState;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -40,9 +42,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -262,6 +266,14 @@ public class CardChoiceHandlerService {
             }
 
             List<Card> hand = gameData.playerHands.get(playerId);
+            Card selectedCard = hand.get(cardIndex);
+            if (!isTargeted && gameQueryService.isCardBlockedFromEnteringFromZone(
+                    gameData, selectedCard, Zone.HAND)) {
+                gameLogService.append(gameData, GameLog.cardThen(
+                        selectedCard, " can't enter the battlefield; it stays in hand."));
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+                return;
+            }
             Card card = hand.remove(cardIndex);
 
             if (isTargeted) {
@@ -316,6 +328,7 @@ public class CardChoiceHandlerService {
                     if (pendingEntry != null) {
                         if (thenCondition == null || predicateEvaluationService.matchesCardPredicate(
                                 card, thenCondition, sourceCardId, gameData, playerId)) {
+                            pendingEntry.setTargetId(enteredPermanent.getId());
                             pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                                     List.of(thenEffect));
                         }
@@ -361,6 +374,11 @@ public class CardChoiceHandlerService {
             handlePlaguecrafterDiscardCardChosen(gameData, player, cardIndex, discardChoice);
             return;
         }
+        if (gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards
+                && player.getId().equals(gameData.eachPlayerRummage.currentPlayerId)) {
+            handleDeferredEachPlayerDiscardCardChosen(gameData, player, cardIndex, discardChoice);
+            return;
+        }
 
         List<Integer> validIndices = discardChoice.validIndices();
         if (cardIndex == -1 && discardChoice.declinable()) {
@@ -387,7 +405,26 @@ public class CardChoiceHandlerService {
 
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
-        Card card = hand.remove(cardIndex);
+        Card card = hand.get(cardIndex);
+
+        Boolean discardToLibraryDecision = gameData.pendingDiscardToLibraryDecision;
+        if (discardToLibraryDecision == null && !card.isToken()) {
+            Card replacementSource = graveyardService.findDiscardToLibraryReplacementSource(gameData, playerId);
+            if (replacementSource != null) {
+                gameData.pendingDiscardToLibraryChoice = discardChoice;
+                gameData.pendingDiscardToLibraryCardIndex = cardIndex;
+                gameData.interaction.clearAwaitingInput();
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        replacementSource,
+                        playerId,
+                        List.of(new DiscardToTopOfLibraryInsteadEffect()),
+                        "Put " + card.getName() + " on top of your library instead of into your graveyard?"));
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+        }
+        gameData.pendingDiscardToLibraryDecision = null;
+        hand.remove(cardIndex);
 
         boolean replacedByBattlefield = false;
         if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
@@ -399,7 +436,8 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield", gameData.id, player.getUsername(), card.getName());
             replacedByBattlefield = true;
         } else {
-            graveyardService.discardCard(gameData, playerId, card);
+            graveyardService.discardCard(gameData, playerId, card,
+                    discardToLibraryDecision == null || discardToLibraryDecision);
             gameLogService.append(gameData, GameLog.playerDiscards(player.getUsername(), card));
             log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
         }
@@ -460,6 +498,19 @@ public class CardChoiceHandlerService {
         }
     }
 
+    public void resumeDiscardToLibraryChoice(GameData gameData, Player player, boolean accepted) {
+        PendingInteraction.DiscardChoice discardChoice = gameData.pendingDiscardToLibraryChoice;
+        int cardIndex = gameData.pendingDiscardToLibraryCardIndex;
+        if (discardChoice == null || cardIndex < 0 || !discardChoice.playerId().equals(player.getId())) {
+            throw new IllegalStateException("No discard replacement choice is pending");
+        }
+        gameData.pendingDiscardToLibraryChoice = null;
+        gameData.pendingDiscardToLibraryCardIndex = -1;
+        gameData.pendingDiscardToLibraryDecision = accepted;
+        interactionHandlerRegistry.begin(gameData, discardChoice);
+        handleDiscardCardChosen(gameData, player, cardIndex);
+    }
+
     private void handlePlaguecrafterDiscardCardChosen(GameData gameData, Player player, int cardIndex,
             PendingInteraction.DiscardChoice discardChoice) {
         if (!discardChoice.validIndices().contains(cardIndex)) {
@@ -489,13 +540,52 @@ public class CardChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleDeferredEachPlayerDiscardCardChosen(GameData gameData, Player player, int cardIndex,
+            PendingInteraction.DiscardChoice discardChoice) {
+        List<Card> hand = gameData.playerHands.getOrDefault(player.getId(), List.of());
+        Set<UUID> selectedIds = gameData.eachPlayerRummage.selectedDiscards.stream()
+                .filter(selection -> selection.playerId().equals(player.getId()))
+                .map(EachPlayerRummageState.SelectedDiscard::cardId)
+                .collect(java.util.stream.Collectors.toSet());
+        List<Card> remainingCards = hand.stream()
+                .filter(card -> !selectedIds.contains(card.getId()))
+                .toList();
+        if (!discardChoice.validIndices().contains(cardIndex)
+                || cardIndex < 0 || cardIndex >= remainingCards.size()) {
+            throw new IllegalStateException("Invalid discard card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.eachPlayerRummage.selectedDiscards.add(new EachPlayerRummageState.SelectedDiscard(
+                player.getId(), remainingCards.get(cardIndex).getId()));
+        int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
+        if (remainingDiscards > 0) {
+            List<Integer> remainingValidIndices = java.util.stream.IntStream.range(0, remainingCards.size() - 1)
+                    .boxed()
+                    .toList();
+            playerInputService.beginDiscardChoice(gameData, player.getId(), remainingValidIndices,
+                    discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
+                    discardChoice.stopAfterDiscardingType(), false);
+            return;
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void discardCollectedPlaguecrafterCards(GameData gameData) {
         PlaguecrafterState state = gameData.plaguecrafter;
-        List<PlaguecrafterState.SelectedDiscard> selected = List.copyOf(state.selectedDiscards);
-        List<PlaguecrafterState.SelectedDiscard> actualDiscards = new ArrayList<>();
+        List<EachPlayerRummageState.SelectedDiscard> selected = state.selectedDiscards.stream()
+                .map(selection -> new EachPlayerRummageState.SelectedDiscard(
+                        selection.playerId(), selection.cardId()))
+                .toList();
+        discardCollectedCards(gameData, selected, state.sourceControllerId);
+    }
+
+    public Map<UUID, Integer> discardCollectedCards(GameData gameData,
+            List<EachPlayerRummageState.SelectedDiscard> selected, UUID sourceControllerId) {
+        List<EachPlayerRummageState.SelectedDiscard> actualDiscards = new ArrayList<>();
         Map<UUID, Card> cardsById = new HashMap<>();
 
-        for (PlaguecrafterState.SelectedDiscard selection : selected) {
+        for (EachPlayerRummageState.SelectedDiscard selection : selected) {
             List<Card> hand = gameData.playerHands.get(selection.playerId());
             if (hand == null) {
                 continue;
@@ -514,13 +604,14 @@ public class CardChoiceHandlerService {
             }
         }
 
-        for (PlaguecrafterState.SelectedDiscard selection : actualDiscards) {
+        Map<UUID, Integer> discardedCounts = new HashMap<>();
+        for (EachPlayerRummageState.SelectedDiscard selection : actualDiscards) {
             Card card = cardsById.get(selection.cardId());
             if (card == null) {
                 continue;
             }
 
-            boolean causedByOpponent = !selection.playerId().equals(state.sourceControllerId);
+            boolean causedByOpponent = !selection.playerId().equals(sourceControllerId);
             gameData.discardCausedByOpponent = causedByOpponent;
             boolean replacedByBattlefield = false;
             if (hasEnterBattlefieldOnDiscardEffect(card) && causedByOpponent) {
@@ -547,7 +638,9 @@ public class CardChoiceHandlerService {
             checkPendingUntapOnDiscardType(gameData, card);
             checkPendingBoostSourceByDiscardedManaValue(gameData, card);
             checkPendingConniveOnDiscard(gameData, card);
+            discardedCounts.merge(selection.playerId(), 1, Integer::sum);
         }
+        return discardedCounts;
     }
 
     private void finishDiscardChoice(GameData gameData, Player player, UUID playerId,
@@ -649,7 +742,7 @@ public class CardChoiceHandlerService {
         if (followUp.graveyardReturnCount() > 0) {
             for (int i = 0; i < followUp.graveyardReturnCount(); i++) {
                 gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
-                        playerId, 1, null, GraveyardChoiceDestination.HAND, false));
+                        playerId, 1, null, GraveyardChoiceDestination.HAND, false, true, false));
             }
             graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
             if (gameData.interaction.isAwaitingInput()) {
@@ -765,6 +858,16 @@ public class CardChoiceHandlerService {
                     return;
                 }
             } else if (hasPreboundTarget) {
+                if (thenEffect instanceof MayEffect && gameData.pendingEffectResolutionEntry != null) {
+                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                    int pendingIndex = gameData.pendingEffectResolutionIndex;
+                    pendingEntry.insertEffectsToResolve(pendingIndex, List.of(thenEffect));
+                    effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, pendingIndex);
+                    if (!gameData.pendingMayAbilities.isEmpty()) {
+                        playerInputService.processNextMayAbility(gameData);
+                    }
+                    return;
+                }
                 StackEntry thenEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         sourceCard,
@@ -850,7 +953,10 @@ public class CardChoiceHandlerService {
             playerInputService.beginExileFromHandChoice(gameData, player.getId(), exileChoice.sourcePermanentId(),
                     exileChoice.playPermissionControllerId(), exileChoice.remainingCount(),
                     exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
-                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId());
+                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
+                    exileChoice.playPermissionToChooser(),
+                    exileChoice.playPermissionTaxSourceControllerId(),
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
             return;
         }
 
@@ -868,10 +974,21 @@ public class CardChoiceHandlerService {
             exileService.exileCard(gameData, playerId, card);
         }
 
-        // Grant the controlling player permission to play this card for as long as it remains
-        // exiled (e.g. Fiend of the Shadows). Does not expire at end of turn.
-        if (exileChoice.playPermissionControllerId() != null) {
-            gameData.exilePlayPermissions.put(card.getId(), exileChoice.playPermissionControllerId());
+        // Grant the configured player permission to play this card for as long as it remains exiled.
+        UUID playPermissionControllerId = exileChoice.playPermissionToChooser()
+                ? playerId : exileChoice.playPermissionControllerId();
+        if (playPermissionControllerId != null) {
+            if (exileChoice.exilePlayOpponentTax() > 0) {
+                exileSupport.grantPlayWhileExiledWithOpponentTax(
+                        gameData, card.getId(), playPermissionControllerId,
+                        exileChoice.playPermissionTaxSourceControllerId(),
+                        exileChoice.exilePlayOpponentTax());
+            } else {
+                gameData.exilePlayPermissions.put(card.getId(), playPermissionControllerId);
+            }
+            if (exileChoice.landsEnterTapped() && card.hasType(CardType.LAND)) {
+                gameData.exileCardsEnterTapped.add(card.getId());
+            }
         }
 
         if (exileChoice.returnOnSourceLeave() && sourcePermanentId != null) {
@@ -896,7 +1013,10 @@ public class CardChoiceHandlerService {
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), remainingExiles,
                     exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
-                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId());
+                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
+                    exileChoice.playPermissionToChooser(),
+                    exileChoice.playPermissionTaxSourceControllerId(),
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
         } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
             // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
             UUID next = exileChoice.remainingChoosers().getFirst();
@@ -905,9 +1025,12 @@ public class CardChoiceHandlerService {
                     : List.of();
             inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
-                    exileChoice.playPermissionControllerId(), exileChoice.cardsPerPlayer(), rest,
+                    exileChoice.playPermissionToChooser() ? null : exileChoice.playPermissionControllerId(),
+                    exileChoice.cardsPerPlayer(), rest,
                     exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave(),
-                    exileChoice.untapPermanentId());
+                    exileChoice.untapPermanentId(), exileChoice.playPermissionToChooser(),
+                    exileChoice.playPermissionTaxSourceControllerId(),
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
         } else {
             gameData.interaction.clearAwaitingInput();
 
@@ -2040,15 +2163,16 @@ public class CardChoiceHandlerService {
         if (pending == null) {
             return;
         }
-        gameData.pendingConnive = null;
-        if (discardedCard.hasType(CardType.LAND)) {
-            return;
+        gameData.pendingConnive = pending.remainingDiscards() > 1
+                ? new PendingConnive(pending.sourcePermanentId(), pending.remainingDiscards() - 1)
+                : null;
+        if (!discardedCard.hasType(CardType.LAND)) {
+            Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+            if (source == null) {
+                return;
+            }
+            permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
         }
-        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-        if (source == null) {
-            return;
-        }
-        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {

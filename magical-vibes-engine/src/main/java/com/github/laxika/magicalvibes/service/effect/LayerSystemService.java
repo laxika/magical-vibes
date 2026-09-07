@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
@@ -152,7 +153,8 @@ public class LayerSystemService {
     private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.of(
             CardSubtype.SWAMP, CardSubtype.ISLAND, CardSubtype.FOREST,
             CardSubtype.MOUNTAIN, CardSubtype.PLAINS, CardSubtype.DESERT,
-            CardSubtype.GATE, CardSubtype.LOCUS);
+            CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.URZAS,
+            CardSubtype.MINE, CardSubtype.POWER_PLANT, CardSubtype.TOWER);
 
     private static final ThreadLocal<Pass> ACTIVE_PASS = new ThreadLocal<>();
 
@@ -343,6 +345,11 @@ public class LayerSystemService {
          *  legacy handler must run with layered accumulator outputs suppressed. */
         public boolean isManagedL56(CardEffect effect) {
             return managedL56Effects.contains(effect);
+        }
+
+        public boolean hasL4Contribution(CardEffect effect, UUID targetId) {
+            Map<UUID, L4Contribution> perTarget = l4Contributions.get(effect);
+            return perTarget != null && perTarget.containsKey(targetId);
         }
 
         /** Replays the layer-4 pass's decision of the given effect for the given permanent
@@ -612,7 +619,7 @@ public class LayerSystemService {
      *
      * <p>NOT covered (assembly-only inputs — the per-target {@code StaticBonus} is rebuilt on
      * every query and only the finished board is cached): emblems, the conditions of the
-     * conditional wrappers the pass did not collect, turn/step state, amount evaluation beyond
+     * conditional wrappers the pass did not collect, step state, amount evaluation beyond
      * the fields above. The wrappers the pass DOES collect are exactly those
      * whose conditions read only what is hashed here — that is what
      * {@link ConditionBoardStability} decides, so widening it means widening this method too.
@@ -624,6 +631,7 @@ public class LayerSystemService {
     private static long computeBoardFingerprint(GameData gameData) {
         long h = 0x9E3779B97F4A7C15L;
         h = mix(h, gameData.timestampCounter);
+        h = mix(h, gameData.activePlayerId == null ? 0 : gameData.activePlayerId.hashCode());
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
@@ -1529,6 +1537,19 @@ public class LayerSystemService {
                             List.copyOf(set.cardTypes())));
                 }
             }
+            case RemoveCardTypeFromAttachedPermanentEffect remove -> {
+                manage(board, instance);
+                for (PermanentSlot target : scopeTargets(gameData, instance, remove.scope(), null,
+                        slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    state.removeCardType(remove.cardType());
+                    List<CardType> retainedTypes = List.copyOf(state.getCardTypes());
+                    state.overrideCardTypes(retainedTypes);
+                    record(board, instance, target, new L4Contribution(
+                            List.of(), false, false, null, null, true,
+                            retainedTypes));
+                }
+            }
             case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored -> {
                 manage(board, instance);
                 for (PermanentSlot target : slots) {
@@ -1680,10 +1701,16 @@ public class LayerSystemService {
                 // enchanted permanent reads as a creature for other layer-4+ effects (lords).
                 for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
+                    if (becomes.powerToughnessEqualsManaValue()
+                            && state.hasCardType(CardType.CREATURE)) {
+                        continue;
+                    }
                     state.addCardType(CardType.CREATURE);
                     for (CardSubtype subtype : becomes.subtypes()) {
                         state.addSubtype(subtype);
                     }
+                    record(board, instance, target, new L4Contribution(
+                            becomes.subtypes(), false, false, CardType.CREATURE, null, false));
                 }
             }
             case NonbasicLandsBecomeTypeEffect becomes -> {
@@ -2235,6 +2262,15 @@ public class LayerSystemService {
         // the object's text changes applied (CR 613.2c): Mind Bend rewriting "black" to "blue"
         // on Paladin en-Vec changes what its printed protection protects from.
         if (!permanent.isFaceDown()) {
+            Set<Keyword> printedKeywords = permanent.getCard().getKeywords();
+            Set<Keyword> rewrittenKeywords = TextChangeTransformer.transformKeywords(
+                    printedKeywords, permanent.getTextReplacements());
+            for (Keyword keyword : printedKeywords) {
+                if (!rewrittenKeywords.contains(keyword)) {
+                    state.removeKeyword(keyword);
+                }
+            }
+            state.addKeywords(rewrittenKeywords);
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
                     ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
@@ -2400,6 +2436,15 @@ public class LayerSystemService {
             for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                 CharacteristicState state = states.get(target.permanent().getId());
                 switch (instance.effect()) {
+                    case AnimateNoncreatureArtifactsEffect animation -> {
+                        if (animation.losesAllAbilities()
+                                && board.marchAnimatedIds().contains(target.permanent().getId())) {
+                            state.loseAllAbilities(instance.timestamp());
+                            board.clearGrantedEffects(target.permanent().getId());
+                            board.recordProvenance(target.permanent().getId(),
+                                    ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
+                        }
+                    }
                     case LosesAllAbilitiesEffect ignored -> {
                         state.loseAllAbilities(instance.timestamp());
                         board.clearGrantedEffects(target.permanent().getId());

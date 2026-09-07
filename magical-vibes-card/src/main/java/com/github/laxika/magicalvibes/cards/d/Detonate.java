@@ -27,16 +27,14 @@ import java.util.List;
 public class Detonate extends Card {
 
     public Detonate() {
-        // Deal the damage while the artifact is still on the battlefield so its controller resolves,
-        // then destroy it (can't be regenerated). Both X values are the spell's chosen X.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentManaValueEqualsXPredicate())),
                 "Target must be an artifact with mana value X."
         ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true))
                 .addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
-                        new XValue(), DamageRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true));
+                        new XValue(), DamageRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

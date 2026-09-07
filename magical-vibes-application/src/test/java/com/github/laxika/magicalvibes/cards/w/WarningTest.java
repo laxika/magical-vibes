@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Warning.class, BalduvianBears.class})
 class WarningTest extends BaseCardTest {
 
     @Test
@@ -33,11 +35,9 @@ class WarningTest extends BaseCardTest {
     @DisplayName("Prevents combat damage the target creature would deal to a blocker")
     void preventsCombatDamageDealtToBlocker() {
         Permanent attacker = addAttacker(player1, player2, 2, 5);
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         castWarning(attacker);
         resolveCombat();
@@ -46,14 +46,20 @@ class WarningTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only combat damage is prevented, not all damage")
-    void combatDamageOnly() {
-        Permanent attacker = addAttacker(player1, player2, 2, 2);
+    @CardUsed(ZuranSpellcaster.class)
+    @DisplayName("Does not prevent noncombat damage dealt by the target creature")
+    void doesNotPreventNoncombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new ZuranSpellcaster());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
 
         castWarning(attacker);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
-        assertThat(gd.permanentsPreventedFromDealingDamage).doesNotContain(attacker.getId());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        harness.activateAbility(player1, attackerIndex, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -75,7 +81,7 @@ class WarningTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking")
     void cannotTargetNonAttacker() {
-        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bystander = addCreatureReady(player1, new BalduvianBears());
         harness.setHand(player1, List.of(new Warning()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -83,24 +89,37 @@ class WarningTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Fizzles if the target stops attacking before resolution")
+    void fizzlesIfTargetStopsAttackingBeforeResolution() {
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+
+        castWarningWithoutResolving(attacker);
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+    }
 
     private void castWarning(Permanent target) {
-        harness.setHand(player1, List.of(new Warning()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, target.getId());
+        castWarningWithoutResolving(target);
         harness.passBothPriorities();
     }
 
+    private void castWarningWithoutResolving(Permanent target) {
+        harness.setHand(player1, List.of(new Warning()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+    }
+
     private Permanent addAttacker(Player owner, Player defender, int power, int toughness) {
-        Card bears = new GrizzlyBears();
+        BalduvianBears bears = new BalduvianBears();
         bears.setPower(power);
         bears.setToughness(toughness);
-        Permanent perm = new Permanent(bears);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(owner, bears);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 }

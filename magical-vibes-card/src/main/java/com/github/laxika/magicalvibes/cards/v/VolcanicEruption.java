@@ -18,7 +18,7 @@ public class VolcanicEruption extends Card {
         // Destroy X target Mountains. ~ deals damage to each creature and each player equal to the
         // number of Mountains put into a graveyard this way. The destroy effect snapshots the count
         // actually destroyed onto the entry's event value, which the mass damage reads via EventValue.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                 "Targets must be Mountains"
         ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());

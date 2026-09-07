@@ -26,6 +26,7 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var selfDamageEffect = (TargetCreatureDealsPowerDamageToSelfEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
@@ -45,7 +46,8 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
         }
 
         int power = gameQueryService.getPowerBasedDamage(gameData, target);
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
+        int rawDamage = gameQueryService.applyDamageMultiplier(
+                gameData, Math.multiplyExact(power, selfDamageEffect.powerMultiplier()), entry);
         damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, target);
     }
 }

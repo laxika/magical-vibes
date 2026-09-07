@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,21 +75,28 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 dealToAssignments(gameData, entry, e, assignments);
             }
             case EVEN -> {
-                List<UUID> targets = entry.getDeclaredTargetIds();
-                boolean usesFlatTargets = !targets.isEmpty();
-                if (targets.isEmpty()) {
+                List<UUID> declaredTargets = entry.getDeclaredTargetIds();
+                boolean usesFlatTargets = !declaredTargets.isEmpty();
+                if (declaredTargets.isEmpty()) {
                     if (entry.getTargetId() != null) {
-                        targets = List.of(entry.getTargetId());
+                        declaredTargets = List.of(entry.getTargetId());
                     } else {
                         return;
                     }
                 }
-                int damagePerTarget = entry.getXValue() / targets.size();
-                Map<UUID, Integer> assignments = new LinkedHashMap<>();
-                for (int i = 0; i < targets.size(); i++) {
+                List<UUID> legalTargets = new java.util.ArrayList<>();
+                for (int i = 0; i < declaredTargets.size(); i++) {
                     if (!usesFlatTargets || entry.isTargetLegal(i)) {
-                        assignments.put(targets.get(i), damagePerTarget);
+                        legalTargets.add(declaredTargets.get(i));
                     }
+                }
+                if (legalTargets.isEmpty()) {
+                    return;
+                }
+                int damagePerTarget = entry.getXValue() / legalTargets.size();
+                Map<UUID, Integer> assignments = new LinkedHashMap<>();
+                for (UUID target : legalTargets) {
+                    assignments.put(target, damagePerTarget);
                 }
                 dealToAssignments(gameData, entry, e, assignments);
             }
@@ -205,7 +211,8 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                             gameData.playerIdToName.get(targetId) + " can't cast noncreature spells this turn."));
                 }
             } else if (gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard(), entry.getControllerId())) {
+                    && gameQueryService.hasProtectionFromDamageSource(
+                    gameData, targetPermanent, entry.getCard(), entry.getControllerId())) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
             } else {
                 damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "239")
+@CardRegistration(set = "ONS", collectorNumber = "321")
 public class PollutedDelta extends Card {
 
     public PollutedDelta() {

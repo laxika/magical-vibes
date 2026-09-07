@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M20", collectorNumber = "18")
+@CardRegistration(set = "DTK", collectorNumber = "18")
 public class GlaringAegis extends Card {
 
     public GlaringAegis() {

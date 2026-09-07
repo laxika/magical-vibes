@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,14 +32,21 @@ public class FightSupport {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final TriggerCollectionService triggerCollectionService;
 
     /** Has {@code first} and {@code second} fight each other; either being gone is a no-op. */
     public void fight(GameData gameData, StackEntry entry, Permanent first, Permanent second) {
-        if (first == null || second == null) {
+        if (first == null || second == null
+                || !gameQueryService.isCreature(gameData, first)
+                || !gameQueryService.isCreature(gameData, second)) {
             return;
         }
+        UUID firstControllerId = gameQueryService.findPermanentController(gameData, first.getId());
+        UUID secondControllerId = gameQueryService.findPermanentController(gameData, second.getId());
         dealMutualDamage(gameData, entry, first, second, true);
         dealMutualDamage(gameData, entry, second, first, true);
+        triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, first, firstControllerId);
+        triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, second, secondControllerId);
     }
 
     public void dealToughnessDamageToEachOther(GameData gameData, StackEntry entry,

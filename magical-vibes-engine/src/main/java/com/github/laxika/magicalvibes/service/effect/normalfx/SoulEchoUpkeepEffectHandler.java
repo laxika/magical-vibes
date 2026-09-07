@@ -53,8 +53,6 @@ public class SoulEchoUpkeepEffectHandler implements NormalEffectHandlerBean {
         }
 
         // "until your next upkeep" — whatever the opponent chose last upkeep ends here.
-        self.setEchoDamageRedirectionActive(false);
-
         if (self.getCounterCount(CounterType.ECHO) <= 0) {
             if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());

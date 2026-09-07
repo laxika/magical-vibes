@@ -895,10 +895,10 @@ class AiTargetSelector {
                 case SHARE_CREATURE_TYPES -> gameQueryService.shareCreatureType(gameData, other, candidate);
                 case SHARE_NO_CREATURE_TYPES -> !gameQueryService.shareCreatureType(gameData, other, candidate);
                 case SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE ->
-                        gameQueryService.sharesArtifactCreatureOrLandType(other, candidate);
+                        gameQueryService.sharesArtifactCreatureOrLandType(gameData, other, candidate);
                 case SHARE_ARTIFACT_OR_CREATURE_TYPE ->
-                        gameQueryService.sharesArtifactOrCreatureType(other, candidate);
-                case SHARE_CARD_TYPE -> gameQueryService.sharesCardType(other, candidate);
+                        gameQueryService.sharesArtifactOrCreatureType(gameData, other, candidate);
+                case SHARE_CARD_TYPE -> gameQueryService.sharesCardType(gameData, other, candidate);
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
                 case ATTACHED_TO_FIRST_TARGET -> java.util.Objects.equals(other.getId(), candidate.getAttachedTo());

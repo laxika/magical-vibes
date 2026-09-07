@@ -1,24 +1,24 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
+import com.github.laxika.magicalvibes.cards.w.WandOfDenial;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FuneralCharm.class, LongbowArcher.class, WandOfDenial.class})
 class FuneralCharmTest extends BaseCardTest {
 
     @Nested
@@ -30,7 +30,7 @@ class FuneralCharmTest extends BaseCardTest {
         void targetDiscards() {
             harness.setHand(player1, List.of(new FuneralCharm()));
             harness.addMana(player1, ManaColor.BLACK, 1);
-            harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new SerraAngel())));
+            harness.setHand(player2, List.of(new LongbowArcher(), new LongbowArcher()));
 
             harness.castInstant(player1, 0, 0, player2.getId());
             harness.passBothPriorities();
@@ -45,7 +45,7 @@ class FuneralCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Can target yourself")
         void canTargetSelf() {
-            harness.setHand(player1, new ArrayList<>(List.of(new FuneralCharm(), new GrizzlyBears())));
+            harness.setHand(player1, List.of(new FuneralCharm(), new LongbowArcher()));
             harness.addMana(player1, ManaColor.BLACK, 1);
 
             harness.castInstant(player1, 0, 0, player1.getId());
@@ -55,7 +55,21 @@ class FuneralCharmTest extends BaseCardTest {
             harness.handleCardChosen(player1, 0);
 
             assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-            harness.assertInGraveyard(player1, "Grizzly Bears");
+            harness.assertInGraveyard(player1, "Longbow Archer");
+        }
+
+        @Test
+        @DisplayName("Can target a player with no cards in hand")
+        void canTargetPlayerWithEmptyHand() {
+            harness.setHand(player1, List.of(new FuneralCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+            harness.setHand(player2, List.of());
+
+            harness.castInstant(player1, 0, 0, player2.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+            assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         }
     }
 
@@ -66,48 +80,41 @@ class FuneralCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Gives +2/-1")
         void boostsTarget() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
             harness.setHand(player1, List.of(new FuneralCharm()));
             harness.addMana(player1, ManaColor.BLACK, 1);
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castInstant(player1, 0, 1, targetId);
+            harness.castInstant(player1, 0, 1, target.getId());
             harness.passBothPriorities();
 
-            Permanent bear = permanent(targetId);
-            assertThat(bear.getEffectivePower()).isEqualTo(4);
-            assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+            assertThat(target.getEffectivePower()).isEqualTo(4);
+            assertThat(target.getEffectiveToughness()).isEqualTo(1);
         }
 
         @Test
         @DisplayName("Boost wears off at end of turn")
         void boostWearsOff() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
             harness.setHand(player1, List.of(new FuneralCharm()));
             harness.addMana(player1, ManaColor.BLACK, 1);
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castInstant(player1, 0, 1, targetId);
+            harness.castInstant(player1, 0, 1, target.getId());
             harness.passBothPriorities();
 
-            harness.forceStep(TurnStep.END_STEP);
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
+            harness.passUntil(TurnStep.CLEANUP);
 
-            Permanent bear = permanent(targetId);
-            assertThat(bear.getEffectivePower()).isEqualTo(2);
-            assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+            assertThat(target.getEffectivePower()).isEqualTo(2);
+            assertThat(target.getEffectiveToughness()).isEqualTo(2);
         }
 
         @Test
         @DisplayName("Cannot target a noncreature permanent")
         void cannotTargetNoncreature() {
-            harness.addToBattlefield(player1, new FountainOfYouth());
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
             harness.setHand(player1, List.of(new FuneralCharm()));
             harness.addMana(player1, ManaColor.BLACK, 1);
 
-            UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
-            assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, targetId))
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, target.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
@@ -119,38 +126,40 @@ class FuneralCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Grants swampwalk")
         void grantsSwampwalk() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
             harness.setHand(player1, List.of(new FuneralCharm()));
             harness.addMana(player1, ManaColor.BLACK, 1);
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castInstant(player1, 0, 2, targetId);
+            harness.castInstant(player1, 0, 2, target.getId());
             harness.passBothPriorities();
 
-            assertThat(gqs.hasKeyword(gd, permanent(targetId), Keyword.SWAMPWALK)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.SWAMPWALK)).isTrue();
         }
 
         @Test
         @DisplayName("Swampwalk wears off at end of turn")
         void swampwalkWearsOff() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
             harness.setHand(player1, List.of(new FuneralCharm()));
             harness.addMana(player1, ManaColor.BLACK, 1);
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castInstant(player1, 0, 2, targetId);
+            harness.castInstant(player1, 0, 2, target.getId());
             harness.passBothPriorities();
 
-            harness.forceStep(TurnStep.END_STEP);
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
+            harness.passUntil(TurnStep.CLEANUP);
 
-            assertThat(gqs.hasKeyword(gd, permanent(targetId), Keyword.SWAMPWALK)).isFalse();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.SWAMPWALK)).isFalse();
         }
-    }
 
-    private Permanent permanent(UUID id) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(id)).findFirst().orElseThrow();
+        @Test
+        @DisplayName("Cannot target a noncreature permanent")
+        void cannotTargetNoncreature() {
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
+            harness.setHand(player1, List.of(new FuneralCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
     }
 }

@@ -158,6 +158,8 @@ class DestroyTargetPermanentEffectHandlerTest {
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
+                org.assertj.core.api.Assertions.assertThat(entry.getRemovedPermanentControllers())
+                        .containsEntry(bears.getId(), player2Id);
                 verify(gameLogService).append(gd, GameLog.isDestroyed(bears.getCard()));
             }
 

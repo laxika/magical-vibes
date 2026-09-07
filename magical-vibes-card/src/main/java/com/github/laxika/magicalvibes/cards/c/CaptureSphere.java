@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M21", collectorNumber = "47")
 @CardRegistration(set = "GRN", collectorNumber = "31")
+@CardRegistration(set = "IKO", collectorNumber = "44")
 public class CaptureSphere extends Card {
 
     public CaptureSphere() {

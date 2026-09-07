@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -29,6 +30,8 @@ import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHan
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -55,6 +58,10 @@ import java.util.UUID;
  */
 @Component
 public class PotentialManaService {
+
+    @Autowired
+    @Lazy
+    private AmountEvaluationService amountEvaluationService;
 
     /**
      * The pool {@link #canTapForManaNow} measures affordability against. Shared and never mutated:
@@ -775,7 +782,8 @@ public class PotentialManaService {
      * Estimates the integer mana quantity an {@link AwardManaEffect} would produce for a
      * virtual mana pool. A flat {@link Fixed} amount is exact; source-relative amounts that can
      * be resolved from the permanent alone — charge counters ({@link CountersOnSource}) and source power
-     * ({@link SourcePower}) — are computed directly. Other dynamic amounts (e.g. per-permanent
+     * ({@link SourcePower}) — are computed directly. Conditional fixed amounts use the shared
+     * amount evaluator against the live board. Other dynamic amounts (e.g. per-permanent
      * counts) aren't estimated here (they contribute 0); {@code null} permanent/game data
      * (hypothetical card evaluation) yields the fixed value or 0.
      */
@@ -791,6 +799,11 @@ public class PotentialManaService {
         }
         if (amount instanceof SourcePower) {
             return Math.max(0, gameQueryService.getEffectivePower(gameData, permanent));
+        }
+        if (amount instanceof FixedIfCondition) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            return amountEvaluationService.evaluate(gameData, amount,
+                    AmountContext.forStaticEffect(permanent, controllerId));
         }
         return 0;
     }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,9 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed(BreedingPit.class)
 class BreedingPitTest extends BaseCardTest {
-
-    // ===== Upkeep sacrifice-unless-pay =====
-
     @Test
     @DisplayName("Declining to pay {B}{B} sacrifices Breeding Pit")
     void decliningPaymentSacrificesEnchantment() {
@@ -60,8 +58,31 @@ class BreedingPitTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Breeding Pit");
     }
 
-    // ===== End step token creation =====
+    @Test
+    @DisplayName("Colorless mana cannot pay the second black mana of the upkeep cost")
+    void colorlessManaCannotPayBlackUpkeepCost() {
+        harness.addToBattlefield(player1, new BreedingPit());
 
+        advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve trigger -> may-pay prompt
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Breeding Pit");
+        harness.assertInGraveyard(player1, "Breeding Pit");
+    }
+
+    @Test
+    @DisplayName("The upkeep sacrifice ability does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        harness.addToBattlefield(player1, new BreedingPit());
+
+        advanceToUpkeep(player2);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Breeding Pit");
+    }
     @Test
     @DisplayName("A 0/1 black Thrull token is created at the controller's end step")
     void endStepCreatesThrullToken() {
@@ -80,6 +101,7 @@ class BreedingPitTest extends BaseCardTest {
             assertThat(t.getCard().getPower()).isEqualTo(0);
             assertThat(t.getCard().getToughness()).isEqualTo(1);
             assertThat(t.getCard().getColor()).isEqualTo(CardColor.BLACK);
+            assertThat(t.getCard().hasType(CardType.CREATURE)).isTrue();
             assertThat(t.getCard().getSubtypes()).containsExactly(CardSubtype.THRULL);
             assertThat(t.getCard().isToken()).isTrue();
         });

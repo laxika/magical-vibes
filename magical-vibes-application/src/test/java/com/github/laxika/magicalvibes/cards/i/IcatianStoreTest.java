@@ -132,6 +132,20 @@ class IcatianStoreTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing storage counters leaves other counter types untouched")
+    void removingStorageCountersLeavesOtherCounterTypesUntouched() {
+        Permanent store = addStoreWithCounters(2);
+        store.setCounterCount(CounterType.CHARGE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "1");
+
+        assertThat(whiteMana()).isEqualTo(1);
+        assertThat(store.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(store.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Removing zero counters produces no mana but still taps the land")
     void removingZeroCountersProducesNoMana() {
         Permanent store = addStoreWithCounters(3);

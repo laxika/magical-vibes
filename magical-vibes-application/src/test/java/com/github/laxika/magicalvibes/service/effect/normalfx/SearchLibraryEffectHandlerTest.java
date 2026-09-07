@@ -74,6 +74,8 @@ class SearchLibraryEffectHandlerTest {
     private PlayerInputService playerInputService;
     @Mock
     private AmountEvaluationService amountEvaluationService;
+    @Mock
+    private CreateTokenEffectHandler createTokenEffectHandler;
     private LibrarySearchSupport support;
     private GameData gd;
     private UUID player1Id;
@@ -107,7 +109,7 @@ class SearchLibraryEffectHandlerTest {
         gd.activePlayerId = player1Id;
         lenient().when(amountEvaluationService.evaluate(any(GameData.class), any(), any())).thenReturn(1);
         searchLibraryHandler = new SearchLibraryEffectHandler(gameQueryService, predicateEvaluationService,
-                gameLogService, support, amountEvaluationService);
+                gameLogService, support, amountEvaluationService, createTokenEffectHandler);
         distantMemoriesHandler = new DistantMemoriesEffectHandler(drawService, gameLogService, support);
         headGamesHandler = new HeadGamesEffectHandler(gameLogService, support);
     }

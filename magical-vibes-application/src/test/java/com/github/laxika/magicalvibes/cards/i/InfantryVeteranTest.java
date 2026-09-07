@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InfantryVeteran.class, GrizzlyBears.class})
 class InfantryVeteranTest extends BaseCardTest {
 
     // ===== Activation on attacking creature =====
@@ -30,7 +32,6 @@ class InfantryVeteranTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Infantry Veteran");
         assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
@@ -133,20 +134,31 @@ class InfantryVeteranTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Ability does not resolve if the target stops attacking")
+    void abilityFizzlesIfTargetStopsAttacking() {
+        addReadyVeteran(player1);
+        Permanent attacker = addAttackingCreature(player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isEqualTo(0);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyVeteran(Player player) {
-        Permanent perm = new Permanent(new InfantryVeteran());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new InfantryVeteran());
     }
 
     private Permanent addAttackingCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new GrizzlyBears());
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

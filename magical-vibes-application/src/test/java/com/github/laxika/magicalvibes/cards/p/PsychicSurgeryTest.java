@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PsychicSurgery.class, Island.class, Forest.class, GrizzlyBears.class})
 class PsychicSurgeryTest extends BaseCardTest {
 
     @Test
@@ -26,10 +27,11 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
 
-        assertThat(gd.pendingMayAbilities).hasSize(1);
-        PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        assertThat(pending.controllerId()).isEqualTo(player1.getId());
-        assertThat(pending.sourceCard().getName()).isEqualTo("Psychic Surgery");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -39,7 +41,7 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         LibraryShuffleHelper.shuffleLibrary(gd, player1.getId());
 
-        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -51,9 +53,8 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
 
-        // Manually begin the may ability interaction
-        PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
+        // Resolve the trigger to reach its optional choice
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -83,12 +84,9 @@ class PsychicSurgeryTest extends BaseCardTest {
         deck.addAll(List.of(topCard, secondCard, thirdCard));
 
         // Begin and accept may ability
-        PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Stack entry created, pass priorities to resolve
-        harness.passBothPriorities();
 
         // Should be in LIBRARY_SEARCH state
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -129,12 +127,9 @@ class PsychicSurgeryTest extends BaseCardTest {
         int exileSizeBefore = gd.getPlayerExiledCards(player1.getId()).size();
 
         // Begin and accept may ability
-        PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Pass priorities to resolve
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
@@ -173,12 +168,9 @@ class PsychicSurgeryTest extends BaseCardTest {
         LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
 
         // Begin and accept may ability
-        PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Pass priorities to resolve — should handle empty library gracefully
-        harness.passBothPriorities();
 
         // No library search should be initiated since library is empty
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -203,12 +195,9 @@ class PsychicSurgeryTest extends BaseCardTest {
         deck.add(onlyCard);
 
         // Begin and accept may ability
-        PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Pass priorities to resolve
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 

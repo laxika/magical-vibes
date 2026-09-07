@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.Breezekeeper;
-import com.github.laxika.magicalvibes.cards.f.Fervor;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CityOfSolitude;
+import com.github.laxika.magicalvibes.cards.q.Quicksand;
+import com.github.laxika.magicalvibes.cards.t.TitaniasSong;
+import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Breezekeeper.class, CityOfSolitude.class, Quicksand.class, SandsOfTime.class, TitaniasSong.class,
+        Warthog.class})
 class SandsOfTimeTest extends BaseCardTest {
 
     @Test
@@ -24,12 +28,12 @@ class SandsOfTimeTest extends BaseCardTest {
         addReady(player1, new SandsOfTime());
         // Enchantments are not flipped by the upkeep ability — so a tapped enchantment staying
         // tapped proves the untap step itself was skipped (advanceToNextTurn auto-resolves upkeep).
-        Permanent fervor = addReady(player1, new Fervor());
-        fervor.tap();
+        Permanent cityOfSolitude = addReady(player1, new CityOfSolitude());
+        cityOfSolitude.tap();
 
         advanceToNextTurn(player2);
 
-        assertThat(fervor.isTapped()).isTrue();
+        assertThat(cityOfSolitude.isTapped()).isTrue();
     }
 
     @Test
@@ -45,59 +49,84 @@ class SandsOfTimeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Losing Sands of Time's abilities stops its untap-step effect")
+    void losingAbilitiesStopsUntapStepEffect() {
+        addReady(player1, new SandsOfTime());
+        addReady(player1, new TitaniasSong());
+        Permanent cityOfSolitude = addReady(player1, new CityOfSolitude());
+        cityOfSolitude.tap();
+
+        advanceToNextTurn(player2);
+
+        assertThat(cityOfSolitude.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing Sands of Time's abilities stops its upkeep trigger")
+    void losingAbilitiesStopsUpkeepTrigger() {
+        addReady(player1, new SandsOfTime());
+        addReady(player1, new TitaniasSong());
+        Permanent warthog = addReady(player1, new Warthog());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(warthog.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Upkeep simultaneously flips tap states of artifacts, creatures, and lands")
     void upkeepFlipsTapStates() {
         Permanent sands = addReady(player1, new SandsOfTime());
-        Permanent tappedBears = addReady(player1, new GrizzlyBears());
-        Permanent untappedBears = addReady(player1, new GrizzlyBears());
-        Permanent tappedForest = addReady(player1, new Forest());
-        Permanent untappedForest = addReady(player1, new Forest());
-        Permanent fervor = addReady(player1, new Fervor());
-        tappedBears.tap();
-        tappedForest.tap();
+        Permanent tappedWarthog = addReady(player1, new Warthog());
+        Permanent untappedWarthog = addReady(player1, new Warthog());
+        Permanent tappedQuicksand = addReady(player1, new Quicksand());
+        Permanent untappedQuicksand = addReady(player1, new Quicksand());
+        Permanent cityOfSolitude = addReady(player1, new CityOfSolitude());
+        tappedWarthog.tap();
+        tappedQuicksand.tap();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
 
-        assertThat(tappedBears.isTapped()).isFalse();
-        assertThat(untappedBears.isTapped()).isTrue();
-        assertThat(tappedForest.isTapped()).isFalse();
-        assertThat(untappedForest.isTapped()).isTrue();
+        assertThat(tappedWarthog.isTapped()).isFalse();
+        assertThat(untappedWarthog.isTapped()).isTrue();
+        assertThat(tappedQuicksand.isTapped()).isFalse();
+        assertThat(untappedQuicksand.isTapped()).isTrue();
         assertThat(sands.isTapped()).isTrue();
-        assertThat(fervor.isTapped()).isFalse();
+        assertThat(cityOfSolitude.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Opponent's upkeep flips only that player's matching permanents")
     void flipsOnlyActivePlayersPermanents() {
         addReady(player1, new SandsOfTime());
-        Permanent ownBears = addReady(player1, new GrizzlyBears());
-        Permanent oppBears = addReady(player2, new GrizzlyBears());
-        ownBears.tap();
+        Permanent ownWarthog = addReady(player1, new Warthog());
+        Permanent opponentWarthog = addReady(player2, new Warthog());
+        ownWarthog.tap();
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(ownBears.isTapped()).isTrue();
-        assertThat(oppBears.isTapped()).isTrue();
+        assertThat(ownWarthog.isTapped()).isTrue();
+        assertThat(opponentWarthog.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Still skips untap and flips while Sands of Time itself is tapped")
     void worksWhileTapped() {
         Permanent sands = addReady(player1, new SandsOfTime());
-        Permanent fervor = addReady(player1, new Fervor());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent cityOfSolitude = addReady(player1, new CityOfSolitude());
+        Permanent warthog = addReady(player1, new Warthog());
         sands.tap();
-        fervor.tap();
-        bears.tap();
+        cityOfSolitude.tap();
+        warthog.tap();
 
         advanceToNextTurn(player2);
-        assertThat(fervor.isTapped()).isTrue(); // skip still applied while Sands is tapped
-        assertThat(bears.isTapped()).isFalse(); // upkeep flip already resolved via auto-pass
+        assertThat(cityOfSolitude.isTapped()).isTrue(); // skip still applied while Sands is tapped
+        assertThat(warthog.isTapped()).isFalse(); // upkeep flip already resolved via auto-pass
         assertThat(sands.isTapped()).isFalse();
     }
 
@@ -112,9 +141,7 @@ class SandsOfTimeTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        Player nextActivePlayer = currentActivePlayer.getId().equals(player1.getId()) ? player2 : player1;
+        harness.passUntil(nextActivePlayer, TurnStep.PRECOMBAT_MAIN);
     }
 }

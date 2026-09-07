@@ -56,6 +56,11 @@ class GlyphOfDestructionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
+        harness.passBothPriorities();
+
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
         harness.assertInGraveyard(player2, "Wall of Wood");
     }

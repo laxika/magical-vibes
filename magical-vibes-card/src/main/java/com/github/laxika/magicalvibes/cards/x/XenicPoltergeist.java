@@ -29,7 +29,7 @@ public class XenicPoltergeist extends Card {
                 List.of(new AnimatePermanentsEffect(
                         new TargetManaValue(), new TargetManaValue(),
                         List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.UNTIL_YOUR_NEXT_TURN, null
+                        GrantScope.TARGET, EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP, null
                 )),
                 "{T}: Until your next upkeep, target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value.",
                 new PermanentPredicateTargetFilter(

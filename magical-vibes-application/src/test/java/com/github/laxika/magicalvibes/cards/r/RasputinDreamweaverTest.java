@@ -59,6 +59,7 @@ class RasputinDreamweaverTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "1");
 
         assertThat(rasputin.getCounterCount(CounterType.DREAM)).isEqualTo(1);
     }

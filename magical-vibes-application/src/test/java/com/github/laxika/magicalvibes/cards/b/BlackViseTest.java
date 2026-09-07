@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AvariceTotem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +14,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlackVise.class, GrizzlyBears.class, AvariceTotem.class})
 class BlackViseTest extends BaseCardTest {
 
     private List<Card> bears(int count) {
@@ -78,10 +82,27 @@ class BlackViseTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         // Grow the hand while the trigger is on the stack: 8 - 4 = 4 at resolution.
-        gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
-        gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
+        harness.setHand(player2, bears(8));
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
+    }
+
+    @Test
+    void chosenOpponentStaysFixedWhenControlChanges() {
+        var blackVise = harness.addToBattlefieldAndReturn(player1, new BlackVise());
+        harness.addToBattlefield(player2, new AvariceTotem());
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player2, 0, null, blackVise.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, bears(6));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 }

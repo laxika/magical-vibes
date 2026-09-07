@@ -1,17 +1,22 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Static effect: "If damage would be dealt to another creature you control, prevent that damage.
- * Put a +1/+1 counter on that creature for each 1 damage prevented this way." (e.g. Vigor), or the
- * same replacement applied to the source itself (e.g. Anti-Venom, Horrifying Healer).
- * <p>
- * The no-argument constructor excludes the source itself; the boolean constructor can include it.
- * Both forms cover combat and noncombat damage. Hooked in
- * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#applyCreaturePreventionShield}.
+ * Static effect that prevents damage to creatures controlled by the source permanent's controller
+ * and replaces it with +1/+1 counters. The default form excludes the source itself (Vigor).
  */
-public record PreventDamageToOtherCreaturesAndAddPlusCountersEffect(boolean includeSource) implements CardEffect {
+public record PreventDamageToOtherCreaturesAndAddPlusCountersEffect(
+        boolean includeSource, boolean noncombatOnly, boolean sourceOnly) implements CardEffect {
 
     public PreventDamageToOtherCreaturesAndAddPlusCountersEffect() {
-        this(false);
+        this(false, false, false);
+    }
+
+    public PreventDamageToOtherCreaturesAndAddPlusCountersEffect(boolean includeSource) {
+        this(includeSource, false, false);
+    }
+
+    /** Creates the source-only variant, optionally restricted to noncombat damage. */
+    public static PreventDamageToOtherCreaturesAndAddPlusCountersEffect forSource(boolean noncombatOnly) {
+        return new PreventDamageToOtherCreaturesAndAddPlusCountersEffect(false, noncombatOnly, true);
     }
 }

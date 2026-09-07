@@ -54,7 +54,7 @@ public final class BlockLegalityContext {
      */
     final Map<UUID, List<Permanent>> attachedByHostId;
 
-    /** Union of printed card subtypes on the defender battlefield, for landwalk checks. */
+    /** Union of card subtypes and effective basic land types on the defender battlefield. */
     final Set<CardSubtype> defenderCardSubtypes;
 
     /** Landwalk keywords specifically ignored by board-wide static effects. */
@@ -128,6 +128,10 @@ public final class BlockLegalityContext {
     record TappedBlockPermission(TappedBlockPermissionEffect effect, FilterContext filterContext) {
     }
 
+    /** One attacker-side restriction and the permanent whose static ability imposes it. */
+    record AttackerRestriction(Permanent source, BlockabilityRestrictionEffect effect) {
+    }
+
     /**
      * Attacker-side facts that do not depend on the blocker, computed once per attacker.
      * {@code colors} is populated only when the attacker has intimidate (the only check that
@@ -148,7 +152,7 @@ public final class BlockLegalityContext {
                          boolean cantBeBlockedByLessPower,
                          boolean cantBeBlockedByPowerLessThanIslandCount,
                          Set<CardColor> colors,
-                         List<BlockabilityRestrictionEffect> pairRestrictions,
+                         List<AttackerRestriction> pairRestrictions,
                          BlockDenial landwalkDenial,
                          boolean landwalkUnblockable,
                          boolean unblockableForOtherReason) {
@@ -171,6 +175,7 @@ public final class BlockLegalityContext {
                         boolean shadow,
                         boolean blocksShadowAsThoughShadow,
                         boolean blocksLandwalkAsThoughNoLandwalk,
+                        List<PermanentPredicate> blocksAsThoughReachForAttackers,
                         boolean artifact,
                         Set<CardColor> colors,
                         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions,

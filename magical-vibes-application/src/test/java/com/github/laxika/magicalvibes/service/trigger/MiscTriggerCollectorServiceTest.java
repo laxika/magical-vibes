@@ -123,6 +123,23 @@ class MiscTriggerCollectorServiceTest {
     private MiscTriggerCollectorService sut;
 
     private TriggerCollectorRegistry registry;
+
+    @Test
+    void enchantedPermanentTapModalWaitsForModeAndTargetBeforeGoingOnTheStack() {
+        Permanent aura = createPermanent("Modal aura");
+        Permanent tapped = createPermanent("Artifact");
+        var effect = new com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect();
+
+        registry.dispatch(match(aura, player1Id, effect), EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+                effect, new TriggerContext.EnchantedPermanentTap(tapped, player2Id));
+
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.pollPendingInteraction(
+                com.github.laxika.magicalvibes.model.PermanentChoiceContext.TriggeredModalTrigger.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.sourcePermanentId()).isEqualTo(aura.getId());
+    }
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -301,6 +318,42 @@ class MiscTriggerCollectorServiceTest {
 
         assertThat(result).isFalse();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("controller life-gain conditional trigger queues its wrapped effect")
+    void controllerLifeGainConditionalTriggerQueuesWrappedEffect() {
+        Permanent perm = createPermanent("Vampire Scrivener");
+        var wrapped = new PutCountersOnSourceEffect(1, 1, 1);
+        var effect = new ConditionalEffect(new ControllerTurn(), wrapped);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect,
+                new TriggerContext.LifeGain(player1Id, 3));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(wrapped);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("controller life-loss conditional trigger queues its wrapped effect")
+    void controllerLifeLossConditionalTriggerQueuesWrappedEffect() {
+        Permanent perm = createPermanent("Vampire Scrivener");
+        var wrapped = new PutCountersOnSourceEffect(1, 1, 1);
+        var effect = new ConditionalEffect(new ControllerTurn(), wrapped);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect,
+                new TriggerContext.LifeLoss(player1Id, 2));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(wrapped);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(2);
     }
 
     @Test

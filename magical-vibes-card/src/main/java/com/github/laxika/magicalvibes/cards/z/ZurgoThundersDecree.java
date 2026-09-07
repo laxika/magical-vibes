@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.ControllerEndStep;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,8 +25,10 @@ public class ZurgoThundersDecree extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenEffect(2, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
         addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(new CantBeSacrificedEffect(), GrantScope.OWN_CREATURES,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsTokenPredicate(), new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerEndStep(),
+                new GrantEffectEffect(new CantBeSacrificedEffect(), GrantScope.OWN_CREATURES,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsTokenPredicate(),
+                                new PermanentHasSubtypePredicate(CardSubtype.WARRIOR))))));
     }
 }

@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ViashivanDragon.class)
 class ViashivanDragonTest extends BaseCardTest {
 
     @Test
@@ -35,6 +37,22 @@ class ViashivanDragonTest extends BaseCardTest {
 
         assertThat(dragon.getPowerModifier()).isEqualTo(0);
         assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A pump affects only the dragon that activated it")
+    void pumpAffectsOnlyItsSource() {
+        Permanent source = addCreatureReady(player1, new ViashivanDragon());
+        Permanent otherDragon = addCreatureReady(player2, new ViashivanDragon());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(otherDragon.getPowerModifier()).isZero();
+        assertThat(otherDragon.getToughnessModifier()).isZero();
     }
 
     @Test

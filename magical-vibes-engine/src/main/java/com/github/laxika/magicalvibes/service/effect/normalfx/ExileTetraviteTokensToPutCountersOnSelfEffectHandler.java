@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTetraviteTokensToPutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExileTetraviteTokensToPutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -38,10 +36,6 @@ public class ExileTetraviteTokensToPutCountersOnSelfEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID sourceId = entry.getSourcePermanentId();
-        Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-        if (source == null) {
-            return;
-        }
         Set<UUID> created = gameData.sourceCreatedTokens.get(sourceId);
         if (created == null || created.isEmpty()) {
             return;
@@ -66,7 +60,7 @@ public class ExileTetraviteTokensToPutCountersOnSelfEffectHandler implements Nor
 
         playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), eligible, eligible.size(),
                 new MultiPermanentChoiceContext.ExileTetraviteTokensPutCountersOnSource(sourceId),
-                "Exile any number of tokens created with " + source.getCard().getName()
+                "Exile any number of tokens created with " + entry.getCard().getName()
                         + " to put that many +1/+1 counters on it.");
     }
 }

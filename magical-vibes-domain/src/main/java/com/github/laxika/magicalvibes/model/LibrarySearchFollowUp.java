@@ -70,10 +70,16 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                     SelectedCardFollowUp selectedCardFollowUp) {
 
     public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect,
-                                       boolean useSelectedCardManaValue) {
+                                       boolean useSelectedCardManaValue,
+                                       CardEffect effectIfNoCardChosen) {
+
+        public SelectedCardFollowUp(CardPredicate predicate, CardEffect effect,
+                                    boolean useSelectedCardManaValue) {
+            this(predicate, effect, useSelectedCardManaValue, null);
+        }
 
         public SelectedCardFollowUp(CardPredicate predicate, CardEffect effect) {
-            this(predicate, effect, false);
+            this(predicate, effect, false, null);
         }
     }
 
@@ -370,6 +376,12 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
                 false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
                 new SelectedCardFollowUp(predicate, effect));
+    }
+
+    public static LibrarySearchFollowUp forNoCard(CardEffect effect) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
+                false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
+                new SelectedCardFollowUp(null, null, false, effect));
     }
 
     public static LibrarySearchFollowUp forSelectedCardWithManaValue(

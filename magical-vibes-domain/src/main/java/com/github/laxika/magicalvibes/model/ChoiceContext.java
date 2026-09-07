@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 public sealed interface ChoiceContext {
 
+    record CappedCounterAmountChoice(UUID sourcePermanentId) implements ChoiceContext {}
+
     record SagaChapterCounterAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                          UUID sourcePermanentId, String chapterName, CounterType counterType,
                                          List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
@@ -40,8 +42,13 @@ public sealed interface ChoiceContext {
 
     record TextChangeFromWord(UUID targetId, boolean untilEndOfTurn) implements ChoiceContext {}
 
-    record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn)
-            implements ChoiceContext {}
+    record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn,
+                            boolean isCreatureType) implements ChoiceContext {
+
+        public TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn) {
+            this(targetId, fromWord, isColor, untilEndOfTurn, false);
+        }
+    }
 
     record ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes,
                                 boolean anyColorCombination) implements ChoiceContext {
@@ -68,6 +75,7 @@ public sealed interface ChoiceContext {
     }
 
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+    record TreasureManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
@@ -466,6 +474,15 @@ public sealed interface ChoiceContext {
             return new ManaColorChoice(playerId, fromCreature, amount, null, false, false, false, colors, false);
         }
 
+        /** "Add N mana in any combination of colors", spendable only to cast creature spells. */
+        public static ManaColorChoice creatureSpellOnlyColorCombination(UUID playerId, boolean fromCreature,
+                                                                         int amount, List<ManaColor> colors) {
+            return new ManaColorChoice(
+                    playerId, fromCreature, amount, null, false, false, false, false, colors,
+                    true, false, false, false, false, null, null, false, null, false,
+                    false, false, false, null, false, false);
+        }
+
         public static ManaColorChoice riotColorCombination(UUID playerId, boolean fromCreature,
                                                             int amount, List<ManaColor> colors) {
             return fixedColorCombination(playerId, fromCreature, amount, colors).withRiot();
@@ -686,6 +703,9 @@ public sealed interface ChoiceContext {
 
     record TargetCreatureHexproofFromChosenColorChoice(UUID targetId) implements ChoiceContext {}
 
+    record BecomeChosenColorAndGainHexproofChoice(UUID targetId, UUID controllerId,
+                                                    String sourceCardName) implements ChoiceContext {}
+
     /**
      * The controller chooses a color at resolution; the target permanent then becomes that color
      * until end of turn (CR 105.3 / layer 5). Used by Distorting Lens.
@@ -735,8 +755,24 @@ public sealed interface ChoiceContext {
     /** Choosing a number at resolution for a spell with no permanent to store it on. */
     record SpellNumberChoice(UUID controllerId) implements ChoiceContext {}
 
+    /** Choosing odd or even at resolution for a spell with no permanent to store it on. */
+    record SpellManaValueParityChoice(UUID controllerId) implements ChoiceContext {}
+
     /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
-    record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
+    record ManaValueParityChoice(UUID permanentId, Card creatureCard, UUID targetId,
+                                 boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                 List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                                 List<UUID> convokeCreatureIds) implements ChoiceContext {
+        public ManaValueParityChoice {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+
+        public ManaValueParityChoice(UUID permanentId) {
+            this(permanentId, null, null, false, 0, 0, false, List.of(), List.of(), List.of());
+        }
+    }
 
     /**
      * Choosing a number in an inclusive range for {@code permanentId} (e.g. Shapeshifter's "choose a
@@ -755,11 +791,20 @@ public sealed interface ChoiceContext {
                                       boolean wasCastFromHand, int etbMode,
                                       boolean kicked) implements ChoiceContext {}
 
-    /** The controller chooses the counter type for a creature's as-enters replacement. */
+    /** The controller chooses counter types for a creature's as-enters replacement. */
     record AsEntersCounterTypeChoice(UUID permanentId, UUID controllerId, Card card, UUID targetId,
                                      boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
                                      List<UUID> targetIds, int exiledCardCount,
-                                     List<CounterType> counterTypes) implements ChoiceContext {
+                                     List<CounterType> counterTypes,
+                                     boolean requireDifferentCounterTypes) implements ChoiceContext {
+        public AsEntersCounterTypeChoice(UUID permanentId, UUID controllerId, Card card, UUID targetId,
+                                         boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                         List<UUID> targetIds, int exiledCardCount,
+                                         List<CounterType> counterTypes) {
+            this(permanentId, controllerId, card, targetId, wasCastFromHand, etbMode, xValue, kicked,
+                    targetIds, exiledCardCount, counterTypes, false);
+        }
+
         public AsEntersCounterTypeChoice {
             targetIds = List.copyOf(targetIds);
             counterTypes = List.copyOf(counterTypes);
@@ -1044,7 +1089,12 @@ public sealed interface ChoiceContext {
      * damage). Used by Vexing Arcanix.
      */
     record TargetPlayerNameCardRevealTopChoice(UUID controllerId, UUID targetPlayerId, UUID sourcePermanentId,
-                                               int damageOnMiss) implements ChoiceContext {}
+                                               int damageOnMiss, Card sourceCard) implements ChoiceContext {
+        public TargetPlayerNameCardRevealTopChoice(UUID controllerId, UUID targetPlayerId,
+                                                   UUID sourcePermanentId, int damageOnMiss) {
+            this(controllerId, targetPlayerId, sourcePermanentId, damageOnMiss, null);
+        }
+    }
 
     /**
      * Diviner's Lockbox: the controller names a card, then reveals the top card of their library.
@@ -1168,6 +1218,11 @@ public sealed interface ChoiceContext {
     record CreateTokensPerPermanentOfChosenColorChoice(UUID controllerId,
                                                        com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                                        String sourceSetCode) implements ChoiceContext {}
+
+    record JinnieFayTokenChoice(UUID controllerId, Card sourceCard,
+                                com.github.laxika.magicalvibes.model.effect.CreateTokenEffect originalToken,
+                                int amount, int power, int toughness, String sourceSetCode)
+            implements ChoiceContext {}
 
     /** The controller chooses a color at resolution, then gains one life per matching permanent. */
     record GainLifePerPermanentOfChosenColorChoice(UUID controllerId, Card sourceCard,
@@ -1360,6 +1415,20 @@ public sealed interface ChoiceContext {
                 case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
                 default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
             };
+        }
+    }
+
+    record RemoveOneCounterChoice(UUID targetId, UUID controllerId, String sourceCardName,
+                                  List<CounterType> counterTypes) implements ChoiceContext {
+
+        public RemoveOneCounterChoice {
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            return counterTypes.stream()
+                    .map(RemoveChosenCountersChoice::counterLabel)
+                    .toList();
         }
     }
 
@@ -1560,6 +1629,22 @@ public sealed interface ChoiceContext {
 
         public static String payOption(String repeatManaCost) {
             return "Pay " + repeatManaCost;
+        }
+    }
+
+    /** Chooses how to pay, or not pay, an enchanted permanent's upkeep penalty. */
+    record EnchantedPermanentManaOrLifePaymentChoice(
+            UUID affectedPlayerId, String sourceCardName, UUID sourcePermanentId,
+            String manaCost, int lifeCost) implements ChoiceContext {
+
+        public static final String DECLINE = "Don't pay";
+
+        public String payManaOption() {
+            return "Pay " + manaCost;
+        }
+
+        public String payLifeOption() {
+            return "Pay " + lifeCost + " life";
         }
     }
 

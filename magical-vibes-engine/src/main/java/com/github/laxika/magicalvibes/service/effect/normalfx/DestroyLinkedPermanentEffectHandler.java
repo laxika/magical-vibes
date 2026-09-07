@@ -37,7 +37,7 @@ public class DestroyLinkedPermanentEffectHandler implements NormalEffectHandlerB
         if (linkedId == null) {
             linkedId = source == null ? null : source.getChosenPermanentId();
         }
-        if (source != null) {
+        if (source != null && linkedId != null && linkedId.equals(source.getChosenPermanentId())) {
             source.setChosenPermanentId(null);
         }
         if (linkedId == null) {

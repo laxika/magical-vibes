@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BalduvianHydra.class, BalduvianBears.class, ZuranSpellcaster.class})
 class BalduvianHydraTest extends BaseCardTest {
 
     @Test
@@ -67,9 +68,7 @@ class BalduvianHydraTest extends BaseCardTest {
     void shieldPreventsNoncombatDamage() {
         Permanent hydra = addCreatureReady(player1, new BalduvianHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 3);
-        Permanent pyromancer = new Permanent(new ProdigalPyromancer());
-        pyromancer.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pyromancer);
+        addCreatureReady(player1, new ZuranSpellcaster());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -86,18 +85,13 @@ class BalduvianHydraTest extends BaseCardTest {
     void shieldPreventsCombatDamage() {
         Permanent hydra = addCreatureReady(player1, new BalduvianHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 3);
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new BalduvianBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -146,6 +140,39 @@ class BalduvianHydraTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("The {R}{R}{R} ability cannot be activated during an opponent's upkeep")
+    void upkeepAbilityCannotBeActivatedDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new BalduvianHydra());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("The prevention shield applies only to damage dealt to that Hydra")
+    void shieldAppliesOnlyToSourceHydra() {
+        Permanent hydra = addCreatureReady(player1, new BalduvianHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+        Permanent bear = addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player1, new ZuranSpellcaster());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 2, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(hydra.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(bear.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test

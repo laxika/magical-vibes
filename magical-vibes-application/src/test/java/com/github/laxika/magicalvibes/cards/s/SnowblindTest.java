@@ -1,42 +1,38 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.m.Melting;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Snowblind.class, BalduvianBears.class, Plains.class, SnowCoveredPlains.class, Melting.class})
 class SnowblindTest extends BaseCardTest {
 
     /** A 2/2 owned by {@code creatureController}, enchanted by a Snowblind player1 controls. */
     private Permanent enchantedBears(Player creatureController) {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(creatureController.getId()).add(bears);
+        Permanent bears = addCreatureReady(creatureController, new BalduvianBears());
 
-        Permanent aura = new Permanent(new Snowblind());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Snowblind());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return bears;
     }
 
     private void addSnowLands(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Permanent snowLand = new Permanent(new Plains());
-            TestCards.mutableCard(snowLand).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-            gd.playerBattlefields.get(player.getId()).add(snowLand);
+            harness.addToBattlefield(player, new SnowCoveredPlains());
         }
     }
 
@@ -59,6 +55,17 @@ class SnowblindTest extends BaseCardTest {
         addSnowLands(player2, 3);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Y can raise a creature that is already below one toughness")
+    void negativeYRaisesAlreadySubOneToughness() {
+        Permanent bears = enchantedBears(player2);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+        addSnowLands(player2, 1);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
@@ -98,6 +105,17 @@ class SnowblindTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Lands that have lost snow are not counted")
+    void landsThatLostSnowAreNotCounted() {
+        Permanent bears = enchantedBears(player2);
+        harness.addToBattlefield(player2, new SnowCoveredPlains());
+        harness.addToBattlefield(player2, new Melting());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("The debuff ends when Snowblind leaves the battlefield")
     void debuffEndsWhenAuraLeaves() {
         Permanent bears = enchantedBears(player2);
@@ -116,7 +134,7 @@ class SnowblindTest extends BaseCardTest {
     void cannotTargetNonCreature() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
         harness.addToBattlefield(player1, new Plains());
         harness.setHand(player1, List.of(new Snowblind()));
         harness.addMana(player1, ManaColor.GREEN, 4);

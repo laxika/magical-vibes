@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StoneRain.class, Mountain.class, GrizzlyBears.class, CityOfBrass.class})
 class StoneRainTest extends BaseCardTest {
 
     @Test
@@ -45,8 +48,7 @@ class StoneRainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
@@ -60,11 +62,24 @@ class StoneRainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player1, "Mountain");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Mountain");
         harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Can destroy a nonbasic land")
+    void canDestroyNonbasicLand() {
+        harness.addToBattlefield(player2, new CityOfBrass());
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "City of Brass");
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "City of Brass");
+        harness.assertInGraveyard(player2, "City of Brass");
     }
 
     @Test

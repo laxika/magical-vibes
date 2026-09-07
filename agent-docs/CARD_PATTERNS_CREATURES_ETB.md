@@ -6,6 +6,11 @@ For an ETB that free-casts an instant from your graveyard, use
 `CastTargetInstantOrSorceryFromGraveyardEffect(CONTROLLERS_GRAVEYARD, true, true,
 CardTypePredicate(INSTANT))` as in `t/TorrentialGearhulk.java`.
 
+ETB Exploit plus an exploit trigger that uses the sacrificed creature's toughness uses
+`MayEffect(ExploitEffect)` on `ON_ENTER_BATTLEFIELD` and
+`ReturnOpponentsCreaturesWithToughnessLessThanSacrificedEffect` on `ON_EXPLOIT`, as in
+`p/ProfanerOfTheDead.java`.
+
 For an ETB that pays X and then offers a free cast of an instant or sorcery with mana value X
 from any graveyard, use `PayXManaCastTargetInstantOrSorceryFromGraveyardEffect()` as in
 `h/HaloForager.java`.
@@ -136,6 +141,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep control-to-lowest-life | `l/LoxodonPeacekeeper.java` | UPKEEP_TRIGGERED PlayerWithLowestLifeGainsControlOfSourceCreatureEffect - the player with the lowest life gains control; the controller chooses among tied lowest-life players |
 | Upkeep control-to-most-life | `g/GhazbNOgre.java` | UPKEEP_TRIGGERED PlayerWithMostLifeGainsControlOfSourceCreatureEffect — player with strictly the most life gains control; no-op on a tie |
 | Upkeep control-to-most-creatures | `w/WildMammoth.java` | UPKEEP_TRIGGERED ConditionalEffect(APlayerControlsMoreCreaturesThanEachOtherPlayer, PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect) — unique player with the most creatures gains control; no-op on a tie |
+| Upkeep control-to-most-Wizards | `t/ThoughtboundPrimoc.java` | UPKEEP_TRIGGERED ConditionalEffect(APlayerControlsMoreCreaturesThanEachOtherPlayer(wizards), PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect(wizards)) — unique player with the most Wizard creatures gains control; no-op on a tie |
 | Upkeep control-to-most-cards-in-hand | `s/SokenzanRenegade.java` | UPKEEP_TRIGGERED ConditionalEffect(APlayerHasMoreCardsInHandThanEachOtherPlayer, PlayerWithMostCardsInHandGainsControlOfSourceCreatureEffect) — unique player with the most cards in hand gains control; no-op on a tie |
 | ETB discard hand + opponent edict per card | `m/Malfegor.java` | DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect() — discard your hand, each opponent sacrifices a creature of their choice for each card discarded this way (sacrifice count = cards discarded) |
 | ETB each player sacrifices a creature or planeswalker, otherwise discards | `p/Plaguecrafter.java` | EachPlayerSacrificesPermanentOrDiscardsEffect(creature OR planeswalker) — APNAP sacrifice choices and simultaneous sacrifice, followed by APNAP discard choices and simultaneous discards |
@@ -190,3 +196,4 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Kicker sorcery (tap subtype kicker + life drain) | `b/BloodTribute.java` | STATIC `KickerEffect.tap(PermanentHasSubtypePredicate(VAMPIRE), "an untapped Vampire")` + target-opponent SPELL `LoseLifeEffect(HalvedRoundedUp(TargetPlayerLifeTotal), TARGET_PLAYER, true)` |
 
 
+| ETB any player may sacrifice two creatures, then sacrifice this creature | `p/ProwlingPangolin.java` | AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffect(2) — offers eligible players the choice in APNAP order, uses the multi-permanent sacrifice flow, and continues to later players after an acceptance |

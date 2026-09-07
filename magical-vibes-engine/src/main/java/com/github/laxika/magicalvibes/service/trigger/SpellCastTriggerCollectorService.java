@@ -140,6 +140,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCo
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -1961,6 +1962,7 @@ public class SpellCastTriggerCollectorService {
                 sc.castingPlayerId(),
                 match.permanent().getId()
         );
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }
@@ -2193,13 +2195,21 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
+        boolean interveningSpellManaValueCondition =
+                trigger.intervening() instanceof SpellManaValueEqualsSourceCounters;
+        int interveningSpellManaValue = interveningSpellManaValueCondition
+                ? spellManaValue(match.gameData(), spellCard) : 0;
         int interveningManaSpent = trigger.intervening() instanceof SpellCreatureManaSpentAtLeast
                 ? match.gameData().getSpellCastCreatureManaSpent(spellCard.getId())
                 : match.gameData().getSpellCastManaSpent(spellCard.getId());
+        ConditionContext interveningContext = ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                .withXValue(interveningManaSpent);
+        if (interveningSpellManaValueCondition) {
+            interveningContext = interveningContext.withEventValue(interveningSpellManaValue);
+        }
         if (trigger.intervening() != null
                 && !conditionEvaluationService.isMet(match.gameData(), trigger.intervening(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId())
-                        .withXValue(interveningManaSpent))) {
+                interveningContext)) {
             return false;
         }
 
@@ -2360,6 +2370,12 @@ public class SpellCastTriggerCollectorService {
             entry.setTriggeringCardId(spellCard.getId());
             if (carriesTriggeringSpellManaValue) {
                 entry.setEventValue(triggeringSpellManaValue);
+            }
+            if (interveningSpellManaValueCondition) {
+                entry.setEventValue(interveningSpellManaValue);
+            }
+            if (trigger.intervening() != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             }
             match.gameData().stack.add(entry);
         }

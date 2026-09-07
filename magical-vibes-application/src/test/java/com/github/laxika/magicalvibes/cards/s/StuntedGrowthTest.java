@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StuntedGrowth.class, BalduvianBears.class})
 class StuntedGrowthTest extends BaseCardTest {
 
     private List<Card> targetHand(int size) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < size; i++) {
-            cards.add(new GrizzlyBears());
+            cards.add(new BalduvianBears());
         }
         return cards;
     }
@@ -42,8 +44,35 @@ class StuntedGrowthTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOfSatisfying(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class, choice -> {
                     assertThat(choice.playerId()).isEqualTo(player2.getId());
+                    assertThat(choice.minCount()).isEqualTo(3);
                     assertThat(choice.maxCount()).isEqualTo(3);
                 });
+    }
+
+    @Test
+    @DisplayName("The caster may also be the targeted player")
+    void canTargetController() {
+        List<Card> hand = targetHand(3);
+        List<Card> casterHand = new ArrayList<>();
+        casterHand.add(new StuntedGrowth());
+        casterHand.addAll(hand);
+        harness.setHand(player1, casterHand);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class, choice -> {
+                    assertThat(choice.playerId()).isEqualTo(player1.getId());
+                    assertThat(choice.minCount()).isEqualTo(3);
+                    assertThat(choice.maxCount()).isEqualTo(3);
+                });
+
+        harness.handleMultipleCardsChosen(player1, hand.stream().map(Card::getId).toList());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Test
@@ -75,7 +104,10 @@ class StuntedGrowthTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOfSatisfying(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class,
-                        choice -> assertThat(choice.maxCount()).isEqualTo(2));
+                        choice -> {
+                            assertThat(choice.minCount()).isEqualTo(2);
+                            assertThat(choice.maxCount()).isEqualTo(2);
+                        });
 
         harness.handleMultipleCardsChosen(player2, List.of(hand.get(0).getId(), hand.get(1).getId()));
 
