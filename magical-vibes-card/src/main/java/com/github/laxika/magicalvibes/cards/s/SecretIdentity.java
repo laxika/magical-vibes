@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "43")
+@CardRegistration(set = "OM1", collectorNumber = "42")
 public class SecretIdentity extends Card {
 
     public SecretIdentity() {

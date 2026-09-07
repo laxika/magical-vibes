@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "93")
 @CardRegistration(set = "SPM", collectorNumber = "263")
+@CardRegistration(set = "OM1", collectorNumber = "75")
 public class SpiderVerse extends Card {
 
     public SpiderVerse() {

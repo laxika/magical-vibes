@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "159")
 @CardRegistration(set = "SPM", collectorNumber = "203")
+@CardRegistration(set = "OM1", collectorNumber = "134")
 public class WebWarriors extends Card {
 
     public WebWarriors() {

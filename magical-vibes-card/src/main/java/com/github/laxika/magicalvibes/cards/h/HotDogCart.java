@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "164")
+@CardRegistration(set = "OM1", collectorNumber = "177")
 public class HotDogCart extends Card {
 
     public HotDogCart() {
