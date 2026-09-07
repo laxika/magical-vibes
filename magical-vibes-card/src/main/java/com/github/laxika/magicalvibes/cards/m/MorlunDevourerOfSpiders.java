@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "59")
+@CardRegistration(set = "SPM", collectorNumber = "257")
 public class MorlunDevourerOfSpiders extends Card {
 
     public MorlunDevourerOfSpiders() {

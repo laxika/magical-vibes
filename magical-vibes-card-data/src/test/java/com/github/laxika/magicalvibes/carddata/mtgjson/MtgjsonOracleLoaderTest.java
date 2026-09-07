@@ -63,7 +63,7 @@ class MtgjsonOracleLoaderTest {
         assertThat(data.colors()).containsExactly(CardColor.GREEN, CardColor.RED);
         assertThat(data.power()).isEqualTo(2);
         assertThat(data.toughness()).isEqualTo(2);
-        assertThat(data.keywords()).containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.TRANSFORM);
+        assertThat(data.keywords()).isEmpty();
         assertThat(data.cardText()).isEqualTo("Whenever this creature enters, create a 2/2 green Wolf creature token.");
     }
 

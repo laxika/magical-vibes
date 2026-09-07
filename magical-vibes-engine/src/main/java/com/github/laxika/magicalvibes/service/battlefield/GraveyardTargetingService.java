@@ -83,14 +83,27 @@ public class GraveyardTargetingService {
     public void handleBattlefieldAndGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId,
             BattlefieldAndGraveyardCardChoosingEffect choosingEffect) {
-        handleBattlefieldAndGraveyardExileTargeting(gameData, controllerId, card, effects, sourcePermanentId,
-                choosingEffect, card.getName() + "'s enter-the-battlefield ability");
+        handleBattlefieldAndGraveyardExileETBTargeting(gameData, controllerId, card, effects,
+                sourcePermanentId, choosingEffect, 0);
     }
 
-    /** Handles a mixed-zone exile trigger whose targets are chosen as the ability goes on the stack. */
+    public void handleBattlefieldAndGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId,
+            BattlefieldAndGraveyardCardChoosingEffect choosingEffect, int xValue) {
+        handleBattlefieldAndGraveyardExileTargeting(gameData, controllerId, card, effects,
+                sourcePermanentId, choosingEffect, card.getName() + "'s enter-the-battlefield ability", xValue);
+    }
+
     public void handleBattlefieldAndGraveyardExileTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId,
             BattlefieldAndGraveyardCardChoosingEffect choosingEffect, String abilityDescription) {
+        handleBattlefieldAndGraveyardExileTargeting(gameData, controllerId, card, effects,
+                sourcePermanentId, choosingEffect, abilityDescription, 0);
+    }
+
+    private void handleBattlefieldAndGraveyardExileTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId,
+            BattlefieldAndGraveyardCardChoosingEffect choosingEffect, String abilityDescription, int xValue) {
         PermanentPredicate battlefieldPredicate = choosingEffect.mixedZoneBattlefieldPredicate();
         CardPredicate graveyardPredicate = choosingEffect.mixedZoneGraveyardPredicate();
         List<Card> pool = new ArrayList<>();
@@ -127,7 +140,7 @@ public class GraveyardTargetingService {
                     controllerId,
                     abilityDescription,
                     new ArrayList<>(effects),
-                    0,
+                    xValue,
                     null,
                     sourcePermanentId,
                     Map.of(),
@@ -141,11 +154,12 @@ public class GraveyardTargetingService {
             return;
         }
 
-        int maxTargets = Math.min(choosingEffect.mixedZoneMaxTargets(), pool.size());
+        int maxTargets = Math.min(choosingEffect.mixedZoneMaxTargets(xValue), pool.size());
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+        gameData.graveyardTargetOperation.xValue = xValue;
         gameData.graveyardTargetOperation.anyNumber = true;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, pool, maxTargets,
                 abilityDescription + " — Choose up to " + maxTargets + " "
@@ -157,11 +171,16 @@ public class GraveyardTargetingService {
                                                   List<CardEffect> allEffects, UUID sourcePermanentId,
                                                   ExileCardsFromGraveyardEffect exile) {
         List<Card> matchingCards = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        List<UUID> graveyardOwners = exile.ownGraveyardOnly()
+                ? List.of(controllerId) : gameData.orderedPlayerIds;
+        for (UUID playerId : graveyardOwners) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId, controllerId);
             if (graveyard == null) continue;
             for (Card graveyardCard : graveyard) {
-                matchingCards.add(graveyardCard);
+                if (exile.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, exile.filter(), card.getId(), gameData, playerId)) {
+                    matchingCards.add(graveyardCard);
+                }
             }
         }
 
@@ -186,7 +205,8 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.singleGraveyard = exile.singleGraveyard();
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                     "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
-                            + (exile.singleGraveyard() ? " from a single graveyard" : " from graveyards")
+                            + (exile.ownGraveyardOnly() ? " from your graveyard"
+                            : exile.singleGraveyard() ? " from a single graveyard" : " from graveyards")
                             + " to exile.");
         }
     }
@@ -243,8 +263,18 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
+        if (exile.trackWithSource()) {
+            gameData.graveyardTargetOperation.sourcePermanentId = gameData.playerBattlefields
+                    .getOrDefault(controllerId, List.of()).stream()
+                    .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
+                    .map(Permanent::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
         String zoneLabel = zoneLabel(scope);
+        int minTargets = exile.exactTargetCount() ? maxTargets : 0;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
+                minTargets,
                 "Choose " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from " + zoneLabel + " to exile.");
     }
 
@@ -464,6 +494,7 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+        gameData.graveyardTargetOperation.targetPlayerId = defendingPlayerId;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                 card.getName() + "'s ability — Choose up to " + maxTargets + " target card"
                         + (maxTargets != 1 ? "s" : "") + " from " + zoneLabel + " to exile.");
@@ -485,7 +516,10 @@ public class GraveyardTargetingService {
                 .map(e -> e.targetSpec().graveyardScope().orElse(null))
                 .filter(java.util.Objects::nonNull)
                 .findFirst()
-                .orElseGet(() -> effects.stream().anyMatch(GraveyardCardChoosingEffect.class::isInstance)
+                .orElseGet(() -> effects.stream()
+                        .filter(GraveyardCardChoosingEffect.class::isInstance)
+                        .map(GraveyardCardChoosingEffect.class::cast)
+                        .anyMatch(GraveyardCardChoosingEffect::choosesGraveyardCards)
                         ? GraveyardSearchScope.ALL_GRAVEYARDS : null);
         if (scope == null) {
             return;
@@ -512,9 +546,26 @@ public class GraveyardTargetingService {
         }
 
         if (matchingCards.isEmpty()) {
+            if (target != null && target.minTargets() == 0) {
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s attack trigger",
+                        new ArrayList<>(effects),
+                        0,
+                        sourcePermanentId);
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        "'s attack ability triggers with no graveyard targets."));
+                log.info("Game {} - {} attack graveyard trigger pushed with 0 targets",
+                        gameData.id, card.getName());
+                return;
+            }
             gameLogService.append(gameData, GameLog.cardThen(card,
                     "'s attack trigger has no valid graveyard targets."));
-            log.info("Game {} - {} attack graveyard trigger skipped (no valid targets)",
+            log.info("Game {} - {} attack graveyard trigger pushed with 0 targets",
                     gameData.id, card.getName());
             return;
         }
@@ -530,8 +581,10 @@ public class GraveyardTargetingService {
                         ? "defending player's graveyard"
                         : zoneLabel(scope);
         String destination = target == null ? "to exile" : target.destination();
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
-                card.getName() + "'s ability — Choose target card from " + zoneLabel + " " + destination + ".");
+        int minTargets = target == null ? 1 : target.minTargets();
+        String countLabel = minTargets == 0 ? "up to one target card" : "target card";
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1, minTargets,
+                card.getName() + "'s ability — Choose " + countLabel + " from " + zoneLabel + " " + destination + ".");
 
         gameLogService.append(gameData, GameLog.cardThen(card,
                 "'s attack trigger — choose a graveyard target."));
@@ -540,12 +593,15 @@ public class GraveyardTargetingService {
     }
 
     public void handleBeginningOfCombatGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
-            List<CardEffect> effects, UUID sourcePermanentId,
-            ExileGraveyardCardsEffect exileEffect) {
-        CardPredicate filter = exileEffect.filter();
+            List<CardEffect> effects, UUID sourcePermanentId) {
+        GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(effects);
+        if (target == null) {
+            return;
+        }
+        CardPredicate filter = target.filter();
 
         List<Card> matchingCards = new ArrayList<>();
-        List<UUID> searchPlayerIds = exileEffect.targetSpec().graveyardScope().orElseThrow()
+        List<UUID> searchPlayerIds = target.scope()
                 .graveyardOwners(gameData.orderedPlayerIds, controllerId);
         for (UUID playerId : searchPlayerIds) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId, controllerId);
@@ -586,13 +642,20 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
-                "Choose up to one target card from a graveyard to exile.");
+        int maxTargets = Math.min(target.maxTargets(), matchingCards.size());
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards,
+                maxTargets, target.minTargets(), "Choose up to one target card from a graveyard "
+                        + target.destination() + ".");
 
         String logEntry = description + " triggers — choose a graveyard target.";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} beginning-of-combat trigger awaiting graveyard target selection",
                 gameData.id, card.getName());
+    }
+
+    public void handleBeginningOfCombatGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId, ExileGraveyardCardsEffect ignored) {
+        handleBeginningOfCombatGraveyardTargeting(gameData, controllerId, card, effects, sourcePermanentId);
     }
 
     public void handleGraveyardCastETBTargeting(GameData gameData, UUID controllerId, Card card,
@@ -767,31 +830,50 @@ public class GraveyardTargetingService {
                                                StackEntryType entryType, int xValue) {
         handleExactNGraveyardSpellTargeting(gameData, controllerId, card, entryType, xValue,
                 new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(CardType.CREATURE),
-                "to exile");
+                "to exile", card.getEffects(EffectSlot.SPELL), GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+    }
+
+    public void handleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                               StackEntryType entryType, int xValue,
+                                               List<CardEffect> spellEffects, GraveyardSearchScope scope) {
+        handleExactNGraveyardSpellTargeting(gameData, controllerId, card, entryType, xValue,
+                new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(CardType.CREATURE),
+                "to exile", spellEffects, scope);
     }
 
     public void handleExactNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                      StackEntryType entryType, int targetCount,
                                                      CardPredicate filter, String destination) {
+        handleExactNGraveyardSpellTargeting(gameData, controllerId, card, entryType, targetCount,
+                filter, destination, card.getEffects(EffectSlot.SPELL), GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+    }
+
+    public void handleExactNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                     StackEntryType entryType, int targetCount,
+                                                     CardPredicate filter, String destination,
+                                                     List<CardEffect> spellEffects, GraveyardSearchScope scope) {
         List<Card> matchingCards = new ArrayList<>();
-        List<Card> graveyard = targetableGraveyard(gameData, controllerId, controllerId);
-        if (graveyard != null) {
-            for (Card graveyardCard : graveyard) {
-                if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
-                    matchingCards.add(graveyardCard);
+        for (UUID graveyardOwner : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId)) {
+            List<Card> graveyard = targetableGraveyard(gameData, graveyardOwner, controllerId);
+            if (graveyard != null) {
+                for (Card graveyardCard : graveyard) {
+                    if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                        matchingCards.add(graveyardCard);
+                    }
                 }
             }
         }
 
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
         gameData.graveyardTargetOperation.entryType = entryType;
         gameData.graveyardTargetOperation.xValue = targetCount;
         gameData.graveyardTargetOperation.anyNumber = false;
+        String searchZone = scope == GraveyardSearchScope.ALL_GRAVEYARDS ? "graveyards" : zoneLabel(scope);
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, targetCount,
                 targetCount, "Choose " + targetCount + " target " + CardPredicateUtils.describeFilter(filter)
-                        + (targetCount != 1 ? "s" : "") + " from your graveyard " + destination + ".");
+                        + (targetCount != 1 ? "s" : "") + " from " + searchZone + " " + destination + ".");
     }
 
     public void handleAnyNumberGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
@@ -829,7 +911,8 @@ public class GraveyardTargetingService {
                                                     StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
                                                     List<CardEffect> spellEffects) {
         handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter, maxTargetsCap,
-                spellEffects, 0, false, false, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+                spellEffects, 0, false, false, GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                false, null, null);
     }
 
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
@@ -838,7 +921,19 @@ public class GraveyardTargetingService {
                                                     int maxTargetsCap, List<CardEffect> spellEffects) {
         handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, returnEffect.filter(),
                 maxTargetsCap, spellEffects, returnEffect.minTargets(),
-                returnEffect.requireSharedCreatureType(), false, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+                returnEffect.requireSharedCreatureType(), false,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, null, null);
+    }
+
+    public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                    StackEntryType entryType,
+                                                    ReturnTargetCardsFromGraveyardToHandEffect returnEffect,
+                                                    int maxTargetsCap, List<CardEffect> spellEffects,
+                                                    int minTargets) {
+        handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, returnEffect.filter(),
+                maxTargetsCap, spellEffects, minTargets,
+                returnEffect.requireSharedCreatureType(), false,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, null);
     }
 
     /**
@@ -882,6 +977,11 @@ public class GraveyardTargetingService {
             List<Card> graveyard = targetableGraveyard(gameData, controllerId, controllerId);
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
+                    if (effect.requiresDistinctTargets()
+                            && gameData.graveyardTargetOperation.independentTargetCardIds
+                            .contains(graveyardCard.getId())) {
+                        continue;
+                    }
                     if (predicateEvaluationService.matchesCardPredicate(
                             graveyardCard, effect.targetFilters().get(groupIndex),
                             gameData.graveyardTargetOperation.card.getId())) {
@@ -891,12 +991,16 @@ public class GraveyardTargetingService {
             }
 
             if (matchingCards.isEmpty()) {
+                if (effect.minimumTargetCounts().get(groupIndex) > 0) {
+                    throw new IllegalStateException("No legal target for required graveyard target group");
+                }
                 gameData.graveyardTargetOperation.independentTargetGroupSizes.add(0);
                 gameData.graveyardTargetOperation.independentTargetGroupIndex++;
                 continue;
             }
 
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
+                    effect.minimumTargetCounts().get(groupIndex),
                     "Choose up to one target " + effect.targetDescriptions().get(groupIndex)
                             + " from your graveyard.");
             return true;
@@ -911,7 +1015,7 @@ public class GraveyardTargetingService {
                                                     List<CardEffect> spellEffects, boolean fromBattlefieldThisTurn) {
         handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter, maxTargetsCap,
                 spellEffects, 0, false, fromBattlefieldThisTurn,
-                GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, null, null);
     }
 
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
@@ -919,8 +1023,35 @@ public class GraveyardTargetingService {
                                                     ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect,
                                                     List<CardEffect> spellEffects) {
         handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType,
-                returnEffect.filter(), returnEffect.maxTargets(), spellEffects, 0, false,
-                returnEffect.fromBattlefieldThisTurn(), returnEffect.source());
+                returnEffect.filter(), returnEffect.maxTargets(), spellEffects, returnEffect.minTargets(), false,
+                returnEffect.fromBattlefieldThisTurn(), returnEffect.source(),
+                returnEffect.singleGraveyard(), null,
+                returnEffect.hasTotalManaValueCap() ? returnEffect.maxTotalManaValue() : null);
+    }
+
+    public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                    StackEntryType entryType,
+                                                    ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect,
+                                                    int maxTargetsCap, Integer xValue,
+                                                    List<CardEffect> spellEffects) {
+        handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType,
+                returnEffect.filter(), maxTargetsCap, spellEffects, returnEffect.minTargets(), false,
+                returnEffect.fromBattlefieldThisTurn(), returnEffect.source(),
+                returnEffect.singleGraveyard(), xValue,
+                returnEffect.hasTotalManaValueCap() ? returnEffect.maxTotalManaValue() : null);
+    }
+
+    private void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                     StackEntryType entryType, CardPredicate filter,
+                                                     int maxTargetsCap, List<CardEffect> spellEffects,
+                                                     int minTargets, boolean requireSharedCreatureType,
+                                                     boolean fromBattlefieldThisTurn,
+                                                     GraveyardSearchScope source,
+                                                     boolean singleGraveyard,
+                                                     Integer xValue) {
+        handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter, maxTargetsCap,
+                spellEffects, minTargets, requireSharedCreatureType, fromBattlefieldThisTurn, source,
+                singleGraveyard, xValue, null);
     }
 
     private void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
@@ -928,7 +1059,10 @@ public class GraveyardTargetingService {
                                                      int maxTargetsCap, List<CardEffect> spellEffects,
                                                      int minTargets, boolean requireSharedCreatureType,
                                                       boolean fromBattlefieldThisTurn,
-                                                      GraveyardSearchScope source) {
+                                                      GraveyardSearchScope source,
+                                                      boolean singleGraveyard,
+                                                      Integer xValue,
+                                                      Integer maxTotalManaValue) {
         List<Card> matchingCards = new ArrayList<>();
         List<UUID> graveyardOwners = switch (source) {
             case CONTROLLERS_GRAVEYARD -> List.of(controllerId);
@@ -946,8 +1080,10 @@ public class GraveyardTargetingService {
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
                     if ((trackedIds == null || trackedIds.contains(graveyardCard.getId()))
+                            && (maxTotalManaValue == null || graveyardCard.getManaValue() <= maxTotalManaValue)
                             && predicateEvaluationService.matchesCardPredicate(
-                                    graveyardCard, filter, card.getId())) {
+                                    graveyardCard, filter, card.getId(), gameData, graveyardOwner,
+                                    null, null, xValue)) {
                         matchingCards.add(graveyardCard);
                     }
                 }
@@ -960,21 +1096,36 @@ public class GraveyardTargetingService {
                             && gameQueryService.shareCreatureType(candidate, other)));
         }
 
+        if (matchingCards.size() < minTargets) {
+            throw new IllegalStateException("Not enough legal graveyard targets");
+        }
+
         int maxTargets = Math.min(maxTargetsCap, matchingCards.size());
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
         gameData.graveyardTargetOperation.entryType = entryType;
-        gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.xValue = xValue == null ? 0 : xValue;
         gameData.graveyardTargetOperation.anyNumber = true;
+        gameData.graveyardTargetOperation.singleGraveyard = singleGraveyard;
         String filterLabel = CardPredicateUtils.describeFilter(filter);
         String prompt = minTargets > 0
                 ? "Choose " + minTargets + " target " + filterLabel + "s that share a creature type from your graveyard."
                 : maxTargetsCap == Integer.MAX_VALUE
                 ? "Choose any number of target " + filterLabel + "s from " + zoneLabel(source) + "."
-                : "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from " + zoneLabel(source) + ".";
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
-                minTargets, prompt);
+                : "Choose up to " + maxTargetsCap + " target " + filterLabel + "s"
+                + (singleGraveyard ? " from a single graveyard" : " from " + zoneLabel(source)) + ".";
+        if (maxTotalManaValue != null) {
+            prompt = prompt.substring(0, prompt.length() - 1)
+                    + " with total mana value " + maxTotalManaValue + " or less.";
+        }
+        if (maxTotalManaValue != null) {
+            playerInputService.beginMultiGraveyardChoiceWithMaximumManaValue(
+                    gameData, controllerId, matchingCards, maxTargets, minTargets, maxTotalManaValue, prompt);
+        } else {
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
+                    minTargets, prompt);
+        }
     }
 
     /**
@@ -1135,22 +1286,32 @@ public class GraveyardTargetingService {
     }
 
     /**
-     * "Exile up to N target cards from a single graveyard" (Scarab Feast). Pools every card in
-     * every graveyard that matches the effect's filter, and flags the choice {@code singleGraveyard} so
+     * "Exile up to N target cards from a single graveyard" (Scarab Feast), or exactly X target cards
+     * from a single graveyard (Rats' Feast). Pools every card in every graveyard that matches the
+     * effect's filter, and flags the choice {@code singleGraveyard} so
      * {@code GraveyardChoiceHandlerService} rejects a selection spanning more than one graveyard.
      */
     public void handleUpToNSingleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                          StackEntryType entryType, int maxTargetsCap,
                                                          com.github.laxika.magicalvibes.model.filter.CardPredicate filter,
-                                                         List<CardEffect> spellEffects) {
+                                                         List<CardEffect> spellEffects, boolean exactTargets) {
         List<Card> matchingCards = new ArrayList<>();
+        boolean hasEnoughCardsInOneGraveyard = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = targetableGraveyard(gameData, playerId, controllerId);
             if (graveyard == null) continue;
-            matchingCards.addAll(graveyard.stream()
+            List<Card> matchingGraveyardCards = graveyard.stream()
                     .filter(candidate -> filter == null
                             || predicateEvaluationService.matchesCardPredicate(candidate, filter, card.getId()))
-                    .toList());
+                    .toList();
+            matchingCards.addAll(matchingGraveyardCards);
+            if (matchingGraveyardCards.size() >= maxTargetsCap) {
+                hasEnoughCardsInOneGraveyard = true;
+            }
+        }
+
+        if (exactTargets && !hasEnoughCardsInOneGraveyard) {
+            throw new IllegalStateException("Not enough cards in a single graveyard");
         }
 
         int maxTargets = Math.min(maxTargetsCap, matchingCards.size());
@@ -1158,12 +1319,13 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
         gameData.graveyardTargetOperation.entryType = entryType;
-        gameData.graveyardTargetOperation.xValue = 0;
-        gameData.graveyardTargetOperation.anyNumber = true;
+        gameData.graveyardTargetOperation.xValue = exactTargets ? maxTargetsCap : 0;
+        gameData.graveyardTargetOperation.anyNumber = !exactTargets;
         gameData.graveyardTargetOperation.singleGraveyard = true;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
-                "Choose up to " + maxTargetsCap + " target card" + (maxTargetsCap != 1 ? "s" : "")
-                        + " from a single graveyard to exile.");
+                exactTargets ? maxTargets : 0,
+                (exactTargets ? "Choose exactly " : "Choose up to ") + maxTargetsCap + " target card"
+                        + (maxTargetsCap != 1 ? "s" : "") + " from a single graveyard to exile.");
     }
 
     public void handleUpToNAllGraveyardsSpellTargeting(GameData gameData, UUID controllerId, Card card,
@@ -1187,6 +1349,7 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.entryType = entryType;
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = true;
+        gameData.graveyardTargetOperation.singleGraveyard = false;
         String filterLabel = CardPredicateUtils.describeFilter(filter);
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from graveyards.");

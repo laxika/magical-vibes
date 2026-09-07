@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchant
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "24")
+@CardRegistration(set = "SPM", collectorNumber = "248")
 public class WithGreatPower extends Card {
 
     public WithGreatPower() {

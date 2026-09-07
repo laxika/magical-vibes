@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
  * Shared tap/untap helpers used by every "normal" Tap/Untap effect handler.
  *
@@ -46,10 +48,23 @@ public class TapUntapSupport {
      * @return true if the permanent was newly tapped (was untapped before)
      */
     public boolean tapPermanent(GameData gameData, Permanent permanent) {
+        UUID tappingPlayerId = gameData.currentlyResolvingControllerId;
+        if (tappingPlayerId == null && gameData.pendingEffectResolutionEntry != null) {
+            tappingPlayerId = gameData.pendingEffectResolutionEntry.getControllerId();
+        }
+        return tapPermanent(gameData, permanent, tappingPlayerId);
+    }
+
+    /**
+     * Taps the permanent and records which player was instructed to perform the tap.
+     *
+     * @return true if the permanent was newly tapped (was untapped before)
+     */
+    public boolean tapPermanent(GameData gameData, Permanent permanent, UUID tappingPlayerId) {
         boolean wasTapped = permanent.isTapped();
         permanent.tap();
         if (!wasTapped) {
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent, tappingPlayerId);
             return true;
         }
         return false;

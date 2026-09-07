@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -11,12 +12,12 @@ import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
+import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -26,12 +27,12 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.NextSpellCostReduction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
 import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -43,7 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingE
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
@@ -112,6 +113,9 @@ public class CastingCostService {
      * single pass so per-card evaluation doesn't re-scan all permanents.
      */
     public record CostModifierSnapshot(List<CollectedCostModifier> modifiers) {
+    }
+
+    public record AlternativeCostSelection(String manaCost, boolean castsWithWarp) {
     }
 
     record CollectedCostModifier(CostModificationHandlerBean handler, CardEffect effect, CostModificationSource source) {
@@ -221,14 +225,42 @@ public class CastingCostService {
         return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId), false);
     }
 
+    /** Returns the generic cast-cost adjustment for a spell cast face down from hand. */
+    public int getCastCostModifierForFaceDownSpell(GameData gameData, UUID playerId, Card card) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), false, 0, false, Zone.HAND, true);
+    }
+
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue) {
         return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId), false,
                 xValue);
     }
 
+    /** Returns the generic cast-cost adjustment for a face-down creature spell when requested. */
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue,
+                                   boolean castingFaceDown) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), false, xValue, false, null,
+                castingFaceDown);
+    }
+
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue, Zone sourceZone) {
         return getCastCostModifier(gameData, playerId, card,
-                buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone);
+                buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone, false);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue,
+                                   Zone sourceZone, boolean collectEvidenceCostPaid) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone, false,
+                collectEvidenceCostPaid);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue,
+                                   Zone sourceZone, boolean kicked, boolean collectEvidenceCostPaid) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone, false,
+                collectEvidenceCostPaid, kicked);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot) {
@@ -273,48 +305,135 @@ public class CastingCostService {
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                   CostModifierSnapshot snapshot, int xValue,
+                                   boolean collectEvidenceCostPaid) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, false, xValue,
+                false, null, false, collectEvidenceCostPaid);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                    CostModifierSnapshot snapshot, boolean flashbackCost,
                                    boolean fromGraveyard, int xValue) {
         return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
-                false, fromGraveyard ? Zone.GRAVEYARD : null);
+                false, fromGraveyard ? Zone.GRAVEYARD : null, false, false);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                    CostModifierSnapshot snapshot, Zone sourceZone) {
-        return getCastCostModifier(gameData, playerId, card, snapshot, false, 0, false, sourceZone);
+        return getCastCostModifier(gameData, playerId, card, snapshot, false, 0,
+                false, sourceZone, false, false);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                    boolean flashbackCost, int xValue, Zone sourceZone) {
-        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId),
-                flashbackCost, xValue, false, sourceZone);
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), flashbackCost, xValue,
+                false, sourceZone, false, false);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
                                    Zone sourceZone) {
         return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
-                false, sourceZone);
+                false, sourceZone, false, false);
     }
 
     /** Returns the generic adjustment that explicitly applies to plotting a card from hand. */
     public int getPlotCostModifier(GameData gameData, UUID playerId, Card card) {
         return getCastCostModifier(gameData, playerId, card,
-                buildCostModifierSnapshot(gameData, playerId), false, 0, true, Zone.HAND);
+                buildCostModifierSnapshot(gameData, playerId), false, 0, true, Zone.HAND, false);
+    }
+
+    /** Returns the generic adjustment supplied by effects that explicitly modify alternate costs. */
+    public int getAlternateHandCastCostModifier(GameData gameData, UUID playerId, Card card) {
+        CostModificationContext context = new CostModificationContext(
+                gameData, playerId, card, false, 0, false, Zone.HAND, false, false, false);
+        return buildCostModifierSnapshot(gameData, playerId).modifiers().stream()
+                .mapToInt(modifier -> modifier.handler().modifyAlternateCost(
+                        context, modifier.effect(), modifier.source()))
+                .sum();
     }
 
     private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                     CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
                                     boolean plottingFromHand) {
         return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
-                plottingFromHand, null);
+                plottingFromHand, null, false);
     }
 
     private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                     CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
-                                    boolean plottingFromHand, Zone sourceZone) {
+                                    boolean plottingFromHand, Zone sourceZone, boolean castFaceDown) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
+                plottingFromHand, sourceZone, castFaceDown, false);
+    }
+
+    private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
+                                    boolean plottingFromHand, Zone sourceZone, boolean castFaceDown,
+                                    boolean collectEvidenceCostPaid) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
+                plottingFromHand, sourceZone, castFaceDown, collectEvidenceCostPaid, false);
+    }
+
+    private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
+                                    boolean plottingFromHand, Zone sourceZone, boolean castFaceDown,
+                                    boolean collectEvidenceCostPaid, boolean kicked) {
+        synchronized (gameData) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            int handIndex = plottingFromHand || (sourceZone != null && sourceZone != Zone.HAND)
+                    ? -1 : findPhysicalHandCardIndex(hand, card);
+            Object layeredBoardCache = gameData.layeredBoardCache;
+            List<Card> previewHand = null;
+            if (handIndex >= 0) {
+                previewHand = new ArrayList<>(hand);
+                previewHand.remove(handIndex);
+                gameData.playerHands.put(playerId, previewHand);
+            }
+            try {
+                if (previewHand != null) {
+                    // A proposed spell has left its hand before its total cost is determined.
+                    // Preview that state so hand-dependent layered values cannot over-reduce it.
+                    return gameQueryService.withFreshQueryScope(gameData,
+                            () -> getCastCostModifierFromCurrentState(
+                                    gameData, playerId, card, snapshot, flashbackCost, xValue,
+                                    plottingFromHand, sourceZone, castFaceDown, collectEvidenceCostPaid, kicked));
+                }
+                return getCastCostModifierFromCurrentState(gameData, playerId, card, snapshot,
+                        flashbackCost, xValue, plottingFromHand, sourceZone, castFaceDown,
+                        collectEvidenceCostPaid, kicked);
+            } finally {
+                if (previewHand != null) {
+                    gameData.playerHands.put(playerId, hand);
+                    gameData.layeredBoardCache = layeredBoardCache;
+                }
+            }
+        }
+    }
+
+    private int findPhysicalHandCardIndex(List<Card> hand, Card spell) {
+        if (hand == null) {
+            return -1;
+        }
+        for (int i = 0; i < hand.size(); i++) {
+            Card physicalCard = hand.get(i);
+            if (physicalCard.getId().equals(spell.getId())
+                    || (physicalCard.getBackFaceCard() != null
+                    && physicalCard.getBackFaceCard().getId().equals(spell.getId()))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private int getCastCostModifierFromCurrentState(
+            GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot,
+            boolean flashbackCost, int xValue, boolean plottingFromHand, Zone sourceZone,
+            boolean castFaceDown, boolean collectEvidenceCostPaid, boolean kicked) {
         CostModificationContext context = new CostModificationContext(gameData, playerId, card,
-                flashbackCost, xValue, plottingFromHand, sourceZone);
+                flashbackCost, xValue, plottingFromHand, sourceZone, castFaceDown,
+                collectEvidenceCostPaid, kicked);
         int delta = 0;
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
@@ -499,10 +618,25 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect) {
+                List<CardEffect> effects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.STATIC));
+                effects.addAll(gameQueryService.getGrantedEffects(gameData, perm));
+                for (CardEffect effect : effects) {
+                    CardEffect activeEffect = effect;
+                    while (activeEffect instanceof ConditionalEffect conditional) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forStaticEffect(perm, controllerId))) {
+                            activeEffect = null;
+                            break;
+                        }
+                        activeEffect = conditional.wrapped();
+                    }
+                    if (activeEffect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect) {
                         if (activatedAbility && !taxEffect.taxesActivatedAbilities()) continue;
                         for (UUID tid : allTargetIds) {
+                            if (taxEffect.taxesController() && controllerId.equals(tid)) {
+                                tax += taxEffect.amount();
+                                break;
+                            }
                             Permanent targetPerm = gameQueryService.findPermanentById(gameData, tid);
                             if (targetPerm != null) {
                                 UUID targetController = gameQueryService.findPermanentController(gameData, tid);
@@ -616,12 +750,14 @@ public class CastingCostService {
 
         int reduction = 0;
         for (UUID controllerId : gameData.orderedPlayerIds) {
-            if (controllerId.equals(casterId)) continue;
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield == null) continue;
             for (Permanent source : battlefield) {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof ReduceOpponentCostForTargetingControlledPermanentEffect reduceEffect)) {
+                        continue;
+                    }
+                    if (controllerId.equals(casterId) && !reduceEffect.affectsController()) {
                         continue;
                     }
                     for (UUID target : allTargetIds) {
@@ -792,10 +928,19 @@ public class CastingCostService {
     public int getActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId,
                                                 Permanent sourcePermanent, ActivatedAbility ability,
                                                 UUID targetId, List<UUID> targetIds) {
+        return getActivatedAbilityCostReduction(gameData, activatingPlayerId, sourcePermanent, ability,
+                targetId, targetIds, Integer.MAX_VALUE);
+    }
+
+    public int getActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId,
+                                                Permanent sourcePermanent, ActivatedAbility ability,
+                                                UUID targetId, List<UUID> targetIds,
+                                                int maximumReductionForMinimumOneMana) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
         if (battlefield == null) return 0;
 
         int reduction = 0;
+        boolean preventsReductionBelowOneMana = false;
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 ActivatedAbilityCostReducingEffect reducer = activeActivatedAbilityCostReducer(
@@ -812,10 +957,13 @@ public class CastingCostService {
                                 .withSourcePermanentId(permanent.getId()))) {
                     reduction += evaluateActivatedAbilityCostReduction(
                             gameData, reducer, permanent, activatingPlayerId);
+                    preventsReductionBelowOneMana |= reducer.preventsReductionBelowOneMana();
                 }
             }
         }
-        return reduction;
+        return preventsReductionBelowOneMana
+                ? Math.min(reduction, maximumReductionForMinimumOneMana)
+                : reduction;
     }
 
     /**
@@ -864,7 +1012,8 @@ public class CastingCostService {
                                         .withSourceCardId(perm.getOriginalCard().getId())
                                         .withSourceControllerId(pid)
                                         .withSourcePermanentId(perm.getId()))) {
-                        reduction += reducingEffect.genericCostReduction();
+                        reduction += evaluateActivatedAbilityCostReduction(
+                                gameData, reducingEffect, perm, pid);
                     }
                 }
             }
@@ -1143,11 +1292,12 @@ public class CastingCostService {
                     if (effect instanceof AlternativeCostForSpellsEffect altCost
                             && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
                             && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
+                            && altCost.nonManaCost() == null
                             && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                             && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                             && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
                             && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
-                            && manaValueCapSatisfied(perm, card, altCost)
+                            && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
                             && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
                         if (!altCost.oncePerTurn()) {
                             return new FreeCastSource(perm, altCost);
@@ -1178,7 +1328,9 @@ public class CastingCostService {
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && altCost.manaValueCapCounter() == null
+                        && altCost.manaValueCapAmount() == null
                         && !altCost.oncePerTurn()
+                        && altCost.nonManaCost() == null
                         && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                         && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                         && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
@@ -1190,7 +1342,13 @@ public class CastingCostService {
         return null;
     }
 
-    private boolean manaValueCapSatisfied(Permanent perm, Card card, AlternativeCostForSpellsEffect altCost) {
+    private boolean manaValueCapSatisfied(GameData gameData, UUID playerId, Permanent perm, Card card,
+                                          AlternativeCostForSpellsEffect altCost) {
+        if (altCost.manaValueCapAmount() != null) {
+            int cap = amountEvaluationService.evaluate(gameData, altCost.manaValueCapAmount(),
+                    new AmountContext(playerId, perm, null, 0, 0));
+            return card.getManaValue() <= cap;
+        }
         if (altCost.manaValueCapCounter() == null) return true;
         return card.getManaValue() <= perm.getCounterCount(altCost.manaValueCapCounter());
     }
@@ -1200,7 +1358,13 @@ public class CastingCostService {
      * for the given card AND the player's mana pool can pay that alternative cost (plus any modifiers).
      */
     public boolean canAffordAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalCost) {
-        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost) != null;
+        return canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost, Zone.HAND);
+    }
+
+    public boolean canAffordAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card,
+                                                            ManaPool pool, int additionalCost, Zone sourceZone) {
+        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost,
+                sourceZone) != null;
     }
 
     /**
@@ -1208,17 +1372,35 @@ public class CastingCostService {
      * or null if none exists or none is affordable.
      */
     public String findAffordableAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalCost) {
+        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost, Zone.HAND);
+    }
+
+    public String findAffordableAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card,
+                                                                ManaPool pool, int additionalCost, Zone sourceZone) {
+        AlternativeCostSelection selection = findAffordableAlternativeCostSelection(
+                gameData, playerId, card, pool, additionalCost, sourceZone);
+        return selection == null ? null : selection.manaCost();
+    }
+
+    public AlternativeCostSelection findAffordableAlternativeCostSelection(GameData gameData, UUID playerId,
+                                                                            Card card, ManaPool pool,
+                                                                            int additionalCost, Zone sourceZone) {
+        if (sourceZone == null) sourceZone = Zone.HAND;
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
+                        && altCost.nonManaCost() == null
+                        && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
+                        && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
+                        && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
                     String alternativeCostString = altCost.manaCostFor(card.getManaValue());
                     ManaCost alternativeManaCost = applyColoredManaCostReductions(
                             gameData, playerId, card, new ManaCost(alternativeCostString));
                     if (alternativeManaCost.getManaValue() > 0 && alternativeManaCost.canPay(pool, additionalCost)) {
-                        return alternativeCostString;
+                        return new AlternativeCostSelection(alternativeCostString, altCost.castsWithWarp());
                     }
                 }
             }
@@ -1254,12 +1436,66 @@ public class CastingCostService {
     }
 
     /**
+     * Returns the collect-evidence alternative cost offered by a permanent the player controls,
+     * or {@code null} when no matching source is currently on the battlefield.
+     */
+    public CollectEvidenceCost findCollectEvidenceAlternativeCostFromBattlefield(
+            GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return null;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AlternativeCostForSpellsEffect alternative
+                        && alternative.nonManaCost() instanceof CollectEvidenceCost collectEvidence
+                        && predicateEvaluationService.matchesCardPredicate(card, alternative.filter(), null)) {
+                    return collectEvidence;
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean canPayCollectEvidenceAlternativeCost(GameData gameData, UUID playerId, Card card) {
+        CollectEvidenceCost cost = findCollectEvidenceAlternativeCostFromBattlefield(gameData, playerId, card);
+        if (cost == null) return false;
+        return gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                .mapToInt(Card::getManaValue)
+                .sum() >= cost.minimumManaValue();
+    }
+
+    public boolean canPayCollectEvidenceCost(GameData gameData, UUID playerId, Card card) {
+        int graveyardManaValue = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                .mapToInt(Card::getManaValue)
+                .sum();
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .anyMatch(cost -> graveyardManaValue >= cost.minimumManaValue());
+    }
+
+    /** Resolves a collect-evidence threshold that depends on the spell's announced targets. */
+    public int resolveCollectEvidenceMinimumManaValue(GameData gameData, CollectEvidenceCost cost,
+                                                      UUID targetId, List<UUID> targetIds) {
+        return additionalSpellCostService.resolveCollectEvidenceMinimumManaValue(
+                gameData, cost, targetId, targetIds);
+    }
+
+    /**
      * Returns true if the card's {@link AlternateHandCast} casting option (e.g. Demon of Death's
      * Gate) exists and all of its costs (life, sacrifices, taps, mana) are currently payable.
      */
     public boolean canPayAlternateHandCast(GameData gameData, UUID playerId, Card card) {
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         if (altCastOpt.isEmpty()) {
+            var adventureCast = card.getCastingOption(AdventureCast.class);
+            if (adventureCast.isPresent()) {
+                Card adventureFace = card.getBackFaceCard() != null ? card.getBackFaceCard() : card;
+                return adventureCast.get().getCost(ManaCastingCost.class)
+                        .map(cost -> applyColoredManaCostReductions(gameData, playerId, adventureFace,
+                                new ManaCost(cost.manaCost())).canPay(
+                                gameData.playerManaPools.get(playerId), getCastCostModifier(gameData, playerId, adventureFace)))
+                        .orElse(false);
+            }
             var bestowCast = card.getCastingOption(BestowCast.class);
             if (bestowCast.isEmpty()) return false;
             return bestowCast.get().getCost(ManaCastingCost.class)
@@ -1286,7 +1522,12 @@ public class CastingCostService {
         }
 
         var lifeCost = altCast.getCost(LifeCastingCost.class);
-        if (lifeCost.isPresent() && gameData.getLife(playerId) < lifeCost.get().amount()) return false;
+        if (lifeCost.isPresent()
+                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || gameData.getLife(playerId) < lifeCost.get().amount())) {
+            return false;
+        }
 
         var sacCost = altCast.getCost(SacrificePermanentsCost.class);
         if (sacCost.isPresent()) {
@@ -1376,7 +1617,9 @@ public class CastingCostService {
                 return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
                         .map(this::manaCostOf)
-                        .anyMatch(reduction -> cost.canPayAfterReduction(pool, reduction));
+                        .anyMatch(reduction -> manaCost.get().treasureManaOnly()
+                                ? pool.canPayWithTreasureManaAfterReduction(cost, reduction)
+                                : cost.canPayAfterReduction(pool, reduction));
             }
             // Emerge: optimistically reduce by the highest mana value among sacrificeable permanents.
             int emergeReduction = 0;
@@ -1387,9 +1630,14 @@ public class CastingCostService {
                         .max()
                         .orElse(0);
             }
-            int additionalCost = card.getKeywords().contains(Keyword.PLOT)
-                    ? getPlotCostModifier(gameData, playerId, card) : -emergeReduction;
-            if (!cost.canPay(pool, additionalCost)) return false;
+            int additionalCost = card.getMorphCost() != null
+                    ? getCastCostModifierForFaceDownSpell(gameData, playerId, card)
+                    : card.getKeywords().contains(Keyword.PLOT)
+                    ? getPlotCostModifier(gameData, playerId, card)
+                    : -emergeReduction + getAlternateHandCastCostModifier(gameData, playerId, card);
+            if (!(manaCost.get().treasureManaOnly()
+                    ? pool.canPayWithTreasureMana(cost, additionalCost)
+                    : cost.canPay(pool, additionalCost))) return false;
         }
 
         return true;
@@ -1703,6 +1951,21 @@ public class CastingCostService {
                 .sum();
     }
 
+    public boolean canPayFlashbackSacrificeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        List<SacrificePermanentsCost> sacrificeCosts = flashback.getCosts(SacrificePermanentsCost.class);
+        List<SacrificeXPermanentsCastingCost> xSacrificeCosts =
+                flashback.getCosts(SacrificeXPermanentsCastingCost.class);
+        if (sacrificeCosts.isEmpty() && xSacrificeCosts.isEmpty()) {
+            return false;
+        }
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(playerId);
+        return sacrificeCosts.stream().allMatch(cost -> battlefield.stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, cost.filter(), filterContext))
+                .count() >= cost.count());
+    }
+
     public boolean canPayFlashbackLifeCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
         var lifeCost = flashback.getCost(LifeCastingCost.class);
         return lifeCost.isEmpty()
@@ -1716,6 +1979,7 @@ public class CastingCostService {
             if (!(cost instanceof ManaCastingCost)
                     && !(cost instanceof TapUntappedPermanentsCost)
                     && !(cost instanceof SacrificePermanentsCost)
+                    && !(cost instanceof SacrificeXPermanentsCastingCost)
                     && !(cost instanceof DiscardXCardsCastingCost)
                     && !(cost instanceof LifeCastingCost)
                     && !(cost instanceof RemoveXCountersFromControlledPermanentsCastingCost)) {
@@ -1726,13 +1990,19 @@ public class CastingCostService {
         if (!canPayFlashbackCounterCosts(gameData, playerId, flashback)) {
             return false;
         }
+        if ((!flashback.getCosts(SacrificePermanentsCost.class).isEmpty()
+                || !flashback.getCosts(SacrificeXPermanentsCastingCost.class).isEmpty())
+                && !canPayFlashbackSacrificeCost(gameData, playerId, flashback)) {
+            return false;
+        }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
             return flashback.costs().stream().allMatch(cost -> cost instanceof ManaCastingCost
                     || cost instanceof DiscardXCardsCastingCost
                     || cost instanceof LifeCastingCost
-                    || cost instanceof RemoveXCountersFromControlledPermanentsCastingCost);
+                    || cost instanceof RemoveXCountersFromControlledPermanentsCastingCost
+                    || cost instanceof SacrificeXPermanentsCastingCost);
         }
 
         var tapCost = flashback.getCost(TapUntappedPermanentsCost.class);
@@ -1835,6 +2105,16 @@ public class CastingCostService {
                                 FilterContext.of(gameData).withSourceControllerId(playerId)))
                         .count();
                 if (matchingCount < sacrificeCost.count()) {
+                    return false;
+                }
+            } else if (cost instanceof ExileNCardsFromGraveyardCastingCost exileCost) {
+                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(graveyardCard -> !graveyardCard.getId().equals(card.getId()))
+                        .filter(graveyardCard -> exileCost.predicate() == null
+                                || predicateEvaluationService.matchesCardPredicate(
+                                graveyardCard, exileCost.predicate(), graveyardCard.getId()))
+                        .count();
+                if (matchingCount < exileCost.count()) {
                     return false;
                 }
             } else {

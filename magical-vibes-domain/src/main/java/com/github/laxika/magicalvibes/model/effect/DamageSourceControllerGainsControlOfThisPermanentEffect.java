@@ -7,9 +7,15 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param combatOnly   if true, only combat damage triggers the control change (not ability/spell damage)
  * @param creatureOnly if true, only damage from creatures triggers the control change
+ * @param untap        if true, untap this permanent after the control change
  */
 public record DamageSourceControllerGainsControlOfThisPermanentEffect(
         boolean combatOnly,
-        boolean creatureOnly
+        boolean creatureOnly,
+        boolean untap
 ) implements CardEffect {
+
+    public DamageSourceControllerGainsControlOfThisPermanentEffect(boolean combatOnly, boolean creatureOnly) {
+        this(combatOnly, creatureOnly, false);
+    }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,8 +9,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +40,7 @@ public record CreateTokenEffect(
         int initialPlusOnePlusOneCounters,
         Set<Keyword> grantedKeywordsUntilEndOfTurn,
         Set<CardSupertype> supertypes
-) implements TokenCreatingEffect, CombatDamageAmountAwareEffect {
+) implements TokenCreatingEffect, CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
 
     @Override
     public DynamicAmount tokenAmount() {
@@ -46,6 +50,18 @@ public record CreateTokenEffect(
     @Override
     public DynamicAmount combatDamageAmount() {
         return amount;
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return amount instanceof PermanentCount count && count.scope() == CountScope.TARGET_PLAYER
+                ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return amount instanceof PermanentCount count && count.scope() == CountScope.TARGET_PLAYER
+                ? TriggerContext.DAMAGED_PLAYER : null;
     }
 
     @Override
@@ -97,6 +113,14 @@ public record CreateTokenEffect(
     public CreateTokenEffect withAmount(int newAmount) {
         return new CreateTokenEffect(primaryType, new Fixed(newAmount), tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes);
+    }
+
+    /** Copy of this blueprint with a different tapped state, all other fields preserved. */
+    public CreateTokenEffect withTapped(boolean newTapped) {
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color,
+                colors, subtypes, keywords, additionalTypes, tappedAndAttacking, newTapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes);
     }
@@ -336,6 +360,11 @@ public record CreateTokenEffect(
                 )));
     }
 
+    /** Treasure tokens with an explicit tapped state. */
+    public static CreateTokenEffect ofTreasureToken(int amount, boolean tapped) {
+        return ofTreasureToken(new Fixed(amount), tapped);
+    }
+
     /** Tapped Treasure token. */
     public static CreateTokenEffect ofTappedTreasureToken(int amount) {
         return new CreateTokenEffect(CardType.ARTIFACT, amount, "Treasure", 0, 0, null, null,
@@ -360,16 +389,27 @@ public record CreateTokenEffect(
 
     /** Treasure token with a dynamically computed count. */
     public static CreateTokenEffect ofTreasureToken(DynamicAmount amount) {
-        return ofArtifactToken(amount, "Treasure", List.of(CardSubtype.TREASURE),
+        return ofTreasureToken(amount, false);
+    }
+
+    /** Treasure token with a dynamically computed count and an explicit tapped state. */
+    public static CreateTokenEffect ofTreasureToken(DynamicAmount amount, boolean tapped) {
+        return new CreateTokenEffect(CardType.ARTIFACT, amount, "Treasure", 0, 0, null, null,
+                List.of(CardSubtype.TREASURE), Set.of(), Set.of(), false, tapped, Map.of(),
                 List.of(new ActivatedAbility(
                         true, null,
                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
                         "{T}, Sacrifice this artifact: Add one mana of any color."
-                )));
+                )), false, false, false, 0, Set.of());
     }
 
     /** Clue token: colorless artifact with "{2}, Sacrifice this token: Draw a card." */
     public static CreateTokenEffect ofClueToken(int amount) {
+        return ofClueToken(new Fixed(amount));
+    }
+
+    /** Clue tokens with a dynamically computed count. */
+    public static CreateTokenEffect ofClueToken(DynamicAmount amount) {
         return ofArtifactToken(amount, "Clue", List.of(CardSubtype.CLUE),
                 List.of(new ActivatedAbility(
                         false, "{2}",
@@ -393,6 +433,26 @@ public record CreateTokenEffect(
                         true, "{1}",
                         List.of(new DiscardCardTypeCost(null, null), new SacrificeSelfCost(), new DrawCardEffect()),
                         "{1}, {T}, Discard a card, Sacrifice this token: Draw a card."
+                )));
+    }
+
+    /** Map token: colorless artifact with a sorcery-speed ability to make a creature explore. */
+    public static CreateTokenEffect ofMapToken(int amount) {
+        return ofMapToken(new Fixed(amount));
+    }
+
+    /** Map token with a dynamically computed count. */
+    public static CreateTokenEffect ofMapToken(DynamicAmount amount) {
+        return ofArtifactToken(amount, "Map", List.of(CardSubtype.MAP),
+                List.of(new ActivatedAbility(
+                        true,
+                        "{1}",
+                        List.of(new SacrificeSelfCost(), new ExploreEffect(true)),
+                        "{1}, {T}, Sacrifice this token: Target creature you control explores. Activate only as a sorcery.",
+                        TargetFilters.creatureYouControl(),
+                        null,
+                        null,
+                        ActivationTimingRestriction.SORCERY_SPEED
                 )));
     }
 }

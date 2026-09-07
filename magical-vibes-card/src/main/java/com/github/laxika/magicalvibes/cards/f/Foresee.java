@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "54")
+@CardRegistration(set = "FUT", collectorNumber = "36")
 public class Foresee extends Card {
 
     public Foresee() {

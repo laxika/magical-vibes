@@ -34,6 +34,19 @@ class CragganwickCrematorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB: damage can target its controller")
+    void discardsCreatureCanDamageController() {
+        harness.setHand(player1, List.of(new CragganwickCremator(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(player1.getId()), List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
     @DisplayName("ETB: discarding a noncreature card deals no damage")
     void discardsNoncreatureDealsNoDamage() {
         harness.setHand(player1, List.of(new CragganwickCremator(), new Mountain()));

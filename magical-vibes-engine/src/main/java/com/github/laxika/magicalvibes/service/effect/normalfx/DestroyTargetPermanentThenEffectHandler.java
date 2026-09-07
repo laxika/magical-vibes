@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -71,8 +72,13 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
             case BASIC_LAND_SEARCH_COUNT -> 0;
         };
+        FilterContext conditionContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         boolean thenApplies = e.thenCondition() == null
-                || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.thenCondition());
+                || predicateEvaluationService.matchesPermanentPredicate(target, e.thenCondition(), conditionContext);
 
         // Unless the card says "dies this way", the then-effect happens regardless of whether
         // destruction succeeds (indestructible / regeneration).

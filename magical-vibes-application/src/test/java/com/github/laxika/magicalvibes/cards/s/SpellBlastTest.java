@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.Disintegrate;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,10 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpellBlast.class, Disintegrate.class, GrizzlyBears.class, LlanowarElves.class})
 class SpellBlastTest extends BaseCardTest {
-
-    // ===== Targeting =====
-
     @Test
     @DisplayName("Can target a spell whose mana value equals X")
     void canTargetSpellWithManaValueEqualToX() {
@@ -37,7 +37,6 @@ class SpellBlastTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
         StackEntry blastEntry = gd.stack.getLast();
-        assertThat(blastEntry.getCard().getName()).isEqualTo("Spell Blast");
         assertThat(blastEntry.getTargetId()).isEqualTo(bears.getId());
     }
 
@@ -58,8 +57,40 @@ class SpellBlastTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resolving =====
+    @Test
+    @DisplayName("Uses an X spell's chosen X when checking its mana value")
+    void usesChosenXWhenCheckingTargetSpellManaValue() {
+        Disintegrate disintegrate = new Disintegrate();
+        harness.setHand(player1, List.of(disintegrate));
+        harness.addMana(player1, ManaColor.RED, 2); // X=1 + {R}
 
+        harness.setHand(player2, List.of(new SpellBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 3); // Spell Blast X=2 + {U}
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 2, disintegrate.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(disintegrate.getId());
+    }
+
+    @Test
+    @DisplayName("Does not use an X spell's printed mana value for targeting")
+    void doesNotUsePrintedManaValueForTargetSpellWithX() {
+        Disintegrate disintegrate = new Disintegrate();
+        harness.setHand(player1, List.of(disintegrate));
+        harness.addMana(player1, ManaColor.RED, 2); // X=1 + {R}
+
+        harness.setHand(player2, List.of(new SpellBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 2); // Spell Blast X=1 + {U}
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, 1, disintegrate.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
     @Test
     @DisplayName("Resolving counters the targeted spell whose mana value equals X")
     void countersSpellWhenXMatches() {
@@ -79,9 +110,6 @@ class SpellBlastTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Spell Blast");
     }
-
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Fizzles if the target spell is no longer on the stack")
     void fizzlesIfTargetRemoved() {

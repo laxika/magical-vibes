@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsDownToFewestEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 public class EachPlayerDiscardsDownToFewestEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,6 +50,10 @@ public class EachPlayerDiscardsDownToFewestEffectHandler implements NormalEffect
         List<UUID> choosers = new ArrayList<>();
         List<Integer> amounts = new ArrayList<>();
         for (UUID playerId : ordered) {
+            if (!gameQueryService.canEffectCauseDiscard(
+                    gameData, playerId, entry.getControllerId())) {
+                continue;
+            }
             int amount = handSize(gameData, playerId) - fewest;
             if (amount > 0) {
                 choosers.add(playerId);

@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -10,9 +8,6 @@ import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -27,33 +22,23 @@ public class BoostBySharedCreatureTypeEffectHandler implements StaticEffectHandl
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostBySharedCreatureTypeEffect) effect;
         Permanent target = context.target();
         GameData gameData = context.gameData();
-
-        List<CardSubtype> targetTypes = new ArrayList<>(target.getCard().getSubtypes());
-        targetTypes.addAll(target.getTransientSubtypes());
-        boolean targetIsChangeling = target.hasKeyword(Keyword.CHANGELING);
-
-        if (targetTypes.isEmpty() && !targetIsChangeling) return;
-
         boolean hasAnimateArtifacts = support.hasAnimateArtifactEffect(gameData);
+        if (!support.isEffectivelyCreature(gameData, target, hasAnimateArtifacts)
+                || !support.matchesStaticFilter(context, target, boost.filter())) {
+            return;
+        }
+
         final int[] count = {0};
 
         gameData.forEachPermanent((playerId, other) -> {
-            if (other == target) return;
-            if (!support.isEffectivelyCreature(other, hasAnimateArtifacts)) return;
+            if (other.getId().equals(target.getId())) return;
+            if (!support.isEffectivelyCreature(gameData, other, hasAnimateArtifacts)) return;
+            if (!support.matchesStaticFilter(context, other, boost.filter())) return;
 
-            List<CardSubtype> otherTypes = new ArrayList<>(other.getCard().getSubtypes());
-            otherTypes.addAll(other.getTransientSubtypes());
-            boolean otherIsChangeling = other.hasKeyword(Keyword.CHANGELING);
-
-            if (otherTypes.isEmpty() && !otherIsChangeling) return;
-
-            boolean sharesType = (targetIsChangeling && (otherIsChangeling || !otherTypes.isEmpty()))
-                    || (otherIsChangeling && !targetTypes.isEmpty())
-                    || targetTypes.stream().anyMatch(otherTypes::contains);
-
-            if (sharesType) count[0]++;
+            if (support.sharesCreatureType(target, other)) count[0]++;
         });
 
         accumulator.addPower(count[0]);

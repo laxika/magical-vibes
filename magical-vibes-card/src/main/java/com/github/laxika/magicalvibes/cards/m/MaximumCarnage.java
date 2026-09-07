@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEff
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "83")
+@CardRegistration(set = "SPM", collectorNumber = "225")
 public class MaximumCarnage extends Card {
 
     public MaximumCarnage() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "105")
+@CardRegistration(set = "SPM", collectorNumber = "226")
 public class KravensLastHunt extends Card {
 
     public KravensLastHunt() {

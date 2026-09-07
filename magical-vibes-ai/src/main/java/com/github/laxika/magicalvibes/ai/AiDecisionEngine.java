@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,7 +13,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,6 +29,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
+import com.github.laxika.magicalvibes.model.effect.CombatTapCostEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
@@ -39,14 +45,18 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEf
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -324,6 +334,21 @@ public abstract class AiDecisionEngine {
         choiceHandler.handleActiveInteraction(gameData);
     }
 
+    /** Floats the full variable face-up cost before the strategy chooses a payable X. */
+    protected void handleTurnFaceUpXValueChoice(GameData gameData) {
+        PendingInteraction.TurnFaceUpXValueChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.TurnFaceUpXValueChoice.class);
+        if (choice != null && aiPlayer.getId().equals(choice.playerId())) {
+            ManaCost cost = new ManaCost(choice.manaCost());
+            int maxX = cost.calculateMaxX(gameData.playerManaPools.get(aiPlayer.getId()));
+            if (maxX < choice.maxValue()) {
+                manaManager.tapLandsForCost(gameData, aiPlayer.getId(), choice.manaCost(),
+                        choice.maxValue(), manaTapAction(), true);
+            }
+        }
+        choiceHandler.handleActiveInteraction(gameData);
+    }
+
     /**
      * Floats mana for the active may-pay prompt when the choice is this AI's and carries a
      * mana cost — the engine pays may-costs from the actual pool, so the mana must be
@@ -421,6 +446,8 @@ public abstract class AiDecisionEngine {
             case PendingInteraction.XValueChoice ignored -> handleXValueChoice(gameData);
             case PendingInteraction.AlternateCastXValueChoice ignored ->
                     handleAlternateCastXValueChoice(gameData);
+            case PendingInteraction.TurnFaceUpXValueChoice ignored ->
+                    handleTurnFaceUpXValueChoice(gameData);
             case PendingInteraction.Scry ignored -> handleScry(gameData);
             case null -> { }
             default -> choiceHandler.handleActiveInteraction(gameData);
@@ -1156,6 +1183,7 @@ public abstract class AiDecisionEngine {
         DeclareAttackersRequest combatLimitLegalRequest =
                 capAttackersToCombatMaximum(gameData, restrictionLegalRequest);
         combatLimitLegalRequest = removeUnmetAttackRestrictions(gameData, combatLimitLegalRequest);
+        combatLimitLegalRequest = fitAttackersToTapCosts(gameData, combatLimitLegalRequest);
         if (combatLimitLegalRequest.attackerIndices().isEmpty()
                 && combatAttackService.isOpponentForcedToAttack(
                         gameData, activeDecisionPlayerId(gameData))) {
@@ -1181,7 +1209,54 @@ public abstract class AiDecisionEngine {
         fallback = removeUnmetAttackRestrictions(gameData, fallback);
         fallback = capAttackersToCombatMaximum(gameData, fallback);
         fallback = removeUnmetAttackRestrictions(gameData, fallback);
+        fallback = fitAttackersToTapCosts(gameData, fallback);
         return fallback;
+    }
+
+    /**
+     * Keeps an ordered subset whose declaration-wide creature-tap costs can be paid.
+     * Required attackers are considered first so an optional attacker cannot consume the creature
+     * needed to pay a required attacker's cost.
+     */
+    private DeclareAttackersRequest fitAttackersToTapCosts(
+            GameData gameData, DeclareAttackersRequest request) {
+        if (request.attackerIndices().isEmpty()) {
+            return request;
+        }
+
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(attackingPlayerId);
+        if (battlefield == null || request.attackerIndices().stream()
+                .filter(index -> index >= 0 && index < battlefield.size())
+                .map(battlefield::get)
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .noneMatch(CombatTapCostEffect.class::isInstance)) {
+            return request;
+        }
+
+        Set<Integer> requested = new HashSet<>(request.attackerIndices());
+        LinkedHashSet<Integer> ordered = new LinkedHashSet<>();
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null) {
+            declaration.mustAttackIndices().stream()
+                    .filter(requested::contains)
+                    .forEach(ordered::add);
+        }
+        ordered.addAll(request.attackerIndices());
+
+        List<Integer> fitted = new ArrayList<>(ordered.size());
+        for (int attackerIndex : ordered) {
+            List<Integer> candidate = new ArrayList<>(fitted);
+            candidate.add(attackerIndex);
+            if (combatAttackService.canPayAttackTapCosts(gameData, attackingPlayerId, candidate)) {
+                fitted.add(attackerIndex);
+            }
+        }
+        if (fitted.equals(request.attackerIndices())) {
+            return request;
+        }
+        return new DeclareAttackersRequest(fitted, request.attackTargets(), request.bands());
     }
 
     private DeclareAttackersRequest enforceAttackerDeclarationRequirements(
@@ -1472,11 +1547,17 @@ public abstract class AiDecisionEngine {
                     capBlockersToLegalMaximum(gameData, requirementLegal.blockerAssignments()));
             requirementLegal = new DeclareBlockersRequest(
                     normalizeBlockerAssignments(gameData, requirementLegal.blockerAssignments()));
+            requirementLegal = new DeclareBlockersRequest(
+                    fitBlockersToTapCosts(gameData, requirementLegal.blockerAssignments()));
+            requirementLegal = new DeclareBlockersRequest(
+                    normalizeBlockerAssignments(gameData, requirementLegal.blockerAssignments()));
         }
         DeclareBlockersRequest affordable = gameData == null
                 ? requirementLegal
                 : new DeclareBlockersRequest(prepareBlockersForTax(gameData, requirementLegal.blockerAssignments()));
         if (gameData != null) {
+            affordable = new DeclareBlockersRequest(
+                    fitBlockersToTapCosts(gameData, affordable.blockerAssignments()));
             affordable = new DeclareBlockersRequest(
                     normalizeBlockerAssignments(gameData, affordable.blockerAssignments()));
         }
@@ -1507,7 +1588,10 @@ public abstract class AiDecisionEngine {
                 : enforceBlockRequirements(gameData, List.of());
         if (gameData != null) {
             fallbackAssignments = capBlockersToLegalMaximum(gameData, fallbackAssignments);
+            fallbackAssignments = fitBlockersToTapCosts(gameData, fallbackAssignments);
+            fallbackAssignments = normalizeBlockerAssignments(gameData, fallbackAssignments);
             fallbackAssignments = prepareBlockersForTax(gameData, fallbackAssignments);
+            fallbackAssignments = fitBlockersToTapCosts(gameData, fallbackAssignments);
             fallbackAssignments = normalizeBlockerAssignments(gameData, fallbackAssignments);
         }
         try {
@@ -1560,6 +1644,56 @@ public abstract class AiDecisionEngine {
             }
         }
         return assignments.stream().filter(kept::contains).toList();
+    }
+
+    /**
+     * Keeps an ordered subset of blocker groups whose declaration-wide creature-tap costs can be
+     * paid. Every assignment for one blocker is considered together because a creature that can
+     * block multiple attackers pays its combat cost only once.
+     */
+    private List<BlockerAssignment> fitBlockersToTapCosts(
+            GameData gameData, List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty() || gameData.activePlayerId == null) {
+            return assignments;
+        }
+        PendingInteraction.BlockerDeclaration pending =
+                gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        UUID defenderId = pending == null
+                ? gameQueryService.getOpponentId(gameData, gameData.activePlayerId)
+                : pending.defenderId();
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null || assignments.stream().anyMatch(assignment ->
+                !isIndexInRange(assignment.blockerIndex(), defenderBattlefield))) {
+            return assignments;
+        }
+
+        LinkedHashSet<Integer> blockerIndices = assignments.stream()
+                .map(BlockerAssignment::blockerIndex)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        boolean hasTapCost = blockerIndices.stream()
+                .map(defenderBattlefield::get)
+                .flatMap(blocker -> blocker.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(CombatTapCostEffect.class::isInstance);
+        if (!hasTapCost) {
+            return assignments;
+        }
+
+        List<BlockerAssignment> fitted = new ArrayList<>();
+        for (int blockerIndex : blockerIndices) {
+            List<BlockerAssignment> candidate = new ArrayList<>(fitted);
+            assignments.stream()
+                    .filter(assignment -> assignment.blockerIndex() == blockerIndex)
+                    .forEach(candidate::add);
+            List<Permanent> candidateBlockers = candidate.stream()
+                    .map(BlockerAssignment::blockerIndex)
+                    .distinct()
+                    .map(defenderBattlefield::get)
+                    .toList();
+            if (blockLegalityService.canPayBlockTapCosts(gameData, defenderId, candidateBlockers)) {
+                fitted = candidate;
+            }
+        }
+        return fitted;
     }
 
     private int maximumLegalBlockersForAttacker(
@@ -1725,6 +1859,13 @@ public abstract class AiDecisionEngine {
                         .filter(candidate -> !hasAssignmentForBlocker(assignments, candidate))
                         .findFirst()
                         .orElse(-1);
+                if (blockerIdx < 0) {
+                    blockerIdx = lureBlockers.stream()
+                            .filter(candidate -> !hasAssignmentToAny(
+                                    assignments, candidate, List.of(attackerIdx)))
+                            .findFirst()
+                            .orElse(-1);
+                }
                 if (blockerIdx < 0) {
                     return;
                 }
@@ -2076,8 +2217,7 @@ public abstract class AiDecisionEngine {
         if (manaCost == null) {
             return false;
         }
-        ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 1) : 0;
         int costModifier = xValue == null
                 ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
@@ -2113,8 +2253,11 @@ public abstract class AiDecisionEngine {
         boolean canPay = cost.hasX()
                 ? cost.canPayWithAdditionalGenericCost(pool, xValue, costModifier - delveReduction)
                 : cost.canPay(pool, costModifier - delveReduction);
-        return canPay && (!card.isRequiresCreatureMana()
-                || cost.canPayCreatureOnly(pool, costModifier - delveReduction));
+        return canPay
+                && (!card.isRequiresCreatureMana()
+                || cost.canPayCreatureOnly(pool, costModifier - delveReduction))
+                && (!card.isRequiresBasicLandMana()
+                || cost.canPayBasicLandOnly(pool, xValue, costModifier - delveReduction));
     }
 
     /**
@@ -2177,8 +2320,7 @@ public abstract class AiDecisionEngine {
             }
             int targetReduction = castingCostService.computeTargetBasedCostReduction(
                     gameData, aiPlayer.getId(), card, costReductionTargetIds);
-            ManaCost validationCost = castingCostService.applyColoredManaCostReductions(
-                    gameData, aiPlayer.getId(), card, new ManaCost(selectedModeManaCost));
+            ManaCost validationCost = effectiveManaCost(gameData, card, selectedModeManaCost);
             int costModifier = xValue == null
                     ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                     : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
@@ -2187,32 +2329,37 @@ public abstract class AiDecisionEngine {
                     gameData, card, validationCost, virtualPool, xValue, costModifier);
         }
 
-        if (card.getManaCost() == null || !castingCostService.hasTargetBasedCastCostReduction(card)) {
+        boolean hasTargetBasedCostReduction = castingCostService.hasTargetBasedCastCostReduction(card);
+        boolean hasTargetBasedCostIncrease = castingCostService.hasTargetBasedCostIncrease(card);
+        if (card.getManaCost() == null
+                || !hasTargetBasedCostReduction && !hasTargetBasedCostIncrease) {
             return true;
         }
 
-        if (castingCostService.computeTargetBasedCostReduction(
-                gameData, aiPlayer.getId(), card, costReductionTargetIds) > 0) {
+        int targetReduction = castingCostService.computeTargetBasedCostReduction(
+                gameData, aiPlayer.getId(), card, costReductionTargetIds);
+        if (!hasTargetBasedCostIncrease && targetReduction > 0) {
             return true;
         }
 
-        ManaCost validationCost = castingCostService.applyColoredManaCostReductions(
-                gameData, aiPlayer.getId(), card, new ManaCost(card.getManaCost()));
+        ManaCost validationCost = effectiveManaCost(gameData, card, card.getManaCost());
         int costModifier = xValue == null
                 ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
         return canPayManaCostWithDelve(
-                gameData, card, validationCost, virtualPool, xValue, costModifier + targetingTax);
+                gameData, card, validationCost, virtualPool, xValue,
+                costModifier + targetingTax - targetReduction);
     }
 
     /**
-     * Computes the targeting tax for a spell based on the chosen target(s).
-     * Effects like Kopala, Warden of Waves increase the cost of spells that
-     * target permanents with certain subtypes; Kaervek's Torch taxes spells that
-     * target it while it is on the stack.
+     * Computes the net target-dependent cost modifier for a spell's chosen target(s).
+     * This includes battlefield taxes and reductions, costs carried by the spell itself,
+     * and costs carried by a targeted spell on the stack.
      */
-    protected int computeTargetingTax(GameData gameData, UUID targetId, List<UUID> multiTargetIds) {
-        return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds, false)
+    protected int computeTargetingTax(GameData gameData, Card card, UUID targetId,
+                                      List<UUID> multiTargetIds) {
+        return castingCostService.getTargetingSpellCostModifier(
+                gameData, aiPlayer.getId(), card, targetId, multiTargetIds)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, multiTargetIds);
     }
 
@@ -2313,6 +2460,72 @@ public abstract class AiDecisionEngine {
         }
     }
 
+    private record CollectEvidenceCastPlan(UUID targetId, List<UUID> targetIds,
+                                           List<Integer> graveyardCardIndices) {
+    }
+
+    private CollectEvidenceCastPlan planCollectEvidenceCast(GameData gameData, Card card,
+                                                            UUID targetId, List<UUID> targetIds,
+                                                            List<Integer> existingGraveyardCardIndices) {
+        CollectEvidenceCost cost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cost == null || cost.optional()) {
+            return new CollectEvidenceCastPlan(targetId, targetIds, existingGraveyardCardIndices);
+        }
+
+        List<UUID> plannedTargetIds = targetIds == null ? null : new ArrayList<>(targetIds);
+        UUID plannedTargetId = targetId;
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
+        int availableManaValue = graveyard.stream().mapToInt(Card::getManaValue).sum();
+        int requiredManaValue = castingCostService.resolveCollectEvidenceMinimumManaValue(
+                gameData, cost, plannedTargetId, plannedTargetIds);
+        boolean mayChooseFewerTargets = card.getMinTargets() == 0 && !card.isAura();
+
+        while (cost.usesTargetManaValue() && requiredManaValue > availableManaValue
+                && mayChooseFewerTargets) {
+            if (plannedTargetIds != null && !plannedTargetIds.isEmpty()) {
+                plannedTargetIds.removeLast();
+            } else if (plannedTargetId != null) {
+                plannedTargetId = null;
+            } else {
+                break;
+            }
+            requiredManaValue = castingCostService.resolveCollectEvidenceMinimumManaValue(
+                    gameData, cost, plannedTargetId, plannedTargetIds);
+        }
+
+        List<Integer> evidenceIndices = selectCollectEvidenceIndices(graveyard, requiredManaValue);
+        return new CollectEvidenceCastPlan(
+                plannedTargetId, plannedTargetIds,
+                evidenceIndices != null ? evidenceIndices : List.of());
+    }
+
+    private List<Integer> selectCollectEvidenceIndices(List<Card> graveyard, int requiredManaValue) {
+        if (requiredManaValue == 0) {
+            return List.of();
+        }
+        List<Integer> candidates = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            candidates.add(i);
+        }
+        candidates.sort(Comparator.comparingInt(
+                (Integer index) -> graveyard.get(index).getManaValue()).reversed());
+
+        List<Integer> selected = new ArrayList<>();
+        int selectedManaValue = 0;
+        for (int index : candidates) {
+            selected.add(index);
+            selectedManaValue += graveyard.get(index).getManaValue();
+            if (selectedManaValue >= requiredManaValue) {
+                return selected;
+            }
+        }
+        return null;
+    }
+
     /**
      * Builds the common spell cast request, including the selected object for any behold cost.
      * The other additional-cost fields mirror the request shape used by all AI spell paths.
@@ -2346,17 +2559,34 @@ public abstract class AiDecisionEngine {
             effectiveXValue = 1;
         }
         CardSubtype chosenAdditionalCostCreatureType = chooseAdditionalCostCreatureType(card);
-        CardSubtype chosenCreatureType = chooseCastTimeCreatureType(gameData, card, targetId, targetIds);
+        CollectEvidenceCastPlan collectEvidencePlan = planCollectEvidenceCast(
+                gameData, card, targetId, targetIds, exileGraveyardCardIndices);
+        CardSubtype chosenCreatureType = chooseCastTimeCreatureType(
+                gameData, card, collectEvidencePlan.targetId(), collectEvidencePlan.targetIds());
         return new PlayCardRequest(
-                cardIndex, effectiveXValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
+                cardIndex, effectiveXValue, collectEvidencePlan.targetId(), damageAssignments,
+                collectEvidencePlan.targetIds(), convokeCreatureIds,
                 null, sacrificePermanentId, null, null, alternateCostSacrificePermanentIds, null,
                 exileGraveyardCardIndex,
-                exileGraveyardCardIndices, null, null, null, discardHandCardIndex,
+                collectEvidencePlan.graveyardCardIndices(), null, null, null, discardHandCardIndex,
                 discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                 List.of(), null,
                 null, selection.permanentId(), selection.handCardIndex(), null, null, null,
                 chosenAdditionalCostCreatureType == null ? null : chosenAdditionalCostCreatureType.name(), null,
                 chosenCreatureType == null ? null : chosenCreatureType.name());
+    }
+
+    /**
+     * Returns whether a hand cast either moved the card out of hand or opened the cast-time
+     * opponent-choice prompt that must finish before the spell can move to the stack.
+     */
+    protected boolean spellCastStarted(GameData gameData, List<Card> hand, Card card) {
+        if (!hand.contains(card)) {
+            return true;
+        }
+        return gameData.interaction.permanentChoiceContext()
+                instanceof PermanentChoiceContext.OpponentChosenSpellTarget pending
+                && pending.cardToCast().getId().equals(card.getId());
     }
 
     private CardSubtype chooseAdditionalCostCreatureType(Card card) {
@@ -2408,14 +2638,17 @@ public abstract class AiDecisionEngine {
      * {@link ExileXCardsFromGraveyardCost}, it cannot exceed the number of matching cards; for cards with
      * {@link ReturnTargetCardsFromGraveyardToBattlefieldEffect} (Return to the Ranks), it cannot
      * exceed the number of graveyard cards matching that effect's filter. The same cap applies to
-     * X-scaled return-to-hand effects. These mirror the engine's own cast-time validation in
-     * {@code SpellCastingService}, so the AI never proposes an X the server refuses. Returns
-     * {@link Integer#MAX_VALUE} if the card has no such requirement.
+     * X-scaled return-to-hand effects and exact X-card graveyard choices. These mirror the engine's
+     * own cast-time validation in {@code SpellCastingService}, so the AI never proposes an X the
+     * server refuses. Returns {@link Integer#MAX_VALUE} if the card has no such requirement.
      */
     protected int getMaxXForGraveyardRequirements(GameData gameData, Card card) {
         List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
-        boolean needsGraveyardCreatures = spellEffects.stream()
-                .anyMatch(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance);
+        ExileCreaturesFromGraveyardAndCreateTokensEffect graveyardCreatureEffect = spellEffects.stream()
+                .filter(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance)
+                .map(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::cast)
+                .findFirst().orElse(null);
+        boolean needsGraveyardCreatures = graveyardCreatureEffect != null;
         ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect = spellEffects.stream()
                 .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
                 .map(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::cast)
@@ -2429,8 +2662,15 @@ public abstract class AiDecisionEngine {
                 .filter(ExileXCardsFromGraveyardCost.class::isInstance)
                 .map(ExileXCardsFromGraveyardCost.class::cast)
                 .findFirst().orElse(null);
+        GraveyardCardChoosingEffect exactXGraveyardChoice = spellEffects.stream()
+                .filter(GraveyardCardChoosingEffect.class::isInstance)
+                .map(GraveyardCardChoosingEffect.class::cast)
+                .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
+                .filter(effect -> effect.graveyardChoiceMaxTargets() == 0)
+                .filter(GraveyardCardChoosingEffect::graveyardChoiceExactTargets)
+                .findFirst().orElse(null);
         if (!needsGraveyardCreatures && returnEffect == null
-                && xScaledToHandEffect == null && exileXCost == null) {
+                && xScaledToHandEffect == null && exileXCost == null && exactXGraveyardChoice == null) {
             return Integer.MAX_VALUE;
         }
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
@@ -2442,7 +2682,10 @@ public abstract class AiDecisionEngine {
                     .count();
         }
         if (needsGraveyardCreatures) {
-            maxX = (int) graveyard.stream()
+            List<UUID> graveyardOwners = graveyardCreatureEffect.graveyardScope()
+                    .graveyardOwners(gameData.orderedPlayerIds, aiPlayer.getId());
+            maxX = (int) graveyardOwners.stream()
+                    .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream())
                     .filter(c -> c.hasType(CardType.CREATURE))
                     .count();
         }
@@ -2458,7 +2701,38 @@ public abstract class AiDecisionEngine {
                             c, xScaledToHandEffect.filter(), card.getId()))
                     .count());
         }
+        if (exactXGraveyardChoice != null) {
+            maxX = Math.min(maxX,
+                    getMaxXForExactGraveyardChoice(gameData, card, exactXGraveyardChoice));
+        }
         return maxX;
+    }
+
+    private int getMaxXForExactGraveyardChoice(GameData gameData, Card card,
+                                                GraveyardCardChoosingEffect effect) {
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return 0;
+        }
+        if (effect.singleGraveyard()) {
+            return gameData.orderedPlayerIds.stream()
+                    .mapToInt(playerId -> countLegalGraveyardChoices(gameData, card, effect, playerId))
+                    .max()
+                    .orElse(0);
+        }
+        return gameData.orderedPlayerIds.stream()
+                .mapToInt(playerId -> countLegalGraveyardChoices(gameData, card, effect, playerId))
+                .sum();
+    }
+
+    private int countLegalGraveyardChoices(GameData gameData, Card card,
+                                            GraveyardCardChoosingEffect effect, UUID playerId) {
+        return (int) gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                .filter(candidate -> effect.graveyardChoiceFilter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        candidate, effect.graveyardChoiceFilter(), card.getId()))
+                .filter(candidate -> !gameQueryService.isLandCardTargetRestricted(
+                        gameData, candidate, aiPlayer.getId()))
+                .count();
     }
 
     /**
@@ -2619,10 +2893,14 @@ public abstract class AiDecisionEngine {
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
+                    || effect instanceof WaterbendCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
             }
             // "Sacrifice a creature" — pick the weakest (lowest effective power + toughness).
+            if (hasAvailableDiscardAlternative(gameData, card, effect)) {
+                continue;
+            }
             if (cost.sacrificesChosenCreature()) {
                 return battlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
@@ -2642,6 +2920,21 @@ public abstract class AiDecisionEngine {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns whether an either-or discard/sacrifice cost can be paid by discarding. The spell
+     * request must carry exactly one branch, so sacrifice selection defers to the discard choice
+     * whenever the shared cost query finds an eligible card.
+     */
+    protected boolean hasAvailableDiscardAlternative(GameData gameData, Card card, CardEffect effect) {
+        if (!(effect instanceof DiscardCardOrSacrificePermanentCost)
+                && !(effect instanceof SacrificePermanentOrDiscardCardCost)) {
+            return false;
+        }
+        List<Integer> validDiscardIndices = castingCostService.validDiscardCostIndices(
+                gameData, aiPlayer.getId(), card);
+        return validDiscardIndices != null && !validDiscardIndices.isEmpty();
     }
 
     /**
@@ -2712,6 +3005,15 @@ public abstract class AiDecisionEngine {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == fixed.value() ? chosen : List.of();
+            }
+            if (effect instanceof WaterbendCost cost) {
+                return battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> gameQueryService.isArtifact(gameData, p)
+                                || gameQueryService.isCreature(gameData, p))
+                        .limit(cost.amount())
+                        .map(Permanent::getId)
+                        .toList();
             }
             if (effect instanceof SacrificeAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()
@@ -2847,8 +3149,7 @@ public abstract class AiDecisionEngine {
             return null;
         }
 
-        ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 0) : 0;
         int costModifier = xValue == null
                 ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
@@ -2875,16 +3176,22 @@ public abstract class AiDecisionEngine {
 
     /**
      * Internal record for modal spell casting: holds the selected mode encoding
-     * (used as xValue in PlayCardRequest), the legacy single target, and any
-     * target-slot targets declared by multi-mode or variable-count modes.
+     * (used as xValue in PlayCardRequest), the legacy single target, any target-slot targets,
+     * and any amount division announced for the selected mode.
      */
-    protected record ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds) {
+    protected record ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds,
+                                   Map<UUID, Integer> damageAssignments) {
         protected ModalCastPlan {
             targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+            damageAssignments = damageAssignments == null ? null : Map.copyOf(damageAssignments);
+        }
+
+        protected ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds) {
+            this(modeIndex, targetId, targetIds, null);
         }
 
         protected ModalCastPlan(int modeIndex, UUID targetId) {
-            this(modeIndex, targetId, List.of());
+            this(modeIndex, targetId, List.of(), null);
         }
     }
 
@@ -2916,24 +3223,70 @@ public abstract class AiDecisionEngine {
         return coe.options().get(selectedModes.getFirst()).manaCost();
     }
 
-    /** Returns the mana cost that the selected modal mode will actually use, when applicable. */
+    /** Returns the full mana cost of the selected modal cast, including any spree mode costs. */
     protected String manaCostForSpell(Card card, Integer modeEncoding) {
         String selectedModeManaCost = selectedModalManaCost(card, modeEncoding);
-        return selectedModeManaCost != null ? selectedModeManaCost : card.getManaCost();
+        String baseManaCost = selectedModeManaCost != null ? selectedModeManaCost : card.getManaCost();
+        String spreeManaCost = selectedSpreeManaCost(card, modeEncoding);
+        if (baseManaCost == null) {
+            return spreeManaCost.isEmpty() ? null : spreeManaCost;
+        }
+        return baseManaCost + spreeManaCost;
+    }
+
+    private ManaCost effectiveManaCost(GameData gameData, Card card, String manaCost) {
+        return castingCostService.applyColoredManaCostReductions(
+                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+    }
+
+    private String selectedSpreeManaCost(Card card, Integer modeEncoding) {
+        if (modeEncoding == null) {
+            return "";
+        }
+        SpreeAdditionalManaCost spreeCost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(SpreeAdditionalManaCost.class::isInstance)
+                .map(SpreeAdditionalManaCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (spreeCost == null) {
+            return "";
+        }
+        ChooseOneEffect modal = findChooseOneEffect(card);
+        if (modal == null) {
+            throw new IllegalStateException("Spree cost has no modal choices");
+        }
+        StringBuilder selectedCost = new StringBuilder();
+        for (int modeIndex : modal.decodeModeIndices(modeEncoding)) {
+            if (modeIndex < 0 || modeIndex >= spreeCost.modeManaCosts().size()) {
+                throw new IllegalStateException("Spree mode has no matching additional cost");
+            }
+            selectedCost.append(spreeCost.modeManaCosts().get(modeIndex));
+        }
+        return selectedCost.toString();
     }
 
     private boolean isModalModeAffordable(GameData gameData, Card card,
-                                          ChooseOneEffect.ChooseOneOption option,
+                                          int modeEncoding,
                                           ManaPool virtualPool) {
-        if (option.manaCost() == null
-                || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)) {
+        String selectedModeManaCost = selectedModalManaCost(card, modeEncoding);
+        String spreeManaCost = selectedSpreeManaCost(card, modeEncoding);
+        if (selectedModeManaCost == null && spreeManaCost.isEmpty()) {
             return true;
         }
-        ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                gameData, aiPlayer.getId(), card, new ManaCost(option.manaCost()));
+        boolean freeCast = castingCostService.hasAlternativeZeroCostFromBattlefield(
+                gameData, aiPlayer.getId(), card);
+        String manaCost = freeCast
+                ? spreeManaCost
+                : manaCostForSpell(card, modeEncoding);
+        if (manaCost == null || manaCost.isEmpty()) {
+            return true;
+        }
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         return cost.canPay(virtualPool, costModifier)
-                && (!card.isRequiresCreatureMana() || cost.canPayCreatureOnly(virtualPool, costModifier));
+                && (!card.isRequiresCreatureMana() || cost.canPayCreatureOnly(virtualPool, costModifier))
+                && (!card.isRequiresBasicLandMana()
+                || cost.canPayBasicLandOnly(virtualPool, 0, costModifier));
     }
 
     /**
@@ -2981,8 +3334,11 @@ public abstract class AiDecisionEngine {
                     }
                     if (validModes.size() == coe.choicesRequired()) {
                         int[] modeIndices = validModes.stream().mapToInt(Integer::intValue).toArray();
+                        int modeEncoding = coe.modesMayRepeat()
+                                ? ChooseOneEffect.encodeRepeatedModeSelection(coe.options().size(), modeIndices)
+                                : ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices);
                         return new ModalCastPlan(
-                                ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices),
+                                modeEncoding,
                                 targetId, targetIds);
                     }
                 }
@@ -2993,22 +3349,29 @@ public abstract class AiDecisionEngine {
         // Choose-one and "choose one or more": pick the first valid single mode (avoids escalate).
         for (int i = 0; i < coe.options().size(); i++) {
             ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
-            if (!isModalModeValid(gameData, card, option)
-                    || !isModalModeAffordable(gameData, card, option, virtualPool)) {
-                continue;
-            }
-            CardEffect effect = option.effect();
             int encoded = coe.variableModeCount()
                     ? ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), coe.choicesMax(), new int[]{i})
                     : i;
+            if (!isModalModeValid(gameData, card, option)
+                    || !isModalModeAffordable(gameData, card, encoded, virtualPool)) {
+                continue;
+            }
 
-            if (EffectResolution.targetsSpellOnStack(effect)) continue;
+            if (option.effects().stream().anyMatch(EffectResolution::targetsSpellOnStack)) continue;
 
             if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
                     || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
                 List<UUID> targets = findModalModeTargets(gameData, card, option);
                 if (targets.size() < requiredModalTargetCount(option)) {
                     continue;
+                }
+                if (EffectResolution.needsDamageDistribution(option.effects())) {
+                    Map<UUID, Integer> assignments = buildModalDamageAssignments(option, targets);
+                    if (assignments == null) {
+                        continue;
+                    }
+                    return new ModalCastPlan(encoded, null,
+                            List.copyOf(assignments.keySet()), assignments);
                 }
                 if (usesModalTargetSlots(coe, option)) {
                     return new ModalCastPlan(encoded, null, targets);
@@ -3019,7 +3382,7 @@ public abstract class AiDecisionEngine {
                 continue;
             }
 
-            if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            if (modeAdmitsTarget(option, TargetPredicate.Kind.GRAVEYARD_CARD)) {
                 List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
                 if (!targets.isEmpty()) {
                     UUID target = targets.getFirst().getId();
@@ -3036,18 +3399,33 @@ public abstract class AiDecisionEngine {
         return null;
     }
 
+    private Map<UUID, Integer> buildModalDamageAssignments(
+            ChooseOneEffect.ChooseOneOption option, List<UUID> targets) {
+        DealDividedDamageEffect dividedDamage = option.effects().stream()
+                .filter(DealDividedDamageEffect.class::isInstance)
+                .map(DealDividedDamageEffect.class::cast)
+                .filter(effect -> effect.mode() == DivisionMode.CHOSEN
+                        && !effect.etbAssignments())
+                .findFirst()
+                .orElse(null);
+        if (dividedDamage == null || !(dividedDamage.totalDamage() instanceof Fixed fixed)
+                || fixed.value() <= 0 || targets.isEmpty()) {
+            return null;
+        }
+        return Map.of(targets.getFirst(), fixed.value());
+    }
+
     private List<UUID> findModalModeTargets(GameData gameData, Card card,
                                              ChooseOneEffect.ChooseOneOption option) {
-        CardEffect effect = option.effect();
         if (option.targetFilters() != null
-                && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                && modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)) {
             return findModalPermanentTargets(gameData, card, option);
         }
         if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
                 || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
             return findModalPlayerOrPermanentTargets(gameData, card, option);
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.GRAVEYARD_CARD)) {
             List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
             return targets.isEmpty() ? List.of() : List.of(targets.getFirst().getId());
         }
@@ -3061,13 +3439,12 @@ public abstract class AiDecisionEngine {
                 return false;
             }
         }
-        CardEffect effect = option.effect();
-        if (EffectResolution.targetsSpellOnStack(effect)) return false;
+        if (option.effects().stream().anyMatch(EffectResolution::targetsSpellOnStack)) return false;
         if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
                 || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
             return findModalModeTargets(gameData, card, option).size() >= requiredModalTargetCount(option);
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.GRAVEYARD_CARD)) {
             return !targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId()).isEmpty();
         }
         return true;
@@ -3295,7 +3672,7 @@ public abstract class AiDecisionEngine {
 
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax - delveReduction;
-        ManaCost cost = new ManaCost(manaCost);
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         List<Permanent> creatures = gameData.playerBattlefields
                 .getOrDefault(aiPlayer.getId(), List.of())
                 .stream()
@@ -3313,7 +3690,9 @@ public abstract class AiDecisionEngine {
                     ? cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, remainingModifier)
                     : cost.canPay(pool, remainingModifier);
             if (canPay && (!card.isRequiresCreatureMana()
-                    || cost.canPayCreatureOnly(pool, remainingModifier))) {
+                    || cost.canPayCreatureOnly(pool, remainingModifier))
+                    && (!card.isRequiresBasicLandMana()
+                    || cost.canPayBasicLandOnly(pool, effectiveXValue, remainingModifier))) {
                 if (count == 0 || sacrificeAllowed) {
                     return new CostReductionPlan(
                             creatures.subList(0, count).stream().map(Permanent::getId).toList(), reduction);
@@ -3360,6 +3739,32 @@ public abstract class AiDecisionEngine {
         return Set.copyOf(reservedIds);
     }
 
+    /**
+     * Returns permanents that must remain unchanged while the AI prepares a spell cast, including
+     * announced cast-time targets and permanents selected for additional costs or cost reductions.
+     * Targets belonging only to an enter-the-battlefield ability are not reserved because tapping
+     * one for mana does not change whether the spell itself can be cast.
+     */
+    protected Set<UUID> reservedSpellPaymentPermanentIds(
+            Card card, UUID targetId, List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+            UUID sacrificePermanentId, BeholdSelection beholdSelection,
+            CostReductionPlan costReductionPlan) {
+        Set<UUID> reservedIds = new HashSet<>(reservedSpellCostPermanentIds(
+                sacrificePermanentId, beholdSelection, costReductionPlan));
+        if (EffectResolution.needsSpellCastTarget(card)) {
+            if (targetId != null) {
+                reservedIds.add(targetId);
+            }
+            if (targetIds != null) {
+                reservedIds.addAll(targetIds);
+            }
+        }
+        if (damageAssignments != null) {
+            reservedIds.addAll(damageAssignments.keySet());
+        }
+        return Set.copyOf(reservedIds);
+    }
+
     protected boolean canPayManaForSpell(GameData gameData, Card card, Integer xValue,
                                           int targetingTax, int delveReduction, int costReduction,
                                           Set<UUID> excludedPermanentIds) {
@@ -3370,13 +3775,16 @@ public abstract class AiDecisionEngine {
         if (manaCost == null) {
             return false;
         }
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax - delveReduction - costReduction;
+        if (card.isRequiresBasicLandMana()) {
+            return manaManager.canPayBasicLandCost(gameData, aiPlayer.getId(), manaCost, costModifier);
+        }
         if (card.isRequiresCreatureMana()) {
-            return manaManager.canPayCost(gameData, aiPlayer.getId(), manaCost, costModifier,
+            return manaManager.canPayCost(gameData, aiPlayer.getId(), cost, costModifier,
                     true, excludedPermanentIds);
         }
-        ManaCost cost = new ManaCost(manaCost);
         if (hasConvokeAbility(gameData, card)) {
             Map<UUID, ManaColor> convokeContributions = new LinkedHashMap<>();
             for (Permanent permanent : gameData.playerBattlefields
@@ -3387,14 +3795,14 @@ public abstract class AiDecisionEngine {
             }
             int additionalGenericCost = costModifier
                     + (cost.hasX() && xValue != null ? xValue : 0);
-            return manaManager.canPayCostWithConvoke(gameData, aiPlayer.getId(), manaCost,
+            return manaManager.canPayCostWithConvoke(gameData, aiPlayer.getId(), cost,
                     additionalGenericCost, excludedPermanentIds, convokeContributions);
         }
         if (cost.hasX() && xValue != null) {
-            return manaManager.canPayXCost(gameData, aiPlayer.getId(), card, manaCost, xValue,
+            return manaManager.canPayXCost(gameData, aiPlayer.getId(), card, cost, xValue,
                     costModifier, excludedPermanentIds);
         }
-        return manaManager.canPayCost(gameData, aiPlayer.getId(), manaCost, costModifier,
+        return manaManager.canPayCost(gameData, aiPlayer.getId(), cost, costModifier,
                 false, excludedPermanentIds);
     }
 
@@ -3406,23 +3814,28 @@ public abstract class AiDecisionEngine {
         }
         String manaCost = manaCostForSpell(card, xValue);
         if (manaCost == null) return false;
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax - delveReduction - costReduction;
         AiManaManager.ManaTapAction tap = manaTapAction();
         int stackSizeBeforePayment = gameData.stack.size();
 
+        if (card.isRequiresBasicLandMana()) {
+            manaManager.tapBasicLandsForCostExcluding(gameData, aiPlayer.getId(), manaCost,
+                    costModifier, tap, excludedPermanentIds);
+            return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
+        }
         if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCostExcluding(gameData, aiPlayer.getId(), manaCost,
+            manaManager.tapCreaturesForCostExcluding(gameData, aiPlayer.getId(), cost,
                     costModifier, tap, excludedPermanentIds);
             return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
         }
 
-        ManaCost cost = new ManaCost(manaCost);
         if (cost.hasX() && xValue != null) {
-            manaManager.tapLandsForXSpellExcluding(gameData, aiPlayer.getId(), card, manaCost,
+            manaManager.tapLandsForXSpellExcluding(gameData, aiPlayer.getId(), card, cost,
                     xValue, costModifier, tap, excludedPermanentIds);
         } else {
-            manaManager.tapLandsForCostExcluding(gameData, aiPlayer.getId(), manaCost,
+            manaManager.tapLandsForCostExcluding(gameData, aiPlayer.getId(), cost,
                     costModifier, tap, false, excludedPermanentIds);
         }
         return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
@@ -3461,7 +3874,7 @@ public abstract class AiDecisionEngine {
 
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax;
-        ManaCost cost = new ManaCost(manaCost);
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int additionalGenericCost = costModifier
                 + (cost.hasX() && xValue != null ? xValue : 0) - delveReduction;
         List<ManaColor> contributions = new ArrayList<>();

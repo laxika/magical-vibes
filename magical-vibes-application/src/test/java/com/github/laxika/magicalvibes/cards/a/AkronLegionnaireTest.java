@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AkronLegionnaire.class, GrizzlyBears.class, Ornithopter.class})
 class AkronLegionnaireTest extends BaseCardTest {
 
     @Test
@@ -21,37 +22,35 @@ class AkronLegionnaireTest extends BaseCardTest {
     void nonArtifactCreatureCannotAttack() {
         harness.addToBattlefield(player1, new AkronLegionnaire());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        int bearsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(bearsIndex)))
+        assertThatThrownBy(() -> declareAttackers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bears))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Akron Legionnaire itself can attack")
     void akronCanAttack() {
-        Permanent akron = new Permanent(new AkronLegionnaire());
-        akron.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(akron);
+        Permanent akron = addCreatureReady(player1, new AkronLegionnaire());
 
         harness.setLife(player2, 20);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(akron)));
 
         // Akron is 8/4, unblocked
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("Another creature named Akron Legionnaire can attack")
+    void anotherAkronLegionnaireCanAttack() {
+        harness.addToBattlefield(player1, new AkronLegionnaire());
+        Permanent secondAkron = addCreatureReady(player1, new AkronLegionnaire());
+
+        harness.setLife(player2, 20);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(secondAkron)));
+
+        harness.assertLife(player2, 12);
     }
 
     @Test
@@ -59,17 +58,10 @@ class AkronLegionnaireTest extends BaseCardTest {
     void artifactCreatureCanAttack() {
         harness.addToBattlefield(player1, new AkronLegionnaire());
 
-        Permanent thopter = new Permanent(new Ornithopter());
-        thopter.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(thopter);
+        Permanent thopter = addCreatureReady(player1, new Ornithopter());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        int thopterIndex = gd.playerBattlefields.get(player1.getId()).indexOf(thopter);
-        assertThatCode(() -> gs.declareAttackers(gd, player1, List.of(thopterIndex)))
+        assertThatCode(() -> declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(thopter))))
                 .doesNotThrowAnyException();
     }
 
@@ -78,17 +70,9 @@ class AkronLegionnaireTest extends BaseCardTest {
     void opponentCreatureUnaffected() {
         harness.addToBattlefield(player1, new AkronLegionnaire());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        int bearsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
-        gs.declareAttackers(gd, player2, List.of(bearsIndex));
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(bears)));
 
         assertThat(bears.isAttacking()).isTrue();
     }

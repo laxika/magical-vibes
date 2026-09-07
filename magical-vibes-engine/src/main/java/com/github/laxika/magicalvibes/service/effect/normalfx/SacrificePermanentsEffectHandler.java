@@ -79,8 +79,8 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 resolveSinglePlayer(gameData, entry, e, targetPlayerId, creatureSingleSac);
             }
             case ACTIVE_PLAYER -> {
-                UUID activePlayerId = entry.getTargetId();
-                if (activePlayerId == null || !gameData.playerIds.contains(activePlayerId)) {
+                UUID activePlayerId = gameData.activePlayerId;
+                if (activePlayerId == null) {
                     return;
                 }
                 resolveSinglePlayer(gameData, entry, e, activePlayerId, creatureSingleSac);
@@ -121,6 +121,31 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             UUID playerId) {
         resolveSinglePlayer(gameData, entry, effect, playerId,
                 effect.filter() instanceof PermanentIsCreaturePredicate);
+    }
+
+    public boolean hasLegalSacrificeChoice(GameData gameData, StackEntry entry,
+            SacrificePermanentsEffect effect, UUID playerId) {
+        if (playerId == null || !gameData.playerIds.contains(playerId)
+                || isSacrificeProtected(gameData, entry, playerId)) {
+            return false;
+        }
+
+        int count = evaluateCount(gameData, entry, effect, playerId);
+        if (count <= 0) {
+            return false;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return false;
+        }
+
+        FilterContext filterContext = filterContextFor(gameData, entry);
+        long matchingCount = battlefield.stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, effect.filter(), filterContext))
+                .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
+                .count();
+        return matchingCount >= count;
     }
 
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
@@ -326,7 +351,8 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 : (entry.getCard() != null ? entry.getCard().getId() : null);
         return FilterContext.of(gameData)
                 .withSourceCardId(sourceCardId)
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentSnapshot(source);
     }
 
     private Permanent resolveSourcePermanent(GameData gameData, StackEntry entry) {
@@ -335,6 +361,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 : null;
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
+        }
+        if (source == null) {
+            source = entry.getSacrificedPermanentSnapshot();
         }
         return source;
     }

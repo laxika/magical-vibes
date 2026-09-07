@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
-import java.util.Set;
+import java.util.EnumSet;
 
 @CardRegistration(set = "DRK", collectorNumber = "56")
 public class WormsOfTheEarth extends Card {
@@ -20,7 +20,8 @@ public class WormsOfTheEarth extends Card {
         addEffect(EffectSlot.STATIC, new PlayersCantPlayLandsIfPermanentCountEffect(
                 0, new PermanentTruePredicate()));
         addEffect(EffectSlot.STATIC, new CardsCantEnterBattlefieldFromZonesEffect(
-                new CardTypePredicate(CardType.LAND), Set.of(Zone.GRAVEYARD, Zone.LIBRARY)));
+                new CardTypePredicate(CardType.LAND),
+                EnumSet.complementOf(EnumSet.of(Zone.BATTLEFIELD))));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new WormsOfTheEarthEffect());
     }
 }

@@ -12,5 +12,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code graveyardTargetOperation.resolutionTimeExileResume} is set; it exiles the chosen card and
  * resumes any remaining effects (e.g. the cycling draw).
  */
-public record ExileUpToOneCardFromGraveyardEffect() implements CardEffect {
+public record ExileUpToOneCardFromGraveyardEffect(boolean mandatory) implements CardEffect {
+    public ExileUpToOneCardFromGraveyardEffect() {
+        this(false);
+    }
 }

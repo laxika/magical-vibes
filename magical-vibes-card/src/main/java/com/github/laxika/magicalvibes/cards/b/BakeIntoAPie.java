@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "169")
+@CardRegistration(set = "ELD", collectorNumber = "76")
 public class BakeIntoAPie extends Card {
 
     public BakeIntoAPie() {

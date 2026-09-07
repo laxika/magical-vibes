@@ -41,6 +41,8 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
     private final DestructionSupport destructionSupport;
     @Autowired @Lazy
     private TriggerCollectionService triggerCollectionService;
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -156,9 +158,7 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
                 }
                 continue;
             }
-            int currentLife = gameData.getLife(playerId);
-            gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
-            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, lifeCost);
+            lifeSupport.applyLifePayment(gameData, playerId, lifeCost, sourceName);
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays " + lifeCost + " life (" + sourceName + ")."));

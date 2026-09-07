@@ -29,6 +29,8 @@ public class Permanent {
     /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
     @Setter private Card fullTextCopySourceCard;
     private boolean tapped;
+    /** Whether this permanent was untapped before its controller's most recent untap step. */
+    @Setter private boolean untappedAtTurnStart;
     private int untapSequence;
     private int controlChangeSequence;
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
@@ -39,6 +41,8 @@ public class Permanent {
     @Setter private UUID attackTarget;
     private boolean attackedThisTurn;
     private boolean attackedThisCombat;
+    /** Creatures that were tapped to pay this Vehicle's crew cost during the current turn. */
+    private final Set<UUID> creaturesThatCrewedThisTurn = new HashSet<>();
     /** Set when this creature is declared as an attacker; unlike {@link #attackedThisTurn} it survives
      *  the intervening opponent turns and is rolled into {@link #attackedDuringControllersLastTurn} at
      *  the start of its controller's next turn by {@link #rollOverAttackRecord()}. */
@@ -91,12 +95,20 @@ public class Permanent {
     /** Temper-style shield: damage prevented by this shield is converted into +1/+1 counters on this
      *  permanent as the damage is prevented. Reset at turn cleanup. */
     @Setter private int damageToPlusOnePlusOneCounterPreventionShield;
+    /** Brace for Impact-style shield: prevent all damage to this permanent and convert it into +1/+1
+     *  counters as the damage is prevented. Reset at turn cleanup. */
+    @Setter private boolean allDamageToPlusOnePlusOneCounterPreventionShield;
+    /** Kill-Suit Cultist-style shield: destroy this creature instead of dealing the next damage to it.
+     *  Reset at turn cleanup. */
+    @Setter private int damageDestructionShield;
     @Setter private int regenerationShield;
     /** How many of this permanent's {@link #regenerationShield}s carry Soldevi Sentry's rider — when
      *  such a shield is actually used, the controller's opponent may draw a card. Plain shields are
      *  consumed first, so a rider shield is only spent once it is all that is left. Reset at turn
      *  cleanup alongside {@link #regenerationShield}. */
     @Setter private int opponentDrawRegenerationShield;
+    /** The opponent chosen for each Soldevi Sentry regeneration shield, in grant order. */
+    private final List<UUID> opponentDrawRegenerationShieldRecipients = new ArrayList<>();
     /** How many of this permanent's {@link #regenerationShield}s carry Matopi Golem's rider — when
      *  such a shield is actually used, put a -1/-1 counter on this permanent. Plain shields are
      *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
@@ -144,6 +156,7 @@ public class Permanent {
     /** Second basic land type chosen "as this enters" when the card chooses two types
      *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
     @Setter private CardSubtype secondChosenSubtype;
+    @Setter private String chosenMode;
     /** The number last chosen for this permanent by a "choose a number between X and Y" effect
      *  (e.g. Shapeshifter). Read by {@link com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource}
      *  to drive a characteristic-defining P/T. Defaults to 0 until a number is chosen. */
@@ -160,6 +173,10 @@ public class Permanent {
     @Setter private UUID chosenPermanentId;
     /** Player targeted by a linked enter-the-battlefield ability. */
     @Setter private UUID rememberedTargetPlayerId;
+    /** Life lost by the controller when this permanent's Soulgorger Orgg-style ETB resolved. */
+    @Setter private int lifeLostWhenEntered;
+    /** Player who lost the recorded life when this permanent's Soulgorger Orgg-style ETB resolved. */
+    @Setter private UUID lifeLostWhenEnteredControllerId;
     /** Permanents tapped this turn to pay for activated abilities whose source tracks that payment. */
     private final List<UUID> tappedPermanentsForAbilityThisTurn = new ArrayList<>();
     /**
@@ -168,11 +185,16 @@ public class Permanent {
      * sacrificed for "add one mana of any type that land could produce").
      */
     @Setter private Card chosenCard;
+    /** The creature card exiled with this permanent most recently chosen for ability copying. */
+    @Setter private Card lastChosenExiledCard;
     /** Last-known snapshot of a permanent sacrificed as payment for an ability that needs it at resolution. */
     @Setter private Permanent chosenSacrificedPermanentSnapshot;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     @Setter private boolean cantBlockThisCombat;
+    /** True while this permanent has the suspected designation. Cleared only by a leave-and-return
+     *  event or an effect that specifically makes it no longer suspected. */
+    @Setter private boolean suspected;
     /** Extra creatures this permanent may block this turn beyond the base one, granted by a one-shot
      *  effect (e.g. Act of Heroism). Stacks on top of any static "can block an additional creature"
      *  grants counted in {@code CombatBlockService}. Cleared at end of turn by {@link #resetModifiers()}. */
@@ -244,15 +266,12 @@ public class Permanent {
     /** Soul Echo: set when the targeted opponent chose that, until this permanent's controller's next
      *  upkeep, each 1 damage that would be dealt to that controller instead removes an echo counter
      *  from this permanent. Survives {@link #resetModifiers()} — the duration ends at the next upkeep,
-     *  where {@code SoulEchoUpkeepEffectHandler} clears it before offering the choice again. */
+     *  where upkeep trigger collection clears it before offering the choice again. */
     @Setter private boolean echoDamageRedirectionActive;
-    /** Spatial Binding: the id of the player whose next upkeep ends this permanent's "can't phase out"
-     *  restriction, or null while it may phase out normally. Phasing is a turn-based action of the untap
-     *  step (CR 502.1), which precedes the upkeep, so the permanent is still protected during that
-     *  player's own untap step; {@code StepTriggerService.handleUpkeepTriggers} clears the field when
-     *  that player becomes the active player. Survives {@link #resetModifiers()} — the duration spans
-     *  turns. */
-    @Setter private UUID cantPhaseOutUntilUpkeepOf;
+    /** Spatial Binding: each player whose next upkeep ends one active "can't phase out"
+     *  restriction on this permanent. Multiple activations have independent durations.
+     */
+    private final Set<UUID> cantPhaseOutUntilUpkeepsOf = new HashSet<>();
     /** Triggered effects temporarily granted by one-shot effects until end of turn
      *  (e.g. Verdant Rebirth granting ON_DEATH → ReturnSourceCardFromGraveyardToOwnerHandEffect).
      *  Keyed by EffectSlot so the trigger collection system can look up effects for the relevant slot.
@@ -272,9 +291,12 @@ public class Permanent {
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
     private boolean faceDown;
+    private boolean cloaked;
     private int faceDownPower;
     private int faceDownToughness;
     private final Set<CardType> faceDownCardTypes = EnumSet.noneOf(CardType.class);
+    /** Whether this face-down permanent was put onto the battlefield by manifest. */
+    @Setter private boolean manifested;
     @Setter private boolean animatedUntilEndOfTurn;
     /** When {@code true}, this permanent is animated as a creature until the combat phase ends
      *  (e.g. Jade Statue). Uses the same {@link #animatedPower}/{@link #animatedToughness}/
@@ -369,6 +391,7 @@ public class Permanent {
      *  {@link #persistentGrantedSupertypes} — the later activation wins. NOT cleared by
      *  {@link #resetModifiers()}. */
     private final Set<CardSupertype> persistentRemovedSupertypes = EnumSet.noneOf(CardSupertype.class);
+    private final Map<CardSupertype, Long> persistentSupertypeChangeTimestamps = new EnumMap<>(CardSupertype.class);
     /** Name assigned by a one-shot effect for as long as this permanent stays on the battlefield. */
     @Setter private String persistentName;
     /** Word substitutions applied by text-changing effects (CR 612). Entries flagged
@@ -478,6 +501,8 @@ public class Permanent {
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
+    /** Controllers whose next turn ends an active ability-loss effect on this permanent. */
+    private final Set<UUID> losesAllAbilitiesUntilNextTurnControllers = new HashSet<>();
     /** Concrete printed static effect types suppressed on this permanent until end of turn. */
     private final Set<Class<? extends CardEffect>> suppressedStaticEffectsUntilEndOfTurn = new HashSet<>();
     /** When true, this permanent has lost all abilities indefinitely (e.g. Retched Wretch). */
@@ -494,14 +519,26 @@ public class Permanent {
     @Setter private boolean kicked;
     /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
     @Setter private boolean evoked;
+    /** Whether this permanent was cast using an escape permission. */
+    @Setter private boolean escaped;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Whether this permanent was cast for its Warp cost. */
+    @Setter private boolean castWithWarp;
+    /** Whether this permanent was cast for its madness cost. */
+    @Setter private boolean madness;
     /** Whether this permanent was cast by paying an alternate cost. */
     @Setter private boolean alternateCost;
     /** Mana value of the creature returned to pay this permanent's web-slinging cost, when applicable. */
     @Setter private Integer webSlingingReturnedCreatureManaValue;
     /** Whether this permanent was cast for its spectacle cost. */
     @Setter private boolean spectacle;
+    /** Whether this permanent's optional collect-evidence additional cost was paid. */
+    @Setter private boolean collectEvidenceCostPaid;
+    /** Whether the spell's optional reveal-a-card-from-hand additional cost was paid. */
+    @Setter private boolean revealCardFromHandCostPaid;
+    /** Whether the spell's controller controlled a Dragon when the spell was finished being cast. */
+    @Setter private boolean controlledDragonAsCast;
     /** Repeatable additional mana payments made to cast this permanent's spell. */
     private List<String> repeatedAdditionalCosts = List.of();
     /** Whether the required tribute counters were placed on this permanent as it entered. */
@@ -511,8 +548,12 @@ public class Permanent {
     @Setter private boolean renowned;
     /** Whether this permanent has become monstrous. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean monstrous;
+    /** Whether this permanent's Case has been solved. Permanent state; never cleared by {@link #resetModifiers()}. */
+    @Setter private boolean solved;
     /** Whether this permanent is harnessed. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean harnessed;
+    /** Number of times this permanent has mutated. Permanent state; never cleared by {@link #resetModifiers()}. */
+    private int timesMutated;
     /** Whether this permanent is saddled until end of turn. */
     @Setter private boolean saddled;
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
@@ -616,6 +657,7 @@ public class Permanent {
         this.originalCard = card;
         this.bestow = false;
         this.tapped = false;
+        this.untappedAtTurnStart = true;
         this.attackedThisTurn = false;
         this.attackedThisCombat = false;
         this.summoningSick = true;
@@ -638,12 +680,14 @@ public class Permanent {
         this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.tapped = source.tapped;
+        this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;
         this.controlChangeSequence = source.controlChangeSequence;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
         this.attackedThisCombat = source.attackedThisCombat;
+        this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
         this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
         this.attackedDuringControllersLastTurn = source.attackedDuringControllersLastTurn;
         this.cantAttackNextTurn = source.cantAttackNextTurn;
@@ -664,8 +708,12 @@ public class Permanent {
         this.damagePreventionShield = source.damagePreventionShield;
         this.damageToCounterPreventionShield = source.damageToCounterPreventionShield;
         this.damageToPlusOnePlusOneCounterPreventionShield = source.damageToPlusOnePlusOneCounterPreventionShield;
+        this.allDamageToPlusOnePlusOneCounterPreventionShield = source.allDamageToPlusOnePlusOneCounterPreventionShield;
+        this.damageDestructionShield = source.damageDestructionShield;
         this.regenerationShield = source.regenerationShield;
         this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
+        this.opponentDrawRegenerationShieldRecipients.addAll(
+                source.opponentDrawRegenerationShieldRecipients);
         this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
         this.plusOnePlusOneCounterRegenerationShield = source.plusOnePlusOneCounterRegenerationShield;
         this.gainControlRegenerationShields.addAll(source.gainControlRegenerationShields);
@@ -680,19 +728,24 @@ public class Permanent {
         this.chosenSubtype = source.chosenSubtype;
         this.chosenCardType = source.chosenCardType;
         this.secondChosenSubtype = source.secondChosenSubtype;
+        this.chosenMode = source.chosenMode;
         this.chosenNumber = source.chosenNumber;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.rememberedTargetPlayerId = source.rememberedTargetPlayerId;
+        this.lifeLostWhenEntered = source.lifeLostWhenEntered;
+        this.lifeLostWhenEnteredControllerId = source.lifeLostWhenEnteredControllerId;
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
         this.chosenCard = source.chosenCard;
+        this.lastChosenExiledCard = source.lastChosenExiledCard;
         this.chosenSacrificedPermanentSnapshot = source.chosenSacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.chosenSacrificedPermanentSnapshot);
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.cantBlockThisCombat = source.cantBlockThisCombat;
+        this.suspected = source.suspected;
         this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
         this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
         this.mustAttackThisCombat = source.mustAttackThisCombat;
@@ -711,6 +764,8 @@ public class Permanent {
         this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
+        this.echoDamageRedirectionActive = source.echoDamageRedirectionActive;
+        this.cantPhaseOutUntilUpkeepsOf.addAll(source.cantPhaseOutUntilUpkeepsOf);
         source.temporaryTriggeredEffects.forEach((slot, effects) ->
                 this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
         source.combatTriggeredEffects.forEach((slot, effects) ->
@@ -730,9 +785,11 @@ public class Permanent {
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
         this.faceDown = source.faceDown;
+        this.cloaked = source.cloaked;
         this.faceDownPower = source.faceDownPower;
         this.faceDownToughness = source.faceDownToughness;
         this.faceDownCardTypes.addAll(source.faceDownCardTypes);
+        this.manifested = source.manifested;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
         this.animatedPower = source.animatedPower;
@@ -762,6 +819,7 @@ public class Permanent {
         this.persistentGrantedCardTypes.addAll(source.persistentGrantedCardTypes);
         this.persistentGrantedSupertypes.addAll(source.persistentGrantedSupertypes);
         this.persistentRemovedSupertypes.addAll(source.persistentRemovedSupertypes);
+        this.persistentSupertypeChangeTimestamps.putAll(source.persistentSupertypeChangeTimestamps);
         this.persistentName = source.persistentName;
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
@@ -797,16 +855,24 @@ public class Permanent {
         this.permanentBaseToughnessOverrideTimestamp = source.permanentBaseToughnessOverrideTimestamp;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
+        this.losesAllAbilitiesUntilNextTurnControllers.addAll(
+                source.losesAllAbilitiesUntilNextTurnControllers);
         this.suppressedStaticEffectsUntilEndOfTurn.addAll(source.suppressedStaticEffectsUntilEndOfTurn);
         this.losesAllAbilitiesPermanently = source.losesAllAbilitiesPermanently;
         this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
         this.transientRemovedSubtypes.addAll(source.transientRemovedSubtypes);
         this.kicked = source.kicked;
         this.evoked = source.evoked;
+        this.escaped = source.escaped;
         this.prowl = source.prowl;
+        this.castWithWarp = source.castWithWarp;
+        this.madness = source.madness;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
+        this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
+        this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
+        this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;
@@ -814,7 +880,9 @@ public class Permanent {
         this.cast = source.cast;
         this.manaSpentToCast = source.manaSpentToCast;
         this.monstrous = source.monstrous;
+        this.solved = source.solved;
         this.harnessed = source.harnessed;
+        this.timesMutated = source.timesMutated;
         this.saddled = source.saddled;
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.devouredCreatures.addAll(source.devouredCreatures);
@@ -844,19 +912,31 @@ public class Permanent {
         return originalCard;
     }
 
+    public void recordMutation() {
+        timesMutated++;
+    }
+
     public void setFaceDown(int power, int toughness, Set<CardType> cardTypes) {
         this.faceDown = true;
+        this.cloaked = false;
         this.faceDownPower = power;
         this.faceDownToughness = toughness;
         this.faceDownCardTypes.clear();
         this.faceDownCardTypes.addAll(cardTypes);
     }
 
+    public void setFaceDownAsCloaked() {
+        setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        this.cloaked = true;
+    }
+
     public void turnFaceUp() {
         this.faceDown = false;
+        this.cloaked = false;
         this.faceDownPower = 0;
         this.faceDownToughness = 0;
         this.faceDownCardTypes.clear();
+        this.manifested = false;
     }
 
     public void setCard(Card card) {
@@ -906,6 +986,11 @@ public class Permanent {
         this.tapped = true;
     }
 
+    /** Sets the permanent's status for an entry replacement without applying untap effects. */
+    public void enterUntapped() {
+        this.tapped = false;
+    }
+
     public void untap() {
         // Stun counters (CR 122.1c / 701.x): if a tapped permanent would become untapped,
         // remove a stun counter from it instead. This is the single funnel point for all
@@ -930,6 +1015,12 @@ public class Permanent {
             this.attackedThisTurn = true;
             this.attackedThisCombat = true;
             this.attackedDuringControllersCurrentTurn = true;
+        }
+    }
+
+    public void recordCreatureThatCrewedThisTurn(UUID creatureId) {
+        if (creatureId != null) {
+            creaturesThatCrewedThisTurn.add(creatureId);
         }
     }
 
@@ -1064,6 +1155,11 @@ public class Permanent {
                     "Counter type " + counterType + " is not a concrete permanent counter");
         }
         return counters.getOrDefault(counterType, 0);
+    }
+
+    /** Returns the total number of counters on this permanent, regardless of counter type. */
+    public int getTotalCounterCount() {
+        return counters.values().stream().mapToInt(Integer::intValue).sum();
     }
 
     public int getPlusOnePlusOneCounters() {
@@ -1284,23 +1380,28 @@ public class Permanent {
     }
 
     public boolean hasKeyword(Keyword keyword) {
-        if (losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesPermanently) return false;
+        if (losesAllAbilitiesUntilEndOfTurn || !losesAllAbilitiesUntilNextTurnControllers.isEmpty()
+                || losesAllAbilitiesPermanently) return false;
         // Changeling grants all creature types; losing all creature types nullifies that grant.
         if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
         CounterType keywordCounter = switch (keyword) {
             case FLYING -> CounterType.FLYING;
             case FIRST_STRIKE -> CounterType.FIRST_STRIKE;
+            case DOUBLE_STRIKE -> CounterType.DOUBLE_STRIKE;
             case DEATHTOUCH -> CounterType.DEATHTOUCH;
             case DECAYED -> CounterType.DECAYED;
             case LIFELINK -> CounterType.LIFELINK;
+            case VIGILANCE -> CounterType.VIGILANCE;
             case REACH -> CounterType.REACH;
             case TRAMPLE -> CounterType.TRAMPLE;
             case HEXPROOF -> CounterType.HEXPROOF;
             case INDESTRUCTIBLE -> CounterType.INDESTRUCTIBLE;
+            case MENACE -> CounterType.MENACE;
             default -> null;
         };
-        return (!faceDown && card.hasKeyword(keyword)) || grantedKeywords.contains(keyword)
+        return (keyword == Keyword.MENACE && suspected)
+                || (!faceDown && card.hasKeyword(keyword)) || grantedKeywords.contains(keyword)
                 || persistentGrantedKeywords.contains(keyword)
                 || untilNextTurnKeywords.contains(keyword)
                 || (keywordCounter != null && getCounterCount(keywordCounter) > 0);
@@ -1364,6 +1465,18 @@ public class Permanent {
         untilNextUpkeepTriggeredEffects.values().removeIf(Map::isEmpty);
     }
 
+    public void preventPhaseOutUntilUpkeepOf(UUID playerId) {
+        cantPhaseOutUntilUpkeepsOf.add(playerId);
+    }
+
+    public void expirePhaseOutPreventionAtUpkeepOf(UUID playerId) {
+        cantPhaseOutUntilUpkeepsOf.remove(playerId);
+    }
+
+    public boolean canPhaseOut() {
+        return cantPhaseOutUntilUpkeepsOf.isEmpty();
+    }
+
     /**
      * Whether this permanent has cumulative upkeep — printed, temporarily granted, or persistently
      * granted (Balduvian Shaman). Used for targeting restrictions like "that doesn't have
@@ -1385,7 +1498,16 @@ public class Permanent {
     }
 
     public boolean isLosesAllAbilitiesUntilEndOfTurn() {
-        return losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesPermanently;
+        return losesAllAbilitiesUntilEndOfTurn || !losesAllAbilitiesUntilNextTurnControllers.isEmpty()
+                || losesAllAbilitiesPermanently;
+    }
+
+    public void addLosesAllAbilitiesUntilNextTurnController(UUID controllerId) {
+        losesAllAbilitiesUntilNextTurnControllers.add(controllerId);
+    }
+
+    public void clearLosesAllAbilitiesUntilNextTurnController(UUID controllerId) {
+        losesAllAbilitiesUntilNextTurnControllers.remove(controllerId);
     }
 
     public void recordTappedPermanentForAbility(UUID permanentId) {
@@ -1435,6 +1557,7 @@ public class Permanent {
         this.mustBeBlockedThisTurn = false;
         this.mustBeBlockedByAllThisTurn = false;
         this.blockedWithoutBlockers = false;
+        this.creaturesThatCrewedThisTurn.clear();
         this.auraEffectsIgnoredThisTurn = false;
         this.dampingEngineEffectIgnoredThisTurn = false;
         this.cantRegenerateThisTurn = false;
@@ -1479,22 +1602,9 @@ public class Permanent {
         expireTemporaryTextReplacements();
     }
 
-    /**
-     * Drops the "until end of turn" word substitutions (CR 612) and undoes any chosen-color swap they
-     * made, so a permanent whose chosen color was renamed by Whim of Volrath goes back to the color it
-     * was chosen as.
-     */
+    /** Drops the "until end of turn" word substitutions (CR 612). */
     private void expireTemporaryTextReplacements() {
-        this.textReplacements.removeIf(replacement -> {
-            if (!replacement.untilEndOfTurn()) {
-                return false;
-            }
-            CardColor renamedTo = textChangeWordAsColor(replacement.toWord());
-            if (renamedTo != null && renamedTo == this.chosenColor) {
-                setChosenColor(textChangeWordAsColor(replacement.fromWord()));
-            }
-            return true;
-        });
+        this.textReplacements.removeIf(TextReplacement::untilEndOfTurn);
     }
 
     /**
@@ -1507,14 +1617,6 @@ public class Permanent {
         this.chosenColors.clear();
         if (chosenColor != null) {
             this.chosenColors.add(chosenColor);
-        }
-    }
-
-    private static CardColor textChangeWordAsColor(String word) {
-        try {
-            return CardColor.valueOf(word.toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ex) {
-            return null;
         }
     }
 

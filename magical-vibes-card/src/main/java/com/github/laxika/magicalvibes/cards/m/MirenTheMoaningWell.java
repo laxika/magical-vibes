@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -27,8 +26,7 @@ public class MirenTheMoaningWell extends Card {
                         new SacrificeCreatureCost(false, false, true),
                         new GainLifeEffect(new XValue())
                 ),
-                "{3}, {T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.",
-                TargetFilters.creatureYouControl()
+                "{3}, {T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness."
         ));
     }
 }

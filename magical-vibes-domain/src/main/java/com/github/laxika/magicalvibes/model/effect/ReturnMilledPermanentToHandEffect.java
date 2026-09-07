@@ -11,14 +11,29 @@ import java.util.UUID;
  * resolutions from clearing one another's pending choices, and {@code maxCount} limits how many
  * offers in the group may be accepted.
  */
-public record ReturnMilledPermanentToHandEffect(UUID groupId, CardPredicate filter, int maxCount) implements CardEffect {
+public record ReturnMilledPermanentToHandEffect(
+        UUID groupId,
+        CardPredicate filter,
+        int maxCount,
+        CardPredicate bonusFilter,
+        int bonusLife
+) implements CardEffect {
 
     public ReturnMilledPermanentToHandEffect(UUID groupId, CardPredicate filter) {
-        this(groupId, filter, 1);
+        this(groupId, filter, 1, null, 0);
+    }
+
+    public ReturnMilledPermanentToHandEffect(UUID groupId, CardPredicate filter, int maxCount) {
+        this(groupId, filter, maxCount, null, 0);
+    }
+
+    public ReturnMilledPermanentToHandEffect(UUID groupId, CardPredicate filter,
+                                              CardPredicate bonusFilter, int bonusLife) {
+        this(groupId, filter, 1, bonusFilter, bonusLife);
     }
 
     public ReturnMilledPermanentToHandEffect(UUID groupId) {
-        this(groupId, new CardIsPermanentPredicate(), 1);
+        this(groupId, new CardIsPermanentPredicate(), 1, null, 0);
     }
 
     public ReturnMilledPermanentToHandEffect {

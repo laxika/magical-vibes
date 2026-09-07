@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.ForetoldCardsInExile;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfChosenTypeToHandRestToBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfChosenTypeToHandRestEffect;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class AlrundGodOfTheCosmos extends Card {
                 new ForetoldCardsInExile(CountScope.CONTROLLER));
         addEffect(EffectSlot.STATIC, new BoostSelfEffect(count, count));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new RevealTopCardsOfChosenTypeToHandRestToBottomEffect(2));
+                new RevealTopCardsOfChosenTypeToHandRestEffect(2));
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Alrund, God of the Cosmos", List.of())
                         .withManaCost("{3}{U}{U}"),

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "214")
+@CardRegistration(set = "GPT", collectorNumber = "137")
 public class WeeDragonauts extends Card {
 
     public WeeDragonauts() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutFaceUpExiledCardOwnedByTargetIntoGraveyardEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ public class PutFaceUpExiledCardOwnedByTargetIntoGraveyardEffectHandler
         implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,11 +30,13 @@ public class PutFaceUpExiledCardOwnedByTargetIntoGraveyardEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (PutFaceUpExiledCardOwnedByTargetIntoGraveyardEffect) effect;
         UUID targetId = entry.getTargetId();
         List<UUID> validCardIds = new ArrayList<>();
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry exiled : gameData.exiledCards) {
-                if (targetId.equals(exiled.ownerId()) && !exiled.faceDown()) {
+                if (targetId.equals(exiled.ownerId()) && !exiled.faceDown()
+                        && predicateEvaluationService.matchesCardPredicate(exiled.card(), e.filter(), null)) {
                     validCardIds.add(exiled.card().getId());
                 }
             }

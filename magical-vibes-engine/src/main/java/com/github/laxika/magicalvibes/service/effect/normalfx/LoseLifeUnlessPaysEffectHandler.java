@@ -44,12 +44,14 @@ public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean 
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
+                int lifeLoss = e.lifeLoss()
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
                 int currentLife = gameData.getLife(targetPlayerId);
-                gameData.playerLifeTotals.put(targetPlayerId, currentLife - e.lifeLoss());
-                String logEntry = playerName + " can't pay {" + e.payAmount() + "}. " + playerName + " loses " + e.lifeLoss() + " life.";
+                gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
+                String logEntry = playerName + " can't pay {" + e.payAmount() + "}. " + playerName + " loses " + lifeLoss + " life.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses {} life (can't pay {}, {})",
-                        gameData.id, playerName, e.lifeLoss(), e.payAmount(), entry.getCard().getName());
+                        gameData.id, playerName, lifeLoss, e.payAmount(), entry.getCard().getName());
             }
             applyLifeGainIfConfigured(gameData, entry, e);
             return;

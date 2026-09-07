@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,7 @@ public class TargetPlayerGainsControlOfTargetPermanentEffectHandler implements N
 
     private final CreatureControlService creatureControlService;
     private final GameQueryService gameQueryService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,6 +33,7 @@ public class TargetPlayerGainsControlOfTargetPermanentEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var transfer = (TargetPlayerGainsControlOfTargetPermanentEffect) effect;
         List<UUID> targets = entry.getTargetIds();
         if (targets == null || targets.size() < 2) {
             return;
@@ -45,6 +49,12 @@ public class TargetPlayerGainsControlOfTargetPermanentEffectHandler implements N
             return;
         }
 
+        UUID currentControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (currentControllerId == null) {
+            return;
+        }
+        boolean controlChanged = !newControllerId.equals(currentControllerId);
+
         creatureControlService.applyControlEffect(
                 gameData,
                 newControllerId,
@@ -53,5 +63,13 @@ public class TargetPlayerGainsControlOfTargetPermanentEffectHandler implements N
                 EffectDuration.PERMANENT,
                 null,
                 entry.getCard().getName());
+
+        if (controlChanged && transfer.thenEffect() != null) {
+            CardEffect thenEffect = transfer.thenEffect();
+            EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);
+            if (handler != null) {
+                handler.resolve(gameData, entry, thenEffect);
+            }
+        }
     }
 }

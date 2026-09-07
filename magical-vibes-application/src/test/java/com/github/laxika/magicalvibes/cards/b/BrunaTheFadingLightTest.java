@@ -70,6 +70,7 @@ class BrunaTheFadingLightTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Bruna, the Fading Light");
         harness.assertInGraveyard(player1, "Grizzly Bears");

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * (e.g. Crib Swap creates a 1/1 Shapeshifter for the target's controller).
  *
  * @param tokenForController if non-null, creates this token for each exiled permanent's controller
+ * @param targetFilter optional predicate narrowing the permanent target
  */
 public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController,
                                          PermanentPredicate targetFilter)

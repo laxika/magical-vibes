@@ -34,9 +34,12 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect exileEffect =
+                (EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect) effect;
         UUID controllerId = entry.getControllerId();
         String sourceName = entry.getCard().getName();
         List<UUID> castableSpellIds = new ArrayList<>();
+        List<UUID> nonlandCardIds = new ArrayList<>();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> library = gameData.playerDecks.get(playerId);
@@ -50,12 +53,31 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
                         .build());
 
                 if (!card.hasType(CardType.LAND)) {
+                    nonlandCardIds.add(card.getId());
                     if (isSpell(card)) {
                         castableSpellIds.add(card.getId());
                     }
                     break;
                 }
             }
+        }
+
+        if (exileEffect.opponentChoosesCard()) {
+            if (nonlandCardIds.isEmpty()) {
+                return;
+            }
+            List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(controllerId))
+                    .toList();
+            if (opponentIds.size() == 1) {
+                beginOpponentCardChoice(gameData, controllerId, opponentIds.getFirst(), nonlandCardIds,
+                        exileEffect.maxCastCount());
+            } else {
+                interactionHandlerRegistry.begin(gameData,
+                        new PendingInteraction.PlarggAndNassariOpponentChoice(
+                                controllerId, opponentIds, nonlandCardIds, exileEffect.maxCastCount()));
+            }
+            return;
         }
 
         if (castableSpellIds.isEmpty()) {
@@ -66,9 +88,17 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.ImprovisationCapstoneCastChoice(
-                        controllerId, castableSpellIds, castableSpellIds.size()));
+                        controllerId, castableSpellIds,
+                        Math.min(exileEffect.maxCastCount(), castableSpellIds.size())));
         log.info("Game {} - {} awaiting cast choices for {} exiled spells",
                 gameData.id, sourceName, castableSpellIds.size());
+    }
+
+    private void beginOpponentCardChoice(GameData gameData, UUID controllerId, UUID opponentId,
+                                         List<UUID> nonlandCardIds, int maxCastCount) {
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.PlarggAndNassariCardChoice(
+                        opponentId, controllerId, nonlandCardIds, maxCastCount));
     }
 
     private static boolean isSpell(Card card) {

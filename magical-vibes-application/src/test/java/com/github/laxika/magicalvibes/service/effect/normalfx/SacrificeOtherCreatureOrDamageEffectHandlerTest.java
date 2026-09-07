@@ -79,6 +79,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
         lenient().when(gameQueryService.lifeAfterDamage(eq(gd), any(UUID.class), anyInt()))
                 .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
                         - (int) invocation.getArgument(2));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         sacrificeOtherOrDamageHandler = new SacrificeOtherCreatureOrDamageEffectHandler(
                 destructionSupport, gameOutcomeService, gameQueryService, playerInputService);
 

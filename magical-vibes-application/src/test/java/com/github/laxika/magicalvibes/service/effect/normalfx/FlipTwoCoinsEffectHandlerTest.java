@@ -28,7 +28,7 @@ class FlipTwoCoinsEffectHandlerTest extends AbstractPlayerInteractionHandlerTest
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
                 CoinFlipService.CoinFlipResult heads = new CoinFlipService.CoinFlipResult(true, 1);
                 CoinFlipService.CoinFlipResult tails = new CoinFlipService.CoinFlipResult(false, 1);
-                when(coinFlipService.flip(gd, player1Id)).thenReturn(heads, tails);
+                when(coinFlipService.flipCoins(gd, player1Id, 2)).thenReturn(List.of(heads, tails));
                 when(coinFlipService.replacementDetails(any())).thenReturn("");
 
                 resolveEffect(gd, entry, effect);

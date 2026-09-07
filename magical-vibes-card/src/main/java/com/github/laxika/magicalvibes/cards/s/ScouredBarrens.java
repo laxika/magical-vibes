@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "DFT", collectorNumber = "263")
 @CardRegistration(set = "TDM", collectorNumber = "267")
 @CardRegistration(set = "MOM", collectorNumber = "272")
+@CardRegistration(set = "IKO", collectorNumber = "254")
+@CardRegistration(set = "FRF", collectorNumber = "171")
 public class ScouredBarrens extends Card {
 
     public ScouredBarrens() {

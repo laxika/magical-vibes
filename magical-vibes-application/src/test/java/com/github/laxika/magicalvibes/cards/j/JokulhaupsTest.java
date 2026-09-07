@@ -1,70 +1,72 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.m.MysticRemora;
+import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed({Jokulhaups.class, BalduvianBears.class, ZuranOrb.class, MysticRemora.class, Forest.class})
 class JokulhaupsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Jokulhaups destroys all artifacts, creatures, and lands")
     void destroysArtifactsCreaturesAndLands() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new JinxedIdol());
+        harness.addToBattlefield(player1, new BalduvianBears());
+        harness.addToBattlefield(player1, new ZuranOrb());
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
         harness.addToBattlefield(player2, new Forest());
 
-        harness.setHand(player1, List.of(new Jokulhaups()));
-        harness.addMana(player1, ManaColor.RED, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Jinxed Idol");
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player1, "Zuran Orb");
         harness.assertNotOnBattlefield(player1, "Forest");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
         harness.assertNotOnBattlefield(player2, "Forest");
     }
 
     @Test
     @DisplayName("Jokulhaups does not destroy enchantments")
     void doesNotDestroyEnchantments() {
-        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new MysticRemora());
 
-        harness.setHand(player1, List.of(new Jokulhaups()));
-        harness.addMana(player1, ManaColor.RED, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Mystic Remora");
     }
 
     @Test
     @DisplayName("Destroyed permanents can't be regenerated")
     void destroyedPermanentsCannotBeRegenerated() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
         bears.setRegenerationShield(1);
 
-        harness.setHand(player1, List.of(new Jokulhaups()));
-        harness.addMana(player1, ManaColor.RED, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
         harness.passBothPriorities();
 
         // Regeneration shield does not save the creature from Jokulhaups.
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Indestructible permanents survive Jokulhaups")
+    void indestructiblePermanentsSurvive() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
     }
 }

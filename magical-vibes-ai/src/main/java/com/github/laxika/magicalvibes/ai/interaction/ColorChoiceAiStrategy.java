@@ -69,6 +69,17 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.ExileFreeCastModeChoice modeChoice) {
+            String chosenMode = modeChoice.chosenModeIndices().size() >= modeChoice.effect().choicesRequired()
+                    && interaction.options().contains(
+                    com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION)
+                    ? com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION
+                    : interaction.options().getFirst();
+            log.info("AI: Choosing exile free-cast modal option \"{}\" in game {}", chosenMode, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenMode));
+            return;
+        }
+
         if (context instanceof ChoiceContext.CardNameChoice) {
             UUID opponentId = getOpponentId(gameData, aiPlayerId);
             List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());

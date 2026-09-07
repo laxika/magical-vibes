@@ -42,6 +42,7 @@ public class StaticBonusAccumulator {
     private Integer baseToughnessOverride;
     private boolean losesAllAbilities;
     private boolean losesAllNonManaAbilities;
+    private int devotionBonus;
     /**
      * While {@code true}, layer 5/6 outputs (colors, keywords, keyword removals, ability loss,
      * protection, granted abilities/effects) are discarded: the CR 613 layered pass already
@@ -61,6 +62,14 @@ public class StaticBonusAccumulator {
 
     public void addToughness(int amount) {
         toughness += amount;
+    }
+
+    public void addDevotionBonus(int amount) {
+        devotionBonus += amount;
+    }
+
+    public int getDevotionBonus() {
+        return devotionBonus;
     }
 
     public void addKeyword(Keyword keyword) {

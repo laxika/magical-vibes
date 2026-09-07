@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public interface ExileTopCardsMayPlayThisTurnDrawReplacementEffect extends CardEffect {
 
-    int count();
+    com.github.laxika.magicalvibes.model.amount.DynamicAmount count();
 
     boolean withoutPayingManaCost();
 }

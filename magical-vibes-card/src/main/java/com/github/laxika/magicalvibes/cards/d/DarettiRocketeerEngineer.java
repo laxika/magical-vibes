@@ -27,7 +27,7 @@ public class DarettiRocketeerEngineer extends Card {
                 .targetGraveyard(true)
                 .build();
         SacrificePermanentThenEffect sacrificeThenReturn = new SacrificePermanentThenEffect(
-                new PermanentIsArtifactPredicate(), returnArtifact, "an artifact", true);
+                new PermanentIsArtifactPredicate(), returnArtifact, "an artifact", true, false);
         MayEffect ability = new MayEffect(sacrificeThenReturn, "Sacrifice an artifact?");
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ability);

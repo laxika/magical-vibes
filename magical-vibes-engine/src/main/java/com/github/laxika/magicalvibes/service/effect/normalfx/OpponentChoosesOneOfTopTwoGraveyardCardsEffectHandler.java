@@ -116,7 +116,7 @@ public class OpponentChoosesOneOfTopTwoGraveyardCardsEffectHandler implements No
             return;
         }
         permanentRemovalService.removeCardFromGraveyardById(gameData, other.getId());
-        gameData.addCardToHand(controllerId, other);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, controllerId, controllerId, other);
         gameLogService.append(gameData, GameLog.textCardText(
                 sourceName + " puts ", other, " from the graveyard into its owner's hand."));
     }

@@ -70,6 +70,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
         }
+        if (predicate instanceof CardHasAdventurePredicate) {
+            return "card with Adventure";
+        }
         if (predicate instanceof CardHasDisturbPredicate) {
             return "card with disturb";
         }
@@ -88,8 +91,17 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasExactlyTwoColorsPredicate) {
             return "card that's exactly two colors";
         }
+        if (predicate instanceof CardHasExactlyNColorsPredicate p) {
+            return "card that's exactly " + p.colorCount() + " colors";
+        }
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";
+        }
+        if (predicate instanceof CardManaValueLessThanSourcePowerPredicate) {
+            return "card with mana value less than this creature's power";
+        }
+        if (predicate instanceof CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate) {
+            return "card with mana value at most the number of permanent cards in your graveyard";
         }
         if (predicate instanceof CardManaValueLessThanSourceLoyaltyPredicate) {
             return "card with mana value less than this planeswalker's loyalty";
@@ -105,6 +117,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardPowerAtMostPredicate p) {
             return "card with power " + p.maxPower() + " or less";
+        }
+        if (predicate instanceof CardPowerAtMostSourcePowerPredicate) {
+            return "card with power at most this creature's power";
         }
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value less than or equal to this creature's power";

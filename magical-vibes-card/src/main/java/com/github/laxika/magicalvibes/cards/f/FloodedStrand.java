@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "233")
+@CardRegistration(set = "ONS", collectorNumber = "316")
 public class FloodedStrand extends Card {
 
     public FloodedStrand() {

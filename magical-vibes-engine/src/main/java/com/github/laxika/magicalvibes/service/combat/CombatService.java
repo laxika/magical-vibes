@@ -3,14 +3,17 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
 import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
@@ -173,7 +176,6 @@ public class CombatService {
      * Resets all combat-related state on permanents and game data.
      */
     public void clearCombatState(GameData gameData) {
-        gameData.expireEndOfCombatFloatingEffects();
         gameData.forEachBattlefield((playerId, battlefield) ->
                 battlefield.forEach(Permanent::clearCombatState));
         gameData.combatDamagePlayerAssignments.clear();
@@ -185,6 +187,7 @@ public class CombatService {
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;
         // Melee's two combat-scoped delayed abilities ("this combat") expire here.
+        gameData.clearDelayedActions(DelayedAttackerDeclarationControl.class);
         gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerUntapRemoveFromCombat.class);
     }
@@ -196,18 +199,19 @@ public class CombatService {
         List<SacrificeAtEndOfCombat> actions = gameData.drainDelayedActions(SacrificeAtEndOfCombat.class);
         for (SacrificeAtEndOfCombat action : actions) {
             Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
-            // "sacrifice it and it deals N damage to you" (Time Elemental): the damage is a delayed
-            // triggered ability that fires even if the creature already left the battlefield (last-known
-            // information). Deal it before the sacrifice so source-based prevention still sees the source.
-            if (action.damageToController() > 0 && action.controllerId() != null) {
-                Card source = perm != null ? perm.getCard() : action.sourceCard();
-                if (source != null) {
-                    StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source,
-                            action.controllerId(), source.getName(), List.<CardEffect>of(),
-                            (UUID) null, action.permanentId());
-                    damageSupport.dealDamageToPlayer(gameData, damageEntry, action.controllerId(),
-                            action.damageToController());
-                }
+            Card source = action.sourceCard() != null ? action.sourceCard() : perm == null ? null : perm.getCard();
+            if (action.damageToController() > 0 && action.controllerId() != null && source != null) {
+                StackEntry delayed = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        source, action.controllerId(), source.getName() + "'s delayed ability",
+                        List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect(),
+                                new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(
+                                        action.damageToController(),
+                                        com.github.laxika.magicalvibes.model.effect.DamageRecipient.CONTROLLER)),
+                        (UUID) null, action.permanentId());
+                delayed.setNonTargeting(true);
+                if (perm != null) delayed.setSourcePermanentSnapshot(new Permanent(perm));
+                gameData.enqueueTrigger(delayed);
+                continue;
             }
             if (perm != null) {
                 UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, action.permanentId());
@@ -336,6 +340,27 @@ public class CombatService {
     public void processEndOfCombatDestructions(GameData gameData) {
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
+
+        List<DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource> counterActions =
+                gameData.drainDelayedActions(DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource.class);
+        for (DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource action : counterActions) {
+            Permanent opponent = gameQueryService.findPermanentById(gameData, action.opponentId());
+            if (opponent == null) {
+                continue;
+            }
+            if (permanentRemovalService.tryDestroyPermanent(gameData, opponent,
+                    action.cannotBeRegenerated())) {
+                gameLogService.append(gameData, GameLog.isDestroyed(opponent.getCard()));
+                log.info("Game {} - {} destroyed at end of combat (combat-opponent counter rider)",
+                        gameData.id, opponent.getCard().getName());
+                if (action.sourcePermanentId() != null && action.controllerId() != null
+                        && action.sourceCard() != null) {
+                    gameData.queueDelayedAction(new PutCounterOnPermanentAtNextEndStep(
+                            action.sourcePermanentId(), action.controllerId(),
+                            CounterType.PLUS_ONE_PLUS_ONE, 1, action.sourceCard()));
+                }
+            }
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
@@ -361,16 +386,18 @@ public class CombatService {
     }
 
     /**
-     * Destroys, for each creature scheduled by Venomous Breath, every creature that blocked or was
-     * blocked by it this turn. The opponent set is read here rather than at spell resolution, so
-     * blocks declared after the spell resolved are included. Respects indestructible and
-     * regeneration via {@link PermanentRemovalService#tryDestroyPermanent}.
+     * Destroys creatures scheduled for directional or bidirectional combat-opponent destruction.
+     * The opponent set was captured when the delayed effect was created. Respects indestructible and regeneration via
+     * {@link PermanentRemovalService#tryDestroyPermanent}.
      */
     public void processEndOfCombatCombatOpponentDestructions(GameData gameData) {
         List<DestroyCombatOpponentsAtEndOfCombat> scheduled =
                 gameData.drainDelayedActions(DestroyCombatOpponentsAtEndOfCombat.class);
         for (DestroyCombatOpponentsAtEndOfCombat action : scheduled) {
-            Set<UUID> opponentIds = gameData.combatBlockOpponentIdsThisTurn.get(action.creatureId());
+            Set<UUID> opponentIds = action.onlyCreaturesBlockedByTarget()
+                    ? gameData.combatOpponentIdsBlockedByThisTurn.getOrDefault(
+                            action.creatureId(), action.combatOpponentIds())
+                    : action.combatOpponentIds();
             if (opponentIds == null) {
                 continue;
             }
@@ -381,7 +408,7 @@ public class CombatService {
                 }
                 if (permanentRemovalService.tryDestroyPermanent(gameData, opponent, false)) {
                     gameLogService.append(gameData, GameLog.isDestroyed(opponent.getCard()));
-                    log.info("Game {} - {} destroyed at end of combat (Venomous Breath)",
+                    log.info("Game {} - {} destroyed at end of combat (combat-opponent destruction)",
                             gameData.id, opponent.getCard().getName());
                 }
             }
@@ -440,7 +467,9 @@ public class CombatService {
                 gameData.drainDelayedActions(PutCounterOnPermanentAtEndOfCombat.class);
         for (PutCounterOnPermanentAtEndOfCombat action : toCounter) {
             Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
-            if (perm == null || action.amount() <= 0) {
+            if (perm == null || action.amount() <= 0
+                    || action.requiredSourcePermanentId() != null
+                    && gameQueryService.findPermanentById(gameData, action.requiredSourcePermanentId()) == null) {
                 continue;
             }
             // One trigger does both, so the token is created even when the counter can't be placed.
@@ -451,16 +480,17 @@ public class CombatService {
                             action.tokenForController(), perm.getCard().getSetCode());
                 }
             }
-            if (gameQueryService.cantHaveCounters(gameData, perm)) {
-                continue;
-            }
-            perm.setCounterCount(action.counterType(),
-                    perm.getCounterCount(action.counterType()) + action.amount());
-            if (action.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                if (controllerId != null && gameQueryService.isCreature(gameData, perm)) {
-                    gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(controllerId);
-                    gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+            if (!gameQueryService.cantHaveCounters(gameData, perm)) {
+                perm.setCounterCount(action.counterType(),
+                        perm.getCounterCount(action.counterType()) + action.amount());
+                if (action.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                    UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                    if (controllerId != null) {
+                        if (gameQueryService.isCreature(gameData, perm)) {
+                            gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(controllerId);
+                        }
+                        gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                    }
                 }
             }
             if (action.alsoTap()) {

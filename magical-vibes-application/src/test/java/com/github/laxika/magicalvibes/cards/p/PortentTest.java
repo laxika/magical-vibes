@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,10 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(Portent.class)
 class PortentTest extends BaseCardTest {
-
-    // ===== Look at / reorder target's library =====
-
     @Test
     @DisplayName("Resolving enters a reorder of the top 3 cards of the target's library")
     void resolvingEntersReorderOfTargetsLibrary() {
@@ -60,9 +57,6 @@ class PortentTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId()).get(0)).isSameAs(originallyThird);
     }
-
-    // ===== May-shuffle the target's library =====
-
     @Test
     @DisplayName("After reorder the controller is asked whether to shuffle")
     void afterReorderControllerAskedToShuffle() {
@@ -96,11 +90,9 @@ class PortentTest extends BaseCardTest {
 
         // The target's library is not drawn from; the shuffle just randomizes it.
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(targetDeckSize);
+        assertThat(gameLogContains(player2.getUsername() + " shuffles their library")).isTrue();
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
     }
-
-    // ===== Delayed draw for the caster =====
-
     @Test
     @DisplayName("Resolving schedules a draw for the caster at the next upkeep")
     void schedulesDrawForCaster() {
@@ -134,17 +126,56 @@ class PortentTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 
-    // ===== Targeting the caster's own library =====
+    @Test
+    @DisplayName("A target library with fewer than three cards reorders all available cards")
+    void shortTargetLibraryReordersAllAvailableCards() {
+        Card first = new Portent();
+        Card second = new Portent();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new Portent()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactly(first, second);
+        assertThat(reorder.deckOwnerId()).isEqualTo(player2.getId());
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, first);
+    }
+
+    @Test
+    @DisplayName("An empty target library still offers the shuffle choice and delayed draw")
+    void emptyTargetLibraryStillOffersShuffleAndDelayedDraw() {
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Portent()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice may =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(may).isNotNull();
+        assertThat(may.playerId()).isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+    }
     @Test
     @DisplayName("Portent can target the caster's own library")
     void canTargetOwnLibrary() {

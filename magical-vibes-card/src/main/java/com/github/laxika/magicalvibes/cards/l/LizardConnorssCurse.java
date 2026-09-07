@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "106")
+@CardRegistration(set = "SPM", collectorNumber = "265")
 public class LizardConnorssCurse extends Card {
 
     public LizardConnorssCurse() {

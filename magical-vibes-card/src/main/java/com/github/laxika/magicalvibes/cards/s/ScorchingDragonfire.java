@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "158")
+@CardRegistration(set = "ELD", collectorNumber = "139")
 public class ScorchingDragonfire extends Card {
 
     public ScorchingDragonfire() {

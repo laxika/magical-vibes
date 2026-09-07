@@ -12,6 +12,13 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "14")
+@CardRegistration(set = "SPM", collectorNumber = "235")
+@CardRegistration(set = "SPM", collectorNumber = "236")
+@CardRegistration(set = "SPM", collectorNumber = "237")
+@CardRegistration(set = "SPM", collectorNumber = "238")
+@CardRegistration(set = "SPM", collectorNumber = "239")
+@CardRegistration(set = "SPM", collectorNumber = "240")
+@CardRegistration(set = "SPM", collectorNumber = "241")
 public class SpectacularSpiderMan extends Card {
 
     public SpectacularSpiderMan() {

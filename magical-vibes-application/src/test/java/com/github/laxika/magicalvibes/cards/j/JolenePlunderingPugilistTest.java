@@ -62,6 +62,7 @@ class JolenePlunderingPugilistTest extends BaseCardTest {
 
         declareAttackers(List.of(1));
         resolveAllTriggers();
+        int lifeBeforeAbility = gd.playerLifeTotals.get(player2.getId());
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -71,6 +72,6 @@ class JolenePlunderingPugilistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Treasure")).isZero();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBeforeAbility - 1);
     }
 }

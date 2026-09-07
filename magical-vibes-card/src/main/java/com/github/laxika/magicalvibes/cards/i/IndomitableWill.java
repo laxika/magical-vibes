@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CHK", collectorNumber = "17")
+@CardRegistration(set = "THB", collectorNumber = "25")
 public class IndomitableWill extends Card {
 
     public IndomitableWill() {

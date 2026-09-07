@@ -41,50 +41,63 @@ public class PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetId = entry.getTargetId();
-        if (targetId == null) {
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        if (targetIds.isEmpty()) {
+            gameData.rerunCurrentEffectAfterInteraction = false;
             return;
         }
 
-        Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
-        if (permanent != null) {
-            movePermanentToTopAndBeginChoice(gameData, permanent);
-            return;
-        }
+        for (UUID targetId : targetIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
+            if (permanent != null) {
+                if (movePermanentToTopAndBeginChoice(gameData, permanent)) {
+                    gameData.rerunCurrentEffectAfterInteraction = targetIds.size() > 1;
+                    return;
+                }
+                continue;
+            }
 
-        StackEntry spell = gameQueryService.findStackEntryByCardId(gameData, targetId);
-        if (spell == null || isAbility(spell)) {
-            return;
-        }
+            StackEntry spell = gameQueryService.findStackEntryByCardId(gameData, targetId);
+            if (spell == null || isAbility(spell)) {
+                continue;
+            }
 
-        gameData.stack.remove(spell);
-        stateTriggerService.cleanupResolvedStateTrigger(gameData, spell);
+            gameData.stack.remove(spell);
+            stateTriggerService.cleanupResolvedStateTrigger(gameData, spell);
 
-        if (spell.isCopy()) {
-            return;
-        }
+            if (spell.isCopy()) {
+                continue;
+            }
 
-        Card card = spell.getCard();
-        UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : spell.getOwnerId();
-        List<Card> library = ownerId == null ? null : gameData.playerDecks.get(ownerId);
-        if (library == null) {
-            return;
+            Card card = spell.getCard();
+            UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : spell.getOwnerId();
+            List<Card> library = ownerId == null ? null : gameData.playerDecks.get(ownerId);
+            if (library == null) {
+                continue;
+            }
+            library.addFirst(card);
+            if (beginChoice(gameData, ownerId, card)) {
+                gameData.rerunCurrentEffectAfterInteraction = targetIds.size() > 1;
+                return;
+            }
         }
-        library.addFirst(card);
-        beginChoice(gameData, ownerId, card);
+        gameData.rerunCurrentEffectAfterInteraction = false;
     }
 
-    private void movePermanentToTopAndBeginChoice(GameData gameData, Permanent permanent) {
+    private boolean movePermanentToTopAndBeginChoice(GameData gameData, Permanent permanent) {
         Card card = permanent.getCard();
         if (!permanentRemovalService.removePermanentToLibraryTop(gameData, permanent)) {
-            return;
+            return false;
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
         UUID ownerId = findLibraryOwner(gameData, card);
         if (ownerId == null) {
-            return;
+            return false;
         }
-        beginChoice(gameData, ownerId, card);
+        return beginChoice(gameData, ownerId, card);
     }
 
     private UUID findLibraryOwner(GameData gameData, Card card) {
@@ -95,15 +108,16 @@ public class PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffectHandler
                 .orElse(null);
     }
 
-    private void beginChoice(GameData gameData, UUID ownerId, Card card) {
+    private boolean beginChoice(GameData gameData, UUID ownerId, Card card) {
         List<Card> library = gameData.playerDecks.get(ownerId);
         if (library == null || library.stream().noneMatch(c -> c.getId().equals(card.getId()))) {
-            return;
+            return false;
         }
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.TargetLibraryDestinationChoice(ownerId, card.getId(), card.getName()));
         log.info("Game {} - awaiting {} to choose the library destination for {}", gameData.id,
                 gameData.playerIdToName.get(ownerId), card.getName());
+        return true;
     }
 
     private static boolean isAbility(StackEntry entry) {

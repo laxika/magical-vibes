@@ -30,9 +30,9 @@ public class RedirectTargetCreatureNextDamageFromChosenSourceToControllerEffectH
         // Without a target creature the ability does nothing. The redirected damage goes to the controller.
         if (protectedCreatureId == null || controllerId == null) return;
 
-        List<UUID> validIds = preventionSupport.collectAllBattlefieldPermanentIds(gameData);
+        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
         if (validIds.isEmpty()) {
-            preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
+            preventionSupport.broadcastNoDamageSourcesForChoice(gameData);
             return;
         }
 

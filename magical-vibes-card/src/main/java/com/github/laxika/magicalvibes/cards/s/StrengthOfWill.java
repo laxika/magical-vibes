@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "118")
+@CardRegistration(set = "SPM", collectorNumber = "267")
 public class StrengthOfWill extends Card {
 
     public StrengthOfWill() {

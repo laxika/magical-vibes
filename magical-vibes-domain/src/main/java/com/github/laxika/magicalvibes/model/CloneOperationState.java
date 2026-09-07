@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
 import java.util.Map;
@@ -36,11 +37,14 @@ public class CloneOperationState {
     // Phantasmal Image: "except it's an Illusion in addition to its other types and it has ..." — only when copying.
     public Set<CardSubtype> additionalSubtypesOverride = Set.of();
     public Map<EffectSlot, List<CardEffect>> additionalSlotEffects = Map.of();
+    // Undercover Operative: a shield counter when the copied permanent is controlled by its controller.
+    public boolean shieldCounterIfControllerControlsCopiedPermanent;
     public boolean copyColor = true;
     // Vesuva: applied only to the chosen copy entry, not retained by the resulting copy.
     public boolean entersTapped;
     public boolean landPlay;
     public int xValue;
+    public CardPredicate copyCardFilter;
     public boolean graveyardCopyChoicePending;
     public boolean exileCopiedGraveyardCardAfterEntry;
 }

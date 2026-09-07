@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.model;
 import java.util.UUID;
 
 /**
- * Tracks a pending connive action that puts a +1/+1 counter on the source if a nonland card is
- * discarded.
+ * Tracks the remaining discards in a connive action and the permanent receiving counters for
+ * nonland cards.
  */
-public record PendingConnive(UUID sourcePermanentId) {
+public record PendingConnive(UUID sourcePermanentId, int remainingDiscards) {
+
+    public PendingConnive(UUID sourcePermanentId) {
+        this(sourcePermanentId, 1);
+    }
 }

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
-import com.github.laxika.magicalvibes.cards.g.GoblinBalloonBrigade;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.e.EarlyHarvest;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GoblinEliteInfantry;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UnyaroGriffin.class, Incinerate.class, EarlyHarvest.class, GoblinEliteInfantry.class,
+        StoneRain.class, Forest.class})
 class UnyaroGriffinTest extends BaseCardTest {
 
     @Test
@@ -22,21 +25,18 @@ class UnyaroGriffinTest extends BaseCardTest {
     void countersRedInstantSpell() {
         harness.addToBattlefield(player1, new UnyaroGriffin());
 
-        Shock shock = new Shock();
-        harness.setHand(player2, List.of(shock));
-        harness.addMana(player2, ManaColor.RED, 1);
+        Incinerate incinerate = new Incinerate();
+        harness.setHand(player2, List.of(incinerate));
+        harness.addMana(player2, ManaColor.RED, 2);
 
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
 
-        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.activateAbility(player1, 0, null, incinerate.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        // Shock is countered into player2's graveyard
-        harness.assertInGraveyard(player2, "Shock");
+        harness.assertInGraveyard(player2, "Incinerate");
         // Unyaro Griffin sacrificed as a cost
         harness.assertInGraveyard(player1, "Unyaro Griffin");
         harness.assertNotOnBattlefield(player1, "Unyaro Griffin");
@@ -44,20 +44,19 @@ class UnyaroGriffinTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target a non-red instant spell")
+    @DisplayName("Cannot target a green instant spell")
     void cannotTargetGreenInstant() {
         harness.addToBattlefield(player1, new UnyaroGriffin());
-        harness.addToBattlefield(player2, new GrizzlyBears());
 
-        GiantGrowth giantGrowth = new GiantGrowth();
-        harness.setHand(player2, List.of(giantGrowth));
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        EarlyHarvest earlyHarvest = new EarlyHarvest();
+        harness.setHand(player2, List.of(earlyHarvest));
+        harness.addMana(player2, ManaColor.GREEN, 3);
 
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.castInstant(player2, 0, player2.getId());
         harness.passPriority(player2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, giantGrowth.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, earlyHarvest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -66,9 +65,9 @@ class UnyaroGriffinTest extends BaseCardTest {
     void cannotTargetRedCreatureSpell() {
         harness.addToBattlefield(player1, new UnyaroGriffin());
 
-        GoblinBalloonBrigade goblin = new GoblinBalloonBrigade();
+        GoblinEliteInfantry goblin = new GoblinEliteInfantry();
         harness.setHand(player2, List.of(goblin));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
 
         harness.forceActivePlayer(player2);
         harness.castCreature(player2, 0);
@@ -76,5 +75,28 @@ class UnyaroGriffinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, goblin.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters a red sorcery spell, sacrificing itself as a cost")
+    void countersRedSorcerySpell() {
+        harness.addToBattlefield(player1, new UnyaroGriffin());
+        harness.addToBattlefield(player2, new Forest());
+
+        StoneRain stoneRain = new StoneRain();
+        harness.setHand(player2, List.of(stoneRain));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, harness.getPermanentId(player2, "Forest"));
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, stoneRain.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Stone Rain");
+        harness.assertInGraveyard(player1, "Unyaro Griffin");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.stack).isEmpty();
     }
 }

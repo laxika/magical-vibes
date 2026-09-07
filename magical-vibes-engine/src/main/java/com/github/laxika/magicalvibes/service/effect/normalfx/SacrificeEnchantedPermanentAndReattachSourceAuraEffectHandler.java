@@ -7,10 +7,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -25,19 +21,14 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link SacrificeEnchantedPermanentAndReattachSourceAuraEffect} (Nettlevine Blight):
- * the enchanted permanent's controller sacrifices it, then moves the source Aura onto a creature or
- * land they control. The Aura keeps its controller. If that player has no other creature or land the
- * enchanted permanent is still sacrificed and the Aura is left unattached (removed as an SBA).
+ * the enchanted permanent's controller sacrifices it, then moves the source Aura onto a matching
+ * permanent they control. The Aura keeps its controller. If that player has no legal destination,
+ * the enchanted permanent is still sacrificed and the Aura is left unattached (removed as an SBA).
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler implements NormalEffectHandlerBean {
-
-    private static final PermanentPredicate CREATURE_OR_LAND = new PermanentAnyOfPredicate(List.of(
-            new PermanentIsCreaturePredicate(),
-            new PermanentIsLandPredicate()
-    ));
 
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
@@ -68,14 +59,16 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
             return;
         }
 
-        // Valid re-attach destinations: creatures and lands that player controls, other than the
-        // permanent about to be sacrificed.
+        SacrificeEnchantedPermanentAndReattachSourceAuraEffect reattachEffect =
+                (SacrificeEnchantedPermanentAndReattachSourceAuraEffect) effect;
+        // Valid re-attach destinations that player controls, other than the permanent about to be sacrificed.
         List<UUID> validTargetIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
                 if (p.getId().equals(enchantedPermanentId)) continue;
-                if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, CREATURE_OR_LAND)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(gameData, p,
+                        reattachEffect.destinationFilter())) {
                     validTargetIds.add(p.getId());
                 }
             }
@@ -87,7 +80,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.ReattachSourceAuraAfterSacrifice(aura.getId(), enchantedPermanentId));
             playerInputService.beginPermanentChoice(gameData, controllerId, validTargetIds,
-                    aura.getCard().getName() + " — Choose a creature or land to attach it to.");
+                    aura.getCard().getName() + " — Choose a permanent to attach it to.");
             return;
         }
 
@@ -98,7 +91,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
 
         if (validTargetIds.isEmpty()) {
             // No legal destination — the Aura stays unattached and is removed as a state-based action.
-            gameLogService.append(gameData, GameLog.textCardText("There is no creature or land to attach ", aura.getCard(), " to."));
+            gameLogService.append(gameData, GameLog.textCardText("There is no legal permanent to attach ", aura.getCard(), " to."));
             permanentRemovalService.removeOrphanedAuras(gameData);
             return;
         }

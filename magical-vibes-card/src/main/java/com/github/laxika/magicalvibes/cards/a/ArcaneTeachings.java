@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "188")
+@CardRegistration(set = "JUD", collectorNumber = "78")
 public class ArcaneTeachings extends Card {
 
     public ArcaneTeachings() {

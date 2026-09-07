@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerAndPutMilledCre
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -18,10 +20,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Resolves the mill-and-reanimate portion of Vorinclex // The Grand Evolution. The choice is
- * limited to cards that this resolution actually milled and that are still in the graveyard.
- */
+/** Resolves a mill followed by choosing a capped number of the milled creatures to reanimate. */
 @Component
 @RequiredArgsConstructor
 public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
@@ -30,6 +29,7 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler returnHandler;
 
@@ -50,7 +50,9 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
         }
 
         List<Card> milled = graveyardService.resolveMillPlayer(
-                gameData, entry.getControllerId(), millEffect.count());
+                gameData, entry.getControllerId(), Math.max(0, amountEvaluationService.evaluate(
+                        gameData, millEffect.count(), AmountContext.forStackEntry(
+                                entry, entry.getSourcePermanentSnapshot()))));
         CardTypePredicate creaturePredicate = new CardTypePredicate(CardType.CREATURE);
         List<Card> eligibleCards = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(

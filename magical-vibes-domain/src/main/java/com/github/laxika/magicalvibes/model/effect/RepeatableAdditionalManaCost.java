@@ -20,14 +20,32 @@ import java.util.List;
  * @param maxPaymentsPerCost maximum number of times each declared cost may be paid
  */
 public record RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker,
-                                            int maxPaymentsPerCost) implements CostEffect {
+                                            int maxPaymentsPerCost,
+                                            List<PaymentOption> paymentOptions) implements CostEffect {
+
+    public record PaymentOption(String manaCost, boolean multikicker, int maxPayments) {
+    }
+
+    public RepeatableAdditionalManaCost {
+        manaCosts = List.copyOf(manaCosts);
+        paymentOptions = paymentOptions == null || paymentOptions.isEmpty()
+                ? manaCosts.stream()
+                        .map(manaCost -> new PaymentOption(manaCost, multikicker, maxPaymentsPerCost))
+                        .toList()
+                : List.copyOf(paymentOptions);
+    }
 
     public RepeatableAdditionalManaCost(List<String> manaCosts) {
-        this(manaCosts, false, Integer.MAX_VALUE);
+        this(manaCosts, false, Integer.MAX_VALUE, null);
     }
 
     public RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker) {
-        this(manaCosts, multikicker, Integer.MAX_VALUE);
+        this(manaCosts, multikicker, Integer.MAX_VALUE, null);
+    }
+
+    public RepeatableAdditionalManaCost(List<String> manaCosts, boolean multikicker,
+                                        int maxPaymentsPerCost) {
+        this(manaCosts, multikicker, maxPaymentsPerCost, null);
     }
 
     public static RepeatableAdditionalManaCost multikicker(List<String> manaCosts) {
@@ -37,5 +55,43 @@ public record RepeatableAdditionalManaCost(List<String> manaCosts, boolean multi
     /** Creates an optional additional cost that may be paid at most once. */
     public static RepeatableAdditionalManaCost singlePayment(List<String> manaCosts) {
         return new RepeatableAdditionalManaCost(manaCosts, false, 1);
+    }
+
+    public static RepeatableAdditionalManaCost combine(List<RepeatableAdditionalManaCost> costs) {
+        List<PaymentOption> options = costs.stream()
+                .flatMap(cost -> cost.paymentOptions().stream())
+                .toList();
+        List<String> manaCosts = options.stream()
+                .map(PaymentOption::manaCost)
+                .distinct()
+                .toList();
+        boolean multikicker = options.stream().anyMatch(PaymentOption::multikicker);
+        int maxPaymentsPerCost = options.stream()
+                .mapToInt(PaymentOption::maxPayments)
+                .min()
+                .orElse(Integer.MAX_VALUE);
+        return new RepeatableAdditionalManaCost(manaCosts, multikicker, maxPaymentsPerCost, options);
+    }
+
+    /** Counts payments assigned to options that are multikicker payments. */
+    public int multikickerPaymentCount(List<String> payments) {
+        if (payments == null || payments.isEmpty()) {
+            return 0;
+        }
+        int[] counts = new int[paymentOptions.size()];
+        int multikickerPayments = 0;
+        for (String payment : payments) {
+            for (int i = 0; i < paymentOptions.size(); i++) {
+                PaymentOption option = paymentOptions.get(i);
+                if (option.manaCost().equals(payment) && counts[i] < option.maxPayments()) {
+                    counts[i]++;
+                    if (option.multikicker()) {
+                        multikickerPayments++;
+                    }
+                    break;
+                }
+            }
+        }
+        return multikickerPayments;
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VolcanicEruption.class, Forest.class, GrizzlyBears.class, HillGiant.class, Mountain.class})
 class VolcanicEruptionTest extends BaseCardTest {
 
     @Test
@@ -37,6 +39,17 @@ class VolcanicEruptionTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Requires exactly X Mountain targets")
+    void requiresExactlyXTargets() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new VolcanicEruption()));
+        harness.addMana(player1, ManaColor.BLUE, 5); // X=2
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, List.of(mountain.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

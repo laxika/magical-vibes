@@ -22,6 +22,8 @@ import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements NormalEffectHandlerBean {
 
@@ -82,9 +84,39 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
             return;
         }
 
+        if (e.bargainedBattlefieldMaxManaValue() != null && entry.wasKicked()) {
+            List<Card> eligibleCards = entry.getTargetCardIdsForEffect(e).stream()
+                    .map(cardId -> gameData.playerGraveyards
+                            .getOrDefault(entry.getControllerId(), List.of()).stream()
+                            .filter(card -> card.getId().equals(cardId))
+                            .findFirst()
+                            .orElse(null))
+                    .filter(card -> card != null
+                            && (e.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                            card, e.filter(), entry.getCard().getId(), gameData, entry.getControllerId()))
+                            && card.getManaValue() <= e.bargainedBattlefieldMaxManaValue())
+                    .toList();
+            if (!eligibleCards.isEmpty()) {
+                gameData.graveyardTargetOperation.resolutionTimeBargainedReturnChoiceResume = true;
+                gameData.graveyardTargetOperation.resolutionTimeBargainedReturnTargetCardIds =
+                        List.copyOf(entry.getTargetCardIdsForEffect(e));
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                        entry.getControllerId(), eligibleCards, 1,
+                        "Choose up to one of those cards to put onto the battlefield instead of returning it to hand."));
+                return;
+            }
+        }
+
         graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
                 entry.getTargetCardIdsForEffect(effect),
-                (graveyard, card) -> gameData.addCardToHand(entry.getControllerId(), card),
+                (graveyard, card) -> {
+                    UUID graveyardOwnerId = findGraveyardOwner(gameData, graveyard, card);
+                    UUID handOwnerId = e.returnToOwnersHand()
+                            ? graveyardOwnerId
+                            : entry.getControllerId();
+                    graveyardReturnSupport.addCardToHandFromGraveyard(
+                            gameData, graveyardOwnerId, handOwnerId, card);
+                },
                 " returns ", " from graveyard to hand.");
     }
 
@@ -173,5 +205,17 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
                         entry.getControllerId(),
                         entry.getCard().getId(),
                         card.getId()));
+    }
+
+    private UUID findGraveyardOwner(GameData gameData, java.util.List<com.github.laxika.magicalvibes.model.Card> graveyard,
+                                     com.github.laxika.magicalvibes.model.Card card) {
+        if (card.getOwnerId() != null) {
+            return card.getOwnerId();
+        }
+        return gameData.playerGraveyards.entrySet().stream()
+                .filter(entry -> entry.getValue() == graveyard)
+                 .map(java.util.Map.Entry::getKey)
+                 .findFirst()
+                 .orElseThrow(() -> new IllegalStateException("Returned card has no graveyard owner"));
     }
 }

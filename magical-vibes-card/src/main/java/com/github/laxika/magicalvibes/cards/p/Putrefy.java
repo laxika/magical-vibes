@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "93")
+@CardRegistration(set = "RAV", collectorNumber = "221")
 public class Putrefy extends Card {
 
     public Putrefy() {

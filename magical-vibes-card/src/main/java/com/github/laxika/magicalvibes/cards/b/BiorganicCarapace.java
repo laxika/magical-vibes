@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "124")
+@CardRegistration(set = "SPM", collectorNumber = "269")
 public class BiorganicCarapace extends Card {
 
     public BiorganicCarapace() {

@@ -37,6 +37,20 @@ class NecrosynthesisTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Enchanted creature retains the granted trigger when it dies with another creature")
+    void grantedTriggerUsesLastKnownStateForSimultaneousDeaths() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attachAura(enchanted);
+        enchanted.setMarkedDamage(2);
+        other.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
     @DisplayName("When enchanted creature dies, look at cards equal to its power and keep one")
     void looksAtCardsEqualToEnchantedCreaturePower() {
         Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new HillGiant());

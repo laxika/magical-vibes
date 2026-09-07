@@ -13,14 +13,18 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * existing search-to-top interaction is reused for the choice and ordering steps.
  */
 public record SearchLibraryForCardsToTopEffect(CardPredicate filter, DynamicAmount count,
-                                               boolean revealCards) implements CardEffect {
+                                               int maxCount, boolean revealCards) implements CardEffect {
 
     public SearchLibraryForCardsToTopEffect(CardPredicate filter) {
-        this(filter, null, true);
+        this(filter, null, Integer.MAX_VALUE, true);
+    }
+
+    public SearchLibraryForCardsToTopEffect(CardPredicate filter, int maxCount) {
+        this(filter, null, maxCount, true);
     }
 
     /** Search for exactly {@code count} cards, without revealing them to other players. */
     public static SearchLibraryForCardsToTopEffect exact(DynamicAmount count) {
-        return new SearchLibraryForCardsToTopEffect(null, count, false);
+        return new SearchLibraryForCardsToTopEffect(null, count, Integer.MAX_VALUE, false);
     }
 }

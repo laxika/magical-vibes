@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "M15", collectorNumber = "200")
 @CardRegistration(set = "GRN", collectorNumber = "144")
+@CardRegistration(set = "RAV", collectorNumber = "183")
 public class SiegeWurm extends Card {
 }

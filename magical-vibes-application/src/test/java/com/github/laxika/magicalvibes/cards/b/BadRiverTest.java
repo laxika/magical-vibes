@@ -1,25 +1,26 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.CrystalVein;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BadRiver.class, CrystalVein.class, Forest.class, Island.class, Mountain.class, Swamp.class})
 class BadRiverTest extends BaseCardTest {
 
     @Test
@@ -29,13 +30,21 @@ class BadRiverTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
-        Permanent river = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bad River"))
-                .findFirst()
-                .orElseThrow();
+        Permanent river = findPermanent(player1, "Bad River");
         assertThat(river.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Search ability cannot be activated while Bad River is tapped")
+    void searchRequiresUntappedSource() {
+        Permanent river = harness.addToBattlefieldAndReturn(player1, new BadRiver());
+        river.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(river);
     }
 
     @Test
@@ -59,12 +68,26 @@ class BadRiverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Search resolves without a choice when the library has no Island or Swamp")
+    void searchWithNoMatchingCards() {
+        harness.addToBattlefield(player1, new BadRiver());
+        harness.setLibrary(player1, List.of(new Forest(), new Mountain(), new CrystalVein()));
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bad River");
+        harness.assertInGraveyard(player1, "Bad River");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Chosen land enters the battlefield untapped")
     void chosenLandEntersUntapped() {
         activateSearch();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Island") && !p.isTapped());
@@ -77,7 +100,7 @@ class BadRiverTest extends BaseCardTest {
         activateSearch();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().hasType(CardType.LAND));
@@ -91,8 +114,6 @@ class BadRiverTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Island(), new Swamp(), new Forest(), new Mountain(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Island(), new Swamp(), new Forest(), new Mountain(), new CrystalVein()));
     }
 }

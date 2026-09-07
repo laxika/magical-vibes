@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.LandsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -19,16 +20,19 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersByAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteControllerLifeTotalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -144,6 +148,19 @@ class BattlefieldPlacementServiceTest {
         putPermanentOntoBattlefield(service, gd, player1Id, entering);
 
         assertThat(entering.getChosenNumber()).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Chooses a random number when the permanent enters")
+    void choosesRandomNumberWhenPermanentEnters() {
+        Card card = new Card();
+        card.setName("Random Number Permanent");
+        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseRandomNumberOnEnterEffect(2, 4));
+        Permanent entering = new Permanent(card);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, entering);
+
+        assertThat(entering.getChosenNumber()).isBetween(2, 4);
     }
 
     @Test
@@ -314,6 +331,38 @@ class BattlefieldPlacementServiceTest {
         putPermanentOntoBattlefield(service, gd, player1Id, entering);
 
         assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dynamic battlefield entry counters use the number of lands entered this turn")
+    void dynamicBattlefieldEntryCountersUseLandsEnteredThisTurn() {
+        when(gameQueryService.doublePlusOnePlusOneCounters(any(), any(), any(), anyInt()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
+
+        Card sourceCard = new Card();
+        sourceCard.setName("Dynamic Counter Source");
+        sourceCard.setType(CardType.ENCHANTMENT);
+        sourceCard.addEffect(EffectSlot.STATIC,
+                new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
+                        new PermanentIsCreaturePredicate(), new LandsEnteredBattlefieldThisTurn()));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+
+        Card landOne = new Card();
+        landOne.setType(CardType.LAND);
+        Card landTwo = new Card();
+        landTwo.setType(CardType.LAND);
+        gd.permanentsEnteredBattlefieldThisTurn.put(player1Id,
+                new ArrayList<>(List.of(landOne, landTwo)));
+
+        Card enteringCard = new Card();
+        enteringCard.setName("Entering Creature");
+        enteringCard.setType(CardType.CREATURE);
+        Permanent entering = new Permanent(enteringCard);
+        when(gameQueryService.isCreature(gd, entering)).thenReturn(true);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, entering);
+
+        assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     /**

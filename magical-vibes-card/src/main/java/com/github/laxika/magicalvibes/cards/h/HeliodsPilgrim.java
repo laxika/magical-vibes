@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "14")
+@CardRegistration(set = "THB", collectorNumber = "20")
 public class HeliodsPilgrim extends Card {
 
     public HeliodsPilgrim() {

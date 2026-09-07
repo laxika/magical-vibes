@@ -56,6 +56,7 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
 
         // Put onto the battlefield
         Permanent perm = new Permanent(imprintedCard);
+        perm.setEnteredFromExile(true);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         gameLogService.append(gameData, GameLog.entersBattlefieldUnder(imprintedCard, playerName));

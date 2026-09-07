@@ -9,9 +9,15 @@ import java.util.UUID;
  *
  * @param dyingCardId the card ID of the dying creature (null in card definition, filled at trigger time)
  */
-public record ImprintDyingCreatureEffect(UUID dyingCardId) implements CardEffect {
+public record ImprintDyingCreatureEffect(UUID dyingCardId)
+        implements CardEffect, DyingCreatureCardAwareEffect {
 
     public ImprintDyingCreatureEffect() {
         this(null);
+    }
+
+    @Override
+    public CardEffect boundToDyingCard(UUID cardId) {
+        return new ImprintDyingCreatureEffect(cardId);
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +18,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SigardasAid.class, GrizzlyBears.class, LeoninScimitar.class})
 class SigardasAidTest extends BaseCardTest {
 
     @Test
+    @CardUsed(Wanderlust.class)
     @DisplayName("Aura and Equipment spells can be cast at instant speed")
     void grantsFlashToAurasAndEquipment() {
         harness.addToBattlefield(player1, new SigardasAid());

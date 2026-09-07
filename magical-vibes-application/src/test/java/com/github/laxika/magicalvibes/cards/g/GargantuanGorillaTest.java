@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +17,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GargantuanGorilla.class, Forest.class, SnowCoveredForest.class, GorillaChieftain.class})
 class GargantuanGorillaTest extends BaseCardTest {
 
     private Permanent gorilla(Player owner) {
-        UUID id = harness.getPermanentId(owner, "Gargantuan Gorilla");
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst().orElseThrow();
+        return findPermanent(owner, "Gargantuan Gorilla");
     }
 
     @Test
@@ -126,15 +124,30 @@ class GargantuanGorillaTest extends BaseCardTest {
     @DisplayName("Fight: the 7/7 Gorilla kills a 3/3 and survives with marked damage")
     void fightKillsSmallerCreature() {
         Permanent gorilla = readyGorilla(player1);
-        Permanent hillGiant = new Permanent(new HillGiant());
-        gd.playerBattlefields.get(player2.getId()).add(hillGiant);
+        Permanent gorillaChieftain = harness.addToBattlefieldAndReturn(player2, new GorillaChieftain());
 
-        harness.activateAbility(player1, 0, null, hillGiant.getId());
+        harness.activateAbility(player1, 0, null, gorillaChieftain.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(hillGiant.getId()));
+                .noneMatch(p -> p.getId().equals(gorillaChieftain.getId()));
         assertThat(gorilla.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("If an opponent controls the Gorilla when the upkeep trigger resolves, it is not sacrificed")
+    void stolenGorillaIsNotSacrificedByItsFormerController() {
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GargantuanGorilla());
+
+        advanceToUpkeep(player1);
+        harness.passPriority(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(gorilla);
+        gd.playerBattlefields.get(player2.getId()).add(gorilla);
+        harness.passPriority(player2);
+
+        harness.assertOnBattlefield(player2, "Gargantuan Gorilla");
+        harness.assertNotInGraveyard(player1, "Gargantuan Gorilla");
+        harness.assertLife(player1, 13);
     }
 
     @Test
@@ -147,9 +160,6 @@ class GargantuanGorillaTest extends BaseCardTest {
     }
 
     private Permanent readyGorilla(Player player) {
-        Permanent perm = new Permanent(new GargantuanGorilla());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GargantuanGorilla());
     }
 }

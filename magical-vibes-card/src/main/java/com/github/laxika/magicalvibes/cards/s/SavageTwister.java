@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "MIR", collectorNumber = "280")
+@CardRegistration(set = "GPT", collectorNumber = "127")
 public class SavageTwister extends Card {
 
     public SavageTwister() {

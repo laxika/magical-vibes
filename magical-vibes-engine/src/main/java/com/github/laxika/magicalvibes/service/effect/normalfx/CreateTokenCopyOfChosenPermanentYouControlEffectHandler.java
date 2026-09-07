@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class CreateTokenCopyOfChosenPermanentYouControlEffectHandler implements 
     private final CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyHandler;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,11 +39,10 @@ public class CreateTokenCopyOfChosenPermanentYouControlEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var copyEffect = (CreateTokenCopyOfChosenPermanentYouControlEffect) effect;
         UUID controllerId = entry.getControllerId();
-        List<UUID> permanentIds = new ArrayList<>();
-        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-            permanentIds.add(permanent.getId());
-        }
+        List<UUID> permanentIds = controlledPermanentIds(gameData, controllerId, entry.getSourcePermanentId(),
+                copyEffect.filter());
 
         if (permanentIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
@@ -49,15 +51,35 @@ public class CreateTokenCopyOfChosenPermanentYouControlEffectHandler implements 
             createCopy(gameData, controllerId, entry.getCard(), permanentIds.getFirst());
         } else {
             gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.AwakenTheMaelstromPermanentCopyChoice(
-                            controllerId, entry.getCard()));
+                    new PermanentChoiceContext.ChosenPermanentCopyChoice(
+                            controllerId, entry.getCard(), copyEffect.filter()));
             playerInputService.beginPermanentChoice(gameData, controllerId, permanentIds,
                     entry.getCard().getName() + " - Choose a permanent you control to copy.");
         }
     }
 
+    private List<UUID> controlledPermanentIds(GameData gameData, UUID controllerId, UUID sourcePermanentId,
+                                               PermanentPredicate filter) {
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(sourcePermanentId);
+        return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(permanent -> filter == null
+                        || predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context))
+                .map(Permanent::getId)
+                .toList();
+    }
+
     public void completeChoice(GameData gameData, UUID permanentId,
                                PermanentChoiceContext.AwakenTheMaelstromPermanentCopyChoice context) {
+        createCopy(gameData, context.controllerId(), context.sourceCard(), permanentId);
+    }
+
+    public void completeChoice(GameData gameData, UUID permanentId,
+                               PermanentChoiceContext.ChosenPermanentCopyChoice context) {
+        if (!controlledPermanentIds(gameData, context.controllerId(), null, context.filter()).contains(permanentId)) {
+            return;
+        }
         createCopy(gameData, context.controllerId(), context.sourceCard(), permanentId);
     }
 

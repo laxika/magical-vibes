@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "173")
+@CardRegistration(set = "THB", collectorNumber = "164")
 public class WrapInFlames extends Card {
 
     public WrapInFlames() {

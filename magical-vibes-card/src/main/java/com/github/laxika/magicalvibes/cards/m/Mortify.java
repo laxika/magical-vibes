@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "192")
+@CardRegistration(set = "GPT", collectorNumber = "122")
 public class Mortify extends Card {
 
     public Mortify() {

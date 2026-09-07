@@ -61,6 +61,9 @@ class CardEffectTargetingConsistencyTest {
             // Static marker: TargetingRestrictionEffect is a "can't be targeted by X" property read
             // by the target-legality services; it never resolves or targets anything itself.
             "TargetingRestrictionEffect",
+            // Marker: declares a target-group position consumed by a sibling effect and never
+            // resolves or chooses a target itself.
+            "TargetGroupMarkerEffect",
             // Pre-resolved: the draw-step player's UUID is baked into the stack entry when the
             // EACH_DRAW_TRIGGERED trigger is pushed in StepTriggerService (Maralen of the Mornsong);
             // it never enters the shared target-collection pipeline.
@@ -106,6 +109,9 @@ class CardEffectTargetingConsistencyTest {
             // Piggyback: Shuriken's effect reads the creature target already chosen for the
             // activated ability's damage effect; it does not choose a second target.
             "TargetPermanentControllerGainsControlOfGrantingEquipmentEffect",
+            // Piggyback: reads the permanent target already chosen for the sibling effect, then
+            // asks that permanent's controller to make a non-targeted sacrifice choice.
+            "TargetPermanentControllerSacrificeThenEffect",
             // Pre-resolved: in a two-player game the sole opponent of the resolving controller is
             // derived rather than chosen (Phelddagrif, Soldevi Heretic), leaving the entry's target
             // slot free for a sibling effect on the same spell that does target.

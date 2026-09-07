@@ -35,6 +35,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
             case GRAVEYARD -> counterSupport.counterSpell(gameData, entry, targetEntry);
             case EXILE -> counterSupport.counterSpellAndExile(gameData, entry, targetEntry);
             case LIBRARY_TOP -> counterSupport.counterSpellAndPutOnTopOfLibrary(gameData, entry, targetEntry);
+            case HAND -> counterSupport.counterSpellAndPutInHand(gameData, entry, targetEntry);
             case LIBRARY_TOP_OR_BOTTOM -> counterOntoChosenLibraryEnd(gameData, entry, targetEntry);
         }
     }

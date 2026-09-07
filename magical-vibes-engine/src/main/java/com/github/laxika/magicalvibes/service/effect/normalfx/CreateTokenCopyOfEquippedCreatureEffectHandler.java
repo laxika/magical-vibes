@@ -62,7 +62,7 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
 
                 Card sourceCard = equippedCreature.getCard();
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId(), true);
                 int totalCopies = e.amount() * tokenMultiplier;
                 for (int copy = 0; copy < totalCopies; copy++) {
                     // Create a token that's a copy of the equipped creature (copying all copiable values per CR 707.2)

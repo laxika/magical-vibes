@@ -103,8 +103,8 @@ public final class FaceOracleMapper {
     /**
      * The face's own keywords.
      *
-     * <p>Both providers report a double-faced card's keywords combined across its faces, so a back
-     * face has to be narrowed to what its own text states — otherwise it inherits the front's.
+     * <p>Both providers report a double-faced card's keywords combined across its faces, so each
+     * face has to be narrowed to what its own text states — otherwise it inherits the other face's.
      * That is not cosmetic: Defender leaking onto Awoken Horror produces a creature the combat code
      * refuses to attack with. The same filtering prevents a front face from treating a mentioned
      * keyword as its own. Narrowing also stops a face that <em>grants</em> a keyword

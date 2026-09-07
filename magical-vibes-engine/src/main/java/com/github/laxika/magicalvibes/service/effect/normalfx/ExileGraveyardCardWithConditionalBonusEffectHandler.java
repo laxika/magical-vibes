@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -94,5 +96,20 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
                 }
             }
         }
+
+        if (!isCreatureCard && e.noncreatureCardsToDraw() > 0) {
+            insertDrawEffect(entry, effect, e.noncreatureCardsToDraw());
+        }
+    }
+
+    private void insertDrawEffect(StackEntry entry, CardEffect currentEffect, int amount) {
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        for (int i = 0; i < effects.size(); i++) {
+            if (effects.get(i) == currentEffect) {
+                entry.insertEffectsToResolve(i + 1, List.of(new DrawCardEffect(amount)));
+                return;
+            }
+        }
+        throw new IllegalStateException("Could not locate graveyard conditional bonus effect on stack entry");
     }
 }

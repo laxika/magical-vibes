@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "88")
 @CardRegistration(set = "CHR", collectorNumber = "123")
+@CardRegistration(set = "LEG", collectorNumber = "265")
 public class TorWauki extends Card {
 
     public TorWauki() {

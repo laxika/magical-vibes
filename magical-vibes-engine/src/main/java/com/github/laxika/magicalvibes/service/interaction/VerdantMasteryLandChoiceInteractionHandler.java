@@ -109,7 +109,7 @@ public class VerdantMasteryLandChoiceInteractionHandler
                              Card opponentCard, List<Card> ownBattlefield, List<Card> handCards) {
         putOntoBattlefield(gameData, opponentId, opponentCard);
         putOntoBattlefield(gameData, controllerId, ownBattlefield);
-        gameData.playerHands.get(controllerId).addAll(handCards);
+        handCards.forEach(card -> gameData.addCardToHand(controllerId, card));
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
 
         gameLogService.append(gameData, GameLog.text(

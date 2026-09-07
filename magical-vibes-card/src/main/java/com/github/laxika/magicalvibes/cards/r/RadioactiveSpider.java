@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "111")
+@CardRegistration(set = "SPM", collectorNumber = "212")
+@CardRegistration(set = "SPM", collectorNumber = "285")
 public class RadioactiveSpider extends Card {
 
     public RadioactiveSpider() {

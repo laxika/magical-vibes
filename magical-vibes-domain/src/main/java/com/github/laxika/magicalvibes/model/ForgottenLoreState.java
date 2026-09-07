@@ -5,8 +5,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Progress state for Forgotten Lore's "target opponent chooses a card in your graveyard; you may pay
- * {G} to repeat, excluding cards already chosen" loop.
+ * Progress state for Forgotten Lore-style effects' "target opponent chooses a card in your
+ * graveyard; you may pay to repeat, excluding cards already chosen" loop.
  */
 public class ForgottenLoreState {
 

@@ -27,9 +27,9 @@ public class ReflectNextDamageFromChosenSourceToItsControllerEffectHandler imple
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
 
-        List<UUID> validIds = preventionSupport.collectAllBattlefieldPermanentIds(gameData);
+        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
         if (validIds.isEmpty()) {
-            preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
+            preventionSupport.broadcastNoDamageSourcesForChoice(gameData);
             return;
         }
 

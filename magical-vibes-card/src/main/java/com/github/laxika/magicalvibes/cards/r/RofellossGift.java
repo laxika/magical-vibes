@@ -18,6 +18,6 @@ public class RofellossGift extends Card {
         addEffect(EffectSlot.SPELL,
                 new RevealAnyNumberOfCardsFromHandEffect(new CardColorPredicate(CardColor.GREEN)));
         addEffect(EffectSlot.SPELL, new ReturnCardsFromControllerGraveyardToHandEffect(
-                new CardTypePredicate(CardType.ENCHANTMENT), new EventValue()));
+                new CardTypePredicate(CardType.ENCHANTMENT), new EventValue(), false));
     }
 }

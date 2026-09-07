@@ -43,14 +43,17 @@ class CardImmutabilityArchTest {
             "StackResolutionService",  // marks a fresh runtime copy of a resolving copied permanent spell as a token
             "AiDecisionEngine",        // mutates the evaluation runtime copy it just created
             "PermanentCopierService",  // assembles fresh clone-copy cards
+            "LandCopyOnEnterService",  // adds Cave to the fresh clone-copy card installed by PermanentCopierService
             "CloneService",            // "except it has ..." on the fresh clone-copy card
             "CopySupport",             // assembles fresh spell-copy cards
             "CopyControllerCastSpellEffectHandler", // decorates the fresh spell-copy card
             "CopySpellEffectHandler",  // decorates the fresh spell-copy card
             "CopyDrawnInstantOrSorceryAndMayCastCopyEffectHandler", // decorates the fresh drawn-card copy
+            "TriggeredAbilityQueueService", // assembles a fresh runtime copy for modal-trigger targeting
             "MayCopyHandlerService",   // re-adds the copy ability on the fresh clone-copy card
             "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
             "BecomeCopyOfEnteringCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Unstable Shapeshifter)
+            "BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler", // name/legendary/hexproof/"this ability" on the fresh clone-copy card (Lazav, Dimir Mastermind)
             "BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler", // name/legendary/activated ability on the fresh clone-copy card
             "BecomeCopyOfTargetLandEffectHandler", // re-grants "except it has this ability" on the fresh clone-copy card (Thespian's Stage)
@@ -58,6 +61,7 @@ class CardImmutabilityArchTest {
             "BecomeCreatureEffectHandler", // replaces an enchantment with the freshly created runtime creature copy
             "BecomeCreatureTypeWithBasePowerToughnessEffectHandler", // replaces subtypes on a fresh runtime copy
             "BecomeAuraReanimateFromGraveyardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Necrotic Plague)
+            "BecomeAuraManifestTopCardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Lightform)
             "ReturnSourceAsAuraEffectHandler", // assembles a fresh Aura runtime copy before returning it
             "ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler", // assembles a fresh non-Aura runtime copy
             "LicidBecomeAuraEffectHandler", // Aura face built on the fresh runtime copy (Licid cycle)
@@ -72,6 +76,7 @@ class CardImmutabilityArchTest {
             "StormCopyEffectHandler", // marks the fresh copy assembled by CopySupport as a token
             "TurnFaceUpCopyService", // restores copy exceptions on the fresh runtime copy installed by PermanentCopierService
             "LudevicCopySupport", // decorates the fresh clone-copy card installed by PermanentCopierService
+            "RegisterDelayedBeginningOfCombatTriggerEffectHandler", // assembles a fresh runtime copy for the delayed trigger
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {

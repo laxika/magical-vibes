@@ -42,9 +42,14 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
 
         // Self-targeting triggers (e.g. Repartee) use sourcePermanentId; targetId may carry
         // separate context about the spell or player that caused the trigger.
-        UUID targetId = unblockable.selfTargeting() && entry.getSourcePermanentId() != null
-                ? entry.getSourcePermanentId()
-                : entry.getTargetId();
+        UUID targetId;
+        if (unblockable.attachedPermanent()) {
+            targetId = entry.getTargetId();
+        } else if (unblockable.selfTargeting() && entry.getSourcePermanentId() != null) {
+            targetId = entry.getSourcePermanentId();
+        } else {
+            targetId = entry.getTargetId();
+        }
         makeUnblockable(gameData, gameQueryService.findPermanentById(gameData, targetId));
     }
 

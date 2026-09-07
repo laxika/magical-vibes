@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SPM", collectorNumber = "153")
+@CardRegistration(set = "SPM", collectorNumber = "231")
 public class TheSpotLivingPortal extends Card {
 
     public TheSpotLivingPortal() {

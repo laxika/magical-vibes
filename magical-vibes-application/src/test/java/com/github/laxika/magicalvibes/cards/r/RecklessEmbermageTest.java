@@ -1,23 +1,24 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
+import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RecklessEmbermage.class, FemerefArchers.class, FeralShadow.class})
 class RecklessEmbermageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 to a target player and 1 to itself; the 2/2 survives")
     void dealsOneToPlayerAndSelf() {
-        Permanent embermage = addReadyEmbermage(player1);
+        Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
         addRedMana(player1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -31,24 +32,40 @@ class RecklessEmbermageTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature — deals 1 damage to it")
     void dealsOneToTargetCreature() {
-        addReadyEmbermage(player1);
+        addCreatureReady(player1, new RecklessEmbermage());
         addRedMana(player1);
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FemerefArchers());
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        // 1 damage marked on the 2/2 Bears — it survives.
+        // 1 damage marked on the 2/2 Archers — it survives.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Femeref Archers");
+    }
+
+    @Test
+    @DisplayName("Lethal damage to the target creature does not stop the self-damage")
+    void lethalTargetDoesNotStopSelfDamage() {
+        Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
+        addRedMana(player1);
+
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FeralShadow());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Feral Shadow");
+        assertThat(embermage.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Reckless Embermage");
     }
 
     @Test
     @DisplayName("Ability has no tap cost — repeating it twice kills the Embermage")
     void repeatedActivationsKillItself() {
-        addReadyEmbermage(player1);
+        addCreatureReady(player1, new RecklessEmbermage());
         addRedMana(player1);
         addRedMana(player1);
 
@@ -68,11 +85,4 @@ class RecklessEmbermageTest extends BaseCardTest {
         harness.addMana(player, ManaColor.COLORLESS, 1);
     }
 
-    private Permanent addReadyEmbermage(Player player) {
-        RecklessEmbermage card = new RecklessEmbermage();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

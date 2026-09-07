@@ -27,6 +27,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "108")
+@CardRegistration(set = "SPM", collectorNumber = "200")
+@CardRegistration(set = "SPM", collectorNumber = "211")
+@CardRegistration(set = "SPM", collectorNumber = "234")
 public class MilesMorales extends Card {
 
     public MilesMorales() {

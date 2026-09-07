@@ -47,7 +47,8 @@ class CoffinQueenTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, queen.getId());
-        harness.passBothPriorities(); // Twiddle resolves, the Queen untaps, the trigger goes on the stack
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities(); // trigger resolves
 
         assertThat(queen.isTapped()).isFalse();

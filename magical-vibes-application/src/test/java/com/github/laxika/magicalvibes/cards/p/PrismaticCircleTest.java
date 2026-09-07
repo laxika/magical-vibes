@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantMantis;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrismaticCircle.class, ViashinoWarrior.class, GiantMantis.class})
 class PrismaticCircleTest extends BaseCardTest {
 
     @Test
@@ -39,16 +42,22 @@ class PrismaticCircleTest extends BaseCardTest {
     @DisplayName("Only sources of the chosen color may be chosen for the prevention shield")
     void onlyChosenColorSourcesAreValid() {
         addCircle(player1, CardColor.RED);
-        Permanent goblin = addReady(player2, new GoblinPiker());
-        addReady(player2, new GrizzlyBears());
+        Permanent viashino = addCreatureReady(player2, new ViashinoWarrior());
+        Permanent mantis = addCreatureReady(player2, new GiantMantis());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(viashino.getId()).doesNotContain(mantis.getId());
+
+        harness.handlePermanentChosen(player1, viashino.getId());
 
         assertThat(gd.playerSourceNextDamageShields)
-                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(goblin.getId()));
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(viashino.getId()));
     }
 
     @Test
@@ -56,14 +65,14 @@ class PrismaticCircleTest extends BaseCardTest {
     void preventsNextCombatDamage() {
         harness.setLife(player1, 20);
         addCircle(player1, CardColor.RED);
-        Permanent goblin = addReady(player2, new GoblinPiker());
+        Permanent viashino = addCreatureReady(player2, new ViashinoWarrior());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, viashino.getId());
 
-        goblin.setAttacking(true);
+        viashino.setAttacking(true);
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
@@ -71,10 +80,63 @@ class PrismaticCircleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage from an unchosen source color is dealt and does not consume the shield")
+    void doesNotPreventDamageFromUnchosenSource() {
+        harness.setLife(player1, 20);
+        addCircle(player1, CardColor.RED);
+        Permanent viashino = addCreatureReady(player2, new ViashinoWarrior());
+        Permanent mantis = addCreatureReady(player2, new GiantMantis());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, viashino.getId());
+
+        mantis.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(viashino.getId()));
+    }
+
+    @Test
+    @CardUsed(Incinerate.class)
+    @DisplayName("A chosen source spell has its next damage to you prevented")
+    void preventsDamageFromChosenSpellOnStack() {
+        harness.setLife(player1, 20);
+        addCircle(player1, CardColor.RED);
+
+        Incinerate incinerate = new Incinerate();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(incinerate));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, player1.getId());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(incinerate.getId());
+        harness.handlePermanentChosen(player1, incinerate.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "Incinerate");
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
     @DisplayName("No source choice is offered when no permanent matches the chosen color")
     void noMatchingColorSource() {
         addCircle(player1, CardColor.BLUE);
-        addReady(player2, new GoblinPiker());
+        addCreatureReady(player2, new ViashinoWarrior());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -117,15 +179,8 @@ class PrismaticCircleTest extends BaseCardTest {
     }
 
     private Permanent addCircle(Player player, CardColor chosen) {
-        Permanent perm = addReady(player, new PrismaticCircle());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new PrismaticCircle());
         perm.setChosenColor(chosen);
-        return perm;
-    }
-
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

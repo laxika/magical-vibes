@@ -28,7 +28,8 @@ import java.util.Set;
  * <ol>
  *   <li><b>Pre-targeted</b> — the card was targeted during casting or ability activation
  *       ({@link #targetGraveyard} is {@code true} and the stack entry has a graveyard target).
- *       Supports optional aura attachment via {@link #attachmentTarget}.</li>
+ *       Supports optional aura attachment via {@link #attachmentTarget} or
+ *       {@link #chooseAuraAttachment}.</li>
  *   <li><b>Return all</b> — returns every matching card without player choice
  *       ({@link #returnAll} is {@code true}). Optionally restricted to cards that entered the
  *       graveyard from the battlefield this turn via {@link #thisTurnOnly}.</li>
@@ -90,8 +91,12 @@ import java.util.Set;
  *                             a graveyard during the current combat phase (e.g. Storrev, Devkarin Lich);
  *                             only meaningful when {@link #targetGraveyard} is {@code true}
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a
- *                             permanent matching this predicate after entering the battlefield; the
- *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
+ *                             permanent matching this predicate after entering the battlefield; for a
+ *                             single return, the controller chooses the permanent (e.g. Nomad Mythmaker),
+ *                             while a mass return attaches each matching card when possible and leaves
+ *                             cards with no legal attachment in the graveyard
+ * @param chooseAuraAttachment {@code true} when a returned Aura's controller chooses any legal
+ *                             permanent or player for it to enchant as it enters the battlefield
  * @param gainLifeEqualToManaValue {@code true} if the controller gains life equal to the returned
  *                             card's mana value after it is returned (e.g. Razor Hippogriff)
  * @param loseLifeEqualToManaValue {@code true} if the controller loses life equal to the returned
@@ -238,6 +243,12 @@ import java.util.Set;
  *                             so the returned permanent can be recognized by effects that treat
  *                             unearth returns specially
  * @param battlefieldEffectGrants static effects continuously granted to each returned battlefield permanent
+ * @param eventCardIdsOnly       when {@code true}, restricts a resolution-time graveyard choice to cards whose
+ *                               ids were recorded by a preceding event on the current stack entry
+ * @param battlefieldEffectGrantDuration duration of the floating effects in
+ *                                      {@link #battlefieldEffectGrants}; defaults to {@link EffectDuration#PERMANENT}
+ * @param targetGroup          positional graveyard-card target group resolved by this effect, or
+ *                             {@code -1} when the effect uses the ordinary target path
  */
 @Builder(toBuilder = true)
 public record ReturnCardFromGraveyardEffect(
@@ -257,6 +268,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
         boolean targetNotPutIntoGraveyardThisCombat,
         PermanentPredicate attachmentTarget,
+        boolean chooseAuraAttachment,
         boolean gainLifeEqualToManaValue,
         boolean loseLifeEqualToManaValue,
         boolean attachToSource,
@@ -308,8 +320,12 @@ public record ReturnCardFromGraveyardEffect(
         DynamicAmount dynamicMaxManaValue,
         boolean unearth,
         boolean exileAtNextUpkeep,
-        List<CardEffect> battlefieldEffectGrants
-) implements CombatDamageAmountAwareEffect {
+        List<CardEffect> battlefieldEffectGrants,
+        boolean eventCardIdsOnly,
+        EffectDuration battlefieldEffectGrantDuration,
+        int targetGroup
+) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect,
+        SacrificedPermanentManaValueAwareEffect {
 
     /**
      * Partial builder class providing default values. Booleans default to {@code false},
@@ -323,6 +339,8 @@ public record ReturnCardFromGraveyardEffect(
         private List<CardSubtype> grantSubtypes = List.of();
         private Set<CounterType> enterWithCounters = Set.of();
         private List<CardEffect> battlefieldEffectGrants = List.of();
+        private EffectDuration battlefieldEffectGrantDuration = EffectDuration.PERMANENT;
+        private int targetGroup = -1;
     }
 
     @Override
@@ -331,12 +349,33 @@ public record ReturnCardFromGraveyardEffect(
         // resolution-time variants pick their card later. The declared scope is source(): it is the
         // one place the own/opponent/all narrowing lives, so the kept validator and every
         // enumeration path read the same value.
-        return targetGraveyard ? TargetSpec.benign(TargetPredicates.graveyardCard(source)) : TargetSpec.NONE;
+        if (!targetGraveyard) {
+            return TargetSpec.NONE;
+        }
+        if (targetGroup >= 0) {
+            return TargetSpec.benign(TargetPredicates.anyOf(
+                    TargetPredicates.graveyardCard(source), TargetPredicates.anyTarget()));
+        }
+        return TargetSpec.benign(TargetPredicates.graveyardCard(source));
     }
 
     @Override
     public DynamicAmount combatDamageAmount() {
         return dynamicMaxManaValue;
+    }
+
+    @Override
+    public List<Integer> targetGroups() {
+        return targetGroup < 0 ? List.of() : List.of(targetGroup);
+    }
+
+    @Override
+    public ReturnCardFromGraveyardEffect boundToSacrificedPermanentManaValue(int manaValue) {
+        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(manaValue - 1);
+        CardPredicate combinedFilter = filter == null
+                ? manaValueFilter
+                : new CardAllOfPredicate(List.of(filter, manaValueFilter));
+        return toBuilder().filter(combinedFilter).build();
     }
 
     @Override

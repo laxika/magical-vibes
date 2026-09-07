@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.b.BadMoon;
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlue;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Feedback.class, BadMoon.class, CircleOfProtectionBlue.class, GrizzlyBears.class})
 class FeedbackTest extends BaseCardTest {
-
-    // ===== Targeting =====
 
     @Test
     @DisplayName("Can enchant an enchantment with Feedback")
@@ -25,7 +25,7 @@ class FeedbackTest extends BaseCardTest {
         Permanent enchantment = addEnchantment(player2);
 
         harness.setHand(player1, List.of(new Feedback()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castEnchantment(player1, 0, enchantment.getId());
 
@@ -36,11 +36,10 @@ class FeedbackTest extends BaseCardTest {
     @DisplayName("Cannot enchant a non-enchantment creature")
     void cannotEnchantCreature() {
         addEnchantment(player2); // a legal target exists so the Aura is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Feedback()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -51,20 +50,21 @@ class FeedbackTest extends BaseCardTest {
     @DisplayName("Resolving Feedback attaches it to the target enchantment")
     void resolvingAttachesToEnchantment() {
         Permanent enchantment = addEnchantment(player2);
+        Feedback feedback = new Feedback();
 
-        harness.setHand(player1, List.of(new Feedback()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.setHand(player1, List.of(feedback));
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castEnchantment(player1, 0, enchantment.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Feedback")
-                        && p.isAttached()
-                        && p.getAttachedTo().equals(enchantment.getId()));
+        Permanent feedbackPermanent = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getId().equals(feedback.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(feedbackPermanent.isAttached()).isTrue();
+        assertThat(feedbackPermanent.getAttachedTo()).isEqualTo(enchantment.getId());
     }
-
-    // ===== Upkeep damage =====
 
     @Test
     @DisplayName("Enchanted enchantment's controller takes 1 damage at their upkeep")
@@ -111,20 +111,31 @@ class FeedbackTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
-    // ===== Helpers =====
+    @Test
+    void damageCanBePrevented() {
+        Permanent enchantment = addEnchantment(player2);
+        harness.addToBattlefield(player2, new CircleOfProtectionBlue());
+        Permanent feedback = attachFeedback(enchantment);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-    private void attachFeedback(Permanent enchantment) {
-        Permanent feedback = new Permanent(new Feedback());
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, feedback.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    private Permanent attachFeedback(Permanent enchantment) {
+        Permanent feedback = harness.addToBattlefieldAndReturn(player1, new Feedback());
         feedback.setAttachedTo(enchantment.getId());
-        gd.playerBattlefields.get(player1.getId()).add(feedback);
+        return feedback;
     }
 
     private Permanent addEnchantment(Player player) {
-        Card card = new Card();
-        card.setName("Test Enchantment");
-        card.setType(CardType.ENCHANTMENT);
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new BadMoon());
     }
 }

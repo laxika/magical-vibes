@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "DRB", collectorNumber = "11")
+@CardRegistration(set = "GPT", collectorNumber = "123")
 public class NivMizzetTheFiremind extends Card {
 
     public NivMizzetTheFiremind() {

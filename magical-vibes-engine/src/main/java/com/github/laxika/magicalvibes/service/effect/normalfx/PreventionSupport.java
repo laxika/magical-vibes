@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,8 +28,22 @@ public class PreventionSupport {
         return validIds;
     }
 
+    public List<UUID> collectAllDamageSourceIds(GameData gameData) {
+        List<UUID> validIds = collectAllBattlefieldPermanentIds(gameData);
+        gameData.stack.stream()
+                .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                        && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
+                .map(entry -> entry.getCard().getId())
+                .forEach(validIds::add);
+        return validIds;
+    }
+
     public void broadcastNoPermanentsForDamageSourceChoice(GameData gameData) {
         String logEntry = "No permanents on the battlefield to choose as a damage source.";
         gameLogService.append(gameData, GameLog.text(logEntry));
+    }
+
+    public void broadcastNoDamageSourcesForChoice(GameData gameData) {
+        gameLogService.append(gameData, GameLog.text("No damage sources to choose from."));
     }
 }

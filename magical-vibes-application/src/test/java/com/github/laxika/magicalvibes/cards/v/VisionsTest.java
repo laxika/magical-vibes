@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(Visions.class)
 class VisionsTest extends BaseCardTest {
 
     @Test
@@ -62,16 +64,21 @@ class VisionsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An empty target library offers no shuffle choice")
-    void emptyTargetLibraryOffersNoChoice() {
+    @DisplayName("An empty target library still offers the shuffle choice")
+    void emptyTargetLibraryStillOffersChoice() {
         harness.setHand(player1, List.of(new Visions()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        PendingInteraction.MayAbilityChoice may =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(may).isNotNull();
+        assertThat(may.playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     @Test

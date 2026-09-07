@@ -12,9 +12,16 @@ import com.github.laxika.magicalvibes.model.CounterType;
  *
  * @param counterType the counter kind to remove; {@link CounterType#ANY} removes one present kind
  * @param thenEffect the effect of the reflexive triggered ability
+ * @param onlyIfLastCounterRemoved whether the reflexive ability is created only when the removed
+ *                                 counter was the last counter of the requested type
  */
-public record RemoveCounterFromSourceThenEffect(CounterType counterType, CardEffect thenEffect)
+public record RemoveCounterFromSourceThenEffect(CounterType counterType, CardEffect thenEffect,
+                                                boolean onlyIfLastCounterRemoved)
         implements CardEffect {
+
+    public RemoveCounterFromSourceThenEffect(CounterType counterType, CardEffect thenEffect) {
+        this(counterType, thenEffect, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

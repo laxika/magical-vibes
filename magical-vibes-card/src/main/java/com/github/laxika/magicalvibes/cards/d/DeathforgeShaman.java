@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -17,7 +19,9 @@ public class DeathforgeShaman extends Card {
 
     public DeathforgeShaman() {
         addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{R}")));
-        target(new PermanentPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(),
+        target(new AnyTargetPredicateTargetFilter(
+                new PermanentIsPlaneswalkerPredicate(),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(

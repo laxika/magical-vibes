@@ -23,6 +23,7 @@ public class HundredTalonKami extends Card {
                         new CardMaxManaValuePredicate(4)
                 )))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

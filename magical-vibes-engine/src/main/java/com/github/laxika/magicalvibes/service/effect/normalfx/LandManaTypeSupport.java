@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -38,12 +38,21 @@ public class LandManaTypeSupport {
     private final GameQueryService gameQueryService;
 
     public Set<ManaColor> manaTypesCouldProduce(GameData gameData, Permanent land) {
-        if (land == null || !land.getCard().hasType(CardType.LAND)) {
+        if (land == null || !gameQueryService.isLand(gameData, land)) {
             return Set.of();
         }
 
-        List<CardEffect> printedTapEffects = land.getCard().getEffects(EffectSlot.ON_TAP);
-        List<ActivatedAbility> abilities = land.getCard().getActivatedAbilities();
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, land);
+        List<CardEffect> printedTapEffects = staticBonus.losesAllAbilities() || land.isLosesAllAbilitiesUntilEndOfTurn()
+                || land.isFaceDown() ? List.of() : land.getCard().getEffects(EffectSlot.ON_TAP);
+        List<ActivatedAbility> abilities = new ArrayList<>();
+        if (!staticBonus.losesAllAbilities() && !land.isLosesAllAbilitiesUntilEndOfTurn() && !land.isFaceDown()) {
+            abilities.addAll(land.getCard().getActivatedAbilities());
+        }
+        abilities.addAll(staticBonus.grantedActivatedAbilities());
+        abilities.addAll(land.getPersistentGrantedActivatedAbilities());
+        abilities.addAll(land.getTemporaryActivatedAbilities());
+        abilities.addAll(land.getUntilNextTurnActivatedAbilities());
         Set<CardSubtype> basicLandTypes = gameQueryService.effectiveBasicLandTypes(gameData, land);
         List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, land);
 
@@ -102,7 +111,11 @@ public class LandManaTypeSupport {
             } else if (effect instanceof AwardHasteGrantingManaEffect mana) {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof AwardManaToChosenPlayerEffect mana) {
-                addIfNonNull(types, mana.color());
+                if (mana.anyColor()) {
+                    types.addAll(ManaColor.COLORS);
+                } else {
+                    addIfNonNull(types, mana.color());
+                }
             } else if (effect instanceof AwardRestrictedManaEffect mana) {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof AwardUncounterableGrantingManaEffect mana) {

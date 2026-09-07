@@ -64,7 +64,7 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificePermanentThen(
-                        controllerId, entry.getCard(), e.thenEffect(), e.reflexive()));
+                        controllerId, entry.getCard(), e.thenEffect(), entry.getSourcePermanentId(), e.reflexive()));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 entry.getCard().getName() + " — Choose " + e.permanentDescription() + " to sacrifice.");
 

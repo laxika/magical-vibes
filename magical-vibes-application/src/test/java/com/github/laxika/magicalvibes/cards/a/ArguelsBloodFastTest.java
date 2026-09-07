@@ -163,6 +163,7 @@ class ArguelsBloodFastTest extends BaseCardTest {
 
         int templeIdx = indexOf(player1, temple);
         harness.activateAbility(player1, templeIdx, 0, null, null);
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         harness.passBothPriorities();
 
         // Gained 4 life (creature toughness)

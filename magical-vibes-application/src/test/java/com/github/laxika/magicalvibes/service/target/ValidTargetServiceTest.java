@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -78,6 +80,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -138,8 +141,8 @@ class ValidTargetServiceTest {
         // Ground Seal gate — default open so graveyard enumeration tests are not emptied by the mock.
         lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
         lenient().when(predicateEvaluationService.matchesCardPredicate(
-                        any(Card.class), any(CardPredicate.class), any(), eq(gameData), any(UUID.class),
-                        any(), any(), any()))
+                        any(Card.class), any(CardPredicate.class), nullable(UUID.class), eq(gameData),
+                        any(UUID.class), nullable(UUID.class), nullable(Integer.class), nullable(Integer.class)))
                 .thenAnswer(invocation -> new PredicateEvaluationService(gameQueryService)
                         .matchesCardPredicate(
                                 invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2),
@@ -468,6 +471,38 @@ class ValidTargetServiceTest {
                     gameData, spell, player1Id, null);
 
             assertThat(response.validPermanentIds()).contains(creature.getId());
+            assertThat(response.validPlayerIds()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("permanent target filter excludes players admitted by an any-target effect")
+        void permanentFilterOverridesEffectPlayerCapability() {
+            Card spell = createCard();
+            spell.target(new PermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(), "Target must be a creature"))
+                    .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of());
+
+            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
+            assertThat(response.validPlayerIds()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("explicit permanent target group excludes players allowed by a bound effect")
+        void explicitPermanentGroupOverridesBoundEffectPlayerCapability() {
+            Card spell = createCard();
+            spell.target(new PermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(), "Targets must be creatures"), 0, 3)
+                    .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)));
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of());
+
+            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
             assertThat(response.validPlayerIds()).isEmpty();
         }
 
@@ -860,6 +895,23 @@ class ValidTargetServiceTest {
         }
 
         @Test
+        @DisplayName("returns player targets when only the ability filter declares targeting")
+        void returnsPlayerTargets_forFilterOnlyTargetingAbility() {
+            Card sourceCard = createCreatureCard();
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new LookAtTopCardsOfTargetLibraryEffect(1, TargetLibraryAction.LOOK_ONLY)),
+                    "Look at the top card of target player's library",
+                    new PlayerPredicateTargetFilter(
+                            new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"));
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0);
+
+            assertThat(response.validPermanentIds()).isEmpty();
+            assertThat(response.validPlayerIds()).containsExactlyInAnyOrder(player1Id, player2Id);
+        }
+
+        @Test
         @DisplayName("'dealt damage by this creature this turn' offers only the players that source damaged")
         void offersOnlySourceDamagedPlayers() {
             Card sourceCard = createCreatureCard();
@@ -1199,9 +1251,6 @@ class ValidTargetServiceTest {
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
-            doThrow(new IllegalStateException("invalid"))
-                    .when(predicateEvaluationService).validateTargetFilter(eq(filter), eq(creature), any(FilterContext.class));
-
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);
 
@@ -1411,6 +1460,30 @@ class ValidTargetServiceTest {
         }
 
         @Test
+        @DisplayName("multi-target ability keeps only creatures sharing a type with the first target")
+        void multiTarget_filtersToSharedCreatureType() {
+            Card sourceCard = createCreatureCard();
+            ActivatedAbility ability = new ActivatedAbility(true, "{4}",
+                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    "Deal 2 damage to two creatures", List.of(), 2, 2)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_CREATURE_TYPES);
+
+            Permanent first = addPermanentToBattlefield(player1Id, createCreatureCard());
+            Permanent shared = addPermanentToBattlefield(player1Id, createCreatureCard());
+            Permanent different = addPermanentToBattlefield(player1Id, createCreatureCard());
+            when(gameQueryService.findPermanentById(gameData, first.getId())).thenReturn(first);
+            when(gameQueryService.findPermanentById(gameData, shared.getId())).thenReturn(shared);
+            when(gameQueryService.findPermanentById(gameData, different.getId())).thenReturn(different);
+            when(gameQueryService.shareCreatureType(gameData, first, shared)).thenReturn(true);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0, List.of(first.getId()));
+
+            assertThat(response.validPermanentIds()).contains(shared.getId()).doesNotContain(different.getId());
+        }
+
+        @Test
         @DisplayName("X-scaled ability caps its max targets at the announced X")
         void xScaledTargets_boundedByAnnouncedX() {
             Card sourceCard = createCreatureCard();
@@ -1534,6 +1607,8 @@ class ValidTargetServiceTest {
         void returnsTrue_forGraveyardTargetingSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
+            gameData.playerGraveyards.put(player1Id, new ArrayList<>());
+            gameData.playerGraveyards.put(player2Id, new ArrayList<>(List.of(createCreatureCard())));
             CardEffect graveyardEffect = new CardEffect() {
                 @Override
                 public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD)); }

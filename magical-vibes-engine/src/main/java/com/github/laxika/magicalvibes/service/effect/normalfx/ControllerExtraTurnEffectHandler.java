@@ -43,9 +43,7 @@ public class ControllerExtraTurnEffectHandler implements NormalEffectHandlerBean
         int count = amountEvaluationService.evaluate(gameData, e.count(),
                 AmountContext.forStackEntry(entry, source));
         for (int i = 0; i < count; i++) {
-            gameData.extraTurns.addFirst(controllerId);
-            gameData.extraTurnSkipsUntap.addFirst(e.skipUntapStep());
-            gameData.extraTurnDamageCantBePrevented.addFirst(e.damageCantBePrevented());
+            gameData.queueExtraTurnFirst(controllerId, e.skipUntapStep(), e.damageCantBePrevented());
         }
 
         String logEntry = playerName + " takes " + count + " extra "

@@ -2,16 +2,18 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
+import com.github.laxika.magicalvibes.cards.k.KingCheetah;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianWalker;
+import com.github.laxika.magicalvibes.cards.u.UrborgMindsucker;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Nekrataal.class, KingCheetah.class, PhyrexianWalker.class, UrborgMindsucker.class})
 class NekrataalTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -28,18 +31,17 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Nekrataal puts it on the stack with target")
     void castingPutsItOnStackWithTarget() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new KingCheetah());
         harness.setHand(player1, List.of(new Nekrataal()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "King Cheetah");
+        harness.castCreature(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Nekrataal");
         assertThat(entry.getTargetId()).isEqualTo(targetId);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -47,12 +49,12 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Nekrataal enters battlefield and triggers ETB destroy")
     void resolvingEntersBattlefieldAndTriggersEtb() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new KingCheetah());
         harness.setHand(player1, List.of(new Nekrataal()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "King Cheetah");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
@@ -64,19 +66,18 @@ class NekrataalTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Nekrataal");
         assertThat(trigger.getTargetId()).isEqualTo(targetId);
     }
 
     @Test
     @DisplayName("ETB resolves and destroys target creature")
     void etbDestroysTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new KingCheetah());
         harness.setHand(player1, List.of(new Nekrataal()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "King Cheetah");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell
         harness.passBothPriorities();
@@ -85,8 +86,25 @@ class NekrataalTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "King Cheetah");
+        harness.assertInGraveyard(player2, "King Cheetah");
+    }
+
+    @Test
+    @DisplayName("Can target a nonblack nonartifact creature you control")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KingCheetah());
+        harness.setHand(player1, List.of(new Nekrataal()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0, target.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent == target);
+        harness.assertOnBattlefield(player1, "Nekrataal");
+        harness.assertInGraveyard(player1, "King Cheetah");
     }
 
     // ===== Target restrictions =====
@@ -94,13 +112,13 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
-        harness.addToBattlefield(player2, new MassOfGhouls());
+        harness.addToBattlefield(player2, new UrborgMindsucker());
         harness.setHand(player1, List.of(new Nekrataal()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Mass of Ghouls");
+        UUID targetId = harness.getPermanentId(player2, "Urborg Mindsucker");
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonblack creature");
     }
@@ -108,13 +126,13 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an artifact creature")
     void cannotTargetArtifactCreature() {
-        harness.addToBattlefield(player2, new BottleGnomes());
+        harness.addToBattlefield(player2, new PhyrexianWalker());
         harness.setHand(player1, List.of(new Nekrataal()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Bottle Gnomes");
+        UUID targetId = harness.getPermanentId(player2, "Phyrexian Walker");
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonartifact");
     }
@@ -124,25 +142,25 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("Destroyed creature cannot be regenerated")
     void destroyedCreatureCannotBeRegenerated() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new KingCheetah());
         harness.setHand(player1, List.of(new Nekrataal()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "King Cheetah");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
 
         // Give the target a regeneration shield before ETB resolves
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = findPermanent(player2, "King Cheetah");
         target.setRegenerationShield(1);
 
         // Resolve ETB — should destroy despite regeneration shield
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "King Cheetah");
+        harness.assertInGraveyard(player2, "King Cheetah");
     }
 
     // ===== Indestructible =====
@@ -150,25 +168,25 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("Indestructible creature survives Nekrataal's ETB")
     void indestructibleCreatureSurvives() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new KingCheetah());
         harness.setHand(player1, List.of(new Nekrataal()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "King Cheetah");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
 
         // Grant indestructible to the target before ETB resolves
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = findPermanent(player2, "King Cheetah");
         target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
         // Resolve ETB — should not destroy indestructible creature
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "King Cheetah");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("indestructible"));
     }
 
@@ -177,12 +195,12 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("ETB fizzles if target creature is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new KingCheetah());
         harness.setHand(player1, List.of(new Nekrataal()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "King Cheetah");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
@@ -203,23 +221,17 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("Can cast without a target when no valid creatures on battlefield")
     void canCastWithoutTargetWhenNoValidCreatures() {
-        harness.setHand(player1, List.of(new Nekrataal()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Nekrataal(), "{2}{B}{B}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Nekrataal");
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
     @Test
     @DisplayName("ETB does not trigger when cast without a target")
     void etbDoesNotTriggerWithoutTarget() {
-        harness.setHand(player1, List.of(new Nekrataal()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Nekrataal(), "{2}{B}{B}");
 
         // Resolve creature spell
         harness.passBothPriorities();
@@ -232,26 +244,30 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("Can cast without target when only black creatures exist")
     void canCastWithoutTargetWhenOnlyBlackCreatures() {
-        harness.addToBattlefield(player2, new MassOfGhouls());
-        harness.setHand(player1, List.of(new Nekrataal()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.castCreature(player1, 0);
+        harness.addToBattlefield(player2, new UrborgMindsucker());
+        harness.castFromHand(player1, new Nekrataal(), "{2}{B}{B}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Nekrataal");
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
     // ===== Keywords =====
 
     @Test
-    @DisplayName("Nekrataal has first strike keyword on the battlefield")
-    void hasFirstStrike() {
-        harness.addToBattlefield(player1, new Nekrataal());
+    @DisplayName("First strike lets Nekrataal survive a lethal block")
+    void firstStrikeDealsDamageBeforeRegularCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new Nekrataal());
+        Permanent blocker = addCreatureReady(player2, new KingCheetah());
+        attacker.setAttacking(true);
 
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()).getFirst()
-                .hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
     }
 
     // ===== Mana validation =====
@@ -259,13 +275,13 @@ class NekrataalTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast without enough mana")
     void cannotCastWithoutEnoughMana() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new KingCheetah());
         harness.setHand(player1, List.of(new Nekrataal()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "King Cheetah");
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

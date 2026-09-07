@@ -195,7 +195,10 @@ public class MulliganService {
                         + (drawn == 1 ? "" : "s") + " with ", ability.sourceCard(), "."));
         log.info("Game {} - {} used Serum Powder to exile {} card(s) and draw {} card(s)",
                 gameData.id, player.getUsername(), cardsToExile.size(), drawn);
-        invalidateForAllPlayers(gameData);
+        if (gameData.status != GameStatus.FINISHED) {
+            invalidateForAllPlayers(gameData);
+            requestMulliganDecision(gameData, player);
+        }
     }
 
     private boolean queueSerumPowderChoice(GameData gameData, Player player) {
@@ -239,9 +242,6 @@ public class MulliganService {
 
         int newMulliganCount = currentMulliganCount + 1;
         gameData.mulliganCounts.put(player.getId(), newMulliganCount);
-        UUID decisionId = UUID.randomUUID();
-        gameData.playerMulliganDecisionIds.put(player.getId(), decisionId);
-
         mutationCoordinator.emit(gameData,
                 new GameEventFact.MulliganResolved(player.getId(), false, newMulliganCount),
                 GameEventAudience.allPlayers());
@@ -251,12 +251,7 @@ public class MulliganService {
 
         log.info("Game {} - {} mulliganed (count: {})", gameData.id, player.getUsername(), newMulliganCount);
         invalidateForAllPlayers(gameData);
-        mutationCoordinator.emit(gameData,
-                new GameEventFact.DecisionRequested(
-                        decisionId,
-                        player.getId(),
-                        GameEventFact.DecisionKind.MULLIGAN),
-                GameEventAudience.player(player.getId()));
+        requestMulliganDecision(gameData, player);
     }
 
     private void ensureNoPendingMulliganAction(GameData gameData) {
@@ -269,6 +264,17 @@ public class MulliganService {
         if (gameData.playerKeptHand.size() >= 2 && gameData.playerNeedsToBottom.isEmpty()) {
             startGame(gameData);
         }
+    }
+
+    private void requestMulliganDecision(GameData gameData, Player player) {
+        UUID decisionId = UUID.randomUUID();
+        gameData.playerMulliganDecisionIds.put(player.getId(), decisionId);
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.DecisionRequested(
+                        decisionId,
+                        player.getId(),
+                        GameEventFact.DecisionKind.MULLIGAN),
+                GameEventAudience.player(player.getId()));
     }
 
     private void startGame(GameData gameData) {

@@ -9,18 +9,25 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
+
+    public RemoveTimeCounterFromExiledCardEffectHandler(GameLogService gameLogService,
+            @Lazy TriggerCollectionService triggerCollectionService) {
+        this.gameLogService = gameLogService;
+        this.triggerCollectionService = triggerCollectionService;
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,10 +53,14 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
             gameData.exiledCardTimeCounters.put(cardId, remaining);
             gameLogService.append(gameData,
                     GameLog.cardThen(exiledEntry.card(), " has a time counter removed (" + remaining + " remaining)."));
+            triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
+                    gameData, exiledEntry.card(), exiledEntry.ownerId(), remaining);
             return;
         }
 
         gameData.exiledCardTimeCounters.remove(cardId);
+        triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
+                gameData, exiledEntry.card(), exiledEntry.ownerId(), 0);
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 exiledEntry.card(),
                 exiledEntry.ownerId(),

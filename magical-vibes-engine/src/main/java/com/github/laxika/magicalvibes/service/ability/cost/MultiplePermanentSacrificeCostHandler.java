@@ -28,12 +28,13 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentSacrificeAction sacrificeAction;
     private final UUID sourcePermanentId;
+    private final UUID excludedSourcePermanentId;
 
     /**
      * Constructor for {@link SacrificeMultiplePermanentsCost} — sacrifice N permanents matching a filter.
      */
     public MultiplePermanentSacrificeCostHandler(SacrificeMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService, PermanentSacrificeAction sacrificeAction) {
-        this(cost, cost.filter(), cost.count(), null, predicateEvaluationService, sacrificeAction, null);
+        this(cost, cost.filter(), cost.count(), null, predicateEvaluationService, sacrificeAction, null, null);
     }
 
     /**
@@ -42,12 +43,12 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
     public MultiplePermanentSacrificeCostHandler(SacrificePermanentCost cost, PredicateEvaluationService predicateEvaluationService,
                                                   PermanentSacrificeAction sacrificeAction, UUID sourcePermanentId) {
         this(cost, cost.filter(), 1, cost.description(), predicateEvaluationService, sacrificeAction,
-                cost.excludeSource() ? sourcePermanentId : null);
+                sourcePermanentId, cost.excludeSource() ? sourcePermanentId : null);
     }
 
     private MultiplePermanentSacrificeCostHandler(CardEffect cost, PermanentPredicate filter, int count, String description,
                                                    PredicateEvaluationService predicateEvaluationService, PermanentSacrificeAction sacrificeAction,
-                                                   UUID sourcePermanentId) {
+                                                   UUID sourcePermanentId, UUID excludedSourcePermanentId) {
         this.cost = cost;
         this.filter = filter;
         this.count = count;
@@ -55,6 +56,7 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
         this.predicateEvaluationService = predicateEvaluationService;
         this.sacrificeAction = sacrificeAction;
         this.sourcePermanentId = sourcePermanentId;
+        this.excludedSourcePermanentId = excludedSourcePermanentId;
     }
 
     @Override public CardEffect costEffect() { return cost; }
@@ -77,7 +79,7 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> matchesFilter(gameData, p))
-                .filter(p -> sourcePermanentId == null || !p.getId().equals(sourcePermanentId))
+                .filter(p -> excludedSourcePermanentId == null || !p.getId().equals(excludedSourcePermanentId))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -90,7 +92,7 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
                     : "Must sacrifice a matching permanent";
             throw new IllegalStateException(message);
         }
-        if (sourcePermanentId != null && chosen.getId().equals(sourcePermanentId)) {
+        if (excludedSourcePermanentId != null && chosen.getId().equals(excludedSourcePermanentId)) {
             throw new IllegalStateException("Cannot sacrifice this permanent to its own ability");
         }
         sacrificeAction.sacrifice(gameData, player, chosen);

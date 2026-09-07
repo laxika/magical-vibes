@@ -9,10 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUnt
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,7 @@ public class MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandle
     private final GameLogService gameLogService;
     private final PermanentCopierService permanentCopierService;
     private final PlayerInputService playerInputService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,7 +50,7 @@ public class MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandle
             return;
         }
 
-        List<UUID> creatureIds = creatureIds(gameData);
+        List<UUID> creatureIds = creatureIds(gameData, copyEffect.chosenCreaturePredicate());
         if (creatureIds.isEmpty()) {
             return;
         }
@@ -65,8 +68,9 @@ public class MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandle
     public void completeChoice(GameData gameData, UUID chosenPermanentId,
                                PermanentChoiceContext.PolymorphousRushCreatureChoice context) {
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
-        if (chosen == null || !gameQueryService.isCreature(gameData, chosen)) {
-            throw new IllegalStateException("Chosen permanent is not a creature on the battlefield");
+        if (chosen == null || !predicateEvaluationService.matchesPermanentPredicate(
+                gameData, chosen, context.effect().chosenCreaturePredicate())) {
+            throw new IllegalStateException("Chosen permanent does not match the required creature filter");
         }
 
         StackEntry entry = gameData.pendingEffectResolutionEntry;
@@ -81,7 +85,8 @@ public class MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandle
                                      MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect effect,
                                      UUID chosenPermanentId) {
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
-        if (chosen == null || !gameQueryService.isCreature(gameData, chosen)) {
+        if (chosen == null || !predicateEvaluationService.matchesPermanentPredicate(
+                gameData, chosen, effect.chosenCreaturePredicate())) {
             return;
         }
 
@@ -112,10 +117,10 @@ public class MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandle
                 entry.getCard().getName(), chosen.getCard().getName(), targets.size());
     }
 
-    private List<UUID> creatureIds(GameData gameData) {
+    private List<UUID> creatureIds(GameData gameData, PermanentPredicate predicate) {
         List<UUID> ids = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (gameQueryService.isCreature(gameData, permanent)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate)) {
                 ids.add(permanent.getId());
             }
         });

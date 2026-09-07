@@ -7,9 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Answers the Goblin Recruiter choice: the AI puts all matching cards on top of its library.
- */
+/** Answers a search-to-top choice by selecting the maximum legal number of matching cards. */
 @Slf4j
 class SearchLibraryToTopChoiceAiStrategy
         implements AiInteractionStrategy<PendingInteraction.SearchLibraryToTopChoice> {
@@ -25,8 +23,10 @@ class SearchLibraryToTopChoiceAiStrategy
             return;
         }
 
-        List<UUID> chosen = interaction.validCardIds();
-        log.info("AI: Putting {} cards on top for Goblin Recruiter in game {}", chosen.size(), ctx.gameId());
+        List<UUID> chosen = interaction.validCardIds().stream()
+                .limit(interaction.maximumSelectionCount())
+                .toList();
+        log.info("AI: Putting {} cards on top of the library in game {}", chosen.size(), ctx.gameId());
         ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 }

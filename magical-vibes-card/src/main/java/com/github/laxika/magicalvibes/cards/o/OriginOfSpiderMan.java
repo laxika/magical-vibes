@@ -23,6 +23,7 @@ import java.util.Set;
  * Origin of Spider-Man — {1}{W} Enchantment — Saga.
  */
 @CardRegistration(set = "SPM", collectorNumber = "9")
+@CardRegistration(set = "SPM", collectorNumber = "218")
 public class OriginOfSpiderMan extends Card {
 
     public OriginOfSpiderMan() {

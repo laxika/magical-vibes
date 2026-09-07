@@ -50,16 +50,13 @@ public class PlayerWithMostLifeGainsControlOfSourceCreatureEffectHandler impleme
         }
 
         // Intervening-if: a single player must have strictly more life than each other player.
-        int highestLife = gameData.orderedPlayerIds.stream()
-                .mapToInt(gameData::getLife)
-                .max()
-                .orElse(0);
+        if (!PlayerWithMostLifeGainsControlOfSourceCreatureEffect.hasUniqueLifeLeader(gameData)) {
+            return;
+        }
+        int highestLife = gameData.orderedPlayerIds.stream().mapToInt(gameData::getLife).max().orElse(0);
         List<UUID> leaders = gameData.orderedPlayerIds.stream()
                 .filter(playerId -> gameData.getLife(playerId) == highestLife)
                 .toList();
-        if (leaders.size() != 1) {
-            return;
-        }
 
         creatureControlService.applyControlEffect(gameData, leaders.get(0), source,
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),

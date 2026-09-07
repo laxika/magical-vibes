@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "203")
+@CardRegistration(set = "SNC", collectorNumber = "110")
 public class InvoluntaryEmployment extends Card {
 
     public InvoluntaryEmployment() {

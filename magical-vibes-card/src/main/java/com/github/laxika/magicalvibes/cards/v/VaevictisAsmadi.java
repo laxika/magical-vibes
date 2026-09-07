@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "89")
+@CardRegistration(set = "LEG", collectorNumber = "269")
 public class VaevictisAsmadi extends Card {
 
     public VaevictisAsmadi() {

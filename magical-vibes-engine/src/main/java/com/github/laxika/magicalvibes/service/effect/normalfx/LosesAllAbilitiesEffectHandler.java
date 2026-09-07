@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +46,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             int count = 0;
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
+                    if (matchesFilter(gameData, entry, e, permanent)
+                            && gameQueryService.isCreature(gameData, permanent)) {
                         applyEffect(gameData, entry, e, permanent);
                         count++;
                     }
@@ -59,7 +63,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             int count = 0;
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
+                    if (matchesFilter(gameData, entry, e, permanent)
+                            && gameQueryService.isCreature(gameData, permanent)) {
                         applyEffect(gameData, entry, e, permanent);
                         count++;
                     }
@@ -74,11 +79,12 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
                 || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
             final int[] count = {0};
             gameData.forEachPermanent((playerId, permanent) -> {
-                if (gameQueryService.isCreature(gameData, permanent)
+                if (matchesFilter(gameData, entry, e, permanent)
+                        && gameQueryService.isCreature(gameData, permanent)
                         && (e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF
                         || entry.getSourcePermanentId() == null
-                        || !permanent.getId().equals(entry.getSourcePermanentId()))) {
-                    applyEffect(gameData, entry, e, permanent);
+                        || !permanent.getId().equals(entry.getSourcePermanentId()))
+                        && applyEffect(gameData, entry, e, permanent)) {
                     count[0]++;
                 }
             });
@@ -87,31 +93,51 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        UUID targetId = switch (e.scope()) {
-            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-            case TARGET -> entry.getTargetId();
-            default -> null;
-        };
-        if (targetId == null) {
+        List<UUID> targetIds;
+        if (e.scope() == GrantScope.SELF) {
+            UUID sourceId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId() : entry.getTargetId();
+            targetIds = sourceId == null ? List.of() : List.of(sourceId);
+        } else if (e.scope() == GrantScope.TARGET) {
+            targetIds = entry.targetsForEffect(effect);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
+        } else {
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
-            return;
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
+
+            if (!applyEffect(gameData, entry, e, target)) {
+                continue;
+            }
+
+            String durationText = switch (e.duration()) {
+                case CONTINUOUS, PERMANENT -> "indefinitely";
+                case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+                case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS,
+                        WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, WHILE_ATTACHED ->
+                        "for as long as its source remains on the battlefield";
+                default -> "until end of turn";
+            };
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " loses all abilities " + durationText + "."));
+            log.info("Game {} - {} loses all abilities {}", gameData.id, target.getCard().getName(), durationText);
         }
-
-        applyEffect(gameData, entry, e, target);
-
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all abilities until end of turn."));
-        log.info("Game {} - {} loses all abilities until end of turn", gameData.id, target.getCard().getName());
     }
 
-    private void applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
+    private boolean applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
         if (e.duration() == EffectDuration.PERMANENT) {
             target.setLosesAllAbilitiesPermanently(true);
-        } else {
+        } else if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
             target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        } else if (e.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
+            target.addLosesAllAbilitiesUntilNextTurnController(entry.getControllerId());
         }
 
         // CR 613 layer engine: a one-shot "loses all abilities until end of turn" (Merfolk
@@ -119,12 +145,37 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
         // keyword grant (Wings of Velis Vel) survives it. The legacy flag is still set for
         // direct Permanent.hasKeyword/flag readers; the layered pass treats the flag as a
         // seed-time removal and then replays this effect at its real timestamp.
-        target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        boolean sourceLinked = e.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                || e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+                || e.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                || e.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED
+                || e.duration() == EffectDuration.WHILE_ATTACHED;
+        UUID sourcePermanentId = sourceLinked ? entry.getSourcePermanentId() : null;
+        if (sourceLinked) {
+            if (sourcePermanentId == null
+                    || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
+                return false;
+            }
+        }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), null, entry.getControllerId(), e,
+                entry.getCard().getName(), sourcePermanentId, entry.getControllerId(), e,
                 target.getId(), null, null,
-                e.duration() == EffectDuration.PERMANENT
-                        ? EffectDuration.PERMANENT : EffectDuration.UNTIL_END_OF_TURN,
+                e.duration() == EffectDuration.CONTINUOUS
+                        ? EffectDuration.PERMANENT : e.duration(),
                 0));
+        return true;
+    }
+
+    private boolean matchesFilter(GameData gameData, StackEntry entry,
+                                  LosesAllAbilitiesEffect effect, Permanent permanent) {
+        return effect.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                permanent,
+                effect.filter(),
+                FilterContext.of(gameData)
+                        .withSourceCardId(entry.getCard().getId())
+                        .withSourceControllerId(entry.getControllerId())
+                        .withSourcePermanentId(entry.getSourcePermanentId())
+                        .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                        .withXValue(entry.getXValue()));
     }
 }

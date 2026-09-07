@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AladdinsRing.class, GrizzlyBears.class})
 class AladdinsRingTest extends BaseCardTest {
 
     @Test
@@ -26,9 +27,20 @@ class AladdinsRingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void deals4DamageToItsController() {
+        harness.setLife(player1, 20);
+        addReadyRing(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
     }
 
     @Test
@@ -54,7 +66,6 @@ class AladdinsRingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(ring.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
     }
@@ -82,10 +93,6 @@ class AladdinsRingTest extends BaseCardTest {
     }
 
     private Permanent addReadyRing(Player player) {
-        AladdinsRing card = new AladdinsRing();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new AladdinsRing());
     }
 }

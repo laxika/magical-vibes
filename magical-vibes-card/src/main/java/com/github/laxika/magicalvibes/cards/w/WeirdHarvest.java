@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMaySearchLibraryFor
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "282")
+@CardRegistration(set = "ONS", collectorNumber = "299")
 public class WeirdHarvest extends Card {
 
     public WeirdHarvest() {

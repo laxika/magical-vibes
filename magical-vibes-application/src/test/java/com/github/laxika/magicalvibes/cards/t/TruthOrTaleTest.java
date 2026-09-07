@@ -72,6 +72,32 @@ class TruthOrTaleTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondShock, secondGrowth, giantGrowth, shock);
     }
 
+    @Test
+    @DisplayName("choosing an empty pile skips the card choice and bottoms every revealed card")
+    void choosingEmptyPileBottomsEveryRevealedCard() {
+        Card shock = new Shock();
+        Card giantGrowth = new GiantGrowth();
+        Card bears = new GrizzlyBears();
+        Card secondShock = new Shock();
+        Card secondGrowth = new GiantGrowth();
+        harness.setLibrary(player1, List.of(shock, giantGrowth, bears, secondShock, secondGrowth));
+
+        cast();
+        harness.handleMultipleCardsChosen(player1, List.of(
+                shock.getId(), giantGrowth.getId(), bears.getId(), secondShock.getId(), secondGrowth.getId()));
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(4, 3, 2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(secondGrowth, secondShock, bears, giantGrowth, shock);
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new TruthOrTale()));
         harness.addMana(player1, ManaColor.BLUE, 1);

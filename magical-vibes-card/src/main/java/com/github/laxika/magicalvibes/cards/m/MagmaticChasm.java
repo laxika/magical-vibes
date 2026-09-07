@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "172")
+@CardRegistration(set = "DTK", collectorNumber = "148")
 public class MagmaticChasm extends Card {
 
     public MagmaticChasm() {

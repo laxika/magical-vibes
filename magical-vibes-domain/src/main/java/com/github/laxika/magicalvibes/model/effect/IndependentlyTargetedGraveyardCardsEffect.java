@@ -12,4 +12,14 @@ public interface IndependentlyTargetedGraveyardCardsEffect extends CardEffect {
 
     /** Human-readable target descriptions corresponding to {@link #targetFilters()}. */
     List<String> targetDescriptions();
+
+    /** The minimum number of cards required for each target group. */
+    default List<Integer> minimumTargetCounts() {
+        return java.util.Collections.nCopies(targetFilters().size(), 0);
+    }
+
+    /** Whether cards chosen for different target groups must be different cards. */
+    default boolean requiresDistinctTargets() {
+        return false;
+    }
 }

@@ -42,6 +42,7 @@ class AuraFinesseTest extends BaseCardTest {
         Permanent host = addCreature(player2);
         Permanent opponentAura = addAuraAttachedTo(player2, host);
         Permanent destination = addCreature(player1);
+        addAuraAttachedTo(player1, destination);
 
         harness.setHand(player1, List.of(new AuraFinesse()));
         harness.addMana(player1, ManaColor.BLUE, 1);

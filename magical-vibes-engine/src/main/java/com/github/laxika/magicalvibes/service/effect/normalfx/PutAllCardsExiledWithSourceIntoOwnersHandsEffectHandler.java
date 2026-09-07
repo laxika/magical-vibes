@@ -28,6 +28,8 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        PutAllCardsExiledWithSourceIntoOwnersHandsEffect returnEffect =
+                (PutAllCardsExiledWithSourceIntoOwnersHandsEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null && entry.getSourcePermanentSnapshot() != null) {
             sourcePermanentId = entry.getSourcePermanentSnapshot().getId();
@@ -38,7 +40,9 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
 
         UUID sourceId = sourcePermanentId;
         List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
-                .filter(exiled -> sourceId.equals(exiled.sourcePermanentId()))
+                .filter(exiled -> sourceId.equals(exiled.sourcePermanentId())
+                        && (!returnEffect.onlyControllerOwned()
+                        || entry.getControllerId().equals(exiled.ownerId())))
                 .toList();
 
         for (ExiledCardEntry exiled : toReturn) {

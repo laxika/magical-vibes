@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Pacifism.class, FountainOfYouth.class, GrizzlyBears.class})
 class PacifismTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -24,11 +25,10 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Pacifism puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Pacifism pacifism = new Pacifism();
 
-        harness.setHand(player1, List.of(new Pacifism()));
+        harness.setHand(player1, List.of(pacifism));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
@@ -36,17 +36,16 @@ class PacifismTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Pacifism");
+        assertThat(entry.getCard()).isSameAs(pacifism);
     }
 
     @Test
     @DisplayName("Resolving Pacifism attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Pacifism pacifism = new Pacifism();
 
-        harness.setHand(player1, List.of(new Pacifism()));
+        harness.setHand(player1, List.of(pacifism));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
@@ -54,7 +53,7 @@ class PacifismTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pacifism")
+                .anyMatch(p -> p.getCard() == pacifism
                         && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
@@ -62,9 +61,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast Pacifism without enough mana")
     void cannotCastWithoutEnoughMana() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -79,23 +76,11 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Creature enchanted with Pacifism cannot be declared as attacker")
     void enchantedCreatureCannotAttack() {
-        // Player1 has a creature
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        // Attach Pacifism directly to the creature
-        Permanent pacifismPerm = new Permanent(new Pacifism());
-        pacifismPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pacifismPerm);
+        attachPacifism(player2, bearsPerm);
 
-        // Try to attack with the pacified creature
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -103,35 +88,19 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Pacified creature is excluded from attackable creature indices")
     void pacifiedCreatureNotInAttackableIndices() {
-        // Player1 has two creatures: one pacified, one free
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent freeBears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent freeBears = new Permanent(new GrizzlyBears());
-        freeBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(freeBears);
+        attachPacifism(player2, bearsPerm);
 
-        // Attach Pacifism directly to the first creature
-        Permanent pacifismPerm = new Permanent(new Pacifism());
-        pacifismPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pacifismPerm);
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player1.getId()))
+                .containsExactly(1);
 
-        // Only the second creature can attack
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        // Pacified creature (index 0) cannot attack, so index 0 in attackable list maps to freeBears (index 1)
-        // Attempting to attack with the pacified creature should fail
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
 
-        // Attacking with index 1 (the free creature) should succeed
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(player1, List.of(1));
 
         assertThat(bearsPerm.isAttacking()).isFalse();
     }
@@ -141,26 +110,14 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Creature enchanted with Pacifism cannot be declared as blocker")
     void enchantedCreatureCannotBlock() {
-        // Player2 has a creature with Pacifism on it
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        // Attach Pacifism directly to the creature
-        Permanent pacifismPerm = new Permanent(new Pacifism());
-        pacifismPerm.setAttachedTo(blockerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(pacifismPerm);
+        attachPacifism(player1, blockerPerm);
 
-        // Player1 has an attacking creature (index 1, after Pacifism at index 0)
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
@@ -170,32 +127,19 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Pacified creature is excluded from blockable creature indices")
     void pacifiedCreatureNotInBlockableIndices() {
-        // Player2 has two creatures: one pacified, one free
-        Permanent pacifiedPerm = new Permanent(new GrizzlyBears());
-        pacifiedPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(pacifiedPerm);
+        Permanent pacifiedPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent freePerm = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent freePerm = new Permanent(new GrizzlyBears());
-        freePerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(freePerm);
+        attachPacifism(player1, pacifiedPerm);
 
-        // Attach Pacifism directly to the first creature
-        Permanent pacifismPerm = new Permanent(new Pacifism());
-        pacifismPerm.setAttachedTo(pacifiedPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(pacifismPerm);
-
-        // Player1 has an attacking creature (added after Pacifism, so it's at index 1)
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        assertThat(harness.getCombatBlockService().getBlockableCreatureIndices(gd, player2.getId()))
+                .containsExactly(1);
 
-        // Only the free creature (index 1) can block; attacker is at index 1 on player1's battlefield
+        prepareDeclareBlockers();
+
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 1)));
 
         assertThat(freePerm.isBlocking()).isTrue();
@@ -207,71 +151,38 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can attack again after Pacifism is removed")
     void creatureCanAttackAfterPacifismRemoved() {
-        // Player1 has a creature
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        // Attach Pacifism to it
-        Permanent pacifismPerm = new Permanent(new Pacifism());
-        pacifismPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pacifismPerm);
+        Permanent pacifismPerm = attachPacifism(player2, bearsPerm);
 
-        // Verify creature can't attack
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
 
-        // Remove Pacifism from battlefield
         gd.playerBattlefields.get(player2.getId()).remove(pacifismPerm);
 
-        // Now creature can attack — declareAttackers should not throw
-        harness.beginAttackerDeclarationInput();
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gs.declareAttackers(gd, player1, List.of(0));
-
-        // The game auto-advances through combat, but the call succeeding proves the creature could attack
+        declareAttackers(player1, List.of(0));
     }
 
     @Test
     @DisplayName("Creature can block again after Pacifism is removed")
     void creatureCanBlockAfterPacifismRemoved() {
-        // Player2 has a creature with Pacifism
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent pacifismPerm = new Permanent(new Pacifism());
-        pacifismPerm.setAttachedTo(blockerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(pacifismPerm);
+        Permanent pacifismPerm = attachPacifism(player1, blockerPerm);
 
-        // Player1 has an attacker
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        // Creature can't block while pacified
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
 
-        // Remove Pacifism
         gd.playerBattlefields.get(player1.getId()).remove(pacifismPerm);
 
-        // Now creature can block
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();
@@ -282,18 +193,17 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Pacifism can be cast on own creature")
     void canCastOnOwnCreature() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Pacifism pacifism = new Pacifism();
 
-        harness.setHand(player1, List.of(new Pacifism()));
+        harness.setHand(player1, List.of(pacifism));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Pacifism")
+                .anyMatch(p -> p.getCard() == pacifism
                         && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
@@ -303,11 +213,10 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Pacifism fizzles to graveyard if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Pacifism pacifism = new Pacifism();
 
-        harness.setHand(player1, List.of(new Pacifism()));
+        harness.setHand(player1, List.of(pacifism));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
@@ -317,9 +226,9 @@ class PacifismTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Pacifism should be in graveyard, not on battlefield
-        harness.assertInGraveyard(player1, "Pacifism");
-        harness.assertNotOnBattlefield(player1, "Pacifism");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(pacifism);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() == pacifism);
     }
 
     // ===== Targeting restriction =====
@@ -327,8 +236,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature with Pacifism")
     void canTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -340,12 +248,9 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Pacifism")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -357,23 +262,40 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Player with only pacified creatures can declare no attackers")
     void canDeclareNoAttackersWithOnlyPacifiedCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent pacifismPerm = new Permanent(new Pacifism());
-        pacifismPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pacifismPerm);
+        attachPacifism(player2, bearsPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        // Declaring no attackers should succeed
-        gs.declareAttackers(gd, player1, List.of());
+        declareAttackers(player1, List.of());
 
         assertThat(bearsPerm.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Pacifism is put into its owner's graveyard when its enchanted creature leaves")
+    void goesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Pacifism pacifism = new Pacifism();
+        harness.setHand(player1, List.of(pacifism));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, bearsPerm));
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(pacifism);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() == pacifism);
+    }
+
+    private Permanent attachPacifism(com.github.laxika.magicalvibes.model.Player controller,
+                                     Permanent creature) {
+        Permanent pacifism = harness.addToBattlefieldAndReturn(controller, new Pacifism());
+        pacifism.setAttachedTo(creature.getId());
+        return pacifism;
     }
 }
 

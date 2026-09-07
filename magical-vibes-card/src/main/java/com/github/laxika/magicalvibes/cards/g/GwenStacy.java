@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredica
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "78")
+@CardRegistration(set = "SPM", collectorNumber = "202")
+@CardRegistration(set = "SPM", collectorNumber = "209")
 public class GwenStacy extends Card {
 
     public GwenStacy() {

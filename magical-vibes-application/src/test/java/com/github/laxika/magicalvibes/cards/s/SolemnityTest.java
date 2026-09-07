@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ class SolemnityTest extends BaseCardTest {
 
     @Test
     @DisplayName("A 0/0 that would enter with +1/+1 counters dies under Solemnity — the counters are never placed")
+    @CardUsed({Solemnity.class, Fertilid.class})
     void creatureEntersWithoutCounters() {
         harness.addToBattlefield(player1, new Solemnity());
         harness.setHand(player1, List.of(new Fertilid()));
@@ -34,6 +36,7 @@ class SolemnityTest extends BaseCardTest {
 
     @Test
     @DisplayName("A charge counter can't be put on an artifact while Solemnity is on the battlefield")
+    @CardUsed({WhiteManaBattery.class, Solemnity.class})
     void chargeCounterNotPlaced() {
         Permanent battery = readyBattery(player1);
         harness.addToBattlefield(player1, new Solemnity());
@@ -49,6 +52,7 @@ class SolemnityTest extends BaseCardTest {
 
     @Test
     @DisplayName("Without Solemnity the same activation places the charge counter")
+    @CardUsed(WhiteManaBattery.class)
     void chargeCounterPlacedWithoutSolemnity() {
         Permanent battery = readyBattery(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

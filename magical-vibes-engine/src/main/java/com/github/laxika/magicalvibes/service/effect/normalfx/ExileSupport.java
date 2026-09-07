@@ -154,6 +154,15 @@ public class ExileSupport {
         gameData.exilePlayPermissions.put(cardId, ownerId);
     }
 
+    /** Grants an owner permission to cast a card from exile for a fixed generic alternative cost. */
+    public void grantCastWhileExiledForGenericCost(GameData gameData, UUID cardId, UUID ownerId,
+                                                   int genericCost) {
+        grantPlayWhileExiled(gameData, cardId, ownerId);
+        gameData.exilePlayWithoutPayingManaCost.add(cardId);
+        gameData.exilePlayCostModifiers.put(cardId,
+                new ExilePlayCostModifier(ownerId, null, genericCost));
+    }
+
     /**
      * Grants an owner permission to play a card from exile and records a cost increase for players
      * who are opponents of {@code sourceControllerId}.
@@ -177,6 +186,19 @@ public class ExileSupport {
                 ? currentEndStepHasBegun ? 2 : 0
                 : 1);
         gameData.exilePlayPermissions.put(cardId, ownerId);
+        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
+    }
+
+    /** Grants {@code permissionPlayerId} permission until {@code endStepPlayerId}'s next end step. */
+    public void grantPlayUntilNextEndStepOfPlayer(GameData gameData, UUID cardId,
+                                                   UUID permissionPlayerId, UUID endStepPlayerId) {
+        boolean endStepPlayerIsActive = endStepPlayerId.equals(gameData.activePlayerId);
+        boolean currentEndStepHasBegun = gameData.currentStep != null
+                && gameData.currentStep.ordinal() >= TurnStep.END_STEP.ordinal();
+        int expireTurn = gameData.turnNumber + (endStepPlayerIsActive
+                ? currentEndStepHasBegun ? 2 : 0
+                : 1);
+        gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
     }
 

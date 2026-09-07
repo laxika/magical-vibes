@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.b.BoneMask;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.w.WildElephant;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AmberPrison.class, BoneMask.class, Forest.class, Pacifism.class, WildElephant.class})
 class AmberPrisonTest extends BaseCardTest {
 
     // ===== Activated ability: tap target artifact / creature / land =====
@@ -106,6 +108,22 @@ class AmberPrisonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Already-tapped target remains locked while Amber Prison is tapped")
+    void alreadyTappedTargetIsLocked() {
+        Permanent amberPrison = addReadyAmberPrison(player1);
+        Permanent target = addReadyCreature(player2);
+        target.tap();
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurn(player1);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Locked permanent untaps after Amber Prison is untapped")
     void lockedPermanentUntapsWhenSourceUntaps() {
         Permanent amberPrison = addReadyAmberPrison(player1);
@@ -118,9 +136,30 @@ class AmberPrisonTest extends BaseCardTest {
         // player1's turn — choose to UNTAP Amber Prison
         advanceToNextTurnWithMayChoice(player2, true);
         assertThat(amberPrison.isTapped()).isFalse();
+        assertThat(target.isTapped()).isTrue();
 
         // player2's turn — their creature should now untap (lock cleared)
         advanceToNextTurn(player1);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untap lock does not resume if Amber Prison is tapped again")
+    void lockDoesNotResumeAfterSourceRetaps() {
+        Permanent amberPrison = addReadyAmberPrison(player1);
+        Permanent target = addReadyCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurnWithMayChoice(player2, true);
+        assertThat(amberPrison.isTapped()).isFalse();
+        assertThat(target.isTapped()).isTrue();
+
+        amberPrison.tap();
+        advanceToNextTurn(player1);
+
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -137,6 +176,24 @@ class AmberPrisonTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
 
         gd.playerBattlefields.get(player1.getId()).remove(amberPrison);
+
+        advanceToNextTurn(player1);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untapping Amber Prison before resolution prevents the untap lock")
+    void untappingSourceBeforeResolutionPreventsLock() {
+        Permanent amberPrison = addReadyAmberPrison(player1);
+        Permanent target = addReadyCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        amberPrison.untap();
+        amberPrison.tap();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
 
         advanceToNextTurn(player1);
         assertThat(target.isTapped()).isFalse();
@@ -192,29 +249,23 @@ class AmberPrisonTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyAmberPrison(Player player) {
-        return addReady(player, new Permanent(new AmberPrison()));
+        return harness.addToBattlefieldAndReturn(player, new AmberPrison());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        return addReady(player, new Permanent(new AngelsFeather()));
+        return harness.addToBattlefieldAndReturn(player, new BoneMask());
     }
 
     private Permanent addReadyCreature(Player player) {
-        return addReady(player, new Permanent(new GrizzlyBears()));
+        return addCreatureReady(player, new WildElephant());
     }
 
     private Permanent addReadyLand(Player player) {
-        return addReady(player, new Permanent(new Forest()));
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        return addReady(player, new Permanent(new Pacifism()));
-    }
-
-    private Permanent addReady(Player player, Permanent perm) {
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Pacifism());
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {

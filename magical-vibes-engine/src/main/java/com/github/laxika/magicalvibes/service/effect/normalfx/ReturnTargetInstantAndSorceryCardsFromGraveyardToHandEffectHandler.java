@@ -22,7 +22,8 @@ public class ReturnTargetInstantAndSorceryCardsFromGraveyardToHandEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry, entry.targetsForEffect(effect),
-                (graveyard, card) -> gameData.addCardToHand(entry.getControllerId(), card),
+                (graveyard, card) -> graveyardReturnSupport.addCardToHandFromGraveyard(
+                        gameData, entry.getControllerId(), entry.getControllerId(), card),
                 " returns ", " from graveyard to hand.");
     }
 }

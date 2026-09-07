@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "127")
+@CardRegistration(set = "SPM", collectorNumber = "271")
 public class CosmicSpiderMan extends Card {
 
     public CosmicSpiderMan() {

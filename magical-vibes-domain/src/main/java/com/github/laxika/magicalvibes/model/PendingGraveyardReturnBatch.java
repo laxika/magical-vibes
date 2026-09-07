@@ -7,7 +7,13 @@ import java.util.UUID;
 
 /** Cards selected by a controller before they enter the battlefield simultaneously. */
 public record PendingGraveyardReturnBatch(UUID controllerId, List<Card> cards,
-                                          Map<UUID, UUID> graveyardOwnerByCardId) {
+                                          Map<UUID, UUID> graveyardOwnerByCardId,
+                                          boolean underOwnersControl) {
+
+    public PendingGraveyardReturnBatch(UUID controllerId, List<Card> cards,
+                                       Map<UUID, UUID> graveyardOwnerByCardId) {
+        this(controllerId, cards, graveyardOwnerByCardId, false);
+    }
 
     public PendingGraveyardReturnBatch {
         cards = List.copyOf(cards);
@@ -19,6 +25,6 @@ public record PendingGraveyardReturnBatch(UUID controllerId, List<Card> cards,
         updatedCards.add(card);
         Map<UUID, UUID> updatedOwners = new java.util.HashMap<>(graveyardOwnerByCardId);
         updatedOwners.put(card.getId(), graveyardOwnerId);
-        return new PendingGraveyardReturnBatch(controllerId, updatedCards, updatedOwners);
+        return new PendingGraveyardReturnBatch(controllerId, updatedCards, updatedOwners, underOwnersControl);
     }
 }

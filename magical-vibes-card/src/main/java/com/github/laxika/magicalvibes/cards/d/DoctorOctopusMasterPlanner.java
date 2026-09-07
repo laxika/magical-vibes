@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "128")
+@CardRegistration(set = "SPM", collectorNumber = "228")
 public class DoctorOctopusMasterPlanner extends Card {
 
     public DoctorOctopusMasterPlanner() {

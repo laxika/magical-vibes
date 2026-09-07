@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 
 /**
  * Controller draws {@code amount} cards, one at a time (so draw-replacement effects and
  * "whenever you draw" triggers see each individual draw).
  */
-public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed) implements ManaAbilityCardDrawingEffect {
+public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed)
+        implements ManaAbilityCardDrawingEffect, CombatDamageTriggerContextEffect {
 
     public DrawCardEffect(DynamicAmount amount) {
         this(amount, false);
@@ -37,6 +39,11 @@ public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed) imp
     @Override
     public boolean onlyTriggersOnSacrifice() {
         return onlyIfSacrificed;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return amount instanceof SourceToughness ? TriggerContext.SOURCE_SELF : null;
     }
 
     @Override

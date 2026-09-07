@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "241")
+@CardRegistration(set = "DTK", collectorNumber = "247")
 public class VialOfDragonfire extends Card {
 
     public VialOfDragonfire() {

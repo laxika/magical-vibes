@@ -5,21 +5,32 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({PrimordialOoze.class})
 class PrimordialOozeTest extends BaseCardTest {
 
     private void advanceToUpkeepAndResolveTrigger(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP, trigger fires onto the stack
-        harness.passBothPriorities(); // resolve trigger → counter placed, then may-pay prompt
+        advanceToUpkeep(activePlayer);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Must attack each combat if able")
+    void mustAttackEachCombatIfAble() {
+        addCreatureReady(player1, new PrimordialOoze());
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
     }
 
     @Test
@@ -46,7 +57,7 @@ class PrimordialOozeTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeepAndResolveTrigger(player1);
-        harness.addMana(player1, ManaColor.RED, 1); // X = 1 counter
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent ooze = findPermanent(player1, "Primordial Ooze");
@@ -63,11 +74,26 @@ class PrimordialOozeTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeepAndResolveTrigger(player1);
-        harness.handleMayAbilityChosen(player1, true); // no mana in pool
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent ooze = findPermanent(player1, "Primordial Ooze");
         assertThat(ooze.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("The penalty uses the number of counters after the new counter is added")
+    void penaltyUsesCountersAfterPlacement() {
+        Permanent ooze = harness.addToBattlefieldAndReturn(player1, new PrimordialOoze());
+        ooze.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeepAndResolveTrigger(player1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(ooze.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
     }
 
     @Test

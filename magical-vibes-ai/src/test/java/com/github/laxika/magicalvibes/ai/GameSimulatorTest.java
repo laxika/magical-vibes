@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LivingInferno;
+import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -186,6 +188,27 @@ class GameSimulatorTest {
     }
 
     @Test
+    @DisplayName("Open the Way is enumerated with X capped at the number of players")
+    void enumeratesOpenTheWayWithPlayerCountCap() {
+        OpenTheWay openTheWay = new OpenTheWay();
+        harness.setHand(player1, List.of(openTheWay));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        SimulationAction.PlayCard cast = actionsForHandCard(0).getFirst();
+
+        assertThat(cast.xValue()).isEqualTo(2);
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(), cast);
+
+        assertThat(copy.stack).hasSize(1);
+        assertThat(copy.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("X-discard spell is capped by the cards available to discard")
     void capsXDiscardSpellByAvailableDiscardCards() {
         AbandonHope abandonHope = new AbandonHope();
@@ -265,6 +288,21 @@ class GameSimulatorTest {
 
         assertThat(actions).extracting(SimulationAction.ActivateAbility::targetId)
                 .contains(feaster.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("Amount-distribution abilities are not enumerated without assignments")
+    void amountDistributionAbilityIsNotEnumerated() {
+        Permanent inferno = harness.addToBattlefieldAndReturn(player1, new LivingInferno());
+        inferno.setSummoningSick(false);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        assertThat(simulator.getLegalActions(gd, player1.getId()))
+                .noneMatch(action -> action instanceof SimulationAction.ActivateAbility activation
+                        && activation.permanentId().equals(inferno.getId()));
     }
 
     @Test

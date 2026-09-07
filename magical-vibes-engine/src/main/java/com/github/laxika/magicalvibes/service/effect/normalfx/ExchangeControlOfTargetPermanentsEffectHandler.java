@@ -103,6 +103,13 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(exchangeControllerId);
         if (exchange.triggeringPermanentIsFirstTarget()) {
             filterContext = filterContext.withSourcePermanentSnapshot(ownTarget);
+        } else {
+            Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                    ? entry.getSourcePermanentSnapshot()
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (sourcePermanent != null) {
+                filterContext = filterContext.withSourcePermanentSnapshot(sourcePermanent);
+            }
         }
         boolean controllersDiffer = !ownController.equals(opponentController);
         boolean ownershipSplitOk = !exchange.requireFirstTargetControlledByController()
@@ -120,10 +127,13 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                 && predicateEvaluationService.matchesPermanentPredicate(opponentTarget, exchange.targetPredicate(), filterContext)
                 && (!exchange.requireOpponentManaValueNotGreater()
                         || opponentTarget.getCard().getManaValue() <= ownTarget.getCard().getManaValue())
+                && (!exchange.requireOpponentPowerNotGreater()
+                        || gameQueryService.getEffectivePower(gameData, opponentTarget)
+                        <= gameQueryService.getEffectivePower(gameData, ownTarget))
                 && (!exchange.requireSharedArtifactOrCreatureType()
-                        || gameQueryService.sharesArtifactOrCreatureType(ownTarget, opponentTarget))
+                        || gameQueryService.sharesArtifactOrCreatureType(gameData, ownTarget, opponentTarget))
                 && (!exchange.requireSharedCardType()
-                        || gameQueryService.sharesCardType(ownTarget, opponentTarget));
+                        || gameQueryService.sharesCardType(gameData, ownTarget, opponentTarget));
         if (!stillLegal) {
             logFizzle(gameData, entry, exchange, ownTarget);
             return;

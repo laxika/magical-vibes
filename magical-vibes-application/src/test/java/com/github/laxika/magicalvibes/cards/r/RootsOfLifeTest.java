@@ -1,19 +1,18 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import java.util.List;
-
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RootsOfLife.class, Island.class, Swamp.class})
 class RootsOfLifeTest extends BaseCardTest {
 
     // "As this enchantment enters, choose Island or Swamp.
@@ -37,6 +36,16 @@ class RootsOfLifeTest extends BaseCardTest {
         harness.handleListChoice(player1, "SWAMP");
 
         assertThat(findPermanent(player1, "Roots of Life").getChosenSubtype()).isEqualTo(CardSubtype.SWAMP);
+    }
+
+    @Test
+    @DisplayName("Choosing Island stores it on the permanent")
+    void choosingIslandStoresIt() {
+        castRootsOfLife();
+
+        harness.handleListChoice(player1, "ISLAND");
+
+        assertThat(findPermanent(player1, "Roots of Life").getChosenSubtype()).isEqualTo(CardSubtype.ISLAND);
     }
 
     @Test
@@ -85,11 +94,7 @@ class RootsOfLifeTest extends BaseCardTest {
     }
 
     private void castRootsOfLife() {
-        harness.setHand(player1, List.of(new RootsOfLife()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new RootsOfLife(), "{1}{G}{G}");
         harness.passBothPriorities();
     }
 

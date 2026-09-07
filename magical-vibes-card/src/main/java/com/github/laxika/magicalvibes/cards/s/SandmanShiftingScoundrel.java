@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "112")
+@CardRegistration(set = "SPM", collectorNumber = "266")
 public class SandmanShiftingScoundrel extends Card {
 
     public SandmanShiftingScoundrel() {

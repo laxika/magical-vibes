@@ -61,12 +61,13 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
             
             gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " (").card(entry.getCard()).text("). " + playerName + "'s life total can't change.").build());
         } else {
+            int lifeLoss = count * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
             int currentLife = gameData.getLife(controllerId);
-            gameData.playerLifeTotals.put(controllerId, currentLife - count);
+            gameData.playerLifeTotals.put(controllerId, currentLife - lifeLoss);
 
             
-            gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " and loses " + count + " life (").card(entry.getCard()).text(").").build());
-            log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, count, entry.getCard().getName());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " and loses " + lifeLoss + " life (").card(entry.getCard()).text(").").build());
+            log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, lifeLoss, entry.getCard().getName());
         }
     
     }

@@ -52,7 +52,14 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
             return;
         }
 
-        UUID controllerId = entry.getControllerId();
+        ExileTopCardsMayPlayUntilNextTurnEffect exileEffect =
+                (ExileTopCardsMayPlayUntilNextTurnEffect) effect;
+        UUID controllerId = exileEffect.useTriggeringPermanentController()
+                ? entry.getTriggeringPermanentControllerId()
+                : entry.getControllerId();
+        if (controllerId == null) {
+            return;
+        }
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {

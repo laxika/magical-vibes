@@ -1,25 +1,40 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FyndhornBow.class, BalduvianBears.class, Mountain.class})
 class FyndhornBowTest extends BaseCardTest {
 
     @Test
     @DisplayName("{3}, {T} grants first strike to target creature")
     void grantsFirstStrike() {
         harness.addToBattlefield(player1, new FyndhornBow());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("{3}, {T} can target an opponent's creature")
+    void grantsFirstStrikeToOpponentsCreature() {
+        harness.addToBattlefield(player1, new FyndhornBow());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
@@ -32,15 +47,14 @@ class FyndhornBowTest extends BaseCardTest {
     @DisplayName("First strike wears off at end of turn")
     void firstStrikeWearsOff() {
         harness.addToBattlefield(player1, new FyndhornBow());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -49,7 +63,7 @@ class FyndhornBowTest extends BaseCardTest {
     @DisplayName("Targeting a non-creature permanent is rejected")
     void nonCreatureRejected() {
         harness.addToBattlefield(player1, new FyndhornBow());
-        Permanent mountain = addCreatureReady(player1, new Mountain());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, mountain.getId()))

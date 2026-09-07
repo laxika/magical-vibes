@@ -66,7 +66,7 @@ public class ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffectHandler imp
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
-        gameData.playerHands.get(ownerId).add(deadCard);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, deadCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         gameLogService.append(gameData, GameLog.builder()

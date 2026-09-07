@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "56")
+@CardRegistration(set = "SPM", collectorNumber = "256")
+@CardRegistration(set = "SPM", collectorNumber = "286")
 public class GwenomRemorseless extends Card {
 
     public GwenomRemorseless() {

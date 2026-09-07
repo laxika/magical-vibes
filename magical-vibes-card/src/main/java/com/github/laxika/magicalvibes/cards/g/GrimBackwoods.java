@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -23,8 +22,7 @@ public class GrimBackwoods extends Card {
                 true,
                 "{2}{B}{G}",
                 List.of(new SacrificeCreatureCost(), new DrawCardEffect(1)),
-                "{2}{B}{G}, {T}, Sacrifice a creature: Draw a card.",
-                TargetFilters.creatureYouControl()
+                "{2}{B}{G}, {T}, Sacrifice a creature: Draw a card."
         ));
     }
 }

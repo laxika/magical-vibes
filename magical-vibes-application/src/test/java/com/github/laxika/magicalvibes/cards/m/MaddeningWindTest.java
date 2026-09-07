@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PaleBears;
+import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,17 +17,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MaddeningWind.class, PaleBears.class, ZuranOrb.class})
 class MaddeningWindTest extends BaseCardTest {
 
     private Permanent attachToOpponentCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-
-        harness.setHand(player1, List.of(new MaddeningWind()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castEnchantment(player1, 0, creature.getId());
-        harness.passBothPriorities();
-
-        return creature;
+        return attachToCreature(player2);
     }
 
     @Test
@@ -38,7 +34,7 @@ class MaddeningWindTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        harness.assertLife(player2, lifeBefore - 2);
     }
 
     @Test
@@ -52,7 +48,26 @@ class MaddeningWindTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false); // decline cumulative upkeep
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Both upkeep abilities trigger when the Aura controller controls the enchanted creature")
+    void bothUpkeepAbilitiesTriggerForSameController() {
+        attachToCreature(player1);
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore - 2);
+
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Maddening Wind");
     }
 
     @Test
@@ -73,6 +88,31 @@ class MaddeningWindTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep costs one green mana per age counter")
+    void cumulativeUpkeepCostsOneManaPerAgeCounter() {
+        attachToOpponentCreature();
+        Permanent aura = findPermanent(player1, "Maddening Wind");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(aura.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        int manaBeforePayment = gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN))
+                .isEqualTo(manaBeforePayment);
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Maddening Wind")
     void decliningCumulativeUpkeepSacrificesAura() {
         attachToOpponentCreature();
@@ -89,14 +129,25 @@ class MaddeningWindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a non-creature permanent")
     void cannotEnchantNonCreature() {
-        addCreatureReady(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        UUID artifactId = harness.getPermanentId(player2, "Fountain of Youth");
+        addCreatureReady(player2, new PaleBears());
+        harness.addToBattlefield(player2, new ZuranOrb());
+        UUID artifactId = harness.getPermanentId(player2, "Zuran Orb");
 
         harness.setHand(player1, List.of(new MaddeningWind()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifactId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private Permanent attachToCreature(Player creatureController) {
+        Permanent creature = addCreatureReady(creatureController, new PaleBears());
+
+        harness.setHand(player1, List.of(new MaddeningWind()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        return creature;
     }
 }

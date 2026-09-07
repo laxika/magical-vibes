@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "4ED", collectorNumber = "116")
 @CardRegistration(set = "ITP", collectorNumber = "15")
 @CardRegistration(set = "RQS", collectorNumber = "14")
+@CardRegistration(set = "LEG", collectorNumber = "86")
 public class ZephyrFalcon extends Card {
 }

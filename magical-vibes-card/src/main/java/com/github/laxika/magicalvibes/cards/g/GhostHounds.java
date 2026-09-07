@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMatchesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
@@ -20,6 +21,6 @@ public class GhostHounds extends Card {
         addEffect(EffectSlot.ON_BLOCK, new BoostSelfWhenCombatOpponentMatchesEffect(
                 white, 0, 0, Set.of(Keyword.FIRST_STRIKE)));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BoostSelfWhenCombatOpponentMatchesEffect(
-                white, 0, 0, Set.of(Keyword.FIRST_STRIKE)));
+                white, 0, 0, Set.of(Keyword.FIRST_STRIKE)), TriggerMode.PER_BLOCKER);
     }
 }

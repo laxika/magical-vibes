@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "81")
+@CardRegistration(set = "SPM", collectorNumber = "261")
 public class JJonahJameson extends Card {
 
     public JJonahJameson() {

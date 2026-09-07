@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import java.util.UUID;
+import java.util.EnumSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -53,7 +55,18 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         }
 
         String originalName = sourcePermanent.getCard().getName();
+        BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect =
+                (BecomeCopyOfTargetCreatureUntilEndOfTurnEffect) effect;
         permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
+        if (copyEffect.nameOverride() != null) {
+            sourcePermanent.getCard().setName(copyEffect.nameOverride());
+        }
+        if (!copyEffect.additionalSupertypesOverride().isEmpty()) {
+            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            supertypes.addAll(sourcePermanent.getCard().getSupertypes());
+            supertypes.addAll(copyEffect.additionalSupertypesOverride());
+            sourcePermanent.getCard().setSupertypes(supertypes);
+        }
         sourcePermanent.setCopyUntilEndOfTurn(true);
         // CR 613.2a: a temporary copy is a layer-1 continuous effect with a duration. The card
         // swap above stores the copiable values; the floating effect carries the CR 613.7

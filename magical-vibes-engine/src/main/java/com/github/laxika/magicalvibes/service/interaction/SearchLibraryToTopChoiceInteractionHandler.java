@@ -70,6 +70,9 @@ public class SearchLibraryToTopChoiceInteractionHandler
                 throw new IllegalStateException("Duplicate card ID: " + id);
             }
         }
+        if (cardIds.size() > interaction.maxCount()) {
+            throw new IllegalStateException("Too many cards chosen");
+        }
 
         UUID controllerId = interaction.playerId();
         String controllerName = gameData.playerIdToName.get(controllerId);

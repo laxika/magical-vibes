@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawLookAtTopReplacementEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +41,8 @@ public class RegisterNextDrawLookAtTopReplacementEffectHandler implements Normal
             return;
         }
 
-        gameData.pendingNextDrawLookAtTop.put(controllerId, x);
+        gameData.pendingNextDrawLookAtTop.computeIfAbsent(controllerId,
+                ignored -> Collections.synchronizedList(new ArrayList<>())).add(x);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         

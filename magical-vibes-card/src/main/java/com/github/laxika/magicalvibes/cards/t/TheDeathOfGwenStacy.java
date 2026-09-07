@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "54")
+@CardRegistration(set = "SPM", collectorNumber = "223")
 public class TheDeathOfGwenStacy extends Card {
 
     public TheDeathOfGwenStacy() {

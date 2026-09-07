@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CHR", collectorNumber = "26")
+@CardRegistration(set = "LEG", collectorNumber = "80")
 public class Teleport extends Card {
 
     public Teleport() {

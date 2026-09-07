@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "M15", collectorNumber = "179")
 @CardRegistration(set = "KLD", collectorNumber = "158")
 @CardRegistration(set = "RIX", collectorNumber = "133")
+@CardRegistration(set = "FRF", collectorNumber = "133")
 public class HuntTheWeak extends Card {
 
     public HuntTheWeak() {

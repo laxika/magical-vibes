@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "35")
+@CardRegistration(set = "SPM", collectorNumber = "252")
 public class LadyOctopusInspiredInventor extends Card {
 
     public LadyOctopusInspiredInventor() {

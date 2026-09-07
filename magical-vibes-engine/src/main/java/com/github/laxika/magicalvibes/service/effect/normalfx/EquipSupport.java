@@ -59,9 +59,14 @@ public class EquipSupport {
     }
 
     public boolean canAttachEquipment(GameData gameData, Permanent equipment, Permanent host) {
+        return canAttachEquipment(gameData, equipment, host, false);
+    }
+
+    public boolean canAttachEquipment(GameData gameData, Permanent equipment, Permanent host,
+                                      boolean permitsNonCreatureTarget) {
         if (!GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)
                 || gameQueryService.isCreature(gameData, equipment)
-                || !gameQueryService.isCreature(gameData, host)
+                || (!permitsNonCreatureTarget && !gameQueryService.isCreature(gameData, host))
                 || gameQueryService.cantBeEquipped(gameData, host)
                 || gameQueryService.hasProtectionFromSource(gameData, host, equipment)) {
             return false;
@@ -72,16 +77,22 @@ public class EquipSupport {
                 || predicateEvaluationService.matchesPermanentPredicate(gameData, host, attachRestriction);
     }
 
-    public UUID attachEquipment(GameData gameData, Permanent equipment, Permanent host) {
+    public boolean attachEquipment(GameData gameData, Permanent equipment, Permanent host) {
+        if (!canAttachEquipment(gameData, equipment, host)) {
+            return false;
+        }
+
         UUID oldAttachedTo = equipment.getAttachedTo();
         if (host.getId().equals(oldAttachedTo)) {
-            return oldAttachedTo;
+            return true;
         }
         gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(host.getId());
         equipment.setTimestamp(gameData.nextTimestamp());
-        triggerCollectionService.checkEquipmentAttachedTriggers(gameData, equipment, oldAttachedTo);
-        return oldAttachedTo;
+        applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, host.getId());
+        notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
+        return true;
     }
 
     public void applySacrificeOnUnattachIfNeeded(GameData gameData, Permanent equipment,

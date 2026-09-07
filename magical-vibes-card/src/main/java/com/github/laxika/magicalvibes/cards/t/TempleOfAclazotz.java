@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -28,8 +27,7 @@ public class TempleOfAclazotz extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(new SacrificeCreatureCost(false, false, true), new GainLifeEffect(new XValue())),
-                "{T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.",
-                TargetFilters.creatureYouControl()
+                "{T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness."
         ));
     }
 }

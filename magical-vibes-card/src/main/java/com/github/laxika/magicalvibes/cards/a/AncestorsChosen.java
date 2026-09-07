@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "1")
+@CardRegistration(set = "JUD", collectorNumber = "1")
 public class AncestorsChosen extends Card {
 
     public AncestorsChosen() {

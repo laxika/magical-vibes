@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "159")
+@CardRegistration(set = "SPM", collectorNumber = "203")
 public class WebWarriors extends Card {
 
     public WebWarriors() {

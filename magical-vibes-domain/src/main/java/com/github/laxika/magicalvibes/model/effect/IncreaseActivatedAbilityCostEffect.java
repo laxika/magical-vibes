@@ -8,19 +8,29 @@ import java.util.UUID;
 /**
  * Increases the activation cost of activated abilities of permanents matching {@code predicate}
  * by {@code amount} generic mana (static). The two-argument constructor is symmetric and taxes
- * every player's matching permanent; the optional flags support opponent-only and non-mana-only
- * taxes such as Tithe Taker.
+ * every player's matching permanent; the optional flags support opponent-only, non-mana-only,
+ * and loyalty-ability-only taxes such as Tithe Taker and Eidolon of Obstruction.
  */
 public record IncreaseActivatedAbilityCostEffect(PermanentPredicate predicate, int amount,
-                                                 boolean opponentsOnly, boolean nonManaOnly)
+                                                 boolean opponentsOnly, boolean nonManaOnly,
+                                                 boolean loyaltyAbilitiesOnly)
         implements ActivatedAbilityCostIncreasingEffect {
 
     public IncreaseActivatedAbilityCostEffect(PermanentPredicate predicate, int amount) {
-        this(predicate, amount, false, false);
+        this(predicate, amount, false, false, false);
+    }
+
+    public IncreaseActivatedAbilityCostEffect(PermanentPredicate predicate, int amount,
+                                              boolean opponentsOnly, boolean nonManaOnly) {
+        this(predicate, amount, opponentsOnly, nonManaOnly, false);
     }
 
     public static IncreaseActivatedAbilityCostEffect opponentNonMana(PermanentPredicate predicate, int amount) {
-        return new IncreaseActivatedAbilityCostEffect(predicate, amount, true, true);
+        return new IncreaseActivatedAbilityCostEffect(predicate, amount, true, true, false);
+    }
+
+    public static IncreaseActivatedAbilityCostEffect opponentLoyalty(PermanentPredicate predicate, int amount) {
+        return new IncreaseActivatedAbilityCostEffect(predicate, amount, true, false, true);
     }
 
     @Override
@@ -38,6 +48,7 @@ public record IncreaseActivatedAbilityCostEffect(PermanentPredicate predicate, i
                               UUID activatingPlayerId, UUID sourceControllerId) {
         return (!opponentsOnly || (activatingPlayerId != null && sourceControllerId != null
                 && !activatingPlayerId.equals(sourceControllerId)))
-                && (!nonManaOnly || !manaAbility);
+                && (!nonManaOnly || !manaAbility)
+                && (!loyaltyAbilitiesOnly || (ability != null && ability.getLoyaltyCost() != null));
     }
 }

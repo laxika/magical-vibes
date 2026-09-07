@@ -114,7 +114,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
                 entry.getCard().getName(), amount, counterName, count);
 
         for (Permanent p : plusOneTargets) {
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p, entry.getControllerId());
         }
         for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, placement.getKey(), placement.getValue());

@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "152")
+@CardRegistration(set = "MKM", collectorNumber = "187")
+@CardRegistration(set = "MKM", collectorNumber = "412")
 public class AssassinsTrophy extends Card {
 
     public AssassinsTrophy() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "1")
+@CardRegistration(set = "FRF", collectorNumber = "1")
 public class UginTheSpiritDragon extends Card {
 
     public UginTheSpiritDragon() {

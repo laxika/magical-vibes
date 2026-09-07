@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ManaReflection.class, Forest.class})
 class ManaReflectionTest extends BaseCardTest {
 
     @Test
@@ -46,8 +48,8 @@ class ManaReflectionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent's Mana Reflection does not double your mana")
-    void onlyControllersManaDoubled() {
+    @DisplayName("Mana Reflection does not double an opponent's mana")
+    void manaReflectionOnlyAffectsItsController() {
         addForest(player1);
         addManaReflection(player2);
 

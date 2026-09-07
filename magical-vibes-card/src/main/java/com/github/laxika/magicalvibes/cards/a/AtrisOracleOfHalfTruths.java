@@ -1,0 +1,22 @@
+package com.github.laxika.magicalvibes.cards.a;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+
+@CardRegistration(set = "THB", collectorNumber = "209")
+public class AtrisOracleOfHalfTruths extends Card {
+
+    public AtrisOracleOfHalfTruths() {
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent."
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RevealTopCardsAndSeparateEffect(
+                3, CardPileDisposition.HAND_WITH_FACE_DOWN_PILE, false, true, true));
+    }
+}

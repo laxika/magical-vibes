@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "TSB", collectorNumber = "40")
+@CardRegistration(set = "LEG", collectorNumber = "94")
 public class Darkness extends Card {
 
     public Darkness() {

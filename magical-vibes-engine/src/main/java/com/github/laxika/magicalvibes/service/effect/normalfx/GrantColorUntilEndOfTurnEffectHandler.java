@@ -34,6 +34,22 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantColorUntilEndOfTurnEffect) effect;
+        if (e.scope() == GrantScope.TARGETS) {
+            List<UUID> targetIds = entry.targetsForEffect(e);
+            int count = 0;
+            for (UUID targetId : targetIds) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target != null) {
+                    applyEffect(gameData, entry, e, target);
+                    count++;
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" makes " + count + " target creature(s) " + colorName(e)
+                            + " until end of turn.").build());
+            return;
+        }
+
         if (e.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
             UUID targetPlayerId = entry.getTargetId();
             if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
@@ -59,6 +75,25 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
             int count = 0;
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
+                    if (gameQueryService.isCreature(gameData, permanent)) {
+                        applyEffect(gameData, entry, e, permanent);
+                        count++;
+                    }
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" makes " + count + " creature(s) " + colorName(e) + " until end of turn.").build());
+            return;
+        }
+
+        if (e.scope() == GrantScope.ALL_CREATURES || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+            int count = 0;
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (e.scope() == GrantScope.ALL_CREATURES
+                            && permanent.getId().equals(entry.getSourcePermanentId())) {
+                        continue;
+                    }
                     if (gameQueryService.isCreature(gameData, permanent)) {
                         applyEffect(gameData, entry, e, permanent);
                         count++;
