@@ -668,8 +668,8 @@ public class AnimationSupport {
     }
 
     /**
-     * TARGET scope, WHILE_SOURCE_REMAINS_TAPPED duration — target artifact becomes a 4/4 creature
-     * for as long as the source permanent remains tapped (The Blackstaff of Waterdeep).
+     * Animates the target with floating type, subtype, color, keyword, and base P/T effects
+     * for as long as the source remains tapped, provided it has not untapped since activation.
      */
     public void animateWhileSourceRemainsTapped(GameData gameData, StackEntry entry,
                                                 AnimatePermanentsEffect effect) {
@@ -688,22 +688,7 @@ public class AnimationSupport {
             return;
         }
 
-        AmountContext ctx = AmountContext.forStackEntry(entry, target);
-        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
-        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
-
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), sourcePermanentId, entry.getControllerId(), effect,
-                target.getId(), null, null, EffectDuration.WHILE_SOURCE_REMAINS_TAPPED, 0));
-        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness,
-                EffectDuration.WHILE_SOURCE_REMAINS_TAPPED);
-
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                " becomes a " + power + "/" + toughness
-                        + " artifact creature for as long as " + entry.getCard().getName()
-                        + " remains tapped."));
-        log.info("Game {} - {} becomes a {}/{} creature while {} remains tapped",
-                gameData.id, target.getCard().getName(), power, toughness, entry.getCard().getName());
+        animateOneWithFloatingDuration(gameData, entry, effect, target.getId());
     }
 
     /**

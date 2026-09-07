@@ -5548,13 +5548,10 @@ public class SpellCastingService {
             }
         } else {
             List<Card> hand = gameData.playerHands.get(player.getId());
-            int selectedIndex = selection.beholdHandCardIndex();
-            int effectiveIndex = selectedIndex;
-            Card removed = hand.remove(effectiveIndex);
-            if (!removed.getId().equals(beheldCard.getId())) {
+            if (!hand.remove(beheldCard)) {
                 throw new IllegalStateException("Beheld hand card changed before payment");
             }
-            exileService.exileCard(gameData, ownerId, removed);
+            exileService.exileCard(gameData, ownerId, beheldCard);
         }
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " exiles ")
@@ -8016,7 +8013,13 @@ public class SpellCastingService {
         // Find the card in exile — check player's own exile first, then all exile zones
         // (cards exiled by AllowCastFromCardsExiledWithSourceEffect may belong to other players)
         ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
-        boolean fromOutsideGame = exiledEntry == null;
+        boolean fromOutsideGame = exiledEntry == null
+                && (gameData.outsideGamePlayPermissions.contains(exileCardId)
+                || gameData.playerSideboards.getOrDefault(playerId, List.of()).stream()
+                        .anyMatch(sideboardCard -> sideboardCard.getId().equals(exileCardId)));
+        if (exiledEntry == null && !fromOutsideGame) {
+            throw new IllegalStateException("Card not found in exile");
+        }
         Zone sourceZone = fromOutsideGame ? Zone.OUTSIDE_GAME : Zone.EXILE;
         Card card;
         if (fromOutsideGame) {

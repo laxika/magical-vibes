@@ -95,6 +95,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -1527,9 +1528,31 @@ class SpellCastingServiceTest {
             verify(turnProgressionService).resolveAutoPass(gd);
             // Land-play special action from exile fires land-play triggers, not spell-cast ones
             verify(triggerCollectionService).checkControllerPlaysLandTriggers(
-                    eq(gd), eq(player1Id), any(), eq(true));
+                    eq(gd), eq(player1Id), eq(land), eq(Zone.EXILE), isNull());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("Outside-game permission still requires the card to exist in the sideboard")
+        void rejectsMissingSideboardCardWithOutsideGamePermission() {
+            UUID missingCardId = UUID.randomUUID();
+            gd.outsideGamePlayPermissions.add(missingCardId);
+
+            assertThatThrownBy(() -> svc.playCardFromExile(gd, player1, missingCardId, 0, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Card not found outside the game");
+        }
+
+        @Test
+        @DisplayName("A sideboard card without permission cannot be played")
+        void rejectsSideboardCardWithoutPermission() {
+            Card card = createCreature("Sideboard Bear", "{1}{G}");
+            gd.playerSideboards.put(player1Id, List.of(card));
+
+            assertThatThrownBy(() -> svc.playCardFromExile(gd, player1, card.getId(), 0, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("No permission to play this card from outside the game");
         }
 
         @Test
@@ -1551,7 +1574,7 @@ class SpellCastingServiceTest {
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(
-                    eq(gd), eq(creature), eq(player1Id), eq(Zone.EXILE));
+                    eq(gd), eq(creature), eq(player1Id), eq(Zone.EXILE), isNull());
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
         }
