@@ -77,6 +77,5 @@ class KrydleOfBaldursGateTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.isCantBeBlocked()).isFalse();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 }

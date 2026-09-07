@@ -55,7 +55,7 @@ class RogueClassTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         Card exiledCard = new GrizzlyBears();
-        harness.setLibrary(player2, List.of(exiledCard));
+        harness.setLibrary(player2, List.of(exiledCard, new GrizzlyBears(), new GrizzlyBears()));
 
         resolveCombatAndTrigger();
 

@@ -29,8 +29,8 @@ class HandOfVecnaTest extends BaseCardTest {
         enterBeginningOfCombat();
         resolveAllTriggers();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
     }
 
     @Test

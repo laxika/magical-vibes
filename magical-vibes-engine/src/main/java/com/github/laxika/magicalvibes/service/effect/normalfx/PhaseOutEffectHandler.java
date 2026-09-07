@@ -38,26 +38,29 @@ public class PhaseOutEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PhaseOutEffect e = (PhaseOutEffect) effect;
 
-        if (e.subject() == PhaseOutSubject.TARGET) {
-            List<UUID> targetIds = entry.targetsForEffect(e);
-            if (targetIds.isEmpty() && entry.getTargetId() != null) {
-                targetIds = List.of(entry.getTargetId());
-            }
+        List<UUID> targetIds = e.subject() == PhaseOutSubject.TARGET
+                ? entry.targetsForEffect(effect)
+                : List.of();
+        if (e.subject() == PhaseOutSubject.TARGET && targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
 
-            List<Permanent> targets = new ArrayList<>();
-            for (UUID targetId : targetIds) {
-                Permanent target = findPermanent(gameData, targetId);
-                if (target != null) {
-                    targets.add(target);
-                }
+        if (e.subject() == PhaseOutSubject.TARGET) {
+            List<Permanent> subjects = targetIds.stream()
+                    .map(id -> findPermanent(gameData, id))
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            if (!subjects.isEmpty()) {
+                phasingService.phaseOut(gameData, subjects);
             }
-            phasingService.phaseOut(gameData, targets);
             return;
         }
 
-        Permanent subject = e.subject() == PhaseOutSubject.SOURCE
-                ? findPermanent(gameData, entry.getSourcePermanentId())
-                : findAttached(gameData, entry);
+        Permanent subject = switch (e.subject()) {
+            case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
+            case TARGET -> null;
+            case ATTACHED -> findAttached(gameData, entry);
+        };
         if (subject != null) {
             phasingService.phaseOut(gameData, List.of(subject));
         }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReanimateEnchantedCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -31,6 +32,7 @@ public class DanceOfTheDead extends Card {
                 .targetGraveyard(true)
                 .enterTapped(true)
                 .build());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReanimateEnchantedCreatureCardEffect(true));
         // "Enchanted creature gets +1/+1 and doesn't untap during its controller's untap step."
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());

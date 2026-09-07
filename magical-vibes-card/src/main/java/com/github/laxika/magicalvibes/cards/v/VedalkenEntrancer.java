@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "76")
+@CardRegistration(set = "RAV", collectorNumber = "74")
 public class VedalkenEntrancer extends Card {
 
     public VedalkenEntrancer() {

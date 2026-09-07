@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Wiitigo.class, BalduvianBears.class})
 class WiitigoTest extends BaseCardTest {
 
     @Test
@@ -43,10 +45,21 @@ class WiitigoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Wiitigo's upkeep ability triggers only during its controller's upkeep")
+    void upkeepDoesNotTriggerOnOpponentUpkeep() {
+        Permanent wiitigo = addWiitigo(player1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(wiitigo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
     @DisplayName("Upkeep adds a +1/+1 counter after Wiitigo blocked")
     void upkeepAddsCounterAfterBlocking() {
         Permanent wiitigo = addWiitigo(player2);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -63,7 +76,7 @@ class WiitigoTest extends BaseCardTest {
     void upkeepAddsCounterAfterBeingBlocked() {
         Permanent wiitigo = addWiitigo(player1);
         wiitigo.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new BalduvianBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -78,7 +91,7 @@ class WiitigoTest extends BaseCardTest {
     @DisplayName("The block window is consumed, so a later upkeep with no block removes a counter again")
     void blockWindowIsConsumedByTheUpkeepTrigger() {
         Permanent wiitigo = addWiitigo(player2);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();

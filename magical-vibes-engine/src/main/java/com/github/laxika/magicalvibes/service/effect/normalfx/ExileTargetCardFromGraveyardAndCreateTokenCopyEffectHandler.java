@@ -87,7 +87,11 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
         if (graveyardOwnerId != null) {
-            exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+            if (e.trackWithSource() && entry.getSourcePermanentId() != null) {
+                exileService.exileCard(gameData, graveyardOwnerId, targetCard, entry.getSourcePermanentId());
+            } else {
+                exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+            }
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
@@ -95,8 +99,9 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
 
         int createdPermanentCount = entry.getCreatedPermanentIds().size();
         graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
-                e.additionalKeywords(), e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
-                e.powerOverride(), e.toughnessOverride());
+                e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
+                e.powerOverride(), e.toughnessOverride(), e.replaceSubtypes(), false,
+                new ArrayList<>(), e.additionalKeywords(), false, e.removeLegendary());
 
         if (e.exileOtherControlledTokensOfSubtype() != null) {
             Set<UUID> createdByThisEffect = new HashSet<>(entry.getCreatedPermanentIds()

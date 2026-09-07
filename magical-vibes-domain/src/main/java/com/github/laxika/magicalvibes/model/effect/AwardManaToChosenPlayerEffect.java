@@ -11,5 +11,15 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  * ability as a mana ability. Used by Valleymaker ("{T}, Sacrifice a Forest: Choose a player.
  * That player adds {G}{G}{G}.").
  */
-public record AwardManaToChosenPlayerEffect(ManaColor color, int amount) implements ManaProducingEffect {
+public record AwardManaToChosenPlayerEffect(ManaColor color, int amount, boolean anyColor)
+        implements ManaProducingEffect {
+
+    public AwardManaToChosenPlayerEffect(ManaColor color, int amount) {
+        this(color, amount, false);
+    }
+
+    /** The chosen player chooses the color of the mana they receive. */
+    public static AwardManaToChosenPlayerEffect anyColor(int amount) {
+        return new AwardManaToChosenPlayerEffect(null, amount, true);
+    }
 }

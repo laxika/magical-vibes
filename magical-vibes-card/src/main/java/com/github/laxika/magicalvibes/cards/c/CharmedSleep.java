@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFR", collectorNumber = "50")
+@CardRegistration(set = "ELD", collectorNumber = "40")
 public class CharmedSleep extends Card {
 
     public CharmedSleep() {

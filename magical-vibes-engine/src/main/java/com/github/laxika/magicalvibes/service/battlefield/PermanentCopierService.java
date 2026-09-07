@@ -56,6 +56,8 @@ public class PermanentCopierService {
         copy.setCardText(target.getCardText());
         copy.setPower(powerOverride != null ? powerOverride : target.getPower());
         copy.setToughness(toughnessOverride != null ? toughnessOverride : target.getToughness());
+        copy.setLoyalty(target.getLoyalty());
+        copy.setToken(clonePerm.getCard().isToken());
         copy.setKeywords(target.getKeywords());
         copy.setSetCode(target.getSetCode());
         copy.setCollectorNumber(target.getCollectorNumber());

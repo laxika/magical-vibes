@@ -8,7 +8,12 @@ package com.github.laxika.magicalvibes.model.effect;
  * be put into the graveyard from the battlefield (i.e. "die"). When matched, the
  * card is placed on top of its owner's library instead. Used by Gravebane Zombie.</p>
  */
-public record PutOnTopOfLibraryInsteadOfDyingEffect() implements DyingCreatureLibraryReplacementEffect {
+public record PutOnTopOfLibraryInsteadOfDyingEffect(boolean mayChoose)
+        implements DyingCreatureLibraryReplacementEffect {
+
+    public PutOnTopOfLibraryInsteadOfDyingEffect() {
+        this(false);
+    }
 
     @Override
     public boolean putOnBottom() {

@@ -11,11 +11,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ITP", collectorNumber = "31")
 @CardRegistration(set = "RQS", collectorNumber = "30")
 @CardRegistration(set = "SUM", collectorNumber = "142")
+@CardRegistration(set = "TSB", collectorNumber = "58")
 public class Disintegrate extends Card {
 
     public Disintegrate() {
-        // X damage to any target; a creature dealt damage this way can't be regenerated
-        // this turn, and if it would die this turn it is exiled instead.
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue(), true, true));
+        // The creature-target riders apply even if all the damage is prevented.
+        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue(), true, true)
+                .withUnconditionalRegenerationPrevention());
     }
 }

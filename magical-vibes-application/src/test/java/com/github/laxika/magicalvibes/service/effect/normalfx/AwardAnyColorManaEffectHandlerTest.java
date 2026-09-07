@@ -50,6 +50,24 @@ class AwardAnyColorManaEffectHandlerTest extends AbstractPlayerInteractionHandle
     }
 
     @Test
+    @DisplayName("Different-color mana choices exclude colors already chosen")
+    void sendsDifferentColorChoices() {
+        Card card = createCard("Firemind Vessel");
+        AwardAnyColorManaEffect effect = AwardAnyColorManaEffect.ofDifferentColors(2);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+        resolveEffect(gd, entry, effect);
+
+        ArgumentCaptor<PendingInteraction.ColorChoice> captor =
+                ArgumentCaptor.forClass(PendingInteraction.ColorChoice.class);
+        verify(interactionHandlerRegistry).begin(eq(gd), captor.capture());
+        ChoiceContext.ManaColorChoice choice =
+                (ChoiceContext.ManaColorChoice) captor.getValue().context();
+        assertThat(choice.differentColors()).isTrue();
+        assertThat(choice.fixedColorOptions()).containsExactlyElementsOf(ManaColor.COLORS);
+    }
+
+    @Test
     @DisplayName("A player target used for the amount does not receive the mana")
     void targetForAmountDoesNotBecomeManaRecipient() {
         Card card = createCard("Carpet of Flowers");

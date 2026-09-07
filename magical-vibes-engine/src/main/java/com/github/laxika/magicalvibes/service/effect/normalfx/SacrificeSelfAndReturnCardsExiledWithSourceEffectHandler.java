@@ -72,6 +72,7 @@ public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements
                 continue;
             }
             Permanent perm = new Permanent(card);
+            perm.setEnteredFromExile(true);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
             
             gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.").build());

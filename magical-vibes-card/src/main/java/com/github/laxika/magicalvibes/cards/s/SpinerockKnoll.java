@@ -19,7 +19,7 @@ public class SpinerockKnoll extends Card {
 
     public SpinerockKnoll() {
         // Hideaway 4 — when this enters, look at the top four cards, exile one face down, rest on bottom.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ImprintFromTopCardsEffect(4));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ImprintFromTopCardsEffect(4, true));
         // This land enters tapped.
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
         // {T}: Add {R}.

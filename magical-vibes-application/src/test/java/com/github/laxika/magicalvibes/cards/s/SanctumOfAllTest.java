@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -30,8 +29,14 @@ class SanctumOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        HondenOfSeeingWinds honden = gd.playerDecks.get(player1.getId()).stream()
+                .filter(HondenOfSeeingWinds.class::isInstance)
+                .map(HondenOfSeeingWinds.class::cast)
+                .findFirst()
+                .orElseThrow();
+        harness.handleMultipleCardsChosen(player1, List.of(honden.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof HondenOfSeeingWinds);
@@ -47,6 +52,7 @@ class SanctumOfAllTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(honden.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == honden);

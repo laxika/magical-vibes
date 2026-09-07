@@ -54,6 +54,7 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     modalChoicesRequired: 0,
     modalChoicesMax: 0,
     modalOptional: false,
+    modalModesMayRepeat: false,
     modalOptions: null,
     exileCastCounterCost: 0,
     prepareSpell: info.prepareSpell ? browseInfoToCard(info.prepareSpell) : null

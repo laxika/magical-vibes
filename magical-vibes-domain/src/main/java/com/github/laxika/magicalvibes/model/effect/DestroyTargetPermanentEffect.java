@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param targetFilter        optional predicate narrowing the permanent target
  * @param tokenOnlyForSourceController whether the token is created only when the target was controlled by the effect's controller
  * @param tokenCount           number of tokens to create when {@code tokenForController} is non-null
+ * @param targetChosenByActivePlayer whether an upkeep trigger has its target chosen by the active player
  */
 public record DestroyTargetPermanentEffect(
         boolean cannotBeRegenerated,
@@ -19,42 +20,56 @@ public record DestroyTargetPermanentEffect(
         int targetGroup,
         PermanentPredicate targetFilter,
         boolean tokenOnlyForSourceController,
-        int tokenCount
+        int tokenCount,
+        boolean targetChosenByActivePlayer
 ) implements RemovalEffect {
 
     public DestroyTargetPermanentEffect() {
-        this(false, null, -1, null, false, 1);
+        this(false, null, -1, null, false, 1, false);
     }
 
     public DestroyTargetPermanentEffect(boolean cannotBeRegenerated) {
-        this(cannotBeRegenerated, null, -1, null, false, 1);
+        this(cannotBeRegenerated, null, -1, null, false, 1, false);
     }
 
     public DestroyTargetPermanentEffect(boolean cannotBeRegenerated, CreateTokenEffect tokenForController) {
-        this(cannotBeRegenerated, tokenForController, -1, null, false, 1);
+        this(cannotBeRegenerated, tokenForController, -1, null, false, 1, false);
     }
 
     public DestroyTargetPermanentEffect(boolean cannotBeRegenerated, CreateTokenEffect tokenForController,
                                         boolean tokenOnlyForSourceController) {
-        this(cannotBeRegenerated, tokenForController, -1, null, tokenOnlyForSourceController, 1);
+        this(cannotBeRegenerated, tokenForController, -1, null, tokenOnlyForSourceController, 1, false);
     }
 
     public DestroyTargetPermanentEffect(boolean cannotBeRegenerated, CreateTokenEffect tokenForController,
                                         int tokenCount, boolean tokenOnlyForSourceController) {
-        this(cannotBeRegenerated, tokenForController, -1, null, tokenOnlyForSourceController, tokenCount);
+        this(cannotBeRegenerated, tokenForController, -1, null, tokenOnlyForSourceController, tokenCount, false);
     }
 
     public DestroyTargetPermanentEffect(boolean cannotBeRegenerated, CreateTokenEffect tokenForController,
                                         int targetGroup, PermanentPredicate targetFilter) {
-        this(cannotBeRegenerated, tokenForController, targetGroup, targetFilter, false, 1);
+        this(cannotBeRegenerated, tokenForController, targetGroup, targetFilter, false, 1, false);
+    }
+
+    public DestroyTargetPermanentEffect(boolean cannotBeRegenerated, CreateTokenEffect tokenForController,
+                                        int targetGroup, PermanentPredicate targetFilter,
+                                        boolean tokenOnlyForSourceController, int tokenCount) {
+        this(cannotBeRegenerated, tokenForController, targetGroup, targetFilter,
+                tokenOnlyForSourceController, tokenCount, false);
     }
 
     public static DestroyTargetPermanentEffect forTargetGroup(int targetGroup) {
-        return new DestroyTargetPermanentEffect(false, null, targetGroup, null, false, 1);
+        return new DestroyTargetPermanentEffect(false, null, targetGroup, null, false, 1, false);
     }
 
     public DestroyTargetPermanentEffect(PermanentPredicate targetFilter) {
-        this(false, null, -1, targetFilter, false, 1);
+        this(false, null, -1, targetFilter, false, 1, false);
+    }
+
+    public static DestroyTargetPermanentEffect activePlayerChoosesTarget(boolean cannotBeRegenerated,
+                                                                           PermanentPredicate targetFilter) {
+        return new DestroyTargetPermanentEffect(
+                cannotBeRegenerated, null, -1, targetFilter, false, 1, true);
     }
 
     @Override

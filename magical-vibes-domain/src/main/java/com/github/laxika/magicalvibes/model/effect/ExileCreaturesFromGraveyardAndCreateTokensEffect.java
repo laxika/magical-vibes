@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 
 /**
  * Exile creature cards from graveyards and create a token for each card exiled this way.
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param toughnessOverride     copy mode: base toughness of the token copy (e.g. 4)
  * @param colorOverride         copy mode: the copy's color is set to exactly this color (e.g. black)
  * @param addedSubtype          copy mode: creature subtype added to the copy in addition to its other types (e.g. Zombie)
+ * @param graveyardScope        graveyards that can supply individually targeted creature cards
  */
 public record ExileCreaturesFromGraveyardAndCreateTokensEffect(
         boolean targetPlayerGraveyard,
@@ -41,12 +43,24 @@ public record ExileCreaturesFromGraveyardAndCreateTokensEffect(
         Integer powerOverride,
         Integer toughnessOverride,
         CardColor colorOverride,
-        CardSubtype addedSubtype
+        CardSubtype addedSubtype,
+        GraveyardSearchScope graveyardScope
 ) implements CardEffect {
+
+    public ExileCreaturesFromGraveyardAndCreateTokensEffect(
+            boolean targetPlayerGraveyard,
+            boolean copyExiledCards,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            CardColor colorOverride,
+            CardSubtype addedSubtype) {
+        this(targetPlayerGraveyard, copyExiledCards, powerOverride, toughnessOverride,
+                colorOverride, addedSubtype, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+    }
 
     /** Midnight Ritual: create a plain 2/2 black Zombie creature token per exiled creature (not a copy). */
     public ExileCreaturesFromGraveyardAndCreateTokensEffect() {
-        this(false, false, null, null, null, null);
+        this(false, false, null, null, null, null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
     }
 
     @Override

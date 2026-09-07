@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.c.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WorldspineWurm;
 import com.github.laxika.magicalvibes.model.ManaColor;

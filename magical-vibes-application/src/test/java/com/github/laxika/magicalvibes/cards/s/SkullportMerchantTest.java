@@ -33,6 +33,7 @@ class SkullportMerchantTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices another creature and draws a card")
     void sacrificesAnotherCreatureAndDraws() {
+        harness.setHand(player1, List.of());
         Permanent merchant = addCreatureReady(player1, new SkullportMerchant());
         addCreatureReady(player1, new GrizzlyBears());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();

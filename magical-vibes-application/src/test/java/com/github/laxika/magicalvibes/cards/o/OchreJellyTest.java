@@ -69,6 +69,7 @@ class OchreJellyTest extends BaseCardTest {
     }
 
     private void destroyWithAssassinate(Permanent target) {
+        target.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Assassinate()));

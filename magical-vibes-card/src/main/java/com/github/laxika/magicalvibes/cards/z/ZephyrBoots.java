@@ -17,7 +17,7 @@ public class ZephyrBoots extends Card {
 
     public ZephyrBoots() {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)

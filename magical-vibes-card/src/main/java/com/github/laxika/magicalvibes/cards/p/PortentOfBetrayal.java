@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "133")
+@CardRegistration(set = "THB", collectorNumber = "149")
 public class PortentOfBetrayal extends Card {
 
     public PortentOfBetrayal() {

@@ -72,10 +72,11 @@ public class ExileAnyNumberOfPermanentsUntilSourceLeavesEffectHandler implements
 
             Card card = permanent.getOriginalCard();
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
-            UUID ownerId = gameData.stolenCreatures.getOrDefault(permanentId, controllerId);
+            UUID ownerId = card.getOwnerId() != null
+                    ? card.getOwnerId() : gameData.stolenCreatures.getOrDefault(permanentId, controllerId);
             boolean token = card.isToken();
 
-            if (!permanentRemovalService.removePermanentToExile(gameData, permanent)) {
+            if (!permanentRemovalService.removePermanentToExile(gameData, permanent, sourcePermanentId)) {
                 continue;
             }
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));

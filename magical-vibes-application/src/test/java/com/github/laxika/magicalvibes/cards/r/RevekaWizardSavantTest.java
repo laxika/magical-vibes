@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RevekaWizardSavant.class, AnabaShaman.class})
 class RevekaWizardSavantTest extends BaseCardTest {
 
     @Test
@@ -27,13 +29,11 @@ class RevekaWizardSavantTest extends BaseCardTest {
     @DisplayName("Ability deals 2 damage to a target creature, killing a 2/2")
     void abilityKillsCreature() {
         Permanent reveka = setUpReveka();
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bear = findPermanent(player2, "Grizzly Bears");
-
-        harness.activateAbility(player1, indexOf(reveka), 0, null, bear.getId());
+        Permanent target = addCreatureReady(player2, new AnabaShaman());
+        harness.activateAbility(player1, indexOf(reveka), 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
     }
 
     @Test
@@ -45,7 +45,12 @@ class RevekaWizardSavantTest extends BaseCardTest {
         assertThat(reveka.isTapped()).isTrue();
 
         harness.passBothPriorities();
-        assertThat(reveka.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(reveka.getSkipUntapCount()).isEqualTo(1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(reveka.isTapped()).isTrue();
+        assertThat(reveka.getSkipUntapCount()).isZero();
     }
 
     @Test
@@ -62,10 +67,7 @@ class RevekaWizardSavantTest extends BaseCardTest {
     private Permanent setUpReveka() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new RevekaWizardSavant());
-        Permanent reveka = findPermanent(player1, "Reveka, Wizard Savant");
-        reveka.setSummoningSick(false);
-        return reveka;
+        return addCreatureReady(player1, new RevekaWizardSavant());
     }
 
     private int indexOf(Permanent permanent) {

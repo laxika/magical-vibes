@@ -50,15 +50,16 @@ class SepulcherGhoulTest extends BaseCardTest {
     @DisplayName("The ability can be activated only once each turn")
     void abilityCanBeActivatedOnlyOnceEachTurn() {
         addCreatureReady(player1, new SepulcherGhoul());
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent sacrifice = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no more than 1 times each turn");
+                .hasMessageContaining("only once each turn");
     }
 
     @Test

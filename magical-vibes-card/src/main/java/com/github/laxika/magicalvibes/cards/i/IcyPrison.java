@@ -19,7 +19,8 @@ public class IcyPrison extends Card {
                 // "When this enchantment enters, exile target creature."
                 // "When this enchantment leaves the battlefield, return the exiled card..."
                 // — LTB return is implicit via O-ring linkage.
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentUntilSourceLeavesEffect())
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        ExileTargetPermanentUntilSourceLeavesEffect.evenIfSourceAlreadyLeft())
                 // "At the beginning of your upkeep, sacrifice this enchantment unless any player pays {3}."
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new ForcedCostOrElseEffect(

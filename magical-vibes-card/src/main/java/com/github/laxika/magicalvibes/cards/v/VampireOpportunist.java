@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "326")
+@CardRegistration(set = "WAR", collectorNumber = "110")
 public class VampireOpportunist extends Card {
 
     public VampireOpportunist() {

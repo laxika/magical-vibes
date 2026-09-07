@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "168")
+@CardRegistration(set = "SNC", collectorNumber = "66")
 public class WitnessProtection extends Card {
 
     public WitnessProtection() {

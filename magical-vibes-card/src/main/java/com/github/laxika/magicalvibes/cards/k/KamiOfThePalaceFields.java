@@ -23,6 +23,7 @@ public class KamiOfThePalaceFields extends Card {
                         new CardMaxManaValuePredicate(5)
                 )))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

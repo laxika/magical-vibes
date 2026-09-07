@@ -14,10 +14,21 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(
         CardPredicate filter,
         boolean includeHand,
-        boolean attachToSource
+        boolean attachToSource,
+        ManaValueBound manaValueBound
 ) implements CardEffect {
 
     public SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(CardPredicate filter) {
-        this(filter, false, false);
+        this(filter, false, false, null);
+    }
+
+    public SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(
+            CardPredicate filter, boolean includeHand, boolean attachToSource) {
+        this(filter, includeHand, attachToSource, null);
+    }
+
+    public SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(
+            CardPredicate filter, ManaValueBound manaValueBound) {
+        this(filter, false, false, manaValueBound);
     }
 }

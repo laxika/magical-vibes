@@ -1,66 +1,36 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
+import com.github.laxika.magicalvibes.cards.m.MtendaGriffin;
+import com.github.laxika.magicalvibes.cards.u.UnyaroBeeSting;
+import com.github.laxika.magicalvibes.cards.w.WindreaperFalcon;
+import com.github.laxika.magicalvibes.cards.z.ZirilanOfTheClaw;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HazeriderDrake.class, Incinerate.class, IronTuskElephant.class, MtendaGriffin.class,
+        UnyaroBeeSting.class, WindreaperFalcon.class, ZirilanOfTheClaw.class})
 class HazeriderDrakeTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 
     @Test
     @DisplayName("Red creature cannot block Hazerider Drake")
     void redCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new HazeriderDrake());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        addCreatureReady(player1, new HazeriderDrake());
+        addCreatureReady(player2, new WindreaperFalcon());
 
-        Card dragon = createCreature("Shivan Dragon", 5, 5, CardColor.RED);
-        dragon.setKeywords(EnumSet.of(Keyword.FLYING));
-        Permanent blocker = new Permanent(dragon);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -70,21 +40,11 @@ class HazeriderDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Non-red flyer can block Hazerider Drake")
     void nonRedFlyerCanBlock() {
-        Permanent attacker = new Permanent(new HazeriderDrake());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        addCreatureReady(player1, new HazeriderDrake());
+        Permanent blocker = addCreatureReady(player2, new MtendaGriffin());
 
-        Card whiteFlyer = createCreature("Cloud Elemental", 2, 2, CardColor.WHITE);
-        whiteFlyer.setKeywords(EnumSet.of(Keyword.FLYING));
-        Permanent blocker = new Permanent(whiteFlyer);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -92,62 +52,60 @@ class HazeriderDrakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A non-flying creature cannot block Hazerider Drake")
+    void nonFlyingCreatureCannotBlock() {
+        addCreatureReady(player1, new HazeriderDrake());
+        addCreatureReady(player2, new IronTuskElephant());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
     @DisplayName("Takes no combat damage from a red creature")
     void takesNoDamageFromRed() {
-        Permanent attacker = new Permanent(createCreature("Craw Wurm", 6, 4, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ZirilanOfTheClaw());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new HazeriderDrake());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new HazeriderDrake());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
+        assertThat(blocker.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Hazerider Drake");
     }
 
     @Test
     @DisplayName("Cannot be targeted by a red instant")
     void cannotBeTargetedByRedInstant() {
-        Permanent drake = new Permanent(new HazeriderDrake());
-        drake.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(drake);
+        Permanent drake = addCreatureReady(player2, new HazeriderDrake());
+        addCreatureReady(player2, new IronTuskElephant());
 
-        // A second creature keeps the spell castable, so the rejection is the protection check
-        // rather than "no legal target exists".
-        Permanent other = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
-        other.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(other);
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, drake.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, drake.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
     }
 
     @Test
-    @DisplayName("Can be targeted by a green instant")
-    void canBeTargetedByGreenInstant() {
-        Permanent drake = new Permanent(new HazeriderDrake());
-        drake.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(drake);
+    @DisplayName("Can be targeted by a green spell")
+    void canBeTargetedByGreenSpell() {
+        Permanent drake = addCreatureReady(player1, new HazeriderDrake());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Wild Might", CardColor.GREEN, "{G}")));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new UnyaroBeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
 
-        gs.playCard(gd, player1, 0, 0, drake.getId(), null);
+        harness.castAndResolveSorcery(player1, 0, 0, drake.getId());
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Wild Might");
+        assertThat(drake.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Hazerider Drake");
     }
 }

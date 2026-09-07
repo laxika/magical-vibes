@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.w.WoollySpider;
+import com.github.laxika.magicalvibes.cards.y.YavimayaGnats;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,18 +17,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SilverErne.class, BalduvianBears.class, WoollySpider.class, YavimayaGnats.class})
 class SilverErneTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cannot be blocked by a creature without flying or reach")
     void cannotBeBlockedByGroundCreature() {
         attackingErne();
-        Permanent groundBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent groundBlocker = addCreatureReady(player2, new BalduvianBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -40,12 +38,9 @@ class SilverErneTest extends BaseCardTest {
     @DisplayName("Can be blocked by a flying creature")
     void canBeBlockedByFlyer() {
         attackingErne();
-        Permanent flyingBlocker = addCreatureReady(player2, new AirElemental());
+        Permanent flyingBlocker = addCreatureReady(player2, new YavimayaGnats());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
@@ -58,10 +53,7 @@ class SilverErneTest extends BaseCardTest {
         attackingErne();
         Permanent reachBlocker = addCreatureReady(player2, new WoollySpider());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
@@ -73,24 +65,21 @@ class SilverErneTest extends BaseCardTest {
     void trampleAssignsExcessDamageToDefender() {
         harness.setLife(player2, 20);
         attackingErne();
-        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
+        Permanent blocker = addCreatureReady(player2, new YavimayaGnats());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
 
-        // 2/2 trample blocked by 1/1 flyer → 1 lethal to blocker, 1 excess to player
+        // 2/2 trample blocked by 0/1 flyer → 1 lethal to blocker, 1 excess to player
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 blocker.getId(), 1,
                 player2.getId(), 1
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        harness.assertInGraveyard(player2, "Suntail Hawk");
+        harness.assertInGraveyard(player2, "Yavimaya Gnats");
     }
 
     private Permanent attackingErne() {

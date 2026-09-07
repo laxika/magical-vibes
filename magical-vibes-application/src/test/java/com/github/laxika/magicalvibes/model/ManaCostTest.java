@@ -16,6 +16,33 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ManaCostTest {
 
+    @Test
+    void virtualManaTotalIsCorrectedOnlyOnceForPayment() {
+        VirtualManaPool pool = new VirtualManaPool();
+        pool.add(ManaColor.RED, 1);
+        pool.add(ManaColor.GREEN, 1);
+        pool.addFlexibleOvercount(1);
+
+        assertThat(new ManaCost("{R}").canPay(pool)).isTrue();
+        assertThat(new ManaCost("{R}{G}").canPay(pool)).isFalse();
+        assertThat(new ManaCost("{X}{R}").canPayWithAdditionalGenericCost(pool, 0, 0)).isTrue();
+        assertThat(new ManaCost("{X}{R}").canPayWithAdditionalGenericCost(pool, 1, 0)).isFalse();
+    }
+
+    @Test
+    void cumulativeUpkeepManaContributesToThePaymentTotal() {
+        ManaPool pool = new ManaPool();
+        pool.addCumulativeUpkeepOnlyColored(ManaColor.BLUE, 1);
+        pool.addCumulativeUpkeepOnlyColorless(1);
+        ManaCost upkeep = new ManaCost("{1}{U}", true);
+
+        assertThat(new ManaCost("{1}{U}").canPay(pool)).isFalse();
+        assertThat(upkeep.canPay(pool)).isTrue();
+        assertThat(upkeep.canPayWithAdditionalGenericCost(pool, 0, 0)).isTrue();
+        upkeep.pay(pool);
+        assertThat(pool.getTotalAllMana()).isZero();
+    }
+
     @Nested
     @DisplayName("Snow mana color permission")
     class SnowManaColorPermission {

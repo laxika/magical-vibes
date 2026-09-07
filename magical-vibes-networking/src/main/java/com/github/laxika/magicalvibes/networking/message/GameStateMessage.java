@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.networking.message;
 
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
@@ -45,7 +46,8 @@ public record GameStateMessage(
         List<Integer> potentialPlayableCardIndices,
         int potentialManaTotal,
         Map<UUID, List<Integer>> potentialPayableAbilityIndices,
-        List<Integer> speeds
+        List<Integer> speeds,
+        DayNight dayNight
 ) {
     public GameStateMessage(
             GameStatus status,
@@ -88,7 +90,7 @@ public record GameStateMessage(
                 playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                 mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                 playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
-                potentialPayableAbilityIndices, List.of());
+                potentialPayableAbilityIndices, List.of(), DayNight.NEITHER);
     }
 
     public GameStateMessage(
@@ -123,13 +125,14 @@ public record GameStateMessage(
             int potentialManaTotal,
             Map<UUID, List<Integer>> potentialPayableAbilityIndices
     ) {
-        this(status, activePlayerId, turnNumber, currentStep, priorityPlayerId, battlefields, stack,
+        this(MessageType.GAME_STATE, status, activePlayerId, turnNumber, currentStep, priorityPlayerId,
+                battlefields, stack,
                 graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters, hand,
                 opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, List.of(),
                 playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                 mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                 playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
-                potentialPayableAbilityIndices);
+                potentialPayableAbilityIndices, List.of(), DayNight.NEITHER);
     }
 
     public GameStateMessage(
@@ -171,6 +174,6 @@ public record GameStateMessage(
                 List.of(), playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                 mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                 playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
-                potentialPayableAbilityIndices, speeds);
+                potentialPayableAbilityIndices, speeds, DayNight.NEITHER);
     }
 }

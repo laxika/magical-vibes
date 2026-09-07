@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,29 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
     }
 
     @Test
+    @DisplayName("Tracks excess damage for a conditional rider")
+    void tracksExcessDamageForConditionalRider() {
+        Card burnCard = createCard("Torch the Witness");
+        Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, burnCard, player1Id,
+                burnCard.getName(), List.of(new ConditionalEffect(new EventValueAtLeast(1),
+                        CreateTokenEffect.ofClueToken(1))));
+        entry.setTargetId(bears.getId());
+        DealDamageToTargetCreatureEffect effect = new DealDamageToTargetCreatureEffect(3, false);
+
+        stubDamagePreventable();
+        stubDamageFromSourceNotPrevented();
+        stubNoDamageMultiplier();
+        stubCreatureDamageCore(bears, 2);
+        stubNoKeywordsOnSource(entry);
+        when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+
+        dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
+
+        assertThat(entry.getEventValue()).isEqualTo(1);
+    }
+
+    @Test
             @DisplayName("Deals lethal damage to a creature — marked for the SBA check")
             void dealsDamageToCreature() {
                 Card burnCard = createCard("Burn the Impure");
@@ -46,7 +72,8 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(3);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 3, player1Id, burnCard, null);
             }
 
             @Test

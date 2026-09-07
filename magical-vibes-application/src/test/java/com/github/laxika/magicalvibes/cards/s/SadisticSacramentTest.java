@@ -30,7 +30,7 @@ class SadisticSacramentTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
-        assertThat(gd.exiledCards).allMatch(entry -> entry.faceDown());
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.faceDown());
     }
 
     @Test

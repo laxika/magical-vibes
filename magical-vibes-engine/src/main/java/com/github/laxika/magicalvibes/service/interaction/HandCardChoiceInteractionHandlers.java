@@ -54,6 +54,30 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
+    /** Retraced Image — reveal one card from hand and conditionally put it onto the battlefield. */
+    @Component
+    public static class RetracedImageCardChoiceInteractionHandler
+            extends Base<PendingInteraction.RetracedImageCardChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public RetracedImageCardChoiceInteractionHandler(CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.RetracedImageCardChoice> handledType() {
+            return PendingInteraction.RetracedImageCardChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.RetracedImageCardChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handleRetracedImageCardChosen(gameData, player, cardIndex(answer));
+        }
+    }
+
     /** TARGETED_CARD_CHOICE — put an Aura from hand onto the battlefield attached to a target (declinable). */
     @Component
     public static class TargetedHandCardChoiceInteractionHandler extends Base<PendingInteraction.TargetedHandCardChoice> {
@@ -119,6 +143,32 @@ public final class HandCardChoiceInteractionHandlers {
         public void handleAnswer(GameData gameData, Player player, PendingInteraction.ExileFromHandChoice interaction,
                                  InteractionAnswer answer) {
             cardChoiceHandlerService.handleExileFromHandChosen(gameData, player, cardIndex(answer));
+        }
+    }
+
+    /** Exile a selected hand card and create a token copy of it. */
+    @Component
+    public static class ExileCardFromHandAndCreateTokenCopyChoiceInteractionHandler
+            extends Base<PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice> {
+
+        private final CardChoiceHandlerService cardChoiceHandlerService;
+
+        public ExileCardFromHandAndCreateTokenCopyChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
+            this.cardChoiceHandlerService = cardChoiceHandlerService;
+        }
+
+        @Override
+        public Class<PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice> handledType() {
+            return PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class;
+        }
+
+        @Override
+        public void handleAnswer(GameData gameData, Player player,
+                                 PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice interaction,
+                                 InteractionAnswer answer) {
+            cardChoiceHandlerService.handleExileCardFromHandAndCreateTokenCopyChosen(
+                    gameData, player, cardIndex(answer));
         }
     }
 

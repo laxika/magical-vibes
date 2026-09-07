@@ -75,7 +75,15 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
 
             boolean instantOrSorcery = targetCard.hasType(CardType.INSTANT) || targetCard.hasType(CardType.SORCERY);
             boolean matchesFilter = e.filter() == null
-                    || predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), entry.getCard().getId());
+                    || predicateEvaluationService.matchesCardPredicate(
+                    targetCard,
+                    e.filter(),
+                    entry.getCard().getId(),
+                    gameData,
+                    graveyardOwnerId,
+                    entry.getSourcePermanentId(),
+                    entry.getTriggeringPermanentPowerAtTrigger(),
+                    entry.getXValue());
             if (!instantOrSorcery || !matchesFilter) {
                 gameLogService.append(gameData, GameLog.text(entry.getDescription()
                         + " fizzles (target is not an instant or sorcery)."));
@@ -87,7 +95,8 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
                     + " without paying its mana cost?"
                     : entry.getCard().getName() + " — Cast " + targetCard.getName() + "?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    targetCard, controllerId, List.of(e), prompt));
+                    targetCard, controllerId, List.of(e), prompt,
+                    entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue()));
         }
     }
 }

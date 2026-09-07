@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 
 @CardRegistration(set = "VIS", collectorNumber = "7")
+@CardRegistration(set = "TSB", collectorNumber = "9")
 public class HonorablePassage extends Card {
 
     public HonorablePassage() {

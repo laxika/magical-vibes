@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -53,26 +54,75 @@ public class BounceSupport {
         log.info("Game {} - {} returned to hand", gameData.id, entry.getCard().getName());
     }
 
+    public int applyReturnPermanentsToHand(GameData gameData, StackEntry entry, List<Permanent> toReturn) {
+        int returnedControlledNontokens = 0;
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent permanent : toReturn) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                boolean controlledNontoken = entry.getControllerId().equals(controllerId)
+                        && !permanent.getCard().isToken();
+                boolean returned = permanentRemovalService.removePermanentToHand(gameData, permanent);
+                if (returned && controlledNontoken) {
+                    returnedControlledNontokens++;
+                }
+
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+                log.info("Game {} - {} returned to owner's hand by {}",
+                        gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
+        }
+
+        if (!toReturn.isEmpty()) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
+        return returnedControlledNontokens;
+    }
+
     public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color) {
         applyReturnAllPermanentsOfColorToHand(gameData, entry, color, null);
     }
 
     public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color,
             PermanentPredicate filter) {
+        applyReturnAllPermanentsOfColorToHand(gameData, entry, color, filter, false);
+    }
+
+    public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color,
+            PermanentPredicate filter, boolean opponentsOnly) {
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        UUID sourceControllerId = entry.getControllerId();
+        if (sourceControllerId == null && entry.getSourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            sourceControllerId = source == null ? null : gameData.findControllerOf(source);
+        }
+        UUID finalSourceControllerId = sourceControllerId;
         List<Permanent> toReturn = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) ->
                 toReturn.addAll(battlefield.stream()
-                        .filter(permanent -> gameQueryService.getEffectiveColors(gameData, permanent).contains(color)
+                        .filter(permanent -> (!opponentsOnly || !playerId.equals(finalSourceControllerId))
+                                && gameQueryService.getEffectiveColors(gameData, permanent).contains(color)
                                 && (filter == null || predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, permanent, filter)))
+                                permanent, filter, filterContext)))
                         .toList()));
 
-        for (Permanent permanent : toReturn) {
-            permanentRemovalService.removePermanentToHand(gameData, permanent);
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent permanent : toReturn) {
+                permanentRemovalService.removePermanentToHand(gameData, permanent);
 
-            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
-            log.info("Game {} - {} returned to owner's hand by {}",
-                    gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+                log.info("Game {} - {} returned to owner's hand by {}",
+                        gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
 
         if (!toReturn.isEmpty()) {

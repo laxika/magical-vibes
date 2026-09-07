@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCreatureCards
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "112")
+@CardRegistration(set = "JUD", collectorNumber = "73")
 public class SuturedGhoul extends Card {
 
     public SuturedGhoul() {

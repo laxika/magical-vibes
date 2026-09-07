@@ -34,6 +34,7 @@ export enum MessageType {
   INTERACTION_PROMPT = 'INTERACTION_PROMPT',
   INTERACTION_ANSWER = 'INTERACTION_ANSWER',
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
+  ACTIVATE_EXILED_ABILITY = 'ACTIVATE_EXILED_ABILITY',
   ACTIVATE_GRAVEYARD_ABILITY = 'ACTIVATE_GRAVEYARD_ABILITY',
   ACTIVATE_HAND_ABILITY = 'ACTIVATE_HAND_ABILITY',
   REVEAL_HAND = 'REVEAL_HAND',
@@ -139,9 +140,10 @@ export interface ActivatedAbilityView {
   /** CounterType name whose counters the ability removes X of as a cost, or null. */
   variableCounterCostType: string | null;
   requiresXValue?: boolean;
-  xValueMin?: number;
   xValueFromControlledCreatureCounters?: boolean;
   xValueFromCardsInHandColor?: string | null;
+  xValueFromWaterbendCost?: boolean;
+  xValueMin?: number;
   modalChoicesRequired?: number;
   modalChoicesMax?: number;
   modalOptions?: ModalOptionView[] | null;
@@ -191,28 +193,37 @@ export interface Card {
   alternateCostDiscardsHandCard?: boolean;
   alternateCostRevealsHandCard?: boolean;
   graveyardCastRequiresDiscard?: boolean;
+  graveyardCastExileCount?: number;
+  graveyardCastExileLabel?: string | null;
   additionalBeholdSubtype: string | null;
   additionalBeholdCount: number;
   additionalBeholdFlashbackOnly: boolean;
   additionalBeholdChosenCreatureType: boolean;
   graveyardActivatedAbilities: ActivatedAbilityView[];
   handActivatedAbilities?: ActivatedAbilityView[];
+  exileActivatedAbilities?: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;
   kickerRequiresTap: boolean;
   kickerRequiresReturn: boolean;
   buybackCost: string | null;
   buybackRequiresSacrifice?: boolean;
+  buybackSacrificeCount?: number;
   buybackDiscardCount?: number;
   modalChoicesRequired: number;
   modalChoicesMax: number;
   modalOptional: boolean;
+  modalModesMayRepeat?: boolean;
   modalOptions: ModalOptionView[] | null;
-  /** Additional counters to remove when casting this card from exile. */
+  /** Additional counters to remove when casting this card from a non-hand zone. */
   exileCastCounterCost: number;
   /** A mandatory creature-type choice made as an additional cast cost. */
   additionalChooseCreatureType?: boolean;
   additionalCreatureTypeChoices?: string[];
+  additionalCostLifePayment?: number;
+  additionalCostManaCost?: string | null;
+  alternateCostCollectEvidence?: boolean;
+  alternateCostCollectEvidenceAmount?: number;
   /** SOS "Prepared": the spell printed inset on a prepare card's front face. Null for every other
    *  card. Not a face you flip to — the front face stays and this is drawn alongside it. */
   prepareSpell: Card | null;
@@ -330,6 +341,7 @@ export interface Game {
   currentStep: TurnStep | null;
   activePlayerId: string | null;
   turnNumber: number;
+  dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
   priorityPlayerId: string | null;
   hand: Card[];
   opponentHand: Card[];
@@ -407,6 +419,7 @@ export interface GameStateNotification {
   status: GameStatus;
   activePlayerId: string;
   turnNumber: number;
+  dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
   currentStep: TurnStep;
   priorityPlayerId: string;
   battlefields: Permanent[][];
@@ -463,6 +476,8 @@ export interface AvailableAttackersNotification {
   availableTargets: AttackTarget[];
   taxPerCreature: number;
   mustAttackWithAtLeastOne: boolean;
+  /** True when the recipient chooses attackers for the active player's creatures. */
+  choosingForOpponent?: boolean;
 }
 
 export interface AvailableBlockersNotification {

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -41,7 +41,7 @@ public class FighterClass extends Card {
         target(TargetFilters.creature(), 0, 1).addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
-                        new MustBlockSourceEffect(null)));
+                        new MustBlockTriggeringAttackerEffect()));
 
         addActivatedAbility(new ActivatedAbility(
                 false, "{3}{R}{W}", List.of(new ClassLevelUpEffect(3)),

@@ -38,6 +38,7 @@ class AdultGoldDragonTest extends BaseCardTest {
     @DisplayName("Haste allows Adult Gold Dragon to attack immediately")
     void hasteAllowsImmediateAttack() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new AdultGoldDragon());
+        harness.addToBattlefield(player2, new AdultGoldDragon());
 
         declareAttackers(List.of(0));
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -62,6 +63,46 @@ class TheBookOfVileDarknessTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "The Book of Vile Darkness");
         harness.assertNotOnBattlefield(player1, "Eye of Vecna");
         harness.assertNotOnBattlefield(player1, "Hand of Vecna");
+    }
+
+    @Test
+    @CardUsed(JinnieFayJetmirsSecond.class)
+    void retainsVecnasTriggeredAbilitiesWhenTokenReplacementIsDeclined() {
+        activateBookWithTokenReplacement();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.handleListChoice(player1, "Original tokens");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Vecna")).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    @CardUsed(JinnieFayJetmirsSecond.class)
+    void replacementCatDoesNotGainVecnasTriggeredAbilities() {
+        activateBookWithTokenReplacement();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.handleListChoice(player1, "Cat");
+
+        assertThat(findPermanents(player1, "Cat")).hasSize(1);
+        assertThat(findPermanents(player1, "Vecna")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    private void activateBookWithTokenReplacement() {
+        harness.addToBattlefield(player1, new TheBookOfVileDarkness());
+        harness.addToBattlefield(player1, artifactWithTriggeredDraw("Eye of Vecna"));
+        harness.addToBattlefield(player1, artifact("Hand of Vecna"));
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
     }
 
     private Card artifact(String name) {

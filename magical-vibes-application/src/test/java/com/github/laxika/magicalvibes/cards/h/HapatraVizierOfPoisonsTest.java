@@ -49,11 +49,10 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
 
-        // Resolution-time "you may" for the combat trigger.
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        // Then choose any creature to receive the -1/-1 counter.
-        harness.handlePermanentChosen(player1, bearsId);
         resolveStack();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
@@ -71,6 +70,8 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
 
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         resolveStack();

@@ -5,5 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * with this card on the battlefield (CR 103.6a). Used as the wrapped effect inside a
  * MayEffect queued during the pregame procedure.
  */
-public record LeylineStartOnBattlefieldEffect() implements CardEffect {
+public record LeylineStartOnBattlefieldEffect() implements PregameBattlefieldChoiceEffect {
 }

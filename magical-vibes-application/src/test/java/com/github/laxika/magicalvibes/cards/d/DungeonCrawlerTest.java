@@ -50,6 +50,7 @@ class DungeonCrawlerTest extends BaseCardTest {
 
         assertThat(gd.playersWhoCompletedDungeon).contains(player1.getId());
         assertThat(gd.playerDungeonProgress).doesNotContainKey(player1.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -71,6 +72,7 @@ class DungeonCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
         harness.handleMayAbilityChosen(player1, false);

@@ -53,8 +53,8 @@ public class SwapExclusiveBlockersBetweenTwoBlockedAttackersEffectHandler implem
 
         List<Permanent> blockersOfA = findBlockers(gameData, attackerA.getId());
         List<Permanent> blockersOfB = findBlockers(gameData, attackerB.getId());
-        if (blockersOfA.isEmpty() || blockersOfB.isEmpty()) {
-            // Targets must still be blocked; otherwise the effect does nothing.
+        if ((blockersOfA.isEmpty() && !attackerA.isBlockedWithoutBlockers())
+                || (blockersOfB.isEmpty() && !attackerB.isBlockedWithoutBlockers())) {
             return;
         }
 
@@ -79,6 +79,8 @@ public class SwapExclusiveBlockersBetweenTwoBlockedAttackersEffectHandler implem
         for (Permanent blocker : exclusiveB) {
             reassignBlocker(blocker, attackerB.getId(), attackerA.getId(), indexA);
         }
+        attackerA.setBlockedWithoutBlockers(findBlockers(gameData, attackerA.getId()).isEmpty());
+        attackerB.setBlockedWithoutBlockers(findBlockers(gameData, attackerB.getId()).isEmpty());
 
         String msg = entry.getCard().getName() + " switches blockers between "
                 + attackerA.getCard().getName() + " and " + attackerB.getCard().getName() + ".";

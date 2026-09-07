@@ -31,6 +31,7 @@ class SphereOfAnnihilationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castArtifact(player1, 0, 3);
+        harness.passBothPriorities();
 
         Permanent sphere = findPermanent(player1, "Sphere of Annihilation");
         assertThat(sphere.getCounterCount(CounterType.VOID)).isEqualTo(3);

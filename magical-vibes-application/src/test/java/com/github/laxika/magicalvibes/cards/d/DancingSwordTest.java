@@ -39,6 +39,7 @@ class DancingSwordTest extends BaseCardTest {
         Permanent sword = attachSword(player1, creature);
 
         destroyCreature(creature);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(sword);
@@ -55,6 +56,7 @@ class DancingSwordTest extends BaseCardTest {
         Permanent sword = attachSword(player1, creature);
 
         destroyCreature(creature);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -72,7 +74,7 @@ class DancingSwordTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castInstant(player2, 0, sword.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
@@ -92,7 +94,7 @@ class DancingSwordTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
     }

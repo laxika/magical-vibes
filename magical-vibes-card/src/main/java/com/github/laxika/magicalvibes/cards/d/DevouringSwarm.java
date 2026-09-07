@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,8 +17,7 @@ public class DevouringSwarm extends Card {
                 false,
                 null,
                 List.of(new SacrificeCreatureCost(), new BoostSelfEffect(1, 1)),
-                "Sacrifice a creature: This creature gets +1/+1 until end of turn.",
-                TargetFilters.creatureYouControl()
+                "Sacrifice a creature: This creature gets +1/+1 until end of turn."
         ));
     }
 }

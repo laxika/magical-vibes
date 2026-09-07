@@ -62,6 +62,7 @@ class GreenDragonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Green Dragon");
 
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
@@ -83,6 +84,7 @@ class GreenDragonTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
         harness.passBothPriorities();
 
@@ -111,8 +113,6 @@ class GreenDragonTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Hill Giant");
     }

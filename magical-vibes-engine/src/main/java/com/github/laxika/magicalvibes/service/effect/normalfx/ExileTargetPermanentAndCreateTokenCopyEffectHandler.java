@@ -45,7 +45,7 @@ public class ExileTargetPermanentAndCreateTokenCopyEffectHandler implements Norm
                     new CreateTokenCopyOfTargetPermanentEffect(
                             e.additionalSubtypes(), e.additionalTypes(), e.powerOverride(), e.toughnessOverride(),
                             java.util.Map.of(), false, true, false, false,
-                            false, false, e.colorOverride(), e.additionalKeywords());
+                            false, false, e.colorOverride(), e.additionalKeywords(), java.util.List.of());
             tokenCopySupport.createTokenCopies(gameData, entry, java.util.List.of(exiledCard), null, tokenProfile);
         }
 

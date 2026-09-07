@@ -46,7 +46,8 @@ public class LockMatchingPermanentsEffectHandler implements NormalEffectHandlerB
 
         FilterContext ctx = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withXValue(entry.getXValue());
 
         List<Permanent> candidates = new ArrayList<>();
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {

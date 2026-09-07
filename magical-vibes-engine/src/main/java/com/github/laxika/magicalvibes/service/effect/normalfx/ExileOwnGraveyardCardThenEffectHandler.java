@@ -59,7 +59,7 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
 
             Card chosen = findMatchingCard(gameData, entry, exileThen, chosenCardId);
             if (chosen != null) {
-                exileCard(gameData, entry, chosen);
+                exileCard(gameData, entry, chosen, exileThen);
                 queueReflexiveAbility(gameData, entry, exileThen.thenEffect());
             }
             return;
@@ -100,16 +100,36 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
                 .orElse(null);
     }
 
-    private void exileCard(GameData gameData, StackEntry entry, Card card) {
+    private void exileCard(GameData gameData, StackEntry entry, Card card,
+                           ExileOwnGraveyardCardThenEffect exileThen) {
         UUID controllerId = entry.getControllerId();
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
-        exileService.exileCard(gameData, controllerId, card);
+        if (exileThen.trackWithSource() && entry.getSourcePermanentId() != null) {
+            exileService.exileCard(gameData, controllerId, card, entry.getSourcePermanentId());
+        } else {
+            exileService.exileCard(gameData, controllerId, card);
+        }
         gameLogService.append(gameData,
                 GameLog.textCardText(entry.getCard().getName() + " exiles ", card,
                         " from its controller's graveyard."));
     }
 
     private void queueReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        if (!(thenEffect instanceof ReturnCardFromGraveyardEffect)) {
+            StackEntry reflexiveAbility = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    entry.getCard(),
+                    entry.getControllerId(),
+                    entry.getCard().getName() + "'s reflexive ability",
+                    new ArrayList<>(List.of(thenEffect)),
+                    entry.getSourcePermanentId(),
+                    List.of()
+            );
+            reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+            gameData.stack.add(reflexiveAbility);
+            return;
+        }
+
         List<Card> targets = matchingReturnTargets(gameData, entry, thenEffect);
         if (targets.isEmpty()) {
             gameLogService.append(gameData,
@@ -120,7 +140,7 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (targets.size() == 1) {
             Card target = targets.getFirst();
-            gameData.stack.add(new StackEntry(
+            StackEntry reflexiveAbility = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     entry.getCard(),
                     entry.getControllerId(),
@@ -133,7 +153,9 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
                     Zone.GRAVEYARD,
                     null,
                     null
-            ));
+            );
+            reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+            gameData.stack.add(reflexiveAbility);
             gameLogService.append(gameData,
                     GameLog.builder().card(entry.getCard()).text("'s reflexive ability targets ")
                             .card(target).text(" in its graveyard.").build());

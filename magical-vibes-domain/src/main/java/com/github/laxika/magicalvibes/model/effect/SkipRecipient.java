@@ -15,10 +15,13 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #TARGET_PLAYER} — a targeted player, also read from {@code targetId} ("target player
  *       skips …"; False Peace, Empty City Ruse, Stonehorn Dignitary, Yosei, the Morning Star). This
  *       is the only value that declares a player {@code TargetSpec}.</li>
+ *   <li>{@link #EACH_OPPONENT} — every player other than the resolving controller ("each opponent
+ *       skips …"; Brine Elemental).</li>
  * </ul>
  */
 public enum SkipRecipient {
     CONTROLLER,
     DAMAGED_PLAYER,
-    TARGET_PLAYER
+    TARGET_PLAYER,
+    EACH_OPPONENT
 }

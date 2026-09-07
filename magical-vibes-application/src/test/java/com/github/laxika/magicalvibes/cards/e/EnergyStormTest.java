@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.f.Flare;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
-import com.github.laxika.magicalvibes.cards.o.OpenFire;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranSkycaptain;
+import com.github.laxika.magicalvibes.cards.l.LavaBurst;
+import com.github.laxika.magicalvibes.cards.s.StormSpirit;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,32 +22,24 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EnergyStorm.class, BalduvianBears.class, Flare.class, Hurricane.class, Incinerate.class,
+        KjeldoranSkycaptain.class, LavaBurst.class, StormSpirit.class})
 class EnergyStormTest extends BaseCardTest {
 
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private void advanceToNextTurn(Player currentActivePlayer) {
+        Player nextActivePlayer = currentActivePlayer.equals(player1) ? player2 : player1;
         harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
+        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
     }
 
     @Test
-    @DisplayName("Prevents Shock damage to a player")
+    @DisplayName("Prevents Flare damage to a player")
     void preventsInstantDamageToPlayer() {
         harness.addToBattlefield(player1, new EnergyStorm());
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Flare()));
+        harness.addMana(player2, ManaColor.RED, 3);
 
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
@@ -69,31 +63,27 @@ class EnergyStormTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Prevents Open Fire damage to a creature")
+    @DisplayName("Prevents Incinerate damage to a creature")
     void preventsInstantDamageToCreature() {
         harness.addToBattlefield(player1, new EnergyStorm());
-        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        harness.setHand(player1, List.of(new OpenFire()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, giant.getId());
+        harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(giant);
-        assertThat(giant.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(bears.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Does not prevent combat damage")
     void doesNotPreventCombatDamage() {
         harness.addToBattlefield(player1, new EnergyStorm());
-        Permanent bears = addReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new BalduvianBears());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
+        declareAttackers(player2, List.of(0));
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
@@ -102,9 +92,9 @@ class EnergyStormTest extends BaseCardTest {
     @Test
     @DisplayName("Flying creatures stay tapped; non-fliers untap")
     void flyingCreaturesDontUntap() {
-        addReady(player1, new EnergyStorm());
-        Permanent flier = addReady(player1, new AirElemental());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new EnergyStorm());
+        Permanent flier = addCreatureReady(player1, new KjeldoranSkycaptain());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
         flier.tap();
         bears.tap();
 
@@ -118,12 +108,40 @@ class EnergyStormTest extends BaseCardTest {
     @DisplayName("Flying creatures controlled by an opponent also stay tapped")
     void opponentFlyingCreaturesDontUntap() {
         harness.addToBattlefield(player1, new EnergyStorm());
-        Permanent flier = addReady(player2, new AirElemental());
+        Permanent flier = addCreatureReady(player2, new KjeldoranSkycaptain());
         flier.tap();
 
         advanceToNextTurn(player1);
 
         assertThat(flier.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not prevent damage from an activated ability")
+    void doesNotPreventActivatedAbilityDamage() {
+        harness.addToBattlefield(player1, new EnergyStorm());
+        Permanent spirit = addCreatureReady(player1, new StormSpirit());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+
+        int spiritIndex = gd.playerBattlefields.get(player1.getId()).indexOf(spirit);
+        harness.activateAbility(player1, spiritIndex, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Does not prevent spell damage that cannot be prevented")
+    void doesNotPreventUnpreventableSpellDamage() {
+        harness.addToBattlefield(player1, new EnergyStorm());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new LavaBurst()));
+        harness.addMana(player1, ManaColor.RED, 2); // X=1 + {R}
+
+        harness.castSorcery(player1, 0, 1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -138,6 +156,29 @@ class EnergyStormTest extends BaseCardTest {
         assertThat(storm.getCounterCount(CounterType.AGE)).isEqualTo(1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(storm);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep increases with each age counter")
+    void cumulativeUpkeepIncreasesEachUpkeep() {
+        Permanent storm = harness.addToBattlefieldAndReturn(player1, new EnergyStorm());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(storm.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(storm);

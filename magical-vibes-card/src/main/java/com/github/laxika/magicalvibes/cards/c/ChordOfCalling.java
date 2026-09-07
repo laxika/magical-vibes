@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "172")
+@CardRegistration(set = "RAV", collectorNumber = "156")
 public class ChordOfCalling extends Card {
 
     public ChordOfCalling() {

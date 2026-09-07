@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "66")
+@CardRegistration(set = "TOR", collectorNumber = "38")
 public class GhostlyWings extends Card {
 
     public GhostlyWings() {

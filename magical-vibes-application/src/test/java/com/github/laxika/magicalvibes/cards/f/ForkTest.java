@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.d.Disintegrate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,23 +18,23 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Fork.class, Boomerang.class, GrizzlyBears.class})
+@CardUsed({Fork.class, Disintegrate.class, GrizzlyBears.class, Unsummon.class})
 class ForkTest extends BaseCardTest {
 
     @Test
     void copiesAsRedAndOffersNewTargets() {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Boomerang boomerang = new Boomerang();
+        Unsummon unsummon = new Unsummon();
 
-        harness.setHand(player1, List.of(boomerang));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(unsummon));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setHand(player2, List.of(new Fork()));
         harness.addMana(player2, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, firstTarget.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
+        harness.castInstant(player2, 0, unsummon.getId());
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
@@ -47,7 +48,46 @@ class ForkTest extends BaseCardTest {
         assertThat(gameData.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(secondTarget.getId());
+                .contains(firstTarget.getId(), secondTarget.getId());
+
+        harness.handlePermanentChosen(player2, secondTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gameData.playerBattlefields.get(player1.getId()))
+                .contains(firstTarget)
+                .doesNotContain(secondTarget);
+        assertThat(gameData.playerHands.get(player1.getId()))
+                .contains(secondTarget.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gameData.playerBattlefields.get(player1.getId()))
+                .doesNotContain(firstTarget, secondTarget);
+        assertThat(gameData.playerHands.get(player1.getId()))
+                .contains(firstTarget.getCard(), secondTarget.getCard());
+    }
+
+    @Test
+    void copiesSorceryAndPreservesItsEffect() {
+        Disintegrate disintegrate = new Disintegrate();
+        harness.setHand(player1, List.of(disintegrate));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLife(player2, 20);
+
+        harness.setHand(player2, List.of(new Fork()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, disintegrate.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

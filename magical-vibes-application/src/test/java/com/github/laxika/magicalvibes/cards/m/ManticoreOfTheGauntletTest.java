@@ -42,6 +42,19 @@ class ManticoreOfTheGauntletTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
+    @Test
+    @DisplayName("ETB cannot target its controller with opponent damage")
+    void etbCannotDamageController() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new ManticoreOfTheGauntlet()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(elemental.getId(), player1.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an opponent or planeswalker");
+    }
+
     // ===== The counter target must be a creature you control =====
 
     @Test

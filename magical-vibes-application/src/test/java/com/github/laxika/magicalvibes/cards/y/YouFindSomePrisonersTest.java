@@ -21,12 +21,12 @@ class YouFindSomePrisonersTest extends BaseCardTest {
     @Test
     void breakTheirChainsDestroysAnArtifact() {
         FountainOfYouth artifact = new FountainOfYouth();
-        harness.addToBattlefield(player2, artifact);
+        var permanent = harness.addToBattlefieldAndReturn(player2, artifact);
         harness.setHand(player1, List.of(new YouFindSomePrisoners()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castModalInstant(player1, 0, 0, List.of(artifact.getId()));
+        harness.castModalInstant(player1, 0, 0, List.of(permanent.getId()));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");

@@ -42,6 +42,7 @@ public class ReturnVoyagingCardFromExileEffectHandler implements NormalEffectHan
         gameData.exiledVoyageControllerIds.remove(cardId);
 
         Permanent permanent = new Permanent(exiled.card());
+        permanent.setEnteredFromExile(true);
         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, voyageCounters);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, exiled.ownerId(), permanent);
         battlefieldEntryService.handleCreatureEnteredBattlefield(

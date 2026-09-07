@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -37,6 +38,9 @@ public class InputCompletionService {
     @Autowired
     @Lazy
     private WarpWorldService warpWorldService;
+    @Autowired
+    @Lazy
+    private DrawService drawService;
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
@@ -63,6 +67,11 @@ public class InputCompletionService {
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
+        if (!gameData.pendingCardDraws.isEmpty()) {
+            drawService.resumePendingCardDraws(gameData);
+            if (gameData.status == GameStatus.FINISHED) return;
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             StackEntry pendingAuraEntry = gameData.interaction.consumePendingAuraResolutionEntry();

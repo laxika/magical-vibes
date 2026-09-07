@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
     private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -76,7 +78,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                         .text(" from the top of their library.")
                         .build());
 
-                if (isSpell(card) && card.getManaValue() <= manaValueLimit) {
+                if (isCastable(card, e, entry) && card.getManaValue() <= manaValueLimit) {
                     castableSpellIds.add(card.getId());
                 }
             }
@@ -110,5 +112,11 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             return true;
         }
         return card.getType().isPermanentType() && !card.hasType(CardType.LAND);
+    }
+
+    private boolean isCastable(Card card, ExileTopCardsAndMayCastSpellsEffect effect, StackEntry entry) {
+        return effect.castFilter() == null
+                ? isSpell(card)
+                : predicateEvaluationService.matchesCardPredicate(card, effect.castFilter(), entry.getCard().getId());
     }
 }

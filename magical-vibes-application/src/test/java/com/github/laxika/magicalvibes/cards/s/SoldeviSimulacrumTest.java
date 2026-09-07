@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SoldeviSimulacrum.class)
 class SoldeviSimulacrumTest extends BaseCardTest {
 
     @Test
@@ -31,6 +33,42 @@ class SoldeviSimulacrumTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep costs two mana on the second upkeep")
+    void secondUpkeepCostsTwoMana() {
+        Permanent simulacrum = harness.addToBattlefieldAndReturn(player1, new SoldeviSimulacrum());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+
+        assertThat(simulacrum.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(simulacrum);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during its controller's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent simulacrum = harness.addToBattlefieldAndReturn(player1, new SoldeviSimulacrum());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(simulacrum.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(simulacrum);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Soldevi Simulacrum")
     void declineSacrifices() {
         Permanent simulacrum = harness.addToBattlefieldAndReturn(player1, new SoldeviSimulacrum());
@@ -46,7 +84,7 @@ class SoldeviSimulacrumTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability gives +1/+0 until end of turn")
     void abilityBoostsSelf() {
-        Permanent simulacrum = addReadySimulacrum();
+        Permanent simulacrum = addCreatureReady(player1, new SoldeviSimulacrum());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -59,7 +97,7 @@ class SoldeviSimulacrumTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostResetsAtEndOfTurn() {
-        Permanent simulacrum = addReadySimulacrum();
+        Permanent simulacrum = addCreatureReady(player1, new SoldeviSimulacrum());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -73,10 +111,4 @@ class SoldeviSimulacrumTest extends BaseCardTest {
         assertThat(simulacrum.getPowerModifier()).isEqualTo(0);
     }
 
-    private Permanent addReadySimulacrum() {
-        Permanent perm = new Permanent(new SoldeviSimulacrum());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
-    }
 }

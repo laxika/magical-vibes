@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,7 +98,25 @@ class MultiplePermanentSacrificeCostHandlerTest {
                 singleCost, predicateEvaluationService, sacrificeAction, sourceId);
         gameData.playerBattlefields.get(playerId).add(source);
 
-        when(predicateEvaluationService.matchesPermanentPredicate(gameData, source, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                eq(source), eq(filter), any(FilterContext.class))).thenReturn(true);
+
+        assertThat(singleHandler.getValidChoiceIds(gameData, playerId)).containsExactly(sourceId);
+    }
+
+    @Test
+    @DisplayName("source-dependent filters receive context when source sacrifice is allowed")
+    void sourceDependentFilterReceivesContextWhenSourceSacrificeIsAllowed() {
+        Permanent source = createPermanent("Source Creature");
+        UUID sourceId = source.getId();
+        SacrificePermanentCost singleCost = new SacrificePermanentCost(
+                new PermanentIsSourcePermanentPredicate(), "this permanent", false);
+        MultiplePermanentSacrificeCostHandler singleHandler = new MultiplePermanentSacrificeCostHandler(
+                singleCost, predicateEvaluationService, sacrificeAction, sourceId);
+        gameData.playerBattlefields.get(playerId).add(source);
+
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                eq(source), eq(singleCost.filter()), any(FilterContext.class))).thenReturn(true);
 
         assertThat(singleHandler.getValidChoiceIds(gameData, playerId)).containsExactly(sourceId);
     }

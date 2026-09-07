@@ -11,6 +11,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "78")
+@CardRegistration(set = "LEG", collectorNumber = "56")
 public class FlashCounter extends Card {
 
     public FlashCounter() {

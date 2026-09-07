@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomHandCardAndPlayEffect;
@@ -151,7 +152,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
                 gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ").card(revealed).text(" without paying its mana cost (" + sourceName + ").").build());
                 log.info("Game {} - {} casts {} (Wild Evocation) without paying mana", gameData.id, playerName, revealed.getName());
 
-                triggerCollectionService.checkSpellCastTriggers(gameData, revealed, targetPlayerId, false);
+                triggerCollectionService.checkSpellCastTriggers(gameData, revealed, targetPlayerId, Zone.HAND);
             }
         }
     

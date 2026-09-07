@@ -1,0 +1,39 @@
+package com.github.laxika.magicalvibes.cards.c;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DisturbCast;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+
+import java.util.List;
+
+@CardRegistration(set = "MID", collectorNumber = "92")
+public class CovertCutpurse extends Card {
+
+    public CovertCutpurse() {
+        setBackFaceCard(new CovetousGeist());
+
+        target(new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
+                        new PermanentDealtDamageThisTurnPredicate()
+                )),
+                "Target must be a creature an opponent controls that was dealt damage this turn"
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+
+        addCastingOption(new DisturbCast("{4}{B}"));
+    }
+
+    @Override
+    public String getBackFaceClassName() {
+        return "CovetousGeist";
+    }
+}

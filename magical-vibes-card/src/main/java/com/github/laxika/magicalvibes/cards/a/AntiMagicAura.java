@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "72")
+@CardRegistration(set = "LEG", collectorNumber = "45")
 public class AntiMagicAura extends Card {
 
     public AntiMagicAura() {

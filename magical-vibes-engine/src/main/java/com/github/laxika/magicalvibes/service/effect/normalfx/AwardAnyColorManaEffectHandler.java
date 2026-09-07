@@ -55,6 +55,8 @@ public class AwardAnyColorManaEffectHandler implements NormalEffectHandlerBean {
                 e.manaRecipientIsTargetPlayer() ? entry.getTargetId() : null,
                 source != null && gameQueryService.hasEffectiveSupertype(
                         gameData, source, com.github.laxika.magicalvibes.model.CardSupertype.SNOW),
+                source != null && GameQueryService.permanentHasSubtype(source, CardSubtype.CAVE),
+                source == null ? null : gameQueryService.getEffectiveColors(gameData, source),
                 source != null && GameQueryService.permanentHasSubtype(source, CardSubtype.TREASURE));
         if (prompted) {
             String playerName = gameData.playerIdToName.get(entry.getControllerId());

@@ -1,0 +1,24 @@
+package com.github.laxika.magicalvibes.cards.t;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+
+@CardRegistration(set = "PLC", collectorNumber = "82")
+public class TreacherousUrge extends Card {
+
+    public TreacherousUrge() {
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"
+        )).addEffect(EffectSlot.SPELL,
+                new ChooseCardFromTargetHandToBattlefieldEffect(
+                        new CardTypePredicate(CardType.CREATURE), "creature", true, true));
+    }
+}

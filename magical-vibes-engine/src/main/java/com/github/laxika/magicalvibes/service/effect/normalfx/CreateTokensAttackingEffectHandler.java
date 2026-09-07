@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -36,7 +37,7 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
         }
 
         int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData, entry.getControllerId(), create.amount(), create.tokenEffect().subtypes());
+                gameData, entry.getControllerId(), create.amount(), create.tokenEffect().subtypes(), create.tokenEffect().primaryType() == CardType.CREATURE);
         PermanentChoiceContext.CreateTokensAttacking context = new PermanentChoiceContext.CreateTokensAttacking(
                 entry.getControllerId(), entry.getCard(), create.tokenEffect(), create.amount(), tokenCount,
                 create.sacrificeAtEndStep(), List.of());

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
@@ -19,6 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -27,15 +31,18 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatureDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -45,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 
@@ -159,6 +167,28 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof TributeNotPaidEffect tributeNotPaid) {
             return classify(gameData, tributeNotPaid.wrapped(), aiPlayerId);
+        }
+        if (effect instanceof SacrificePermanentsOrElseEffect sacrificeOrElse) {
+            TargetPolarity sacrificed = classify(gameData, sacrificeOrElse.sacrificedEffect(), aiPlayerId);
+            TargetPolarity otherwise = classify(gameData, sacrificeOrElse.elseEffect(), aiPlayerId);
+            return higherPriority(sacrificed, otherwise);
+        }
+
+        if (effect instanceof CreateTokenAttachedToTargetEffect attachToken) {
+            return attachToken.targetControllerRelation() == PlayerRelation.OPPONENT
+                    ? TargetPolarity.HARMFUL
+                    : TargetPolarity.BENEFICIAL;
+        }
+        if (effect instanceof CreateTokenAttachedToTargetThenEffect attachTokenThen) {
+            return attachTokenThen.targetControllerRelation() == PlayerRelation.OPPONENT
+                    ? TargetPolarity.HARMFUL
+                    : TargetPolarity.BENEFICIAL;
+        }
+
+        if (effect instanceof ExileTargetCreaturesUntilSourceLeavesWithCounterEffect
+                || effect instanceof ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect
+                || effect instanceof PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect) {
+            return TargetPolarity.HARMFUL_REMOVAL;
         }
 
         // Removal: the target leaves the battlefield. removalKind() is non-null exactly for
@@ -297,9 +327,14 @@ public class TargetPolarityClassifier {
             return TargetPolarity.BENEFICIAL;
         }
         if (effect instanceof KeywordGrantingEffect grant) {
-            return grant.scope() == GrantScope.TARGET || grant.scope() == GrantScope.ENCHANTED_CREATURE
+            return grant.scope() == GrantScope.TARGET
+                    || grant.scope() == GrantScope.TARGET_AND_SHARING_CREATURES
+                    || grant.scope() == GrantScope.ENCHANTED_CREATURE
                     ? TargetPolarity.BENEFICIAL
                     : null;
+        }
+        if (effect instanceof SuspectEffect suspect) {
+            return suspect.scope() == GrantScope.TARGET ? TargetPolarity.NEUTRAL : null;
         }
 
         // Base-P/T setters swing both ways: Diminish (1/1) shrinks the opponent's fatty,
@@ -340,6 +375,7 @@ public class TargetPolarityClassifier {
             entry("ExileTargetCreatureAndAllWithSameNameEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndImprintEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ExileTargetPermanentAndTrackWithSourceEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentMayPlayUntilNextTurnEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -362,11 +398,13 @@ public class TargetPolarityClassifier {
             entry("SacrificeTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ShuffleTargetPermanentIntoLibraryThenDiscoverEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("EquipoiseEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 
             // The target (or a permanent tied to it) takes damage.
             entry("DealDamageEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("DealDamageToOtherCreaturesControlledByTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToEachTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetAndTheirCreaturesEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetControllerIfTargetHasKeywordEffect", TargetPolarity.HARMFUL_DAMAGE),
@@ -385,14 +423,17 @@ public class TargetPolarityClassifier {
             entry("SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetCreatureDealsPowerDamageToSelfEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("ChannelHarmEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ControlledCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ExileTopCardMayDealDamageOrPlayEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardDealManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("RevealUntilNonlandBottomThenDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealUntilNonlandToHandRestToBottomDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
 
             // Other harm: fights, steals, strips, debuffs, forced blocks.
             entry("DestroyAttachmentsOnTargetCreatureEffect", TargetPolarity.HARMFUL),
+            entry("CantBlockTargetAndSharingCreaturesUntilEndOfTurnEffect", TargetPolarity.HARMFUL),
             entry("EnchantedCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("EnteringCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect", TargetPolarity.HARMFUL),
@@ -416,29 +457,55 @@ public class TargetPolarityClassifier {
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
             entry("TargetCreatureDealsPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL),
             entry("TargetCreatureDealsPowerDamageToControllerEffect", TargetPolarity.HARMFUL),
+            entry("TargetCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("TargetCreaturesDealToughnessDamageToEachOtherEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetDealsPowerDamageToTargetEffect", TargetPolarity.HARMFUL),
+            entry("EachTargetCreatureDealsPowerDamageToTargetCreatureEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("RemoveUpToCountersFromTargetEffect", TargetPolarity.HARMFUL),
             entry("TargetPlayerGainsControlOfTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("UnattachEquipmentFromTargetPermanentsEffect", TargetPolarity.HARMFUL),
             entry("PayAnyAmountOfEnergyToBoostTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("PayEnergyToGainControlOfTargetEffect", TargetPolarity.HARMFUL),
+            entry("PutCounterOnEitherTargetPermanentEffect", TargetPolarity.HARMFUL),
+            entry("RemoveChosenCountersFromTargetPermanentEffect", TargetPolarity.HARMFUL),
+
+            // Arcbond's watched creature is a strategic choice: either player's creature may be
+            // the best center for the later symmetric damage event.
+            entry("RegisterDelayedWatchedCreatureDealtDamageEffect", TargetPolarity.NEUTRAL),
+            entry("RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect", TargetPolarity.NEUTRAL),
+            // The delayed combat-damage reward belongs to the effect's controller, but either
+            // player's creature can be the strategically useful watched source.
+            entry("RegisterDelayedWatchedCreaturesCombatDamageEffect", TargetPolarity.NEUTRAL),
+            // Feint can save either an attacker or its blockers depending on the combat state.
+            entry("TapAndPreventCombatDamageByTargetAndBlockersEffect", TargetPolarity.NEUTRAL),
+            entry("TurnTargetCreatureFaceDownEffect", TargetPolarity.NEUTRAL),
+            entry("TurnTargetCreatureFaceUpEffect", TargetPolarity.NEUTRAL),
 
             // The target's side comes out ahead: pumps, shields, blinks, lure, animation.
             entry("AnimatePermanentsEffect", TargetPolarity.BENEFICIAL),
+            entry("EarthbendTargetLandEffect", TargetPolarity.BENEFICIAL),
+            entry("EarthbendTargetLandThenFightEffect", TargetPolarity.BENEFICIAL),
+            entry("AttachOneOfControlledEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetAuraOrEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachSourceEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("BuffTargetCreatureIndefinitelyEffect", TargetPolarity.BENEFICIAL),
+            entry("DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleCountersOnTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("DoublePlusOneCountersOnTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
+            entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
             // Predator's Rapport: targets a creature you control and only reads its stats.
             entry("GainLifeEqualToTargetCreatureStatEffect", TargetPolarity.BENEFICIAL),
             // Chandra's Ignition: the target is a creature you control and is only the damage
             // source — it takes no damage itself, so the AI should aim at its own board.
             entry("TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEffect", TargetPolarity.BENEFICIAL),
+            entry("TargetCreatureDealsPowerDamageToEachOtherCreatureEffect", TargetPolarity.BENEFICIAL),
+            entry("TapTargetThenEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantProtectionChoiceToTargetAndSharingCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantChosenKeywordEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
@@ -450,8 +517,10 @@ public class TargetPolarityClassifier {
             entry("GrantTargetingRestrictionToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureUnblockableEffect", TargetPolarity.BENEFICIAL),
             entry("TapCombatOpponentsOfTargetAtEndOfCombatEffect", TargetPolarity.BENEFICIAL),
+            entry("TransformTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect", TargetPolarity.BENEFICIAL),
+            entry("PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageToTargetFromChosenSourceEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDividedDamageEffect", TargetPolarity.BENEFICIAL),
             entry("PreventNextDamageByTargetCreatureEffect", TargetPolarity.BENEFICIAL),
@@ -461,15 +530,18 @@ public class TargetPolarityClassifier {
             entry("RedirectAllDamageToChosenCreatureUntilNextTurnEffect", TargetPolarity.BENEFICIAL),
             entry("RedirectTargetCreatureDamageFromChosenSourceToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("ReturnTargetCardOnDeathThisTurnEffect", TargetPolarity.BENEFICIAL),
+            entry("UntapTargetAndSharingCreaturesEffect", TargetPolarity.BENEFICIAL),
 
             // Pack Hunt searches for cards named after the opposing creature it targets.
             entry("SearchLibraryForCardsWithTargetCreatureNameEffect", TargetPolarity.HARMFUL),
+            entry("SearchTargetPermanentControllerLibraryForSameNameToBattlefieldEffect", TargetPolarity.HARMFUL),
 
             // Deliberately directionless: copies, color/type tweaks, symmetric moves — and
             // Polymorph/Shape Anew-style upgrades that are usually aimed at the AI's own
             // permanents (NEUTRAL keeps the own-battlefield-first fallback for them).
             entry("AddCardTypeToTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("AddAnotherCounterOfEachKindToTargetEffect", TargetPolarity.NEUTRAL),
+            entry("AdjustChosenCounterOnTargetEffect", TargetPolarity.NEUTRAL),
             // Quarry Hauler chooses add-or-remove per counter kind at resolution — no fixed direction.
             entry("AdjustEachCounterKindOnTargetEffect", TargetPolarity.NEUTRAL),
             entry("AttachAllAurasToAnotherPermanentEffect", TargetPolarity.NEUTRAL),
@@ -487,18 +559,28 @@ public class TargetPolarityClassifier {
             entry("ExileTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
             entry("EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
+            entry("MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("GrantBasicLandTypeToTargetEffect", TargetPolarity.NEUTRAL),
+            entry("GrantColorEffect", TargetPolarity.NEUTRAL),
             entry("GrantColorUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
+            entry("GrantSubtypeEffect", TargetPolarity.NEUTRAL),
+            entry("GrantSubtypeUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
+            entry("GrantSubtypeToTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("MoveCounterFromTargetCreatureToTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("RemoveAllCountersFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
+            entry("RegisterControlLossUnattachTriggerEffect", TargetPolarity.NEUTRAL),
             entry("SearchLibraryForTargetCreatureNameToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("SacrificeTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("SetTargetColorEffect", TargetPolarity.NEUTRAL),
+            entry("SetTargetPermanentNameEffect", TargetPolarity.NEUTRAL),
+            entry("SetTargetPermanentSupertypeEffect", TargetPolarity.NEUTRAL),
+            entry("SetCardTypesEffect", TargetPolarity.HARMFUL),
             entry("SetChosenColorForTargetCreaturesUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeColorlessUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("SwitchPowerToughnessEffect", TargetPolarity.NEUTRAL),
+            entry("SuspectTargetCreatureEffect", TargetPolarity.NEUTRAL),
             entry("TargetCreatureBecomesSubtypeUntilEndOfTurnEffect", TargetPolarity.NEUTRAL)
     );
 

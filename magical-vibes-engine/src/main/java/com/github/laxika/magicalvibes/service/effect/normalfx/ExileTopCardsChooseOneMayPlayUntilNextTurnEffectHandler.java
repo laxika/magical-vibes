@@ -53,7 +53,9 @@ public class ExileTopCardsChooseOneMayPlayUntilNextTurnEffectHandler implements 
 
         UUID controllerId = entry.getControllerId();
         UUID libraryOwnerId = ((ExileTopCardsChooseOneMayPlayUntilNextTurnEffect) effect).libraryScope()
-                == LibraryScope.TARGET_PLAYER ? entry.getTargetId() : controllerId;
+                == LibraryScope.TARGET_PLAYER
+                ? (entry.targetsForEffect(effect).isEmpty() ? entry.getTargetId() : entry.targetsForEffect(effect).getFirst())
+                : controllerId;
         if (libraryOwnerId == null || !gameData.orderedPlayerIds.contains(libraryOwnerId)) {
             return;
         }

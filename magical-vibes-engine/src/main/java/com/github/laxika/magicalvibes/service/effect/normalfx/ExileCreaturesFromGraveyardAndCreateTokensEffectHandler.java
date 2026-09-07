@@ -86,7 +86,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
 
         int tokensToCreate = exiledCards.size();
         int totalTokens = gameQueryService.getTokenCreationAmount(
-                gameData, controllerId, tokensToCreate, List.of(CardSubtype.ZOMBIE));
+                gameData, controllerId, tokensToCreate, List.of(CardSubtype.ZOMBIE), true);
         // All the Zombie tokens are created at once, so none of them applies its own replacement or
         // static abilities to the others as they enter (CR 614.12).
         List<Permanent> batch = new ArrayList<>();

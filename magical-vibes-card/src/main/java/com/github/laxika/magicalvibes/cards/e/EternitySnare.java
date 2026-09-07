@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "37")
+@CardRegistration(set = "TSP", collectorNumber = "61")
 public class EternitySnare extends Card {
 
     public EternitySnare() {

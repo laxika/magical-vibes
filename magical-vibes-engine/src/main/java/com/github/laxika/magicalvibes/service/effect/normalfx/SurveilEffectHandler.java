@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.*;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Component;
 public class SurveilEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
 
@@ -37,22 +40,24 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SurveilEffect e = (SurveilEffect) effect;
+        int count = Math.max(0, amountEvaluationService.evaluate(
+                gameData, e.count(), AmountContext.forStackEntry(entry, null)));
 
         if (e.applyAdditionalChoices()) {
             List<Integer> additionalCounts = additionalSurveilCounts(gameData, entry.getControllerId());
             List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
-            if (e.count() > 0 && !additionalCounts.isEmpty() && deck != null && deck.size() > e.count()) {
+            if (count > 0 && !additionalCounts.isEmpty() && deck != null && deck.size() > count) {
                 int effectIndex = entry.getEffectsToResolve().indexOf(effect);
-                entry.insertEffectsToResolve(effectIndex + 1,
-                        List.of(buildAdditionalSurveilChoices(additionalCounts, 0, e.count())));
+                entry.insertEffectsToResolve(effectIndex + 1, List.of(
+                        buildAdditionalSurveilChoices(additionalCounts, 0, count)));
                 return;
             }
         }
 
-        resolveSurveil(gameData, entry, e);
+        resolveSurveil(gameData, entry, e, count);
     }
 
-    private void resolveSurveil(GameData gameData, StackEntry entry, SurveilEffect e) {
+    private void resolveSurveil(GameData gameData, StackEntry entry, SurveilEffect effect, int count) {
 
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -60,7 +65,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
         String sourceName = entry.getCard().getName();
 
         // Surveil 0 (or fewer): no surveil event occurs.
-        if (e.count() <= 0) {
+        if (count <= 0) {
             return;
         }
 
@@ -73,14 +78,14 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
 
         // Surveil 2+ uses the top-of-library / graveyard split interaction (shared with scry).
         // Surveil 1 stays a single "put the top card into your graveyard?" may-ability.
-        if (e.count() > 1) {
-            int count = Math.min(e.count(), deck.size());
-            List<Card> topCards = new ArrayList<>(deck.subList(0, count));
-            deck.subList(0, count).clear();
+        if (count > 1) {
+            int cardsToSurveil = Math.min(count, deck.size());
+            List<Card> topCards = new ArrayList<>(deck.subList(0, cardsToSurveil));
+            deck.subList(0, cardsToSurveil).clear();
 
-            String logEntry = playerName + " surveils " + count + " (" + sourceName + ").";
+            String logEntry = playerName + " surveils " + cardsToSurveil + " (" + sourceName + ").";
             gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} surveils {} ({})", gameData.id, playerName, count, sourceName);
+            log.info("Game {} - {} surveils {} ({})", gameData.id, playerName, cardsToSurveil, sourceName);
             triggerCollectionService.checkSurveilTriggers(gameData, controllerId);
 
             interactionHandlerRegistry.begin(gameData,
@@ -98,7 +103,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 controllerId,
-                List.of(e),
+                List.of(effect),
                 sourceName + " — Put " + topCard.getName() + " into your graveyard?",
                 null,
                 null,

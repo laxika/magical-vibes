@@ -40,7 +40,7 @@ class TheTarrasqueTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 11);
 
         harness.castInstant(player2, 0, tarrasque.getId());
         harness.passBothPriorities();
@@ -62,7 +62,7 @@ class TheTarrasqueTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 11);
 
         harness.castInstant(player2, 0, tarrasque.getId());
         harness.passBothPriorities();

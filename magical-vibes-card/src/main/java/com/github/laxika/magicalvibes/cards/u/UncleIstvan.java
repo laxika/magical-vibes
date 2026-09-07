@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreatu
 
 @CardRegistration(set = "4ED", collectorNumber = "165")
 @CardRegistration(set = "DRK", collectorNumber = "54")
+@CardRegistration(set = "TSB", collectorNumber = "51")
 public class UncleIstvan extends Card {
 
     public UncleIstvan() {

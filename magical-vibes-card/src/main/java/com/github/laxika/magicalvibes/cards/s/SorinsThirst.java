@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "110")
 @CardRegistration(set = "M20", collectorNumber = "325")
+@CardRegistration(set = "WAR", collectorNumber = "104")
 public class SorinsThirst extends Card {
 
     public SorinsThirst() {

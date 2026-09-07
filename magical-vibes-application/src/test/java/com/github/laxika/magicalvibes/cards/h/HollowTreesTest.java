@@ -12,12 +12,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HollowTrees.class})
 class HollowTreesTest extends BaseCardTest {
-
-    // ===== Enters tapped =====
-
     @Test
     @DisplayName("Hollow Trees enters the battlefield tapped")
     void entersTapped() {
@@ -29,9 +27,6 @@ class HollowTreesTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Hollow Trees").isTapped()).isTrue();
     }
-
-    // ===== Upkeep storage-counter accrual =====
-
     @Test
     @DisplayName("Upkeep adds a storage counter while the land is tapped")
     void upkeepAddsStorageCounterWhileTapped() {
@@ -99,9 +94,6 @@ class HollowTreesTest extends BaseCardTest {
 
         assertThat(trees.getCounterCount(CounterType.STORAGE)).isZero();
     }
-
-    // ===== Mana ability =====
-
     @Test
     @DisplayName("Removing all storage counters adds that much green mana")
     void removingAllCountersAddsThatMuchGreen() {
@@ -141,6 +133,17 @@ class HollowTreesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The mana ability cannot be activated while Hollow Trees is tapped")
+    void cannotActivateManaAbilityWhileTapped() {
+        Permanent trees = addTreesWithCounters(3);
+        trees.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
     @DisplayName("Activating with no storage counters produces no mana and no choice")
     void activatingWithNoCountersProducesNoMana() {
         Permanent trees = addTreesWithCounters(0);
@@ -151,9 +154,6 @@ class HollowTreesTest extends BaseCardTest {
         assertThat(greenMana()).isZero();
         assertThat(trees.isTapped()).isTrue();
     }
-
-    // ===== Helpers =====
-
     private void beginPlayer1UntapChoice() {
         harness.forceActivePlayer(player2);
         harness.setHand(player1, List.of());

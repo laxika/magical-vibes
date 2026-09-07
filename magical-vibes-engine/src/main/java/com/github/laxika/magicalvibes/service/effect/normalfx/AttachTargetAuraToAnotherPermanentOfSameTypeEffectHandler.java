@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeAuraReanimateFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -62,6 +63,7 @@ public class AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler implement
                 return;
             }
             if (sameType(gameData, currentHost, permanent)
+                    && canMoveAuraTo(aura, permanent)
                     && auraAttachmentService.canEnchant(gameData, aura.getCard(), auraControllerId, permanent)
                     && !gameQueryService.hasProtectionFromSource(gameData, permanent, aura)) {
                 validTargetIds.add(permanent.getId());
@@ -97,6 +99,7 @@ public class AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler implement
                 || target.getId().equals(currentHost.getId()) || target.getId().equals(aura.getId())
                 || !aura.getCard().isAura() || !isCreatureOrLand(gameData, currentHost)
                 || !sameType(gameData, currentHost, target)
+                || !canMoveAuraTo(aura, target)
                 || !auraAttachmentService.canEnchant(gameData, aura.getCard(), auraControllerId, target)
                 || gameQueryService.hasProtectionFromSource(gameData, target, aura)) {
             return;
@@ -114,13 +117,21 @@ public class AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler implement
                 || (gameQueryService.isLand(gameData, currentHost) && gameQueryService.isLand(gameData, candidate));
     }
 
+    private boolean canMoveAuraTo(Permanent aura, Permanent candidate) {
+        boolean enchantsOnlyReanimatedCreature = aura.getCard().getEffects(
+                com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(BecomeAuraReanimateFromGraveyardEffect.class::isInstance);
+        return !enchantsOnlyReanimatedCreature
+                || candidate.getId().equals(aura.getChosenPermanentId());
+    }
+
     private void attach(GameData gameData, Permanent aura, Permanent target) {
         Permanent oldHost = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(target.getId());
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), target.getId());
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, target.getId());
         if (oldHost != null) {
             creatureControlService.recomputeControl(gameData, oldHost);
         }

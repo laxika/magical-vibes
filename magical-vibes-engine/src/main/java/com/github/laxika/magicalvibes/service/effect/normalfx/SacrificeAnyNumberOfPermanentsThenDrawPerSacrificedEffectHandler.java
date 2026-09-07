@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -45,9 +46,17 @@ public class SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffectHandler
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         List<UUID> eligibleIds = new ArrayList<>();
+        UUID sourceCardId = entry.getSourcePermanentSnapshot() != null
+                && entry.getSourcePermanentSnapshot().getOriginalCard() != null
+                ? entry.getSourcePermanentSnapshot().getOriginalCard().getId()
+                : entry.getCard().getId();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(sourceCardId)
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(entry.getSourcePermanentId());
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(gameData, perm, e.filter())) {
+                if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     eligibleIds.add(perm.getId());
                 }
             }
@@ -64,7 +73,7 @@ public class SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffectHandler
 
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, eligibleIds.size(),
                 new MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed(),
-                "Sacrifice any number of artifacts, creatures, and/or lands. "
+                "Sacrifice any number of permanents. "
                         + "You will draw a card for each permanent sacrificed this way.");
     }
 }

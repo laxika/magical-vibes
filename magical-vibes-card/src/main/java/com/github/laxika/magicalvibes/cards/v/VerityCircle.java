@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -23,8 +24,11 @@ public class VerityCircle extends Card {
 
     public VerityCircle() {
         addEffect(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED, new TriggeringPermanentConditionalEffect(
-                new PermanentIsCreaturePredicate(),
-                new MayEffect(new DrawCardEffect(1), "Draw a card?"), false, true));
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentNotPredicate(new PermanentIsAttackingPredicate())
+                )),
+                new MayEffect(new DrawCardEffect(1), "Draw a card?")));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,11 +26,9 @@ class XanatharGuildKingpinTest extends BaseCardTest {
         harness.addToBattlefield(player1, new XanatharGuildKingpin());
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2;
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
 
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.PermanentChosen(player2.getId()));
         harness.passBothPriorities();

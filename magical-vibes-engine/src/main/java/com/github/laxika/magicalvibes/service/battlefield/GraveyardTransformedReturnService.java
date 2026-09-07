@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,10 +45,20 @@ public class GraveyardTransformedReturnService {
 
     /**
      * Moves {@code cardId} from the graveyard onto the battlefield transformed and, when supplied,
-     * attaches the resulting Aura to the target player.
+     * attaches the resulting permanent to the target identified by {@code attachmentTargetId}.
      */
     public boolean returnTransformed(GameData gameData, UUID cardId, UUID ownerId, UUID controllerId,
                                      UUID attachmentTargetId) {
+        return returnTransformed(gameData, cardId, ownerId, controllerId, attachmentTargetId,
+                false, null, 0);
+    }
+
+    /**
+     * Moves the card to the battlefield transformed, optionally tapped and with counters.
+     */
+    public boolean returnTransformed(GameData gameData, UUID cardId, UUID ownerId, UUID controllerId,
+                                     UUID attachmentTargetId, boolean tapped,
+                                     CounterType enteringCounterType, int enteringCounterCount) {
         List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
         if (graveyard == null) {
             return false;
@@ -79,6 +90,12 @@ public class GraveyardTransformedReturnService {
         permanent.setCard(backFace);
         permanent.setTransformed(true);
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
+        if (tapped) {
+            permanent.tap();
+        }
+        if (enteringCounterCount > 0) {
+            permanent.setCounterCount(enteringCounterType, enteringCounterCount);
+        }
         if (attachmentTargetId != null) {
             permanent.setAttachedTo(attachmentTargetId);
         }

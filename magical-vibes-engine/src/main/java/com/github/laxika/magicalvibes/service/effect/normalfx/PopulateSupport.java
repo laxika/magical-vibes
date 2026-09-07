@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -51,7 +52,7 @@ public class PopulateSupport {
     public void createCopy(GameData gameData, UUID controllerId, Permanent sourceToken) {
         Card sourceCard = sourceToken.getCard();
         int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                gameData, controllerId, 1, sourceCard.getSubtypes());
+                gameData, controllerId, 1, sourceCard.getSubtypes(), sourceCard.hasType(CardType.CREATURE));
 
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(

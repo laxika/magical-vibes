@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
+import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.PendingAnimalMagnetismChoice;
+import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
@@ -21,10 +24,12 @@ import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
+import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.PendingThranTomeChoice;
 import com.github.laxika.magicalvibes.model.PendingStudyCounterExileReturn;
+import com.github.laxika.magicalvibes.model.PendingTruthOrTaleCardChoice;
 import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
 import com.github.laxika.magicalvibes.model.PendingValkiCopyChoice;
 import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
@@ -56,11 +61,14 @@ class PendingInteractionContractTest {
     /** Records that only wait in the queue and are serviced by beginning a promptable kind. */
     private static final Set<Class<?>> QUEUE_ONLY_CARRIERS = Set.of(
             PermanentChoiceContext.class,
+            PendingAllureOfTheUnknownChoice.class,
             PendingSphinxAmbassadorChoice.class,
             PendingCapriciousEfreetState.class,
             PendingKarnScionRevealChoice.class,
             PendingOpponentChoosesCardToHandRestToGraveyard.class,
+            PendingMemoriesReturningChoice.class,
             PendingMurmursFromBeyondChoice.class,
+            PendingAnimalMagnetismChoice.class,
             PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,
             PendingDubiousChallengeChoice.class,
@@ -74,9 +82,12 @@ class PendingInteractionContractTest {
             PendingGuildFeud.class,
             PendingThranTomeChoice.class,
             PendingStudyCounterExileReturn.class,
+            PendingPsychoticEpisodeChoice.class,
+            PendingTruthOrTaleCardChoice.class,
             PendingWhimsOfTheFates.class,
             PendingValkiCopyChoice.class,
             PendingValkiHandExileChoice.class,
+            PendingInteraction.PortentOfCalamityState.class,
             PendingInteraction.RevealedFreeCastGroup.class,
             PendingInteraction.RippleFreeCastGroup.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(

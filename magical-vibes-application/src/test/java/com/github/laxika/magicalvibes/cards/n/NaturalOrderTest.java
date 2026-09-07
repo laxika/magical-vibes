@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NaturalOrder.class, GrizzlyBears.class, ElvishRanger.class, HornedTurtle.class, Plains.class})
 class NaturalOrderTest extends BaseCardTest {
 
     // ===== Casting (additional cost: sacrifice a green creature) =====
@@ -26,8 +27,7 @@ class NaturalOrderTest extends BaseCardTest {
     @Test
     @DisplayName("Casting sacrifices the chosen green creature and puts the spell on the stack")
     void castingSacrificesGreenCreature() {
-        Permanent greenCreature = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player1.getId()).add(greenCreature);
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new NaturalOrder()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -35,8 +35,8 @@ class NaturalOrderTest extends BaseCardTest {
         harness.castSorceryWithSacrifice(player1, 0, greenCreature.getId());
 
         assertThat(gd.stack).hasSize(1);
-        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
-        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -53,8 +53,7 @@ class NaturalOrderTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice a non-green creature")
     void cannotSacrificeNonGreenCreature() {
-        Permanent blueCreature = new Permanent(new AirElemental());
-        gd.playerBattlefields.get(player1.getId()).add(blueCreature);
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new HornedTurtle());
 
         harness.setHand(player1, List.of(new NaturalOrder()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -76,7 +75,7 @@ class NaturalOrderTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
+                .containsExactlyInAnyOrder("Elvish Ranger", "Grizzly Bears");
     }
 
     @Test
@@ -100,7 +99,7 @@ class NaturalOrderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals(chosenName));
@@ -109,11 +108,24 @@ class NaturalOrderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Resolving sends Natural Order to its owner's graveyard")
+    void resolvingSendsSpellToGraveyard() {
+        castNaturalOrder();
+        setupLibrary();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Natural Order");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Natural Order"));
+    }
+
     // ===== Helpers =====
 
     private void castNaturalOrder() {
-        Permanent greenCreature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(greenCreature);
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new NaturalOrder()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -122,9 +134,6 @@ class NaturalOrderTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        // LlanowarElves + GrizzlyBears: green creatures; AirElemental: blue creature; Plains: basic land.
-        deck.addAll(List.of(new LlanowarElves(), new GrizzlyBears(), new AirElemental(), new Plains()));
+        harness.setLibrary(player1, List.of(new ElvishRanger(), new GrizzlyBears(), new HornedTurtle(), new Plains()));
     }
 }

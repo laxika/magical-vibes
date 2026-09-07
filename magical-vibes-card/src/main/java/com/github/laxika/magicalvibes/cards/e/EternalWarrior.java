@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "190")
 @CardRegistration(set = "5ED", collectorNumber = "225")
+@CardRegistration(set = "LEG", collectorNumber = "144")
 public class EternalWarrior extends Card {
 
     public EternalWarrior() {

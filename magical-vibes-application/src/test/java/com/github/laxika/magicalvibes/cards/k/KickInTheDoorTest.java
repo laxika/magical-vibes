@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.DungeonProgress;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -27,7 +28,7 @@ class KickInTheDoorTest extends BaseCardTest {
     @Test
     @DisplayName("Puts a counter and grants haste, Wall evasion, and venture")
     void appliesAllEffects() {
-        Permanent bears = harness.addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new KickInTheDoor()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -43,8 +44,8 @@ class KickInTheDoorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be blocked by Walls this turn")
     void cannotBeBlockedByWall() {
-        Permanent attacker = harness.addCreatureReady(player1, new GrizzlyBears());
-        Permanent wall = harness.addCreatureReady(player2, new WallOfFire());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wall = addCreatureReady(player2, new WallOfFire());
         castKickInTheDoor(attacker);
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -61,8 +62,8 @@ class KickInTheDoorTest extends BaseCardTest {
     @Test
     @DisplayName("Can be blocked by a non-Wall creature this turn")
     void canBeBlockedByNonWall() {
-        Permanent attacker = harness.addCreatureReady(player1, new GrizzlyBears());
-        Permanent blocker = harness.addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         castKickInTheDoor(attacker);
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -78,8 +79,8 @@ class KickInTheDoorTest extends BaseCardTest {
     @Test
     @DisplayName("Wall restriction wears off at cleanup")
     void wallRestrictionWearsOffAtCleanup() {
-        Permanent attacker = harness.addCreatureReady(player1, new GrizzlyBears());
-        Permanent wall = harness.addCreatureReady(player2, new WallOfFire());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wall = addCreatureReady(player2, new WallOfFire());
         castKickInTheDoor(attacker);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -112,5 +113,7 @@ class KickInTheDoorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
     }
 }

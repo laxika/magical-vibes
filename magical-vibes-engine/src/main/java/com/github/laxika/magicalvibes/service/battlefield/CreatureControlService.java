@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ControlLossTapTrigger;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -14,11 +17,16 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedToControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -45,17 +53,25 @@ public class CreatureControlService {
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final UnattachTriggerSupport unattachTriggerSupport;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Autowired
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
-                                  UnattachTriggerSupport unattachTriggerSupport) {
+                                  UnattachTriggerSupport unattachTriggerSupport,
+                                  @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameLogService = gameLogService;
         this.gameQueryService = gameQueryService;
         this.unattachTriggerSupport = unattachTriggerSupport;
+        this.triggerCollectionService = triggerCollectionService;
+    }
+
+    public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
+                                  UnattachTriggerSupport unattachTriggerSupport) {
+        this(gameLogService, gameQueryService, unattachTriggerSupport, null);
     }
 
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService) {
-        this(gameLogService, gameQueryService, new UnattachTriggerSupport(gameLogService));
+        this(gameLogService, gameQueryService, new UnattachTriggerSupport(gameLogService), null);
     }
 
     /**
@@ -151,11 +167,15 @@ public class CreatureControlService {
         if (derived == null || derived.equals(current)) {
             return;
         }
-        boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
-
-        if (gameData.permanentsToTapWhenControlLost.remove(permanent.getId())) {
-            permanent.tap();
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkOpponentGainsControlTriggers(
+                    gameData, permanent, current, derived);
         }
+        boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
+        boolean hasControlLossUnattachTrigger = queueControlLossUnattachTriggers(
+                gameData, permanent, current);
+
+        queueControlLossTapTriggers(gameData, permanent, current);
 
         removeFromCombat(gameData, permanent);
         gameData.playerBattlefields.get(current).remove(permanent);
@@ -180,7 +200,7 @@ public class CreatureControlService {
 
         // Legacy behavior preserved: an attached Equipment reverting to its default controller
         // becomes unattached.
-        if (revertedToDefault && permanent.isAttached()
+        if (revertedToDefault && !hasControlLossUnattachTrigger && permanent.isAttached()
                 && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, permanent, permanent.getAttachedTo(), current);
             permanent.setAttachedTo(null);
@@ -201,9 +221,88 @@ public class CreatureControlService {
         }
         log.info("Game {} - {} controls {}", gameData.id, newControllerName, permanent.getCard().getName());
 
+        queueSelfControlChangeTriggers(gameData, permanent, derived);
+
         // "For as long as you control [source]" effects keyed to THIS permanent end when it
         // changes controllers away from their creator; cascade to the permanents they held.
         expireSourceControllerDependentEffects(gameData, permanent);
+        gameData.expireExilePlayPermissionsForSource(permanent.getId());
+    }
+
+    private boolean queueControlLossUnattachTriggers(GameData gameData, Permanent permanent,
+                                                     UUID previousController) {
+        boolean queued = false;
+        for (var registration : gameData.controlLossUnattachTriggersFor(permanent.getId())) {
+            if (!previousController.equals(registration.controllerId())) {
+                continue;
+            }
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    registration.sourceCard(),
+                    registration.controllerId(),
+                    registration.sourceCard().getName() + "'s reflexive ability",
+                    List.of(new UnattachEquipmentIfAttachedToControlledCreatureEffect(permanent.getId())));
+            trigger.setNonTargeting(true);
+            gameData.enqueueTrigger(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(registration.sourceCard()));
+            queued = true;
+        }
+        return queued;
+    }
+
+    private void queueControlLossTapTriggers(GameData gameData, Permanent permanent,
+                                             UUID previousController) {
+        List<ControlLossTapTrigger> registrations = gameData.controlLossTapTriggersFor(permanent.getId());
+        if (registrations.isEmpty()) {
+            return;
+        }
+
+        List<ControlLossTapTrigger> remaining = new ArrayList<>();
+        for (ControlLossTapTrigger registration : registrations) {
+            if (!previousController.equals(registration.controllerId())) {
+                remaining.add(registration);
+                continue;
+            }
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    registration.sourceCard(),
+                    registration.controllerId(),
+                    registration.sourceCard().getName() + "'s delayed triggered ability",
+                    List.of(new TapPermanentsEffect(TapUntapScope.TARGET)));
+            trigger.setTargetId(permanent.getId());
+            trigger.setNonTargeting(true);
+            gameData.enqueueTrigger(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(registration.sourceCard()));
+        }
+
+        if (remaining.isEmpty()) {
+            gameData.controlLossTapTriggers.remove(permanent.getId());
+        } else {
+            gameData.controlLossTapTriggers.put(permanent.getId(),
+                    java.util.Collections.synchronizedList(remaining));
+        }
+    }
+
+    private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
+        List<CardEffect> effects = new ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+
+        for (CardEffect effect : effects) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(),
+                    controllerId,
+                    permanent.getCard().getName() + "'s ability",
+                    List.of(effect),
+                    null,
+                    permanent.getId());
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        }
     }
 
     private void removeFromCombat(GameData gameData, Permanent permanent) {

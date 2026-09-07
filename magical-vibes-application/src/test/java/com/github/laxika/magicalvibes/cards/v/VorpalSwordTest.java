@@ -38,7 +38,7 @@ class VorpalSwordTest extends BaseCardTest {
         creature.setAttacking(true);
 
         harness.addMana(player1, ManaColor.BLACK, 8);
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
         resolveCombat();
@@ -56,7 +56,7 @@ class VorpalSwordTest extends BaseCardTest {
         sword.setAttachedTo(creature.getId());
 
         harness.addMana(player1, ManaColor.BLACK, 8);
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);

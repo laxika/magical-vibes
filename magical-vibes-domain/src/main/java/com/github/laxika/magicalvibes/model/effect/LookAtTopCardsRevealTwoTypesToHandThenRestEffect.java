@@ -50,7 +50,12 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         String secondPrompt,
         boolean randomRest,
         LibraryScope scope,
-        UUID playerId) implements CardEffect {
+        UUID playerId) implements CombatDamageAmountAwareEffect {
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return count;
+    }
 
     public LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
             DynamicAmount count, CardType firstType, CardType secondType,

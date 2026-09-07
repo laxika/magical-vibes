@@ -101,6 +101,9 @@ public class GrantedAbilityViewFactory {
         if (!remainingProtection.isEmpty()) {
             result.add(new GrantedAbilityView(formatProtectionColors(remainingProtection), null));
         }
+        if (permanent.isProtectionFromColorlessUntilEndOfTurn()) {
+            result.add(new GrantedAbilityView("Protection from colorless", null));
+        }
         if (permanent.isCantBeBlocked()) {
             result.add(new GrantedAbilityView("Can't be blocked", null));
         }
@@ -174,6 +177,9 @@ public class GrantedAbilityViewFactory {
         if (protection.protectionFromMulticolored()) {
             return "Protection from multicolored";
         }
+        if (protection.protectionFromMonocolored()) {
+            return "Protection from monocolored";
+        }
         if (!protection.protectionFromColors().isEmpty()) {
             return formatProtectionColors(protection.protectionFromColors());
         }
@@ -185,6 +191,9 @@ public class GrantedAbilityViewFactory {
             return protection.subtypeProtectionRequiresCreatureSource()
                     ? "Protection from " + subtypes + " creatures"
                     : "Protection from " + subtypes;
+        }
+        if (protection.protectionFromManaValueParity()) {
+            return "Protection from mana values of the chosen quality";
         }
         if (protection.protectionFromManaValueAtLeast().isPresent()) {
             return "Protection from mana value "

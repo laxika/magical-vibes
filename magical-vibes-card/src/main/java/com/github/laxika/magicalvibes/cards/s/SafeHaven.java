@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "113")
 @CardRegistration(set = "DRK", collectorNumber = "118")
+@CardRegistration(set = "TSB", collectorNumber = "121")
 public class SafeHaven extends Card {
 
     public SafeHaven() {

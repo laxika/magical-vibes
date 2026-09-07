@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Static effect that grants a color to permanents matching the given scope.
  * For equipment: "equipped creature is a black [type]" adds the color.
  * For auras: "enchanted creature is [color]" similarly.
+ * With {@link GrantScope#TARGET}, it can also be used by a resolving ability to permanently
+ * set the target's colors when {@code overriding} is true.
  *
  * @param color      the color to grant
  * @param scope      which permanents are affected (EQUIPPED_CREATURE, ENCHANTED_CREATURE, etc.)
@@ -22,5 +24,12 @@ public record GrantColorEffect(CardColor color, GrantScope scope, boolean overri
 
     public GrantColorEffect(CardColor color, GrantScope scope, boolean overriding) {
         this(color, scope, overriding, null);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return scope == GrantScope.TARGET
+                ? TargetSpec.benign(TargetPredicates.permanent())
+                : TargetSpec.NONE;
     }
 }

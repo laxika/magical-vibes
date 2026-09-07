@@ -1,17 +1,24 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.a.Archangel;
+import com.github.laxika.magicalvibes.cards.f.Fireblast;
+import com.github.laxika.magicalvibes.cards.k.KingCheetah;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RighteousAura.class, KingCheetah.class, Archangel.class, Fireblast.class})
 class RighteousAuraTest extends BaseCardTest {
 
     @Test
@@ -19,7 +26,7 @@ class RighteousAuraTest extends BaseCardTest {
     void activationPaysLifeAndPromptsForSource() {
         harness.setLife(player1, 20);
         addReadyAura(player1);
-        addReadyGoblin(player2);
+        addReadyKingCheetah(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -34,14 +41,14 @@ class RighteousAuraTest extends BaseCardTest {
     void preventsDamageFromChosenSource() {
         harness.setLife(player1, 20);
         addReadyAura(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent kingCheetah = addReadyKingCheetah(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, kingCheetah.getId());
 
-        goblin.setAttacking(true);
+        kingCheetah.setAttacking(true);
         resolveCombat(player2);
 
         // 2 life paid on activation; combat damage prevented → still 18
@@ -54,8 +61,8 @@ class RighteousAuraTest extends BaseCardTest {
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
         addReadyAura(player1);
-        Permanent chosen = addReadyGoblin(player2);
-        Permanent other = addReadyGoblin(player2);
+        Permanent chosen = addReadyKingCheetah(player2);
+        Permanent other = addReadyKingCheetah(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -65,22 +72,71 @@ class RighteousAuraTest extends BaseCardTest {
         other.setAttacking(true);
         resolveCombat(player2);
 
-        // 2 life paid + 2 combat damage
-        harness.assertLife(player1, 16);
+        // 2 life paid + 3 combat damage
+        harness.assertLife(player1, 15);
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
+    }
+
+    @Test
+    @DisplayName("Damage from the chosen source to a creature you control is not prevented")
+    void chosenSourceDamageToControlledCreatureIsNotPrevented() {
+        harness.setLife(player1, 20);
+        addReadyAura(player1);
+        Permanent blocker = addCreatureReady(player1, new Archangel());
+        Permanent kingCheetah = addReadyKingCheetah(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, kingCheetah.getId());
+
+        kingCheetah.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(kingCheetah);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.sourceId().equals(kingCheetah.getId()));
+    }
+
+    @Test
+    @DisplayName("A spell on the stack is a legal source choice")
+    void spellOnStackIsLegalSourceChoice() {
+        harness.setLife(player1, 20);
+        addReadyAura(player1);
+        Fireblast fireblast = new Fireblast();
+        harness.setHand(player2, List.of(fireblast));
+        harness.addMana(player2, ManaColor.RED, 6);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(fireblast.getId());
+        harness.handlePermanentChosen(player1, fireblast.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
     @Test
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         addReadyAura(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent kingCheetah = addReadyKingCheetah(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, kingCheetah.getId());
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
@@ -93,16 +149,10 @@ class RighteousAuraTest extends BaseCardTest {
     }
 
     private Permanent addReadyAura(Player player) {
-        Permanent perm = new Permanent(new RighteousAura());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new RighteousAura());
     }
 
-    private Permanent addReadyGoblin(Player player) {
-        Permanent perm = new Permanent(new GoblinPiker());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    private Permanent addReadyKingCheetah(Player player) {
+        return addCreatureReady(player, new KingCheetah());
     }
 }

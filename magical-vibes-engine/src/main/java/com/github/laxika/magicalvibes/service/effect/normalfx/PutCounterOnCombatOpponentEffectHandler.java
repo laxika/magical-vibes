@@ -42,11 +42,8 @@ public class PutCounterOnCombatOpponentEffectHandler implements NormalEffectHand
             return;
         }
 
-        int placed = permanentCounterSupport.placeCounterOnPermanent(
+        permanentCounterSupport.placeCounterOnPermanent(
                 gameData, entry, target, counterEffect.counterType(), counterEffect.amount());
-        if (placed <= 0) {
-            return;
-        }
         if (counterEffect.grantedStaticEffect() != null
                 && !target.getPersistentTriggeredEffects(EffectSlot.STATIC)
                         .contains(counterEffect.grantedStaticEffect())) {
@@ -54,9 +51,7 @@ public class PutCounterOnCombatOpponentEffectHandler implements NormalEffectHand
                     EffectSlot.STATIC,
                     counterEffect.grantedStaticEffect());
         }
-        if (counterEffect.grantedUpkeepEffect() != null
-                && !target.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED)
-                        .contains(counterEffect.grantedUpkeepEffect())) {
+        if (counterEffect.grantedUpkeepEffect() != null) {
             target.addPersistentTriggeredEffect(
                     EffectSlot.UPKEEP_TRIGGERED,
                     counterEffect.grantedUpkeepEffect());

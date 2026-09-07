@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ManaClashEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final CoinFlipService coinFlipService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,13 +50,6 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
             CoinFlipService.CoinFlipResult opponentResult = coinFlipService.flip(gameData, opponentId);
             boolean controllerHeads = controllerResult.heads();
             boolean opponentHeads = opponentResult.heads();
-
-            if (controllerHeads) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-            }
-            if (opponentHeads) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, opponentId);
-            }
 
             gameLogService.append(gameData, GameLog.text(sourceName + ": "
                     + controllerName + " flips " + (controllerHeads ? "heads" : "tails")

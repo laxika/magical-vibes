@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "52")
+@CardRegistration(set = "LEG", collectorNumber = "158")
 public class LandsEdge extends Card {
 
     public LandsEdge() {

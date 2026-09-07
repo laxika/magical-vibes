@@ -15,4 +15,12 @@ public record AwardRestrictedManaOfColorsEffect(List<ManaColor> colors, DynamicA
                                              ManaRestriction restriction) {
         this(colors, new Fixed(amount), restriction);
     }
+
+    public AwardRestrictedManaOfColorsEffect(List<ManaColor> colors, ManaRestriction restriction) {
+        this(colors, new Fixed(1), restriction);
+    }
+
+    public AwardRestrictedManaOfColorsEffect {
+        colors = List.copyOf(colors);
+    }
 }

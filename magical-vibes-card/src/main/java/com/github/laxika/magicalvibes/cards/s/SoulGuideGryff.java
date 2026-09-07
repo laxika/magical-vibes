@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "40")
+@CardRegistration(set = "MID", collectorNumber = "35")
 public class SoulGuideGryff extends Card {
 
     public SoulGuideGryff() {

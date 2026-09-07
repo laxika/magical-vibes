@@ -41,6 +41,22 @@ class SeasingerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a creature whose controller is also Seasinger's controller")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent seasinger = addCreatureReady(player1, new Seasinger());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(seasinger);
+        harness.activateAbility(player1, idx, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(seasinger.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(gd.newestControlEffectFor(bears.getId()).sourcePermanentId()).isEqualTo(seasinger.getId());
+    }
+
+    @Test
     @DisplayName("Cannot target a creature whose controller controls no Island")
     void cannotTargetCreatureWithoutIslandController() {
         harness.addToBattlefield(player1, new Island());
@@ -56,17 +72,31 @@ class SeasingerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a noncreature even when its controller controls an Island")
+    void cannotTargetNoncreature() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent seasinger = addCreatureReady(player1, new Seasinger());
+
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(seasinger);
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, island.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
     @DisplayName("Target becomes illegal if its controller loses their Island before resolution")
     void targetControllerMustControlIslandWhenAbilityResolves() {
         harness.addToBattlefield(player1, new Island());
         Permanent seasinger = addCreatureReady(player1, new Seasinger());
 
-        harness.addToBattlefield(player2, new Island());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(seasinger);
         harness.activateAbility(player1, idx, null, bears.getId());
-        gd.playerBattlefields.get(player2.getId()).remove(findPermanent(player2, "Island"));
+        gd.playerBattlefields.get(player2.getId()).remove(island);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(bears.getId()));
@@ -199,15 +229,29 @@ class SeasingerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Seasinger");
     }
 
+    @Test
+    @DisplayName("State-triggered sacrifice still resolves if an Island returns before resolution")
+    void stateTriggerStillSacrificesIfIslandReturnsBeforeResolution() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent seasinger = addCreatureReady(player1, new Seasinger());
+
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        harness.runStateBasedActions();
+        harness.addToBattlefield(player1, new Island());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(seasinger.getId()));
+        harness.assertInGraveyard(player1, "Seasinger");
+    }
+
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
@@ -216,9 +260,8 @@ class SeasingerTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP -> advanceTurn -> may ability prompt
-
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -33,6 +35,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -62,6 +65,24 @@ class GraveyardTargetingServiceTest {
         gd.orderedPlayerIds.add(player1Id);
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player1Id, new ArrayList<>());
+    }
+
+    @Test
+    @DisplayName("handleAttackGraveyardTargeting keeps the trigger when no graveyard cards are available")
+    void handleAttackGraveyardTargeting_pushesTriggerWhenGraveyardsAreEmpty() {
+        Card card = new Card();
+        card.setName("Restless Cottage");
+        UUID sourcePermanentId = UUID.randomUUID();
+        ExileCardsFromGraveyardEffect exile = new ExileCardsFromGraveyardEffect(1, 0);
+
+        service.handleAttackGraveyardTargeting(
+                gd, player1Id, card, List.of(exile), sourcePermanentId, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(exile);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourcePermanentId);
+        assertThat(gd.stack.getFirst().getTargetIds()).isEmpty();
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
     }
 
     @Test
@@ -139,6 +160,77 @@ class GraveyardTargetingServiceTest {
         // Only one matching card, so the cap is min(2, 1) = 1
         verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), org.mockito.ArgumentMatchers.anyList(),
                 eq(1), eq(0), anyString());
+    }
+
+    @Test
+    @DisplayName("graveyard return targeting passes a total mana value cap to the choice")
+    void handleReturnToBattlefieldTargeting_passesMaximumManaValue() {
+        Card source = new Card();
+        source.setName("Patch Up");
+        Card creature = new Card();
+        creature.setName("Creature");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{1}");
+        Card expensiveCreature = new Card();
+        expensiveCreature.setName("Expensive creature");
+        expensiveCreature.setType(CardType.CREATURE);
+        expensiveCreature.setManaCost("{4}");
+        gd.playerGraveyards.get(player1Id).add(creature);
+        gd.playerGraveyards.get(player1Id).add(expensiveCreature);
+        ReturnTargetCardsFromGraveyardToBattlefieldEffect effect =
+                new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                        new CardTypePredicate(CardType.CREATURE), 3, false, false,
+                        null, 3, null, null, null, 0);
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(creature), eq(effect.filter()), eq(source.getId()), eq(gd), eq(player1Id),
+                isNull(), isNull(), isNull())).thenReturn(true);
+        service.handleUpToNGraveyardSpellTargeting(gd, player1Id, source,
+                StackEntryType.SORCERY_SPELL, effect, List.of(effect));
+
+        verify(playerInputService).beginMultiGraveyardChoiceWithMaximumManaValue(
+                eq(gd), eq(player1Id), argThat(cards -> cards.contains(creature)
+                        && !cards.contains(expensiveCreature)), eq(1), eq(0), eq(3), anyString());
+    }
+
+    @Test
+    @DisplayName("graveyard return targeting accepts effects without a total mana value cap")
+    void handleReturnToHandTargeting_acceptsNoMaximumManaValue() {
+        Card source = new Card();
+        source.setName("Pull from the Deep");
+        Card instant = new Card();
+        instant.setName("Instant");
+        instant.setType(CardType.INSTANT);
+        gd.playerGraveyards.get(player1Id).add(instant);
+        ReturnTargetCardsFromGraveyardToHandEffect effect =
+                new ReturnTargetCardsFromGraveyardToHandEffect(new CardTypePredicate(CardType.INSTANT), 1);
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(instant), eq(effect.filter()), eq(source.getId()), eq(gd), eq(player1Id),
+                isNull(), isNull(), isNull())).thenReturn(true);
+
+        service.handleUpToNGraveyardSpellTargeting(gd, player1Id, source,
+                StackEntryType.SORCERY_SPELL, effect, 1, List.of(effect), 0);
+
+        verify(playerInputService).beginMultiGraveyardChoice(
+                eq(gd), eq(player1Id), argThat(cards -> cards.contains(instant)),
+                eq(1), eq(0), anyString());
+    }
+
+    @Test
+    @DisplayName("handleGraveyardCardsExileETBTargeting tracks a source permanent for source exiles")
+    void handleGraveyardCardsExileETBTargeting_tracksSourcePermanent() {
+        Card card = new Card();
+        card.setName("Pit of Offerings");
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        Card graveyardCard = new Card();
+        gd.playerGraveyards.get(player1Id).add(graveyardCard);
+        ExileGraveyardCardsEffect exile = new ExileGraveyardCardsEffect(
+                3, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, null, false, true, false);
+
+        service.handleGraveyardCardsExileETBTargeting(gd, player1Id, card, List.of(exile), exile);
+
+        assertThat(gd.graveyardTargetOperation.sourcePermanentId).isEqualTo(source.getId());
     }
 
     @Test

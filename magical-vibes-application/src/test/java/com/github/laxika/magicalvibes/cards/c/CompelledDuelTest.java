@@ -50,7 +50,7 @@ class CompelledDuelTest extends BaseCardTest {
     void fizzlesIfTargetRemoved() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new CompelledDuel()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
 
         harness.castSorcery(player1, 0, targetId);
@@ -65,7 +65,7 @@ class CompelledDuelTest extends BaseCardTest {
     private void castCompelledDuelOnBears() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new CompelledDuel()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
 
         harness.castSorcery(player1, 0, targetId);

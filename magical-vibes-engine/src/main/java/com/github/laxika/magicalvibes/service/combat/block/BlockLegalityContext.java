@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat.block;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
@@ -53,14 +54,17 @@ public final class BlockLegalityContext {
      */
     final Map<UUID, List<Permanent>> attachedByHostId;
 
-    /** Union of printed card subtypes on the defender battlefield, for landwalk checks. */
+    /** Union of card subtypes and effective basic land types on the defender battlefield. */
     final Set<CardSubtype> defenderCardSubtypes;
 
-    /**
-     * True while a permanent on the board switches landwalk off (Staff of the Ages): landwalk
-     * abilities (CR 702.14a) are ignored when checking blocks, everything else still applies.
-     */
-    final boolean landwalkIgnored;
+    /** Landwalk keywords specifically ignored by board-wide static effects. */
+    final Set<Keyword> ignoredLandwalkKeywords;
+
+    /** True while a permanent switches off every landwalk ability. */
+    final boolean allLandwalkIgnored;
+
+    /** Permanents whose landwalk abilities are ignored until the corresponding floating effect expires. */
+    final Set<UUID> landwalkIgnoredPermanentIds;
 
     final Map<UUID, AttackerFacts> attackerFacts = new HashMap<>();
     final Map<UUID, BlockerFacts> blockerFacts = new HashMap<>();
@@ -79,7 +83,9 @@ public final class BlockLegalityContext {
                          List<TappedBlockPermission> tappedBlockPermissions,
                          Map<UUID, List<Permanent>> attachedByHostId,
                          Set<CardSubtype> defenderCardSubtypes,
-                         boolean landwalkIgnored) {
+                         Set<Keyword> ignoredLandwalkKeywords,
+                         boolean allLandwalkIgnored,
+                         Set<UUID> landwalkIgnoredPermanentIds) {
         this.gameData = gameData;
         this.defenderBattlefield = defenderBattlefield;
         this.globalBlockRestrictions = globalBlockRestrictions;
@@ -87,7 +93,9 @@ public final class BlockLegalityContext {
         this.tappedBlockPermissions = tappedBlockPermissions;
         this.attachedByHostId = attachedByHostId;
         this.defenderCardSubtypes = defenderCardSubtypes;
-        this.landwalkIgnored = landwalkIgnored;
+        this.ignoredLandwalkKeywords = ignoredLandwalkKeywords;
+        this.allLandwalkIgnored = allLandwalkIgnored;
+        this.landwalkIgnoredPermanentIds = landwalkIgnoredPermanentIds;
     }
 
     /** The attached permanents on {@code host}, or an empty list when it has none. */
@@ -120,6 +128,10 @@ public final class BlockLegalityContext {
     record TappedBlockPermission(TappedBlockPermissionEffect effect, FilterContext filterContext) {
     }
 
+    /** One attacker-side restriction and the permanent whose static ability imposes it. */
+    record AttackerRestriction(Permanent source, BlockabilityRestrictionEffect effect) {
+    }
+
     /**
      * Attacker-side facts that do not depend on the blocker, computed once per attacker.
      * {@code colors} is populated only when the attacker has intimidate (the only check that
@@ -140,8 +152,10 @@ public final class BlockLegalityContext {
                          boolean cantBeBlockedByLessPower,
                          boolean cantBeBlockedByPowerLessThanIslandCount,
                          Set<CardColor> colors,
-                         List<BlockabilityRestrictionEffect> pairRestrictions,
-                         BlockDenial landwalkDenial) {
+                         List<AttackerRestriction> pairRestrictions,
+                         BlockDenial landwalkDenial,
+                         boolean landwalkUnblockable,
+                         boolean unblockableForOtherReason) {
     }
 
     /**
@@ -160,6 +174,8 @@ public final class BlockLegalityContext {
                         boolean horsemanship,
                         boolean shadow,
                         boolean blocksShadowAsThoughShadow,
+                        boolean blocksLandwalkAsThoughNoLandwalk,
+                        List<PermanentPredicate> blocksAsThoughReachForAttackers,
                         boolean artifact,
                         Set<CardColor> colors,
                         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions,

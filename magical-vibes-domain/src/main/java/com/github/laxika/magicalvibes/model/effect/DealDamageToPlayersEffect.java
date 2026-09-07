@@ -14,17 +14,29 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>{@code attachedCountFilter} is non-null only for the {@code ENCHANTED_PLAYER} curse case
  * (Curse of Thirst): the amount dealt is the number of permanents attached to the enchanted
  * player that match the predicate, and {@code amount} is ignored.
+ *
+ * @param unpreventable whether the damage can't be prevented
  */
 public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
-                                        PermanentPredicate attachedCountFilter)
+                                        PermanentPredicate attachedCountFilter, boolean unpreventable)
         implements DamageDealingEffect, CombatDamageTriggerContextEffect {
 
     public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {
-        this(new Fixed(damage), recipient, null);
+        this(new Fixed(damage), recipient, null, false);
     }
 
     public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient) {
-        this(amount, recipient, null);
+        this(amount, recipient, null, false);
+    }
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     PermanentPredicate attachedCountFilter) {
+        this(amount, recipient, attachedCountFilter, false);
+    }
+
+    public DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
+                                     boolean unpreventable) {
+        this(amount, recipient, null, unpreventable);
     }
 
     /**

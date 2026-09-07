@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -260,6 +262,21 @@ class GameDataDeepCopyTest {
         copy.permanentTypesCastFromGraveyardThisTurn.get(p1).add(CardType.LAND);
         assertThat(gd.lifeLostThisTurn).containsEntry(p1, 6);
         assertThat(gd.permanentTypesCastFromGraveyardThisTurn.get(p1)).containsExactly(CardType.CREATURE);
+    }
+
+    @Test
+    @DisplayName("Deep copy preserves simultaneous-death granted-trigger snapshots independently")
+    void deepCopyPreservesSimultaneousDeathGrantedTriggerSnapshots() {
+        UUID permanentId = UUID.randomUUID();
+        PutCountersOnSelfEffect effect = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE);
+        gd.simultaneousDyingGrantedCreatureDeathEffects.put(permanentId, List.of(effect));
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.simultaneousDyingGrantedCreatureDeathEffects.get(permanentId))
+                .containsExactly(effect);
+        copy.simultaneousDyingGrantedCreatureDeathEffects.clear();
+        assertThat(gd.simultaneousDyingGrantedCreatureDeathEffects).containsKey(permanentId);
     }
 
     @Test

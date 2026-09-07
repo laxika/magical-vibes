@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "107")
 @CardRegistration(set = "INR", collectorNumber = "462")
+@CardRegistration(set = "MID", collectorNumber = "100")
 public class EcstaticAwakener extends Card {
 
     public EcstaticAwakener() {

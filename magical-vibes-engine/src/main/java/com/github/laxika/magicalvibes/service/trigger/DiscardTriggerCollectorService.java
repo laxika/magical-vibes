@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -20,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerE
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -28,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPerma
 import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -38,6 +43,8 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +52,7 @@ import org.springframework.stereotype.Service;
 
 import com.github.laxika.magicalvibes.model.GameLog;
 /**
- * Trigger collectors for discard events (ON_OPPONENT_DISCARDS).
+ * Trigger collectors for discard and cycling events.
  */
 @Slf4j
 @Service
@@ -58,6 +65,48 @@ public class DiscardTriggerCollectorService {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final LifeSupport lifeSupport;
+    private final ConditionEvaluationService conditionEvaluationService;
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleConditionalDiscard(TriggerMatchContext match,
+            ConditionalEffect trigger, TriggerContext ctx) {
+        if (trigger.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), trigger.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+        UUID triggeringPlayerId = ctx instanceof TriggerContext.Discard discard
+                ? discard.discardingPlayerId() : null;
+        return enqueueDiscardTrigger(match, trigger, "conditional effect", triggeringPlayerId);
+    }
+
+    @CollectsTrigger(value = CyclingTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleCyclingTrigger(TriggerMatchContext match,
+            CyclingTriggerEffect trigger, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.Discard discard) || !discard.cycled()) return false;
+
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        if (trigger.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || trigger.wrapped().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger.wrapped())),
+                    match.permanent().getId()));
+        } else {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(trigger.wrapped())),
+                    null,
+                    match.permanent().getId()));
+        }
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycling", gameData.id, sourceCard.getName());
+        return true;
+    }
 
     @CollectsTrigger(value = OpponentCausedDiscardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleOpponentCausedDiscard(TriggerMatchContext match,
@@ -103,6 +152,59 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    private boolean handleCycleMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(may)),
+                null,
+                match.permanent().getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycling", match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnToHandEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    private boolean handleCycleReturnToHand(TriggerMatchContext match, ReturnToHandEffect effect,
+                                            TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycling", match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    private boolean handleCyclePutCountersOnSelf(TriggerMatchContext match,
+                                                  PutCountersOnSelfEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycling", match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = DealDamageToDiscardingPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleDamageOnDiscard(TriggerMatchContext match,
             DealDamageToDiscardingPlayerEffect trigger, TriggerContext ctx) {
@@ -130,8 +232,14 @@ public class DiscardTriggerCollectorService {
         }
         if (!gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())
                 && !sourceDamagePrevented
+                && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(
+                gameData, discardingPlayerId, match.permanent())
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
+            damage = damagePreventionService.applyChannelHarmPrevention(
+                    gameData, discardingPlayerId,
+                    gameQueryService.findPermanentController(gameData, match.permanent().getId()), damage);
+            if (damage <= 0) return true;
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
             effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
@@ -142,13 +250,16 @@ public class DiscardTriggerCollectorService {
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
             } else {
-                int currentLife = gameData.getLife(discardingPlayerId);
-                gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
+                int lifeLoss = effectiveDamage
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
+                gameData.playerLifeTotals.put(discardingPlayerId,
+                        gameQueryService.lifeAfterDamage(gameData, discardingPlayerId, lifeLoss));
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage,
                         gameQueryService.isArtifact(gameData, match.permanent()) ? effectiveDamage : 0);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, discardingPlayerId, effectiveDamage);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(
+                        gameData, discardingPlayerId, match.permanent().getId(), effectiveDamage);
             }
         }
 
@@ -213,6 +324,28 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleDrawOnDiscardEvent(TriggerMatchContext match, DrawCardEffect trigger,
+                                              TriggerContext ctx) {
+        TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(discardEvent.discardedCount());
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard event (draw {})", gameData.id,
+                sourceCard.getName(), discardEvent.discardedCount());
+        return true;
+    }
+
     @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handlePutCountersOnSelfOnDiscardEvent(TriggerMatchContext match,
             PutCountersOnSelfEffect trigger, TriggerContext ctx) {
@@ -270,6 +403,12 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ExileTopCardMayPlayThisTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleExileTopCardMayPlayOnDiscard(TriggerMatchContext match,
+            ExileTopCardMayPlayThisTurnEffect trigger, TriggerContext ctx) {
+        return enqueueDiscardTrigger(match, trigger, "exile top card and allow play");
+    }
+
     @CollectsTrigger(value = ScryEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleScryOnDiscard(TriggerMatchContext match, ScryEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard another card, scry N." Cycling discards the card (CR 702.29e),
@@ -312,12 +451,11 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleSequenceOnDiscard(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn and can't be
-        // blocked this turn" (and similar mandatory multi-step self-triggers). Cycling discards the card
-        // (CR 702.29e), so this single controller-discard trigger fires for both. The steps must stay ONE
-        // atomic triggered ability (SequenceEffect), so queue a single stack entry carrying the source
-        // permanent id — each self step then resolves against this creature. (Cunning Survivor)
+        // Multi-step discard triggers must stay ONE atomic triggered ability (SequenceEffect), so queue
+        // a single stack entry carrying the source permanent id. Each self step then resolves against
+        // this creature.
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(
@@ -433,24 +571,31 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTriggers({
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    })
     private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, you may pay {N}. If you do, ..." Cycling discards the card
-        // (CR 702.29e), so this single controller-discard trigger fires for both. Queue it as a proper
-        // triggered ability so it uses the stack (and, when cycling, resolves above the cycling draw); its
-        // MayAbilityChoice pay prompt then comes up at resolution. (Drake Haven)
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId()));
+        if (trigger.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || trigger.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), match.permanent().getId()));
+        } else {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(trigger)),
+                    null,
+                    match.permanent().getId()));
+        }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on cycle/discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
+        log.info("Game {} - {} triggers on discard/cycle (may pay {})",
+                gameData.id, sourceCard.getName(), trigger.manaCost());
         return true;
     }
 
@@ -505,6 +650,27 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ExileTopCardsMayPlayUntilNextEndStepEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleExileTopCardsMayPlayUntilNextEndStepOnDiscardEvent(
+            TriggerMatchContext match, ExileTopCardsMayPlayUntilNextEndStepEffect trigger,
+            TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard event (exile top card)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     /**
      * "Whenever an opponent discards a land card, add {B}{B}." Not a mana ability — it does not
      * trigger off a mana ability, so it uses the stack (CR 605.1b) and the mana lands in the
@@ -525,16 +691,25 @@ public class DiscardTriggerCollectorService {
     }
 
     private boolean enqueueDiscardTrigger(TriggerMatchContext match, CardEffect trigger, String what) {
+        return enqueueDiscardTrigger(match, trigger, what, null);
+    }
+
+    private boolean enqueueDiscardTrigger(TriggerMatchContext match, CardEffect trigger, String what,
+            UUID triggeringPlayerId) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId()));
+                triggeringPlayerId,
+                match.permanent().getId());
+        if (triggeringPlayerId != null) {
+            entry.setNonTargeting(true);
+        }
+        gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on discard ({})", gameData.id, sourceCard.getName(), what);
         return true;
@@ -561,8 +736,10 @@ public class DiscardTriggerCollectorService {
         if (!gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
         } else {
+            int lifeLoss = amount
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
             int currentLife = gameData.getLife(discardingPlayerId);
-            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - amount);
+            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - lifeLoss);
         }
 
         return true;

@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WildGrowth.class, Forest.class, BalduvianBears.class, IcyManipulator.class, GrizzlyBears.class})
 class WildGrowthTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Wild Growth attaches it to target land")
     void resolvingAttachesToTargetLand() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new WildGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -34,11 +37,9 @@ class WildGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping enchanted Forest adds an additional {G}")
     void enchantedLandAddsExtraMana() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new WildGrowth());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player1, 0);
 
@@ -48,12 +49,10 @@ class WildGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Only enchanted land gets Wild Growth bonus")
     void onlyEnchantedLandGetsBonus() {
+        Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Forest());
-        Permanent firstForest = gd.playerBattlefields.get(player1.getId()).get(0);
-        Permanent aura = new Permanent(new WildGrowth());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
         aura.setAttachedTo(firstForest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         // Tap second (non-enchanted) Forest at index 1.
         harness.tapPermanent(player1, 1);
@@ -64,11 +63,9 @@ class WildGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Controller of enchanted land gets bonus mana even if aura is controlled by opponent")
     void enchantedLandControllerGetsBonus() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent opponentsForest = gd.playerBattlefields.get(player2.getId()).getFirst();
-        Permanent aura = new Permanent(new WildGrowth());
+        Permanent opponentsForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
         aura.setAttachedTo(opponentsForest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player2, 0);
 
@@ -79,11 +76,9 @@ class WildGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Wild Growth bonus stops when aura leaves battlefield")
     void bonusStopsWhenAuraLeavesBattlefield() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new WildGrowth());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.tapPermanent(player1, 0);
@@ -92,16 +87,61 @@ class WildGrowthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple Wild Growths each add an additional {G}")
+    void multipleWildGrowthsEachAddBonus() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
+        firstAura.setAttachedTo(forest.getId());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
+        secondAura.setAttachedTo(forest.getId());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Wild Growth does not trigger when the enchanted land is tapped without producing mana")
+    void doesNotTriggerOnNonManaTap() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new IcyManipulator());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new WildGrowth());
+        aura.setAttachedTo(forest.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot cast Wild Growth targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
         harness.setHand(player1, List.of(new WildGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("Each Wild Growth on the same land adds its own bonus")
+    void multipleAurasEachAddBonus() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent firstAura = new Permanent(new WildGrowth());
+        firstAura.setAttachedTo(forest.getId());
+        gd.playerBattlefields.get(player1.getId()).add(firstAura);
+        Permanent secondAura = new Permanent(new WildGrowth());
+        secondAura.setAttachedTo(forest.getId());
+        gd.playerBattlefields.get(player1.getId()).add(secondAura);
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
     }
 }

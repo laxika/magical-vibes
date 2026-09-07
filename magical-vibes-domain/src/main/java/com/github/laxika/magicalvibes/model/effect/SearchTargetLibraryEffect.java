@@ -13,8 +13,8 @@ import java.util.Set;
  * {@link SearchLibraryEffect}, which searches the controller's own library.
  *
  * <p>A {@code null} filter is an unrestricted search (any card): every card in the library is a
- * candidate, and because such a search reveals nothing an exiled card is exiled face down. A non-null
- * filter narrows the candidates, drives the prompt wording, and exiles the found card face up.
+ * candidate. Ordinary exile is face up; destinations that explicitly grant hidden play permission
+ * handle their own face-down exile. A non-null filter narrows candidates and drives the prompt wording.
  *
  * <p>{@code canFailToFind} separates a search for a bare quantity ("three cards"), where the searcher
  * must find that many if they are there (CR 701.23d), from a search for cards with a stated quality or

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * Exiles cards from a library, then lets the controller cast any number of the exiled spells
@@ -12,19 +13,28 @@ public record ExileTopCardsAndMayCastSpellsEffect(
         DynamicAmount dynamicCount,
         LibraryScope scope,
         boolean trackWithSource,
-        DynamicAmount manaValueLimit
+        DynamicAmount manaValueLimit,
+        CardPredicate castFilter
 ) implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     /** Exiles the top {@code count} cards of the controller's library. */
     public ExileTopCardsAndMayCastSpellsEffect(int count) {
-        this(count, null, LibraryScope.CONTROLLER, false, null);
+        this(count, null, LibraryScope.CONTROLLER, false, null, null);
     }
 
     /** Exiles cards from a combat-damaged opponent's library and tracks them with the source. */
     public ExileTopCardsAndMayCastSpellsEffect(DynamicAmount dynamicCount, LibraryScope scope,
                                                boolean trackWithSource,
                                                DynamicAmount manaValueLimit) {
-        this(0, dynamicCount, scope, trackWithSource, manaValueLimit);
+        this(0, dynamicCount, scope, trackWithSource, manaValueLimit, null);
+    }
+
+    /** Exiles cards and offers only cards matching {@code castFilter} for free casting. */
+    public ExileTopCardsAndMayCastSpellsEffect(DynamicAmount dynamicCount, LibraryScope scope,
+                                               boolean trackWithSource,
+                                               DynamicAmount manaValueLimit,
+                                               CardPredicate castFilter) {
+        this(0, dynamicCount, scope, trackWithSource, manaValueLimit, castFilter);
     }
 
     @Override

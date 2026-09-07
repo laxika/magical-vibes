@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "242")
 @CardRegistration(set = "INR", collectorNumber = "432")
+@CardRegistration(set = "MID", collectorNumber = "229")
 public class JoinTheDance extends Card {
 
     public JoinTheDance() {

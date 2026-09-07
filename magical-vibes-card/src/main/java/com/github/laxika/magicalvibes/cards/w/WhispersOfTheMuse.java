@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "103")
 @CardRegistration(set = "TPR", collectorNumber = "79")
+@CardRegistration(set = "TSB", collectorNumber = "35")
 public class WhispersOfTheMuse extends Card {
 
     public WhispersOfTheMuse() {

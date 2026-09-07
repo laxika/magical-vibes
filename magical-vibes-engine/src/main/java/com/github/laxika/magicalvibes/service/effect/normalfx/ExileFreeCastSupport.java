@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -53,6 +54,16 @@ public class ExileFreeCastSupport {
     }
 
     public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId) {
+        castFromExileWithoutPaying(gameData, player, exileCardId, false);
+    }
+
+    public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId,
+                                           boolean grantHaste) {
+        castFromExileWithoutPaying(gameData, player, exileCardId, grantHaste, false);
+    }
+
+    public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId,
+                                           boolean grantHaste, boolean returnToHandIfUnable) {
         UUID playerId = player.getId();
         ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
         if (exiledEntry == null) {
@@ -62,7 +73,13 @@ public class ExileFreeCastSupport {
 
         Card card = exiledEntry.card();
         if (card.isCastOnlyFromGraveyard()) {
-            gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast from exile and stays exiled."));
+            if (returnToHandIfUnable) {
+                returnExiledCardToHand(gameData, exileCardId);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, " cannot be cast from exile and is put into its owner's hand."));
+            } else {
+                gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast from exile and stays exiled."));
+            }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -78,9 +95,14 @@ public class ExileFreeCastSupport {
                     : !firstCandidates.isEmpty();
 
             if (!hasLegalTargets) {
-                // Can't be legally cast — the card stays exiled (no second chance to play it).
                 gameData.spellsGrantedHasteOnEntry.remove(exileCardId);
-                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets and stays exiled."));
+                if (returnToHandIfUnable) {
+                    returnExiledCardToHand(gameData, exileCardId);
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(card, " has no valid targets and is put into its owner's hand."));
+                } else {
+                    gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets and stays exiled."));
+                }
                 log.info("Game {} - {} exile free-cast has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -88,6 +110,9 @@ public class ExileFreeCastSupport {
 
             // Remove from exile now that it will be cast; the ExileCastSpellTarget flow puts it on the stack.
             gameData.removeFromExile(exileCardId);
+            if (grantHaste && card.hasType(CardType.CREATURE)) {
+                gameData.spellsGrantedHasteOnEntry.add(exileCardId);
+            }
             gameData.recordCardPlayedFromExile(playerId);
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType));
@@ -100,11 +125,15 @@ public class ExileFreeCastSupport {
         }
 
         gameData.removeFromExile(exileCardId);
+        if (grantHaste && card.hasType(CardType.CREATURE)) {
+            gameData.spellsGrantedHasteOnEntry.add(exileCardId);
+        }
         gameData.recordCardPlayedFromExile(playerId);
         StackEntry stackEntry = new StackEntry(
                 spellType, card, playerId, card.getName(),
                 spellEffects, 0, (UUID) null, null
         );
+        stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
         stackEntry.setSourceZone(Zone.EXILE);
         gameData.stack.add(stackEntry);
 
@@ -117,5 +146,15 @@ public class ExileFreeCastSupport {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, Zone.EXILE);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public boolean returnExiledCardToHand(GameData gameData, UUID exileCardId) {
+        ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
+        if (exiledEntry == null) {
+            return false;
+        }
+        gameData.removeFromExile(exileCardId);
+        gameData.addCardToHand(exiledEntry.ownerId(), exiledEntry.card());
+        return true;
     }
 }

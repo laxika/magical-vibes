@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.cards.s.StormtideLeviathan;
 import com.github.laxika.magicalvibes.cards.t.TrainingDrone;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.w.WakestoneGargoyle;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
@@ -49,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Spec for {@link AttackLegalityService}, the creature-level half of declare-attackers legality
- * (CR 508.1a): may this permanent be declared as an attacker at all, may it be declared against a
+ * (CR 508.1): may this permanent be declared as an attacker at all, may it be declared against a
  * given defender, and how many "attacks if able" requirements does it carry. The group-level half
  * — "can't attack alone", banding, satisfying as many requirements as possible — is enforced when
  * a declaration is submitted and belongs to {@code CombatAttackService}.
@@ -88,7 +90,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         StormtideLeviathan.class,
         TrainingDrone.class,
         WallOfWood.class,
-        WindDrake.class
+        WindDrake.class,
+        WakestoneGargoyle.class
 })
 class AttackLegalityServiceTest extends BaseCardTest {
 
@@ -193,6 +196,21 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A temporary static grant lifts defender for the controller's creatures")
+    void temporaryStaticGrantCanLiftDefender() {
+        Permanent gargoyle = addCreatureReady(player1, new WakestoneGargoyle());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThat(als.canAttack(gd, gargoyle, player1.getId())).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(als.canAttack(gd, gargoyle, player1.getId())).isTrue();
+    }
+
+    @Test
     @DisplayName("The \"can't attack this turn\" flag stops attacking")
     void cantAttackThisTurnFlagStopsAttacking() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -251,7 +269,7 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("CR 508.1a: \"can't attack unless …\" is re-evaluated against the current board")
+    @DisplayName("CR 508.1c: \"can't attack unless …\" is re-evaluated against the current board")
     void cantAttackUnlessConditionGatesAttacking() {
         // Sea Serpent: "can't attack unless defending player controls an Island".
         Permanent serpent = addCreatureReady(player1, new SeaSerpent());
@@ -507,7 +525,7 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("CR 508.1c: the defending player's planeswalkers are attack targets too")
+    @DisplayName("CR 508.1b: the defending player's planeswalkers are attack targets too")
     void defendingPlaneswalkersAreValidAttackTargets() {
         Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         // A permanent the attacking player controls is never one of their own attack targets.

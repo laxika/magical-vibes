@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
+
 import java.util.UUID;
 
 /**
@@ -14,10 +16,22 @@ import java.util.UUID;
  * Fizzles if it is no longer in a graveyard.
  *
  * @param dyingCardId the card ID of the dying creature (null in the card definition)
+ * @param grantSubtype subtype granted to the returned permanent if it is a creature
  */
-public record ReturnDyingOpponentCreatureUnderYourControlEffect(UUID dyingCardId) implements CardEffect {
+public record ReturnDyingOpponentCreatureUnderYourControlEffect(
+        UUID dyingCardId,
+        CardSubtype grantSubtype
+) implements CardEffect {
 
     public ReturnDyingOpponentCreatureUnderYourControlEffect() {
-        this(null);
+        this(null, null);
+    }
+
+    public ReturnDyingOpponentCreatureUnderYourControlEffect(UUID dyingCardId) {
+        this(dyingCardId, null);
+    }
+
+    public ReturnDyingOpponentCreatureUnderYourControlEffect(CardSubtype grantSubtype) {
+        this(null, grantSubtype);
     }
 }

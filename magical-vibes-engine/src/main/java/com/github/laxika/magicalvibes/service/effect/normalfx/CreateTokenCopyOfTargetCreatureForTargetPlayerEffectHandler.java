@@ -48,7 +48,7 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
 
         Card sourceCard = targetPermanent.getCard();
         int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData, tokenControllerId, 1, sourceCard.getSubtypes());
+                gameData, tokenControllerId, 1, sourceCard.getSubtypes(), true);
         for (int copy = 0; copy < tokenCount; copy++) {
             Card tokenCard = buildTokenCopy(sourceCard);
             Card createdTokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(

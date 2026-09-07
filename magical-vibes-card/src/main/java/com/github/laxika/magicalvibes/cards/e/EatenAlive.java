@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "106")
 @CardRegistration(set = "FDN", collectorNumber = "172")
+@CardRegistration(set = "MID", collectorNumber = "99")
 public class EatenAlive extends Card {
 
     public EatenAlive() {

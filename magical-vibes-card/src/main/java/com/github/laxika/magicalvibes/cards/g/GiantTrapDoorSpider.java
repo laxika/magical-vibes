@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "293")
+@CardRegistration(set = "DKM", collectorNumber = "33")
 public class GiantTrapDoorSpider extends Card {
 
     public GiantTrapDoorSpider() {

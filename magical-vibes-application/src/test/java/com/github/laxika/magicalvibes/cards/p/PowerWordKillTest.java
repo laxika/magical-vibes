@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.a.ArchfiendsVessel;
+import com.github.laxika.magicalvibes.cards.g.GrinningDemon;
 import com.github.laxika.magicalvibes.cards.b.BaneslayerAngel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HulkingDevil;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PowerWordKill.class, GrizzlyBears.class, BaneslayerAngel.class, ArchfiendsVessel.class,
+@CardUsed({PowerWordKill.class, GrizzlyBears.class, BaneslayerAngel.class, GrinningDemon.class,
         HulkingDevil.class, TwoHeadedDragon.class})
 class PowerWordKillTest extends BaseCardTest {
 
@@ -42,7 +42,7 @@ class PowerWordKillTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a Demon")
     void cannotTargetDemon() {
-        assertCannotTarget(new ArchfiendsVessel(), "non-Demon");
+        assertCannotTarget(new GrinningDemon(), "non-Demon");
     }
 
     @Test

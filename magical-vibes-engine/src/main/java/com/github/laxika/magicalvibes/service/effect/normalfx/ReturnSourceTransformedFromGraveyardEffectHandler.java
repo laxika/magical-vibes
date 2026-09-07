@@ -39,6 +39,16 @@ public class ReturnSourceTransformedFromGraveyardEffectHandler implements Normal
             log.info("Game {} - Transformed return for {} fizzles (not in a graveyard)", gameData.id, card.getName());
             return;
         }
-        graveyardTransformedReturnService.returnTransformed(gameData, card.getId(), ownerId, entry.getControllerId());
+        ReturnSourceTransformedFromGraveyardEffect returnEffect =
+                (ReturnSourceTransformedFromGraveyardEffect) effect;
+        graveyardTransformedReturnService.returnTransformed(
+                gameData,
+                card.getId(),
+                ownerId,
+                returnEffect.underOwnersControl() ? ownerId : entry.getControllerId(),
+                null,
+                returnEffect.tapped(),
+                returnEffect.enteringCounterType(),
+                returnEffect.enteringCounterCount());
     }
 }

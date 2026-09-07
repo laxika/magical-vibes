@@ -56,7 +56,8 @@ public class PutUpToCardsFromHandOntoBattlefieldChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
-        support.applyPutChoice(gameData, player.getId(), validated, interaction.cardName());
+        support.applyPutChoice(gameData, player.getId(), validated, interaction.cardName(),
+                interaction.includeGraveyard(), interaction.enterTapped());
         inputCompletionService.publishStateAfterInput(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

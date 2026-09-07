@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "13")
 @CardRegistration(set = "M11", collectorNumber = "11")
+@CardRegistration(set = "DIS", collectorNumber = "8")
 public class Condemn extends Card {
 
     public Condemn() {

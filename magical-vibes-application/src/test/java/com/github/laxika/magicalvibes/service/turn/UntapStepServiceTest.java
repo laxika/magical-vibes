@@ -13,7 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -60,6 +63,8 @@ class UntapStepServiceTest {
     private PhasingService phasingService;
     @Mock
     private PermanentRemovalService permanentRemovalService;
+    @Mock
+    private DayNightService dayNightService;
     @Spy
     private UntapPreventionSupport untapPreventionSupport =
             new UntapPreventionSupport(org.mockito.Mockito.mock(ConditionEvaluationService.class));
@@ -107,6 +112,18 @@ class UntapStepServiceTest {
         Permanent perm = new Permanent(card);
         gd.playerBattlefields.get(playerId).add(perm);
         return perm;
+    }
+
+    @Test
+    void skippedStepPreservesNextUntapRestriction() {
+        Permanent permanent = addPermanent(player1Id, createCardWithName("Creature"));
+        permanent.tap();
+        permanent.setSkipUntapCount(1);
+
+        sut.untapPermanents(gd, player1Id, null, true);
+
+        assertThat(permanent.isTapped()).isTrue();
+        assertThat(permanent.getSkipUntapCount()).isEqualTo(1);
     }
 
     @Nested
@@ -201,6 +218,40 @@ class UntapStepServiceTest {
             sut.untapPermanents(gd, player1Id);
 
             assertThat(perm.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Attached Aura can lock its host based on a counter on the Aura")
+        void attachedAuraChecksItsOwnCounter() {
+            Permanent creature = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
+            creature.tap();
+            Card auraCard = createCardWithName("Cocoon");
+            auraCard.addEffect(EffectSlot.STATIC,
+                    DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
+            Permanent aura = addPermanent(player1Id, auraCard);
+            aura.setAttachedTo(creature.getId());
+            aura.setCounterCount(CounterType.PUPA, 1);
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(creature.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Attached Aura can lock its host based on a counter on the host")
+        void attachedAuraChecksEnchantedPermanentCounter() {
+            Permanent creature = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
+            creature.tap();
+            creature.setCounterCount(CounterType.SLEEP, 1);
+            Card auraCard = createCardWithName("Venarian Gold");
+            auraCard.addEffect(EffectSlot.STATIC,
+                    DoesntUntapWithCounterEffect.enchantedWithCounterOnEnchantedPermanent(CounterType.SLEEP));
+            Permanent aura = addPermanent(player1Id, auraCard);
+            aura.setAttachedTo(creature.getId());
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(creature.isTapped()).isTrue();
         }
 
         @Test
@@ -327,6 +378,24 @@ class UntapStepServiceTest {
     class SeedbornMuseUntap {
 
         @Test
+        @DisplayName("Self-scoped effect untaps only its source during an opponent's untap step")
+        void selfScopedEffectOnlyUntapsSource() {
+            Card waterskinCard = createCardWithName("Bender's Waterskin");
+            waterskinCard.addEffect(EffectSlot.STATIC,
+                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
+                            TurnStep.UNTAP, null, TapUntapScope.SELF));
+            Permanent waterskin = addPermanent(player2Id, waterskinCard);
+            waterskin.tap();
+            Permanent otherPermanent = addPermanent(player2Id, createCardWithName("Other Permanent"));
+            otherPermanent.tap();
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(waterskin.isTapped()).isFalse();
+            assertThat(otherPermanent.isTapped()).isTrue();
+        }
+
+        @Test
         @DisplayName("Non-active player's permanents untap when they control Seedborn Muse")
         void untapsNonActivePlayerWithSeedbornMuse() {
             // Player 2 controls Seedborn Muse
@@ -362,15 +431,39 @@ class UntapStepServiceTest {
             nonMatchingPerm.tap();
 
             // Default: permanents don't match the filter
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(), eq(filter))).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), eq(filter),
+                    any(FilterContext.class))).thenReturn(false);
             // Only the matching permanent passes the filter
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, matchingPerm, filter)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(matchingPerm), eq(filter),
+                    any(FilterContext.class))).thenReturn(true);
 
             sut.untapPermanents(gd, player1Id);
 
             assertThat(matchingPerm.isTapped()).isFalse();
             assertThat(nonMatchingPerm.isTapped()).isTrue();
             verify(gameLogService).append(gd, GameLog.text("Player2 untaps some permanents during opponent's untap step."));
+        }
+
+        @Test
+        @DisplayName("Source-relative filter only untaps the effect's source")
+        void sourceRelativeFilterOnlyUntapsSource() {
+            PermanentPredicate filter = new PermanentIsSourcePermanentPredicate();
+            Card effectCard = createCardWithName("Source Untapper");
+            effectCard.addEffect(EffectSlot.STATIC,
+                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP, filter));
+            Permanent source = addPermanent(player2Id, effectCard);
+            source.tap();
+
+            Permanent otherPermanent = addPermanent(player2Id, createCardWithName("Other Permanent"));
+            otherPermanent.tap();
+
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(source), eq(filter), any()))
+                    .thenReturn(true);
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(source.isTapped()).isFalse();
+            assertThat(otherPermanent.isTapped()).isTrue();
         }
 
         @Test

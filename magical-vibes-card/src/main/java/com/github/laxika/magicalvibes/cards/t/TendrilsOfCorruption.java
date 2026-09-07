@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "114")
+@CardRegistration(set = "TSP", collectorNumber = "136")
 public class TendrilsOfCorruption extends Card {
 
     public TendrilsOfCorruption() {

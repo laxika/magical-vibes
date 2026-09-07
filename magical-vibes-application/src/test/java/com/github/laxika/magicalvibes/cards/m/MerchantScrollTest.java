@@ -1,19 +1,18 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MerchantScroll.class, Boomerang.class, Shock.class, AirElemental.class, GrizzlyBears.class, PsychogenicProbe.class})
 class MerchantScrollTest extends BaseCardTest {
 
     @Test
@@ -52,7 +52,7 @@ class MerchantScrollTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -67,10 +67,7 @@ class MerchantScrollTest extends BaseCardTest {
         setupAndCast();
 
         GameData gd = harness.getGameData();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        // Shock is a red instant, Air Elemental is a blue creature — neither is a blue instant.
-        deck.addAll(List.of(new Shock(), new AirElemental(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Shock(), new AirElemental(), new GrizzlyBears()));
 
         harness.passBothPriorities();
 
@@ -78,16 +75,25 @@ class MerchantScrollTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no"));
     }
 
+    @Test
+    @DisplayName("Empty library still triggers abilities that trigger when a library is shuffled")
+    void emptyLibraryStillTriggersShuffleAbilities() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new MerchantScroll()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new MerchantScroll(), "{1}{U}");
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        // Boomerang is the only blue instant; the others must not be offered.
-        deck.addAll(List.of(new Boomerang(), new Shock(), new AirElemental(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Boomerang(), new Shock(), new AirElemental(), new GrizzlyBears()));
     }
 }

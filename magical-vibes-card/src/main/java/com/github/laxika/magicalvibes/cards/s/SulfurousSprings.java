@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "360")
+@CardRegistration(set = "DKM", collectorNumber = "40")
 @CardRegistration(set = "10E", collectorNumber = "359")
 @CardRegistration(set = "9ED", collectorNumber = "325")
 @CardRegistration(set = "5ED", collectorNumber = "424")

@@ -20,7 +20,10 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
+import com.github.laxika.magicalvibes.model.effect.FlickerScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -36,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -94,7 +98,8 @@ class FlickerEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new FlickerEffectHandler(exileSupport, gameQueryService, predicateEvaluationService,
                 gameLogService, permanentRemovalService, battlefieldEntryService,
-                drawService, amountEvaluationService, graveyardReturnSupport, grantKeywordEffectHandler);
+                drawService, amountEvaluationService, graveyardReturnSupport, grantKeywordEffectHandler,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class));
     }
 
     private Card createCreatureCard(String name) {
@@ -112,6 +117,51 @@ class FlickerEffectHandlerTest {
         card.setType(CardType.PLANESWALKER);
         card.setLoyalty(3);
         return card;
+    }
+
+    @Nested
+    @DisplayName("TARGET, immediate with additional end step")
+    class TargetImmediateWithAdditionalEndStep {
+
+        @Test
+        @DisplayName("Adds an end step only when the flicker resolves during the first end step")
+        void addsEndStepOnlyDuringFirstEndStep() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Y'shtola Rhul");
+            FlickerEffect effect = FlickerEffect.flickerTargetWithAdditionalEndStep();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            gd.currentStep = TurnStep.END_STEP;
+            gd.endStepsThisTurn = 1;
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.additionalEndStepsPending).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Does not add an end step when the flicker resolves during an additional end step")
+        void doesNotAddEndStepDuringAdditionalEndStep() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Y'shtola Rhul");
+            FlickerEffect effect = FlickerEffect.flickerTargetWithAdditionalEndStep();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            gd.currentStep = TurnStep.END_STEP;
+            gd.endStepsThisTurn = 2;
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.additionalEndStepsPending).isZero();
+        }
     }
 
     @Nested
@@ -135,6 +185,54 @@ class FlickerEffectHandlerTest {
 
             verify(grantKeywordEffectHandler).grantToPermanent(
                     eq(gd), eq(entry), any(Permanent.class), eq(Set.of(Keyword.FIRST_STRIKE)));
+        }
+
+        @Test
+        @DisplayName("Returns the permanent tapped when requested")
+        void returnsTapped() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Ojutai Exemplars");
+            FlickerEffect effect = new FlickerEffect(
+                    FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
+                    true, null, null, 0, false, false);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), returnedCaptor.capture());
+            assertThat(returnedCaptor.getValue().isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns a self-flickered permanent face down and processes face-down ETB triggers")
+        void returnsSelfFaceDown() {
+            Permanent target = new Permanent(createCreatureCard("Shorecrasher Elemental"));
+            Card sourceCard = createCreatureCard("Shorecrasher Elemental");
+            FlickerEffect effect = FlickerEffect.flickerSelfFaceDown();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.ACTIVATED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), null, target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), returnedCaptor.capture());
+            assertThat(returnedCaptor.getValue().isFaceDown()).isTrue();
+            verify(battlefieldEntryService).processFaceDownCreatureETBTriggers(
+                    eq(gd), eq(player1Id), eq(target.getCard()));
+            verify(battlefieldEntryService, never()).handleCreatureEnteredBattlefield(
+                    eq(gd), eq(player1Id), eq(target.getCard()), eq(null), eq(false));
         }
     }
 
@@ -275,6 +373,59 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is exiled. It will return at the beginning of the next end step.")));
+        }
+    }
+
+    @Nested
+    @DisplayName("Immediate controller-conditional return rider")
+    class ImmediateControllerConditionalReturn {
+
+        @Test
+        @DisplayName("Adds a counter when the permanent returns under the effect controller")
+        void addsCounterForControllerReturn() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Hallowed Respite");
+            FlickerEffect effect = FlickerEffect.flickerTargetWithControllerConditionalCounterOrTap();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+            when(gameQueryService.doublePlusOnePlusOneCounters(
+                    eq(gd), any(Permanent.class), eq(player1Id), eq(1))).thenReturn(1);
+
+            handler.resolve(gd, entry, effect);
+
+            ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), returnedCaptor.capture());
+            assertThat(returnedCaptor.getValue().getCounterCount(
+                    com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(returnedCaptor.getValue().isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Taps the permanent when it returns under another player's control")
+        void tapsForOpponentReturn() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Hallowed Respite");
+            FlickerEffect effect = FlickerEffect.flickerTargetWithControllerConditionalCounterOrTap();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+
+            handler.resolve(gd, entry, effect);
+
+            ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player2Id), returnedCaptor.capture());
+            assertThat(returnedCaptor.getValue().getCounterCount(
+                    com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(returnedCaptor.getValue().isTapped()).isTrue();
         }
     }
 

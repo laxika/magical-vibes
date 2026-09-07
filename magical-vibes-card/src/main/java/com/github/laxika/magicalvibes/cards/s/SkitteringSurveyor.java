@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "DOM", collectorNumber = "230")
+@CardRegistration(set = "MOM", collectorNumber = "264")
 public class SkitteringSurveyor extends Card {
 
     public SkitteringSurveyor() {

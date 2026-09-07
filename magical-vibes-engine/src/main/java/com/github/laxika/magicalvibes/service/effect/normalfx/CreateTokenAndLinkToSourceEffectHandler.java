@@ -41,7 +41,7 @@ public class CreateTokenAndLinkToSourceEffectHandler implements NormalEffectHand
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
         CreateTokenEffect token = linked.token();
-        if (source != null) {
+        if (source != null && linked.linkTokenToSource()) {
             var tokenEffects = new EnumMap<EffectSlot, CardEffect>(EffectSlot.class);
             if (token.tokenEffects() != null) {
                 tokenEffects.putAll(token.tokenEffects());

@@ -72,6 +72,7 @@ class SwarmingGoblinsTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     private void assertGoblins(int expectedCount) {

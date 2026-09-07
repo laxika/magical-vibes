@@ -32,7 +32,7 @@ public class ReduceCastCostForChosenSubtypeSpellsEffectHandler implements CostMo
         if (chosenSubtype == null || !spell.hasType(CardType.CREATURE)) {
             return 0;
         }
-        boolean hasChosenSubtype = spell.getKeywords().contains(Keyword.CHANGELING)
+        boolean hasChosenSubtype = spell.hasKeyword(Keyword.CHANGELING)
                 || gameQueryService.cardHasSubtype(spell, chosenSubtype, context.gameData(), spell.getOwnerId());
         return hasChosenSubtype
                 ? -((ReduceCastCostForChosenSubtypeSpellsEffect) effect).amount()

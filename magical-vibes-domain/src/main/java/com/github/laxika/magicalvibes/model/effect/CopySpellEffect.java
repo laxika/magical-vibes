@@ -23,45 +23,56 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  */
 public record CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
                               boolean sacrificeAtEndStep, boolean copyForTargetController,
-                              boolean tokenCopy, boolean removeLegendary,
+                              boolean tokenCopy, boolean permanentSpellToken, boolean removeLegendary,
                               CardColor colorOverride) implements CardEffect {
 
+    public CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
+                           boolean sacrificeAtEndStep, boolean copyForTargetController,
+                           boolean tokenCopy, boolean removeLegendary, CardColor colorOverride) {
+        this(spellFilter, tokenWithHaste, sacrificeAtEndStep, copyForTargetController,
+                tokenCopy, false, removeLegendary, colorOverride);
+    }
+
     /** No-filter form — used by spells like Twincast where the filter is on the Card's SpellTarget. */
-    public CopySpellEffect() { this(null, false, false, false, false, false, null); }
+    public CopySpellEffect() { this(null, false, false, false, false, false, false, null); }
 
     /** Filter-only form — used by ETB copy triggers like Naru Meha. */
-    public CopySpellEffect(StackEntryPredicate spellFilter) { this(spellFilter, false, false, false, false, false, null); }
+    public CopySpellEffect(StackEntryPredicate spellFilter) { this(spellFilter, false, false, false, false, false, false, null); }
 
     /** Existing full form for ordinary and creature-spell copies. */
     public CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
                            boolean sacrificeAtEndStep) {
-        this(spellFilter, tokenWithHaste, sacrificeAtEndStep, false, false, false, null);
+        this(spellFilter, tokenWithHaste, sacrificeAtEndStep, false, false, false, false, null);
     }
 
     /** Full form retained for ordinary copies and copies controlled by the target spell's controller. */
     public CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
                            boolean sacrificeAtEndStep, boolean copyForTargetController) {
-        this(spellFilter, tokenWithHaste, sacrificeAtEndStep, copyForTargetController, false, false, null);
+        this(spellFilter, tokenWithHaste, sacrificeAtEndStep, copyForTargetController, false, false, false, null);
     }
 
     /** Form for effects that give the target spell's controller control of the copy. */
     public static CopySpellEffect forTargetSpellController() {
-        return new CopySpellEffect(null, false, false, true, false, false, null);
+        return new CopySpellEffect(null, false, false, true, false, false, false, null);
     }
 
     /** Form for copying an artifact spell as a token without granting haste. */
     public static CopySpellEffect asToken() {
-        return new CopySpellEffect(null, false, false, false, true, false, null);
+        return new CopySpellEffect(null, false, false, false, true, false, false, null);
+    }
+
+    public static CopySpellEffect permanentSpellBecomesToken() {
+        return new CopySpellEffect(null, false, false, false, false, true, false, null);
     }
 
     /** Form for copying a creature spell as a nonlegendary token. */
     public static CopySpellEffect asTokenWithoutLegendary() {
-        return new CopySpellEffect(null, false, false, false, true, true, null);
+        return new CopySpellEffect(null, false, false, false, true, false, true, null);
     }
 
     /** Form for a spell copy with a color override, as with Fork. */
     public static CopySpellEffect withColor(CardColor color) {
-        return new CopySpellEffect(null, false, false, false, false, false, color);
+        return new CopySpellEffect(null, false, false, false, false, false, false, color);
     }
 
     @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.spellOnStack()); }

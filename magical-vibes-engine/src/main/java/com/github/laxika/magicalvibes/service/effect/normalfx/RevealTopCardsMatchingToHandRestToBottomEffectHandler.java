@@ -95,7 +95,7 @@ public class RevealTopCardsMatchingToHandRestToBottomEffectHandler implements No
     private boolean isCreatureOfChosenType(Card card, CardSubtype chosenSubtype) {
         boolean creature = LibraryRevealSupport.matchesCardTypes(card, Set.of(CardType.CREATURE));
         if (!creature) return false;
-        return card.getKeywords().contains(Keyword.CHANGELING)
+        return card.hasKeyword(Keyword.CHANGELING)
                 || card.getSubtypes().contains(chosenSubtype);
     }
 }

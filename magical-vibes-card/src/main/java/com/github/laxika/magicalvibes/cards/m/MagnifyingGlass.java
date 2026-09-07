@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "258")
+@CardRegistration(set = "MKM", collectorNumber = "255")
 public class MagnifyingGlass extends Card {
 
     public MagnifyingGlass() {

@@ -40,14 +40,16 @@ public class TransformTriggerCollectorService {
         }
 
         Card sourceCard = match.permanent().getCard();
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(resolved)),
                 null,
-                match.permanent().getId()));
+                match.permanent().getId());
+        trigger.setTriggeringPermanentId(transforms.transformedPermanent().getId());
+        match.gameData().enqueueTrigger(trigger);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when an ally permanent transforms",
                 match.gameData().id, sourceCard.getName());

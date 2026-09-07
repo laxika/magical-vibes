@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "85")
+@CardRegistration(set = "DKM", collectorNumber = "23")
 public class BountyOfTheHunt extends Card {
 
     public BountyOfTheHunt() {

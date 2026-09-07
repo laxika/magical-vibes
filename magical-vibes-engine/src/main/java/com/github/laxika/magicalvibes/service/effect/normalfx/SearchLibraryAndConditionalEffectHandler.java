@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

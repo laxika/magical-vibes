@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -8,18 +10,22 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PentagramOfTheAges.class, GrizzlyBears.class, Incinerate.class, OrcishArtillery.class})
 class PentagramOfTheAgesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability prompts for a source choice")
     void activatingPromptsForSourceChoice() {
         addReadyPentagram(player1);
-        addReadyGoblin(player2);
+        addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -32,7 +38,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     @DisplayName("Choosing a source records a one-shot prevention shield with no life gain")
     void choosingSourceRecordsShield() {
         addReadyPentagram(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent goblin = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -50,7 +56,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     void preventsDamageWithoutGainingLife() {
         harness.setLife(player1, 20);
         addReadyPentagram(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent goblin = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -70,8 +76,8 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
         addReadyPentagram(player1);
-        Permanent chosen = addReadyGoblin(player2);
-        Permanent other = addReadyGoblin(player2);
+        Permanent chosen = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -90,7 +96,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         addReadyPentagram(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent goblin = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -111,7 +117,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     @DisplayName("Answering the source choice resumes the parked resolution entry")
     void answeringSourceChoiceClearsParkedResolution() {
         addReadyPentagram(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent goblin = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -129,8 +135,8 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     void lethalDamageAfterSourceChoiceEndsGame() {
         harness.setLife(player2, 2);
         addReadyPentagram(player1);
-        Permanent attacker = addReadyGoblin(player1);
-        Permanent source = addReadyGoblin(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent source = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -143,17 +149,91 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
-    private Permanent addReadyPentagram(Player player) {
-        Permanent perm = new Permanent(new PentagramOfTheAges());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Activating the ability taps Pentagram of the Ages")
+    void activatingTapsPentagram() {
+        Permanent pentagram = addReadyPentagram(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(pentagram.isTapped()).isTrue();
     }
 
-    private Permanent addReadyGoblin(Player player) {
-        Permanent perm = new Permanent(new GoblinPiker());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Prevents the next noncombat damage from the chosen source to you")
+    void preventsNextNoncombatDamageToYou() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyPentagram(player1);
+        Permanent artillery = addCreatureReady(player2, new OrcishArtillery());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artillery.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage from the chosen source to your creature is not prevented")
+    void chosenSourceDamageToCreatureIsNotPrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyPentagram(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent artillery = addCreatureReady(player2, new OrcishArtillery());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artillery.getId());
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId())
+                        && s.sourceId().equals(artillery.getId()));
+    }
+
+    @Test
+    @DisplayName("Can choose a spell on the stack as the source")
+    void canChooseSpellOnStackAsSource() {
+        harness.setLife(player1, 20);
+        addReadyPentagram(player1);
+        harness.forceActivePlayer(player2);
+        Incinerate incinerate = new Incinerate();
+        harness.setHand(player2, List.of(incinerate));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(incinerate.getId());
+
+        harness.handlePermanentChosen(player1, incinerate.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    private Permanent addReadyPentagram(Player player) {
+        return addCreatureReady(player, new PentagramOfTheAges());
     }
 }

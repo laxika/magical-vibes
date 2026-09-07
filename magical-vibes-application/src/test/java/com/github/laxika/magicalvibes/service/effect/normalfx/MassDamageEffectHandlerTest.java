@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -53,8 +55,10 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(2);
                 assertThat(elves.getMarkedDamage()).isEqualTo(2);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, elves, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 2, player1Id, pyroCard, null);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, elves, 2, player1Id, pyroCard, null);
             }
 
             @Test
@@ -80,7 +84,8 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 assertThat(angel.getMarkedDamage()).isEqualTo(2);
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, angel, 2, player1Id, pyroCard, null);
             }
 
             @Test
@@ -115,8 +120,10 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(16);
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
                 verify(gameOutcomeService).checkWinCondition(gd);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 4, player1Id);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 4, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, angel, 4, player1Id, hurricaneCard, null);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 4, player1Id, hurricaneCard, null);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player1Id, 4);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 4);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player1Id, null, false);
@@ -125,5 +132,32 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                         eq(gd), eq(player1Id), any(), eq(4));
                 verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
                         eq(gd), eq(player2Id), any(), eq(4));
+            }
+
+            @Test
+            @DisplayName("Deals damage to battles when configured")
+            void damagesBattles() {
+                Card intoTheFireCard = createCard("Into the Fire");
+                Card battleCard = createCard("Battle");
+                battleCard.setType(CardType.BATTLE);
+                Permanent battle = addPermanent(player1Id, battleCard);
+                battle.setCounterCount(CounterType.DEFENSE, 5);
+                StackEntry entry = createEntry(intoTheFireCard, player1Id, null);
+                MassDamageEffect effect = MassDamageEffect.damageToEachCreaturePlaneswalkerAndBattle(2);
+
+                stubDamagePreventable();
+                stubDamageFromSourceNotPrevented();
+                stubNoDamageMultiplier();
+                when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(false);
+                when(gameQueryService.findPermanentController(eq(gd), eq(battle.getId()))).thenReturn(player1Id);
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(battle), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
+                stubNoKeywordsOnSource(entry);
+
+                massDamageHandler.resolve(gd, entry, effect);
+
+                assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+                verify(battleDefeatSupport).checkAfterDefenseRemoved(gd, battle);
             }
 }

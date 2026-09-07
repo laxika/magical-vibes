@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -23,8 +22,7 @@ public class PhyrexianTower extends Card {
                 true,
                 null,
                 List.of(new SacrificeCreatureCost(), new AwardManaEffect(ManaColor.BLACK, 2)),
-                "{T}, Sacrifice a creature: Add {B}{B}.",
-                TargetFilters.creatureYouControl()
+                "{T}, Sacrifice a creature: Add {B}{B}."
         ));
     }
 }

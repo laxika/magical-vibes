@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "258")
+@CardRegistration(set = "WAR", collectorNumber = "244")
 public class BlastZone extends Card {
 
     public BlastZone() {

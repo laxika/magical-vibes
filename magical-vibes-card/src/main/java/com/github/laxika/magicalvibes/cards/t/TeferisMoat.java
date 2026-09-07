@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "279")
+@CardRegistration(set = "TSB", collectorNumber = "103")
 public class TeferisMoat extends Card {
 
     public TeferisMoat() {

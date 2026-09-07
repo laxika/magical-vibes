@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Static effect that grants a subtype to permanents matching the given scope.
  * For equipment: "equipped creature is a [color] Zombie" adds the subtype.
  * For auras: "enchanted creature is a [type]" similarly.
+ * With {@link GrantScope#TARGET}, it can also be used by a resolving ability to permanently
+ * replace the target's creature subtypes when {@code overriding} is true.
  * For global enchantments: "each [filter] is an Equipment" with ALL_PERMANENTS scope.
  *
  * @param subtype    the subtype to grant
@@ -23,5 +25,12 @@ public record GrantSubtypeEffect(CardSubtype subtype, GrantScope scope, boolean 
 
     public GrantSubtypeEffect(CardSubtype subtype, GrantScope scope, boolean overriding) {
         this(subtype, scope, overriding, null);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return scope == GrantScope.TARGET
+                ? TargetSpec.benign(TargetPredicates.permanent())
+                : TargetSpec.NONE;
     }
 }

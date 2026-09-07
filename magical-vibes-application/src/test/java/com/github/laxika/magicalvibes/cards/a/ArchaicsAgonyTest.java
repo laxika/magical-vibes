@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import org.junit.jupiter.api.DisplayName;
@@ -20,9 +21,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArchaicsAgony.class, GrizzlyBears.class, RagingGoblin.class, Shock.class})
 class ArchaicsAgonyTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Converge X equals number of colors spent to cast")
@@ -141,11 +141,13 @@ class ArchaicsAgonyTest extends BaseCardTest {
         assertThat(expireTurn).isGreaterThan(gd.turnNumber);
 
         gd.turnNumber = expireTurn - 1;
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(() ->
+                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
         assertThat(gd.exilePlayPermissions).containsKey(exiledId);
 
         gd.turnNumber = expireTurn;
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(() ->
+                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
         assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledId);
     }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -36,9 +37,13 @@ public class ReturnAnyNumberOfPermanentsToHandEffectHandler implements NormalEff
         UUID controllerId = entry.getControllerId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         List<UUID> eligibleIds = new ArrayList<>();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, e.filter())) {
+                if (predicateEvaluationService.matchesPermanentPredicate(permanent, e.filter(), filterContext)) {
                     eligibleIds.add(permanent.getId());
                 }
             }

@@ -23,8 +23,8 @@ public class BecomeColorlessEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var becomes = (BecomeColorlessEffect) effect;
         boolean matches = becomes.scope() == GrantScope.ALL_PERMANENTS
-                ? support.matchesStaticFilter(context, context.target(), null)
-                : support.matchesCreatureScope(context, becomes.scope(), null);
+                ? support.matchesStaticFilter(context, context.target(), becomes.filter())
+                : support.matchesCreatureScope(context, becomes.scope(), becomes.filter());
         if (matches) {
             accumulator.setColorOverriding(true);
         }

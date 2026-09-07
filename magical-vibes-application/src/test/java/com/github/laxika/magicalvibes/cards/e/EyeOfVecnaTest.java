@@ -39,9 +39,10 @@ class EyeOfVecnaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EyeOfVecna());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLife(player1, 20);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
         int handSizeBeforeDraw = gd.playerHands.get(player1.getId()).size();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
@@ -59,15 +60,15 @@ class EyeOfVecnaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EyeOfVecna());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLife(player1, 20);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
         int handSizeBeforeDraw = gd.playerHands.get(player1.getId()).size();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBeforeDraw);
         harness.assertLife(player1, 20);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 }

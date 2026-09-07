@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(WhiteManaBattery.class)
 class WhiteManaBatteryTest extends BaseCardTest {
 
     // ===== Ability 0: {2}, {T}: Put a charge counter =====
@@ -94,13 +96,34 @@ class WhiteManaBatteryTest extends BaseCardTest {
         assertThat(battery.isTapped()).isTrue();
     }
 
+    @Test
+    void firstAbilityRequiresTwoMana() {
+        Permanent battery = addReadyBattery(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(battery.isTapped()).isFalse();
+    }
+
+    @Test
+    void secondAbilityRejectedWhenTapped() {
+        Permanent battery = addReadyBattery(player1);
+        battery.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(whiteMana()).isZero();
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyBattery(Player player) {
-        Permanent perm = new Permanent(new WhiteManaBattery());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new WhiteManaBattery());
     }
 
     private int whiteMana() {

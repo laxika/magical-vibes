@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +17,7 @@ import java.util.List;
 public class MayRevealSubtypeFromHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final PlayerInputService playerInputService;
+    private final MayEffectHandler mayEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,10 +32,12 @@ public class MayRevealSubtypeFromHandEffectHandler implements NormalEffectHandle
                 card, reveal.subtype(), gameData, entry.getControllerId()))) {
             return;
         }
-        gameData.queueMayAbilityForPlayer(entry.getCard(), entry.getControllerId(),
-                new MayEffect(reveal.thenEffect(), reveal.prompt()),
-                entry.getTargetId(), entry.getSourcePermanentId(), entry.getControllerId(),
-                entry.getSourcePermanentSnapshot());
-        playerInputService.processNextMayAbility(gameData);
+        MayEffect may = new MayEffect(reveal.thenEffect(), reveal.prompt());
+        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        if (effectIndex < 0) {
+            throw new IllegalStateException("Reveal effect is not on its stack entry");
+        }
+        entry.replaceEffectToResolve(effectIndex, may);
+        mayEffectHandler.resolve(gameData, entry, may);
     }
 }

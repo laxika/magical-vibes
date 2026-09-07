@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 
 @CardRegistration(set = "RTR", collectorNumber = "18")
 @CardRegistration(set = "AKR", collectorNumber = "33")
+@CardRegistration(set = "BIG", collectorNumber = "4")
 public class RestInPeace extends Card {
 
     public RestInPeace() {

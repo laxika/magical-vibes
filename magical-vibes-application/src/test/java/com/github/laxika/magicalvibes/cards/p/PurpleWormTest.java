@@ -57,7 +57,7 @@ class PurpleWormTest extends BaseCardTest {
         Permanent worm = addReadyWorm(player1);
         prepareMainPhase(player2);
         harness.setHand(player2, List.of(new GiantGrowth()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.GREEN, 3);
 
         harness.castInstant(player2, 0, worm.getId());
         harness.passBothPriorities();

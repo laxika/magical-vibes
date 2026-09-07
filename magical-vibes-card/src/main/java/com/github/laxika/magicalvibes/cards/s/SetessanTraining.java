@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M21", collectorNumber = "205")
+@CardRegistration(set = "THB", collectorNumber = "201")
 public class SetessanTraining extends Card {
 
     public SetessanTraining() {

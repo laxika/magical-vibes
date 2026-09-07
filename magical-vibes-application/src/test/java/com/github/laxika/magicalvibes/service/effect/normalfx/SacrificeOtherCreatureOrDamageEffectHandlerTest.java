@@ -36,8 +36,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -74,6 +76,10 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().when(gameQueryService.lifeAfterDamage(eq(gd), any(UUID.class), anyInt()))
+                .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
+                        - (int) invocation.getArgument(2));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         sacrificeOtherOrDamageHandler = new SacrificeOtherCreatureOrDamageEffectHandler(
                 destructionSupport, gameOutcomeService, gameQueryService, playerInputService);
 

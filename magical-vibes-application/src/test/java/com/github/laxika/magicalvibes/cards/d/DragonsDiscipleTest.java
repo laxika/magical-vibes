@@ -59,7 +59,7 @@ class DragonsDiscipleTest extends BaseCardTest {
     void dragonsYouControlHaveWardOne() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new DragonHatchling());
         harness.addToBattlefield(player1, new DragonsDisciple());
-        castGiantGrowthAt(player2, dragon, 1);
+        castGiantGrowthAt(player2, dragon, 2);
 
         harness.handleMayAbilityChosen(player2, false);
 

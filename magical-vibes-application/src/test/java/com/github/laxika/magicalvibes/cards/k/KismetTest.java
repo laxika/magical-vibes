@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,22 +15,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Kismet.class, GrizzlyBears.class, HowlingMine.class, Ornithopter.class, Forest.class})
 class KismetTest extends BaseCardTest {
 
     @Test
     @DisplayName("Opponent's creatures enter tapped")
     void opponentsCreaturesEnterTapped() {
         harness.addToBattlefield(player1, new Kismet());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
-        Permanent bears = permanentOf(player2, "Grizzly Bears");
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
     }
 
@@ -37,16 +36,28 @@ class KismetTest extends BaseCardTest {
     @DisplayName("Opponent's artifacts enter tapped")
     void opponentsArtifactsEnterTapped() {
         harness.addToBattlefield(player1, new Kismet());
-        harness.setHand(player2, List.of(new Ornithopter()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
 
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, new Ornithopter(), "{0}");
         harness.passBothPriorities();
 
-        Permanent ornithopter = permanentOf(player2, "Ornithopter");
+        Permanent ornithopter = findPermanent(player2, "Ornithopter");
         assertThat(ornithopter.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent noncreature artifacts enter tapped")
+    void opponentsNonCreatureArtifactsEnterTapped() {
+        harness.addToBattlefield(player1, new Kismet());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player2, new HowlingMine(), "{2}");
+        harness.passBothPriorities();
+
+        Permanent howlingMine = findPermanent(player2, "Howling Mine");
+        assertThat(howlingMine.isTapped()).isTrue();
     }
 
     @Test
@@ -56,11 +67,10 @@ class KismetTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
 
-        gs.playCard(gd, player2, 0, 0, null, null);
+        harness.playLand(player2, 0);
 
-        Permanent forest = permanentOf(player2, "Forest");
+        Permanent forest = findPermanent(player2, "Forest");
         assertThat(forest.isTapped()).isTrue();
     }
 
@@ -69,14 +79,27 @@ class KismetTest extends BaseCardTest {
     void controllersPermanentsDoNotEnterTapped() {
         harness.addToBattlefield(player1, new Kismet());
         harness.setHand(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.playLand(player1, 0);
 
-        Permanent forest = permanentOf(player1, "Forest");
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isFalse();
     }
 
-    private Permanent permanentOf(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return findPermanent(player, name);
+    @Test
+    @DisplayName("Opponent enchantments enter untapped")
+    void opponentsEnchantmentsEnterUntapped() {
+        harness.addToBattlefield(player1, new Kismet());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player2, new Kismet(), "{3}{W}");
+        harness.passBothPriorities();
+
+        Permanent kismet = findPermanent(player2, "Kismet");
+        assertThat(kismet.isTapped()).isFalse();
     }
+
 }

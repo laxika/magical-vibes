@@ -29,35 +29,40 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
                                         boolean tapWhenControlLost, boolean linkStolenPermanentToSource,
-                                        PermanentPredicate targetPredicate)
+                                        PermanentPredicate targetPredicate, boolean opponentChoosesTarget)
         implements ControlStealingEffect {
 
     public GainControlOfTargetEffect(ControlDuration duration) {
-        this(duration, null, false, false, null);
+        this(duration, null, false, false, null, false);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype) {
-        this(duration, grantedSubtype, false, false, null);
+        this(duration, grantedSubtype, false, false, null, false);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, boolean tapWhenControlLost) {
-        this(duration, null, tapWhenControlLost, false, null);
+        this(duration, null, tapWhenControlLost, false, null, false);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
                                      boolean tapWhenControlLost, boolean linkStolenPermanentToSource) {
-        this(duration, grantedSubtype, tapWhenControlLost, linkStolenPermanentToSource, null);
+        this(duration, grantedSubtype, tapWhenControlLost, linkStolenPermanentToSource, null, false);
     }
 
     /** Control for the given duration, recording the stolen permanent on the source (Merieke Ri Berit). */
     public static GainControlOfTargetEffect linkingToSource(ControlDuration duration) {
-        return new GainControlOfTargetEffect(duration, null, false, true);
+        return new GainControlOfTargetEffect(duration, null, false, true, null, false);
     }
 
     /** Control for the given duration, with an additional target restriction. */
     public static GainControlOfTargetEffect withTargetPredicate(ControlDuration duration,
                                                                 PermanentPredicate targetPredicate) {
-        return new GainControlOfTargetEffect(duration, null, false, false, targetPredicate);
+        return new GainControlOfTargetEffect(duration, null, false, false, targetPredicate, false);
+    }
+
+    /** Control of a creature chosen by an opponent who was chosen by the spell's controller. */
+    public static GainControlOfTargetEffect opponentChosenTarget(ControlDuration duration) {
+        return new GainControlOfTargetEffect(duration, null, false, false, null, true);
     }
 
     @Override

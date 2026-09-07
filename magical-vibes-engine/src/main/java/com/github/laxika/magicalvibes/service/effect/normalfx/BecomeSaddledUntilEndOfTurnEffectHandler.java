@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ public class BecomeSaddledUntilEndOfTurnEffectHandler implements NormalEffectHan
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,7 +51,14 @@ public class BecomeSaddledUntilEndOfTurnEffectHandler implements NormalEffectHan
             if (target == null) {
                 continue;
             }
+            boolean becameSaddled = !target.isSaddled();
             target.setSaddled(true);
+            if (becameSaddled) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+                if (controllerId != null) {
+                    triggerCollectionService.checkBecomesSaddledTriggers(gameData, target, controllerId);
+                }
+            }
             gameLogService.append(gameData, GameLog.builder().card(target.getCard())
                     .text(" becomes saddled until end of turn.").build());
         }

@@ -57,7 +57,7 @@ class MinscBelovedRangerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.BEAR)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.GIANT)).isTrue();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, bears).contains(CardSubtype.GIANT)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -66,6 +66,6 @@ class MinscBelovedRangerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.BEAR)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.GIANT)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, bears).contains(CardSubtype.GIANT)).isFalse();
     }
 }

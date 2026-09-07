@@ -64,7 +64,7 @@ class DraugrRecruiterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
                 player1, 0, 0, List.of(secondCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no more than 1 times each turn");
+                .hasMessageContaining("only once each turn");
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "19")
+@CardRegistration(set = "TSP", collectorNumber = "19")
 public class Fortify extends Card {
 
     public Fortify() {

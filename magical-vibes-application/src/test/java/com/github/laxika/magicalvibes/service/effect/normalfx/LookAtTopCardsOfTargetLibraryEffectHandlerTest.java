@@ -179,6 +179,18 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
     class MayShuffle {
 
         @Test
+        void emptyLibraryStillOffersShuffle() {
+            LookAtTopCardsOfTargetLibraryEffect effect =
+                    new LookAtTopCardsOfTargetLibraryEffect(5, TargetLibraryAction.MAY_SHUFFLE);
+
+            handler.resolve(gd, entryTargeting("Visions", effect), effect);
+
+            assertThat(gd.pendingMayAbilities).hasSize(1);
+            assertThat(gd.pendingMayAbilities.getFirst().description()).contains("shuffle their library");
+            assertThat(gd.pendingMayAbilities.getFirst().targetCardId()).isEqualTo(player2Id);
+        }
+
+        @Test
         @DisplayName("Queues a may-ability naming the looked-at cards (Visions)")
         void queuesMayAbility() {
             gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears"));
@@ -325,6 +337,35 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
                     .isEqualTo(LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD);
             assertThat(search.params().restToGraveyard()).isTrue();
             assertThat(search.params().reorderRemainingToBottom()).isFalse();
+            assertThat(search.params().canFailToFind()).isFalse();
+        }
+    }
+
+    @Nested
+    class ExileTwoFaceDownRestToBottomRandom {
+
+        @Test
+        @DisplayName("Enters a bounded two-card face-down exile search with random bottoming")
+        void entersSearchForTwoCards() {
+            stubCardViewFactory();
+            List<Card> cards = List.of(
+                    createCard("First"), createCard("Second"), createCard("Third"),
+                    createCard("Fourth"), createCard("Fifth"), createCard("Sixth"),
+                    createCard("Seventh"), createCard("Eighth"), createCard("Ninth"));
+            gd.playerDecks.get(player2Id).addAll(cards);
+
+            LookAtTopCardsOfTargetLibraryEffect effect = new LookAtTopCardsOfTargetLibraryEffect(
+                    9, TargetLibraryAction.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM);
+            handler.resolve(gd, entryTargeting("Black Cat, Cunning Thief", effect), effect);
+
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search.params().targetPlayerId()).isEqualTo(player2Id);
+            assertThat(search.params().destination())
+                    .isEqualTo(LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM);
+            assertThat(search.params().remainingCount()).isEqualTo(2);
+            assertThat(search.params().sourceCards()).hasSize(9);
+            assertThat(search.params().reorderRemainingToBottom()).isTrue();
             assertThat(search.params().canFailToFind()).isFalse();
         }
     }

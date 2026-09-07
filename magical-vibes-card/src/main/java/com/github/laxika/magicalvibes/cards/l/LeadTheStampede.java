@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MBS", collectorNumber = "82")
+@CardRegistration(set = "IKO", collectorNumber = "163")
 public class LeadTheStampede extends Card {
 
     public LeadTheStampede() {

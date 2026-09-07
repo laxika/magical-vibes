@@ -26,11 +26,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * basic land card, put that card onto the battlefield tapped, then shuffle." (A restricted search
  * can always fail to find, so "may search" needs no extra flag.)
  *
+ * @param stat          last-known stat copied to the rider's event value, or {@code NONE}
  * @param thenEffect    an existing effect resolved after exile (reused via its own handler)
  * @param recipient     whose controller slot the then-effect acts on
  * @param thenCondition optional predicate on the exiled permanent; {@code null} = always run
  */
 public record ExileTargetPermanentThenEffect(
+        EventStat stat,
         CardEffect thenEffect,
         ThenEffectRecipient recipient,
         PermanentPredicate thenCondition
@@ -38,7 +40,17 @@ public record ExileTargetPermanentThenEffect(
 
     /** Convenience: always run the then-effect (no condition on the exiled permanent). */
     public ExileTargetPermanentThenEffect(CardEffect thenEffect, ThenEffectRecipient recipient) {
-        this(thenEffect, recipient, null);
+        this(EventStat.NONE, thenEffect, recipient, null);
+    }
+
+    public ExileTargetPermanentThenEffect(
+            CardEffect thenEffect, ThenEffectRecipient recipient, PermanentPredicate thenCondition) {
+        this(EventStat.NONE, thenEffect, recipient, thenCondition);
+    }
+
+    public ExileTargetPermanentThenEffect(
+            EventStat stat, CardEffect thenEffect, ThenEffectRecipient recipient) {
+        this(stat, thenEffect, recipient, null);
     }
 
     @Override

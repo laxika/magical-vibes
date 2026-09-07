@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "163")
+@CardRegistration(set = "THB", collectorNumber = "246")
 public class TempleOfEnlightenment extends Card {
 
     public TempleOfEnlightenment() {

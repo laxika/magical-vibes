@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "304")
+@CardRegistration(set = "TSB", collectorNumber = "102")
 public class Stormbind extends Card {
 
     public Stormbind() {

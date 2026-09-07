@@ -25,14 +25,15 @@ class SkeletalSwarmingTest extends BaseCardTest {
         Permanent first = addCreatureReady(player1, new ClatteringSkeletons());
         Permanent second = addCreatureReady(player1, new ClatteringSkeletons());
         Permanent opponent = addCreatureReady(player2, new ClatteringSkeletons());
+        int basePower = gqs.getEffectivePower(gd, first);
         harness.addToBattlefield(player1, new SkeletalSwarming());
 
-        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(opponent.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(basePower + 1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(basePower + 1);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(basePower);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

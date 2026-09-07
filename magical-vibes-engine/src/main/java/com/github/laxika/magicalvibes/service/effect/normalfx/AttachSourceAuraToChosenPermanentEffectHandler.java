@@ -89,7 +89,7 @@ public class AttachSourceAuraToChosenPermanentEffectHandler implements NormalEff
         aura.setAttachedTo(target.getId());
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), target.getId());
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, target.getId());
         log.info("Game {} - {} attached to {}", gameData.id, aura.getCard().getName(), target.getCard().getName());
     }
 }

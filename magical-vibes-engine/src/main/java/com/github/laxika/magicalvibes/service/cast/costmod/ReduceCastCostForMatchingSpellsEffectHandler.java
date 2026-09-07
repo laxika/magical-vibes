@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service.cast.costmod;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSource;
@@ -34,10 +37,23 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         if (!applies) {
             return 0;
         }
+        if (reduce.plotFromHandOnly() != context.plottingFromHand()) {
+            return 0;
+        }
+        if (reduce.faceDownOnly() && !context.castFaceDown()) {
+            return 0;
+        }
+        if (!reduce.sourceZones().isEmpty()
+                && (context.sourceZone() == null
+                ? reduce.sourceZones().stream().noneMatch(zone -> spellWasCastFromZone(
+                        context.gameData(), context.spell(), zone))
+                : !reduce.sourceZones().contains(context.sourceZone()))) {
+            return 0;
+        }
         if (!predicateEvaluationService.matchesCardPredicate(
                 context.spell(), reduce.predicate(),
                 source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
-                context.gameData(), context.castingPlayerId())) {
+                context.gameData(), context.castingPlayerId(), null, null, context.xValue())) {
             return 0;
         }
         // Evaluated against the source permanent so source-relative amounts (counters on this
@@ -45,5 +61,17 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         var amountContext = new AmountContext(context.castingPlayerId(), source.sourcePermanent(),
                 null, 0, 0);
         return -amountEvaluationService.evaluate(context.gameData(), reduce.amount(), amountContext);
+    }
+
+    private boolean spellWasCastFromZone(GameData gameData, Card spell, Zone zone) {
+        return switch (zone) {
+            case EXILE -> gameData.findExiledCard(spell.getId()) != null;
+            case GRAVEYARD -> gameData.playerGraveyards.values().stream()
+                    .anyMatch(graveyard -> graveyard.stream()
+                            .anyMatch(card -> card.getId().equals(spell.getId())));
+            case HAND -> gameData.playerHands.values().stream()
+                    .anyMatch(hand -> hand.stream().anyMatch(card -> card.getId().equals(spell.getId())));
+            default -> false;
+        };
     }
 }

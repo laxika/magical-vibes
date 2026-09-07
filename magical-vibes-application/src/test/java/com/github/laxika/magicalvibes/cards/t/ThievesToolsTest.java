@@ -26,6 +26,7 @@ class ThievesToolsTest extends BaseCardTest {
     void createsTreasureOnEnter() {
         harness.castFromHand(player1, new ThievesTools(), "{1}{B}");
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(
                 permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)

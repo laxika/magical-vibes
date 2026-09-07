@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Private peek at the top card, then may reveal a matching card to hand; when the effect opts in,
- * a card that stays out of hand may instead be put into the graveyard.
+ * a card that stays out of hand may instead be put into the graveyard or on the library bottom.
  */
 @Slf4j
 @Component
@@ -73,7 +73,19 @@ public class LookAtTopCardMayRevealMatchingToHandEffectHandler
             return;
         }
 
-        if (!e.mayGraveyardOtherwise()) {
+        if (e.otherwiseDestination()
+                == LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.BOTTOM) {
+            Card bottomCard = deck.removeFirst();
+            deck.addLast(bottomCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " puts ", bottomCard, " on the bottom of their library."));
+            log.info("Game {} - {} puts non-matching {} on the bottom of their library ({})",
+                    gameData.id, playerName, bottomCard.getName(), sourceName);
+            return;
+        }
+
+        if (e.otherwiseDestination()
+                != LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.GRAVEYARD) {
             log.info("Game {} - {} looks at non-matching top card — it stays on top ({})",
                     gameData.id, playerName, sourceName);
             return;

@@ -4,7 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 import java.util.List;
@@ -27,7 +32,13 @@ public class UrzasPowerPlant extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.COLORLESS,
-                        new FixedIfControlsAllNamed(List.of("Urza's Mine", "Urza's Tower"), 2, 1))),
+                        new FixedIfCondition(new AllOf(List.of(
+                                new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.URZAS),
+                                        new PermanentHasSubtypePredicate(CardSubtype.MINE)))),
+                                new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.URZAS),
+                                        new PermanentHasSubtypePredicate(CardSubtype.TOWER)))))), 2, 1))),
                 "{T}: Add {C}. If you control an Urza's Mine and an Urza's Tower, add {C}{C} instead."
         ));
     }

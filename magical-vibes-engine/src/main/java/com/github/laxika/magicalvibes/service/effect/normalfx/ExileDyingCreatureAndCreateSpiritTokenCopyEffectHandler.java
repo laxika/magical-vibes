@@ -72,7 +72,7 @@ public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements 
             tokenSubtypes.add(CardSubtype.SPIRIT);
         }
         int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData, entry.getControllerId(), 1, tokenSubtypes);
+                gameData, entry.getControllerId(), 1, tokenSubtypes, true);
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> batch = new ArrayList<>();
         for (int i = 0; i < tokenCount; i++) {

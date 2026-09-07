@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfChosenDistinctControlledTokensEffect;
@@ -75,7 +76,7 @@ public class CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler impl
 
         for (Card sourceCard : sourceCards) {
             int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                    gameData, entry.getControllerId(), 1, sourceCard.getSubtypes());
+                    gameData, entry.getControllerId(), 1, sourceCard.getSubtypes(), sourceCard.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 tokenCopyHandler.createTokenCopy(gameData, entry, sourceCard);
             }

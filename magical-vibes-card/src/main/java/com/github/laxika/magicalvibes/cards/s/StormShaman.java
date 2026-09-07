@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "222")
 @CardRegistration(set = "ALL", collectorNumber = "81a")
 @CardRegistration(set = "ALL", collectorNumber = "81b")
+@CardRegistration(set = "DKM", collectorNumber = "21a")
+@CardRegistration(set = "DKM", collectorNumber = "21b")
 public class StormShaman extends Card {
 
     public StormShaman() {

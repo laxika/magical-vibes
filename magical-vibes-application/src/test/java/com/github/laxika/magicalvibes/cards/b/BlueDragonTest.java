@@ -31,9 +31,9 @@ class BlueDragonTest extends BaseCardTest {
         chooseTarget(third);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(-3);
-        assertThat(second.getPowerModifier()).isEqualTo(-2);
-        assertThat(third.getPowerModifier()).isEqualTo(-1);
+        assertThat((gqs.getEffectivePower(gd, first) - first.getCard().getPower())).isEqualTo(-3);
+        assertThat((gqs.getEffectivePower(gd, second) - second.getCard().getPower())).isEqualTo(-2);
+        assertThat((gqs.getEffectivePower(gd, third) - third.getCard().getPower())).isEqualTo(-1);
         assertThat(first.getToughnessModifier()).isZero();
         assertThat(second.getToughnessModifier()).isZero();
         assertThat(third.getToughnessModifier()).isZero();
@@ -51,8 +51,8 @@ class BlueDragonTest extends BaseCardTest {
         chooseTarget(second);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(-3);
-        assertThat(second.getPowerModifier()).isEqualTo(-1);
+        assertThat((gqs.getEffectivePower(gd, first) - first.getCard().getPower())).isEqualTo(-3);
+        assertThat((gqs.getEffectivePower(gd, second) - second.getCard().getPower())).isEqualTo(-1);
     }
 
     @Test
@@ -67,10 +67,10 @@ class BlueDragonTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
+        assertThat((gqs.getEffectivePower(gd, target) - target.getCard().getPower())).isEqualTo(-3);
 
         gd.expireFloatingEffectsAtTurnStart(player1.getId());
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat((gqs.getEffectivePower(gd, target) - target.getCard().getPower())).isZero();
     }
 
     @Test
@@ -90,7 +90,7 @@ class BlueDragonTest extends BaseCardTest {
 
         chooseTarget(opposingCreature);
         harness.passBothPriorities();
-        assertThat(opposingCreature.getPowerModifier()).isEqualTo(-3);
+        assertThat((gqs.getEffectivePower(gd, opposingCreature) - opposingCreature.getCard().getPower())).isEqualTo(-3);
     }
 
     private void castBlueDragon() {

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RollD20EffectHandler;
@@ -49,7 +51,7 @@ class FaridehDevilsChosenTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, farideh, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, farideh, Keyword.MENACE)).isTrue();
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
     }
 
@@ -63,7 +65,7 @@ class FaridehDevilsChosenTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, farideh, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, farideh, Keyword.MENACE)).isTrue();
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3).contains(libraryCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -87,7 +89,7 @@ class FaridehDevilsChosenTest extends BaseCardTest {
 
     private Permanent prepare(Card libraryCard) {
         Permanent farideh = harness.addToBattlefieldAndReturn(player1, new FaridehDevilsChosen());
-        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), libraryCard));
         harness.setHand(player1, List.of(new ContactOtherPlane()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -97,6 +99,10 @@ class FaridehDevilsChosenTest extends BaseCardTest {
     private void castRollSpell() {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.Scry.class) != null) {
+            gs.handleInteractionAnswer(gd, player1,
+                    new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+        }
         harness.passBothPriorities();
     }
 

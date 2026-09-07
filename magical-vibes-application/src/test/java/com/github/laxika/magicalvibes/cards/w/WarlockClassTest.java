@@ -91,6 +91,7 @@ class WarlockClassTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         prepareForSorcery(player1);
+        harness.addMana(player1, ManaColor.BLACK, 7);
         harness.activateAbility(player1, battlefieldIndex(warlockClass), 1, null, null);
         harness.passBothPriorities();
     }

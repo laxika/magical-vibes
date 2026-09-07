@@ -71,7 +71,8 @@ public class ReturnPermanentControlledByPlayerToHandEffectHandler implements Nor
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(chooserId));
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(
+                chooserId, e.thenCondition(), e.thenEffect()));
         playerInputService.beginPermanentChoice(gameData, chooserId, choices,
                 "Choose a " + e.noun() + " to return to its owner's hand.");
     }

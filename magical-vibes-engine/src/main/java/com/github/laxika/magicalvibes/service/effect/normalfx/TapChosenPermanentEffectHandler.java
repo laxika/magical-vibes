@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link TapChosenPermanentEffect}: the controller chooses one permanent matching the
  * effect's predicate, and it is tapped (and optionally untap-locked for the source's lifetime) when
- * the choice is answered
+ * the choice is answered, or skips its next untap step when requested
  * (see {@code MultiPermanentChoiceHandlerService.handleTapChosenPermanent}).
  */
 @Component
@@ -68,7 +68,7 @@ public class TapChosenPermanentEffectHandler implements NormalEffectHandlerBean 
         playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), validIds, 1,
                 new MultiPermanentChoiceContext.TapChosenPermanent(entry.getCard().getName(),
                         entry.getSourcePermanentId(), e.preventUntapWhileSourceTapped(),
-                        e.preventUntapWhileSourceOnBattlefield()),
+                        e.preventUntapWhileSourceOnBattlefield(), e.skipNextUntap()),
                 entry.getCard().getName() + "'s ability — Choose a permanent to tap.");
     }
 }

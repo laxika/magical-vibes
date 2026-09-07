@@ -27,7 +27,7 @@ class DrawCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(3)).resolveDrawCard(gd, player1Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 3);
             }
 
             @Test
@@ -39,7 +39,7 @@ class DrawCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 1);
             }
 
             @Test
@@ -51,7 +51,7 @@ class DrawCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(5)).resolveDrawCard(gd, player1Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 5);
             }
 
             @Test
@@ -63,7 +63,7 @@ class DrawCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, never()).resolveDrawCard(any(), any());
+                verify(drawService).resolveDrawCards(gd, player1Id, 0);
             }
 
             @Test
@@ -78,6 +78,6 @@ class DrawCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(3)).resolveDrawCard(gd, player1Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 3);
             }
 }

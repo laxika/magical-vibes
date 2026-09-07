@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "235")
+@CardRegistration(set = "MOM", collectorNumber = "215")
 public class WaryThespian extends Card {
 
     public WaryThespian() {

@@ -80,12 +80,16 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.builder().text(playerName + " exchanges life total with ").card(source.getCard()).text("'s " + statName + " (" + playerName + ": " + currentLife + " -> " + currentStat + ", ").card(source.getCard()).text(" " + statName + ": " + currentStat + " -> " + currentLife + ").").build());
 
-        // Set player's life total to the creature's stat
-        gameData.playerLifeTotals.put(playerId, currentStat);
+        // Set player's life total to the creature's stat, applying life-loss replacements if lower.
+        int resultingLife = currentStat > currentLife
+                ? currentStat
+                : currentLife - (currentLife - currentStat)
+                * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        gameData.playerLifeTotals.put(playerId, resultingLife);
         if (currentStat > currentLife) {
             triggerCollectionService.checkLifeGainTriggers(gameData, playerId, currentStat - currentLife);
         } else {
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, currentLife - currentStat);
+            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, currentLife - resultingLife);
         }
 
         // Set creature's base stat to the player's former life total (layer 7b setting effect,

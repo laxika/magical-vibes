@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 
 @CardRegistration(set = "MMQ", collectorNumber = "127")
+@CardRegistration(set = "TSB", collectorNumber = "39")
 public class Conspiracy extends Card {
 
     public Conspiracy() {

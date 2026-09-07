@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentLifeCostForTa
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "164")
+@CardRegistration(set = "OTJ", collectorNumber = "149")
 public class TerrorOfThePeaks extends Card {
 
     public TerrorOfThePeaks() {

@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
@@ -37,10 +39,13 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -62,7 +67,10 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -97,6 +105,9 @@ public class MayAbilityHandlerService {
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
@@ -213,7 +224,10 @@ public class MayAbilityHandlerService {
                 .filter(e -> e instanceof CastTopOfLibraryWithoutPayingManaCostEffect)
                 .map(e -> (CastTopOfLibraryWithoutPayingManaCostEffect) e)
                 .findFirst().orElse(null);
-        if (castFromLibEffect != null && castFromLibEffect.castableTypes().contains(ability.sourceCard().getType())) {
+        if (castFromLibEffect != null && castFromLibEffect.matches(ability.sourceCard())) {
+            if (accepted) {
+                markOncePerTurnTriggerOnAcceptance(gameData, ability);
+            }
             mayCastHandlerService.handleCastFromLibraryChoice(gameData, player, accepted, ability);
             return;
         }
@@ -259,6 +273,10 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean isTargetedEffect = isTargetedPermanentEffect || isTargetedPlayerEffect || isTargetedGraveyardEffect;
 
+        if (accepted) {
+            markOncePerTurnTriggerOnAcceptance(gameData, ability);
+        }
+
         // Pre-targeted may ability — target was already chosen (e.g. "You may tap or untap that creature", "you may have that player lose 1 life")
         if (accepted && isTargetedEffect && ability.targetCardId() != null) {
             boolean isPreTargetedPlayer = gameData.playerIds.contains(ability.targetCardId());
@@ -288,10 +306,11 @@ public class MayAbilityHandlerService {
                 entry.setTargetId(ability.targetCardId());
                 entry.setAttackedTargetId(ability.attackedTargetId());
                 entry.setActivePlayerId(ability.activePlayerId());
-                entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-                entry.setEventValue(ability.eventValue());
-                entry.setTriggeringPermanentId(ability.triggeringPermanentId());
-                gameData.stack.add(entry);
+            entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+            entry.setEventValue(ability.eventValue());
+            entry.setTriggeringPermanentId(ability.triggeringPermanentId());
+            entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
+            gameData.stack.add(entry);
 
                 if (isPreTargetedPlayer) {
                     String targetName = gameData.playerIdToName.get(ability.targetCardId());
@@ -355,6 +374,7 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
+            entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
             entry.setTriggeringCardId(ability.triggeringCardId());
 
             // Self-targeting effects need the source permanent's ID to resolve
@@ -381,7 +401,8 @@ public class MayAbilityHandlerService {
             // Effects that copy an entering permanent need the target permanent ID from the trigger
             boolean needsEnteringTarget = ability.effects().stream()
                     .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect
-                            || e instanceof DiscardCardThenEffect discard && discard.useEntryTarget());
+                            || e instanceof DiscardCardThenEffect discard && discard.useEntryTarget()
+                            || e.usesEnteringPermanentReference());
             if (needsEnteringTarget && ability.targetCardId() != null) {
                 entry.setTargetId(ability.targetCardId());
             }
@@ -625,6 +646,15 @@ public class MayAbilityHandlerService {
             return;
         }
         if (accepted) {
+            if (requiresSourceSacrifice(ability.effects())
+                    && (ability.sourcePermanentId() == null
+                    || gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) == null)) {
+                accepted = false;
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " cannot sacrifice ", ability.sourceCard(), "."));
+            }
+        }
+        if (accepted) {
             if (ability.tapPermanentsCost() != null) {
                 // beginTapCostPayment either awaits input or continues the parked resolution.
                 mayAbilityTapCostService.beginTapCostPayment(
@@ -640,10 +670,8 @@ public class MayAbilityHandlerService {
                     boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, player.getId())
                             && gameData.getLife(player.getId()) >= ability.lifeCost();
                     if (canPayLife) {
-                        gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - ability.lifeCost());
-                        triggerCollectionService.checkLifePaymentTriggers(gameData, player.getId(), ability.lifeCost());
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                player.getUsername() + " pays " + ability.lifeCost() + " life for ", ability.sourceCard(), "'s ability."));
+                        lifeSupport.applyLifePayment(gameData, player.getId(), ability.lifeCost(),
+                                ability.sourceCard().getName());
                         paidWithLife = true;
                     }
                 }
@@ -666,16 +694,12 @@ public class MayAbilityHandlerService {
                 if (!paidWithLife) {
                     cost.pay(pool);
                     if (ability.additionalLifeCost() > 0) {
-                        gameData.playerLifeTotals.put(player.getId(),
-                                gameData.getLife(player.getId()) - ability.additionalLifeCost());
-                        triggerCollectionService.checkLifePaymentTriggers(
-                                gameData, player.getId(), ability.additionalLifeCost());
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                player.getUsername() + " pays " + ability.additionalLifeCost() + " life for ",
-                                ability.sourceCard(), "'s ability."));
+                        lifeSupport.applyLifePayment(gameData, player.getId(), ability.additionalLifeCost(),
+                                ability.sourceCard().getName());
                     }
                 }
             }
+            markOncePerTurnTriggerOnAcceptance(gameData, ability);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
             CardEffect innerEffect = extractInnerEffect(ability);
@@ -716,6 +740,19 @@ public class MayAbilityHandlerService {
         if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
         if (gameData.interaction.isAwaitingInput()) { return; }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private boolean requiresSourceSacrifice(List<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof SacrificeSelfEffect) {
+                return true;
+            }
+            if (effect instanceof SequenceEffect sequence
+                    && requiresSourceSacrifice(sequence.steps())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Continues a may ability after a tap cost has been paid. */
@@ -848,6 +885,53 @@ public class MayAbilityHandlerService {
         return first;
     }
 
+    private void markOncePerTurnTriggerOnAcceptance(GameData gameData, PendingMayAbility ability) {
+        if (ability.sourcePermanentId() == null) {
+            return;
+        }
+        boolean marksOnAcceptance = gameData.pendingEffectResolutionEntry != null
+                && gameData.pendingEffectResolutionEntry.isMarkSourceOncePerTurnOnAcceptance();
+        marksOnAcceptance |= ability.effects().stream()
+                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
+                .anyMatch(effect -> effect instanceof CopyControllerCastSpellEffect copy
+                        && copy.markSourceOncePerTurnOnAccept());
+        CardEffect acceptedEffect = null;
+        for (CardEffect effect : ability.effects()) {
+            CardEffect innerEffect = effect instanceof MayEffect may ? may.wrapped() : effect;
+            if (innerEffect instanceof CopyControllerCastSpellEffect copy
+                    && copy.markSourceOncePerTurnOnAccept()) {
+                acceptedEffect = innerEffect;
+                break;
+            }
+            if (innerEffect instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy
+                    && copy.markSourceOncePerTurnOnAccept()) {
+                acceptedEffect = copy.asAccepted();
+                replaceAcceptedMayEffect(gameData, effect, acceptedEffect);
+                break;
+            }
+        }
+        if (acceptedEffect != null) {
+            marksOnAcceptance = true;
+        }
+        if (marksOnAcceptance) {
+            gameData.oncePerTurnTriggersFiredThisTurn.add(ability.sourcePermanentId());
+        }
+    }
+
+    private void replaceAcceptedMayEffect(GameData gameData, CardEffect authoredEffect,
+                                          CardEffect acceptedEffect) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        int effectIndex = gameData.pendingEffectResolutionIndex;
+        if (pendingEntry == null || effectIndex < 0
+                || effectIndex >= pendingEntry.getEffectsToResolve().size()) {
+            return;
+        }
+        CardEffect replacement = authoredEffect instanceof MayEffect may
+                ? new MayEffect(acceptedEffect, may.prompt(), may.elseEffect(), may.choicePlayer())
+                : acceptedEffect;
+        pendingEntry.replaceEffectToResolve(effectIndex, replacement);
+    }
+
     private void handleAnyPlayerMayPayChoice(GameData gameData, Player player, boolean accepted,
                                              PendingMayAbility ability) {
         if (accepted && ability.manaCost() != null) {
@@ -921,6 +1005,7 @@ public class MayAbilityHandlerService {
                 case ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy -> exileCopy.filter();
                 case ExileGraveyardCardsEffect exile -> exile.filter();
                 case ExileGraveyardCardCreateTokenIfCreatureEffect exileCreature -> exileCreature.filter();
+                case ExileGraveyardCardWithConditionalBonusEffect exileBonus -> exileBonus.filter();
                 case ReturnCardFromGraveyardEffect ret -> ret.filter();
                 default -> null;
             };

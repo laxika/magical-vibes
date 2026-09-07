@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class PlayerWithMostCreaturesGainsControlOfSourceCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final CreatureControlService creatureControlService;
-    private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,14 +52,27 @@ public class PlayerWithMostCreaturesGainsControlOfSourceCreatureEffectHandler im
             return;
         }
 
+        PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect mostCreaturesEffect =
+                (PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect) effect;
+        PermanentPredicate creatureFilter = mostCreaturesEffect.creatureFilter();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
+
         int highestCreatureCount = -1;
         UUID playerWithMostCreatures = null;
         boolean tiedForMostCreatures = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            int creatureCount = battlefield == null ? 0 : (int) battlefield.stream()
-                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                    .count();
+            int creatureCount = 0;
+            if (battlefield != null) {
+                for (Permanent permanent : battlefield) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, creatureFilter, filterContext)) {
+                        creatureCount++;
+                    }
+                }
+            }
             if (creatureCount > highestCreatureCount) {
                 highestCreatureCount = creatureCount;
                 playerWithMostCreatures = playerId;

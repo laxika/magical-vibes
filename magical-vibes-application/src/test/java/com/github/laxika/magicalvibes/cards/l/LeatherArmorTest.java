@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -34,7 +33,7 @@ class LeatherArmorTest extends BaseCardTest {
         prepareOpponentTurn();
         harness.setHand(player2, List.of(new GiantGrowth()));
         harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.castInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
@@ -73,6 +72,7 @@ class LeatherArmorTest extends BaseCardTest {
         Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
         prepareOpponentTurn();
 
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.activateAbility(player2, 0, null, creature.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
@@ -94,7 +94,7 @@ class LeatherArmorTest extends BaseCardTest {
         assertThat(armor.getAttachedTo()).isEqualTo(firstCreature.getId());
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, secondCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no more than 1 times each turn");
+                .hasMessageContaining("only once each turn");
     }
 
     private Permanent addArmorReady(Player player) {
@@ -107,11 +107,7 @@ class LeatherArmorTest extends BaseCardTest {
         return addCreatureReady(player, new GrizzlyBears());
     }
 
-    private Permanent addCreatureReady(Player player, Card card) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
-        creature.setSummoningSick(false);
-        return creature;
-    }
+
 
     private void prepareOpponentTurn() {
         harness.forceActivePlayer(player2);

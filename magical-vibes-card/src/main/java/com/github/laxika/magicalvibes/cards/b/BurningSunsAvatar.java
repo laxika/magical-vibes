@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "XLN", collectorNumber = "135")
@@ -17,8 +18,9 @@ public class BurningSunsAvatar extends Card {
         setAllowSharedTargets(true);
 
         // Deals 3 damage to target opponent or planeswalker
-        target(new PermanentPredicateTargetFilter(
+        target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT));
 

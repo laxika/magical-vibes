@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnControlledPer
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "216")
+@CardRegistration(set = "RAV", collectorNumber = "158")
 public class DoublingSeason extends Card {
 
     public DoublingSeason() {

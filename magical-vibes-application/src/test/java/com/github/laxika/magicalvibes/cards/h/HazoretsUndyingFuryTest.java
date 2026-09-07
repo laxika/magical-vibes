@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.c.CollectiveBrutality;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, CollectiveBrutality.class,
+        Forest.class, GrizzlyBears.class, Plains.class, Shock.class})
 class HazoretsUndyingFuryTest extends BaseCardTest {
 
     // ===== Shuffle, exile, and free-cast =====
@@ -68,6 +72,30 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, bearId);
 
             assertThat(gd.stack.stream().anyMatch(e -> e.getCard().getName().equals("Shock"))).isTrue();
+        }
+
+        @Test
+        @DisplayName("Chooses a targeted modal spell mode before casting it for free")
+        void choosesModalSpellModeAndTargetBeforeFreeCast() {
+            CollectiveBrutality brutality = new CollectiveBrutality();
+            harness.setHand(player2, List.of(new Shock()));
+
+            cast(List.of(brutality));
+
+            harness.handleMultipleCardsChosen(player1, List.of(brutality.getId()));
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+
+            harness.handleListChoice(player1,
+                    "Target opponent reveals their hand. You choose an instant or sorcery card from it. "
+                            + "That player discards that card");
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+            harness.handleCardChosen(player1, 0);
+
+            harness.assertInGraveyard(player2, "Shock");
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         }
 
         @Test

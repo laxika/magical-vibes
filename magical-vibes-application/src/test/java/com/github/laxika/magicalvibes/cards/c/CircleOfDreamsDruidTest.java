@@ -15,7 +15,7 @@ class CircleOfDreamsDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping Circle of Dreams Druid adds one green mana for each creature you control")
     void addsGreenManaForEachControlledCreature() {
-        harness.addToBattlefield(player1, new CircleOfDreamsDruid());
+        addCreatureReady(player1, new CircleOfDreamsDruid());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());

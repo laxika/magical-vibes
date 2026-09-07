@@ -33,6 +33,8 @@ class FindThePathTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
+
         assertThat(gd.playerDungeonProgress.get(player1.getId()))
                 .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();

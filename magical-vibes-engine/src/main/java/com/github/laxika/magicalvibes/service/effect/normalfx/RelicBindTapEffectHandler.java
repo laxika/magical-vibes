@@ -9,12 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves Relic Bind's enchanted-artifact-tap triggered ability. The engine has no cast-time modal
- * machinery for triggered abilities, so the "choose one" mode is picked as the ability resolves (a
- * list pick driven by {@code ChoiceContext.RelicBindModeChoice}); the chosen mode's targeted effect
- * — 1 damage to a player/planeswalker, or a player gains 1 life — then routes through the shared
- * {@code MayAbilityTriggerTarget} target-selection flow. Both modes' targets are free, so this is
- * functionally equivalent to choosing mode and target as the ability is put on the stack.
+ * Compatibility resolver for an already queued legacy marker. New enchanted-permanent tap triggers
+ * choose their mode and target through the shared triggered-modal queue before receiving priority,
+ * and put the chosen damage or life-gain effect directly on the stack.
  */
 @Component
 @RequiredArgsConstructor

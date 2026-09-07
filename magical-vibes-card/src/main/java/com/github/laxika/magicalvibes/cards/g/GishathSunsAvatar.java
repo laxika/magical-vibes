@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "222")
+@CardRegistration(set = "LCI", collectorNumber = "229")
+@CardRegistration(set = "LCI", collectorNumber = "330")
 public class GishathSunsAvatar extends Card {
 
     public GishathSunsAvatar() {

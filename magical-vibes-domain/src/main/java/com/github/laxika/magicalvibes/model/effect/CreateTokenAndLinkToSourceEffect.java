@@ -7,11 +7,16 @@ import java.util.Objects;
 
 /**
  * Creates the supplied token blueprint and links every token created by the resolution to the
- * source permanent. The source's leaves-the-battlefield effect can then clean up those tokens,
- * while each token can refer back to the source when it leaves.
+ * source permanent. The source's leaves-the-battlefield effect can then clean up those tokens. The
+ * optional reciprocal link gives each token a reference to the source when it leaves; cards that
+ * only need source tracking can disable that behavior.
  */
-public record CreateTokenAndLinkToSourceEffect(CreateTokenEffect token)
+public record CreateTokenAndLinkToSourceEffect(CreateTokenEffect token, boolean linkTokenToSource)
         implements TokenCreatingEffect {
+
+    public CreateTokenAndLinkToSourceEffect(CreateTokenEffect token) {
+        this(token, true);
+    }
 
     public CreateTokenAndLinkToSourceEffect {
         Objects.requireNonNull(token, "token");

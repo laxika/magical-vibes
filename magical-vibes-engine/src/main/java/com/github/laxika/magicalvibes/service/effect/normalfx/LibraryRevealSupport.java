@@ -77,6 +77,11 @@ public class LibraryRevealSupport {
         return collectCardNamesInGame(gameData, card -> matchesCardTypes(card, Set.of(CardType.CREATURE)));
     }
 
+    /** Every distinct nonland card name across all zones (Tamiyo, Collector of Tales). */
+    public List<String> collectNonlandCardNamesInGame(GameData gameData) {
+        return collectCardNamesInGame(gameData, card -> !card.hasType(CardType.LAND));
+    }
+
     public List<String> collectAllCardNamesInGame(GameData gameData) {
         return collectCardNamesInGame(gameData, card -> true);
     }

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>The {@code scope} determines which creatures are affected:
  * <ul>
+ *   <li>{@link GrantScope#SELF} — only the source creature; always uses toughness regardless of
+ *       power.</li>
  *   <li>{@link GrantScope#EQUIPPED_CREATURE} / {@link GrantScope#ENCHANTED_CREATURE} —
  *       only the attached creature; also requires toughness &gt; power (equipment/aura pattern,
  *       e.g. Bark of Doran).</li>

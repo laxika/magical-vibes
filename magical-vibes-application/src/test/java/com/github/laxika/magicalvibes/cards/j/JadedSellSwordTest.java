@@ -66,7 +66,7 @@ class JadedSellSwordTest extends BaseCardTest {
 
         int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
         harness.activateAbility(player1, treasureIndex, null, null);
-        harness.handleListChoice(player1, "COLORLESS");
+        harness.handleListChoice(player1, "RED");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);

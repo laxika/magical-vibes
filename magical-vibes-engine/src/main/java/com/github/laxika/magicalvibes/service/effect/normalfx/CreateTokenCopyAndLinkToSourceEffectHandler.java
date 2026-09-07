@@ -39,11 +39,6 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent sourceEnchantment = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (sourceEnchantment == null) {
-            log.info("Game {} - Dance of Many enchantment no longer on battlefield, no token created", gameData.id);
-            return;
-        }
-
         Permanent targetCreature = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (targetCreature == null) {
             log.info("Game {} - Target creature no longer on battlefield, no token created", gameData.id);
@@ -54,7 +49,7 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
         // "when this leaves the battlefield, sacrifice the linked enchantment" trigger before freezing.
         Card sourceCard = targetCreature.getCard();
         int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData, entry.getControllerId(), 1, sourceCard.getSubtypes());
+                gameData, entry.getControllerId(), 1, sourceCard.getSubtypes(), true);
         for (int copy = 0; copy < tokenCount; copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
                     sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
@@ -67,10 +62,12 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, entry.getControllerId(), tokenPermanent);
 
-            // Forge the bond: each permanent remembers the other so their leaves-battlefield triggers can
-            // find their partner.
+        // Forge the bond: each permanent remembers the other so their leaves-battlefield triggers can
+        // find their partner.
+        if (sourceEnchantment != null) {
             sourceEnchantment.setChosenPermanentId(tokenPermanent.getId());
             tokenPermanent.setChosenPermanentId(sourceEnchantment.getId());
+        }
 
             gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
             log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id, sourceCard.getName());

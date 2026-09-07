@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -31,11 +33,14 @@ public class BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffectHandler imp
         String sourceName = entry.getCard() != null ? entry.getCard().getName() : "Equipment";
 
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (equipment == null || equipment.getAttachedTo() == null) {
-            log.info("Game {} - {} trigger fizzles: equipment no longer attached", gameData.id, sourceName);
+        UUID attachedCreatureId = equipment != null && equipment.getAttachedTo() != null
+                ? equipment.getAttachedTo()
+                : entry.getTriggeringPermanentId();
+        if (attachedCreatureId == null) {
+            log.info("Game {} - {} trigger fizzles: no attached creature was recorded", gameData.id, sourceName);
             return;
         }
-        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, attachedCreatureId);
         if (equippedCreature == null) {
             log.info("Game {} - {} trigger fizzles: equipped creature no longer on battlefield", gameData.id, sourceName);
             return;

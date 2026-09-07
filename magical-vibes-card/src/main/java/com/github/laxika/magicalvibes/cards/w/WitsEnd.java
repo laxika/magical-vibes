@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M13", collectorNumber = "117")
+@CardRegistration(set = "DIS", collectorNumber = "58")
 public class WitsEnd extends Card {
 
     public WitsEnd() {

@@ -31,8 +31,16 @@ public class GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntil
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        UUID targetId = !targetIds.isEmpty() ? targetIds.getFirst() : entry.getTargetId();
+        var grant = (GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntilEndOfTurnEffect) effect;
+        UUID targetId;
+        if (grant.selfTargeting()) {
+            targetId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId()
+                    : entry.getTargetId();
+        } else {
+            List<UUID> targetIds = entry.targetsForEffect(effect);
+            targetId = !targetIds.isEmpty() ? targetIds.getFirst() : entry.getTargetId();
+        }
         if (targetId == null || gameQueryService.findPermanentById(gameData, targetId) == null) {
             return;
         }

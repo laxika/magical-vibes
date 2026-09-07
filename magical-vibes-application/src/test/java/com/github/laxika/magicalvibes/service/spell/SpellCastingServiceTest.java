@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.spell;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.Card;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -23,10 +25,13 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -38,14 +43,17 @@ import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -53,17 +61,21 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -84,6 +96,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -99,6 +112,9 @@ class SpellCastingServiceTest {
 
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
+
+    @Mock
+    private CloneService cloneService;
 
     @Mock
     private GameQueryService gameQueryService;
@@ -145,6 +161,9 @@ class SpellCastingServiceTest {
     private ConditionEvaluationService conditionEvaluationService;
 
     @Mock
+    private WaterbendPaymentService waterbendPaymentService;
+
+    @Mock
     private GameMutationCoordinator mutationCoordinator;
 
     @Mock
@@ -152,6 +171,12 @@ class SpellCastingServiceTest {
 
     @Mock
     private LifeSupport lifeSupport;
+
+    @Mock
+    private LandCopyOnEnterService landCopyOnEnterService;
+
+    @Mock
+    private PlayerInputService playerInputService;
 
     private SpellCastingService svc;
 
@@ -163,16 +188,19 @@ class SpellCastingServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
-        svc = new SpellCastingService(cardRevealService, battlefieldEntryService, graveyardTargetingService,
+        svc = new SpellCastingService(cardRevealService, battlefieldEntryService, cloneService, graveyardTargetingService,
                 gameQueryService, predicateEvaluationService, actionAvailabilityService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, new TargetGroupAssignmentService(gameQueryService),
                 permanentRemovalService, triggerCollectionService,
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
-                mutationCoordinator, stateBasedActionService, lifeSupport);
+                waterbendPaymentService,
+                mutationCoordinator, stateBasedActionService, lifeSupport, landCopyOnEnterService,
+                playerInputService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -220,6 +248,12 @@ class SpellCastingServiceTest {
                         .hasType(invocation.getArgument(1)));
         lenient().when(gameQueryService.canCastSpellFromZone(
                         any(GameData.class), any(Card.class), any(Zone.class)))
+                .thenReturn(true);
+        lenient().when(gameQueryService.canCastSpellFromZone(
+                        any(GameData.class), any(Card.class), any(Zone.class), any(UUID.class)))
+                .thenReturn(true);
+        lenient().when(gameQueryService.canPlayerCastSpellsFromZone(
+                        any(GameData.class), any(UUID.class), any(Zone.class)))
                 .thenReturn(true);
         lenient().when(gameQueryService.canPlayersCastSpellsFromZone(
                         any(GameData.class), any(Zone.class)))
@@ -270,6 +304,36 @@ class SpellCastingServiceTest {
     }
 
     @Test
+    @DisplayName("Pays a single-permanent sacrifice cost when casting flashback from the graveyard")
+    void paysSinglePermanentSacrificeCostFromGraveyard() {
+        Card spell = createSorcery("Graveyard Sacrifice Spell", "{W}{B}");
+        spell.addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+                new PermanentIsArtifactPredicate(), "an artifact"));
+        spell.addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        spell.addCastingOption(new FlashbackCast("{2}{W}{B}"));
+        Permanent artifact = new Permanent(createArtifact("Test Ingot", "{1}"));
+        gd.playerBattlefields.get(player1Id).add(artifact);
+        gd.playerGraveyards.get(player1Id).add(spell);
+        addMana(player1Id, ManaColor.COLORLESS, 2);
+        addMana(player1Id, ManaColor.WHITE, 1);
+        addMana(player1Id, ManaColor.BLACK, 1);
+        when(castingPermissionService.canUseFlashback(eq(gd), eq(player1Id), any(FlashbackCast.class)))
+                .thenReturn(true);
+        when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, spell)).thenReturn(true);
+        when(gameQueryService.findPermanentById(gd, artifact.getId())).thenReturn(artifact);
+        when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
+                .thenReturn(true);
+        when(permanentRemovalService.removePermanentToGraveyard(gd, artifact)).thenReturn(true);
+
+        svc.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
+                List.of(), null, artifact.getId());
+
+        verify(permanentRemovalService).removePermanentToGraveyard(gd, artifact);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Pays a non-X additional target cost")
     void paysAdditionalTargetCostForNonXSpell() {
         Card spell = createInstant("Strive Spell", "{W}");
@@ -316,6 +380,45 @@ class SpellCastingServiceTest {
         assertThat(gd.stack.getFirst().getTargetIds()).containsExactlyElementsOf(targetIds);
         assertThat(gd.stack.getFirst().getCard().getSpellTargets()).hasSize(2);
         assertThat(gd.playerHands.get(player1Id)).containsExactly(spliced);
+    }
+
+    @Test
+    @DisplayName("Allows an optional counter distribution to be cast with no targets")
+    void allowsOptionalCounterDistributionWithNoTargets() {
+        Card spell = createSorcery("Optional Counter Spell", "{2}{G}{G}");
+        spell.target(TargetFilters.creatureYouControl(), 0, 4)
+                .addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
+                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4), null));
+        setHand(player1Id, List.of(spell));
+        addMana(player1Id, ManaColor.GREEN, 4);
+        when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+        when(amountEvaluationService.evaluate(eq(gd), any(), any())).thenReturn(4);
+
+        svc.playCard(gd, player1, 0, null, null, Map.of(), List.of(), List.of(), false, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getDamageAssignments()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Allows an Adventure with only optional targets to be cast without targets")
+    void allowsAdventureWithNoOptionalTargets() {
+        Card front = createCreature("Test Creature", "{4}{R}");
+        Card adventure = createSorcery("Test Adventure", "{2}{R}");
+        adventure.target(TargetFilters.creature(), 0, 2)
+                .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+        front.setBackFaceCard(adventure);
+        front.addCastingOption(new AdventureCast("{2}{R}"));
+        setHand(player1Id, List.of(front));
+        addMana(player1Id, ManaColor.RED, 2);
+        addMana(player1Id, ManaColor.COLORLESS, 1);
+        when(actionAvailabilityService.isCardPlayableWithDeclaredTargets(
+                eq(gd), eq(player1Id), eq(adventure), any(ManaPool.class), eq(0))).thenReturn(true);
+
+        svc.playAdventureCard(gd, player1, 0, null, null, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetIds()).isEmpty();
     }
 
     // =========================================================================
@@ -473,8 +576,10 @@ class SpellCastingServiceTest {
         void appliesSpellCastingRestrictionsToGraveyardSpells() {
             Card instant = createInstant("Test Instant", "{R}");
             gd.playerGraveyards.get(player1Id).add(instant);
-            when(castingPermissionService.findFilteredGraveyardPermissionSource(gd, player1Id, instant))
-                    .thenReturn(Optional.of(UUID.randomUUID()));
+            var permission = mock(CastSpellsFromGraveyardPermission.class);
+            when(castingPermissionService.findFilteredGraveyardPermission(gd, player1Id, instant))
+                    .thenReturn(Optional.of(new CastingPermissionService.FilteredGraveyardPermission(
+                            UUID.randomUUID(), permission)));
             when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, instant)).thenReturn(false);
 
             assertThatThrownBy(() -> svc.playFlashbackSpell(gd, player1, 0, null, null))
@@ -502,7 +607,8 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
+            verify(battlefieldEntryService).putLandOntoBattlefield(
+                    eq(gd), eq(player1Id), any(Permanent.class), eq(Zone.HAND));
             verify(battlefieldEntryService).processLandETBEffects(eq(gd), eq(player1Id), eq(land));
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
@@ -523,6 +629,21 @@ class SpellCastingServiceTest {
             verify(triggerCollectionService).checkControllerPlaysLandTriggers(eq(gd), eq(player1Id), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("Land played from a graveyard is marked for graveyard-entry triggers")
+        void graveyardLandIsMarkedAsEnteringFromGraveyard() {
+            Card land = createLand("Test Plains");
+            gd.playerGraveyards.get(player1Id).add(land);
+            when(actionAvailabilityService.getPlayableGraveyardLandIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, null, null, null, null, null, true, null);
+
+            ArgumentCaptor<Permanent> permanentCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putLandOntoBattlefield(
+                    eq(gd), eq(player1Id), permanentCaptor.capture(), eq(Zone.GRAVEYARD));
+            assertThat(permanentCaptor.getValue().getEnteredFromGraveyardOwnerId()).isEqualTo(player1Id);
         }
     }
 
@@ -652,7 +773,7 @@ class SpellCastingServiceTest {
             // validateSpellTargeting is called with needsTarget=false (ETB-only),
             // so hexproof won't be enforced at cast time
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(creature), anyList(), eq(player2Id), any(), eq(player1Id), eq(false), anyInt(), eq(false));
+                    eq(gd), eq(creature), anyList(), eq(player2Id), any(), eq(player1Id), eq(false), anyInt(), eq(false), eq(false));
         }
 
         @Test
@@ -668,7 +789,7 @@ class SpellCastingServiceTest {
 
             // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(sorcery), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false));
+                    eq(gd), eq(sorcery), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false), eq(false));
         }
 
         @Test
@@ -762,7 +883,7 @@ class SpellCastingServiceTest {
 
             // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false));
+                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false), eq(false));
         }
     }
 
@@ -788,7 +909,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt(), eq(false));
+                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt(), eq(false), eq(false));
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(instant), eq(player1Id), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
@@ -881,7 +1002,7 @@ class SpellCastingServiceTest {
                     List.of(first.getId(), second.getId()), null, false, null);
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.getLife(player1Id)).isZero();
+            verify(lifeSupport).applyLifePayment(gd, player1Id, 6, "Test Purge");
         }
     }
 
@@ -1138,7 +1259,8 @@ class SpellCastingServiceTest {
             // Card not playable without convoke, but playable with 1 convoke creature
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id, 1)).thenReturn(List.of(0));
-            when(castingCostService.getCastCostModifier(gd, player1Id, convokeCard, 0)).thenReturn(0);
+            when(castingCostService.getCastCostModifier(
+                    gd, player1Id, convokeCard, 0, null, false, false)).thenReturn(0);
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
 
             svc.playCard(gd, player1, 0, null, null, null, null, List.of(helperId), false, null);
@@ -1176,7 +1298,8 @@ class SpellCastingServiceTest {
             addMana(player1Id, ManaColor.BLUE, 5);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id, 1)).thenReturn(List.of(0));
-            when(castingCostService.getCastCostModifier(gd, player1Id, improviseCard, 0)).thenReturn(0);
+            when(castingCostService.getCastCostModifier(
+                    gd, player1Id, improviseCard, 0, null, false, false)).thenReturn(0);
             when(gameQueryService.isArtifact(eq(gd), any(Permanent.class))).thenReturn(true);
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(false);
 
@@ -1397,12 +1520,14 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).isEmpty();
             assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
             assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
+            verify(battlefieldEntryService).putLandOntoBattlefield(
+                    eq(gd), eq(player1Id), any(Permanent.class), eq(Zone.EXILE));
             verify(battlefieldEntryService).processLandETBEffects(eq(gd), eq(player1Id), eq(land));
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
             // Land-play special action from exile fires land-play triggers, not spell-cast ones
-            verify(triggerCollectionService).checkControllerPlaysLandTriggers(eq(gd), eq(player1Id), any());
+            verify(triggerCollectionService).checkControllerPlaysLandTriggers(
+                    eq(gd), eq(player1Id), any(), eq(true));
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
         }
@@ -1425,7 +1550,8 @@ class SpellCastingServiceTest {
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(0);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(creature), eq(player1Id));
+            verify(triggerCollectionService).checkSpellCastTriggers(
+                    eq(gd), eq(creature), eq(player1Id), eq(Zone.EXILE));
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
         }

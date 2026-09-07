@@ -60,8 +60,9 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHand
                 gameData, targetPlayerId, GameEventFact.RevealZone.HAND, List.of(revealed));
 
         int lifeCost = lifeCost(revealed);
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)
-                && gameData.getLife(targetPlayerId) >= lifeCost;
+        boolean canPay = lifeCost == 0
+                || (gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)
+                && gameData.getLife(targetPlayerId) >= lifeCost);
         if (!canPay) {
             discardCard(gameData, targetPlayerId, revealed.getId(), entry.getCard(), entry.getControllerId());
             return;

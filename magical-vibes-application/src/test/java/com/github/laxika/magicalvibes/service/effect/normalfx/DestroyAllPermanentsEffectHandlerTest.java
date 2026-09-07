@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,6 +64,7 @@ class DestroyAllPermanentsEffectHandlerTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
     @Mock private EffectHandlerRegistry effectHandlerRegistry;
+    @Mock private TriggerCollectionService triggerCollectionService;
     @InjectMocks private DestructionSupport destructionSupport;
     private GameData gd;
     private UUID player1Id;

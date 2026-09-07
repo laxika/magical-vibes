@@ -61,6 +61,21 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
             return;
         }
 
+        if (e.counterType() == CounterType.ANY) {
+            var options = java.util.Arrays.stream(CounterType.values())
+                    .filter(type -> type != CounterType.ANY && type != CounterType.SILVER
+                            && source.getCounterCount(type) > 0)
+                    .map(type -> new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                            "Remove a " + permanentCounterSupport.counterTypeName(type) + " counter",
+                            new RemoveCounterFromSourceThenEffect(type, e.thenEffect(), e.onlyIfLastCounterRemoved())))
+                    .toList();
+            if (options.size() > 1) {
+                playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
+                        new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(options),
+                        false, entry.getSourcePermanentId());
+                return;
+            }
+        }
         CounterType counterType = findCounterType(source, e.counterType());
         if (counterType == null) {
             return;
@@ -74,7 +89,9 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 .text(" removes a ").text(permanentCounterSupport.counterTypeName(counterType))
                 .text(" counter.").build());
 
-        beginReflexiveTrigger(gameData, entry, e.thenEffect());
+        if (!e.onlyIfLastCounterRemoved() || source.getCounterCount(counterType) == 0) {
+            beginReflexiveTrigger(gameData, entry, e.thenEffect());
+        }
     }
 
     private void beginReflexiveTrigger(GameData gameData, StackEntry entry, CardEffect thenEffect) {
@@ -113,7 +130,8 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
-                .withSourcePermanentId(entry.getSourcePermanentId());
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withDefendingPlayerId(entry.getTargetId());
         List<UUID> validPermanentTargets = new ArrayList<>();
         if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
             for (UUID playerId : gameData.orderedPlayerIds) {
@@ -142,7 +160,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
                 entry.getCard(), entry.getControllerId(), List.of(thenEffect),
-                entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot()));
+                entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot(), 0, 0, false, entry.getTargetId()));
         String prompt = entry.getCard().getName() + "'s reflexive ability - Choose target.";
         if (validPlayerTargets.isEmpty()) {
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validPermanentTargets, prompt);

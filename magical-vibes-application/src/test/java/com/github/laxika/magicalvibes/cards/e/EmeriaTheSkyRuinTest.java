@@ -49,6 +49,8 @@ class EmeriaTheSkyRuinTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -62,7 +64,10 @@ class EmeriaTheSkyRuinTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        var bears = gd.playerGraveyards.get(player1.getId()).getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");

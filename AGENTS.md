@@ -1,4 +1,5 @@
 - Do not start committing changes until I tell you to do so.
+- Do not start committing changes until I tell you to do so.
 - If you commit changes (after being instructed) make sure to attribute yourself.
 - In commit messages and descriptions, never write out full card set names — refer to a set only by its short set code (e.g. `INR`).
 - You should always work on the main branch!

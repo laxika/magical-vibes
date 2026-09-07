@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpiritShackle.class, GiantSpider.class, Mountain.class, Disenchant.class})
 class SpiritShackleTest extends BaseCardTest {
 
     // ===== Casting and targeting =====
@@ -59,14 +61,12 @@ class SpiritShackleTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking (tapping) the enchanted creature puts a -0/-2 counter on it")
     void tappingEnchantedCreaturePutsCounter() {
-        Permanent spider = new Permanent(new GiantSpider()); // 2/4
-        spider.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(spider);
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
         attachShackle(player1, spider);
 
         assertThat(spider.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)).isZero();
 
-        declareAttack(player1, 0);
+        declareAttackers(List.of(0));
         harness.passBothPriorities(); // resolve the becomes-tapped trigger
 
         assertThat(spider.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)).isEqualTo(1);
@@ -77,30 +77,41 @@ class SpiritShackleTest extends BaseCardTest {
     @Test
     @DisplayName("An un-enchanted creature becoming tapped gets no counter")
     void unenchantedCreatureGetsNoCounter() {
-        Permanent spider = new Permanent(new GiantSpider());
-        spider.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(spider);
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
 
-        declareAttack(player1, 0);
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(spider.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(4);
     }
 
+    @Test
+    void tapTriggerUsesLastKnownAttachmentIfAuraLeaves() {
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        Permanent aura = attachShackle(player1, spider);
+
+        declareAttackers(List.of(0));
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+
+        harness.passBothPriorities();
+
+        assertThat(spider.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)).isEqualTo(1);
+    }
+
     // ===== Helpers =====
 
-    private void attachShackle(Player owner, Permanent creature) {
+    private Permanent attachShackle(Player owner, Permanent creature) {
         Permanent aura = new Permanent(new SpiritShackle());
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(owner.getId()).add(aura);
-    }
-
-    private void declareAttack(Player attacker, int creatureIndex) {
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, attacker, List.of(creatureIndex));
+        return aura;
     }
 }

@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RelicBind.class, GrizzlyBears.class, JaceBeleren.class, Ornithopter.class})
 class RelicBindTest extends BaseCardTest {
 
     // "Enchant artifact an opponent controls. Whenever enchanted artifact becomes tapped, choose
@@ -79,7 +83,7 @@ class RelicBindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Relic Bind")
+                .anyMatch(p -> p.getCard() instanceof RelicBind
                         && artifact.getId().equals(p.getAttachedTo()));
     }
 
@@ -108,6 +112,18 @@ class RelicBindTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage mode can target a planeswalker")
+    void damageModeCanTargetPlaneswalker() {
+        Permanent artifact = attachAuraToOpponentArtifact();
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+
+        tapAndResolveModal(artifact, ChoiceContext.RelicBindModeChoice.DAMAGE, jace.getId());
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Life mode makes the chosen player gain 1 life when the enchanted artifact taps")
     void lifeModeGainsOne() {
         Permanent artifact = attachAuraToOpponentArtifact();
@@ -116,6 +132,17 @@ class RelicBindTest extends BaseCardTest {
         tapAndResolveModal(artifact, ChoiceContext.RelicBindModeChoice.LIFE, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(p1Before + 1);
+    }
+
+    @Test
+    @DisplayName("Life mode can target the opponent")
+    void lifeModeCanTargetOpponent() {
+        Permanent artifact = attachAuraToOpponentArtifact();
+        int p2Before = gd.playerLifeTotals.get(player2.getId());
+
+        tapAndResolveModal(artifact, ChoiceContext.RelicBindModeChoice.LIFE, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(p2Before + 1);
     }
 
     @Test
@@ -133,13 +160,28 @@ class RelicBindTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(p2Before);
     }
 
+    @Test
+    @DisplayName("Relic Bind's mode is chosen before the opponent receives priority")
+    void modeIsChosenBeforeOpponentPriority() {
+        Permanent artifact = attachAuraToOpponentArtifact();
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+
+        artifact.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+
+        harness.passPriority(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
     // ===== Helpers =====
 
     private Permanent attachAuraToOpponentArtifact() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        Permanent aura = new Permanent(new RelicBind());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new RelicBind());
         aura.setAttachedTo(artifact.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return artifact;
     }
 
@@ -147,8 +189,7 @@ class RelicBindTest extends BaseCardTest {
         artifact.tap();
         harness.inMutationScope(
                 () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
-        // resolve trigger -> mode prompt
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passPriority(player1);
         harness.handleListChoice(player1, mode);          // choose mode -> target prompt
         harness.handlePermanentChosen(player1, targetId); // choose target -> chosen mode's effect onto stack
         // resolve the chosen mode's effect

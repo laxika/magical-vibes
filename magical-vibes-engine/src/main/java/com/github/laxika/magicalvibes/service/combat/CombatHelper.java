@@ -32,21 +32,30 @@ public final class CombatHelper {
                                                           GameData gameData,
                                                           Permanent attacker,
                                                           List<Permanent> defenderBattlefield) {
-        boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData);
+        boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData)
+                || isLandwalkIgnoredForBlocking(gameData, attacker.getId());
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof BlockabilityRestrictionEffect restriction
-                    && hasDefenderCondition(restriction, landwalkIgnored)
-                    && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
-                    attacker, restriction.unblockableIfDefenderControls())) {
-                return true;
+            if (effect instanceof BlockabilityRestrictionEffect restriction) {
+                if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
+                    return true;
+                }
+                if (hasDefenderCondition(restriction, landwalkIgnored)
+                        && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
+                        attacker, restriction.unblockableIfDefenderControls())) {
+                    return true;
+                }
             }
         }
         for (CardEffect effect : gameQueryService.computeStaticBonus(gameData, attacker).grantedEffects()) {
-            if (effect instanceof BlockabilityRestrictionEffect restriction
-                    && hasDefenderCondition(restriction, landwalkIgnored)
-                    && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
-                    attacker, restriction.unblockableIfDefenderControls())) {
-                return true;
+            if (effect instanceof BlockabilityRestrictionEffect restriction) {
+                if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
+                    return true;
+                }
+                if (hasDefenderCondition(restriction, landwalkIgnored)
+                        && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
+                        attacker, restriction.unblockableIfDefenderControls())) {
+                    return true;
+                }
             }
         }
         final boolean[] result = {false};
@@ -56,12 +65,17 @@ public final class CombatHelper {
                 return;
             }
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof BlockabilityRestrictionEffect restriction
-                        && hasDefenderCondition(restriction, landwalkIgnored)
-                    && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
-                        source, restriction.unblockableIfDefenderControls())) {
-                    result[0] = true;
-                    return;
+                if (effect instanceof BlockabilityRestrictionEffect restriction) {
+                    if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
+                        result[0] = true;
+                        return;
+                    }
+                    if (hasDefenderCondition(restriction, landwalkIgnored)
+                            && defenderControls(predicateEvaluationService, gameData, defenderBattlefield,
+                            source, restriction.unblockableIfDefenderControls())) {
+                        result[0] = true;
+                        return;
+                    }
                 }
             }
         });
@@ -88,11 +102,21 @@ public final class CombatHelper {
         boolean[] found = {false};
         gameData.forEachPermanent((playerId, permanent) -> {
             if (!found[0] && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(LandwalkIgnoredForBlockingEffect.class::isInstance)) {
+                    .anyMatch(effect -> effect instanceof LandwalkIgnoredForBlockingEffect landwalkEffect
+                            && landwalkEffect.ignoresAllLandwalk())) {
                 found[0] = true;
             }
         });
         return found[0];
+    }
+
+    public static boolean isLandwalkIgnoredForBlocking(GameData gameData, UUID permanentId) {
+        synchronized (gameData.floatingEffects) {
+            return gameData.floatingEffects.stream()
+                    .anyMatch(floatingEffect -> permanentId.equals(floatingEffect.affectedPermanentId())
+                            && floatingEffect.effect() instanceof LandwalkIgnoredForBlockingEffect landwalkEffect
+                            && landwalkEffect.ignoresAllLandwalk());
+        }
     }
 
     private static boolean defenderControls(PredicateEvaluationService predicateEvaluationService,
@@ -110,6 +134,26 @@ public final class CombatHelper {
     private static boolean hasDefenderCondition(BlockabilityRestrictionEffect restriction, boolean landwalkIgnored) {
         return restriction.unblockableIfDefenderControls() != null
                 && !(landwalkIgnored && restriction.unblockableIfDefenderControlsIsLandwalk());
+    }
+
+    private static boolean hasUnmetSharedTypeCondition(GameQueryService gameQueryService,
+                                                        GameData gameData,
+                                                        List<Permanent> defenderBattlefield,
+                                                        BlockabilityRestrictionEffect restriction) {
+        Integer minimum = restriction.defenderControlsCreaturesSharingTypeMinimum();
+        if (minimum == null) {
+            return false;
+        }
+        UUID defenderControllerId = null;
+        if (defenderBattlefield != null) {
+            for (Permanent permanent : defenderBattlefield) {
+                defenderControllerId = gameData.findControllerOf(permanent);
+                if (defenderControllerId != null) {
+                    break;
+                }
+            }
+        }
+        return !gameQueryService.controlsCreaturesSharingCreatureType(gameData, defenderControllerId, minimum);
     }
 
     public static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,

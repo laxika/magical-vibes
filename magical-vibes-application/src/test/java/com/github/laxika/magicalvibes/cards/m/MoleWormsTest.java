@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MoleWorms.class, Forest.class, BalduvianBears.class})
 class MoleWormsTest extends BaseCardTest {
 
     // ===== Activated ability: tap target land =====
@@ -58,14 +60,44 @@ class MoleWormsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Untapping and retapping Mole Worms before resolution does not lock the land")
+    void untappingAndRetappingBeforeResolutionDoesNotLockLand() {
+        Permanent moleWorms = addReadyMoleWorms(player1);
+        Permanent targetLand = addReadyLand(player2);
+
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+        moleWorms.untap();
+        moleWorms.tap();
+        harness.passBothPriorities();
+
+        assertThat(targetLand.isTapped()).isTrue();
+
+        advanceToNextTurn(player1);
+
+        assertThat(targetLand.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot target non-land permanents")
     void cannotTargetNonLand() {
         addReadyMoleWorms(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("Can target a land controlled by Mole Worms' controller")
+    void canTargetOwnLand() {
+        addReadyMoleWorms(player1);
+        Permanent ownLand = addReadyLand(player1);
+
+        harness.activateAbility(player1, 0, null, ownLand.getId());
+        harness.passBothPriorities();
+
+        assertThat(ownLand.isTapped()).isTrue();
     }
 
     // ===== Prevent untap while source tapped =====
@@ -106,6 +138,24 @@ class MoleWormsTest extends BaseCardTest {
         assertThat(moleWorms.isTapped()).isFalse();
 
         // player2's turn — their land should now untap (lock cleared)
+        advanceToNextTurn(player1);
+
+        assertThat(targetLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An old land lock does not return when Mole Worms is tapped again")
+    void oldLockDoesNotReturnAfterMoleWormsIsRetapped() {
+        Permanent moleWorms = addReadyMoleWorms(player1);
+        Permanent targetLand = addReadyLand(player2);
+
+        harness.activateAbility(player1, 0, null, targetLand.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurnWithMayChoice(player2, true);
+        assertThat(moleWorms.isTapped()).isFalse();
+
+        moleWorms.tap();
         advanceToNextTurn(player1);
 
         assertThat(targetLand.isTapped()).isFalse();
@@ -179,17 +229,11 @@ class MoleWormsTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyMoleWorms(Player player) {
-        Permanent perm = new Permanent(new MoleWorms());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new MoleWorms());
     }
 
     private Permanent addReadyLand(Player player) {
-        Permanent perm = new Permanent(new Forest());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Forest());
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
@@ -198,9 +242,8 @@ class MoleWormsTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
+        Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(nextActivePlayer, TurnStep.UPKEEP);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
@@ -209,9 +252,9 @@ class MoleWormsTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // Cascades: END_STEP -> CLEANUP -> advanceTurn -> may ability prompt
-
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

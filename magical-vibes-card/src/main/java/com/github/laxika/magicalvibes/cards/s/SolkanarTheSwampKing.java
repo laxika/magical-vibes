@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "85")
+@CardRegistration(set = "TSB", collectorNumber = "100")
+@CardRegistration(set = "LEG", collectorNumber = "259")
 public class SolkanarTheSwampKing extends Card {
 
     public SolkanarTheSwampKing() {

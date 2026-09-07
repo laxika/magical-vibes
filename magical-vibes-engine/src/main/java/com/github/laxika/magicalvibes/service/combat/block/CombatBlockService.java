@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
@@ -57,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
@@ -78,12 +80,16 @@ import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -105,10 +111,15 @@ public class CombatBlockService {
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
     private final CombatTapCostService combatTapCostService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GraveyardTargetingService graveyardTargetingService;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
+
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as blockers.
@@ -183,11 +194,20 @@ public class CombatBlockService {
         List<Integer> attackerIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Integer> blockableCreatureIndices = getBlockableCreatureIndices(gameData, defenderId);
         BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
         return attackerIndices.stream()
                 .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
-                .filter(idx -> !CombatHelper.isCantBeBlockedDueToDefenderCondition(gameQueryService, predicateEvaluationService,
-                        gameData, attackerBattlefield.get(idx), defenderBattlefield))
+                .filter(idx -> {
+                    Permanent attacker = attackerBattlefield.get(idx);
+                    if (!CombatHelper.isCantBeBlockedDueToDefenderCondition(gameQueryService, predicateEvaluationService,
+                            gameData, attacker, defenderBattlefield)) {
+                        return true;
+                    }
+                    return blockableCreatureIndices.stream()
+                            .map(defenderBattlefield::get)
+                            .anyMatch(blocker -> blockLegalityService.canBlockAttacker(blockContext, blocker, attacker));
+                })
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToHistoricCast(gameQueryService, gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToAttackingAlone(gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> blockLegalityService.canBeBlockedByAllDefendingCreatures(
@@ -316,8 +336,6 @@ public class CombatBlockService {
         int blockLifeTaxTotal = blockLifeTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
         blockTaxTotal += globalBlockManaTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
 
-        int teamMaxBlockers = maximumBlockersForTeam(attackerBattlefield);
-
         for (var entry : blockersPerAttacker.entrySet()) {
             int attackerIdx = entry.getKey();
             int blockerCount = entry.getValue();
@@ -325,6 +343,7 @@ public class CombatBlockService {
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) && blockerCount == 1) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked except by two or more creatures");
             }
+            int teamMaxBlockers = maximumBlockersForTeam(gameData, attacker, attackerBattlefield);
             if (blockerCount > teamMaxBlockers) {
                 throw new IllegalStateException(attacker.getCard().getName()
                         + " can't be blocked by more than " + teamMaxBlockers
@@ -337,6 +356,13 @@ public class CombatBlockService {
                         + " creature" + (maxBlockers == 1 ? "" : "s"));
             }
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
+                        && blockerCount < restriction.minBlockers()) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
+                }
+            }
+            for (CardEffect effect : gameQueryService.getGrantedEffects(gameData, attacker)) {
                 if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
                         && blockerCount < restriction.minBlockers()) {
                     throw new IllegalStateException(attacker.getCard().getName()
@@ -399,9 +425,7 @@ public class CombatBlockService {
             combatAttackService.payGenericMana(gameData.playerManaPools.get(defenderId), blockTaxTotal);
         }
         if (blockLifeTaxTotal > 0) {
-            int currentLife = gameData.playerLifeTotals.get(defenderId);
-            gameData.playerLifeTotals.put(defenderId, currentLife - blockLifeTaxTotal);
-            gameData.lifeLostThisTurn.merge(defenderId, blockLifeTaxTotal, Integer::sum);
+            lifeSupport.applyLifePayment(gameData, defenderId, blockLifeTaxTotal, "block tax");
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " pays " + blockLifeTaxTotal + " life to declare blockers."));
         }
@@ -425,11 +449,13 @@ public class CombatBlockService {
         // that band becomes blocked by that same blocker (even one it couldn't otherwise block, e.g.
         // a flyer). Applied after validation, so these consequential blocks don't count against
         // max-blocks or menace.
-        applyBandSharedBlocking(gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
+        List<BlockerAssignment> declaredBlockerAssignments = blockerAssignments;
+        blockerAssignments = applyBandSharedBlocking(
+                gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
 
-        if (!blockerAssignments.isEmpty()) {
-            String logEntry = player.getUsername() + " declares " + blockerAssignments.size() +
-                    " blocker" + (blockerAssignments.size() > 1 ? "s" : "") + ".";
+        if (!declaredBlockerAssignments.isEmpty()) {
+            String logEntry = player.getUsername() + " declares " + declaredBlockerAssignments.size() +
+                    " blocker" + (declaredBlockerAssignments.size() > 1 ? "s" : "") + ".";
             gameLogService.append(gameData, GameLog.text(logEntry));
         }
 
@@ -454,7 +480,11 @@ public class CombatBlockService {
                 // Resolve conditional block effects (e.g. "when blocking a creature with flying")
                 List<CardEffect> resolvedBlockEffects = new ArrayList<>();
                 for (CardEffect e : blockEffects) {
-                    if (e instanceof BoostSelfWhenBlockingKeywordEffect kwEffect) {
+                    if (e instanceof ConditionalEffect conditional
+                            && !conditionEvaluationService.isInterveningIfMet(
+                            gameData, conditional, blocker, defenderId, attacker.getId())) {
+                        continue;
+                    } else if (e instanceof BoostSelfWhenBlockingKeywordEffect kwEffect) {
                         if (gameQueryService.hasKeyword(gameData, attacker, kwEffect.requiredKeyword())) {
                             resolvedBlockEffects.add(new BoostSelfEffect(kwEffect.powerBoost(), kwEffect.toughnessBoost()));
                         }
@@ -471,11 +501,16 @@ public class CombatBlockService {
                         if (hasEquipmentAttached(gameData, attacker)) {
                             resolvedBlockEffects.add(e);
                         }
+                    } else if (e instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, attacker, destroyEffect.filter())) {
+                            resolvedBlockEffects.add(e);
+                        }
                     } else {
                         resolvedBlockEffects.add(e);
                     }
                 }
-                if (resolvedBlockEffects.isEmpty()) continue;
+                if (!resolvedBlockEffects.isEmpty()) {
 
                 // Targeted block triggers (e.g. Elite Javelineer's "deals 1 damage to target
                 // attacking creature") let the controller choose any legal target rather than
@@ -517,11 +552,13 @@ public class CombatBlockService {
                         blocker.getId()
                 );
                 // Block triggers reference "that creature" but don't target — they can't fizzle
+                blockTrigger.setTriggeringPermanentId(attacker.getId());
                 blockTrigger.setNonTargeting(true);
                 gameData.stack.add(blockTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
                         "'s block ability triggers."));
                 log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
+                }
             }
 
             // Check for aura/equipment-based "when enchanted/equipped creature blocks" triggers
@@ -577,6 +614,8 @@ public class CombatBlockService {
             List<CardEffect> grantedBecomesBlockedEffects = new ArrayList<>(
                     attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
             grantedBecomesBlockedEffects.addAll(attacker.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
+            grantedBecomesBlockedEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                    gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED));
             if (!becomesBlockedRegs.isEmpty() || !grantedBecomesBlockedEffects.isEmpty()) {
                 List<CardEffect> blockerSpecificEffects = new ArrayList<>(becomesBlockedRegs.stream()
                         .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
@@ -621,6 +660,11 @@ public class CombatBlockService {
                                 // (e.g. Catacomb Dragon's nonartifact, non-Dragon blocker).
                                 if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, permConditional.predicate())) {
                                     filteredEffects.add(permConditional.wrapped());
+                                }
+                            } else if (e instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
+                                if (predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, blocker, destroyEffect.filter())) {
+                                    filteredEffects.add(e);
                                 }
                             } else {
                                 filteredEffects.add(e);
@@ -841,7 +885,11 @@ public class CombatBlockService {
 
         List<CardEffect> resolvedEffects = new ArrayList<>();
         for (CardEffect effect : blockEffects) {
-            if (effect instanceof BoostSelfWhenBlockingKeywordEffect keywordEffect) {
+            if (effect instanceof ConditionalEffect conditional
+                    && !conditionEvaluationService.isInterveningIfMet(
+                    gameData, conditional, blocker, defenderId, attacker.getId())) {
+                continue;
+            } else if (effect instanceof BoostSelfWhenBlockingKeywordEffect keywordEffect) {
                 if (gameQueryService.hasKeyword(gameData, attacker, keywordEffect.requiredKeyword())) {
                     resolvedEffects.add(new BoostSelfEffect(keywordEffect.powerBoost(), keywordEffect.toughnessBoost()));
                 }
@@ -853,6 +901,11 @@ public class CombatBlockService {
                 addResolvedCombatOpponentBoost(gameData, resolvedEffects, conditional, List.of(attacker));
             } else if (effect instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                 if (hasEquipmentAttached(gameData, attacker)) {
+                    resolvedEffects.add(effect);
+                }
+            } else if (effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
+                if (predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, destroyEffect.filter())) {
                     resolvedEffects.add(effect);
                 }
             } else {
@@ -894,6 +947,7 @@ public class CombatBlockService {
                 resolvedEffects,
                 needsAttackerTarget ? attacker.getId() : blocker.getId(),
                 blocker.getId());
+        trigger.setTriggeringPermanentId(attacker.getId());
         trigger.setNonTargeting(true);
         gameData.stack.add(trigger);
     }
@@ -938,6 +992,11 @@ public class CombatBlockService {
                 } else if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
                     if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, conditional.predicate())) {
                         filteredEffects.add(conditional.wrapped());
+                    }
+                } else if (effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, blocker, destroyEffect.filter())) {
+                        filteredEffects.add(effect);
                     }
                 } else {
                     filteredEffects.add(effect);
@@ -1252,9 +1311,13 @@ public class CombatBlockService {
             if (!attacker.isAttacking() || isBlocked(defenderBattlefield, attacker)) {
                 continue;
             }
-            List<CardEffect> effects = attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED);
+            List<CardEffect> effects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED));
+            effects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                    gameData, attacker, EffectSlot.ON_ATTACKS_UNBLOCKED));
             List<UUID> defendingCreatureIds = defenderBattlefield == null ? List.of() : defenderBattlefield.stream()
                     .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                    .filter(permanent -> targetLegalityService.checkTriggeredPermanentTargetableReason(
+                            gameData, permanent, attacker.getCard(), activeId).isEmpty())
                     .map(Permanent::getId)
                     .toList();
             effects = effects.stream().map(effect -> {
@@ -1273,6 +1336,7 @@ public class CombatBlockService {
             GraveyardCardChoosingEffect graveyardChoice = effects.stream()
                     .filter(GraveyardCardChoosingEffect.class::isInstance)
                     .map(GraveyardCardChoosingEffect.class::cast)
+                    .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
                     .findFirst()
                     .orElse(null);
             if (graveyardChoice != null) {
@@ -1295,24 +1359,21 @@ public class CombatBlockService {
                         attacker.getCard().getName());
                 pushed++;
             } else if (!effects.isEmpty()) {
-                // Permanent-targeting "you may" (Dwarven Vigilantes / Gaze of Pain shape): the may's
-                // creature target is chosen at resolution after accepting. Push via queueMayAbility
-                // with null targetId so the defender baked into other unblocked-attack triggers does
-                // not look like an already-chosen creature target. Non-targeting mays (Stromgald Spy)
-                // and mandatory effects keep the defending player as targetId.
+                // Targets of a triggered ability are chosen before its controller makes any choice
+                // the ability asks for during resolution.
                 List<CardEffect> targetingMayEffects = effects.stream()
-                        .filter(e -> e instanceof MayEffect
+                        .filter(e -> (e instanceof MayEffect || e instanceof MayPayManaEffect)
                                 && e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                         .toList();
                 List<CardEffect> otherEffects = effects.stream()
                         .filter(e -> !targetingMayEffects.contains(e))
                         .toList();
                 for (CardEffect effect : targetingMayEffects) {
-                    gameData.queueMayAbility(attacker.getCard(), activeId, (MayEffect) effect,
-                            null, attacker.getId());
+                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                            attacker.getCard(), activeId, List.of(effect), attacker.getId(), activeId, defenderId));
                     gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                             "'s unblocked-attack ability triggers."));
-                    log.info("Game {} - {} unblocked-attack targeting-may trigger pushed onto stack",
+                    log.info("Game {} - {} unblocked-attack targeting-may trigger queued for target selection",
                             gameData.id, attacker.getCard().getName());
                     pushed++;
                 }
@@ -1455,14 +1516,15 @@ public class CombatBlockService {
      * up "blocking" a flying band-mate) and are applied only after all declared blocks have been
      * validated, so they never count toward max-blocks or menace requirements.
      */
-    private void applyBandSharedBlocking(GameData gameData,
-                                         List<Permanent> attackerBattlefield,
-                                         List<Permanent> defenderBattlefield,
-                                         List<BlockerAssignment> blockerAssignments) {
+    private List<BlockerAssignment> applyBandSharedBlocking(GameData gameData,
+                                                            List<Permanent> attackerBattlefield,
+                                                            List<Permanent> defenderBattlefield,
+                                                            List<BlockerAssignment> blockerAssignments) {
         Map<UUID, List<Integer>> bandMembers = groupAttackingBands(attackerBattlefield);
         if (bandMembers.isEmpty()) {
-            return;
+            return blockerAssignments;
         }
+        List<BlockerAssignment> effectiveAssignments = new ArrayList<>(blockerAssignments);
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
             UUID bandId = attacker.getBandId();
@@ -1482,9 +1544,12 @@ public class CombatBlockService {
                     member.setBlockedOrWasBlockedSinceLastUpkeep(true);
                     member.setAttackedOrBlockedSinceLastUpkeep(true);
                     recordCombatBlockOpponentSubtypes(gameData, blocker, member);
+                    effectiveAssignments.add(new BlockerAssignment(
+                            assignment.blockerIndex(), memberIdx));
                 }
             }
         }
+        return effectiveAssignments;
     }
 
     /**
@@ -1555,6 +1620,7 @@ public class CombatBlockService {
 
         token.setBlocking(true);
         token.addBlockingTargetId(attacker.getId());
+        attacker.setBlockedWithoutBlockers(false);
         UUID attackerControllerId = gameData.findControllerOf(attacker);
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerControllerId);
         if (attackerBattlefield != null) {
@@ -1674,6 +1740,8 @@ public class CombatBlockService {
                 attacker.getId(),
                 attacker.getId()
         );
+        trigger.setNonTargeting(true);
+        trigger.setSourcePermanentSnapshot(new Permanent(attacker));
         trigger.setAttackedTargetId(attacker.getAttackTarget());
         gameData.stack.add(trigger);
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
@@ -1725,10 +1793,20 @@ public class CombatBlockService {
             if (effects.isEmpty()) continue;
 
             List<CardEffect> matchingEffects = new ArrayList<>();
+            FilterContext watcherContext = FilterContext.of(gameData)
+                    .withSourceCardId(perm.getCard().getId())
+                    .withSourceControllerId(activeId)
+                    .withSourcePermanentId(perm.getId());
             for (CardEffect effect : effects) {
                 if (effect instanceof TriggeringCardConditionalEffect conditional) {
                     if (!predicateEvaluationService.matchesCardPredicate(blockedAttacker.getCard(), conditional.predicate(),
                             null, gameData, activeId)) {
+                        continue;
+                    }
+                    matchingEffects.add(conditional.wrapped());
+                } else if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(
+                            blockedAttacker, conditional.predicate(), watcherContext)) {
                         continue;
                     }
                     matchingEffects.add(conditional.wrapped());
@@ -1760,8 +1838,10 @@ public class CombatBlockService {
                     blockedAttacker.getId(),
                     blockedAttacker.getId()
             );
+            trigger.setAttackedTargetId(blockedAttacker.getAttackTarget());
             // "It" references the blocked creature without targeting it — can't fizzle.
             trigger.setNonTargeting(true);
+            trigger.setSourcePermanentSnapshot(new Permanent(blockedAttacker));
             gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} ON_ALLY_CREATURE_BECOMES_BLOCKED trigger for {} blocked",
@@ -2104,7 +2184,6 @@ public class CombatBlockService {
         }
 
         Map<Integer, Integer> attackerNodes = new HashMap<>();
-        int teamMaxBlockers = maximumBlockersForTeam(attackerBattlefield);
         int globalMaxBlockers = CombatHelper.getMaximumBlockers(gameData);
         for (int i = 0; i < attackerIndices.size(); i++) {
             int attackerIdx = attackerIndices.get(i);
@@ -2112,7 +2191,8 @@ public class CombatBlockService {
             attackerNodes.put(attackerIdx, attackerNode);
             int capacity = Math.min(
                     Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attackerBattlefield.get(attackerIdx)),
-                            teamMaxBlockers),
+                            maximumBlockersForTeam(
+                                    gameData, attackerBattlefield.get(attackerIdx), attackerBattlefield)),
                     globalMaxBlockers);
             capacity = Math.min(capacity, blockerIndices.size());
             residual[attackerNode][sink] = capacity;
@@ -2380,6 +2460,9 @@ public class CombatBlockService {
         if (!blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
             return false;
         }
+        if (gameQueryService.getBlockManaTax(gameData, blocker, attacker) > 0) {
+            return false;
+        }
 
         int minimumBlockers = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) ? 2 : 1;
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
@@ -2387,10 +2470,15 @@ public class CombatBlockService {
                 minimumBlockers = Math.max(minimumBlockers, restriction.minBlockers());
             }
         }
+        for (CardEffect effect : gameQueryService.getGrantedEffects(gameData, attacker)) {
+            if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction) {
+                minimumBlockers = Math.max(minimumBlockers, restriction.minBlockers());
+            }
+        }
 
         int maximumBlockers = Math.min(
                 Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
-                        maximumBlockersForTeam(attackerBattlefield)),
+                        maximumBlockersForTeam(gameData, attacker, attackerBattlefield)),
                 CombatHelper.getMaximumBlockers(gameData));
         if (minimumBlockers > maximumBlockers) {
             return false;
@@ -2556,15 +2644,19 @@ public class CombatBlockService {
             GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
         return Math.min(
                 Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
-                        maximumBlockersForTeam(attackerBattlefield)),
+                        maximumBlockersForTeam(gameData, attacker, attackerBattlefield)),
                 CombatHelper.getMaximumBlockers(gameData));
     }
 
-    private int maximumBlockersForTeam(List<Permanent> attackerBattlefield) {
+    private int maximumBlockersForTeam(
+            GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
         int maximumBlockers = Integer.MAX_VALUE;
         for (Permanent permanent : attackerBattlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
+                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction
+                        && (restriction.affectedCreatureFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, restriction.affectedCreatureFilter()))) {
                     maximumBlockers = Math.min(maximumBlockers, restriction.maxBlockers());
                 }
             }
@@ -2722,6 +2814,12 @@ public class CombatBlockService {
         gameData.combatBlockOpponentIdsThisTurn
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(opponent.getId());
+        UUID opponentControllerId = gameQueryService.findPermanentController(gameData, opponent.getId());
+        if (opponentControllerId != null) {
+            gameData.combatBlockOpponentControllerIdsThisTurn
+                    .computeIfAbsent(creature.getId(), k -> new ConcurrentHashMap<>())
+                    .put(opponent.getId(), opponentControllerId);
+        }
         gameData.combatBlockOpponentIdsThisCombat
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(opponent.getId());

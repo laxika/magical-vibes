@@ -36,6 +36,15 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SkipNextEffect) effect;
 
+        if (e.recipient() == SkipRecipient.EACH_OPPONENT) {
+            for (UUID playerId : gameData.playerIds) {
+                if (!playerId.equals(entry.getControllerId())) {
+                    resolveForPlayer(gameData, entry, e, playerId);
+                }
+            }
+            return;
+        }
+
         UUID affectedPlayerId = e.recipient() == SkipRecipient.CONTROLLER
                 ? entry.getControllerId()
                 : entry.getTargetId();
@@ -43,6 +52,11 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        resolveForPlayer(gameData, entry, e, affectedPlayerId);
+    }
+
+    private void resolveForPlayer(GameData gameData, StackEntry entry, SkipNextEffect e,
+                                  UUID affectedPlayerId) {
         queueFor(gameData, e.kind()).merge(affectedPlayerId, 1, Integer::sum);
 
         String affectedName = gameData.playerIdToName.get(affectedPlayerId);

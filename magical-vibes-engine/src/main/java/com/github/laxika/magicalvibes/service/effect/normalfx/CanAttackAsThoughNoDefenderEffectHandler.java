@@ -39,7 +39,13 @@ public class CanAttackAsThoughNoDefenderEffectHandler implements NormalEffectHan
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID sourceId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        var permission = (CanAttackAsThoughNoDefenderEffect) effect;
+        UUID sourceId;
+        if (permission.targeted()) {
+            sourceId = entry.targetsForEffect(effect).stream().findFirst().orElse(entry.getTargetId());
+        } else {
+            sourceId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        }
         if (sourceId == null) {
             return;
         }

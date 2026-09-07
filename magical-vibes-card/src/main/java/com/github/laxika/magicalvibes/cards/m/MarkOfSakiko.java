@@ -14,6 +14,7 @@ public class MarkOfSakiko extends Card {
     public MarkOfSakiko() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                        new AwardPersistentManaEffect(ManaColor.GREEN, new EventValue()));
+                        new AwardPersistentManaEffect(ManaColor.GREEN, new EventValue(),
+                                AwardPersistentManaEffect.Recipient.ENCHANTED_PERMANENT_CONTROLLER));
     }
 }

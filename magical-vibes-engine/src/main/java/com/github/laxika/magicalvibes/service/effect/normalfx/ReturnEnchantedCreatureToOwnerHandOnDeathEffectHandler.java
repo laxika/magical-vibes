@@ -53,7 +53,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
 
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCreatureCardId);
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCreatureCardId);
-        gameData.playerHands.get(ownerId).add(creatureCard);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, creatureCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         

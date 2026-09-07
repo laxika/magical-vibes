@@ -1,23 +1,33 @@
 package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.DamagePersistenceEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -30,6 +40,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -76,10 +87,12 @@ public class TurnCleanupService {
         sacrificePermanentsFlaggedForCleanup(gameData);
         returnPermanentsFlaggedForCleanup(gameData);
         removeCountersScheduledForCleanup(gameData);
+        clearSpellTypeRestrictionsEndingThisTurn(gameData);
         resetEndOfTurnModifiers(gameData);
         expireControlAtEndOfNextTurn(gameData);
-        tapPermanentsReturningToOwner(gameData);
         creatureControlService.reconcileControl(gameData);
+        gameData.controlLossUnattachTriggers.clear();
+        gameData.controlLossTapTriggers.clear();
     }
 
     /** Expires control effects whose controller has just finished their next turn. */
@@ -161,22 +174,21 @@ public class TurnCleanupService {
         });
     }
 
-    /**
-     * Taps permanents carrying a "tap it when you lose control" rider (Magus of the Unseen) as
-     * their until-end-of-turn control effect expires this cleanup and they revert to their owner.
-     */
-    private void tapPermanentsReturningToOwner(GameData gameData) {
-        if (gameData.permanentsToTapWhenControlLost.isEmpty()) {
+    private void clearSpellTypeRestrictionsEndingThisTurn(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        Map<CardType, Integer> restrictions =
+                gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.get(activePlayerId);
+        if (restrictions == null) {
             return;
         }
-        for (UUID permanentId : gameData.permanentsToTapWhenControlLost) {
-            Permanent permanent = findPermanent(gameData, permanentId);
-            if (permanent != null) {
-                permanent.tap();
-            }
+        int turnsTaken = gameData.turnsTakenByPlayer.getOrDefault(activePlayerId, 0);
+        restrictions.entrySet().removeIf(entry -> entry.getValue() <= turnsTaken);
+        if (restrictions.isEmpty()) {
+            gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.remove(activePlayerId);
         }
-        gameData.permanentsToTapWhenControlLost.clear();
     }
+
+
 
     /**
      * Resets all "until end of turn" modifiers on permanents (power/toughness
@@ -191,7 +203,8 @@ public class TurnCleanupService {
         // (Tilonalli's Skinshifter) reverts the permanent's card to the pre-copy card — the
         // official ruling pins this to the same moment damage is removed (the cleanup step).
         for (FloatingContinuousEffect expired : gameData.expireEndOfTurnFloatingEffects()) {
-            if (expired.effect() instanceof BecomeCopyOfTargetCreatureUntilEndOfTurnEffect
+            if ((expired.effect() instanceof BecomeCopyOfTargetCreatureUntilEndOfTurnEffect
+                    || expired.effect() instanceof BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect)
                     && expired.affectedPermanentId() != null) {
                 Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
                 if (copy != null) {
@@ -202,8 +215,13 @@ public class TurnCleanupService {
 
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
-            p.setMarkedDamage(0);
-            p.setDamagedByDeathtouch(false);
+            boolean damagePersists = !p.isLosesAllAbilitiesUntilEndOfTurn()
+                    && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(DamagePersistenceEffect.class::isInstance);
+            if (!damagePersists) {
+                p.setMarkedDamage(0);
+                p.setDamagedByDeathtouch(false);
+            }
             p.setTimesRegeneratedThisTurn(0);
             // Reset unconditionally: resetModifiers() only touches "until end of turn" state, so it is a
             // no-op on an unmodified permanent. Guarding it on a hand-maintained list of dirty flags let
@@ -213,8 +231,11 @@ public class TurnCleanupService {
             p.setDamagePreventionShield(0);
             p.setDamageToCounterPreventionShield(0);
             p.setDamageToPlusOnePlusOneCounterPreventionShield(0);
+            p.setAllDamageToPlusOnePlusOneCounterPreventionShield(false);
+            p.setDamageDestructionShield(0);
             p.setRegenerationShield(0);
             p.setOpponentDrawRegenerationShield(0);
+            p.getOpponentDrawRegenerationShieldRecipients().clear();
             p.setMinusOneCounterRegenerationShield(0);
             p.setPlusOnePlusOneCounterRegenerationShield(0);
             p.getGainControlRegenerationShields().clear();
@@ -223,16 +244,20 @@ public class TurnCleanupService {
 
         gameData.playerDamagePreventionShields.clear();
         gameData.playerCombatDamagePreventionShields.clear();
+        gameData.channelHarmShields.clear();
+        gameData.playerStaticEffectsUntilEndOfTurn.clear();
         gameData.damageRedirectShields.clear();
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();
         gameData.turnSourceDamageRedirectToControllerShields.clear();
         gameData.playerNextDamageRedirectShields.clear();
+        gameData.sourcePermanentAndControllerNextDamageRedirectShields.clear();
         gameData.playerNextInstantOrSorceryDamageRedirectShields.clear();
         gameData.sourceNextCombatDamageToOpponentRedirectShields.clear();
         gameData.targetSourceDamagePreventionShields.clear();
         gameData.damagePreventionLifeGainShields.clear();
+        gameData.damageByCreaturesPreventionLifeGainPlayers.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
         gameData.preventAllCombatDamageByAttackingCreatures = false;
@@ -241,11 +266,13 @@ public class TurnCleanupService {
         gameData.preventAllDamageByCreatures = false;
         gameData.preventAllDamageFromNonHumanSources = false;
         gameData.combatDamageExemptPredicate = null;
+        gameData.combatDamageExemptControllerId = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.additionalEnterCountersThisTurn.clear();
         gameData.skippedStepOrPhasesThisTurn.clear();
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
+        gameData.combatDamageRedirectPlayer = null;
         gameData.playerColorDamagePreventionCount.clear();
         gameData.colorDamagePreventionUntilEndOfTurn.clear();
         gameData.playerSourceDamagePreventionIds.clear();
@@ -260,29 +287,48 @@ public class TurnCleanupService {
         gameData.pendingSourceDamageForReflection.clear();
         gameData.clearDelayedActions(DelayedWatchedCreaturesCombatDamage.class,
                 watch -> watch.untilEndOfTurn());
+        gameData.clearDelayedActions(DelayedNamedCreatureCombatDamage.class,
+                watch -> watch.untilEndOfTurn());
         gameData.clearDelayedActions(DelayedWatchedCreatureDealsDamage.class);
+        gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class);
+        gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamage.class);
+        gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
+        gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
+        gameData.clearDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class);
         gameData.permanentsPreventedFromDealingDamage.clear();
+        gameData.creaturesProtectedFromTargetingDamage.clear();
         gameData.targetSpellDamagePreventionShields.clear();
+        gameData.targetSorceryDamageRedirectShields.clear();
         gameData.playersWithAllDamagePrevented.clear();
         gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.playersRedirectingAllCreatureDamage.clear();
         gameData.playersWithAllPlayerDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
+        gameData.playersWithDamageFromOpponentCreaturesPrevented.clear();
         gameData.playersWithDamageFromMatchingSourcesPrevented.clear();
+        gameData.playerNextDamageFromMatchingSourcesPrevented.clear();
+        gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
         gameData.playersGatheringTokensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
         gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.clear();
         gameData.playersExilingCreaturesInsteadOfDyingThisTurn.clear();
+        gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
+        gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
         gameData.allDamagePreventionPredicates.clear();
+        gameData.allDamagePreventionPredicatesByController.clear();
         gameData.creaturesWithCombatDamagePrevented.clear();
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
+        gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
+        gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
         gameData.combatDamagePreventionPredicatesByController.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.damageLifeFloorsUntilEndOfTurn.clear();
+        gameData.damageReplacementsThisTurn.clear();
         gameData.playersCantGainLifeThisTurn = false;
+        gameData.playersCantSearchLibrariesThisTurn = false;
         gameData.creaturesCantAttackThisTurn = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
@@ -291,25 +337,40 @@ public class TurnCleanupService {
         gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
-        gameData.temporaryGlobalTriggeredAbilities.clear();
+        gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
+                !watcher.untilEndOfNextTurn()
+                        || (gameData.activePlayerId.equals(watcher.controllerId())
+                        && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
         gameData.allyCreatureEntersTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
+        gameData.chainsDrawReplacementsApplied.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.pendingNextDrawLookAtTop.clear();
+        gameData.pendingNextDrawGainLife.clear();
+        gameData.pendingNextDrawCreateBears.clear();
+        gameData.pendingNextDrawDamage.clear();
+        gameData.pendingNextDrawReturnPermanents.clear();
+        gameData.pendingNextDrawDiscardOpponents.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
+        gameData.pendingNextDrawExileTopCard.clear();
         gameData.pendingMysticReflections.clear();
         gameData.activeMysticReflectionsForEntryBatch.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playersSpellsCantBeCounteredThisTurn.clear();
+        gameData.playersCreatureSpellsCantBeCounteredThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playerHexproofFromColorsThisTurn.clear();
+        gameData.playersWithHexproofThisTurn.clear();
+        gameData.playersWithShroudThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
+        gameData.playerKeywordsUntilEndOfTurn.clear();
         gameData.spellColorOverridesUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
+        gameData.playersMaxSpellsThisTurn.clear();
         gameData.extraManaOnLandSubtypeTapThisTurn.clear();
         gameData.landSubtypeFixedManaColorThisTurn.clear();
         gameData.nonbasicLandsFixedManaColorThisTurn = null;
@@ -319,6 +380,7 @@ public class TurnCleanupService {
         gameData.playersWithLandManaChoiceReplacementThisTurn.clear();
         gameData.landManaFixedColorThisTurn.clear();
         gameData.playersCantPlayLandsThisTurn.clear();
+        gameData.playersCantPlayFromGraveyardsThisTurn.clear();
         gameData.playersCantCastSpellTypesThisTurn.clear();
         gameData.playersCantCastNoncreatureSpellsThisTurn.clear();
         gameData.playersCantActivateAbilitiesThisTurn.clear();
@@ -328,15 +390,20 @@ public class TurnCleanupService {
         gameData.senControlledPlayerId = null;
         gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.clear();
         gameData.libraryTopCardPermissionsUntilEndOfTurn.clear();
+        gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.clear();
+        gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
+        gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.clear();
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
         gameData.nextSpellCostReductionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
+        gameData.spellEntryCounters.clear();
+        gameData.spellGrantedSubtypesOnEntry.clear();
         gameData.spellsGrantedHasteOnEntry.clear();
         gameData.spellsGrantedRiotOnEntry.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
@@ -351,12 +418,18 @@ public class TurnCleanupService {
         gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
         gameData.graveyardCastFilterPermissionsThisTurn.clear();
         gameData.outsideGamePlayPermissions.clear();
+        gameData.graveyardPlayFilterPermissionsThisTurn.clear();
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
+        gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();
+        gameData.pendingNextFilteredSpellCopiesThisTurn.clear();
         gameData.pendingNextSpellUncounterableThisTurnCount.clear();
+        gameData.pendingAnyManaTypeForNextSpellThisTurnCount.clear();
+        gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
+        gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.creatureSpellCastDrawsThisTurn.clear();
@@ -369,8 +442,13 @@ public class TurnCleanupService {
         gameData.graveyardLeaveNotificationDepth = 0;
         gameData.graveyardLeaveNotificationPendingOwners.clear();
         gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
+        gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
+        gameData.kayaExileNotificationPendingCreatureCards.clear();
+        gameData.kayaExileNotificationPendingCounts.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
+        gameData.cardsLeftGraveyardCountThisTurn.clear();
+        gameData.creatureExileCountThisTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
@@ -399,6 +477,8 @@ public class TurnCleanupService {
             }
             return false;
         });
+        gameData.graveyardAdventureCastPermissions.entrySet()
+                .removeIf(entry -> entry.getValue().expireTurn() <= currentTurn);
 
         // Clear persistent mana tracking so the next drain empties pools fully
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -424,7 +504,7 @@ public class TurnCleanupService {
 
     /**
      * Drains each player's mana pool, applying global and controller-scoped prevention effects.
-     * A controller's mana is converted to colorless instead when that controller has a
+     * A controller's mana is converted to the replacement color instead when that controller has a
      * {@link ReplaceManaDrainWithColorlessEffect}. Mana marked as persistent survives the drain;
      * only non-persistent mana is removed.
      *
@@ -448,15 +528,19 @@ public class TurnCleanupService {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                boolean replaceManaDrain = battlefield != null && battlefield.stream()
+                ManaColor replacementColor = battlefield == null ? null : battlefield.stream()
                         .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
-                        .anyMatch(ReplaceManaDrainWithColorlessEffect.class::isInstance);
-                if (replaceManaDrain) {
-                    manaPool.convertNonPersistentManaToColorless();
+                        .filter(ReplaceManaDrainWithColorlessEffect.class::isInstance)
+                        .map(ReplaceManaDrainWithColorlessEffect.class::cast)
+                        .map(ReplaceManaDrainWithColorlessEffect::replacementColor)
+                        .findFirst()
+                        .orElse(null);
+                if (replacementColor != null) {
+                    manaPool.convertNonPersistentManaTo(replacementColor);
                 }
                 Set<ManaColor> protectedColors = protectedManaColors(gameData, playerId);
-                if (replaceManaDrain) {
-                    protectedColors.add(ManaColor.COLORLESS);
+                if (replacementColor != null) {
+                    protectedColors.add(replacementColor);
                 }
                 manaPool.drainNonPersistent(protectedColors);
                 boolean copyGrantManaPersists = protectedColors.stream()
@@ -472,14 +556,27 @@ public class TurnCleanupService {
     private Set<ManaColor> protectedManaColors(GameData gameData, UUID playerId) {
         EnumSet<ManaColor> protectedColors = EnumSet.noneOf(ManaColor.class);
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return protectedColors;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PreventManaDrainEffect prevent
+                            && prevent.color() != null) {
+                        protectedColors.add(prevent.color());
+                    }
+                }
+            }
         }
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof PreventManaDrainEffect prevent
-                        && prevent.color() != null) {
-                    protectedColors.add(prevent.color());
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (!playerId.equals(floating.affectedPlayerId())) {
+                    continue;
+                }
+                if (floating.effect() instanceof PreventManaDrainEffect prevent) {
+                    if (prevent.color() == null) {
+                        protectedColors.addAll(Set.of(ManaColor.values()));
+                    } else {
+                        protectedColors.add(prevent.color());
+                    }
                 }
             }
         }
@@ -509,9 +606,25 @@ public class TurnCleanupService {
             List<Permanent> bf = gameData.playerBattlefields.get(otherPlayerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                boolean hasChosenPlayer = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(RememberTargetPlayerEffect.class::isInstance);
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (!own && effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
-                        maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
+                    if (effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
+                        UUID affectedPlayerId = null;
+                        if (hasChosenPlayer) {
+                            affectedPlayerId = perm.getRememberedTargetPlayerId();
+                            if (affectedPlayerId == null) {
+                                UUID originalControllerId = gameData.stolenCreatures
+                                        .getOrDefault(perm.getId(), otherPlayerId);
+                                affectedPlayerId = gameData.orderedPlayerIds.stream()
+                                        .filter(id -> !id.equals(originalControllerId))
+                                        .findFirst()
+                                        .orElse(null);
+                            }
+                        }
+                        if (hasChosenPlayer ? playerId.equals(affectedPlayerId) : !own) {
+                            maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
+                        }
                     } else if (own && effect instanceof ControllerMaxHandSizeEffect handSizeEffect) {
                         maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize, perm);
                     }

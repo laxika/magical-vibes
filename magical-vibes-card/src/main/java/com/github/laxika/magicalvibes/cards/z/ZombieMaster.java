@@ -30,7 +30,7 @@ public class ZombieMaster extends Card {
         // Other Zombies have "{B}: Regenerate this permanent."
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()), "{B}: Regenerate this permanent."),
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_PERMANENTS,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ZOMBIE))));
     }
 }

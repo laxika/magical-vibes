@@ -4,16 +4,18 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Browse.class, GrizzlyBears.class})
 class BrowseTest extends BaseCardTest {
 
     @Test
@@ -56,6 +58,24 @@ class BrowseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing no card is rejected because exactly one card must be put into hand")
+    void choosingNoCardIsRejected() {
+        addReadyBrowse(player1);
+        payMana(player1);
+
+        Card top0 = new GrizzlyBears();
+        Card top1 = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top0, top1));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Invalid number of cards selected");
+    }
+
+    @Test
     @DisplayName("With one card left, it goes to hand and nothing is exiled")
     void oneCardAutoToHand() {
         addReadyBrowse(player1);
@@ -93,10 +113,7 @@ class BrowseTest extends BaseCardTest {
         harness.addMana(player, ManaColor.COLORLESS, 2);
     }
 
-    private Permanent addReadyBrowse(Player player) {
-        Permanent perm = new Permanent(new Browse());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    private void addReadyBrowse(Player player) {
+        addCreatureReady(player, new Browse());
     }
 }

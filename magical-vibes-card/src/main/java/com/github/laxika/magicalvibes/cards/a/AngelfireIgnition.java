@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "229")
+@CardRegistration(set = "MID", collectorNumber = "209")
 public class AngelfireIgnition extends Card {
 
     public AngelfireIgnition() {

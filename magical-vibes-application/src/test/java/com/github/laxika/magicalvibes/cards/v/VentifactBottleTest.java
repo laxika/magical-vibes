@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(VentifactBottle.class)
 class VentifactBottleTest extends BaseCardTest {
 
     @Test
@@ -53,6 +55,40 @@ class VentifactBottleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The trigger does not fire during the postcombat main phase")
+    void doesNotTriggerDuringPostcombatMainPhase() {
+        Permanent bottle = addBottle(player1);
+        bottle.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(bottle.isTapped()).isFalse();
+        assertThat(bottle.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the charge counters before resolution prevents the trigger")
+    void triggerDoesNothingIfCountersAreRemovedBeforeResolution() {
+        Permanent bottle = addBottle(player1);
+        bottle.setCounterCount(CounterType.CHARGE, 3);
+
+        advanceToPrecombatMain(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        bottle.setCounterCount(CounterType.CHARGE, 0);
+        harness.passBothPriorities();
+
+        assertThat(bottle.isTapped()).isFalse();
+        assertThat(bottle.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
     @DisplayName("Without a charge counter the ability does not even trigger")
     void doesNotTriggerWithoutChargeCounters() {
         Permanent bottle = addBottle(player1);
@@ -89,7 +125,6 @@ class VentifactBottleTest extends BaseCardTest {
     private void advanceToPrecombatMain(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
     }
 }

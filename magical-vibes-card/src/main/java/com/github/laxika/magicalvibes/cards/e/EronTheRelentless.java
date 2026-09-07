@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "73")
+@CardRegistration(set = "TSB", collectorNumber = "61")
 public class EronTheRelentless extends Card {
 
     public EronTheRelentless() {

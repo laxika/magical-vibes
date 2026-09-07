@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.EdgarKingOfFigaroEffect;
 import com.github.laxika.magicalvibes.model.effect.KrarksThumbEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -16,17 +19,38 @@ public class CoinFlipService {
     private final GameQueryService gameQueryService;
 
     public CoinFlipResult flip(GameData gameData, UUID playerId) {
+        return flipCoins(gameData, playerId, 1).getFirst();
+    }
+
+    /** Performs a single event that flips {@code count} coins at once. */
+    public List<CoinFlipResult> flipCoins(GameData gameData, UUID playerId, int count) {
         int thumbCount = gameQueryService.countPlayerControlledStaticEffects(
                 gameData, playerId, KrarksThumbEffect.class);
         int physicalFlips = 1 << thumbCount;
-        boolean heads = false;
-        for (int i = 0; i < physicalFlips; i++) {
-            heads |= ThreadLocalRandom.current().nextBoolean();
+        boolean edgarApplies = gameData.playersWhoFlippedCoinsThisTurn.add(playerId)
+                && gameQueryService.countPlayerControlledStaticEffects(
+                        gameData, playerId, EdgarKingOfFigaroEffect.class) > 0;
+
+        List<CoinFlipResult> results = new ArrayList<>(count);
+        for (int coin = 0; coin < count; coin++) {
+            boolean heads = edgarApplies;
+            if (!heads) {
+                for (int i = 0; i < physicalFlips; i++) {
+                    heads |= ThreadLocalRandom.current().nextBoolean();
+                }
+            }
+            results.add(new CoinFlipResult(heads, physicalFlips, edgarApplies));
         }
-        return new CoinFlipResult(heads, physicalFlips);
+        return results;
     }
 
     public String replacementDetails(CoinFlipResult result) {
+        if (result.edgarApplied()) {
+            return result.physicalFlips() == 1
+                    ? " (Edgar, King of Figaro made it come up heads)"
+                    : " (Edgar, King of Figaro made all physical flips come up heads; flipped "
+                            + result.physicalFlips() + ")";
+        }
         if (result.physicalFlips() == 1) {
             return "";
         }
@@ -34,6 +58,24 @@ public class CoinFlipService {
                 + (result.physicalFlips() - 1) + ")";
     }
 
-    public record CoinFlipResult(boolean heads, int physicalFlips) {
+    public String replacementDetailsForCoins(List<CoinFlipResult> results) {
+        int physicalFlips = results.stream().mapToInt(CoinFlipResult::physicalFlips).sum();
+        boolean edgarApplied = results.stream().anyMatch(CoinFlipResult::edgarApplied);
+        if (edgarApplied) {
+            return physicalFlips == results.size()
+                    ? " (Edgar, King of Figaro made all of these flips come up heads)"
+                    : " (Edgar, King of Figaro made all physical flips come up heads; flipped "
+                            + physicalFlips + ")";
+        }
+        if (physicalFlips == results.size()) {
+            return "";
+        }
+        return " (" + physicalFlips + " physical coin flips; one result kept per coin)";
+    }
+
+    public record CoinFlipResult(boolean heads, int physicalFlips, boolean edgarApplied) {
+        public CoinFlipResult(boolean heads, int physicalFlips) {
+            this(heads, physicalFlips, false);
+        }
     }
 }

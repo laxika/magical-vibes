@@ -51,9 +51,11 @@ public class DrawCardIfEnteringCreatureHasUniqueNameEffectHandler implements Nor
             }
         }
 
-        Card enteringCard = gameQueryService.findCardInGraveyardById(gameData, effect.enteringCardId());
+        UUID enteringCardId = effect.enteringCardId() != null
+                ? effect.enteringCardId() : entry.getTriggeringCardId();
+        Card enteringCard = gameQueryService.findCardInGraveyardById(gameData, enteringCardId);
         if (enteringCard == null) {
-            enteringCard = gameQueryService.findCardInExileById(gameData, effect.enteringCardId());
+            enteringCard = gameQueryService.findCardInExileById(gameData, enteringCardId);
         }
         return enteringCard == null ? effect.enteringCardName() : enteringCard.getName();
     }

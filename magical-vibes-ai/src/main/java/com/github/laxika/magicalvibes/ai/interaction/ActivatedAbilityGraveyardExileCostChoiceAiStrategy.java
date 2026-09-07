@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,8 +27,14 @@ class ActivatedAbilityGraveyardExileCostChoiceAiStrategy
             return;
         }
 
-        List<UUID> selectedCardIds = interaction.validCardIds().subList(
-                0, Math.min(interaction.maximumCards(), interaction.validCardIds().size()));
+        List<Card> candidates = new ArrayList<>(interaction.cards());
+        if (!interaction.singleGraveyard()) {
+            candidates.sort(Comparator.comparingInt(Card::getManaValue));
+        }
+        List<UUID> selectedCardIds = candidates.stream()
+                .limit(Math.min(interaction.maximumCards(), candidates.size()))
+                .map(Card::getId)
+                .toList();
         log.info("AI: Exiling {} graveyard cards for an activated ability in game {}",
                 selectedCardIds.size(), ctx.gameId());
         ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(selectedCardIds));

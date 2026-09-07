@@ -50,9 +50,13 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
             log.info("Game {} - Copy target triggered ability no longer on stack", gameData.id);
             return;
         }
+        if (targetEntry.getCard().isCantBeCopied()) {
+            log.info("Game {} - Target triggered ability cannot be copied", gameData.id);
+            return;
+        }
 
-        // Source of the copy is the same as the original (official ruling); controller is the original's.
-        UUID copyControllerId = targetEntry.getControllerId();
+        // The copy keeps the original source, but is controlled by the effect's controller.
+        UUID copyControllerId = entry.getControllerId();
         Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());

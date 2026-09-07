@@ -56,6 +56,7 @@ class NeverwinterDryadTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(chosen.getId()) && permanent.isTapped());
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId)
-                .containsExactlyInAnyOrder(plains.getId(), bears.getId());
+                .containsExactlyInAnyOrderElementsOf(List.of(forest, snowCoveredForest, plains, bears).stream()
+                        .filter(card -> card != chosen).map(Card::getId).toList());
     }
 }

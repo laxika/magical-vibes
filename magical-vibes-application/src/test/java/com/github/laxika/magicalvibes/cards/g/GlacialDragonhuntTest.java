@@ -75,6 +75,7 @@ class GlacialDragonhuntTest extends BaseCardTest {
         Card spell = new GlacialDragonhunt();
         Permanent reducer = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(spell));
         harness.setLibrary(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.BLUE, 1);

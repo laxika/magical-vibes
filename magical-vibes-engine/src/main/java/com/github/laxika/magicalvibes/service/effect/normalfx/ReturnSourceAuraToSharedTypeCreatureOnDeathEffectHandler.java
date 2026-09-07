@@ -74,7 +74,7 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
         boolean dyingIsChangeling = false;
         if (dyingCreatureCard != null) {
             dyingTypes.addAll(dyingCreatureCard.getSubtypes());
-            dyingIsChangeling = dyingCreatureCard.getKeywords().contains(Keyword.CHANGELING);
+            dyingIsChangeling = dyingCreatureCard.hasKeyword(Keyword.CHANGELING);
         }
 
         if (dyingTypes.isEmpty() && !dyingIsChangeling) {

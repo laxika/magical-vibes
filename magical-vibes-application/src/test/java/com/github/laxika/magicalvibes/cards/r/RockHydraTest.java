@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.Whippoorwill;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RockHydra.class, GiantGrowth.class, Shock.class})
+@CardUsed({RockHydra.class, GiantGrowth.class, Shock.class, Whippoorwill.class, ProdigalSorcerer.class})
 class RockHydraTest extends BaseCardTest {
 
     @Test
@@ -29,7 +31,7 @@ class RockHydraTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 3, null, null);
         harness.passBothPriorities();
 
-        Permanent hydra = addOrFindHydra(player1);
+        Permanent hydra = findPermanent(player1, "Rock Hydra");
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(3);
@@ -89,12 +91,74 @@ class RockHydraTest extends BaseCardTest {
     void redAbilityPreventsNextDamage() {
         Permanent hydra = addCreatureReady(player1, new RockHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
 
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, hydra.getId());
+        harness.passBothPriorities();
+
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hydra.getDamagePreventionShield()).isEqualTo(1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, hydra.getId());
+        harness.passBothPriorities();
+
+        assertThat(hydra.getMarkedDamage()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Rock Hydra's counter prevention combines with its red prevention")
+    void counterPreventionCombinesWithRedPrevention() {
+        Permanent hydra = addCreatureReady(player1, new RockHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, hydra.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, hydra.getId());
+        harness.passBothPriorities();
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(hydra.getMarkedDamage()).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Unpreventable damage still removes a +1/+1 counter")
+    void unpreventableDamageStillRemovesCounter() {
+        addCreatureReady(player1, new Whippoorwill());
+        addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent hydra = addCreatureReady(player2, new RockHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, hydra.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, hydra.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, hydra.getId());
+        harness.passBothPriorities();
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(hydra.getMarkedDamage()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(3);
     }
 
     @Test
@@ -129,10 +193,4 @@ class RockHydraTest extends BaseCardTest {
                 .hasMessageContaining("upkeep");
     }
 
-    private Permanent addOrFindHydra(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard() instanceof RockHydra)
-                .findFirst()
-                .orElseThrow();
-    }
 }

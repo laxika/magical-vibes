@@ -66,6 +66,7 @@ class LoathsomeTrollTest extends BaseCardTest {
     private LoathsomeTroll activateTrollWithRoll(int result) {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(result));
 
+        harness.setHand(player1, List.of());
         LoathsomeTroll troll = new LoathsomeTroll();
         harness.setGraveyard(player1, List.of(troll));
         harness.addMana(player1, ManaColor.GREEN, 1);

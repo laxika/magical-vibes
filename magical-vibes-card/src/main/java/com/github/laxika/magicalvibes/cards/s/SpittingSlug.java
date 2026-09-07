@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 
 @CardRegistration(set = "DRK", collectorNumber = "88")
+@CardRegistration(set = "TSB", collectorNumber = "85")
 public class SpittingSlug extends Card {
 
     public SpittingSlug() {

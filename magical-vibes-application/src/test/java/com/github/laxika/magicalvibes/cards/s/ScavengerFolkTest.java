@@ -2,20 +2,22 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.f.FellwarStone;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.k.Kismet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScavengerFolk.class, FellwarStone.class, GrizzlyBears.class, Kismet.class, Forest.class})
 class ScavengerFolkTest extends BaseCardTest {
 
     @Test
@@ -30,8 +32,26 @@ class ScavengerFolkTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Scavenger Folk");
         harness.assertInGraveyard(player1, "Scavenger Folk");
-        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
-        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player2, "Fellwar Stone");
+        harness.assertInGraveyard(player2, "Fellwar Stone");
+    }
+
+    @Test
+    @DisplayName("Sacrifices Scavenger Folk as an activation cost")
+    void sacrificesAsActivationCost() {
+        addReadyFolk(player1);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Scavenger Folk");
+        harness.assertInGraveyard(player1, "Scavenger Folk");
+        harness.assertOnBattlefield(player2, "Fellwar Stone");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fellwar Stone");
     }
 
     @Test
@@ -44,7 +64,7 @@ class ScavengerFolkTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Fellwar Stone");
     }
 
     @Test
@@ -60,8 +80,19 @@ class ScavengerFolkTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with summoning sickness (tap cost)")
     void cannotActivateWithSummoningSickness() {
-        ScavengerFolk card = new ScavengerFolk();
-        harness.addToBattlefield(player1, card);
+        harness.addToBattlefield(player1, new ScavengerFolk());
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent folk = addReadyFolk(player1);
+        folk.tap();
         Permanent target = addReadyArtifact(player2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -112,7 +143,7 @@ class ScavengerFolkTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Leonin Scimitar"));
+                .removeIf(p -> p.getCard().getName().equals("Fellwar Stone"));
 
         harness.passBothPriorities();
 
@@ -121,32 +152,18 @@ class ScavengerFolkTest extends BaseCardTest {
     }
 
     private Permanent addReadyFolk(Player player) {
-        ScavengerFolk card = new ScavengerFolk();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ScavengerFolk());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        LeoninScimitar card = new LeoninScimitar();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new FellwarStone());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        GloriousAnthem card = new GloriousAnthem();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Kismet());
     }
 
     private Permanent addReadyLand(Player player) {
-        Island card = new Island();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 }

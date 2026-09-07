@@ -8,8 +8,11 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
     private final PlayerInputService playerInputService;
+    private final AmountEvaluationService amountEvaluationService;
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
         return TokenCopySupport.buildTokenCopyCard(sourceCard, effect);
@@ -38,44 +42,59 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
         List<UUID> targetIds = entry.targetsForBoundEffectGroup(copyEffect);
         if (targetIds == null) {
-            targetIds = entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+            targetIds = !entry.getTargetIds().isEmpty()
+                    ? entry.getTargetIds()
+                    : !entry.getTargetCardIds().isEmpty()
+                    ? entry.getTargetCardIds()
+                     : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
         } else if (targetIds.isEmpty() && entry.getDeclaredTargetIds().isEmpty()
                 && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         }
 
-        for (UUID targetId : targetIds) {
-            Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
-            if (targetPermanent == null) {
-                continue;
-            }
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        int copyCount = amountEvaluationService.evaluate(
+                gameData, copyEffect.amount(), AmountContext.forStackEntry(entry, sourcePermanent));
+        if (copyCount <= 0) {
+            return;
+        }
 
-            Card sourceCard = targetPermanent.getCard();
-            Permanent sourcePermanent = entry.getSourcePermanentId() == null
-                    ? null
-                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            UUID tokenControllerId = entry.getControllerId();
-            if (copyEffect.createForTargetController()) {
-                UUID targetControllerId = gameQueryService.findPermanentController(gameData, targetId);
-                if (targetControllerId != null) {
-                    tokenControllerId = targetControllerId;
-                }
-            }
-            if (copyEffect.chooseAttackTarget()) {
-                int tokenCount = gameQueryService.getTokenCreationAmount(
-                        gameData, tokenControllerId, 1, tokenSubtypes(sourceCard, copyEffect));
-                if (tokenCount > 0) {
-                    beginAttackTargetChoice(gameData, new PermanentChoiceContext.CreateTokenCopiesAttacking(
-                            tokenControllerId, targetId, entry.getSourcePermanentId(), copyEffect,
-                            tokenCount, List.of()));
-                }
-                return;
-            }
-            tokenCopySupport.createTokenCopies(
-                    gameData, entry, List.of(sourceCard), sourcePermanent, tokenControllerId, copyEffect);
+        for (UUID targetId : targetIds) {
+            resolveForTarget(gameData, entry, copyEffect, targetId, copyCount);
         }
     }
 
+    void resolveForTarget(GameData gameData, StackEntry entry,
+                          CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId) {
+        resolveForTarget(gameData, entry, effect, targetId, 1);
+    }
+
+    void resolveForTarget(GameData gameData, StackEntry entry,
+                          CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId, int copyCount) {
+        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
+        if (targetPermanent == null) {
+            return;
+        }
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID tokenControllerId = entry.getControllerId();
+        if (effect.createForTargetController()) {
+            UUID targetControllerId = gameQueryService.findPermanentController(gameData, targetId);
+            if (targetControllerId != null) {
+                tokenControllerId = targetControllerId;
+            }
+        }
+        if (effect.chooseAttackTarget()) {
+            int tokenCount = gameQueryService.getTokenCreationAmount(gameData, tokenControllerId, copyCount, tokenSubtypes(targetPermanent.getCard(), effect), true);
+            if (tokenCount > 0) {
+                beginAttackTargetChoice(gameData, new PermanentChoiceContext.CreateTokenCopiesAttacking(tokenControllerId, targetId, entry.getSourcePermanentId(), effect, tokenCount, List.of()));
+            }
+            return;
+        }
+        tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, targetPermanent.getCard()),
+                sourcePermanent, tokenControllerId, effect);
+    }
     private List<CardSubtype> tokenSubtypes(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
         List<CardSubtype> subtypes =
                 sourceCard.getSubtypes() == null

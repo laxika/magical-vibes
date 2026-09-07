@@ -102,7 +102,7 @@ class PermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInteract
         if (!(costChoice.costEffect() instanceof CostEffect cost)) {
             return null;
         }
-        if (!cost.sacrificesChosenCreature() && cost.consumedPermanentFilter() == null) {
+        if (!cost.sacrificesChosenPermanent()) {
             return null;
         }
         return costChoice.sourcePermanentId();

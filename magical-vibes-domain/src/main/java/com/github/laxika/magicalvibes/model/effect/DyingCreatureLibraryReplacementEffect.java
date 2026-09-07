@@ -6,4 +6,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public interface DyingCreatureLibraryReplacementEffect extends CardEffect {
 
     boolean putOnBottom();
+
+    default boolean mayChoose() {
+        return false;
+    }
 }

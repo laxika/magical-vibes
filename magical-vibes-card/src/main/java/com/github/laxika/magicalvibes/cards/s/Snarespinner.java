@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMa
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "207")
+@CardRegistration(set = "WAR", collectorNumber = "176")
 public class Snarespinner extends Card {
 
     public Snarespinner() {

@@ -39,9 +39,8 @@ class HiredHexbladeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WilyGoblin(), new HiredHexblade()));
         harness.setLibrary(player1, List.of(libraryCard));
         harness.setLife(player1, 20);
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -49,7 +48,7 @@ class HiredHexbladeTest extends BaseCardTest {
 
         int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
         harness.activateAbility(player1, treasureIndex, null, null);
-        harness.handleListChoice(player1, "COLORLESS");
+        harness.handleListChoice(player1, "RED");
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

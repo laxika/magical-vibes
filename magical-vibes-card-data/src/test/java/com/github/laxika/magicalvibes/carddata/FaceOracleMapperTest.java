@@ -113,6 +113,15 @@ class FaceOracleMapperTest {
         assertThat(map(face, BACK).keywords()).containsExactly(Keyword.FLYING);
     }
 
+    @Test
+    void frontFaceKeepsOnlyTheKeywordsItsOwnTextStates() {
+        Builder face = face()
+                .text("Dragonfire Dive — During your turn, Dion and other Knights you control have flying.")
+                .keywords(List.of("Flying"));
+
+        assertThat(map(face, FRONT).keywords()).isEmpty();
+    }
+
     /** A face that grants a keyword to others does not claim it for itself. */
     @Test
     void aGrantedKeywordIsNotTheFacesOwn() {
@@ -138,6 +147,12 @@ class FaceOracleMapperTest {
                 .containsExactly(Keyword.FIRST_STRIKE);
     }
 
+    @Test
+    void keywordWithEmDashParameterIsRecognized() {
+        assertThat(map(face().text("Warp\u2014{B}, Pay 2 life.").keywords(List.of("Warp")), FRONT).keywords())
+                .containsExactly(Keyword.WARP);
+    }
+
     /**
      * Capitalisation runs on the full combined list, before any narrowing — reversing the order
      * would stop keyword lines being capitalised on back faces.
@@ -150,6 +165,17 @@ class FaceOracleMapperTest {
 
         assertThat(data.cardText()).isEqualTo("Flying, Vigilance");
         assertThat(data.keywords()).containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE);
+    }
+
+    @Test
+    void semicolonSeparatedKeywordLinesRetainEveryKeyword() {
+        OracleData data = map(face()
+                .text("Flying; fear\nCumulative upkeep {B}")
+                .keywords(List.of("Flying", "Fear", "Cumulative upkeep")), FRONT);
+
+        assertThat(data.cardText()).isEqualTo("Flying; Fear\nCumulative upkeep {B}");
+        assertThat(data.keywords())
+                .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.FEAR);
     }
 
     /** Reminder text is not printed on the card. */

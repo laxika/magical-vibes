@@ -30,6 +30,7 @@ class LumberingBattlementTest extends BaseCardTest {
         Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
 
         LumberingBattlement card = castBattlement();
+        harness.passBothPriorities();
         Permanent battlement = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() == card)
                 .findFirst().orElseThrow();
@@ -54,8 +55,11 @@ class LumberingBattlementTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled creatures return under their owner's control when the source leaves")
     void exiledCreaturesReturnWhenSourceLeaves() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears bearsCard = new GrizzlyBears();
+        bearsCard.setOwnerId(player2.getId());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, bearsCard);
         LumberingBattlement card = castBattlement();
+        harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -78,6 +82,7 @@ class LumberingBattlementTest extends BaseCardTest {
     void mayChooseNoCreatures() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         LumberingBattlement battlementCard = castBattlement();
+        harness.passBothPriorities();
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
@@ -100,9 +105,10 @@ class LumberingBattlementTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, battlement));
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 

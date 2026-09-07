@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerSearchesLibraryFo
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "122")
+@CardRegistration(set = "IKO", collectorNumber = "152")
 public class Fertilid extends Card {
 
     public Fertilid() {

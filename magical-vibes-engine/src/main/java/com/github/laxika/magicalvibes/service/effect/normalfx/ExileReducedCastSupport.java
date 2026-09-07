@@ -47,6 +47,17 @@ public class ExileReducedCastSupport {
 
     public void castFromExileWithCostReduction(GameData gameData, Player player, UUID exileCardId,
                                                int genericCostReduction) {
+        castFromExileWithCostReduction(gameData, player, exileCardId, genericCostReduction, false);
+    }
+
+    public void castFromExileWithNormalCostDuringResolution(GameData gameData, Player player,
+                                                             UUID exileCardId) {
+        castFromExileWithCostReduction(gameData, player, exileCardId, 0, true);
+    }
+
+    public void castFromExileWithCostReduction(GameData gameData, Player player, UUID exileCardId,
+                                               int genericCostReduction,
+                                               boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard) {
         ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
         if (exiledEntry == null) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -72,7 +83,9 @@ public class ExileReducedCastSupport {
             List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
             StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
-                    card, playerId, spellEffects, spellType, false, List.of(), genericCostReduction));
+                    card, playerId, spellEffects, spellType, false, List.of(), genericCostReduction,
+                    putOnBottomOfOwnersLibraryInsteadOfGraveyard, 0,
+                    putOnBottomOfOwnersLibraryInsteadOfGraveyard));
             playerInputService.beginPermanentChoice(gameData, playerId, candidates,
                     "Choose a target for " + card.getName() + ".");
             return;
@@ -80,11 +93,12 @@ public class ExileReducedCastSupport {
 
         try {
             spellCastingService.playCardFromExileAsResolutionCast(gameData, player, exileCardId, 0,
-                    (UUID) null);
+                    (UUID) null, false, putOnBottomOfOwnersLibraryInsteadOfGraveyard);
         } catch (IllegalStateException ex) {
             gameData.exilePlayCostModifiers.remove(exileCardId);
-            log.info("Game {} - {} could not pay the reduced cost for {}", gameData.id,
-                    player.getUsername(), card.getName());
+            log.info("Game {} - {} could not pay the {} for {}", gameData.id,
+                    player.getUsername(), genericCostReduction > 0 ? "reduced cost" : "normal cost",
+                    card.getName());
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

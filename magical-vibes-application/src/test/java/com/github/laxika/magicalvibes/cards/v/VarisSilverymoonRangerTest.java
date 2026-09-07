@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -46,6 +47,8 @@ class VarisSilverymoonRangerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         harness.passBothPriorities();
 
         harness.castCreature(player1, 0);

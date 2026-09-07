@@ -1,0 +1,92 @@
+package com.github.laxika.magicalvibes.cards.c;
+
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({ChainToMemory.class, Forest.class, GrizzlyBears.class, HillGiant.class})
+class ChainToMemoryTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Gives target creature -4/-0 and scries 2")
+    void weakensTargetCreatureAndScries() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new ChainToMemory()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(-1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Scry 2 can put both cards on the bottom")
+    void scryTwoPutsCardsOnBottom() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ChainToMemory()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        Card firstTop = deck.get(0);
+        Card secondTop = deck.get(1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        assertThat(deck.get(deck.size() - 2)).isSameAs(firstTop);
+        assertThat(deck.get(deck.size() - 1)).isSameAs(secondTop);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The debuff wears off at cleanup")
+    void debuffWearsOffAtCleanup() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new ChainToMemory()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new ChainToMemory()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+}

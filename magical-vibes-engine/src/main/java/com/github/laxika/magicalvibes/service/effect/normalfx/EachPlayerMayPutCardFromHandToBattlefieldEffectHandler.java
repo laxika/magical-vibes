@@ -25,11 +25,14 @@ public class EachPlayerMayPutCardFromHandToBattlefieldEffectHandler implements N
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachPlayerMayPutCardFromHandToBattlefieldEffect typedEffect =
                 (EachPlayerMayPutCardFromHandToBattlefieldEffect) effect;
-        List<UUID> players = apnapOrder(gameData);
+        List<UUID> players = typedEffect.startsWithController()
+                ? controllerFirstOrder(gameData, entry.getControllerId())
+                : apnapOrder(gameData);
         if (typedEffect.opponentsOnly()) {
             players.removeIf(playerId -> playerId.equals(entry.getControllerId()));
         }
-        support.beginNextChoice(gameData, players, List.of(), typedEffect, entry.getCard().getName());
+        support.beginNextChoice(gameData, players, List.of(), typedEffect, entry.getCard().getName(), false,
+                typedEffect.startsWithController() ? entry.getControllerId() : null);
     }
 
     private List<UUID> apnapOrder(GameData gameData) {
@@ -40,6 +43,17 @@ public class EachPlayerMayPutCardFromHandToBattlefieldEffectHandler implements N
         }
         List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(activeIndex, orderedPlayerIds.size()));
         rotated.addAll(orderedPlayerIds.subList(0, activeIndex));
+        return rotated;
+    }
+
+    private List<UUID> controllerFirstOrder(GameData gameData, UUID controllerId) {
+        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
+        int controllerIndex = orderedPlayerIds.indexOf(controllerId);
+        if (controllerIndex <= 0) {
+            return orderedPlayerIds;
+        }
+        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(controllerIndex, orderedPlayerIds.size()));
+        rotated.addAll(orderedPlayerIds.subList(0, controllerIndex));
         return rotated;
     }
 }

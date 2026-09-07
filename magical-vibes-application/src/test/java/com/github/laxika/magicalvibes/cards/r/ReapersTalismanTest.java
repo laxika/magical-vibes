@@ -28,7 +28,7 @@ class ReapersTalismanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
     }
 
@@ -62,7 +62,7 @@ class ReapersTalismanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
     }
 

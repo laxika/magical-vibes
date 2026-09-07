@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PostmortemLunge.class, GrizzlyBears.class, SerraAngel.class})
 class PostmortemLungeTest extends BaseCardTest {
 
     
@@ -67,7 +69,7 @@ class PostmortemLungeTest extends BaseCardTest {
         assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
 
         // Creature should be marked for exile at end step
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).contains(new DelayedPermanentAction(creature.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).contains(new DelayedPermanentAction(creature.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
     }
 
     @Test
@@ -86,6 +88,7 @@ class PostmortemLungeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         // Creature should no longer be on the battlefield
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Creature should be in exile

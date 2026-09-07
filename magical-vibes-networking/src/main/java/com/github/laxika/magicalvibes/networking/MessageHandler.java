@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.RegisterRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.ActivateExiledAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateHandAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
@@ -55,6 +56,8 @@ public interface MessageHandler {
     void handleSacrificePermanent(Connection connection, SacrificePermanentRequest request) throws Exception;
 
     void handleActivateAbility(Connection connection, ActivateAbilityRequest request) throws Exception;
+
+    void handleActivateExiledAbility(Connection connection, ActivateExiledAbilityRequest request) throws Exception;
 
     void handleActivateGraveyardAbility(Connection connection, ActivateGraveyardAbilityRequest request) throws Exception;
 

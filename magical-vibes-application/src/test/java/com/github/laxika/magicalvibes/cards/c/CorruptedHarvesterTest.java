@@ -45,6 +45,7 @@ class CorruptedHarvesterTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Corrupted Harvester");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(harvesterPerm.getId());
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
     }
 
     @Test

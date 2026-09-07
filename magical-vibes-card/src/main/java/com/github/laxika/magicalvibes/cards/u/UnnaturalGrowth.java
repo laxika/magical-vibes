@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleAllOwnCreaturesPowerToughnessEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "223")
+@CardRegistration(set = "MID", collectorNumber = "206")
 public class UnnaturalGrowth extends Card {
 
     public UnnaturalGrowth() {

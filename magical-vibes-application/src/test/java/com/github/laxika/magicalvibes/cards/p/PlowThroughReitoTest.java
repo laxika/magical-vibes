@@ -66,7 +66,7 @@ class PlowThroughReitoTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, plains.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card is not playable");
+                .hasMessage("Target must be a creature");
     }
 
     private void castCard(Player player, java.util.UUID targetId) {

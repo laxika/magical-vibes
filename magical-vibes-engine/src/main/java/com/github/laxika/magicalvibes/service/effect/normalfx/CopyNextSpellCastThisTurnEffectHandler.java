@@ -20,7 +20,16 @@ public class CopyNextSpellCastThisTurnEffectHandler implements NormalEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.pendingNextSpellCopyThisTurnCount.merge(entry.getControllerId(), 1, Integer::sum);
-        log.info("Game {} - {} will copy their next spell this turn", gameData.id, entry.getControllerId());
+        var copyEffect = (CopyNextSpellCastThisTurnEffect) effect;
+        if (copyEffect.spellFilter() == null && copyEffect.removedSupertypes().isEmpty()) {
+            gameData.pendingNextSpellCopyThisTurnCount.merge(entry.getControllerId(), 1, Integer::sum);
+            log.info("Game {} - {} will copy their next spell this turn", gameData.id, entry.getControllerId());
+            return;
+        }
+
+        gameData.pendingNextFilteredSpellCopiesThisTurn
+                .computeIfAbsent(entry.getControllerId(), ignored -> new java.util.ArrayList<>())
+                .add(copyEffect);
+        log.info("Game {} - {} will copy their next matching spell this turn", gameData.id, entry.getControllerId());
     }
 }

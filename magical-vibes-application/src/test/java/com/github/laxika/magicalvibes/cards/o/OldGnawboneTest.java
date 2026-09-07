@@ -48,7 +48,7 @@ class OldGnawboneTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        blocker.addBlockingTarget(1);
 
         resolveCombat();
         resolveAllTriggers();

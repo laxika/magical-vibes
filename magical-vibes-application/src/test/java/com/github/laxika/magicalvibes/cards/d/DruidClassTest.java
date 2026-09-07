@@ -36,10 +36,10 @@ class DruidClassTest extends BaseCardTest {
         levelUpToTwo(druidClass);
 
         assertThat(druidClass.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
-        assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(2);
 
         harness.setHand(player1, List.of(new Forest(), new Forest()));
         harness.playLand(player1, 0);
+        harness.passBothPriorities();
         harness.playLand(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()

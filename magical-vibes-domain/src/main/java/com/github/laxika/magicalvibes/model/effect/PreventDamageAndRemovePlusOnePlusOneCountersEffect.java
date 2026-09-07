@@ -18,29 +18,35 @@ package com.github.laxika.magicalvibes.model.effect;
 public record PreventDamageAndRemovePlusOnePlusOneCountersEffect(
         boolean removeOneOnly,
         CreateTokenEffect tokenTemplate,
-        boolean preventOnlyIfCounterAvailable
+        boolean preventOnlyIfCounterAvailable,
+        boolean requiresCounter
 ) implements CardEffect {
 
     /** Default constructor: removes counters equal to damage (Protean Hydra behavior). */
     public PreventDamageAndRemovePlusOnePlusOneCountersEffect() {
-        this(false, null, false);
+        this(false, null, false, false);
     }
 
     public PreventDamageAndRemovePlusOnePlusOneCountersEffect(boolean removeOneOnly) {
-        this(removeOneOnly, null, false);
+        this(removeOneOnly, null, false, false);
     }
 
     /** Sekki variant: creates one token for each point of damage prevented. */
     public PreventDamageAndRemovePlusOnePlusOneCountersEffect(CreateTokenEffect tokenTemplate) {
-        this(false, tokenTemplate, false);
+        this(false, tokenTemplate, false, false);
     }
 
     public PreventDamageAndRemovePlusOnePlusOneCountersEffect(boolean removeOneOnly, CreateTokenEffect tokenTemplate) {
-        this(removeOneOnly, tokenTemplate, false);
+        this(removeOneOnly, tokenTemplate, false, false);
     }
 
     /** Rock Hydra variant: each available +1/+1 counter prevents one damage. */
     public static PreventDamageAndRemovePlusOnePlusOneCountersEffect onlyIfCounterAvailable() {
-        return new PreventDamageAndRemovePlusOnePlusOneCountersEffect(false, null, true);
+        return new PreventDamageAndRemovePlusOnePlusOneCountersEffect(false, null, true, false);
+    }
+
+    /** Ugin's Conjurant variant: applies only while the permanent has a +1/+1 counter. */
+    public static PreventDamageAndRemovePlusOnePlusOneCountersEffect onlyWhileCountered() {
+        return new PreventDamageAndRemovePlusOnePlusOneCountersEffect(false, null, false, true);
     }
 }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AFR", collectorNumber = "8")
@@ -31,8 +32,8 @@ public class DancingSword extends Card {
                         GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new MayEffect(
-                new BecomeCreatureEffect(2, 1, CardSubtype.CONSTRUCT,
-                        Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)),
+                new BecomeCreatureEffect(2, 1, List.of(CardSubtype.CONSTRUCT),
+                        Set.of(Keyword.FLYING), Set.of(), Set.of(CardType.ARTIFACT)),
                 "Have Dancing Sword become a creature?"));
 
         addActivatedAbility(new EquipActivatedAbility("{1}"));

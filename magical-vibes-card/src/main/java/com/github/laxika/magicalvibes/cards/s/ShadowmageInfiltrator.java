@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "294")
+@CardRegistration(set = "TSB", collectorNumber = "99")
 public class ShadowmageInfiltrator extends Card {
 
     public ShadowmageInfiltrator() {

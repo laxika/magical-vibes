@@ -42,7 +42,7 @@ public class ChooseCardFromGraveyardAndGrantCastPermissionEffectHandler implemen
         var choiceEffect = (ChooseCardFromGraveyardAndGrantCastPermissionEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        if (entry.getTargetId() != null) {
+        if (entry.getTargetId() != null && !gameData.playerIds.contains(entry.getTargetId())) {
             grantPermission(gameData, entry, choiceEffect, entry.getTargetId());
             return;
         }
@@ -107,10 +107,17 @@ public class ChooseCardFromGraveyardAndGrantCastPermissionEffectHandler implemen
             return;
         }
 
-        gameData.graveyardPlayPermissions.put(cardId, controllerId);
-        gameData.graveyardPlayPermissionsExpireEndOfTurn.add(cardId);
-        if (effect.exileInsteadOfGraveyard()) {
-            gameData.exileInsteadOfGraveyard.add(cardId);
+        if (effect.withoutPayingManaCost()) {
+            gameData.graveyardCardCastPermissionsUntilEndOfTurn.put(cardId,
+                    new GameData.GraveyardCardCastPermission(
+                            entry.getSourcePermanentId(), controllerId, false,
+                            effect.exileInsteadOfGraveyard(), true));
+        } else {
+            gameData.graveyardPlayPermissions.put(cardId, controllerId);
+            gameData.graveyardPlayPermissionsExpireEndOfTurn.add(cardId);
+            if (effect.exileInsteadOfGraveyard()) {
+                gameData.exileInsteadOfGraveyard.add(cardId);
+            }
         }
 
         gameLogService.append(gameData, GameLog.builder()

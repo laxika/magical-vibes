@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
-import com.github.laxika.magicalvibes.cards.w.WallOfGlare;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionRed;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
+import com.github.laxika.magicalvibes.cards.p.PaleBears;
+import com.github.laxika.magicalvibes.cards.p.PalaceGuard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,97 +16,75 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BattleCry.class, CircleOfProtectionRed.class, KjeldoranWarrior.class, PaleBears.class,
+        PalaceGuard.class})
 class BattleCryTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Untaps white creatures you control, not nonwhite or opponent's")
+    @DisplayName("Untaps controlled white creatures, not nonwhite, noncreature, or opponent's")
     void untapsOnlyControlledWhiteCreatures() {
-        Permanent white = new Permanent(new SavannahLions());
+        Permanent white = addCreatureReady(player1, new KjeldoranWarrior());
         white.tap();
-        white.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(white);
 
-        Permanent green = new Permanent(new GrizzlyBears());
+        Permanent green = addCreatureReady(player1, new PaleBears());
         green.tap();
-        green.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(green);
 
-        Permanent oppWhite = new Permanent(new SavannahLions());
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player1, new CircleOfProtectionRed());
+        noncreature.tap();
+
+        Permanent oppWhite = addCreatureReady(player2, new KjeldoranWarrior());
         oppWhite.tap();
-        oppWhite.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(oppWhite);
 
-        harness.setHand(player1, List.of(new BattleCry()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new BattleCry(), "{2}{W}");
         harness.passBothPriorities();
 
         assertThat(white.isTapped()).isFalse();
         assertThat(green.isTapped()).isTrue();
+        assertThat(noncreature.isTapped()).isTrue();
         assertThat(oppWhite.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Whenever a creature blocks this turn, it gets +0/+1 until end of turn")
     void blockerGetsPlusZeroPlusOne() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new PaleBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new KjeldoranWarrior());
 
-        harness.setHand(player2, List.of(new BattleCry()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new BattleCry(), "{2}{W}");
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         // Delayed trigger on the stack — resolve it.
-        harness.passBothPriorities();
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(blocker.getToughnessModifier()).isEqualTo(1);
         assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
     }
 
     @Test
     @DisplayName("A blocker gets only one boost even when blocking multiple attackers")
     void blockerBoostTriggersOncePerBlockingCreature() {
-        Permanent attackerOne = new Permanent(new GrizzlyBears());
-        attackerOne.setSummoningSick(false);
+        Permanent attackerOne = addCreatureReady(player1, new PaleBears());
         attackerOne.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attackerOne);
 
-        Permanent attackerTwo = new Permanent(new GrizzlyBears());
-        attackerTwo.setSummoningSick(false);
+        Permanent attackerTwo = addCreatureReady(player1, new PaleBears());
         attackerTwo.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attackerTwo);
 
-        Permanent blocker = new Permanent(new WallOfGlare());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new PalaceGuard());
 
-        harness.setHand(player1, List.of(new BattleCry()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new BattleCry(), "{2}{W}");
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerOneIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerOne);
@@ -114,40 +93,54 @@ class BattleCryTest extends BaseCardTest {
                 new BlockerAssignment(blockerIdx, attackerOneIdx),
                 new BlockerAssignment(blockerIdx, attackerTwoIdx)));
 
-        harness.passBothPriorities();
-        resolveStack();
+        resolveAllTriggers();
 
         assertThat(blocker.getToughnessModifier()).isEqualTo(1);
         assertThat(blocker.getPowerModifier()).isZero();
     }
 
     @Test
-    @DisplayName("Blocker boost wears off at end of turn")
-    void blockerBoostExpiresAtEndOfTurn() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+    @DisplayName("Two Battle Cry spells give a blocker +0/+2")
+    void multipleBattleCrySourcesStack() {
+        Permanent attacker = addCreatureReady(player1, new PaleBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new KjeldoranWarrior());
 
-        harness.setHand(player2, List.of(new BattleCry()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player1, new BattleCry(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new BattleCry(), "{2}{W}");
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        resolveAllTriggers();
+
+        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(blocker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocker boost wears off at end of turn")
+    void blockerBoostExpiresAtEndOfTurn() {
+        Permanent attacker = addCreatureReady(player1, new PaleBears());
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new KjeldoranWarrior());
+
+        harness.castFromHand(player2, new BattleCry(), "{2}{W}");
         harness.passBothPriorities();
-        resolveStack();
+
+        prepareDeclareBlockers(player1);
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+        resolveAllTriggers();
 
         assertThat(blocker.getToughnessModifier()).isEqualTo(1);
 
@@ -156,13 +149,5 @@ class BattleCryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(blocker.getToughnessModifier()).isZero();
-    }
-
-    private void resolveStack() {
-        int guard = 0;
-        while (!gd.stack.isEmpty() && guard++ < 10) {
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-        }
     }
 }

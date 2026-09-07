@@ -30,16 +30,20 @@ public class PreventDamageToTargetFromChosenSourceEffectHandler implements Norma
         UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
-        List<UUID> validIds = preventionSupport.collectAllBattlefieldPermanentIds(gameData);
+        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
 
         if (validIds.isEmpty()) {
-            preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
+            preventionSupport.broadcastNoDamageSourcesForChoice(gameData);
             return;
         }
 
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.PreventDamageToTargetFromSourceChoice(controllerId, e.amount(), targetId));
+                new PermanentChoiceContext.PreventDamageToTargetFromSourceChoice(
+                        controllerId, e.amount(), targetId, e.allDamage()));
+        String prompt = e.allDamage()
+                ? "Choose a source. Prevent all damage it would deal to the target this turn."
+                : "Choose a source. The next " + e.amount() + " damage it would deal to the target is prevented.";
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
-                "Choose a source. The next " + e.amount() + " damage it would deal to the target is prevented.");
+                prompt);
     }
 }

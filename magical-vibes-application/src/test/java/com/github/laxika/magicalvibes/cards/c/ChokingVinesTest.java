@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChokingVines.class, GrizzlyBears.class, MonssGoblinRaiders.class})
 class ChokingVinesTest extends BaseCardTest {
 
     private void giveSpell(int mana) {
@@ -81,6 +83,22 @@ class ChokingVinesTest extends BaseCardTest {
 
         assertThat(blockedAttacker.isBlockedWithoutBlockers()).isFalse();
         assertThat(blockedAttacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("X=2 requires exactly two attacking creature targets")
+    void requiresExactlyXTargets() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackers(List.of(0));
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        giveSpell(3);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player2, 0, 2, List.of(attacker.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must target between 2 and 2 targets");
     }
 
     @Test

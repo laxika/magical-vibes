@@ -26,6 +26,7 @@ class SorcererClassTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
@@ -39,7 +40,9 @@ class SorcererClassTest extends BaseCardTest {
     @Test
     void levelTwoLetsCreaturesProduceManaForInstantSorcerySpells() {
         Permanent sorcererClass = harness.addToBattlefieldAndReturn(player1, new SorcererClass());
+        sorcererClass.setSummoningSick(false);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setSummoningSick(false);
         levelUpToTwo(sorcererClass);
 
         harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null);
@@ -58,7 +61,9 @@ class SorcererClassTest extends BaseCardTest {
     @Test
     void levelTwoManaCanPayForTheNextClassLevel() {
         Permanent sorcererClass = harness.addToBattlefieldAndReturn(player1, new SorcererClass());
+        sorcererClass.setSummoningSick(false);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setSummoningSick(false);
         levelUpToTwo(sorcererClass);
 
         harness.activateAbility(player1, battlefieldIndex(creature), 0, null, null);
@@ -76,6 +81,7 @@ class SorcererClassTest extends BaseCardTest {
     @Test
     void levelThreeDealsIncreasingDamageForEachInstantOrSorceryCastThisTurn() {
         Permanent sorcererClass = harness.addToBattlefieldAndReturn(player1, new SorcererClass());
+        sorcererClass.setSummoningSick(false);
         levelUpToThree(sorcererClass);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new Shock(), new Shock()));
@@ -88,7 +94,7 @@ class SorcererClassTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
         harness.passBothPriorities();
     }
 

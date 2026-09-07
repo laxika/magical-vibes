@@ -15,16 +15,19 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +40,7 @@ public class TokenCopySupport {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final SagaChapterService sagaChapterService;
 
     public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                         Permanent sourcePermanent,
@@ -60,15 +64,35 @@ public class TokenCopySupport {
         }
 
         List<Permanent> tokens = new ArrayList<>();
+        Card artifactTokenTemplate = null;
         for (Card sourceCard : sourceCards) {
+            Card tokenTemplate = buildTokenCopyCard(
+                    sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
             int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                    gameData, tokenControllerId, 1, tokenSubtypes(sourceCard, effect));
+                    gameData, tokenControllerId, 1, tokenTemplate.getSubtypes(), tokenTemplate.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
-                Card tokenCard = buildTokenCopyCard(sourceCard, effect);
+                Card tokenCard = copy == 0
+                        ? tokenTemplate
+                        : buildTokenCopyCard(
+                                sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
+                if (artifactTokenTemplate == null && tokenCard.hasType(CardType.ARTIFACT)) {
+                    artifactTokenTemplate = tokenCard;
+                }
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
                 tokens.add(new Permanent(tokenCard));
             }
+        }
+        int additionalMapTokenCount = TokenCreationReplacementSupport.additionalMapTokenCount(
+                gameData, tokenControllerId, artifactTokenTemplate, 1);
+        for (int map = 0; map < additionalMapTokenCount; map++) {
+            Card mapTokenCard = TokenCardFactory.create(
+                    TokenCreationReplacementSupport.additionalMapToken(
+                            effect.tapped(), effect.tappedAndAttacking()),
+                    0,
+                    0,
+                    entry.getCard() == null ? null : entry.getCard().getSetCode());
+            tokens.add(new Permanent(mapTokenCard));
         }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
@@ -86,8 +110,10 @@ public class TokenCopySupport {
                         .add(tokenPermanent.getId());
             }
 
-            if (effect.tappedAndAttacking()) {
+            if (effect.tapped() || effect.tappedAndAttacking()) {
                 tokenPermanent.tap();
+            }
+            if (effect.tappedAndAttacking()) {
                 tokenPermanent.setAttacking(true);
                 if (attackTargetIds != null && tokenIndex < attackTargetIds.size()) {
                     tokenPermanent.setAttackTarget(attackTargetIds.get(tokenIndex));
@@ -109,11 +135,18 @@ public class TokenCopySupport {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
             }
+            if (effect.sacrificeAtNextUpkeep()) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP));
+            }
 
             Card sourceCard = tokenPermanent.getCard();
             gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, tokenControllerId, sourceCard, null, false);
+            if (sourceCard.isSaga()) {
+                sagaChapterService.initializeSaga(gameData, tokenPermanent, sourceCard, tokenControllerId);
+            }
 
             if (effect.initialCounters() != null && !effect.initialCounters().isEmpty()
                     && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
@@ -126,25 +159,23 @@ public class TokenCopySupport {
             }
             simultaneouslyEntered.add(tokenPermanent);
         }
+
+        battlefieldEntryService.checkAllyTokenEntersTriggers(
+                gameData, tokenControllerId, tokens.stream().map(Permanent::getId).toList());
         return createdIds;
     }
 
-    private static List<CardSubtype> tokenSubtypes(Card sourceCard,
-                                                    CreateTokenCopyOfTargetPermanentEffect effect) {
-        List<CardSubtype> subtypes = sourceCard.getSubtypes() == null
-                ? new ArrayList<>()
-                : new ArrayList<>(sourceCard.getSubtypes());
-        if (effect.additionalSubtypes() != null) {
-            for (CardSubtype subtype : effect.additionalSubtypes()) {
-                if (!subtypes.contains(subtype)) {
-                    subtypes.add(subtype);
-                }
-            }
-        }
-        return subtypes;
+    static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
+        return buildTokenCopyCard(sourceCard, effect, null);
     }
 
-    static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
+    private static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,
+                                           Predicate<CardSubtype> isCreatureSubtype) {
+        return buildTokenCopyCard(sourceCard, effect, isCreatureSubtype, null);
+    }
+
+    private static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,
+                                           Predicate<CardSubtype> isCreatureSubtype, Card targetingSourceCard) {
         boolean hasPTOverride = effect.powerOverride() != null || effect.toughnessOverride() != null;
 
         Card tokenCard = new Card();
@@ -158,12 +189,15 @@ public class TokenCopySupport {
         tokenCard.setColors(effect.colorOverride() != null
                 ? List.of(effect.colorOverride())
                 : sourceCard.getColors());
-        Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+        EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
         if (sourceCard.getSupertypes() != null) {
             supertypes.addAll(sourceCard.getSupertypes());
         }
-        if (effect.nonlegendary()) {
+        if (effect.removeLegendary()) {
             supertypes.remove(CardSupertype.LEGENDARY);
+        }
+        if (effect.additionalSupertypes() != null) {
+            supertypes.addAll(effect.additionalSupertypes());
         }
         tokenCard.setSupertypes(supertypes);
         tokenCard.setPower(effect.powerOverride() != null ? effect.powerOverride() : sourceCard.getPower());
@@ -173,13 +207,31 @@ public class TokenCopySupport {
         tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
 
         List<CardSubtype> subtypes = new ArrayList<>();
-        if (sourceCard.getSubtypes() != null) {
-            subtypes.addAll(sourceCard.getSubtypes());
-        }
-        if (effect.additionalSubtypes() != null) {
-            for (CardSubtype subtype : effect.additionalSubtypes()) {
+        if (effect.creatureSubtypeOverride() != null && !effect.creatureSubtypeOverride().isEmpty()) {
+            if (isCreatureSubtype == null) {
+                throw new IllegalStateException("Creature subtype override requires subtype classification");
+            }
+            if (sourceCard.getSubtypes() != null) {
+                for (CardSubtype subtype : sourceCard.getSubtypes()) {
+                    if (!isCreatureSubtype.test(subtype)) {
+                        subtypes.add(subtype);
+                    }
+                }
+            }
+            for (CardSubtype subtype : effect.creatureSubtypeOverride()) {
                 if (!subtypes.contains(subtype)) {
                     subtypes.add(subtype);
+                }
+            }
+        } else {
+            if (sourceCard.getSubtypes() != null) {
+                subtypes.addAll(sourceCard.getSubtypes());
+            }
+            if (effect.additionalSubtypes() != null) {
+                for (CardSubtype subtype : effect.additionalSubtypes()) {
+                    if (!subtypes.contains(subtype)) {
+                        subtypes.add(subtype);
+                    }
                 }
             }
         }
@@ -218,10 +270,19 @@ public class TokenCopySupport {
                 tokenCard.addEffect(slot, registration.effect(), registration.triggerMode());
             }
         }
+        if (effect.additionalSlotEffects() != null) {
+            effect.additionalSlotEffects().forEach((slot, effects) ->
+                    effects.forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect)));
+        }
         for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
             tokenCard.addActivatedAbility(ability);
         }
         tokenCard.copyTargetingFrom(sourceCard);
+        if (targetingSourceCard != null && effect.additionalSlotEffects() != null) {
+            List<CardEffect> additionalEffects =
+                    effect.additionalSlotEffects().values().stream().flatMap(List::stream).toList();
+            tokenCard.appendSpellTargetingForEffectsFrom(targetingSourceCard, additionalEffects);
+        }
         return tokenCard;
     }
 }

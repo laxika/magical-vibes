@@ -1,0 +1,20 @@
+package com.github.laxika.magicalvibes.cards.r;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+
+@CardRegistration(set = "ONS", collectorNumber = "222")
+public class RecklessOne extends Card {
+
+    public RecklessOne() {
+        PermanentCount goblinsOnBattlefield =
+                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.GOBLIN), CountScope.ANY_PLAYER);
+        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(goblinsOnBattlefield, goblinsOnBattlefield));
+    }
+}

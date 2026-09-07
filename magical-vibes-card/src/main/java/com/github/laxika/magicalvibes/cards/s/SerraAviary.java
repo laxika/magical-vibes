@@ -13,6 +13,7 @@ public class SerraAviary extends Card {
 
     public SerraAviary() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(
-                1, 1, GrantScope.ALL_CREATURES, new PermanentHasKeywordPredicate(Keyword.FLYING)));
+                1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }
 }

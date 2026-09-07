@@ -25,7 +25,7 @@ class KalainReclusivePainterTest extends BaseCardTest {
     void createsTreasureOnEntry() {
         harness.setHand(player1, List.of(new KalainReclusivePainter()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -54,7 +54,7 @@ class KalainReclusivePainterTest extends BaseCardTest {
     void entryCountersScaleWithTreasureManaSpent() {
         addReadyKalain(player1);
         createTwoTreasures();
-        sacrificeTreasureFor(ManaColor.COLORLESS);
+        sacrificeTreasureFor(ManaColor.RED);
         sacrificeTreasureFor(ManaColor.GREEN);
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -102,7 +102,7 @@ class KalainReclusivePainterTest extends BaseCardTest {
 
     private void createTreasure() {
         harness.setHand(player1, List.of(new WilyGoblin()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -111,7 +111,7 @@ class KalainReclusivePainterTest extends BaseCardTest {
 
     private void createTwoTreasures() {
         harness.setHand(player1, List.of(new WilyGoblin(), new WilyGoblin()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 4);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

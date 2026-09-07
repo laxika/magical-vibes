@@ -14,4 +14,9 @@ public record ControllerCastTwoOrMoreSpellsThisTurn(CardPredicate filter) implem
     public String conditionNotMetReason() {
         return "you haven't cast two or more matching spells this turn";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

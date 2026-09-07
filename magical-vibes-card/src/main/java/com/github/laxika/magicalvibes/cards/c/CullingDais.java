@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -22,8 +21,7 @@ public class CullingDais extends Card {
                 true,
                 null,
                 List.of(new SacrificeCreatureCost(), new PutCountersOnSelfEffect(CounterType.CHARGE)),
-                "{T}, Sacrifice a creature: Put a charge counter on Culling Dais.",
-                TargetFilters.creatureYouControl()
+                "{T}, Sacrifice a creature: Put a charge counter on Culling Dais."
         ));
 
         // {1}, Sacrifice Culling Dais: Draw a card for each charge counter on Culling Dais.

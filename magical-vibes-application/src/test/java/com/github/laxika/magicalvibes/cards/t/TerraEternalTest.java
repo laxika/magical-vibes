@@ -5,16 +5,15 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TerraEternal.class, Plains.class, Forest.class, GrizzlyBears.class, Armageddon.class})
 class TerraEternalTest extends BaseCardTest {
 
     @Test
@@ -46,12 +45,10 @@ class TerraEternalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TerraEternal());
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player2, new Forest());
-        harness.setHand(player2, List.of(new Armageddon()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new Armageddon(), "{3}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Plains");

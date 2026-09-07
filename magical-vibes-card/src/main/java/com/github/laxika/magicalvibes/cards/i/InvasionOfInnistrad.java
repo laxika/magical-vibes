@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "INR", collectorNumber = "120")
+@CardRegistration(set = "MOM", collectorNumber = "115")
 public class InvasionOfInnistrad extends Card {
 
     public InvasionOfInnistrad() {

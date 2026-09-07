@@ -80,7 +80,7 @@ public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffe
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", destination.getCard(), "."));
         log.info("Game {} - {} attached to {} via {}", gameData.id, aura.getCard().getName(), destination.getCard().getName(), entry.getCard().getName());
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura.getCard(), destination.getId());
+        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, destination.getId());
     }
 
     private void fizzle(GameData gameData, StackEntry entry, String reason) {

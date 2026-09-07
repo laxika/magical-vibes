@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "26")
+@CardRegistration(set = "WAR", collectorNumber = "22")
 public class MakeshiftBattalion extends Card {
 
     public MakeshiftBattalion() {

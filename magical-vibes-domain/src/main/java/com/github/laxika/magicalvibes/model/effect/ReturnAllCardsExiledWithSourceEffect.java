@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.Keyword;
+
+import java.util.Set;
 
 /**
  * Returns all cards exiled with the source permanent (tracked via
@@ -16,20 +19,28 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *        cards
  * @param turnFaceUp when {@code true}, turn every card exiled with the source face up before
  *        returning the matching cards (Pyxis of Pandemonium)
+ * @param grantedKeywords keywords granted indefinitely to each card returned to the battlefield
  */
 public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                    CardPredicate filter,
-                                                   boolean turnFaceUp) implements CardEffect {
+                                                   boolean turnFaceUp,
+                                                   Set<Keyword> grantedKeywords) implements CardEffect {
 
     public ReturnAllCardsExiledWithSourceEffect() {
-        this(false, null, false);
+        this(false, null, false, Set.of());
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl) {
-        this(underControllerControl, null, false);
+        this(underControllerControl, null, false, Set.of());
     }
 
     public ReturnAllCardsExiledWithSourceEffect(CardPredicate filter) {
-        this(false, filter, false);
+        this(false, filter, false, Set.of());
+    }
+
+    public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
+                                                CardPredicate filter,
+                                                boolean turnFaceUp) {
+        this(underControllerControl, filter, turnFaceUp, Set.of());
     }
 }

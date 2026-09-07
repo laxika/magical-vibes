@@ -88,9 +88,9 @@ class SpoilsOfTheHuntTest extends BaseCardTest {
 
     private void castWithTreasureMana(Permanent source, Permanent victim) {
         harness.setHand(player1, List.of(new WilyGoblin(), new SpoilsOfTheHunt()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -98,7 +98,7 @@ class SpoilsOfTheHuntTest extends BaseCardTest {
         Permanent treasure = findPermanent(player1, "Treasure");
         int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(treasure);
         harness.activateAbility(player1, treasureIndex, null, null);
-        harness.handleListChoice(player1, "COLORLESS");
+        harness.handleListChoice(player1, "RED");
 
         harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
         harness.passBothPriorities();
@@ -106,9 +106,8 @@ class SpoilsOfTheHuntTest extends BaseCardTest {
 
     private void castWithTwoTreasureMana(Permanent source, Permanent victim) {
         harness.setHand(player1, List.of(new WilyGoblin(), new WilyGoblin(), new SpoilsOfTheHunt()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 4);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -128,7 +127,7 @@ class SpoilsOfTheHuntTest extends BaseCardTest {
         Permanent treasure = findPermanent(player1, "Treasure");
         int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(treasure);
         harness.activateAbility(player1, treasureIndex, null, null);
-        harness.handleListChoice(player1, "COLORLESS");
+        harness.handleListChoice(player1, "RED");
     }
 
     private void addMana() {

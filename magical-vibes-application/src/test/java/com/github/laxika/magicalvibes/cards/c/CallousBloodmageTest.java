@@ -55,8 +55,10 @@ class CallousBloodmageTest extends BaseCardTest {
     void exilesTargetPlayersGraveyard() {
         harness.setGraveyard(player2, List.of(new Forest(), new Shock()));
 
-        castBloodmage(2, player2.getId());
-        resolveAllTriggers();
+        castBloodmage(2);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
@@ -68,9 +70,4 @@ class CallousBloodmageTest extends BaseCardTest {
         harness.castCreature(player1, 0, mode);
     }
 
-    private void castBloodmage(int mode, java.util.UUID targetId) {
-        harness.setHand(player1, List.of(new CallousBloodmage()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castCreature(player1, 0, mode, targetId);
-    }
 }

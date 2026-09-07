@@ -36,6 +36,9 @@ public record RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPr
         if (scope == GrantScope.TARGET) {
             return TargetSpec.benign(TargetPredicates.permanent());
         }
+        if (scope == GrantScope.TARGET_PLAYERS_CREATURES) {
+            return TargetSpec.benign(TargetPredicates.player());
+        }
         if (scope == GrantScope.SELF) {
             return new TargetSpec(null, false, null, true, 1);
         }

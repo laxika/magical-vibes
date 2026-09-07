@@ -38,5 +38,8 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
                 ? amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, self))
                 : e.count();
         permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), count);
+        if (entry.getSourcePermanentId() != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(self));
+        }
     }
 }

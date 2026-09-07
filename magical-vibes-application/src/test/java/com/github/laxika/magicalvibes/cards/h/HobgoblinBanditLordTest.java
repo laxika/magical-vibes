@@ -19,7 +19,6 @@ class HobgoblinBanditLordTest extends BaseCardTest {
 
     @Test
     void boostsOtherGoblinsYouControl() {
-        harness.addToBattlefield(player1, new HobgoblinBanditLord());
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
         Permanent nonGoblin = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentGoblin = harness.addToBattlefieldAndReturn(player2, new GoblinPiker());
@@ -28,6 +27,8 @@ class HobgoblinBanditLordTest extends BaseCardTest {
         int goblinToughness = gqs.getEffectiveToughness(gd, goblin);
         int nonGoblinPower = gqs.getEffectivePower(gd, nonGoblin);
         int opponentGoblinPower = gqs.getEffectivePower(gd, opponentGoblin);
+
+        harness.addToBattlefield(player1, new HobgoblinBanditLord());
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(goblinPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(goblinToughness + 1);

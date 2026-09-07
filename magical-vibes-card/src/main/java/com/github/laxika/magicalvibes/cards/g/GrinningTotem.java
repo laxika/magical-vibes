@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "288")
 @CardRegistration(set = "MIR", collectorNumber = "303")
+@CardRegistration(set = "TSB", collectorNumber = "110")
 public class GrinningTotem extends Card {
 
     public GrinningTotem() {

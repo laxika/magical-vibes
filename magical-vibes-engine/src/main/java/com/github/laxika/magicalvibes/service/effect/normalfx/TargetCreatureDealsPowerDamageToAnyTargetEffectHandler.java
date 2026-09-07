@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -40,40 +41,61 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
             return;
         }
 
-        Permanent biter = gameQueryService.findPermanentById(gameData, sourceGroup.getFirst());
-        if (biter == null) {
-            return;
-        }
         UUID victimId = victimGroup.getFirst();
+        Permanent victim = e.excessDamageToControllerIfSourceHasTrample()
+                ? gameQueryService.findPermanentById(gameData, victimId)
+                : null;
 
-        UUID controllerId = gameQueryService.findPermanentController(gameData, biter.getId());
-        if (controllerId == null) {
-            return;
+        for (UUID sourceId : sourceGroup) {
+            Permanent biter = gameQueryService.findPermanentById(gameData, sourceId);
+            if (biter == null) {
+                continue;
+            }
+
+            UUID controllerId = gameQueryService.findPermanentController(gameData, biter.getId());
+            if (controllerId == null) {
+                continue;
+            }
+
+            // The biting creature is the damage source. If it is prevented from dealing damage,
+            // nothing happens for that source.
+            if (gameQueryService.isDamagePreventable(gameData)
+                    && gameQueryService.isPreventedFromDealingDamage(gameData, biter)) {
+                gameLogService.append(gameData, GameLog.cardThen(biter.getCard(), "'s damage is prevented."));
+                continue;
+            }
+
+            int power = gameQueryService.getPowerBasedDamage(gameData, biter);
+
+            // Build a temporary entry whose source is the biting creature, so prevention,
+            // protection and damage triggers key off the creature rather than the spell.
+            StackEntry damageEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    biter.getCard(),
+                    controllerId,
+                    biter.getCard().getName() + "'s ability",
+                    List.of(),
+                    null,
+                    biter.getId());
+
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            boolean trampleSource = e.excessDamageToControllerIfSourceHasTrample()
+                    && victim != null
+                    && gameQueryService.isCreature(gameData, victim)
+                    && gameQueryService.sourceHasKeyword(gameData, damageEntry, biter, Keyword.TRAMPLE);
+            UUID victimControllerId = trampleSource
+                    ? gameQueryService.findPermanentController(gameData, victim.getId())
+                    : null;
+            int excessDamage = victimControllerId == null
+                    ? 0
+                    : damageSupport.computeExcessDamageToCreature(
+                            gameData, victim, rawDamage, victim.getMarkedDamage(),
+                            gameQueryService.sourceHasKeyword(gameData, damageEntry, biter, Keyword.DEATHTOUCH));
+            damageSupport.resolveAnyTargetDamage(gameData, damageEntry, victimId, rawDamage, false);
+            if (excessDamage > 0) {
+                damageSupport.dealDamageToPlayer(gameData, damageEntry, victimControllerId, excessDamage);
+            }
         }
-
-        // The biting creature is the damage source (CR 608.2h). If it is prevented from dealing
-        // damage, nothing happens.
-        if (gameQueryService.isDamagePreventable(gameData)
-                && gameQueryService.isPreventedFromDealingDamage(gameData, biter)) {
-            gameLogService.append(gameData, GameLog.cardThen(biter.getCard(), "'s damage is prevented."));
-            return;
-        }
-
-        int power = gameQueryService.getPowerBasedDamage(gameData, biter);
-
-        // Build a temporary entry whose source is the biting creature, so prevention/protection/
-        // lifelink and "deals damage" triggers key off the creature rather than the spell.
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                biter.getCard(),
-                controllerId,
-                biter.getCard().getName() + "'s ability",
-                List.of(),
-                null,
-                biter.getId());
-
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
-        damageSupport.resolveAnyTargetDamage(gameData, damageEntry, victimId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }
 }

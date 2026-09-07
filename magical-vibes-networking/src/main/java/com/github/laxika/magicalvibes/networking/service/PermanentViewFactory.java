@@ -189,6 +189,7 @@ public class PermanentViewFactory {
                 .alternateCostRevealsHandCard(false)
                 .graveyardActivatedAbilities(List.of())
                 .handActivatedAbilities(List.of())
+                .exileActivatedAbilities(List.of())
                 .transformable(false)
                 .kickerCost(null)
                 .kickerRequiresTap(false)
@@ -197,6 +198,7 @@ public class PermanentViewFactory {
                 .modalChoicesRequired(0)
                 .modalChoicesMax(0)
                 .modalOptional(false)
+                .modalModesMayRepeat(false)
                 .modalOptions(null)
                 .prepareSpell(null)
                 .build();

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "174")
+@CardRegistration(set = "OTJ", collectorNumber = "87")
+@CardRegistration(set = "SNC", collectorNumber = "79")
 public class FakeYourOwnDeath extends Card {
 
     public FakeYourOwnDeath() {

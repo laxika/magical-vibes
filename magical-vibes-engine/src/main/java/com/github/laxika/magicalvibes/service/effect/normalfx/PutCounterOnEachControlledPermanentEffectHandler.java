@@ -55,6 +55,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
                 .withSourceCardId(entry.getCard().getId())
                 .withSourcePermanentSnapshot(source);
         int count = 0;
+        int loyaltyCountersPlaced = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
         Map<Permanent, Integer> minusOneTargets = new LinkedHashMap<>();
         for (Permanent p : new ArrayList<>(battlefield)) {
@@ -76,6 +77,9 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                         gameData, p, placed);
                 plusOneTargets.add(p);
+            } else if (e.counterType() == CounterType.LOYALTY
+                    && gameQueryService.isPlaneswalker(gameData, p)) {
+                loyaltyCountersPlaced += placed;
             } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE && placed > 0) {
                 minusOneTargets.put(p, placed);
             }
@@ -90,11 +94,15 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         // Fire +1/+1 counter-placement triggers after all placements.
         // Deferred past the loop since firing pushes triggered abilities onto the stack.
         for (Permanent p : plusOneTargets) {
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p, entry.getControllerId());
         }
         for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
                     gameData, placement.getKey(), placement.getValue());
+        }
+        if (loyaltyCountersPlaced > 0) {
+            permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
+                    gameData, entry.getControllerId(), loyaltyCountersPlaced);
         }
     }
 }

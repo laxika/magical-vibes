@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Handles a search-to-top choice: from the held-out matching {@code pool}, the controller picks
- * any number of cards to reveal and put on top of their library. The unchosen matching cards are
+ * the permitted number of cards to put on top of their library. The unchosen matching cards are
  * returned to the library, the library is shuffled, and the chosen cards are placed on top (ordered
  * via {@link PendingInteraction.LibraryReorder} when more than one is kept).
  */
@@ -55,6 +55,11 @@ public class SearchLibraryToTopChoiceInteractionHandler
             cardIds = List.of();
         }
 
+        int expectedCount = interaction.minimumSelectionCount();
+        if (interaction.requiredCount() >= 0 && cardIds.size() != expectedCount) {
+            throw new IllegalStateException("Must choose " + expectedCount + " cards");
+        }
+
         List<UUID> validIds = interaction.validCardIds();
         Set<UUID> uniqueIds = new HashSet<>();
         for (UUID id : cardIds) {
@@ -64,6 +69,9 @@ public class SearchLibraryToTopChoiceInteractionHandler
             if (!uniqueIds.add(id)) {
                 throw new IllegalStateException("Duplicate card ID: " + id);
             }
+        }
+        if (cardIds.size() > interaction.maxCount()) {
+            throw new IllegalStateException("Too many cards chosen");
         }
 
         UUID controllerId = interaction.playerId();
@@ -90,7 +98,7 @@ public class SearchLibraryToTopChoiceInteractionHandler
         deck.addAll(rest);
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
 
-        if (!chosen.isEmpty()) {
+        if (interaction.revealCards() && !chosen.isEmpty()) {
             GameLog.Builder revealBuilder = GameLog.builder().text(controllerName + " reveals ");
             for (int i = 0; i < chosen.size(); i++) {
                 if (i > 0) revealBuilder.text(", ");
@@ -98,6 +106,10 @@ public class SearchLibraryToTopChoiceInteractionHandler
             }
             revealBuilder.text(" and shuffles their library.");
             gameLogService.append(gameData, revealBuilder.build());
+        } else if (!chosen.isEmpty()) {
+            gameLogService.append(gameData,
+                    GameLog.text(controllerName + " shuffles their library and puts "
+                            + chosen.size() + " cards on top of their library."));
         }
 
         if (chosen.isEmpty()) {
@@ -105,7 +117,9 @@ public class SearchLibraryToTopChoiceInteractionHandler
             finishResolution(gameData);
         } else if (chosen.size() == 1) {
             deck.addFirst(chosen.getFirst());
-            gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", chosen.getFirst(), " on top of their library."));
+            gameLogService.append(gameData, interaction.revealCards()
+                    ? GameLog.textCardText(controllerName + " puts ", chosen.getFirst(), " on top of their library.")
+                    : GameLog.text(controllerName + " puts a card on top of their library."));
             finishResolution(gameData);
         } else {
             gameLogService.append(gameData, GameLog.text(controllerName + " puts " + chosen.size()

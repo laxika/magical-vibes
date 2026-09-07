@@ -42,6 +42,23 @@ class QuandrixCommandTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Allows separate modes to target the same creature")
+    void allowsSeparateModesToTargetSameCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new QuandrixCommand()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{0, 2}, null,
+                List.of(target.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Counters an artifact spell and shuffles up to three cards from a target player's graveyard")
     void countersArtifactSpellAndShufflesGraveyardCards() {
         Spellbook spellbook = new Spellbook();

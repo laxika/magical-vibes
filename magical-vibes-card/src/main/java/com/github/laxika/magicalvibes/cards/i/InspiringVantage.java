@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "246")
+@CardRegistration(set = "OTJ", collectorNumber = "269")
 public class InspiringVantage extends Card {
 
     public InspiringVantage() {

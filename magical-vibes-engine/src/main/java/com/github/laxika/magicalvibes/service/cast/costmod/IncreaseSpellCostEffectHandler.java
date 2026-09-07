@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.cast.costmod;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSource;
@@ -55,6 +56,24 @@ public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBe
         if (!inScope) {
             return false;
         }
-        return predicateEvaluationService.matchesCardPredicate(context.spell(), increase.predicate(), null);
+        if (!increase.sourceZones().isEmpty()
+                && increase.sourceZones().stream().noneMatch(zone -> spellWasCastFromZone(
+                context, zone))) {
+            return false;
+        }
+        return predicateEvaluationService.matchesCardPredicate(
+                context.spell(), increase.predicate(),
+                source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
+                context.gameData(), context.castingPlayerId());
+    }
+
+    private boolean spellWasCastFromZone(CostModificationContext context, Zone zone) {
+        return switch (zone) {
+            case EXILE -> context.gameData().findExiledCard(context.spell().getId()) != null;
+            case GRAVEYARD -> context.gameData().playerGraveyards.values().stream()
+                    .anyMatch(graveyard -> graveyard.stream()
+                            .anyMatch(card -> card.getId().equals(context.spell().getId())));
+            default -> false;
+        };
     }
 }

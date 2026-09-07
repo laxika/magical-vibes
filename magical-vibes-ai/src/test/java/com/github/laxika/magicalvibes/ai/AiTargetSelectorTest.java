@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.cards.b.Befuddle;
 import com.github.laxika.magicalvibes.cards.a.AgonyWarp;
 import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.c.CompellingDeterrence;
+import com.github.laxika.magicalvibes.cards.c.ChokingVines;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
 import com.github.laxika.magicalvibes.cards.d.Diminish;
 import com.github.laxika.magicalvibes.cards.f.FeelingOfDread;
 import com.github.laxika.magicalvibes.cards.f.Fireball;
+import com.github.laxika.magicalvibes.cards.f.FieryJustice;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.FulgentDistraction;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
@@ -21,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.f.FertileGround;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantAmbushBeetle;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.g.GoblinBarrage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GroundSeal;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -28,6 +31,8 @@ import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.m.MorbidBloom;
+import com.github.laxika.magicalvibes.cards.m.MagmaOpus;
+import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.PathToExile;
@@ -45,6 +50,7 @@ import com.github.laxika.magicalvibes.cards.s.SplendidAgony;
 import com.github.laxika.magicalvibes.cards.s.Stun;
 import com.github.laxika.magicalvibes.cards.s.SynchronizedStrike;
 import com.github.laxika.magicalvibes.cards.w.WildGrowth;
+import com.github.laxika.magicalvibes.cards.w.WinterBlast;
 import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -117,6 +123,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
@@ -265,6 +273,18 @@ class AiTargetSelectorTest {
         UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 
         assertThat(target).isEqualTo(ownElves.getId());
+    }
+
+    @Test
+    @DisplayName("Non-kicked Goblin Barrage targets only creatures")
+    void nonKickedGoblinBarrageExcludesKickerPlayerTarget() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+
+        List<UUID> targets = targetSelector.findLegalSingleSpellTargets(
+                gd, new GoblinBarrage(), aiPlayer.getId());
+
+        assertThat(targets).containsExactly(opponentCreature.getId());
+        assertThat(targets).doesNotContain(aiPlayer.getId(), human.getId());
     }
 
     // ===== chooseTarget: bounce removal =====
@@ -995,7 +1015,8 @@ class AiTargetSelectorTest {
         void setUp() {
             mockGqs = mock(GameQueryService.class);
             mockTvs = mock(TargetValidationService.class);
-            unitSelector = new AiTargetSelector(mockGqs, mockTvs, null);
+            TargetLegalityService mockTls = mock(TargetLegalityService.class);
+            unitSelector = new AiTargetSelector(mockGqs, mockTvs, mockTls);
 
             aiId = UUID.randomUUID();
             opponentId = UUID.randomUUID();
@@ -1008,6 +1029,8 @@ class AiTargetSelectorTest {
             unitGd.playerBattlefields.put(opponentId, Collections.synchronizedList(new ArrayList<>()));
 
             lenient().when(mockTvs.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+            lenient().when(mockTls.getEffectiveMaxTargets(any(), any(), any(), anyInt(), anyBoolean()))
+                    .thenAnswer(invocation -> ((Card) invocation.getArgument(1)).getMaxTargets());
         }
 
         private Card makePlayerOnlySpell() {
@@ -1080,6 +1103,14 @@ class AiTargetSelectorTest {
 
             assertThat(allowed).contains(TargetType.PERMANENT);
             assertThat(allowed).doesNotContain(TargetType.PLAYER);
+        }
+
+        @Test
+        @DisplayName("Conditional kicker rider does not add targets to the base cast")
+        void conditionalKickerEffectIsExcludedFromBaseTargets() {
+            Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(new GoblinBarrage());
+
+            assertThat(allowed).containsExactly(TargetType.PERMANENT);
         }
 
         @Test
@@ -1161,6 +1192,41 @@ class AiTargetSelectorTest {
     @Nested
     @DisplayName("chooseMultiTargets")
     class ChooseMultiTargetsTests {
+
+        @Test
+        @DisplayName("Exact-X targeting lowers X to the number of legal targets")
+        void exactXTargetingLowersXAndKeepsAlreadyBlockedAttacker() {
+            Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+            attacker.setAttacking(true);
+            Permanent blocker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            blocker.setBlocking(true);
+            blocker.addBlockingTargetId(attacker.getId());
+
+            AiTargetSelector.XScaledTargetSelection selection = targetSelector.chooseXScaledTargets(
+                    gd, new ChokingVines(), aiPlayer.getId(), 2);
+
+            assertThat(selection).isNotNull();
+            assertThat(selection.xValue()).isEqualTo(1);
+            assertThat(selection.targetIds()).containsExactly(attacker.getId());
+        }
+
+        @Test
+        @DisplayName("Magma Opus keeps tap targets separate from damage assignments")
+        void keepsMagmaOpusTapTargetsSeparateFromDamageAssignments() {
+            for (int i = 0; i < 2; i++) {
+                harness.addToBattlefield(human, new GrizzlyBears());
+            }
+
+            MagmaOpus card = new MagmaOpus();
+            Map<UUID, Integer> damageAssignments = targetSelector.buildDamageAssignments(
+                    gd, card, aiPlayer.getId());
+            List<UUID> tapTargets = targetSelector.chooseMultiTargetsAfterDistribution(
+                    gd, card, aiPlayer.getId(), damageAssignments);
+
+            assertThat(damageAssignments).hasSize(2);
+            assertThat(tapTargets).hasSize(2).doesNotHaveDuplicates();
+            assertThat(tapTargets).allMatch(damageAssignments::containsKey);
+        }
 
         @Test
         @DisplayName("Karn's Temporal Sundering: picks self for extra turn + opponent's nonland permanent")
@@ -1378,11 +1444,27 @@ class AiTargetSelectorTest {
             assertThat(targetSelector.needsMultiTargetSelection(new FulgentDistraction())).isTrue();
             assertThat(targetSelector.needsMultiTargetSelection(new AgonyWarp())).isTrue();
             assertThat(targetSelector.needsMultiTargetSelection(new SynchronizedStrike())).isTrue();
+            assertThat(targetSelector.needsMultiTargetSelection(new FieryJustice())).isFalse();
             assertThat(targetSelector.needsMultiTargetSelection(new Stun())).isFalse();
             // Fireball charges {1} per extra target — priced by neither the AI's affordability
             // check nor its mana tapping, so it stays on the single-target line.
             assertThat(targetSelector.needsMultiTargetSelection(new Fireball())).isFalse();
             assertThat(targetSelector.needsMultiTargetSelection(new SetessanTactics())).isFalse();
+        }
+
+        @Test
+        @DisplayName("Divided damage and a separate target may choose the same opponent")
+        void selectsOpponentForBothFieryJusticeTargetInstances() {
+            FieryJustice card = new FieryJustice();
+            Map<UUID, Integer> damageAssignments = targetSelector.buildDamageAssignments(
+                    gd, card, aiPlayer.getId());
+
+            AiTargetSelector.SpellTargetSelection otherTargets = targetSelector.chooseTargetsAfterDistribution(
+                    gd, card, aiPlayer.getId(), damageAssignments);
+
+            assertThat(damageAssignments).containsExactlyEntriesOf(Map.of(human.getId(), 5));
+            assertThat(otherTargets.targetId()).isEqualTo(human.getId());
+            assertThat(otherTargets.targetIds()).isEmpty();
         }
 
         @Test
@@ -1396,6 +1478,18 @@ class AiTargetSelectorTest {
             // …but neither player is a target the engine would accept for this cast.
             assertThat(targetSelector.isValidPlayerTarget(gd, card, aiPlayer.getId(), aiPlayer.getId())).isFalse();
             assertThat(targetSelector.isValidPlayerTarget(gd, card, human.getId(), aiPlayer.getId())).isFalse();
+        }
+
+        @Test
+        @DisplayName("Winter Blast legal targets exclude players")
+        void winterBlastLegalTargetsExcludePlayers() {
+            Permanent creature = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+
+            List<UUID> targets = targetSelector.findLegalSingleSpellTargets(
+                    gd, new WinterBlast(), aiPlayer.getId());
+
+            assertThat(targets).containsExactly(creature.getId());
+            assertThat(targets).doesNotContain(aiPlayer.getId(), human.getId());
         }
 
         @Test
@@ -1694,6 +1788,17 @@ class AiTargetSelectorTest {
                     "{T}: Deal 1 damage to any target.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(human.getId());
+        }
+
+        @Test
+        @DisplayName("Uses an ability's player filter when its effect is target-neutral")
+        void targetFilterOnlyAbilityTargetsPlayer() {
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new MishrasBauble());
+
+            UUID target = targetSelector.chooseAbilityTarget(
+                    gd, source.getCard().getActivatedAbilities().getFirst(), aiPlayer.getId(), source);
 
             assertThat(target).isEqualTo(human.getId());
         }

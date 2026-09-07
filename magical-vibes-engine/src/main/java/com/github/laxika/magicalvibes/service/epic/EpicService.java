@@ -57,6 +57,7 @@ public class EpicService {
             copy.setNonTargeting(!EffectResolution.needsTarget(copyCard)
                     && !EffectResolution.needsSpellTarget(copyCard));
             gameData.stack.add(copy);
+            copySupport.checkSpellCopyTriggers(gameData, copy);
             if (copy.getTargetId() != null) {
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         copyCard,

@@ -25,6 +25,6 @@ public record DoubleDamageFromSubtypeEffect(CardSubtype subtype) implements Sour
     @Override
     public boolean matchesStackEntrySource(StackEntry entry, Permanent effectSource) {
         return entry.getEffectiveDamageSourceCard().getSubtypes().contains(subtype)
-                || entry.getEffectiveDamageSourceCard().getKeywords().contains(Keyword.CHANGELING);
+                || entry.getEffectiveDamageSourceCard().hasKeyword(Keyword.CHANGELING);
     }
 }

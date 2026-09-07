@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -27,6 +29,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -74,6 +77,8 @@ class StateBasedActionServiceTest {
     private GraveyardService graveyardService;
     @Mock
     private StateTriggerService stateTriggerService;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
     @Mock
     private LegendRuleService legendRuleService;
     @Mock
@@ -152,6 +157,7 @@ class StateBasedActionServiceTest {
         if (finalChapter >= 1) card.addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToAnyTargetEffect(1));
         if (finalChapter >= 2) card.addEffect(EffectSlot.SAGA_CHAPTER_II, new DealDamageToAnyTargetEffect(1));
         if (finalChapter >= 3) card.addEffect(EffectSlot.SAGA_CHAPTER_III, new DealDamageToAnyTargetEffect(1));
+        if (finalChapter >= 4) card.addEffect(EffectSlot.SAGA_CHAPTER_IV, new DealDamageToAnyTargetEffect(1));
         return card;
     }
 
@@ -651,6 +657,19 @@ class StateBasedActionServiceTest {
         }
 
         @Test
+        @DisplayName("Four-chapter Saga survives with three lore counters")
+        void fourChapterSagaSurvivesAtChapterThree() {
+            Card card = createSagaCard("Four-Chapter Saga", 4);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.LORE, 3);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+        }
+
+        @Test
         @DisplayName("Saga is not sacrificed if chapter ability from it is still on the stack")
         void sagaNotSacrificedWhenChapterAbilityOnStack() {
             Card card = createSagaCard("The Flame of Keld", 3);
@@ -663,6 +682,23 @@ class StateBasedActionServiceTest {
                     StackEntryType.TRIGGERED_ABILITY, card, player1Id,
                     "Chapter III", List.of(), null, perm.getId());
             gd.stack.add(chapterAbility);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+        }
+
+        @Test
+        @DisplayName("Saga is not sacrificed while its chapter ability is parked for input")
+        void sagaNotSacrificedWhileChapterAbilityResolutionIsParked() {
+            Card card = createSagaCard("The Great Synthesis", 3);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.LORE, 3);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            gd.pendingEffectResolutionEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                    "Chapter III", List.of(), null, perm.getId());
 
             sut.performStateBasedActions(gd);
 
@@ -1195,50 +1231,58 @@ class StateBasedActionServiceTest {
     class ExiledCardsOnControlLoss {
 
         private Card exiledCard;
+        private Card sourceCard;
         private UUID scepterId;
 
         @BeforeEach
         void setUpWatch() {
             exiledCard = createCreatureCard("Grizzly Bears");
+            sourceCard = new Card();
+            sourceCard.setName("Gustha's Scepter");
+            sourceCard.setType(CardType.ARTIFACT);
             scepterId = UUID.randomUUID();
             gd.addToExile(player1Id, exiledCard, scepterId, true);
-            gd.exiledCardsToGraveyardOnControlLossWatch.put(scepterId, player1Id);
+            gd.exiledCardsToGraveyardOnControlLossWatch.put(scepterId,
+                    new ExiledCardsControlLossWatch(player1Id, sourceCard));
         }
 
         @Test
-        @DisplayName("Exiled cards are put into their owner's graveyard when the source leaves the battlefield")
+        @DisplayName("Source leaving queues the ability that moves its exiled cards")
         void sourceLeftBattlefield() {
             sut.performStateBasedActions(gd);
 
-            verify(graveyardService).addCardToGraveyard(gd, player1Id, exiledCard);
-            assertThat(gd.exiledCards).isEmpty();
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            assertThat(gd.exiledCards).hasSize(1);
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(scepterId);
+                assertThat(entry.getEffectsToResolve()).singleElement()
+                        .isInstanceOf(ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect.class);
+            });
             assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).isEmpty();
         }
 
         @Test
-        @DisplayName("Exiled cards are put into their owner's graveyard when another player gains control of the source")
+        @DisplayName("A controller change queues the ability that moves the source's exiled cards")
         void controllerChanged() {
-            Card artifact = new Card();
-            artifact.setName("Gustha's Scepter");
-            artifact.setType(CardType.ARTIFACT);
-            Permanent scepter = new Permanent(artifact);
+            Permanent scepter = new Permanent(sourceCard);
             gd.playerBattlefields.get(player2Id).add(scepter);
             when(gameQueryService.findPermanentById(gd, scepterId)).thenReturn(scepter);
 
             sut.performStateBasedActions(gd);
 
-            verify(graveyardService).addCardToGraveyard(gd, player1Id, exiledCard);
-            assertThat(gd.exiledCards).isEmpty();
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            assertThat(gd.exiledCards).hasSize(1);
+            assertThat(gd.stack).singleElement().satisfies(entry ->
+                    assertThat(entry.getEffectsToResolve()).singleElement()
+                            .isInstanceOf(ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect.class));
             assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).isEmpty();
         }
 
         @Test
         @DisplayName("Exiled cards stay in exile while the same player still controls the source")
         void controllerUnchanged() {
-            Card artifact = new Card();
-            artifact.setName("Gustha's Scepter");
-            artifact.setType(CardType.ARTIFACT);
-            Permanent scepter = new Permanent(artifact);
+            Permanent scepter = new Permanent(sourceCard);
             gd.playerBattlefields.get(player1Id).add(scepter);
             when(gameQueryService.findPermanentById(gd, scepterId)).thenReturn(scepter);
 
@@ -1246,7 +1290,8 @@ class StateBasedActionServiceTest {
 
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
             assertThat(gd.exiledCards).hasSize(1);
-            assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).containsEntry(scepterId, player1Id);
+            assertThat(gd.exiledCardsToGraveyardOnControlLossWatch)
+                    .containsEntry(scepterId, new ExiledCardsControlLossWatch(player1Id, sourceCard));
         }
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,24 @@ class MagmaOpusTest extends BaseCardTest {
             assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
         });
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn1, drawn2);
+    }
+
+    @Test
+    void allowsDamageTargetToAlsoBeATapTarget() {
+        Permanent sharedTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherTapTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new MagmaOpus()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.playCard(gd, player1, 0, 0, null,
+                Map.of(sharedTarget.getId(), 4),
+                List.of(sharedTarget.getId(), otherTapTarget.getId()), List.of());
+
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.targetsForGroup(0)).containsExactly(sharedTarget.getId());
+        assertThat(entry.targetsForGroup(1)).containsExactly(sharedTarget.getId(), otherTapTarget.getId());
     }
 
     @Test

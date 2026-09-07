@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Fumarole extends Card {
 
     public Fumarole() {
+        setAllowSharedTargets(true);
+
         // As an additional cost to cast this spell, pay 3 life.
         addEffect(EffectSlot.SPELL, new PayLifeCost(3));
 

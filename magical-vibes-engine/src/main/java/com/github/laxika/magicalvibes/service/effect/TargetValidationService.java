@@ -125,6 +125,25 @@ public class TargetValidationService {
             return;
         }
 
+        boolean exiledCardTarget = predicate.admits(TargetPredicate.Kind.EXILED_CARD)
+                && ctx.targetZone() == Zone.EXILE;
+        if (exiledCardTarget) {
+            requireTarget(ctx);
+            var exiled = ctx.gameData().findExiledCard(ctx.targetId());
+            if (exiled == null || exiled.faceDown()) {
+                throw new IllegalStateException("Target card not found in exile");
+            }
+            TargetPredicate.ExiledCards restriction = (TargetPredicate.ExiledCards)
+                    predicate.leaf(TargetPredicate.Kind.EXILED_CARD).orElseThrow();
+            UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
+            if (!predicateEvaluationService.matchesCardPredicate(
+                    exiled.card(), restriction.inner(), sourceCardId, ctx.gameData(), exiled.ownerId(),
+                    ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
+                throw new IllegalStateException("Target card does not match the required predicate");
+            }
+            return;
+        }
+
         PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
         if (restriction != null && demandsPermanentTarget(predicate, restriction, effect)) {
             requireTarget(ctx);
@@ -140,6 +159,9 @@ public class TargetValidationService {
                 : gameQueryService.findPermanentById(ctx.gameData(), ctx.targetId());
         if (target == null) {
             return;
+        }
+        if (!predicate.admits(TargetPredicate.Kind.PERMANENT)) {
+            throw new IllegalStateException("Target must be a player");
         }
         if (restriction != null) {
             FilterContext filterContext = sourceFilterContext(ctx);
@@ -161,13 +183,17 @@ public class TargetValidationService {
         if (target == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
+        UUID controllerId = ctx.sourceControllerId() != null
+                ? ctx.sourceControllerId() : findSourcePermanentController(ctx);
+        if (gameQueryService.isLandCardTargetRestricted(ctx.gameData(), target, controllerId)) {
+            throw new IllegalStateException(
+                    "Land cards in graveyards can't be the targets of spells or abilities opponents control");
+        }
 
         TargetPredicate.GraveyardCards restriction = (TargetPredicate.GraveyardCards)
                 predicate.leaf(TargetPredicate.Kind.GRAVEYARD_CARD).orElseThrow();
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(
                 ctx.gameData(), ctx.targetId());
-        UUID controllerId = ctx.sourceControllerId() != null
-                ? ctx.sourceControllerId() : findSourcePermanentController(ctx);
         if (controllerId != null && graveyardOwnerId != null
                 && !restriction.scope().graveyardOwners(
                         ctx.gameData().orderedPlayerIds, controllerId).contains(graveyardOwnerId)) {
@@ -175,7 +201,8 @@ public class TargetValidationService {
         }
         UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
         if (!predicateEvaluationService.matchesCardPredicate(
-                target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId)) {
+                target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId,
+                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
             throw new IllegalStateException("Target card does not match the required predicate");
         }
     }
@@ -283,6 +310,9 @@ public class TargetValidationService {
             if (ctx.sourcePermanentSnapshot() != null) {
                 filterContext = filterContext.withSourcePermanentSnapshot(ctx.sourcePermanentSnapshot());
             }
+        }
+        if (ctx.defendingPlayerId() != null) {
+            filterContext = filterContext.withDefendingPlayerId(ctx.defendingPlayerId());
         }
         return filterContext;
     }

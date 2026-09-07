@@ -41,7 +41,7 @@ class ManipulateFateTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
                 .containsExactlyInAnyOrder(exiledOne.getId(), exiledTwo.getId(), exiledThree.getId());
-        assertThat(gd.exiledCards).allMatch(com.github.laxika.magicalvibes.model.ExiledCardEntry::faceDown);
+        assertThat(gd.exiledCards).noneMatch(com.github.laxika.magicalvibes.model.ExiledCardEntry::faceDown);
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(drawn.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
