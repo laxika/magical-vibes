@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "119")
+@CardRegistration(set = "TMT", collectorNumber = "219")
+@CardRegistration(set = "TMT", collectorNumber = "304")
 public class MichelangeloImproviser extends Card {
 
     public MichelangeloImproviser() {

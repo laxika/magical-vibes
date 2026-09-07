@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "188")
+@CardRegistration(set = "TMT", collectorNumber = "280")
 public class NorthamptonFarm extends Card {
 
     public NorthamptonFarm() {

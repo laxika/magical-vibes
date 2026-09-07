@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "35")
+@CardRegistration(set = "TMT", collectorNumber = "212")
+@CardRegistration(set = "TMT", collectorNumber = "283")
+@CardRegistration(set = "TMT", collectorNumber = "293")
 public class DonatelloGadgetMaster extends Card {
 
     public DonatelloGadgetMaster() {
