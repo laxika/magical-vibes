@@ -387,6 +387,21 @@ public class GameActionAvailabilityService {
                     : new ManaPool(pool);
             pool.promoteCreatureOrEnchantmentSpellOnlyMana();
         }
+        if (card.hasType(CardType.ENCHANTMENT)
+                && pool.getEnchantmentOrRoomUnlockOrTurnFaceUpManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
+        }
+        if (card.hasType(CardType.ENCHANTMENT)
+                && card.getSubtypes().contains(CardSubtype.ROOM)
+                && pool.getRoomSpellsOrUnlocksManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteRoomSpellsOrUnlocksMana();
+        }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
                 && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty()
@@ -990,19 +1005,7 @@ public class GameActionAvailabilityService {
 
     private boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card,
                                                 Keyword ability, Zone sourceZone) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof SpellCastingAbilityGrantingEffect grant
-                        && grant.grantedAbility() == ability
-                        && grant.appliesToSourceZone(sourceZone)
-                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card, ability, sourceZone);
     }
 
     public List<Integer> getPlayableGraveyardLandIndices(GameData gameData, UUID playerId) {

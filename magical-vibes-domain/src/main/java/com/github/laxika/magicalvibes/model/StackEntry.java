@@ -44,6 +44,8 @@ public class StackEntry {
     private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
+    @Getter(AccessLevel.NONE)
+    private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
     /** Counters a permanent spell is instructed to enter with. */
     private final Map<CounterType, Integer> enteringCounters = new EnumMap<>(CounterType.class);
@@ -201,6 +203,8 @@ public class StackEntry {
     @Setter private Integer dyingPermanentManaValue;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
+    /** Controller of the spell targeted by a counter effect, retained after that spell leaves the stack. */
+    @Setter private UUID counteredSpellControllerId;
     /**
      * The per-permanent player payload behind this entry — one entry per permanent involved in the
      * event, holding that permanent's controller. Stamped by
@@ -583,6 +587,7 @@ public class StackEntry {
         this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
+        this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
         this.counters.putAll(source.counters);
         this.enteringCounters.putAll(source.enteringCounters);
         this.sourceStackCardId = source.sourceStackCardId;
@@ -646,6 +651,7 @@ public class StackEntry {
         this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
+        this.counteredSpellControllerId = source.counteredSpellControllerId;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
@@ -1058,6 +1064,16 @@ public class StackEntry {
             }
         }
         return false;
+    }
+
+    public void rememberLastKnownPermanentCard(UUID permanentId, Card card) {
+        if (permanentId != null && card != null) {
+            lastKnownPermanentCards.put(permanentId, card);
+        }
+    }
+
+    public Card lastKnownPermanentCard(UUID permanentId) {
+        return lastKnownPermanentCards.get(permanentId);
     }
 
     /**

@@ -425,6 +425,80 @@ public class GameService {
         }
     }
 
+    /** Unlocks one door of a Room as a special action during the controller's main phase. */
+    public void unlockRoomDoor(GameData gameData, Player player, int permanentIndex, int doorIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> unlockRoomDoor(gameData, actionPlayer, permanentIndex, doorIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            if (!player.getId().equals(gameData.activePlayerId)
+                    || (gameData.currentStep != TurnStep.PRECOMBAT_MAIN
+                    && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN)) {
+                throw new IllegalStateException("Room doors can only be unlocked during your main phase");
+            }
+            if (!gameData.stack.isEmpty()) {
+                throw new IllegalStateException("Room doors can only be unlocked with an empty stack");
+            }
+
+            List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalArgumentException("Invalid permanent index");
+            }
+            Permanent room = battlefield.get(permanentIndex);
+            if (!room.getCard().hasType(CardType.ENCHANTMENT)
+                    || !room.getCard().getSubtypes().contains(CardSubtype.ROOM)
+                    || room.getCard().getRoomDoorManaCosts().size() != 2) {
+                throw new IllegalStateException("Permanent is not a Room");
+            }
+            if (doorIndex < 0 || doorIndex > 1) {
+                throw new IllegalArgumentException("Invalid Room door index");
+            }
+            if (room.isRoomDoorUnlocked(doorIndex)) {
+                throw new IllegalStateException("Room door is already unlocked");
+            }
+
+            ManaCost cost = castingCostService == null
+                    ? new ManaCost(room.getCard().getRoomDoorManaCosts().get(doorIndex))
+                    : castingCostService.getRoomUnlockCost(
+                    gameData, player.getId(), room.getCard(), doorIndex);
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            ManaPool.EnchantmentOrRoomUnlockOrTurnFaceUpManaState restrictedMana = pool != null
+                    ? pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana() : null;
+            ManaPool.RoomSpellsOrUnlocksManaState roomMana = pool != null
+                    ? pool.promoteRoomSpellsOrUnlocksMana() : null;
+            try {
+                if (pool == null || !cost.canPay(pool)) {
+                    throw new IllegalStateException("Not enough mana to unlock that Room door");
+                }
+                cost.pay(pool);
+            } finally {
+                if (roomMana != null) {
+                    pool.restorePromotedRoomSpellsOrUnlocksMana(roomMana);
+                }
+                if (restrictedMana != null) {
+                    pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(restrictedMana);
+                }
+            }
+
+            boolean wasFullyUnlocked = room.isRoomFullyUnlocked();
+            room.unlockRoomDoor(doorIndex);
+            triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
+                    gameData, player.getId(), room, doorIndex);
+            if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {
+                triggerCollectionService.checkAllyRoomFullyUnlockedTriggers(
+                        gameData, player.getId(), room);
+            }
+            gameData.priorityPassedBy.clear();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " unlocks a door of ", room.getCard(), "."));
+            log.info("Game {} - {} unlocks door {} of {}", gameData.id, player.getUsername(),
+                    doorIndex, room.getCard().getName());
+            invalidateForAllPlayers(gameData);
+        }
+    }
+
     public void surrender(GameData gameData, Player player) {
         if (runAsActionIfNeeded(gameData, () -> surrender(gameData, player))) return;
         synchronized (gameData) {
@@ -1185,6 +1259,10 @@ public class GameService {
                 }
                 ManaPool.FaceDownSpellsOrTurnFaceUpManaState restrictedMana =
                         pool.promoteFaceDownSpellsOrTurnFaceUpMana();
+                ManaPool.EnchantmentOrRoomUnlockOrTurnFaceUpManaState enchantmentOrRoomUnlockOrTurnFaceUpMana =
+                        pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
+                ManaPool.TurnPermanentsFaceUpManaState turnPermanentsFaceUpMana =
+                        pool.promoteTurnPermanentsFaceUpMana();
                 try {
                     if (cost.hasX() && xValue == null) {
                         ManaPool potentialPool = potentialManaService != null
@@ -1209,6 +1287,9 @@ public class GameService {
                     }
                     cost.pay(pool, effectiveXValue);
                 } finally {
+                    pool.restorePromotedTurnPermanentsFaceUpMana(turnPermanentsFaceUpMana);
+                    pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(
+                            enchantmentOrRoomUnlockOrTurnFaceUpMana);
                     pool.restorePromotedFaceDownSpellsOrTurnFaceUpMana(restrictedMana);
                 }
             }
@@ -1223,10 +1304,23 @@ public class GameService {
     /** Turns a targeted face-down creature face up without using its morph or disguise action. */
     public void turnPermanentFaceUpWithoutPayingManaCost(GameData gameData, Permanent permanent) {
         if (runAsActionIfNeeded(gameData,
-                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent))) return;
+                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, true))) return;
+        turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, true);
+    }
+
+    /** Turns a face-down permanent face up when its printed card is a creature. */
+    public void turnPermanentFaceUpIfCreatureCardWithoutPayingManaCost(GameData gameData, Permanent permanent) {
+        if (runAsActionIfNeeded(gameData,
+                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, false))) return;
+        turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, false);
+    }
+
+    private void turnPermanentFaceUpWithoutPayingManaCost(GameData gameData, Permanent permanent,
+                                                           boolean requireEffectiveCreature) {
         synchronized (gameData) {
             if (permanent == null || !permanent.isFaceDown()
-                    || !gameQueryService.isCreature(gameData, permanent)
+                    || (requireEffectiveCreature && !gameQueryService.isCreature(gameData, permanent))
+                    || (!requireEffectiveCreature && !permanent.getOriginalCard().hasType(CardType.CREATURE))
                     || gameQueryService.isTurnFaceUpPrevented(gameData, permanent)) {
                 return;
             }
@@ -1241,6 +1335,7 @@ public class GameService {
     private void finishTurningFaceUp(GameData gameData, Permanent permanent, UUID controllerId,
                                      Integer xValue, boolean autoPass) {
         permanent.turnFaceUp();
+        gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(controllerId);
         List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
                 .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
                 .filter(TurnFaceUpReplacementEffect.class::isInstance)

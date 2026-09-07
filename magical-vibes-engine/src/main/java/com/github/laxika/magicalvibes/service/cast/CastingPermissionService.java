@@ -1708,6 +1708,27 @@ public class CastingPermissionService {
         return false;
     }
 
+    public boolean hasManaValueLifeAlternativeFromExiledWithSource(GameData gameData,
+                                                                    UUID playerId, UUID cardId) {
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null || entry.card().hasType(CardType.LAND)) return false;
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                if (!perm.getId().equals(entry.sourcePermanentId())) continue;
+                if (activeExileCastPermissions(gameData, perm, sourceControllerId)
+                        .anyMatch(permission -> permission.payLifeEqualToManaValue()
+                                && canAccessExiledEntry(
+                                perm, sourceControllerId, permission, entry, playerId)
+                                && applies(permission, gameData, playerId, perm, entry))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean hasWaterbendCastFromExiledWithSourcePermission(GameData gameData, UUID playerId,
                                                                    UUID cardId) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);

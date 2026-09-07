@@ -1062,7 +1062,8 @@ public class ActivatedAbilityExecutionService {
                 } else if (picks > 0) {
                     ChoiceContext.RestrictedManaColorChoice choiceContext =
                             new ChoiceContext.RestrictedManaColorChoice(playerId, picks, isCreatureSource,
-                                    restrictedColors.colors(), restrictedColors.restriction());
+                                    restrictedColors.colors(), restrictedColors.restriction(),
+                                    restrictedColors.sameColor());
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext,
                             restrictedColors.colors().stream().map(Enum::name).toList(),

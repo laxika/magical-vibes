@@ -418,4 +418,43 @@ public sealed interface ManaRestriction {
             return "face-down spells or turning creatures face up only";
         }
     }
+
+    /** Mana spendable only to cast enchantment spells, unlock a Room door, or turn a permanent face up. */
+    record EnchantmentOrRoomUnlockOrTurnFaceUp() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addEnchantmentOrRoomUnlockOrTurnFaceUpMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "enchantment spells, unlocking a Room door, or turning a permanent face up only";
+        }
+    }
+
+    /** Mana spendable only to cast Room spells or unlock Room doors. */
+    record RoomSpellsOrUnlocks() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addRoomSpellsOrUnlocksMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "Room spells or unlocking Room doors only";
+        }
+    }
+
+    /** Mana spendable only to turn permanents face up. */
+    record TurnPermanentsFaceUp() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addTurnPermanentsFaceUpMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "turning permanents face up only";
+        }
+    }
 }

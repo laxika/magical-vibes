@@ -202,6 +202,29 @@ public class CastingCostService {
         return modifier;
     }
 
+    /** Returns the effective mana cost of unlocking the selected door of a Room. */
+    public ManaCost getRoomUnlockCost(GameData gameData, UUID playerId, Card room, int doorIndex) {
+        ManaCost baseCost = new ManaCost(room.getRoomDoorManaCosts().get(doorIndex));
+        int modifier = getRoomUnlockCostModifier(gameData, playerId, room,
+                buildCostModifierSnapshot(gameData, playerId));
+        if (modifier == 0) {
+            return baseCost;
+        }
+        return modifier > 0
+                ? baseCost.increasedBy(new ManaCost("{" + modifier + "}"))
+                : baseCost.reducedBy(new ManaCost("{" + -modifier + "}"));
+    }
+
+    private int getRoomUnlockCostModifier(GameData gameData, UUID playerId, Card room,
+                                          CostModifierSnapshot snapshot) {
+        int modifier = 0;
+        for (CollectedCostModifier costModifier : snapshot.modifiers()) {
+            modifier += costModifier.handler().modifyRoomUnlockCost(
+                    gameData, playerId, room, costModifier.effect(), costModifier.source());
+        }
+        return modifier;
+    }
+
     /** Whether the player may foretell during a turn whose active player is someone else. */
     public boolean canForetellDuringAnyTurn(GameData gameData, UUID playerId) {
         CostModifierSnapshot snapshot = buildCostModifierSnapshot(gameData, playerId);
@@ -1239,7 +1262,9 @@ public class CastingCostService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AlternativeCostForSpellsEffect altCost
+                    AlternativeCostForSpellsEffect altCost = activeAlternativeCost(
+                            gameData, effect, perm, ownerId);
+                    if (altCost != null
                             && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
                             && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
                             && altCost.nonManaCost() == null
@@ -1260,6 +1285,20 @@ public class CastingCostService {
             }
         }
         return oncePerTurnFallback;
+    }
+
+    private AlternativeCostForSpellsEffect activeAlternativeCost(GameData gameData, CardEffect effect,
+                                                                  Permanent sourcePermanent,
+                                                                  UUID sourceControllerId) {
+        CardEffect current = effect;
+        while (current instanceof ConditionalEffect conditional) {
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(sourcePermanent, sourceControllerId))) {
+                return null;
+            }
+            current = conditional.wrapped();
+        }
+        return current instanceof AlternativeCostForSpellsEffect alternative ? alternative : null;
     }
 
     /**

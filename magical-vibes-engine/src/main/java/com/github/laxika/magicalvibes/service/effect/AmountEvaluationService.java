@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
+import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.ControllerSpeed;
 import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
@@ -132,6 +134,7 @@ import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
+import com.github.laxika.magicalvibes.model.amount.UnlockedRoomDoorsCount;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
@@ -273,6 +276,8 @@ public class AmountEvaluationService {
                             ? evaluate(gameData, d.amount(), ctx) : 0;
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case UnlockedRoomDoorsCount c ->
+                    countUnlockedRoomDoors(gameData, c, ctx);
             case PermanentsSacrificedThisTurn ignored ->
                     ctx.controllerId() == null ? 0
                             : gameData.sacrificedPermanentCountThisTurn.getOrDefault(ctx.controllerId(), 0);
@@ -361,6 +366,9 @@ public class AmountEvaluationService {
                     countColorManaSymbolsInHand(gameData, c, ctx);
             case CountersOnSource c ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getCounterCount(c.counterType());
+            case AllCountersOnSource ignored ->
+                    ctx.sourcePermanent() == null ? 0
+                            : ctx.sourcePermanent().getCounters().values().stream().mapToInt(Integer::intValue).sum();
             case CountersOnTargetPermanent c ->
                     countCountersOnTargetPermanent(gameData, c, ctx);
             case CountersOnStackEntryCard c ->
@@ -558,6 +566,10 @@ public class AmountEvaluationService {
                     triggeringSpellColorCount(gameData, ctx);
             case ChosenPermanentPower ignored ->
                     chosenPermanentEffectivePower(gameData, ctx);
+            case ChosenCreatureOrRevealedCardPower ignored ->
+                    ctx.chosenPermanentId() == null
+                            ? Math.max(0, ctx.xValue())
+                            : chosenPermanentEffectivePower(gameData, ctx);
             case ChosenNumberOnSource ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getChosenNumber();
         };
@@ -728,6 +740,7 @@ public class AmountEvaluationService {
         return switch (amount) {
             case XValue ignored -> true;
             case ManaSpentToCast ignored -> true;
+            case ChosenCreatureOrRevealedCardPower ignored -> true;
             case SnowManaSpentToCast ignored -> false;
             case Scaled s -> referencesXValue(s.amount());
             case Divided d -> referencesXValue(d.amount());
@@ -761,6 +774,29 @@ public class AmountEvaluationService {
 
     private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx) {
         return countPermanents(gameData, count, ctx, false);
+    }
+
+    private int countUnlockedRoomDoors(GameData gameData, UnlockedRoomDoorsCount amount,
+                                       AmountContext ctx) {
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) {
+                continue;
+            }
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (!gameQueryService.isEnchantment(gameData, permanent)
+                        || !gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.ROOM)) {
+                    continue;
+                }
+                if (permanent.isRoomDoorUnlocked(0)) {
+                    count++;
+                }
+                if (permanent.isRoomDoorUnlocked(1)) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     private int targetCardsManaValueSum(GameData gameData, AmountContext ctx) {

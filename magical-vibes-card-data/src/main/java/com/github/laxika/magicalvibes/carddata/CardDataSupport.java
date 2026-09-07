@@ -68,6 +68,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Swampwalk", Keyword.SWAMPWALK);
         KEYWORD_MAP.put("Plainswalk", Keyword.PLAINSWALK);
         KEYWORD_MAP.put("Hexproof", Keyword.HEXPROOF);
+        KEYWORD_MAP.put("Ward", Keyword.WARD);
         KEYWORD_MAP.put("Infect", Keyword.INFECT);
         KEYWORD_MAP.put("Wither", Keyword.WITHER);
         KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
@@ -125,6 +126,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Dash", Keyword.DASH);
         KEYWORD_MAP.put("Sunburst", Keyword.SUNBURST);
         KEYWORD_MAP.put("Prototype", Keyword.PROTOTYPE);
+        KEYWORD_MAP.put("Impending", Keyword.IMPENDING);
         KEYWORD_MAP.put("Rebound", Keyword.REBOUND);
         KEYWORD_MAP.put("Recover", Keyword.RECOVER);
         KEYWORD_MAP.put("Start your engines!", Keyword.START_YOUR_ENGINES);

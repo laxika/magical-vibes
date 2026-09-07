@@ -636,7 +636,14 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<Card> remainingCards = new ArrayList<>(topCards);
         remainingCards.removeAll(eligibleCards);
         if (!remainingCards.isEmpty()) {
-            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, remainingCards);
+            if (randomRemaining) {
+                java.util.Collections.shuffle(remainingCards);
+                gameData.playerDecks.get(controllerId).addAll(remainingCards);
+                gameLogService.append(gameData, GameLog.text(playerName
+                        + " puts the rest on the bottom of their library in a random order."));
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, remainingCards);
+            }
         }
     }
 

@@ -647,6 +647,20 @@ public class CardChoiceHandlerService {
         if (thenEffectConditionMet && selectedThenEffect != null && followUp.thenEffectSourceCard() != null) {
             CardEffect thenEffect = selectedThenEffect;
             Card sourceCard = followUp.thenEffectSourceCard();
+            int thenEffectTargetGroup = thenEffect.targetGroup();
+            if (followUp.thenEffectTargetId() == null
+                    && thenEffectTargetGroup >= 0
+                    && thenEffectTargetGroup < sourceCard.getSpellTargets().size()) {
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        sourceCard, playerId, List.of(thenEffect), followUp.thenEffectSourcePermanentId(),
+                        List.of(), 0, 0, List.of(), followUp.thenEffectEventValue(), List.of()));
+                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+                resumeRemainingEffectsAfterDiscard(gameData);
+                return;
+            }
             TargetSpec targetSpec = thenEffect.targetSpec();
             boolean hasPreboundTarget = followUp.thenEffectTargetId() != null;
             GraveyardTargetingSupport.Target graveyardTarget = graveyardTargetingSupport.findTarget(List.of(thenEffect));

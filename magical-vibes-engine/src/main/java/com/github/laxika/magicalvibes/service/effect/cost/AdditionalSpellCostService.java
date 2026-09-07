@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellAdditionalCountersCostEffect;
@@ -149,6 +150,7 @@ public class AdditionalSpellCostService {
             RepeatableAdditionalManaCost.class,
             ChooseXValueCost.class,
             ChooseCreatureTypeCost.class,
+            ChooseCreatureOrRevealCreatureCardCost.class,
             BeholdAndExileCost.class,
             BeholdCost.class,
             DelveCost.class,
@@ -207,6 +209,7 @@ public class AdditionalSpellCostService {
             BeholdCost beholdSelectionCost,
             DelveCost delveCost,
             RevealCardFromHandCost revealCardCost,
+            ChooseCreatureOrRevealCreatureCardCost chooseCreatureOrRevealCreatureCardCost,
             ChooseCreatureTypeCost chooseCreatureTypeCost,
             TieredManaCost tieredManaCost,
             PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost,
@@ -241,6 +244,7 @@ public class AdditionalSpellCostService {
                     || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
                     || revealCardCost != null || chooseCreatureTypeCost != null
+                    || chooseCreatureOrRevealCreatureCardCost != null
                     || tieredManaCost != null
                     || spreeAdditionalManaCost != null || waterbendCost != null
                     || forageOrPayManaCost != null;
@@ -406,6 +410,8 @@ public class AdditionalSpellCostService {
         DelveCost delveCost = removeFirst(effects, DelveCost.class);
         RevealCardFromHandCost revealCardCost = removeFirst(effects, RevealCardFromHandCost.class);
         ChooseCreatureTypeCost chooseCreatureTypeCost = removeFirst(effects, ChooseCreatureTypeCost.class);
+        ChooseCreatureOrRevealCreatureCardCost chooseCreatureOrRevealCreatureCardCost =
+                removeFirst(effects, ChooseCreatureOrRevealCreatureCardCost.class);
         TieredManaCost tieredManaCost = removeFirst(effects, TieredManaCost.class);
         SpreeAdditionalManaCost spreeAdditionalManaCost = removeFirst(effects, SpreeAdditionalManaCost.class);
         WaterbendCost waterbendCost = removeFirst(effects, WaterbendCost.class);
@@ -421,7 +427,7 @@ public class AdditionalSpellCostService {
                 discardOrPay, discardOrPayLife,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, delveCost, revealCardCost,
-                chooseCreatureTypeCost, tieredManaCost,
+                chooseCreatureOrRevealCreatureCardCost, chooseCreatureTypeCost, tieredManaCost,
                 payLifeOrSacrificePermanentCost, spreeAdditionalManaCost, waterbendCost,
                 forageOrPayManaCost);
     }
@@ -656,6 +662,14 @@ public class AdditionalSpellCostService {
                 }
                 case RevealCardFromHandCost cost -> {
                     if (revealCardIndices(gameData, playerId, card, cost).isEmpty()) return false;
+                }
+                case ChooseCreatureOrRevealCreatureCardCost ignored -> {
+                    boolean hasCreature = battlefield.stream().anyMatch(
+                            permanent -> gameQueryService.isCreature(gameData, permanent));
+                    boolean hasCreatureCard = hand.stream()
+                            .filter(candidate -> !candidate.getId().equals(card.getId()))
+                            .anyMatch(candidate -> candidate.hasType(CardType.CREATURE));
+                    if (!hasCreature && !hasCreatureCard) return false;
                 }
                 case DiscardRandomCardCost ignored -> {
                     if (hand.stream().noneMatch(candidate -> !candidate.getId().equals(card.getId()))) return false;
@@ -968,6 +982,9 @@ public class AdditionalSpellCostService {
         if (costs.revealCardCost() != null) {
             validateRevealCardCost(gameData, player, card, costs.revealCardCost(),
                     selection.discardHandCardIndex(), selection.spellCardIndex());
+        }
+        if (costs.chooseCreatureOrRevealCreatureCardCost() != null) {
+            validateChooseCreatureOrRevealCreatureCardCost(gameData, player, card, selection);
         }
         if (costs.sacrificePermanentCost() != null) {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
@@ -2232,6 +2249,69 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("Revealed card must be " + label);
         }
         return effectiveIndex;
+    }
+
+    /** The object chosen for a creature-or-revealed-card additional cast cost. */
+    public record CreatureOrRevealedCardChoice(UUID permanentId, Card card) {
+    }
+
+    /** Validates and returns the object chosen for a creature-or-revealed-card cast cost. */
+    public CreatureOrRevealedCardChoice validateChooseCreatureOrRevealCreatureCardCost(
+            GameData gameData, Player player, Card card, CostSelection selection) {
+        UUID permanentId = selection.beholdPermanentId();
+        List<UUID> permanentIds = selection.beholdPermanentIds() == null
+                ? List.of() : selection.beholdPermanentIds();
+        if (permanentId != null && !permanentIds.isEmpty()) {
+            throw new IllegalStateException("Choose only one creature to cast " + card.getName());
+        }
+        if (permanentId == null && permanentIds.size() > 1) {
+            throw new IllegalStateException("Choose only one creature to cast " + card.getName());
+        }
+        if (permanentId == null && permanentIds.size() == 1) {
+            permanentId = permanentIds.getFirst();
+        }
+
+        Integer handCardIndex = selection.beholdHandCardIndex();
+        List<Integer> handCardIndices = selection.beholdHandCardIndices() == null
+                ? List.of() : selection.beholdHandCardIndices();
+        if (handCardIndex != null && !handCardIndices.isEmpty()) {
+            throw new IllegalStateException("Choose only one creature to cast " + card.getName());
+        }
+        if (handCardIndex == null && handCardIndices.size() > 1) {
+            throw new IllegalStateException("Choose only one creature card to cast " + card.getName());
+        }
+        if (handCardIndex == null && handCardIndices.size() == 1) {
+            handCardIndex = handCardIndices.getFirst();
+        }
+
+        if ((permanentId == null) == (handCardIndex == null)) {
+            throw new IllegalStateException("Must choose a creature or reveal a creature card to cast "
+                    + card.getName());
+        }
+        if (permanentId != null) {
+            Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
+            if (chosen == null
+                    || !player.getId().equals(gameQueryService.findPermanentController(gameData, permanentId))
+                    || !gameQueryService.isCreature(gameData, chosen)) {
+                throw new IllegalStateException("Must choose a creature you control to cast " + card.getName());
+            }
+            return new CreatureOrRevealedCardChoice(permanentId, chosen.getCard());
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || handCardIndex == selection.spellCardIndex()) {
+            throw new IllegalStateException("Must reveal a creature card to cast " + card.getName());
+        }
+        int effectiveIndex = selection.spellCardIndex() >= 0 && handCardIndex > selection.spellCardIndex()
+                ? handCardIndex - 1 : handCardIndex;
+        if (effectiveIndex < 0 || effectiveIndex >= hand.size()) {
+            throw new IllegalStateException("Must reveal a creature card to cast " + card.getName());
+        }
+        Card toReveal = hand.get(effectiveIndex);
+        if (toReveal.getId().equals(card.getId()) || !toReveal.hasType(CardType.CREATURE)) {
+            throw new IllegalStateException("Revealed card must be a creature to cast " + card.getName());
+        }
+        return new CreatureOrRevealedCardChoice(null, toReveal);
     }
 
     /** Validates a fixed-count discard additional cast cost without mutating anything. */

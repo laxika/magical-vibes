@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -26,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentManaValueAwareEffect;
@@ -61,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -171,6 +175,68 @@ public class MiscTriggerCollectorService {
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(card));
         log.info("Game {} - {} triggers on becoming untapped", match.gameData().id, card.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = TriggeringRoomDoorConditionalEffect.class,
+            slot = EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED)
+    private boolean handleSelfRoomDoorUnlocked(TriggerMatchContext match,
+                                                TriggeringRoomDoorConditionalEffect effect,
+                                                TriggerContext ctx) {
+        TriggerContext.RoomDoorUnlocked unlocked = (TriggerContext.RoomDoorUnlocked) ctx;
+        if (effect.doorIndex() != unlocked.doorIndex()) {
+            return false;
+        }
+
+        Card card = match.permanent().getCard();
+        List<TriggeringRoomDoorConditionalEffect> matchingEffects = card
+                .getEffects(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED).stream()
+                .filter(TriggeringRoomDoorConditionalEffect.class::isInstance)
+                .map(TriggeringRoomDoorConditionalEffect.class::cast)
+                .filter(candidate -> candidate.doorIndex() == unlocked.doorIndex())
+                .toList();
+        if (matchingEffects.isEmpty() || matchingEffects.getFirst() != effect) {
+            return false;
+        }
+
+        List<CardEffect> triggeredEffects = matchingEffects.stream()
+                .map(TriggeringRoomDoorConditionalEffect::wrapped)
+                .toList();
+        boolean needsTarget = triggeredEffects.stream()
+                .anyMatch(triggeredEffect ->
+                        triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                                || card.getEffectTargetIndex(triggeredEffect) >= 0);
+        if (needsTarget) {
+            boolean multiTarget = card.getSpellTargets().stream()
+                    .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
+                    || card.getSpellTargets().size() > 1;
+            if (multiTarget) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        card, match.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
+                        List.of(), 0, 0, List.of(), 0));
+            } else {
+                match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                        card, match.controllerId(), new ArrayList<>(triggeredEffects),
+                        "unlocks a Room door", match.permanent().getId(), null,
+                        matchingEffects.stream().anyMatch(OptionalTargetEffect.class::isInstance)));
+            }
+        } else {
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    match.controllerId(),
+                    card.getName() + "'s ability",
+                    new ArrayList<>(triggeredEffects),
+                    null,
+                    match.permanent().getId());
+            trigger.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            match.gameData().enqueueTrigger(trigger);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(card));
+        log.info("Game {} - {} triggers when Room door {} unlocks", match.gameData().id,
+                card.getName(), unlocked.doorIndex());
         return true;
     }
 
@@ -790,6 +856,28 @@ public class MiscTriggerCollectorService {
 
     // ── ON_CONTROLLER_GAINS_LIFE ────────────────────────────────────────
 
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleSequenceOnControllerLifeLoss(TriggerMatchContext match,
+            SequenceEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(lifeLoss.lifeLostAmount());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller life loss ({} life)",
+                match.gameData().id, sourceCard.getName(), lifeLoss.lifeLostAmount());
+        return true;
+    }
+
     @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_PAYS_LIFE)
     private boolean handleLifePaymentPutCountersOnSelf(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
@@ -1193,6 +1281,40 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on a land card being milled", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnTriggeringLandFromGraveyardToBattlefieldEffect.class,
+            slot = EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    private boolean handleMilledLandsReturn(TriggerMatchContext match,
+            ReturnTriggeringLandFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut)) {
+            return false;
+        }
+
+        List<CardEffect> returnEffects = new ArrayList<>();
+        for (Card card : cardsPut.cards()) {
+            if (!card.isToken() && card.hasType(CardType.LAND)) {
+                returnEffects.add(new ReturnTriggeringLandFromGraveyardToBattlefieldEffect(
+                        card.getId(), effect.enterTapped()));
+            }
+        }
+        if (returnEffects.isEmpty()) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                returnEffects,
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers for lands put into the graveyard from the library",
+                match.gameData().id, sourceCard.getName());
         return true;
     }
 

@@ -2105,6 +2105,19 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("same-name predicate compares the target with the source")
+        void sameNamePredicateUsesSourceName() {
+            Permanent source = addPermanent(player1Id, createCreature("Marvin", 2, 2, CardColor.GREEN));
+            Permanent sameName = addPermanent(player1Id, createCreature("Marvin", 2, 2, CardColor.GREEN));
+            Permanent differentName = addPermanent(player1Id, createCreature("Other Creature", 2, 2, CardColor.GREEN));
+            FilterContext sourceContext = ctx().withSourceCardId(source.getCard().getId());
+
+            PermanentHasSameNameAsSourcePredicate predicate = new PermanentHasSameNameAsSourcePredicate();
+            assertThat(evaluator.matchesStaticFilter(sameName, predicate, sourceContext)).isTrue();
+            assertThat(evaluator.matchesStaticFilter(differentName, predicate, sourceContext)).isFalse();
+        }
+
+        @Test
         @DisplayName("a predicate with no recursion-safe answer throws instead of silently not matching")
         void unsupportedPredicateThrows() {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));

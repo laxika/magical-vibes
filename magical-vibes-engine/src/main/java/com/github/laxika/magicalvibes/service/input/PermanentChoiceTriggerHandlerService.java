@@ -290,6 +290,10 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleSelfTriggeredAbility(GameData gameData, UUID targetId,
                                             PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
+        boolean isPlayerTarget = targetId != null && gameData.playerIdToName.containsKey(targetId);
+        boolean declined = (slt.optionalTarget() || hasOptionalSingleTarget(slt.sourceCard(), slt.effects()))
+                && isPlayerTarget
+                && targetId.equals(slt.controllerId());
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 slt.sourceCard(),
@@ -299,18 +303,26 @@ public class PermanentChoiceTriggerHandlerService {
                 null,
                 slt.sourcePermanentId()
         );
-        entry.setTargetId(targetId);
+        if (!declined) {
+            entry.setTargetId(targetId);
+        }
         if (slt.eventValue() != null) {
             entry.setEventValue(slt.eventValue());
         }
         pushTriggeredEntry(gameData, entry);
 
-        String targetName = getTargetDisplayName(gameData, targetId);
-        
-        gameLogService.append(gameData, GameLog.builder().card(slt.sourceCard()).text("'s "
-                + slt.eventDescription() + " trigger targets " + targetName + ".").build());
-        log.info("Game {} - {} {} trigger targets {}", gameData.id, slt.sourceCard().getName(),
-                slt.eventDescription(), targetName);
+        if (declined) {
+            gameLogService.append(gameData, GameLog.builder().card(slt.sourceCard()).text("'s "
+                    + slt.eventDescription() + " trigger targets nothing.").build());
+            log.info("Game {} - {} {} trigger declined targeting", gameData.id,
+                    slt.sourceCard().getName(), slt.eventDescription());
+        } else {
+            String targetName = getTargetDisplayName(gameData, targetId);
+            gameLogService.append(gameData, GameLog.builder().card(slt.sourceCard()).text("'s "
+                    + slt.eventDescription() + " trigger targets " + targetName + ".").build());
+            log.info("Game {} - {} {} trigger targets {}", gameData.id, slt.sourceCard().getName(),
+                    slt.eventDescription(), targetName);
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
             triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
@@ -1821,21 +1833,30 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleEndStepTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EndStepTriggerTarget est) {
+        boolean declined = hasOptionalSingleTarget(est.sourceCard(), est.effects())
+                && gameData.playerIdToName.containsKey(permanentId)
+                && permanentId.equals(est.controllerId());
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 est.sourceCard(),
                 est.controllerId(),
                 est.sourceCard().getName() + "'s end step ability",
                 new ArrayList<>(est.effects()),
-                permanentId,
+                declined ? null : permanentId,
                 est.sourcePermanentId()
         );
         pushTriggeredEntry(gameData, entry);
 
-        String targetName = getTargetDisplayName(gameData, permanentId);
-        
-        gameLogService.append(gameData, GameLog.builder().card(est.sourceCard()).text("'s ability targets " + targetName + ".").build());
-        log.info("Game {} - {} end-step trigger targets {}", gameData.id, est.sourceCard().getName(), targetName);
+        if (declined) {
+            gameLogService.append(gameData, GameLog.builder().card(est.sourceCard())
+                    .text("'s ability targets nothing.").build());
+            log.info("Game {} - {} end-step trigger declined targeting", gameData.id, est.sourceCard().getName());
+        } else {
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            gameLogService.append(gameData, GameLog.builder().card(est.sourceCard())
+                    .text("'s ability targets " + targetName + ".").build());
+            log.info("Game {} - {} end-step trigger targets {}", gameData.id, est.sourceCard().getName(), targetName);
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             turnProgressionService.processNextEndStepTriggerTarget(gameData);

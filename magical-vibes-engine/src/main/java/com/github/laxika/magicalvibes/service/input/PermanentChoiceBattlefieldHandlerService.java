@@ -214,6 +214,35 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /** Trial of Agony: the targeted creatures' controller has chosen which creature receives the
+     * damage; the other target can't block this turn. */
+    public void handleDealDamageToOneOfTwoThenOtherCantBlock(GameData gameData, UUID permanentId,
+                                                             PermanentChoiceContext.DealDamageToOneOfTwoThenOtherCantBlock context) {
+        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        UUID otherId = permanentId.equals(context.firstPermanentId())
+                ? context.secondPermanentId()
+                : context.firstPermanentId();
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            entry = new StackEntry(context.sourceCard(), context.controllerId());
+        }
+        if (!damageSupport.isDamagePreventedForCreature(gameData, entry, chosen)) {
+            damageSupport.dealCreatureDamage(gameData, entry, chosen, context.damage());
+        }
+
+        Permanent other = gameQueryService.findPermanentById(gameData, otherId);
+        if (other != null) {
+            other.setCantBlockThisTurn(true);
+            gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " can't block this turn."));
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     /** Cannibalize: the spell's controller chooses which target to exile; the other gets two +1/+1 counters. */
     public void handleCannibalizeChoice(GameData gameData, UUID permanentId,
                                         PermanentChoiceContext.CannibalizeChoice context) {

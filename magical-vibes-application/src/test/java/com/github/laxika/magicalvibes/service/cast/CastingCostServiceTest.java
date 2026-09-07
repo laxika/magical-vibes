@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingE
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ReduceRoomUnlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -172,6 +173,21 @@ class CastingCostServiceTest {
     @Nested
     @DisplayName("getCastCostModifier — handler-dispatched cost modifiers")
     class GetCastCostModifierTests {
+
+        @Test
+        void appliesRoomUnlockReductionToGenericManaOnly() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceRoomUnlockCostEffect(1));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            Card room = new Card();
+            room.setRoomDoorManaCosts(List.of("{4}{U}", "{2}{W}"));
+
+            var cost = svc.getRoomUnlockCost(gd, player1Id, room, 0);
+
+            assertThat(cost.getGenericCost()).isEqualTo(3);
+            assertThat(cost.getColoredCosts()).containsEntry(ManaColor.BLUE, 1);
+        }
 
         @Test
         @DisplayName("Applies opponent cost increase for matching card type")

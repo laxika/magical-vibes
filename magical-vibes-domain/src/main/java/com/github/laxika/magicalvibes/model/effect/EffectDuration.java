@@ -8,6 +8,8 @@ public enum EffectDuration {
     CONTINUOUS,
     /** One-shot effect that wears off at end of turn (cleared by resetModifiers). */
     UNTIL_END_OF_TURN,
+    /** One-shot effect that wears off at the beginning of the next end step. */
+    UNTIL_NEXT_END_STEP,
     /** One-shot effect that wears off when any player casts a creature spell. */
     UNTIL_CREATURE_SPELL_CAST,
     /** One-shot effect that wears off when its controller casts a matching spell. */

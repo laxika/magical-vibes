@@ -8,11 +8,21 @@ import java.util.List;
 
 /** Adds mana of one color chosen from a fixed list, with a spend restriction. */
 public record AwardRestrictedManaOfColorsEffect(List<ManaColor> colors, DynamicAmount amount,
-                                                ManaRestriction restriction)
+                                                ManaRestriction restriction, boolean sameColor)
         implements ManaProducingEffect {
 
     public AwardRestrictedManaOfColorsEffect(List<ManaColor> colors, ManaRestriction restriction) {
-        this(colors, new Fixed(1), restriction);
+        this(colors, new Fixed(1), restriction, false);
+    }
+
+    public AwardRestrictedManaOfColorsEffect(List<ManaColor> colors, DynamicAmount amount,
+                                             ManaRestriction restriction) {
+        this(colors, amount, restriction, false);
+    }
+
+    public AwardRestrictedManaOfColorsEffect(List<ManaColor> colors, int amount,
+                                             ManaRestriction restriction, boolean sameColor) {
+        this(colors, new Fixed(amount), restriction, sameColor);
     }
 
     public AwardRestrictedManaOfColorsEffect {

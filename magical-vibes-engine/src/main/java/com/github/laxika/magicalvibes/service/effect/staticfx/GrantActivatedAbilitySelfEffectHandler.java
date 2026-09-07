@@ -35,9 +35,12 @@ public class GrantActivatedAbilitySelfEffectHandler implements StaticEffectHandl
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantActivatedAbilityEffect) effect;
-        if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                || grant.scope() == GrantScope.ALL_OWN_CREATURES)
-                && support.matchesStaticFilter(context, context.target(), grant.filter())) {
+        boolean applies = switch (grant.scope()) {
+            case SELF, SELF_AND_PAIRED -> support.matchesStaticFilter(context, context.target(), grant.filter());
+            case ALL_OWN_CREATURES -> support.matchesCreatureScope(context, grant.scope(), grant.filter());
+            default -> false;
+        };
+        if (applies) {
             accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
         }
     }

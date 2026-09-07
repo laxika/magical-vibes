@@ -94,6 +94,10 @@ public class GameData {
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Face-down creatures that entered under each player's control this turn, including ones that have since left or turned face up. */
     public final Map<UUID, List<Card>> faceDownCreaturesEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /** Face-down permanents that entered under each player's control this turn, including ones that have since left or turned face up. */
+    public final Map<UUID, List<Card>> faceDownPermanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /** Players who turned a permanent face up this turn. */
+    public final Set<UUID> playersWhoTurnedPermanentsFaceUpThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of permanents that entered under each player's control during the immediately preceding turn. */
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldLastTurn = new ConcurrentHashMap<>();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
@@ -583,6 +587,10 @@ public class GameData {
     public final EachPlayerDiscardsOneThenDrawsForEachCardTypeState
             eachPlayerDiscardsOneThenDrawsForEachCardType =
             new EachPlayerDiscardsOneThenDrawsForEachCardTypeState();
+    /** Progress state for each player's discard followed by the controller's conditional draw. */
+    public final EachPlayerDiscardsOneThenControllerDrawsIfDiscardedState
+            eachPlayerDiscardsOneThenControllerDrawsIfDiscarded =
+            new EachPlayerDiscardsOneThenControllerDrawsIfDiscardedState();
     /** Progress state for Dispersal's opponent-by-opponent return-then-discard sequence. */
     public final DispersalState dispersal = new DispersalState();
     /** Progress state for an opponent-by-opponent discard-two-unless-nonland sequence. */
@@ -1780,6 +1788,10 @@ public class GameData {
      *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Tracks source permanent object IDs whose Survival ability has been evaluated. A new object
+     *  created when the card leaves and returns can evaluate again. */
+    public final Set<UUID> survivalTriggersEvaluated = ConcurrentHashMap.newKeySet();
+
     /** Tracks source permanent IDs to creature IDs whose first counter-placement trigger has fired
      *  this turn. Cleared at start of new turn. */
     public final Map<UUID, Set<UUID>> oncePerCreatureTriggersFiredThisTurn = new ConcurrentHashMap<>();
@@ -2199,6 +2211,11 @@ public class GameData {
     public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffects() {
         return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_TURN
                 || fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST);
+    }
+
+    /** Removes and returns all floating effects that expire at the beginning of the next end step. */
+    public List<FloatingContinuousEffect> expireFloatingEffectsAtNextEndStep() {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_NEXT_END_STEP);
     }
 
     /** Removes and returns all floating effects with {@code UNTIL_END_OF_COMBAT} duration. */
@@ -3924,6 +3941,18 @@ public class GameData {
                 this.eachPlayerDiscardsOneThenDrawsForEachCardType.remaining);
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.addAll(
                 this.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes);
+        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.active =
+                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.active;
+        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerId =
+                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerId;
+        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.currentPlayerId =
+                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.currentPlayerId;
+        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerDiscardCountBefore =
+                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerDiscardCountBefore;
+        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerDiscarded =
+                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerDiscarded;
+        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.remaining.addAll(
+                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.remaining);
         copy.dispersal.active = this.dispersal.active;
         copy.dispersal.remainingOpponentIds.addAll(this.dispersal.remainingOpponentIds);
         copy.dispersal.currentOpponentId = this.dispersal.currentOpponentId;
@@ -4175,6 +4204,9 @@ public class GameData {
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         this.faceDownCreaturesEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.faceDownCreaturesEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
+        this.faceDownPermanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
+                copy.faceDownPermanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
+        copy.playersWhoTurnedPermanentsFaceUpThisTurn.addAll(this.playersWhoTurnedPermanentsFaceUpThisTurn);
         this.permanentsEnteredBattlefieldLastTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldLastTurn.put(k, new ArrayList<>(v)));
         this.spellsCastThisTurn.forEach((k, v) ->
@@ -4275,6 +4307,7 @@ public class GameData {
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
         copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
+        copy.survivalTriggersEvaluated.addAll(this.survivalTriggersEvaluated);
         this.oncePerCreatureTriggersFiredThisTurn.forEach((k, v) ->
                 copy.oncePerCreatureTriggersFiredThisTurn.put(k, new HashSet<>(v)));
         copy.permanentsThatAddedManaWithAbilityThisTurn.addAll(this.permanentsThatAddedManaWithAbilityThisTurn);

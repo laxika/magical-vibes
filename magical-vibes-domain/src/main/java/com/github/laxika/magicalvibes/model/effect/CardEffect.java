@@ -26,6 +26,12 @@ public interface CardEffect {
     default TargetSpec targetSpec() { return TargetSpec.NONE; }
 
     /**
+     * Returns the positional target-group index used by effects that resolve against a declared
+     * group rather than the entry's ordinary target. A negative value means no explicit group.
+     */
+    default int targetGroup() { return -1; }
+
+    /**
      * Returns whether this effect reads the numeric value captured from the event that triggered
      * its stack entry. Death-trigger collectors use this to snapshot last-known information before
      * the triggering permanent leaves the battlefield.

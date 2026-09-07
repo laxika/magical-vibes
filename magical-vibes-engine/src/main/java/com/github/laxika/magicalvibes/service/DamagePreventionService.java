@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfF
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndExileFromLibraryEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageMillReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
@@ -1970,6 +1971,27 @@ public class DamagePreventionService {
                 .filter(e -> e instanceof PreventSpellDamageToOpponentAndCreateTokensEffect)
                 .map(e -> (PreventSpellDamageToOpponentAndCreateTokensEffect) e)
                 .findFirst().orElse(null);
+    }
+
+    /** Returns whether a source controlled by the given player must replace damage to an opponent with milling. */
+    public boolean hasControllerOpponentDamageMillReplacement(GameData gameData, UUID sourceControllerId,
+                                                               UUID targetPlayerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)
+                || damage <= 0
+                || sourceControllerId == null
+                || targetPlayerId == null
+                || sourceControllerId.equals(targetPlayerId)) {
+            return false;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+        if (battlefield == null) return false;
+
+        return battlefield.stream()
+                .filter(permanent -> !permanent.isFaceDown()
+                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn())
+                .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, ControllerOpponentDamageMillReplacementEffect.class));
     }
 
     /**

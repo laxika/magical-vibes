@@ -163,9 +163,19 @@ public class TokenCopySupport {
         tokenCard.setToken(true);
         CardColor color = effect.colorOverride() != null ? effect.colorOverride() : sourceCard.getColor();
         tokenCard.setColor(color);
-        tokenCard.setColors(effect.colorOverride() != null
-                ? List.of(effect.colorOverride())
-                : sourceCard.getColors());
+        List<CardColor> colors = effect.colorOverride() != null
+                ? new ArrayList<>(List.of(effect.colorOverride()))
+                : sourceCard.getColors() == null
+                        ? new ArrayList<>()
+                        : new ArrayList<>(sourceCard.getColors());
+        if (effect.additionalColors() != null) {
+            for (CardColor additionalColor : effect.additionalColors()) {
+                if (!colors.contains(additionalColor)) {
+                    colors.add(additionalColor);
+                }
+            }
+        }
+        tokenCard.setColors(colors);
         if (effect.removeLegendary()) {
             EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
             if (sourceCard.getSupertypes() != null) {

@@ -122,11 +122,13 @@ combat damage step is processed.
 | `ON_HAUNTED_CREATURE_DIES` | `TriggerCollectionService.checkHauntedCreatureDeathTriggers` scans the tracked haunted-permanent relationships when a permanent enters a graveyard, then uses the death-trigger target queue for targeted effects | Death |
 | `ON_EQUIPPED_CREATURE_DIES` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
 | `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE` | `DamageTriggerCollectorService.handleEquippedCreatureDealsCombatDamage` (scans attached Equipment and preserves last-known attachment) | Combat damage |
+| `ON_ENCHANTED_PLAYER_DEALT_DAMAGE` | `TriggerCollectionService.checkEnchantedPlayerDealtDamageTriggers` + `DamageTriggerCollectorService.handleEnchantedPlayerDealtDamage` | Damage (non-targeting) |
 | `ON_EQUIPPED_CREATURE_TRANSFORMS` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
 | `ON_EQUIPMENT_ATTACHED_TO_CREATURE` | `TriggerCollectionService.checkEquipmentAttachedTriggers` (non-targeting; called by `EquipSupport.attachEquipment` and for permanents entering already attached) | Attachment |
 | `ON_ALLY_PERMANENT_TRANSFORMS` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; supports `TriggeringCardConditionalEffect` against the transformed face) | Transform |
 | `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` | Death |
 | `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (targeting variants) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` / `handleArtifactGraveyardReturnUnlessDamage` | Spell target; the latter carries the exact graveyard card id and uses the source permanent snapshot |
+| `POSTCOMBAT_MAIN_TRIGGERED` (graveyard-targeting variants) | `StepTriggerService.handlePostcombatMainTriggers` | Spell graveyard target |
 | `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` (non-may effects are batched; `DyingCreatureCountersAwareEffect` implementations receive the dying permanent's concrete counter snapshot before stacking) | Death |
 | `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (targeting wrapper) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` | Spell target |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
@@ -251,7 +253,8 @@ owner's graveyard — mill batches are checked in `GraveyardService.resolveMillP
 effects),
 `ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Devourer of Memory; fires once per
 library-to-graveyard event when one or more non-token cards actually enter the controller's graveyard —
-mill batches are checked after replacement effects),
+mill batches are checked after replacement effects and preserve the cards in the event context for
+card-specific effects such as Hedge Shredder),
 `ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Dreadhound; fires once for each non-token
 creature card that actually enters any player's graveyard from a library, after replacement effects;
 checked in `GraveyardService.addCardToGraveyard`),
@@ -420,6 +423,14 @@ lands on the entry's `targetCardIds` and the effect handler's pre-targeted path 
 the trigger path allows an empty selection, a "you may return target …" reads correctly as up-to-one
 (choose 0 to decline) with no `MayEffect` wrapper. `BecomeAuraReanimateFromGraveyardEffect` (Necromancy)
 uses the same flow with `ALL_GRAVEYARDS` — any player's graveyard, creature cards only. `PutCardFromOpponentGraveyardOntoBattlefieldEffect` uses it too (`OPPONENT_GRAVEYARD`); on a combat-damage trigger `CombatDamageService` sets the pending trigger's `graveyardOwnerId` to the damaged player, so Ink-Eyes, Servant of Oni sees only **that player's** graveyard.
+
+**Graveyard-targeting postcombat main triggers** ("At the beginning of your second main phase,
+return target creature card from your graveyard to your hand" - Savior of the Small) use the same
+`SpellGraveyardTargetTrigger` flow. `StepTriggerService.handlePostcombatMainTriggers` queues the
+graveyard target after evaluating the trigger condition, and the selected card id is attached when
+the ability is put on the stack. The wrapped `ConditionalEffect` remains on the stack so the
+survival tap condition is checked again on resolution; mandatory targets with no legal card do not
+create a stack entry.
 
 **Graveyard-targeting upkeep triggers** ("At the beginning of your upkeep, you may return target
 enchantment card from your graveyard to the battlefield" - Starfield of Nyx) use the same

@@ -1642,22 +1642,40 @@ public class LibraryChoiceHandlerService {
     }
 
     private void resolveManifestChoice(GameData gameData, UUID controllerId,
-                                       List<Card> selectedCards, List<Card> remainingCards) {
+                                       List<Card> selectedCards, List<Card> remainingCards,
+                                       boolean remainingToGraveyard) {
         if (selectedCards.size() != 1 || remainingCards.size() > 1) {
             throw new IllegalStateException("Manifest selection must choose exactly one of at most two cards");
         }
 
         StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
         Card sourceCard = sourceEntry == null ? selectedCards.getFirst() : sourceEntry.getCard();
-        manifestService.manifestCard(gameData, controllerId, sourceCard, selectedCards.getFirst());
+        Permanent manifestedPermanent = manifestService.manifestCardAndReturnPermanent(
+                gameData, controllerId, sourceCard, selectedCards.getFirst());
+        if (sourceEntry != null && manifestedPermanent != null) {
+            sourceEntry.setChosenPermanentId(manifestedPermanent.getId());
+        }
 
         if (remainingCards.isEmpty()) {
+            if (remainingToGraveyard) {
+                triggerCollectionService.checkManifestDreadTriggers(gameData, controllerId, null);
+            }
             performStateBasedActionsIfResolutionComplete(gameData);
             finishSearchAndResume(gameData);
             return;
         }
 
         Card remainingCard = remainingCards.getFirst();
+        if (remainingToGraveyard) {
+            boolean enteredGraveyard = graveyardService.addCardToGraveyard(
+                    gameData, controllerId, remainingCard, Zone.LIBRARY);
+            triggerCollectionService.checkManifestDreadTriggers(gameData, controllerId,
+                    enteredGraveyard ? remainingCard : null);
+            performStateBasedActionsIfResolutionComplete(gameData);
+            finishSearchAndResume(gameData);
+            return;
+        }
+
         gameData.playerDecks.get(controllerId).addFirst(remainingCard);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetLibraryDestinationChoice(
                 controllerId, remainingCard.getId(), remainingCard.getName()));
@@ -2053,6 +2071,17 @@ public class LibraryChoiceHandlerService {
 
         UUID controllerId = libraryRevealChoice.playerId();
         List<Card> allRevealedCards = libraryRevealChoice.allCards();
+        if (libraryRevealChoice.requireDistinctPowers()) {
+            Set<Integer> selectedPowers = new HashSet<>();
+            for (Card card : allRevealedCards) {
+                if (cardIds.contains(card.getId())) {
+                    int power = card.getPower() == null ? 0 : card.getPower();
+                    if (!selectedPowers.add(power)) {
+                        throw new IllegalStateException("Selected cards must have different powers");
+                    }
+                }
+            }
+        }
         String playerName = gameData.playerIdToName.get(controllerId);
 
         // Validate before touching interaction state, joining the three checks above: a rejected
@@ -2164,7 +2193,8 @@ public class LibraryChoiceHandlerService {
         }
 
         if (libraryRevealChoice.selectedToManifest()) {
-            resolveManifestChoice(gameData, controllerId, selectedCards, remainingCards);
+            resolveManifestChoice(gameData, controllerId, selectedCards, remainingCards,
+                    libraryRevealChoice.remainingToGraveyard());
             return;
         }
 

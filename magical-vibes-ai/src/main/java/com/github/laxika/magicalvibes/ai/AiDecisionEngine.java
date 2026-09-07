@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
@@ -2419,23 +2420,29 @@ public abstract class AiDecisionEngine {
                 .map(BeholdAndExileCost.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (cost == null) {
+        boolean chooseCreatureOrRevealCreatureCard = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(ChooseCreatureOrRevealCreatureCardCost.class::isInstance);
+        if (cost == null && !chooseCreatureOrRevealCreatureCard) {
             return new BeholdSelection(null, null);
         }
 
-        PermanentPredicate permanentFilter = new PermanentHasSubtypePredicate(cost.subtype());
+        PermanentPredicate permanentFilter = cost == null ? null : new PermanentHasSubtypePredicate(cost.subtype());
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of())) {
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, permanentFilter)) {
+            if (chooseCreatureOrRevealCreatureCard
+                    ? gameQueryService.isCreature(gameData, permanent)
+                    : predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, permanentFilter)) {
                 return new BeholdSelection(permanent.getId(), null);
             }
         }
 
-        CardSubtypePredicate cardFilter = new CardSubtypePredicate(cost.subtype());
+        CardSubtypePredicate cardFilter = cost == null ? null : new CardSubtypePredicate(cost.subtype());
         List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
         for (int i = 0; i < hand.size(); i++) {
             Card candidate = hand.get(i);
             if (!candidate.getId().equals(card.getId())
-                    && predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId())) {
+                    && (chooseCreatureOrRevealCreatureCard
+                    ? candidate.hasType(CardType.CREATURE)
+                    : predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId()))) {
                 return new BeholdSelection(null, i);
             }
         }

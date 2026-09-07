@@ -61,7 +61,13 @@ public sealed interface ChoiceContext {
 
     record RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
                                      List<ManaColor> fixedColorOptions,
-                                     ManaRestriction restriction) implements ChoiceContext {
+                                     ManaRestriction restriction, boolean sameColor) implements ChoiceContext {
+        public RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
+                                         List<ManaColor> fixedColorOptions,
+                                         ManaRestriction restriction) {
+            this(playerId, amount, fromCreature, fixedColorOptions, restriction, false);
+        }
+
         public RestrictedManaColorChoice {
             fixedColorOptions = List.copyOf(fixedColorOptions);
         }
@@ -688,9 +694,13 @@ public sealed interface ChoiceContext {
      */
     record MassProtectionColorChoice(UUID controllerId) implements ChoiceContext {}
 
-    record SubtypeChoice(UUID permanentId, boolean landPlay) implements ChoiceContext {
+    record SubtypeChoice(UUID permanentId, boolean landPlay, boolean continueGameStart) implements ChoiceContext {
         public SubtypeChoice(UUID permanentId) {
-            this(permanentId, false);
+            this(permanentId, false, false);
+        }
+
+        public SubtypeChoice(UUID permanentId, boolean landPlay) {
+            this(permanentId, landPlay, false);
         }
     }
 
@@ -1387,6 +1397,30 @@ public sealed interface ChoiceContext {
         public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                 UUID sourcePermanentId, boolean asEnters) {
             this(sourceCard, controllerId, effect, false, sourcePermanentId, false, List.of(), asEnters);
+        }
+    }
+
+    /** Choice of a specific locked door for an effect that unlocks a Room for free. */
+    record UnlockRoomDoorChoice(Card sourceCard, UUID controllerId, List<RoomDoor> choices)
+            implements ChoiceContext {
+
+        public UnlockRoomDoorChoice {
+            choices = List.copyOf(choices);
+        }
+
+        public record RoomDoor(UUID roomPermanentId, int doorIndex, String label) {
+        }
+    }
+
+    /** Choice of a door for an effect that locks an unlocked door or unlocks a locked door. */
+    record LockOrUnlockRoomDoorChoice(Card sourceCard, UUID controllerId, List<RoomDoor> choices)
+            implements ChoiceContext {
+
+        public LockOrUnlockRoomDoorChoice {
+            choices = List.copyOf(choices);
+        }
+
+        public record RoomDoor(UUID roomPermanentId, int doorIndex, String label) {
         }
     }
 

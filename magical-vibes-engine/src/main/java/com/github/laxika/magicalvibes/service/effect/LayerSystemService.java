@@ -701,6 +701,8 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isTransformed() ? 1 : 0);
         flags = flags << 1 | (p.isFaceDown() ? 1 : 0);
         flags = flags << 1 | (p.isCloaked() ? 1 : 0);
+        flags = flags << 1 | (p.isRoomDoorUnlocked(0) ? 1 : 0);
+        flags = flags << 1 | (p.isRoomDoorUnlocked(1) ? 1 : 0);
         // Combat assignments feed static scopes ("creatures blocking or blocked by this creature
         // have lifelink" — Alms Beast), so declaring attackers or blockers must invalidate the
         // memoized board.

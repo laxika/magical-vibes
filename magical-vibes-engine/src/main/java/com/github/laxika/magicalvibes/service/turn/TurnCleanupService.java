@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombat
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePersistenceEffect;
@@ -23,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -196,8 +195,7 @@ public class TurnCleanupService {
         // (Tilonalli's Skinshifter) reverts the permanent's card to the pre-copy card — the
         // official ruling pins this to the same moment damage is removed (the cleanup step).
         for (FloatingContinuousEffect expired : gameData.expireEndOfTurnFloatingEffects()) {
-            if ((expired.effect() instanceof BecomeCopyOfTargetCreatureUntilEndOfTurnEffect
-                    || expired.effect() instanceof BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect)
+            if (expired.effect() instanceof TemporaryCopyEffect
                     && expired.affectedPermanentId() != null) {
                 Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
                 if (copy != null) {
@@ -570,7 +568,8 @@ public class TurnCleanupService {
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!own && effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
-                        maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
+                        maxHandSize = handSizeEffect.applyToMaximumHandSize(
+                                maxHandSize, gameData, otherPlayerId);
                     } else if (own && effect instanceof ControllerMaxHandSizeEffect handSizeEffect) {
                         maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize, perm);
                     }

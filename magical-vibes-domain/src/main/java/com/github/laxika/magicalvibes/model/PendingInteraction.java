@@ -3059,7 +3059,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                LibrarySelectionFollowUp battlefieldSelectionFollowUp,
                                boolean selectLandsAfterHand,
                                boolean selectedToBattlefieldSimultaneously,
-                               boolean selectedToManifest)
+                               boolean selectedToManifest,
+                               boolean requireDistinctPowers)
             implements PendingInteraction {
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3081,6 +3082,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
                     payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
                     selectedToBattlefieldSimultaneously, false);
+        }
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount,
+                                   boolean selectedToBattlefieldCloaked, boolean payLifePerSelection,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                                   boolean selectLandsAfterHand,
+                                   boolean selectedToBattlefieldSimultaneously,
+                                   boolean selectedToManifest) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
+                    payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
+                    selectedToBattlefieldSimultaneously, selectedToManifest, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3262,6 +3285,68 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     false,
                     false,
                     null,
+                    false,
+                    false,
+                    true
+            );
+        }
+
+        public static LibraryRevealChoice manifestDread(UUID playerId,
+                                                        java.util.List<Card> allCards,
+                                                        String prompt) {
+            return new LibraryRevealChoice(
+                    playerId,
+                    allCards,
+                    allCards.stream().map(Card::getId).toList(),
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                    0,
+                    null,
+                    1,
+                    prompt,
+                    false,
+                    1,
+                    false,
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    false,
+                    false,
+                    true
+            );
+        }
+
+        public static LibraryRevealChoice distinctPowersToHand(UUID playerId,
+                                                                java.util.List<Card> allCards,
+                                                                java.util.List<UUID> validCardIds,
+                                                                String prompt) {
+            return new LibraryRevealChoice(
+                    playerId,
+                    allCards,
+                    validCardIds,
+                    false,
+                    true,
+                    false,
+                    true,
+                    false,
+                    0,
+                    null,
+                    validCardIds.size(),
+                    prompt,
+                    false,
+                    0,
+                    false,
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    false,
                     false,
                     false,
                     true

@@ -176,6 +176,39 @@ public class EnterTriggerCollectorService {
         return enqueueAnyPermanentEnter(match, effect, (TriggerContext.PermanentEnters) ctx);
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED)
+    private boolean handleRoomFullyUnlockedDefault(TriggerMatchContext match, CardEffect effect,
+                                                    TriggerContext ctx) {
+        TriggerContext.RoomFullyUnlocked room = (TriggerContext.RoomFullyUnlocked) ctx;
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    match.permanent().getId(), room.roomPermanentId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            log.info("Game {} - {} triggers when a Room is fully unlocked, awaiting target",
+                    match.gameData().id, match.permanent().getCard().getName());
+            return true;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setTriggeringPermanentId(room.roomPermanentId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers when a Room is fully unlocked",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
             slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleAnyPermanentEnterCardConditional(TriggerMatchContext match,

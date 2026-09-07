@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -165,6 +166,9 @@ public class Permanent {
     private final Set<String> chosenModeLabels = new HashSet<>();
     /** Labels of modes chosen this turn for a turn-scoped modal trigger. */
     private final Set<String> chosenModeLabelsThisTurn = new HashSet<>();
+    /** Room doors unlocked on this permanent, in door order. This state survives turn resets. */
+    @Getter(AccessLevel.NONE)
+    private final Set<Integer> unlockedRoomDoors = new HashSet<>();
     @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
     /** Player targeted by a linked enter-the-battlefield ability. */
@@ -716,6 +720,7 @@ public class Permanent {
         this.chosenNumber = source.chosenNumber;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
+        this.unlockedRoomDoors.addAll(source.unlockedRoomDoors);
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.rememberedTargetPlayerId = source.rememberedTargetPlayerId;
@@ -1584,6 +1589,28 @@ public class Permanent {
         if (chosenColor != null) {
             this.chosenColors.add(chosenColor);
         }
+    }
+
+    public boolean isRoomDoorUnlocked(int doorIndex) {
+        return unlockedRoomDoors.contains(doorIndex);
+    }
+
+    public void unlockRoomDoor(int doorIndex) {
+        if (doorIndex < 0 || doorIndex > 1) {
+            throw new IllegalArgumentException("Invalid Room door index: " + doorIndex);
+        }
+        unlockedRoomDoors.add(doorIndex);
+    }
+
+    public void lockRoomDoor(int doorIndex) {
+        if (doorIndex < 0 || doorIndex > 1) {
+            throw new IllegalArgumentException("Invalid Room door index: " + doorIndex);
+        }
+        unlockedRoomDoors.remove(doorIndex);
+    }
+
+    public boolean isRoomFullyUnlocked() {
+        return unlockedRoomDoors.contains(0) && unlockedRoomDoors.contains(1);
     }
 
     private static CardColor textChangeWordAsColor(String word) {

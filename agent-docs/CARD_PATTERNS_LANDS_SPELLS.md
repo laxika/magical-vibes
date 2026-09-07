@@ -71,6 +71,7 @@ on what the mana may pay for.
 | Targeted burn | `s/Shock.java` | SPELL DealDamageToAnyTargetEffect (targeting auto-derived) |
 | Random-discard burn | `s/SonicBurst.java` | SPELL `DiscardRandomCardCost` + `DealDamageToAnyTargetEffect(4)`; the random discard is paid automatically before the spell is put on the stack |
 | Burn creature + controller | `c/ChandrasOutrage.java` | DealDamageToTargetCreatureEffect + DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER) |
+| Two-target choice burn + block restriction | `t/TrialOfAgony.java` | Two opponent-creature target groups with `MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET` + `DealDamageToOneOfTwoTargetCreaturesThenOtherCantBlockEffect(5)` |
 | Burn player/PW + delayed "pay or take more" | `q/QuenchableFire.java` | DealDamageToTargetPlayerOrPlaneswalkerEffect(3) + RegisterDamageAtNextUpkeepUnlessPaysEffect(3, "{U}") — 3 damage now, then at the caster's next upkeep the target's controller pays {U} or takes 3 more (delayed `DamageAtNextUpkeepUnlessPays` drained in StepTriggerService). Registrar piggybacks on the damage target |
 | Uncounterable + unpreventable burn | `c/Combust.java` | STATIC CantBeCounteredEffect + DealDamageToTargetCreatureEffect(5, true) + PermanentColorInPredicate target filter |
 | X burn | `b/Blaze.java` | DealDamageToAnyTargetEffect(new XValue()) |

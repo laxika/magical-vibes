@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,7 @@ public class CombatTriggerService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
+    private final ETBTokenTargetService etbTokenTargetService;
 
     /**
      * Checks attached permanents (auras/equipment) for triggers in the given slot
@@ -177,10 +179,17 @@ public class CombatTriggerService {
                             boolean needsTarget = effectsForStack.stream()
                                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                             if (needsTarget) {
-                                gameData.queueInteraction(
-                                        new PermanentChoiceContext.AttackTriggerTarget(
-                                                perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
-                                                auraOwnerId, null));
+                                if (slot == EffectSlot.ON_ATTACK
+                                        && etbTokenTargetService.needsSlotBySlotTargetSelection(perm.getCard())) {
+                                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                            List.of(), 0, 0));
+                                } else {
+                                    gameData.queueInteraction(
+                                            new PermanentChoiceContext.AttackTriggerTarget(
+                                                    perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                                    auraOwnerId, null));
+                                }
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                                 log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                         gameData.id, perm.getCard().getName(), creature.getCard().getName());

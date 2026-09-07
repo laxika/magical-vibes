@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanen
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -127,6 +128,11 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RedistributePlayerLifeTotalsSupport redistributePlayerLifeTotalsSupport;
     private final TriggerTargetCollector triggerTargetCollector;
     private final TurnFaceUpCopyService turnFaceUpCopyService;
+    private final MulliganService mulliganService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.UnlockControlledRoomDoorEffectHandler
+            unlockControlledRoomDoorEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.LockOrUnlockTargetRoomDoorEffectHandler
+            lockOrUnlockTargetRoomDoorEffectHandler;
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -166,6 +172,15 @@ public class ChoiceHandlerService {
         if (colorChoice.context() instanceof ChoiceContext.TriggeredModalChoice
                 && !colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid mode: " + colorName);
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.UnlockRoomDoorChoice ctx) {
+            unlockControlledRoomDoorEffectHandler.completeChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.LockOrUnlockRoomDoorChoice ctx) {
+            lockOrUnlockTargetRoomDoorEffectHandler.completeChoice(gameData, colorName, ctx);
+            return;
         }
 
         if (colorChoice.context() instanceof ChoiceContext.DevotionManaColorChoice ctx) {
@@ -1260,13 +1275,14 @@ public class ChoiceHandlerService {
         ManaColor manaColor = ManaColor.valueOf(colorName);
         gameData.interaction.clearAwaitingInput();
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
-        ctx.restriction().applyTo(manaPool, manaColor, 1);
+        int amount = ctx.sameColor() ? ctx.amount() : 1;
+        ctx.restriction().applyTo(manaPool, manaColor, amount);
 
-        int remaining = ctx.amount() - 1;
+        int remaining = ctx.amount() - amount;
         if (remaining > 0) {
             ChoiceContext.RestrictedManaColorChoice nextContext =
                     new ChoiceContext.RestrictedManaColorChoice(ctx.playerId(), remaining,
-                            ctx.fromCreature(), ctx.fixedColorOptions(), ctx.restriction());
+                            ctx.fromCreature(), ctx.fixedColorOptions(), ctx.restriction(), ctx.sameColor());
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     ctx.playerId(), null, null, nextContext,
                     ctx.fixedColorOptions().stream().map(Enum::name).toList(),
@@ -3180,6 +3196,14 @@ public class ChoiceHandlerService {
             if (ctx.landPlay()) {
                 triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), perm.getCard());
             }
+        }
+
+        if (ctx.continueGameStart()) {
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                mulliganService.continueStartGame(gameData);
+            }
+            return;
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

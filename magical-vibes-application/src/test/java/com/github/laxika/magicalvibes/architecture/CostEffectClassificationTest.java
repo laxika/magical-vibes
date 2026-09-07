@@ -131,6 +131,7 @@ class CostEffectClassificationTest {
             "SpreeAdditionalManaCost",
             "BeholdCost",
             "BeholdAndExileCost",
+            "ChooseCreatureOrRevealCreatureCardCost",
             "RevealCardFromHandCost",
             "DelveCost",
             "WaterbendCost");

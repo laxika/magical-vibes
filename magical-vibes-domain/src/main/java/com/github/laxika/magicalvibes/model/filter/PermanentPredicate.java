@@ -104,6 +104,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsSuspectedPredicate,
         PermanentIsSourceCardPredicate,
         PermanentIsSourcePermanentPredicate,
+        PermanentIsTriggeringPermanentPredicate,
         PermanentIsSpecificPermanentPredicate,
         PermanentIsTappedPredicate,
         PermanentIsTokenPredicate,

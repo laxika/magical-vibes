@@ -139,4 +139,9 @@ public record ExileGraveyardCardsEffect(
             default -> TargetSpec.NONE;
         };
     }
+
+    @Override
+    public boolean hasOptionalTarget() {
+        return choosesGraveyardCards() && !exactTargetCount;
+    }
 }

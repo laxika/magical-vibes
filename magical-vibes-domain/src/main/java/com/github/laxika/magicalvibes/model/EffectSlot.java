@@ -168,6 +168,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller surveils. Checked by
      *  {@code TriggerCollectionService.checkSurveilTriggers}. */
     ON_CONTROLLER_SURVEILS,
+    /** Triggers whenever this permanent's controller manifests dread. */
+    ON_CONTROLLER_MANIFESTS_DREAD,
     ON_CONTROLLER_BENDS,
     /** Triggers whenever this permanent's controller collects evidence. */
     ON_CONTROLLER_COLLECTS_EVIDENCE,
@@ -427,6 +429,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
      *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
     ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
+    /** Triggers whenever the player this Aura is attached to is dealt damage (combat or non-combat).
+     *  Fires once for each damage event on the attached player. */
+    ON_ENCHANTED_PLAYER_DEALT_DAMAGE,
     /** Triggers whenever the creature this aura is attached to deals damage (combat or non-combat) to the
      *  aura's controller — i.e. "whenever enchanted creature deals damage to you" (Backfire). Because the
      *  aura sits on its controller's battlefield, the trigger is scanned on the damaged player's battlefield
@@ -500,6 +505,17 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  subtype with a {@code TriggeringCardConditionalEffect}. Checked in
      *  {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. Used by Trial of Solidarity. */
     ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+    /** Triggers whenever an enchantment enters under the controller's control while this card is
+     *  in that controller's graveyard. Checked in
+     *  {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. */
+    GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+    /** Triggers whenever the controller fully unlocks a Room. */
+    ON_ALLY_ROOM_FULLY_UNLOCKED,
+    /** Triggers whenever the controller fully unlocks a Room while this card is in the controller's
+     *  graveyard. Checked in {@code TriggerCollectionService.checkAllyRoomFullyUnlockedTriggers}. */
+    GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED,
+    /** Triggers whenever this Room's specified door becomes unlocked. */
+    ON_SELF_ROOM_DOOR_UNLOCKED,
     ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this creature or another creature enters the battlefield from the
      *  controller's graveyard. Checked in {@code BattlefieldEntryService.checkEntersFromGraveyardTriggers}

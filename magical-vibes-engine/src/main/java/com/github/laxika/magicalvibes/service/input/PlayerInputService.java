@@ -981,9 +981,22 @@ public class PlayerInputService {
                 choiceEffect.choicePrompt());
     }
 
+    public void beginPregameSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                          SubtypeChoiceOnEnterEffect choiceEffect) {
+        beginSubtypeChoice(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), false,
+                choiceEffect.choicePrompt(), true);
+    }
+
     private void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
                                     List<CardSubtype> allowedSubtypes, boolean landPlay, String prompt) {
-        ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId, landPlay);
+        beginSubtypeChoice(gameData, playerId, permanentId, allowedSubtypes, landPlay, prompt, false);
+    }
+
+    private void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                    List<CardSubtype> allowedSubtypes, boolean landPlay, String prompt,
+                                    boolean continueGameStart) {
+        ChoiceContext.SubtypeChoice choiceContext =
+                new ChoiceContext.SubtypeChoice(permanentId, landPlay, continueGameStart);
 
         List<CardSubtype> choices = allowedSubtypes == null || allowedSubtypes.isEmpty()
                 ? Arrays.stream(CardSubtype.values())

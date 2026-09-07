@@ -550,6 +550,8 @@ public class TurnProgressionService {
                 gameData.permanentsEnteredBattlefieldLastTurn.put(playerId, new ArrayList<>(entered)));
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.faceDownCreaturesEnteredBattlefieldThisTurn.clear();
+        gameData.faceDownPermanentsEnteredBattlefieldThisTurn.clear();
+        gameData.playersWhoTurnedPermanentsFaceUpThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
         gameData.crimeCandidatesThisTurn.clear();
         gameData.clearSpellsCastFromHandThisTurn();

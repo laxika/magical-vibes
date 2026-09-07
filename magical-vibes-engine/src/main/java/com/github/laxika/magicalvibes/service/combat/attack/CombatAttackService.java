@@ -885,10 +885,6 @@ public class CombatAttackService {
                         allEffects.replaceAll(e -> e instanceof OncePerTurnTriggerEffect once ? once.wrapped() : e);
                     }
                 }
-                if (firesOnceEachTurn) {
-                    gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
-                }
-
                 // Filter trigger-subject conditionals against this attacking creature, then
                 // unwrap them so their condition is not re-evaluated during resolution.
                 allEffects.removeIf(e -> e instanceof TriggeringPermanentConditionalEffect conditional
@@ -990,6 +986,15 @@ public class CombatAttackService {
                         && !conditionEvaluationService.isMet(gameData, ce.condition(), attackedTargetContext));
                 allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttackedTargetMatches ? ce.wrapped() : e);
+
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.interveningIf()
+                        && !conditionEvaluationService.isMet(
+                                gameData, ce.condition(), ConditionContext.forPermanent(attacker, playerId)));
+
+                if (firesOnceEachTurn && !allEffects.isEmpty()) {
+                    gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
+                }
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
@@ -1186,7 +1191,10 @@ public class CombatAttackService {
         // The attacker count is locked at trigger time via xValue (per MTG rules: creatures
         // removed before resolution still count, tokens entering attacking after don't).
         for (Permanent perm : battlefield) {
-            List<CardEffect> allyAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK);
+            List<CardEffect> allyAttackEffects = new ArrayList<>(
+                    perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK));
+            allyAttackEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, perm, EffectSlot.ON_ALLY_CREATURES_ATTACK));
             if (allyAttackEffects.isEmpty()) continue;
 
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists,
@@ -1331,7 +1339,10 @@ public class CombatAttackService {
         }
         for (UUID attackedPlayerId : directlyAttackedPlayers) {
             for (Permanent perm : new ArrayList<>(battlefield)) {
-                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER);
+                List<CardEffect> effects = new ArrayList<>(
+                        perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER));
+                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, perm, EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER));
                 if (effects.isEmpty()) continue;
 
                 ConditionContext targetContext = ConditionContext.forPermanent(perm, playerId)
@@ -1401,7 +1412,10 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             for (Permanent perm : battlefield) {
-                List<CardEffect> perCreatureAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                List<CardEffect> perCreatureAttackEffects = new ArrayList<>(
+                        perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+                perCreatureAttackEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, perm, EffectSlot.ON_ALLY_CREATURE_ATTACKS));
                 if (perCreatureAttackEffects.isEmpty()) continue;
 
                 List<CardEffect> matchingEffects = new ArrayList<>();

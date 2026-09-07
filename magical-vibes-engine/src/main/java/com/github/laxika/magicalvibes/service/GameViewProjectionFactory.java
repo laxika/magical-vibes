@@ -299,9 +299,9 @@ public class GameViewProjectionFactory {
         return result;
     }
 
-    /** Face-down battlefield creatures revealed to a player by a turn-scoped permission. */
+    /** Face-down battlefield creatures revealed to a player by a static or turn-scoped permission. */
     Map<UUID, CardView> collectFaceDownPermanentReveals(GameData data, UUID viewerId) {
-        if (!data.playersWhoMayLookAtFaceDownCreaturesThisTurn.contains(viewerId)) {
+        if (!gameQueryService.mayLookAtOpposingFaceDownCreatures(data, viewerId)) {
             return Map.of();
         }
 
@@ -627,6 +627,17 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteCreatureOrEnchantmentSpellOnlyMana();
             }
+            if (card.hasType(CardType.ENCHANTMENT)
+                    && cardPool.getEnchantmentOrRoomUnlockOrTurnFaceUpManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
+            }
+            if (card.hasType(CardType.ENCHANTMENT)
+                    && card.getSubtypes().contains(CardSubtype.ROOM)
+                    && cardPool.getRoomSpellsOrUnlocksManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteRoomSpellsOrUnlocksMana();
+            }
             ExiledCardEntry exiledEntry = gameData.findExiledCard(card.getId());
             ForetellCast foretellCast = card.getCastingOption(ForetellCast.class).orElse(null);
             ManaCost foretoldCost = gameData.foretoldCardCosts.get(card.getId());
@@ -684,6 +695,16 @@ public class GameViewProjectionFactory {
             if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) continue;
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
+                boolean canPayManaValueLifeAlternative = !foretellPermission
+                        && castingPermissionService.hasManaValueLifeAlternativeFromExiledWithSource(
+                        gameData, playerId, card.getId())
+                        && gameData.getLife(playerId) >= card.getManaValue()
+                        && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                        && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                if (canPayManaValueLifeAlternative) {
+                    playable.add(exileCardView(gameData, playerId, card));
+                    continue;
+                }
                 if (!foretellPermission
                         && (castingPermissionService.hasFreeCastFromExiledWithSource(gameData, playerId, card.getId())
                         || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card))) {

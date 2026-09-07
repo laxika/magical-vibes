@@ -1258,6 +1258,20 @@ public class DamageSupport {
                 lifeSupport.applyGainLife(gameData, playerId, purityPrevented, "prevented damage");
             }
 
+            if (damagePreventionService.hasControllerOpponentDamageMillReplacement(
+                    gameData, sourceControllerId, playerId, effectiveDamage)) {
+                int replacedDamage = effectiveDamage;
+                effectiveDamage = 0;
+                gameLogService.append(gameData, GameLog.cardThen(source,
+                        "'s " + replacedDamage + " damage to " + gameData.playerIdToName.get(playerId)
+                                + " is prevented and replaced with milling."));
+                for (UUID opponentId : gameData.orderedPlayerIds) {
+                    if (!opponentId.equals(sourceControllerId)) {
+                        graveyardService.resolveMillPlayer(gameData, opponentId, replacedDamage);
+                    }
+                }
+            }
+
             // Hostility: prevent all remaining damage a spell you control would deal to an opponent and
             // create one token per 1 damage prevented (for the spell's controller).
             var hostility = damagePreventionService.findSpellDamageToOpponentPrevention(gameData, entry, playerId, effectiveDamage);
@@ -1373,6 +1387,8 @@ public class DamageSupport {
                     gameData.recordCreatureDamageSourceToPlayer(sourcePermanent.getId(), playerId);
                 }
                 recordRedSpellDamage(gameData, entry, source, playerId);
+                triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                        gameData, playerId, effectiveDamage);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
                 // The stack entry's controller is the damage source's controller (caster/activator);
@@ -1516,6 +1532,8 @@ public class DamageSupport {
                         : redirect.sourceCard() != null && redirect.sourceCard().hasType(CardType.ARTIFACT);
                 gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
                 gameData.recordDamageRecipientBySource(redirect.sourcePermanentId(), targetId);
+                triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                        gameData, targetId, redirectEffective);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, targetId, redirect.sourcePermanentId(), redirectEffective);
             }
@@ -1596,6 +1614,8 @@ public class DamageSupport {
                             && gameQueryService.isArtifact(gameData, sourcePermanent);
                     gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
+                    triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                            gameData, targetId, redirectEffective);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(
                             gameData, targetId, redirect.damageSourceId(), redirectEffective);
                 }

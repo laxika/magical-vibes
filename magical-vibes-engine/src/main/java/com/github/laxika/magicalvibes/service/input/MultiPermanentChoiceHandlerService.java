@@ -1627,7 +1627,9 @@ public class MultiPermanentChoiceHandlerService {
         CardEffect branch = sacrificed == context.requiredCount()
                 ? context.sacrificedEffect()
                 : context.elseEffect();
-        entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(branch));
+        if (branch != null) {
+            entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(branch));
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

@@ -82,8 +82,10 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentCreatureHexproofEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventOpponentCreatureWardTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
@@ -357,10 +359,11 @@ public class GameQueryService {
                               boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding,
                               boolean cardTypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden,
                               int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities,
-                              boolean losesAllNonManaAbilities, boolean ptSwitched, String name) {
+                              boolean losesAllNonManaAbilities, boolean ptSwitched, String name,
+                              boolean turnFaceUpPrevented) {
         static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), Set.of(), false,
                 List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false,
-                Set.of(), false, 0, 0, false, false, false, null);
+                Set.of(), false, 0, 0, false, false, false, null, false);
 
         public StaticBonus(int power, int toughness, Set<Keyword> keywords,
                            Set<CardColor> protectionColors, boolean animatedCreature,
@@ -378,7 +381,7 @@ public class GameQueryService {
                     landSubtypeOverriding, cardTypeOverriding, removedKeywords,
                     basePTOverridden, basePowerOverride != null ? basePowerOverride : 0,
                     baseToughnessOverride != null ? baseToughnessOverride : 0,
-                    losesAllAbilities, false, ptSwitched, null);
+                    losesAllAbilities, false, ptSwitched, null, false);
         }
     }
 
@@ -526,6 +529,12 @@ public class GameQueryService {
      * face up because the active player controls a matching static restriction.
      */
     public boolean isTurnFaceUpPrevented(GameData gameData, Permanent permanent) {
+        if (permanent == null || !permanent.isFaceDown()) {
+            return false;
+        }
+        if (computeStaticBonus(gameData, permanent).turnFaceUpPrevented()) {
+            return true;
+        }
         UUID permanentControllerId = findPermanentController(gameData, permanent.getId());
         UUID activePlayerId = gameData.activePlayerId;
         if (permanentControllerId == null || activePlayerId == null
@@ -958,7 +967,8 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player is able to gain life (i.e. no
-     * {@link PlayersCantGainLifeEffect} is present on any battlefield, no opponent controls an
+     * a global {@link PlayersCantGainLifeEffect} is present on any battlefield, no enchanted-player
+     * {@link PlayersCantGainLifeEffect} is attached to this player, no opponent controls an
      * {@link OpponentsCantGainLifeEffect}, and no {@link LifeTotalCantChangeEffect} prevents life
      * changes).
      */
@@ -967,7 +977,18 @@ public class GameQueryService {
         if (gameData.playersWhoCantGainLifeRestOfGame.contains(playerId)) return false;
         if (gameData.playersWhoCantGainLifeThisTurn.contains(playerId)) return false;
         if (gameData.playersCantGainLifeThisTurn) return false;
-        if (anyBattlefieldHasStaticEffect(gameData, PlayersCantGainLifeEffect.class)) return false;
+        if (gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof PlayersCantGainLifeEffect restriction
+                        && restriction.scope() == PlayersCantGainLifeEffect.Scope.ALL_PLAYERS))) {
+            return false;
+        }
+        if (gameData.anyPermanentMatches(permanent -> permanent.isAttached()
+                && playerId.equals(permanent.getAttachedTo())
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof PlayersCantGainLifeEffect restriction
+                        && restriction.scope() == PlayersCantGainLifeEffect.Scope.ENCHANTED_PLAYER))) {
+            return false;
+        }
         for (UUID otherId : gameData.playerBattlefields.keySet()) {
             if (!otherId.equals(playerId)
                     && playerBattlefieldHasStaticEffect(gameData, otherId, OpponentsCantGainLifeEffect.class)) {
@@ -1436,6 +1457,31 @@ public class GameQueryService {
     /** Returns true when a global static effect lets the player spend mana as any color. */
     public boolean canSpendManaAsAnyColor(GameData gameData, UUID playerId) {
         return anyBattlefieldHasStaticEffect(gameData, SpendManaAsAnyColorEffect.class);
+    }
+
+    /** Returns whether a player may look at opposing face-down creatures. */
+    public boolean mayLookAtOpposingFaceDownCreatures(GameData gameData, UUID playerId) {
+        if (gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.contains(playerId)) {
+            return true;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent source : battlefield) {
+            if (source.isFaceDown()
+                    || source.isStaticEffectSuppressed(LookAtFaceDownCreaturesEffect.class)) {
+                continue;
+            }
+            StaticBonus bonus = computeStaticBonus(gameData, source);
+            if (bonus.losesAllAbilities() || bonus.losesAllNonManaAbilities()) {
+                continue;
+            }
+            if (hasActiveStaticEffect(gameData, source, LookAtFaceDownCreaturesEffect.class)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1949,7 +1995,9 @@ public class GameQueryService {
         if (battlefield == null) return false;
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof SpellCastingAbilityGrantingEffect grant
+                CardEffect activeEffect = staticEffectConditionResolver.resolve(
+                        gameData, permanent, playerId, effect);
+                if (activeEffect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == ability
                         && grant.appliesToSourceZone(sourceZone)
                         && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
@@ -2381,6 +2429,26 @@ public class GameQueryService {
             }
         }
         return controllerHasFloatingHexproofIgnore(gameData, controllerId);
+    }
+
+    /**
+     * Returns whether ward abilities of creatures controlled by the controller's opponents should
+     * be suppressed by a static effect on the controller's battlefield.
+     */
+    public boolean preventsOpponentCreatureWardTriggers(GameData gameData, UUID controllerId) {
+        if (controllerId == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PreventOpponentCreatureWardTriggersEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -3930,7 +3998,8 @@ public class GameQueryService {
                 && !accumulator.isLandSubtypeOverriding()
                 && !accumulator.isCardTypeOverriding()
                 && accumulator.getGrantedSupertypes().isEmpty()
-                && accumulator.getName() == null) {
+                && accumulator.getName() == null
+                && !accumulator.isTurnFaceUpPrevented()) {
             return StaticBonus.NONE;
         }
 
@@ -4021,7 +4090,8 @@ public class GameQueryService {
                 removedKeywords, accumulator.isBasePTOverridden(),
                 accumulator.getBasePowerOverride() != null ? accumulator.getBasePowerOverride() : 0,
                 accumulator.getBaseToughnessOverride() != null ? accumulator.getBaseToughnessOverride() : 0,
-                losesAllAbilities, losesAllNonManaAbilities, ptSwitched, accumulator.getName());
+                losesAllAbilities, losesAllNonManaAbilities, ptSwitched, accumulator.getName(),
+                accumulator.isTurnFaceUpPrevented());
     }
 
     private void applyFloatingStaticGrantsFromSource(GameData gameData, StaticSource sourceSlot,

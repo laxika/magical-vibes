@@ -323,6 +323,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record SacrificeOneOfTwoThenCounterOnOther(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,
                                                UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
 
+    /** Trial of Agony: the targeted creatures' controller picks which one receives damage; the
+     *  other one can't block this turn. */
+    record DealDamageToOneOfTwoThenOtherCantBlock(UUID choosingPlayerId, Card sourceCard, UUID controllerId,
+                                                  UUID firstPermanentId, UUID secondPermanentId, int damage)
+            implements PermanentChoiceContext {}
+
     /** Cannibalize: the spell's controller picks which target to exile; the other gets two +1/+1 counters. */
     record CannibalizeChoice(Card sourceCard, UUID controllerId,
                              UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
@@ -499,7 +505,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Targeted ability whose source permanent triggered, with the target chosen as it is put on the stack. */
     record SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                       String eventDescription, UUID sourcePermanentId,
-                                      Integer eventValue) implements PermanentChoiceContext {
+                                      Integer eventValue, boolean optionalTarget) implements PermanentChoiceContext {
+        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          String eventDescription, UUID sourcePermanentId,
+                                          Integer eventValue) {
+            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, eventValue, false);
+        }
+
         public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
             this(sourceCard, controllerId, effects, "leaves-the-battlefield", null, null);
         }

@@ -407,7 +407,8 @@ public class StackResolutionService {
                 || entry.isCastWithEscape() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
         } else {
-            graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
+            graveyardService.addCardToGraveyardFromSpell(gameData, ownerId, physicalCard,
+                    entry.getControllerId());
         }
     }
 
@@ -580,7 +581,8 @@ public class StackResolutionService {
                     .card(card)
                     .text(" fizzles (enchanted creature card no longer in a graveyard).")
                     .build());
-            graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), card);
+            graveyardService.addCardToGraveyardFromSpell(gameData, entry.getOwnerId(), card,
+                    entry.getControllerId());
             log.info("Game {} - {} fizzles, reanimation target {} not in graveyard", gameData.id, card.getName(), entry.getTargetId());
             return;
         }
@@ -594,7 +596,8 @@ public class StackResolutionService {
                 gameData, controllerId, graveyardCard, enterTapped);
         if (creature == null) {
             // Blocked from entering (e.g. Grafdigger's Cage): the Aura has nothing to enchant.
-            graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), card);
+            graveyardService.addCardToGraveyardFromSpell(gameData, entry.getOwnerId(), card,
+                    entry.getControllerId());
             log.info("Game {} - {} put into graveyard, reanimated creature could not enter", gameData.id, card.getName());
             return;
         }
@@ -749,9 +752,16 @@ public class StackResolutionService {
             }
 
             Permanent enchPerm = createEnteringPermanent(entry, card, characteristics);
+            if (card.getSelectedRoomDoor() != null) {
+                enchPerm.unlockRoomDoor(card.getSelectedRoomDoor());
+            }
             // Pass cast X / kicked so "enters with X counters" replacements and ETB triggers that
             // read XValue (e.g. The Meathook Massacre) see the paid X.
             putResolvedPermanentOntoBattlefield(gameData, controllerId, enchPerm, entry);
+            if (card.getSelectedRoomDoor() != null) {
+                triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
+                        gameData, controllerId, enchPerm, card.getSelectedRoomDoor());
+            }
             Card enteredCard = enchPerm.getCard();
             logEnterBattlefield(gameData, enteredCard, controllerId);
 
@@ -1024,7 +1034,8 @@ public class StackResolutionService {
                     exileService.exileCard(gameData, entry.getOwnerId(), dispositionCard);
                     gameLogService.append(gameData, GameLog.isExiled(dispositionCard));
                 } else {
-                    graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), dispositionCard);
+                    graveyardService.addCardToGraveyardFromSpell(gameData, entry.getOwnerId(), dispositionCard,
+                            entry.getControllerId());
                 }
             }
         } else {
@@ -1244,7 +1255,8 @@ public class StackResolutionService {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), " is exiled with a dream counter."));
         } else {
-            boolean enteredGraveyard = graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
+            boolean enteredGraveyard = graveyardService.addCardToGraveyardFromSpell(
+                    gameData, ownerId, physicalCard, entry.getControllerId());
             if (enteredGraveyard) {
                 triggerCollectionService.collectSpellHauntTrigger(gameData, physicalCard, entry.getControllerId());
             }

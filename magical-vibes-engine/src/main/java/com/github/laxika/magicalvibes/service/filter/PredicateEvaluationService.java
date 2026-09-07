@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithControlledRoomPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNameStartsWithPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
@@ -70,6 +72,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -168,6 +171,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
@@ -537,6 +541,8 @@ public class PredicateEvaluationService {
             }
             case CardNamedPredicate p ->
                     p.cardName().equals(card.getName());
+            case CardNameStartsWithPredicate p ->
+                    card.getName() != null && card.getName().startsWith(p.prefix());
             case CardNameInControllerGraveyardPredicate ignored ->
                     gameData != null && cardOwnerId != null
                             && gameData.playerGraveyards.getOrDefault(cardOwnerId, List.of()).stream()
@@ -558,6 +564,15 @@ public class PredicateEvaluationService {
                             sourcePermanentId, sourcePowerAtTrigger, xValue));
             case CardControllerDoesNotOwnPredicate ignored ->
                     card.getOwnerId() != null && cardOwnerId != null && !card.getOwnerId().equals(cardOwnerId);
+            case CardDoesNotShareNameWithControlledRoomPredicate ignored ->
+                    cardOwnerId != null && gameData != null
+                            && RoomNameSupport.allDoorNames(card).stream()
+                            .noneMatch(name -> gameData.playerBattlefields
+                                    .getOrDefault(cardOwnerId, List.of()).stream()
+                                    .filter(permanent -> gameQueryService.hasEffectiveSubtype(
+                                            gameData, permanent, CardSubtype.ROOM))
+                                    .flatMap(permanent -> RoomNameSupport.unlockedDoorNames(permanent).stream())
+                                    .anyMatch(name::equals));
             case CardTruePredicate ignored ->
                     true;
         };
@@ -1321,6 +1336,11 @@ public class PredicateEvaluationService {
                 }
                 yield sourcePermanent != null && sourcePermanent.getId().equals(permanent.getId());
             }
+            case PermanentIsTriggeringPermanentPredicate ignored -> {
+                UUID triggeringPermanentId = filterContext == null
+                        ? null : filterContext.triggeringPermanentId();
+                yield triggeringPermanentId != null && triggeringPermanentId.equals(permanent.getId());
+            }
             case PermanentIsSourceCardPredicate ignored ->
                     sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
             case PermanentIsSpecificPermanentPredicate specific ->
@@ -1938,6 +1958,23 @@ public class PredicateEvaluationService {
             case PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate ignored ->
                     hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersStatic(permanent, context);
             case PermanentInCombatWithSourcePredicate ignored -> inCombatWithSourceStatic(permanent, context);
+            case PermanentHasSameNameAsSourcePredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                UUID sourceCardId = context == null ? null : context.sourceCardId();
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
+                if (sourcePermanent == null && context != null) {
+                    sourcePermanent = context.sourcePermanentSnapshot();
+                }
+                if (sourcePermanent == null) {
+                    yield false;
+                }
+                yield namesMatch(
+                        effectiveName(permanent, context),
+                        effectiveName(sourcePermanent, context));
+            }
             case PermanentHasSourceChosenSubtypePredicate ignored -> {
                 CardSubtype chosen = sourceChosenSubtype(context);
                 yield chosen != null
@@ -2034,6 +2071,10 @@ public class PredicateEvaluationService {
                 }
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 yield source != null && source.getId().equals(permanent.getId());
+            }
+            case PermanentIsTriggeringPermanentPredicate ignored -> {
+                UUID triggeringPermanentId = context == null ? null : context.triggeringPermanentId();
+                yield triggeringPermanentId != null && triggeringPermanentId.equals(permanent.getId());
             }
             case PermanentSharesColorWithEquippedCreaturePredicate ignored -> {
                 // Recursion-safe: both colour sets come from the in-flight layer state (or the

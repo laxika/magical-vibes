@@ -279,6 +279,11 @@ public class BattlefieldPlacementService {
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(permanent.getCard());
+        if (permanent.isFaceDown()) {
+            gameData.faceDownPermanentsEnteredBattlefieldThisTurn
+                    .computeIfAbsent(controllerId, k -> new ArrayList<>())
+                    .add(permanent.getCard());
+        }
         if (permanent.isFaceDown() && permanent.getFaceDownCardTypes().contains(CardType.CREATURE)) {
             gameData.faceDownCreaturesEnteredBattlefieldThisTurn
                     .computeIfAbsent(controllerId, k -> new ArrayList<>())

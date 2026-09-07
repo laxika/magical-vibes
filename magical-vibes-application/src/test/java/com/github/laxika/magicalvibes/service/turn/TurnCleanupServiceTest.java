@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffe
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeToSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeToSevenMinusCardTypesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -38,6 +39,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -876,6 +878,29 @@ class TurnCleanupServiceTest {
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("Sets opponents' hand size from the controller's graveyard card types when delirium is met")
+        void setByControllerGraveyardCardTypes() {
+            Card winter = createCardWithName("Winter, Misanthropic Guide");
+            winter.addEffect(EffectSlot.STATIC,
+                    new SetOpponentMaximumHandSizeToSevenMinusCardTypesInGraveyardEffect());
+            gd.playerBattlefields.get(player2Id).add(new Permanent(winter));
+
+            gd.playerGraveyards.put(player2Id, List.of(
+                    cardOfType(CardType.CREATURE),
+                    cardOfType(CardType.LAND),
+                    cardOfType(CardType.INSTANT),
+                    cardOfType(CardType.ENCHANTMENT)));
+
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(3);
+        }
+
+        private Card cardOfType(CardType type) {
+            Card card = new Card();
+            card.setType(type);
+            return card;
         }
 
         @Test

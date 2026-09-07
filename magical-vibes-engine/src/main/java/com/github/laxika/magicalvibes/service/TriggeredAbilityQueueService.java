@@ -431,13 +431,30 @@ public class TriggeredAbilityQueueService {
                     pending.sourceCard(),
                     TriggerTargetCollector.Options.END_STEP,
                     sourcePermanentSnapshot);
+            boolean optionalTarget = pending.optionalTarget()
+                    || hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
-                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                        "'s " + pending.eventDescription() + " trigger has no valid targets."));
-                log.info("Game {} - {} {} trigger skipped (no valid targets)",
-                        gameData.id, pending.sourceCard().getName(), pending.eventDescription());
+                if (optionalTarget) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            pending.sourceCard(),
+                            pending.controllerId(),
+                            pending.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(pending.effects()),
+                            null,
+                            pending.sourcePermanentId()));
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s " + pending.eventDescription() + " trigger triggers without a target."));
+                    log.info("Game {} - {} {} trigger pushed without a target",
+                            gameData.id, pending.sourceCard().getName(), pending.eventDescription());
+                } else {
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s " + pending.eventDescription() + " trigger has no valid targets."));
+                    log.info("Game {} - {} {} trigger skipped (no valid targets)",
+                            gameData.id, pending.sourceCard().getName(), pending.eventDescription());
+                }
                 continue;
             }
 
@@ -446,9 +463,15 @@ public class TriggeredAbilityQueueService {
             String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
                     : result.canTargetPlayers()
                             ? (result.opponentOnly() ? "target opponent" : "target player")
-                            : "target creature";
-            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
-                    pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+                            : optionalTarget ? "target creature or yourself to decline" : "target creature";
+            if (optionalTarget) {
+                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), result.validTargets(),
+                        List.of(pending.controllerId()),
+                        pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+            } else {
+                playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                        pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+            }
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s " + pending.eventDescription() + " trigger - choose " + targetDescription + "."));

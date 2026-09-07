@@ -39,6 +39,8 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEff
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageDealerAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -1263,6 +1265,14 @@ public class CombatDamageService {
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s metalcraft ability triggers:"));
+                    continue;
+                }
+
+                if (effect instanceof ChooseModeNotYetChosenEffect modal) {
+                    gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                            creature.getCard(), attackerId, new ChooseOneEffect(modal.options()),
+                            creature.getId(), false, true, null));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(creature.getCard()));
                     continue;
                 }
 
@@ -2880,6 +2890,8 @@ public class CombatDamageService {
             }
             gameData.recordCombatDamageToPlayer(defenderId, damageDealt);
             gameData.recordDamageToPlayer(defenderId, damageDealt, Math.min(damageDealt, artifactDamage));
+            triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                    gameData, defenderId, damageDealt);
             for (var sourceDamage : state.combatDamageDealtToPlayer.entrySet()) {
                 if (sourceDamage.getValue() > 0) {
                     triggerCollectionService.checkOpponentDealtDamageTriggers(
@@ -2983,6 +2995,8 @@ public class CombatDamageService {
                     gameData.recordDamageToPlayer(targetId, redirectEffective,
                             artifactSource ? redirectEffective : 0);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
+                    triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                            gameData, targetId, redirectEffective);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(
                             gameData, targetId, redirect.damageSourceId(), redirectEffective);
                 }
@@ -3061,6 +3075,8 @@ public class CombatDamageService {
                 }
                 gameData.recordDamageToPlayer(targetId, effective,
                         reflection.eyeCard().hasType(CardType.ARTIFACT) ? effective : 0);
+                triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                        gameData, targetId, effective);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, targetId, null, effective);
             }
@@ -3162,6 +3178,20 @@ public class CombatDamageService {
         // CR 614 — Replacement effect: if a matching creature would deal combat damage to a
         // player, instead that player mills that many cards (e.g. Undead Alchemist).
         if (damage > 0 && redirectTarget == null) {
+            if (damagePreventionService.hasControllerOpponentDamageMillReplacement(
+                    gameData, sourceControllerId, defenderId, damage)) {
+                gameLogService.append(gameData, GameLog.cardThen(atk.getCard(),
+                        "'s " + damage + " combat damage to " + gameData.playerIdToName.get(defenderId)
+                                + " is prevented and replaced with milling."));
+                for (UUID opponentId : gameData.orderedPlayerIds) {
+                    if (!opponentId.equals(sourceControllerId)) {
+                        graveyardService.resolveMillPlayer(gameData, opponentId, damage);
+                    }
+                }
+                state.combatDamageDealt.merge(atk, 0, Integer::sum);
+                return;
+            }
+
             UUID atkControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
             ReplaceCombatDamageWithMillEffect replacement = atkControllerId == null
                     ? null : findCombatDamageMillReplacement(gameData, atkControllerId, atk);

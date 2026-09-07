@@ -133,6 +133,11 @@ override `modifyForetellCost` for the generic action cost and
 `allowsForetellDuringAnyTurn` for a source-controller timing permission; ordinary spell-cost
 modifiers do not affect foretell.
 
+Room-door unlock-cost modifiers use the same battlefield handler registry. A handler may override
+`modifyRoomUnlockCost` for the generic mana component of a Room door's unlock cost; ordinary
+spell-cost modifiers do not affect Room-door unlocks. `CastingCostService.getRoomUnlockCost` is
+the shared path for previews and payment.
+
 ## Infrastructure
 
 - `cast/CostModificationHandlerBean.java` — interface.
@@ -164,6 +169,9 @@ modifiers do not affect foretell.
 - `cast/costmod/ForetellCostReductionEffectHandler.java` — battlefield handler for
   `ForetellCostReductionEffect(int, boolean)`; contributes through the foretell action-cost and
   any-player-turn channels for the source controller.
+- `cast/costmod/ReduceRoomUnlockCostEffectHandler.java` — battlefield handler for
+  `ReduceRoomUnlockCostEffect(int)`; contributes only through the generic Room-door unlock-cost
+  channel for the source controller (Inquisitive Glimmer, `DSK`).
 - `cast/costmod/ReduceCastCostForChosenNameSpellsEffectHandler.java` — battlefield handler for
   `ReduceCastCostForChosenNameSpellsEffect(int amount)`; applies only to the source controller's spells
   whose name equals the source permanent's `chosenName` (Council of the Absolute, {2}). Its own record

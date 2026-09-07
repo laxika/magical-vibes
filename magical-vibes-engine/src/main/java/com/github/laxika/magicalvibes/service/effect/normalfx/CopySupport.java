@@ -100,6 +100,9 @@ public class CopySupport {
         copy.setCardText(original.getCardText());
         copy.setPower(original.getPower());
         copy.setToughness(original.getToughness());
+        if (original.getRoomDoorManaCosts().size() == 2) {
+            copy.setRoomDoorManaCosts(original.getRoomDoorManaCosts());
+        }
         Set<Keyword> copiedKeywords = original.getKeywords().isEmpty()
                 ? EnumSet.noneOf(Keyword.class)
                 : EnumSet.copyOf(original.getKeywords());
