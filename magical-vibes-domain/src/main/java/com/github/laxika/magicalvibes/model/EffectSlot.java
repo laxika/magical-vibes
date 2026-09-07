@@ -178,6 +178,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller surveils. Checked by
      *  {@code TriggerCollectionService.checkSurveilTriggers}. */
     ON_CONTROLLER_SURVEILS,
+    /** Triggers whenever this permanent's controller completes a dungeon. */
+    ON_CONTROLLER_COMPLETES_DUNGEON,
+    /** Triggers whenever this permanent's controller rolls one or more dice. */
+    ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
     ON_CONTROLLER_BENDS,
     /** Triggers whenever this permanent's controller collects evidence. */
     ON_CONTROLLER_COLLECTS_EVIDENCE,
@@ -668,9 +672,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers whenever the controller completes a dungeon, while this card is in their graveyard. */
+    GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON,
     /** Triggers whenever the controller surveils, while this card is in the controller's
      *  graveyard. Checked per-card inside {@code TriggerCollectionService.checkSurveilTriggers}. */
     GRAVEYARD_ON_CONTROLLER_SURVEILS,
+    /** Triggers whenever the controller rolls a natural 20, while this card is in their graveyard. */
+    GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20,
     /** Triggers whenever the controller activates an exhaust ability, while this card is in the
      *  controller's graveyard. Checked per-card inside
      *  {@code TriggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard}. */

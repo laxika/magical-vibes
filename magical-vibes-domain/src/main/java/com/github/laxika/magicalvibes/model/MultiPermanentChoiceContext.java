@@ -282,9 +282,17 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
-    record ReturnTargetPermanentsToHand(CardEffect thenEffect) implements MultiPermanentChoiceContext {
+    record ReturnTargetPermanentsToHand(CardEffect thenEffect, int requiredCount) implements MultiPermanentChoiceContext {
+        public ReturnTargetPermanentsToHand(CardEffect thenEffect) {
+            this(thenEffect, 0);
+        }
+
+        public ReturnTargetPermanentsToHand(int requiredCount) {
+            this(null, requiredCount);
+        }
+
         public ReturnTargetPermanentsToHand() {
-            this(null);
+            this(null, 0);
         }
     }
 

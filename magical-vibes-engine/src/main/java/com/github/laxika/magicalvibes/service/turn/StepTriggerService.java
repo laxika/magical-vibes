@@ -119,6 +119,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
@@ -3190,11 +3191,14 @@ public class StepTriggerService {
      * Scans every battlefield for {@code END_OF_COMBAT_TRIGGERED} abilities and pushes them onto
      * the stack as the end of combat step begins (CR 511.2). Unlike the postcombat-main scan this
      * runs on all players' permanents, because "at end of combat" is not restricted to the
-     * controller's own turn. The triggers are non-targeting.
+     * controller's own turn. Also collects emblems that trigger at the end of their controller's
+     * first combat phase.
      *
      * @param gameData the current game state to modify
      */
     public void handleEndOfCombatTriggers(GameData gameData) {
+        collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_OF_FIRST_COMBAT);
+
         List<DelayedEndOfCombatTrigger> delayedTriggers =
                 gameData.drainDelayedActions(DelayedEndOfCombatTrigger.class);
         for (DelayedEndOfCombatTrigger delayedTrigger : delayedTriggers) {
@@ -3240,6 +3244,10 @@ public class StepTriggerService {
             log.info("Game {} - {} end-of-combat trigger pushed onto stack",
                     gameData.id, perm.getCard().getName());
         });
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
+            triggerCollectionService.processNextEmblemTriggerTarget(gameData);
+        }
     }
 
     /**
@@ -4302,7 +4310,7 @@ public class StepTriggerService {
                         pending.copiedCard(),
                         pending.controllerId(),
                         sourceName + "'s delayed trigger — create token copy",
-                        new ArrayList<>(List.of(new CreateTokenCopyOfSourceEffect()))
+                        new ArrayList<>(List.of(pending.copyEffect() != null ? pending.copyEffect() : new CreateTokenCopyOfSourceEffect()))
                 ));
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard() != null ? pending.sourceCard() : pending.copiedCard(),
@@ -5623,8 +5631,12 @@ public class StepTriggerService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                queueBeginningOfCombatTriggers(gameData, activePlayerId, perm,
+                List<CardEffect> combatEffects = new ArrayList<>(
                         perm.getCard().getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
+                combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, perm, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
+                queueBeginningOfCombatTriggers(gameData, activePlayerId, perm,
+                        combatEffects);
             }
         }
 
@@ -5637,14 +5649,22 @@ public class StepTriggerService {
             }
         }
 
-        gameData.forEachPermanent((playerId, perm) ->
-                queueBeginningOfCombatTriggers(gameData, playerId, perm,
-                        perm.getCard().getEffects(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED)));
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> combatEffects = new ArrayList<>(
+                    perm.getCard().getEffects(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED));
+            combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, perm, EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED));
+            queueBeginningOfCombatTriggers(gameData, playerId, perm, combatEffects);
+        });
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (!playerId.equals(activePlayerId)) {
-                queueBeginningOfCombatTriggers(gameData, playerId, perm,
+                List<CardEffect> combatEffects = new ArrayList<>(
                         perm.getCard().getEffects(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED));
+                combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, perm, EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED));
+                queueBeginningOfCombatTriggers(gameData, playerId, perm,
+                        combatEffects);
             }
         });
 

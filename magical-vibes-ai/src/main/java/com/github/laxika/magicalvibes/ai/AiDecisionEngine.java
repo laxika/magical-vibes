@@ -495,7 +495,7 @@ public abstract class AiDecisionEngine {
 
     protected boolean tryPlayLand(GameData gameData) {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(aiPlayer.getId(), 0);
-        if (landsPlayed >= gameData.getMaxLandsThisTurn(aiPlayer.getId())) {
+        if (landsPlayed >= (gameData.getMaxLandsThisTurn(aiPlayer.getId()) + gameQueryService.getConditionalAdditionalLandPlays(gameData, aiPlayer.getId()))) {
             return false;
         }
 
@@ -2696,10 +2696,15 @@ public abstract class AiDecisionEngine {
                     .count());
         }
         if (xScaledToHandEffect != null) {
-            maxX = Math.min(maxX, (int) graveyard.stream()
+            var matchingCards = graveyard.stream()
                     .filter(c -> predicateEvaluationService.matchesCardPredicate(
                             c, xScaledToHandEffect.filter(), card.getId()))
-                    .count());
+                    .toList();
+            int matchingCount = card.getMultiTargetConstraint()
+                    == com.github.laxika.magicalvibes.model.MultiTargetConstraint.DIFFERENT_MANA_VALUES
+                    ? (int) matchingCards.stream().map(Card::getManaValue).distinct().count()
+                    : matchingCards.size();
+            maxX = Math.min(maxX, matchingCount);
         }
         if (exactXGraveyardChoice != null) {
             maxX = Math.min(maxX,

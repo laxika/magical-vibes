@@ -25,6 +25,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| ETB chooses a graveyard instant or sorcery, then rolls a d20 for alternate outcomes | `a/AberrantMindSorcerer.java` | `target(GraveyardCardPredicateTargetFilter(instantOrSorcery, CONTROLLERS_GRAVEYARD)).addEffect(ON_ENTER_BATTLEFIELD, RollD20Effect(MayEffect(ReturnCardFromGraveyardEffect(TOP_OF_OWNERS_LIBRARY), ...), ReturnCardFromGraveyardEffect(HAND)))` — the roll occurs on resolution while preserving the already-chosen graveyard target; the 1-9 top-of-library branch is optional, and the 10-20 hand branch is mandatory |
 | Disguise creature with face-down ward | `d/DefenestratedPhantom.java` | `addMorph(faceUpCost)` supplies the disguise alternate cost; wrap `CounterUnlessPaysEffect(2)` in `ConditionalEffect(new SourceIsFaceDown(), ...)` on `ON_BECOMES_TARGET_OF_OPPONENT_SPELL` so the ward exists only while face down. |
 | Tribute + conditional ETB | `o/Ornitharch.java` | STATIC `TributeEffect(N)` records the opponent's as-enters choice; wrap the conditional ETB in `TributeNotPaidEffect` so it is dropped when the full counter amount entered on the creature |
 | Infect creature | `b/BlackcleaveGoblin.java` | Haste + Infect auto-loaded from Scryfall. Infect deals damage as -1/-1 counters to creatures and poison counters to players. |

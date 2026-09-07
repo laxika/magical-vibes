@@ -569,8 +569,14 @@ public class PlayerInputService {
     public void beginJinnieFayTokenChoice(GameData gameData, UUID controllerId, Card sourceCard,
                                            CreateTokenEffect originalToken, int amount, int power,
                                            int toughness, String sourceSetCode) {
+        beginJinnieFayTokenChoice(gameData, controllerId, sourceCard, originalToken, amount, power, toughness, sourceSetCode, java.util.Map.of());
+    }
+
+    public void beginJinnieFayTokenChoice(GameData gameData, UUID controllerId, Card sourceCard,
+                                           CreateTokenEffect originalToken, int amount, int power,
+                                           int toughness, String sourceSetCode, java.util.Map<com.github.laxika.magicalvibes.model.EffectSlot, java.util.List<com.github.laxika.magicalvibes.model.EffectRegistration>> additionalEffects) {
         ChoiceContext.JinnieFayTokenChoice ctx = new ChoiceContext.JinnieFayTokenChoice(
-                controllerId, sourceCard, originalToken, amount, power, toughness, sourceSetCode);
+                controllerId, sourceCard, originalToken, amount, power, toughness, sourceSetCode, additionalEffects);
         List<String> options = List.of(
                 com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.CAT_OPTION,
                 com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.DOG_OPTION,

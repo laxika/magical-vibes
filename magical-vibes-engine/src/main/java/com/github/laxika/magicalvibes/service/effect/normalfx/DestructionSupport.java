@@ -961,7 +961,7 @@ public class DestructionSupport {
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature);
         CreateTokenEffect additionalFrog = TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                 gameData, controllerId, token);
-        int totalAmount = tokenCount * tokenMultiplier;
+        int totalAmount = gameQueryService.getTokenCreationAmount(gameData, controllerId, tokenCount, token.subtypes(), baseTokenIsCreature);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         for (int count = 0; count < totalAmount + (additionalFrog != null && totalAmount > 0 ? 1 : 0); count++) {

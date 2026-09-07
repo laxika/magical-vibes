@@ -1194,6 +1194,7 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
+                snapshotBeheldPower(gameData, target);
                 snapshotChosenPermanentStats(gameData, target,
                         gameQueryService.getEffectivePower(gameData, target),
                         gameQueryService.getEffectiveToughness(gameData, target));
@@ -1211,6 +1212,14 @@ public class PermanentRemovalService {
             }
         }
         return Optional.empty();
+    }
+
+    private void snapshotBeheldPower(GameData gameData, Permanent target) {
+        for (StackEntry entry : gameData.stack) {
+            if (target.getId().equals(entry.getBeholdPermanentId())) {
+                entry.setBeholdPower(Math.max(0, gameQueryService.getEffectivePower(gameData, target)));
+            }
+        }
     }
 
     private void snapshotChosenPermanentStats(GameData gameData, Permanent target, int power, int toughness) {
@@ -1551,6 +1560,7 @@ public class PermanentRemovalService {
                     gameData, target, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                gameData.creatureNamesDiedThisTurn.add(target.getCard().getName());
                 gameData.creaturesPutIntoOwnGraveyardThisTurnCount.merge(ownerId, 1, Integer::sum);
                 if (!target.getCard().isToken()) {
                     gameData.nontokenCreatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);

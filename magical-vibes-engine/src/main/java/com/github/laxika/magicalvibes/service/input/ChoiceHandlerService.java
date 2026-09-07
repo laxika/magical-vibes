@@ -195,6 +195,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.RestrictedManaColorChoice ctx) {
+            handleRestrictedManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.ManaColorSpellChoice ctx) {
             handleManaColorSpellChosen(gameData, player, colorName, ctx);
             return;
@@ -1061,6 +1066,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsRiot()) {
             manaPool.add(manaColor, 1);
             manaPool.addRiotGrantingMana(manaColor, 1);
+            if (ctx.fromTreasureSource()) {
+                manaPool.addTreasureMana(manaColor, 1);
+            }
             if (ctx.fromBasicLandSource()) {
                 manaPool.addBasicLandManaTag(manaColor, 1);
             }
@@ -1085,6 +1093,7 @@ public class ChoiceHandlerService {
                         .withSnowSource(ctx.fromSnowSource())
                         .withCaveSource(ctx.fromCaveSource())
                         .withBasicLandSource(ctx.fromBasicLandSource());
+                nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -1141,6 +1150,9 @@ public class ChoiceHandlerService {
                 if (ctx.fromBasicLandSource()) {
                     manaPool.addBasicLandManaTag(manaColor, 1);
                 }
+                if (ctx.fromTreasureSource()) {
+                    manaPool.addTreasureMana(manaColor, 1);
+                }
             }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
@@ -1166,6 +1178,7 @@ public class ChoiceHandlerService {
                     nextCtx = nextCtx.withPlaneswalkerSpellOnly();
                 }
                 List<String> colors = nextColors.stream().map(Enum::name).toList();
+                nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
                 inputCompletionService.publishStateAfterInput(gameData);
@@ -1271,6 +1284,9 @@ public class ChoiceHandlerService {
             manaPool.add(manaColor, amount);
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, amount);
+            }
+            if (ctx.fromTreasureSource()) {
+                manaPool.addTreasureMana(manaColor, amount);
             }
             if (ctx.fromCaveSource()) {
                 manaPool.addCaveManaTag(manaColor, amount);
@@ -3110,7 +3126,7 @@ public class ChoiceHandlerService {
                 : ctx.originalToken();
         List<UUID> createdIds = permanentControlSupport.applyCreateTokenAfterJinnieFayChoice(
                 gameData, ctx.controllerId(), replacement, ctx.amount(), ctx.sourceSetCode(),
-                replace ? (cat ? 2 : 3) : ctx.power(), replace ? (cat ? 2 : 1) : ctx.toughness());
+                replace ? (cat ? 2 : 3) : ctx.power(), replace ? (cat ? 2 : 1) : ctx.toughness(), replace ? Map.of() : ctx.additionalEffects());
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry != null) {
             pendingEntry.getCreatedPermanentIds().addAll(createdIds);

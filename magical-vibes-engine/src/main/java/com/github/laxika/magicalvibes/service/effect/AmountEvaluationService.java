@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
+import com.github.laxika.magicalvibes.model.amount.BeheldPower;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsDiscardedThisResolution;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
+import com.github.laxika.magicalvibes.model.amount.CompletedDungeonsCount;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.ControllerSpeed;
@@ -131,6 +133,7 @@ import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.amount.LowestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.SnowManaSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
@@ -256,6 +259,8 @@ public class AmountEvaluationService {
                     ctx.xValue();
             case SnowManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId());
+            case TreasureManaSpentToCast ignored ->
+                    ctx.sourceCard() == null ? 0 : gameData.getSpellCastTreasureManaSpent(ctx.sourceCard().getId());
             case CaveManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastCaveManaSpent(ctx.sourceCard().getId());
             case EventValue ignored ->
@@ -286,6 +291,8 @@ public class AmountEvaluationService {
             case DuringControllerTurn d ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId)
                             ? evaluate(gameData, d.amount(), ctx) : 0;
+            case CompletedDungeonsCount ignored ->
+                    gameData.completedDungeonsByPlayer.getOrDefault(ctx.controllerId(), Set.of()).size();
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
             case PermanentCounterSum s ->
@@ -606,6 +613,8 @@ public class AmountEvaluationService {
                     triggeringSpellColorCount(gameData, ctx);
             case ChosenPermanentPower ignored ->
                     chosenPermanentEffectivePower(gameData, ctx);
+            case BeheldPower ignored ->
+                    beheldPower(gameData, ctx);
             case ChosenCreatureOrWarpedCardPower ignored ->
                     chosenCreatureOrWarpedCardPower(gameData, ctx);
             case ChosenNumberOnSource ignored ->
@@ -694,6 +703,18 @@ public class AmountEvaluationService {
         Card chosenCard = entry.getChosenObjectCard();
         return chosenCard == null || chosenCard.getPower() == null
                 ? 0 : Math.max(0, chosenCard.getPower());
+    }
+
+    private int beheldPower(GameData gameData, AmountContext ctx) {
+        StackEntry entry = ctx.stackEntry();
+        if (entry == null) return 0;
+        if (entry.getBeholdPermanentId() != null) {
+            Permanent chosen = gameQueryService.findPermanentById(gameData, entry.getBeholdPermanentId());
+            if (chosen != null) {
+                return Math.max(0, gameQueryService.getEffectivePower(gameData, chosen));
+            }
+        }
+        return Math.max(0, entry.getBeholdPower());
     }
 
     private int countOtherAttackersSharingCreatureTypeWithTarget(GameData gameData, AmountContext ctx) {
@@ -824,6 +845,7 @@ public class AmountEvaluationService {
             case XValue ignored -> true;
             case ManaSpentToCast ignored -> true;
             case SnowManaSpentToCast ignored -> false;
+            case TreasureManaSpentToCast ignored -> false;
             case Scaled s -> referencesXValue(s.amount());
             case Divided d -> referencesXValue(d.amount());
             case HalvedRoundedUp h -> referencesXValue(h.amount());
@@ -844,6 +866,7 @@ public class AmountEvaluationService {
             case null -> false;
             case EventValue ignored -> true;
             case SnowManaSpentToCast ignored -> false;
+            case TreasureManaSpentToCast ignored -> false;
             case Scaled s -> referencesEventValue(s.amount());
             case Divided d -> referencesEventValue(d.amount());
             case HalvedRoundedUp h -> referencesEventValue(h.amount());
@@ -1120,7 +1143,7 @@ public class AmountEvaluationService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
-                if (!card.isToken()) {
+                if (!card.isToken() && (!amount.nonlandOnly() || !card.hasType(CardType.LAND))) {
                     found.add(card.getManaValue());
                 }
             }

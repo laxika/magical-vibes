@@ -4,12 +4,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Death trigger: immediately returns the dying source card from its owner's graveyard to the
- * battlefield under that owner's control, optionally tapped.
+ * battlefield under that owner's control, optionally tapped and with an optional counter.
  *
  * <p>Battlefield analogue of {@link ReturnSourceCardFromGraveyardToOwnerHandEffect}. Unlike
  * {@link RegisterDelayedSelfReturnFromGraveyardEffect} the return happens right away instead of
- * being queued for a later step, and unlike {@link UndyingReturnEffect} it adds no counter and is
- * granted by a card rather than pushed by the engine.
+ * being queued for a later step, and is granted by a card rather than pushed by the engine.
  *
  * <p>Granted until end of turn by Abnormal Endurance ("gains 'When this creature dies, return it to
  * the battlefield tapped under its owner's control.'") and Undying Malice (which also returns it

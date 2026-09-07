@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -563,9 +564,14 @@ public class AnimationSupport {
         target.setPermanentlyAnimated(true);
         target.setPermanentAnimatedPower(power);
         target.setPermanentAnimatedToughness(toughness);
+        boolean dynamicPowerToughness = effect.power() != null && effect.toughness() != null
+                && (!(effect.power() instanceof Fixed) || !(effect.toughness() instanceof Fixed));
+        CardEffect basePowerToughnessEffect = !dynamicPowerToughness
+                ? new SetBasePowerToughnessEffect(power, toughness)
+                : new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness());
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
-                sourcePermanentId, controllerId, new SetBasePowerToughnessEffect(power, toughness),
-                target.getId(), null, null, EffectDuration.PERMANENT, 0));
+                sourcePermanentId, controllerId, basePowerToughnessEffect, target.getId(), null, null,
+                EffectDuration.PERMANENT, 0));
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             if (!target.getGrantedSubtypes().contains(subtype)) {
@@ -659,6 +665,45 @@ public class AnimationSupport {
         log.info("Game {} - {} becomes a {}/{} creature while {} is on the battlefield",
                 gameData.id, target.getCard().getName(), power, toughness,
                 entry.getCard().getName());
+    }
+
+    /**
+     * TARGET scope, WHILE_SOURCE_REMAINS_TAPPED duration — target artifact becomes a 4/4 creature
+     * for as long as the source permanent remains tapped (The Blackstaff of Waterdeep).
+     */
+    public void animateWhileSourceRemainsTapped(GameData gameData, StackEntry entry,
+                                                AnimatePermanentsEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent source = sourcePermanentId == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
+        if (source == null || !source.isTapped() || sourceSnapshot == null
+                || source.getUntapSequence() != sourceSnapshot.getUntapSequence()) {
+            return;
+        }
+
+        AmountContext ctx = AmountContext.forStackEntry(entry, target);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), sourcePermanentId, entry.getControllerId(), effect,
+                target.getId(), null, null, EffectDuration.WHILE_SOURCE_REMAINS_TAPPED, 0));
+        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness,
+                EffectDuration.WHILE_SOURCE_REMAINS_TAPPED);
+
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                " becomes a " + power + "/" + toughness
+                        + " artifact creature for as long as " + entry.getCard().getName()
+                        + " remains tapped."));
+        log.info("Game {} - {} becomes a {}/{} creature while {} remains tapped",
+                gameData.id, target.getCard().getName(), power, toughness, entry.getCard().getName());
     }
 
     /**

@@ -412,6 +412,8 @@ public class CombatDamageService {
 
         // Process combat damage to player triggers (e.g. Cephalid Constable)
         processCombatDamageToPlayerTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
+        triggerCollectionService.checkEmblemCombatDamageTriggers(
+                gameData, activeId, defenderId, state.combatDamageDealtToPlayer);
 
         // Process delayed combat damage loot triggers (e.g. Jace, Cunning Castaway's +1)
         processDelayedCombatDamageLootTriggers(gameData, state.combatDamageDealtToPlayer, activeId);
@@ -1605,6 +1607,10 @@ public class CombatDamageService {
                 List<CardEffect> rawEffects = new ArrayList<>();
                 rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
                 rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
 
                 // Unwrap EnchantedPermanentConditionalEffect against the enchanted creature that
                 // dealt the damage, so a granted trigger gated on the creature's characteristics
@@ -2481,6 +2487,8 @@ public class CombatDamageService {
             UUID controllerId = state.combatDamageTargetControllers.get(damagedCreatureId);
             triggerCollectionService.checkAnyCreatureDealtDamageTriggers(
                     gameData, damaged, controllerId, entry.getValue());
+            triggerCollectionService.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+                    gameData, damaged, controllerId, entry.getValue());
         }
     }
 
@@ -2613,6 +2621,21 @@ public class CombatDamageService {
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
                     continue;
                 }
+
+                if (effectToAdd.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effectToAdd.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                    TargetFilter targetFilter = data.card().getEffectTargetIndex(effect) >= 0
+                            ? data.card().getTargetFilter() : null;
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)),
+                            !effectToAdd.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
+                            targetFilter, data.damageDealt(), data.permanentId()));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
+                    log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger awaits target",
+                            gameData.id, data.card().getName());
+                    continue;
+                }
+
                 // The combat damage dealt snapshots onto eventValue so "it deals that much damage"
                 // effects can read it with an EventValue amount (Stuffy Doll).
                 StackEntry triggerEntry = new StackEntry(

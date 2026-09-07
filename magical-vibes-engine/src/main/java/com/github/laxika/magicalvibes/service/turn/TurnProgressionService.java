@@ -614,6 +614,7 @@ public class TurnProgressionService {
         gameData.controllerNoncombatDamageBonusThisTurn.clear();
         gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.playersWhoInvestigatedThisTurn.clear();
+        gameData.playersWhoVenturedIntoDungeonThisTurn.clear();
         gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
         gameData.sacrificedPermanentCountThisTurn.clear();
         gameData.playersWhoSurveilledThisTurn.clear();
@@ -647,6 +648,7 @@ public class TurnProgressionService {
         }
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
+        gameData.playersWhoActivatedEquipAbilityThisTurn.clear();
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
@@ -665,6 +667,7 @@ public class TurnProgressionService {
         gameData.creatureLeftBattlefieldCountThisTurn.clear();
         gameData.nonlandPermanentLeftBattlefieldThisTurn = false;
         gameData.creatureDeathCountThisTurn.clear();
+        gameData.creatureNamesDiedThisTurn.clear();
         gameData.creaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();

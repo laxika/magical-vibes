@@ -523,7 +523,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     e.payLifePerSelectedCard() > 0
                             ? e.payLifePerSelectedCard() : e.loseLifePerSelectedCard(),
                     null, max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), false,
-                    false, e.payLifePerSelectedCard() > 0, null, false, false));
+                    false, e.payLifePerSelectedCard() > 0, null, false, false).withSelectedCardFollowUp(e.selectedCardPredicate(), e.effectIfSelectedCardMatches()));
             return;
         }
 

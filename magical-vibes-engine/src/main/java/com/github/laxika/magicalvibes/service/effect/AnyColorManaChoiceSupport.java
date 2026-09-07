@@ -140,6 +140,16 @@ public final class AnyColorManaChoiceSupport {
                                            Card sourceCard, UUID sourcePermanentId,
                                            UUID recipientPlayerId, boolean fromSnowSource,
                                            boolean fromCaveSource, Set<CardColor> sourceColors) {
+        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount, fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource, sourceColors, false);
+    }
+
+    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameData gameData, UUID playerId,
+                                           AwardAnyColorManaEffect effect, int amount,
+                                           boolean fromCreature, CardSubtype chosenSubtype,
+                                           Card sourceCard, UUID sourcePermanentId,
+                                           UUID recipientPlayerId, boolean fromSnowSource,
+                                           boolean fromCaveSource, Set<CardColor> sourceColors, boolean fromTreasureSource) {
         if (amount <= 0) {
             return false;
         }
@@ -168,6 +178,9 @@ public final class AnyColorManaChoiceSupport {
         } else if (fromSnowSource
                 && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withSnowSource(true);
+        }
+        if (fromTreasureSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+            choiceContext = manaColorChoice.withTreasureSource(true);
         }
         if (fromCaveSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withCaveSource(true);
@@ -202,6 +215,9 @@ public final class AnyColorManaChoiceSupport {
                 if (fromCreature) {
                     manaPool.addCreatureMana(effectiveColor, amount);
                 }
+            }
+            if (fromTreasureSource) {
+                manaPool.addTreasureMana(effectiveColor, amount);
             }
             return false;
         }

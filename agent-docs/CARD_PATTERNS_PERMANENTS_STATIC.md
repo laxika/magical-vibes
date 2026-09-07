@@ -30,6 +30,7 @@ All paths relative to `cards/`.
 | Owned Adventure card in exile grants haste | `h/HowlingGalefang.java` | STATIC ConditionalEffect(new CardsInExileMatchingAtLeast(1, new CardHasAdventurePredicate()), StaticBoostEffect(0, 0, [HASTE], SELF)) — haste as long as the controller owns an Adventure card in exile |
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| Dungeon-room trigger doubler | `h/HamaPasharRuinSeeker.java` | STATIC `AdditionalDungeonRoomTriggerEffect()` — repeats the same dungeon room ability without advancing the dungeon |
 | Oil-counter trigger plus counter-based anthem | `i/IchorplateGolem.java` | ON_ALLY_CREATURE_ENTERS_BATTLEFIELD `EnteringCreatureHasCountersConditionalEffect(OIL, PutCountersOnEnteringCreatureEffect(OIL, 1, false, OIL))` plus STATIC `StaticBoostEffect(1, 1, ALL_OWN_CREATURES, PermanentHasCountersPredicate(OIL))` |
 | Buyback cost reduction | `m/MemoryCrystal.java` | STATIC `ReduceBuybackCostEffect(2)` — the generic mana component of every player's mana buyback costs {2} less |
 | Foretell cost reduction and timing permission | `c/CosmosCharger.java` | STATIC `ForetellCostReductionEffect(1, true)` — your foretell action costs {1} less and may be taken during any player's turn |
@@ -169,6 +170,7 @@ All paths relative to `cards/`.
 | Can't cast noncreature MV/X spells | `g/GaddockTeeg.java` | STATIC NoncreatureSpellsCantBeCastEffect(4, true) — add `false` as the third argument for a controller-only lock (Nullhide Ferox) |
 | Opponents can't cast MV â‰¤ N | `b/BriselaVoiceOfNightmares.java` | STATIC OpponentsCantCastSpellsWithManaValueAtMostEffect(3) |
 | Opponents locked out during your turn | `g/GrandAbolisher.java` | STATIC OpponentsCantCastOrActivateDuringYourTurnEffect |
+| Opponents limited to one dungeon venture each turn | `k/KeenEaredSentry.java` | STATIC OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect + STATIC GrantControllerKeywordEffect(HEXPROOF) |
 | Cast/activate only on own turns | `c/CityOfSolitude.java` | STATIC PlayersCanCastAndActivateOnlyDuringOwnTurnEffect — symmetric; mana abilities included |
 | No instants / non-mana abilities in combat | `h/HandToHand.java` | STATIC PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect — symmetric; only during combat steps |
 | Aura: enchanted creature's controller can't cast creature spells | `b/BrandOfIllOmen.java` | STATIC EnchantedPermanentControllerCantCastSpellTypeEffect(Set.of(CREATURE)) + UPKEEP_TRIGGERED CumulativeUpkeepEffect("{R}") |
@@ -289,6 +291,7 @@ All paths relative to `cards/`.
 | Draw replacement — exile top cards and may play them | `e/EruthTormentedProphet.java` | STATIC `ExileTopCardMayPlayThisTurnEffect(2, false)` — each would-be draw exiles up to two cards from the controller's library and grants normal-cost play permission until end of turn. Detected via `ExileTopCardsMayPlayThisTurnDrawReplacementEffect`; an empty library does not cause a loss |
 | Draw replacement — reveal draw, discard creature unless pay life | `b/BreathstealersCrypt.java` | STATIC BreathstealersCryptDrawReplacementEffect — every draw revealed; creature → discard unless pay 3 life. Detected in `DrawService.performDrawCard`; mayfx pay-or-discard |
 | Draw replacement — Shared Fate exile-and-play | `s/SharedFate.java` | STATIC SharedFateDrawReplacementEffect + AllowCastFromCardsExiledWithSourceEffect(false, EXILER) — each drawer exiles the top card of an opponent's library face down and may look at/play/cast the cards they exiled with the source while it remains on the battlefield |
+| Draw replacement — controller's top-card exile | `a/AsmodeusTheArchfiend.java` | STATIC ExileTopCardFaceDownInsteadOfDrawEffect — the controller's draw is replaced by exiling the top card of their library face down, tracked with the source; an empty library exiles nothing and causes no draw loss |
 | Return-from-GY-instead-of-draw + self-exile GY | `f/ForbiddenCrypt.java` | STATIC ReturnFromGraveyardInsteadOfDrawEffect + STATIC ExileOwnCardsInsteadOfGraveyardEffect — draws are replaced by returning a GY card to hand (lose if GY empty); your cards are exiled instead of hitting your GY |
 | Bushido + battlefield permanent graveyard replacement | `s/SamuraiOfThePaleCurtain.java` | ON_BLOCK + ON_BECOMES_BLOCKED `BoostSelfEffect(1, 1)` + STATIC `ExilePermanentsInsteadOfGraveyardEffect` — exiles permanents leaving the battlefield, while spells and other cards entering a graveyard from other zones are unaffected |
 | Grant flash to spell type | `s/ShimmerMyr.java` | STATIC GrantFlashToCardTypeEffect(ARTIFACT) — controller may cast artifact spells as though they had flash |

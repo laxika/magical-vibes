@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
@@ -485,6 +486,13 @@ public class ActivatedAbilityExecutionService {
                     }
                 });
 
+        if (abilityEffects.stream().anyMatch(PayLifeForEachCardInHandCost.class::isInstance)) {
+            int amount = gameData.playerHands.getOrDefault(playerId, List.of()).size();
+            if (amount > 0) {
+                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+            }
+        }
+
         int xLifeCost = effectiveXValue;
         abilityEffects.stream()
                 .filter(PayXLifeCost.class::isInstance)
@@ -512,9 +520,14 @@ public class ActivatedAbilityExecutionService {
                             GameLog.text(playerName + " pays " + cost.amount() + " energy counter(s)."));
                 });
 
-        boolean shouldExileSelf = abilityEffects.stream().anyMatch(e -> e instanceof ExileSelfCost);
-        if (shouldExileSelf) {
-            permanentRemovalService.removePermanentToExile(gameData, permanent);
+        ExileSelfCost exileSelfCost = abilityEffects.stream()
+                .filter(ExileSelfCost.class::isInstance)
+                .map(ExileSelfCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileSelfCost != null) {
+            permanentRemovalService.removePermanentToExile(
+                    gameData, permanent, exileSelfCost.trackWithSource() ? permanent.getId() : null);
         }
 
         boolean shouldExileEquipment = abilityEffects.stream().anyMatch(ExileSourceEquipmentCost.class::isInstance);
@@ -1177,10 +1190,31 @@ public class ActivatedAbilityExecutionService {
                 boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
                         playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype(), permanent.getCard(),
                         permanent.getId(), null, snowSource,
-                        caveSource, gameQueryService.getEffectiveColors(gameData, permanent));
+                        caveSource, gameQueryService.getEffectiveColors(gameData, permanent),
+                        GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE));
                 if (prompted) {
                     log.info("Game {} - Awaiting {} to choose a mana color ({}, amount={})",
                             gameData.id, player.getUsername(), anyColor.restriction(), picks);
+                }
+            } else if (effect instanceof AwardRestrictedManaOfColorsEffect restrictedOfColors) {
+                int picks = amountEvaluationService.evaluate(gameData, restrictedOfColors.amount(),
+                        AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
+                if (picks > 0 && restrictedOfColors.colors().size() == 1) {
+                    ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
+                            restrictedOfColors.colors().getFirst());
+                    restrictedOfColors.restriction().applyTo(
+                            gameData.playerManaPools.get(playerId), manaColor, picks);
+                } else if (picks > 0) {
+                    ChoiceContext.RestrictedManaColorChoice choiceContext =
+                            new ChoiceContext.RestrictedManaColorChoice(
+                                    playerId, isCreatureSource, picks,
+                                    restrictedOfColors.colors(), restrictedOfColors.restriction());
+                    List<String> colors = restrictedOfColors.colors().stream().map(Enum::name).toList();
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, colors,
+                            "Choose a color of mana to add."));
+                    log.info("Game {} - Awaiting {} to choose a restricted mana color from a fixed set",
+                            gameData.id, player.getUsername());
                 }
             } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
                 int picks = amountEvaluationService.evaluate(gameData, ofColors.amount(),
@@ -1723,6 +1757,9 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardAnyColorManaEffect anyColor) {
                 total += amountEvaluationService.evaluate(gameData, anyColor.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));
+            } else if (effect instanceof AwardRestrictedManaOfColorsEffect restrictedOfColors) {
+                total += amountEvaluationService.evaluate(gameData, restrictedOfColors.amount(),
+                        AmountContext.forManaAbility(permanent, playerId, xValue));
             } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
                 total += amountEvaluationService.evaluate(gameData, ofColors.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));
@@ -2038,6 +2075,8 @@ public class ActivatedAbilityExecutionService {
         stackEntry.setSacrificedCardIds(sacrificedCardIds == null ? List.of() : List.copyOf(sacrificedCardIds));
         Map<ManaColor, Integer> activationManaSpent = gameData.abilityActivationManaSpent.get(permanent.getCard().getId());
         stackEntry.setActivationManaSpent(activationManaSpent == null ? Map.of() : Map.copyOf(activationManaSpent));
+        stackEntry.setActivationTreasureManaSpent(
+                gameData.abilityActivationTreasureManaSpent.getOrDefault(permanent.getCard().getId(), 0));
         stackEntry.setActivationUsedTreasureMana(
                 gameData.abilityActivationUsedTreasureMana.getOrDefault(permanent.getCard().getId(), false));
         // Carry the creature chosen during activation (e.g. tapped for a TapCreatureCost) so

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
+import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
@@ -89,9 +90,25 @@ public class TurnCleanupService {
         removeCountersScheduledForCleanup(gameData);
         clearSpellTypeRestrictionsEndingThisTurn(gameData);
         resetEndOfTurnModifiers(gameData);
+        expireControlAtEndOfNextTurn(gameData);
         creatureControlService.reconcileControl(gameData);
         gameData.controlLossUnattachTriggers.clear();
         gameData.controlLossTapTriggers.clear();
+    }
+
+    /** Expires control effects whose controller has just finished their next turn. */
+    private void expireControlAtEndOfNextTurn(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null) {
+            return;
+        }
+        List<ExpireControlAtEndOfNextTurn> expirations = gameData.drainDelayedActions(
+                ExpireControlAtEndOfNextTurn.class,
+                action -> activePlayerId.equals(action.controllerId())
+                        && gameData.turnNumber > action.registeredTurnNumber());
+        for (ExpireControlAtEndOfNextTurn expiration : expirations) {
+            gameData.expireFloatingEffects(effect -> expiration.controlEffectId().equals(effect.id()));
+        }
     }
 
     /**
@@ -171,6 +188,8 @@ public class TurnCleanupService {
             gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.remove(activePlayerId);
         }
     }
+
+
 
     /**
      * Resets all "until end of turn" modifiers on permanents (power/toughness
@@ -371,6 +390,7 @@ public class TurnCleanupService {
         gameData.senControllerPlayerId = null;
         gameData.senControlledPlayerId = null;
         gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.clear();
+        gameData.libraryTopCardPermissionsUntilEndOfTurn.clear();
         gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.clear();
         gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
@@ -398,6 +418,7 @@ public class TurnCleanupService {
         }
         gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
         gameData.graveyardCastFilterPermissionsThisTurn.clear();
+        gameData.outsideGamePlayPermissions.clear();
         gameData.graveyardPlayFilterPermissionsThisTurn.clear();
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
@@ -439,7 +460,10 @@ public class TurnCleanupService {
         gameData.exilePlayPermissionsExpireEndOfTurn.clear();
 
         // Per-card "this turn" exile-cast riders (e.g. Nita, Forum Conciliator) end with the turn.
-        gameData.exilePlayAnyManaType.clear();
+        // Keep any-mana permission attached to a card whose play permission lasts through a later
+        // turn; the expiry map below removes it when that permission ends.
+        gameData.exilePlayAnyManaType.removeIf(cardId ->
+                !gameData.exilePlayPermissionsExpireAtTurnEnd.containsKey(cardId));
         gameData.exileCastPermissionsUntilEndOfTurn.clear();
         gameData.exileInsteadOfGraveyard.clear();
 
@@ -449,6 +473,7 @@ public class TurnCleanupService {
                 gameData.exilePlayPermissions.remove(entry.getKey());
                 gameData.exilePlayCostModifiers.remove(entry.getKey());
                 gameData.exilePlayWithoutPayingManaCost.remove(entry.getKey());
+                gameData.exilePlayAnyManaType.remove(entry.getKey());
                 return true;
             }
             return false;

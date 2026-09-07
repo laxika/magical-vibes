@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyard
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerToughnessTotalAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -419,6 +420,28 @@ class PredicateEvaluationServiceTest {
             var predicate = new CardSharesCardTypeWithImprintedCardPredicate();
             assertThat(evaluator.matchesCardPredicate(creature, predicate, source.getId(), gd, player1Id)).isTrue();
             assertThat(evaluator.matchesCardPredicate(instant, predicate, source.getId(), gd, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate checks both zones")
+        void creatureTypeSharingPredicateChecksBattlefieldAndGraveyard() {
+            addPermanent(player1Id, createCreatureWithSubtypes(
+                    "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            gd.playerGraveyards.get(player1Id).add(createCreatureWithSubtypes(
+                    "Elf", 1, 1, CardColor.GREEN, List.of(CardSubtype.ELF)));
+
+            CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate predicate =
+                    new CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(
+                    createCreatureWithSubtypes("Another Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)),
+                    predicate, null, gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(
+                    createCreatureWithSubtypes("Another Elf", 1, 1, CardColor.GREEN, List.of(CardSubtype.ELF)),
+                    predicate, null, gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(
+                    createCreatureWithSubtypes("Bird", 1, 1, CardColor.BLUE, List.of(CardSubtype.BIRD)),
+                    predicate, null, gd, player1Id)).isFalse();
         }
 
         @Test

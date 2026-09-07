@@ -58,6 +58,17 @@ public sealed interface ManaRestriction {
     }
 
     /** Mana spendable only to cast noncreature spells. */
+    record InstantSorceryOrClassLevel() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addInstantSorceryOrClassLevelOnlyMana(color, amount);
+        }
+        @Override
+        public String description() {
+            return "instant or sorcery spells or Class levels only";
+        }
+    }
+
     record NoncreatureSpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {

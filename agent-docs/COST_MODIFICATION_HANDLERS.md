@@ -117,7 +117,9 @@ permanent target matches; the spell-self form continues to inspect its first tar
 
 `ReduceOwnCastCostIfTargetingGraveyardCardEffect` is the corresponding target-gated record for a
 graveyard card. Its `CardPredicate` is evaluated against the chosen first graveyard target in the
-same `CastingCostService.computeTargetBasedCostReduction` path.
+same `CastingCostService.computeTargetBasedCostReduction` path. The spell-self form checks the
+effect's zero-based `targetIndex` (defaulting to the first target), while a battlefield-carried
+effect continues to reduce once when any chosen permanent target matches.
 
 Target-gated increases use the parallel `TargetBasedCastCostIncreaseEffect` interface and
 `IncreaseOwnCastCostIfTargetingPermanentEffect` record. Their surcharge is evaluated against the

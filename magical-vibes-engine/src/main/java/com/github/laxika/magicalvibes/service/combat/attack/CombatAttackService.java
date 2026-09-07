@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
+import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
@@ -998,6 +999,14 @@ public class CombatAttackService {
                         && ce.condition() instanceof ExactlyAttackers
                         ? ce.wrapped() : e);
 
+                // Pack-tactics-style conditions qualify the attack event itself, so the condition
+                // is measured now and the surviving effect is not re-evaluated during resolution.
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
+                        ? ce.wrapped() : e);
                 ConditionContext attackedTargetContext = ConditionContext.forPermanent(attacker, playerId)
                         .withTargetId(attacker.getAttackTarget());
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
