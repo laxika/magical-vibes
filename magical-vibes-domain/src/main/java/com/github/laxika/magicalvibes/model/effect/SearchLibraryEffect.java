@@ -143,6 +143,13 @@ public record SearchLibraryEffect(
                 LibrarySearchPlayer.CONTROLLER, false, false, true);
     }
 
+    /** Single card matching {@code filter} with a dynamic mana-value bound and configurable shuffling. */
+    public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, boolean shuffleAfterSelection) {
+        this(new Fixed(1), filter, destination, manaValueBound, 1, false, false, false, false, null,
+                LibrarySearchPlayer.CONTROLLER, false, false, shuffleAfterSelection);
+    }
+
     /**
      * Up to {@code count} cards matching {@code filter} to {@code destination} with a mana-value bound
      * and optional distinct-names constraint (Uncage the Menagerie).

@@ -20,6 +20,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 
 | Pattern keyword | File |
 |----------------|------|
+| d20, roll a d20, graveyard target ETB | CARD_PATTERNS_CREATURES_ETB.md |
 | land, basic, pain, check, fast, manland | CARD_PATTERNS_LANDS_SPELLS.md |
 | burn, damage, shock, bolt, X burn | CARD_PATTERNS_LANDS_SPELLS.md |
 | pump, boost, giant growth, overrun | CARD_PATTERNS_LANDS_SPELLS.md |

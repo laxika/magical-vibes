@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -121,6 +122,8 @@ public class ActivatedAbility {
     private CounterType sourceCounterScaledTargetsType;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
     private boolean requiresXValue;
+    /** Minimum value that may be announced for this ability's {@code X} cost. */
+    private int minimumXValue;
     /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
     private boolean modalChoiceAtActivation;
     /**
@@ -282,6 +285,7 @@ public class ActivatedAbility {
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
+        copy.minimumXValue = this.minimumXValue;
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         copy.xValueFromCardsInHandColor = this.xValueFromCardsInHandColor;
@@ -549,6 +553,15 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Requires the ability's announced {@code X} value to be at least {@code minimumXValue}. */
+    public ActivatedAbility withMinimumXValue(int minimumXValue) {
+        if (minimumXValue < 0) {
+            throw new IllegalArgumentException("Minimum X value cannot be negative");
+        }
+        this.minimumXValue = minimumXValue;
+        return this;
+    }
+
     /** Marks the modal choice as part of activating this ability rather than resolving it. */
     public ActivatedAbility withModalChoiceAtActivation() {
         this.modalChoiceAtActivation = true;
@@ -615,6 +628,11 @@ public class ActivatedAbility {
         return effects.stream()
                 .filter(effect -> !(effect instanceof CostEffect))
                 .anyMatch(ManaProducingEffect.class::isInstance);
+    }
+
+    /** Whether this activated ability is an equip ability. */
+    public boolean isEquipAbility() {
+        return effects.stream().anyMatch(EquipEffect.class::isInstance);
     }
 
     /**

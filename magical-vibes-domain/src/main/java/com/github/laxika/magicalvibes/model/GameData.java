@@ -96,6 +96,14 @@ public class GameData {
     public final Set<UUID> playersWhoSearchedLibraryThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have received the city's blessing for the rest of the game. */
     public final Set<UUID> playersWithCityBlessing = ConcurrentHashMap.newKeySet();
+    /** Players who have completed at least one dungeon this game. */
+    public final Set<UUID> playersWhoCompletedDungeon = ConcurrentHashMap.newKeySet();
+    /** Distinct dungeons completed by each player this game. */
+    public final Map<UUID, Set<Dungeon>> completedDungeonsByPlayer = new ConcurrentHashMap<>();
+    /** The current dungeon and room marked by each player's venture marker. */
+    public final Map<UUID, DungeonProgress> playerDungeonProgress = new ConcurrentHashMap<>();
+    /** Players who ventured into a dungeon at least once this turn. */
+    public final Set<UUID> playersWhoVenturedIntoDungeonThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who played at least one card from exile this turn. */
     public final Set<UUID> playersWhoPlayedCardFromExileThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who investigated this turn. */
@@ -140,6 +148,8 @@ public class GameData {
     public final Map<UUID, Integer> spellCastSnowManaSpent = new ConcurrentHashMap<>();
     /** Amount of snow-produced mana spent for each color, keyed by spell card instance id. */
     public final Map<UUID, java.util.EnumMap<ManaColor, Integer>> spellCastSnowManaSpentByColor = new ConcurrentHashMap<>();
+    /** Amount of mana produced by Treasures spent to cast a spell, keyed by spell card instance id. */
+    public final Map<UUID, Integer> spellCastTreasureManaSpent = new ConcurrentHashMap<>();
     /**
      * Names of the cards spliced onto a spell (CR 702.47), keyed by host spell card instance id.
      * Populated as splice costs are paid and read while the spell is on the stack (Minamo's Meddling).
@@ -199,6 +209,8 @@ public class GameData {
      * spent to pay this activation cost" effect can read it when the ability resolves.
      */
     public final Map<UUID, Map<ManaColor, Integer>> abilityActivationManaSpent = new ConcurrentHashMap<>();
+    /** Amount of Treasure-produced mana spent to activate an ability, keyed by source card id. */
+    public final Map<UUID, Integer> abilityActivationTreasureManaSpent = new ConcurrentHashMap<>();
     public final Map<UUID, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
     /**
      * Phased-out permanents (CR 702.26b), keyed by the player who controlled them when they phased
@@ -289,6 +301,8 @@ public class GameData {
     public UUID cardEnteringGraveyardByCycling;
     /** Counts all creature deaths (including tokens) from battlefield this turn, per controller. */
     public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
+    /** Last-known battlefield names of creatures that died this turn, including tokens. */
+    public final Set<String> creatureNamesDiedThisTurn = ConcurrentHashMap.newKeySet();
     /** Counts nontoken creature deaths from the battlefield this turn, per controller. */
     public final Map<UUID, Integer> nontokenCreatureDeathCountThisTurn = new ConcurrentHashMap<>();
     /** Counts creature deaths by effective creature subtype and controller this turn. */
@@ -566,6 +580,8 @@ public class GameData {
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
     /** Players who have begun activating an exhaust ability this turn. */
     public final Set<UUID> playersWhoActivatedExhaustAbilityThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who have activated an equip ability this turn. */
+    public final Set<UUID> playersWhoActivatedEquipAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated a loyalty ability of a planeswalker this turn, backing the
      *  {@code DidntActivateLoyaltyAbilityThisTurn} intervening-if (The Chain Veil). Recorded when the
      *  loyalty cost is paid, so an activation whose ability is countered still counts. */
@@ -1167,8 +1183,16 @@ public class GameData {
     /** Player UUID to card UUID for a temporary free-play permission on the current library top card. */
     public final Map<UUID, UUID> libraryTopCardFreePlayPermissionsUntilEndOfTurn = new ConcurrentHashMap<>();
 
+    /** Pairs of caster and library owner for temporary access to another player's library top. */
+    public record LibraryTopCardPermission(UUID castingPlayerId, UUID libraryOwnerId) {}
+
+    /** Temporary permissions to look at and play another player's current library top card. */
+    public final Set<LibraryTopCardPermission> libraryTopCardPermissionsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
+    /** Card UUIDs the controller may play from their outside-the-game card pool this turn. */
+    public final Set<UUID> outsideGamePlayPermissions = ConcurrentHashMap.newKeySet();
     /** Maps a source permanent to the latest card whose permission it granted. */
     public final Map<UUID, UUID> exilePlayPermissionSourceCards = new ConcurrentHashMap<>();
     /** Cost modifiers attached to cards that may be played from exile. */
@@ -1181,7 +1205,8 @@ public class GameData {
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnEnd = new ConcurrentHashMap<>();
     /** Exiled card UUIDs that may be cast spending mana of any type (e.g. Nita, Forum Conciliator's
      *  activated ability). Complements the battlefield-permanent any-mana grant used by Hostage Taker.
-     *  Cleared during cleanup step. */
+     *  Current-turn grants are cleared during cleanup; grants tied to a later play-permission
+     *  expiry remain until that permission expires. */
     public final Set<UUID> exilePlayAnyManaType = ConcurrentHashMap.newKeySet();
     /** Exiled card UUIDs that may be cast spending mana of any type for as long as they remain exiled. */
     public final Set<UUID> exilePlayAnyManaTypeWhileExiled = ConcurrentHashMap.newKeySet();
@@ -1785,7 +1810,8 @@ public class GameData {
      *  {@code UNTIL_END_OF_COMBAT} when combat state is cleared,
      *  {@code WHILE_SOURCE_ON_BATTLEFIELD}/{@code WHILE_ATTACHED} when the source permanent
      *  leaves the battlefield or becomes unattached, {@code UNTIL_YOUR_NEXT_TURN} at the start
-     *  of the controller's next turn. */
+     *  of the controller's next turn, and {@code UNTIL_END_OF_YOUR_NEXT_TURN} during the cleanup
+     *  step at the end of that turn. */
     public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
 
     /** Permanents whose temporary control effect carries a "tap it when you lose control" rider
@@ -1875,13 +1901,13 @@ public class GameData {
     }
 
     /**
-     * Removes and returns all NON-control {@code WHILE_SOURCE_TAPPED} floating effects sourced from
-     * the given permanent. Called when that permanent becomes untapped (CR 611.2b — such effects end
-     * and do not resume). Control {@code WHILE_SOURCE_TAPPED} effects are handled separately by the
-     * control reconciliation in {@code CreatureControlService}. Tawnos's Weaponry's +1/+1 buff.
+     * Removes and returns all NON-control source-tapped floating effects sourced from the given
+     * permanent. Called when that permanent becomes untapped. Control source-tapped effects are
+     * handled separately by the control reconciliation in {@code CreatureControlService}.
      */
     public List<FloatingContinuousEffect> expireTappedSourceFloatingEffects(UUID sourcePermanentId) {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+        return expireFloatingEffects(fe -> (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED)
                 && !fe.isControlEffect()
                 && sourcePermanentId.equals(fe.sourcePermanentId()));
     }
@@ -2586,6 +2612,29 @@ public class GameData {
 
     public void clearSpellCastSnowManaSpentByColor(UUID spellCardId) {
         spellCastSnowManaSpentByColor.remove(spellCardId);
+    }
+
+    /** Records a completed dungeon for the player, preserving both the legacy flag and its name. */
+    public void recordCompletedDungeon(UUID playerId, Dungeon dungeon) {
+        if (playerId == null || dungeon == null) return;
+        playersWhoCompletedDungeon.add(playerId);
+        completedDungeonsByPlayer
+                .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(dungeon);
+    }
+
+    public void addSpellCastTreasureManaSpent(UUID spellCardId, int amount) {
+        if (amount > 0) {
+            spellCastTreasureManaSpent.merge(spellCardId, amount, Integer::sum);
+        }
+    }
+
+    public int getSpellCastTreasureManaSpent(UUID spellCardId) {
+        return spellCastTreasureManaSpent.getOrDefault(spellCardId, 0);
+    }
+
+    public void clearSpellCastTreasureManaSpent(UUID spellCardId) {
+        spellCastTreasureManaSpent.remove(spellCardId);
     }
 
     public void setSpellCastManaSpentOnX(UUID spellCardId, java.util.EnumMap<ManaColor, Integer> spentOnX) {
@@ -3380,6 +3429,7 @@ public class GameData {
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.playersWhoPlayedCardFromExileThisTurn.addAll(this.playersWhoPlayedCardFromExileThisTurn);
         copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
+        copy.playersWhoActivatedEquipAbilityThisTurn.addAll(this.playersWhoActivatedEquipAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
         copy.permanentsProtectedFromDamageUntilNextTurn.putAll(this.permanentsProtectedFromDamageUntilNextTurn);
@@ -3463,6 +3513,7 @@ public class GameData {
         this.notedMana.forEach((cardId, mana) -> copy.notedMana.put(cardId, new EnumMap<>(mana)));
         this.abilityActivationManaSpent.forEach((cardId, mana) ->
                 copy.abilityActivationManaSpent.put(cardId, new EnumMap<>(mana)));
+        copy.abilityActivationTreasureManaSpent.putAll(this.abilityActivationTreasureManaSpent);
         copy.playerDeckChoices.putAll(this.playerDeckChoices);
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
@@ -3485,6 +3536,14 @@ public class GameData {
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
         copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);
+        copy.playersWhoCompletedDungeon.addAll(this.playersWhoCompletedDungeon);
+        this.completedDungeonsByPlayer.forEach((playerId, dungeons) -> {
+            Set<Dungeon> copiedDungeons = ConcurrentHashMap.newKeySet();
+            copiedDungeons.addAll(dungeons);
+            copy.completedDungeonsByPlayer.put(playerId, copiedDungeons);
+        });
+        copy.playerDungeonProgress.putAll(this.playerDungeonProgress);
+        copy.playersWhoVenturedIntoDungeonThisTurn.addAll(this.playersWhoVenturedIntoDungeonThisTurn);
         copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
@@ -3649,6 +3708,7 @@ public class GameData {
         copy.playersWhosePermanentsLeftBattlefieldThisTurn
                 .addAll(this.playersWhosePermanentsLeftBattlefieldThisTurn);
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
+        copy.creatureNamesDiedThisTurn.addAll(this.creatureNamesDiedThisTurn);
         copy.nontokenCreatureDeathCountThisTurn.putAll(this.nontokenCreatureDeathCountThisTurn);
         this.creatureSubtypeDeathCountThisTurn.forEach((k, v) ->
                 copy.creatureSubtypeDeathCountThisTurn.put(k, new HashMap<>(v)));
@@ -3906,7 +3966,9 @@ public class GameData {
                 copy.untapAttackedCreaturesEachCombatThisTurnSources.put(playerId, new ArrayList<>(cards)));
 
         copy.libraryTopCardFreePlayPermissionsUntilEndOfTurn.putAll(this.libraryTopCardFreePlayPermissionsUntilEndOfTurn);
+        copy.libraryTopCardPermissionsUntilEndOfTurn.addAll(this.libraryTopCardPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
+        copy.outsideGamePlayPermissions.addAll(this.outsideGamePlayPermissions);
         copy.exilePlayPermissionSourceCards.putAll(this.exilePlayPermissionSourceCards);
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
@@ -4002,6 +4064,7 @@ public class GameData {
         copy.spellCastSnowManaSpent.putAll(this.spellCastSnowManaSpent);
         this.spellCastSnowManaSpentByColor.forEach((k, v) ->
                 copy.spellCastSnowManaSpentByColor.put(k, new java.util.EnumMap<>(v)));
+        copy.spellCastTreasureManaSpent.putAll(this.spellCastTreasureManaSpent);
         this.spellCastManaSpentOnX.forEach((k, v) ->
                 copy.spellCastManaSpentOnX.put(k, new java.util.EnumMap<>(v)));
         copy.spellCastSplicedNames.putAll(this.spellCastSplicedNames);

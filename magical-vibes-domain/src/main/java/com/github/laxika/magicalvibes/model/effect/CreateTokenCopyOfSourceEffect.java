@@ -22,28 +22,48 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param toughnessOverride if non-null, the token's base toughness is set to this (Eternalize 4/4)
  * @param grantHaste       if true, the token gains haste
  * @param exileAtEndStep  if true, the token is exiled at the beginning of the next end step
+ * @param initialPlusOnePlusOneCounters number of +1/+1 counters to put on each created token as
+ *                                     it enters the battlefield
  */
 public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
                                             CardColor colorOverride, CardSubtype addedSubtype,
                                             boolean removeManaCost,
                                             Integer powerOverride, Integer toughnessOverride,
-                                            boolean grantHaste, boolean exileAtEndStep)
+                                            boolean grantHaste, boolean exileAtEndStep,
+                                            int initialPlusOnePlusOneCounters)
         implements CardEffect {
 
     /** Backward-compatible: single copy, keeps legendary status, no transformation. */
     public CreateTokenCopyOfSourceEffect() {
-        this(false, 1, null, null, false, null, null, false, false);
+        this(false, 1, null, null, false, null, null, false, false, 0);
     }
 
     /** Backward-compatible: copies with an optional non-legendary flag and count, no transformation. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount) {
-        this(removeLegendary, amount, null, null, false, null, null, false, false);
+        this(removeLegendary, amount, null, null, false, null, null, false, false, 0);
+    }
+
+    /** Plain source copy with a specified number of +1/+1 counters. */
+    public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
+                                         int initialPlusOnePlusOneCounters) {
+        this(removeLegendary, amount, null, null, false, null, null, false, false,
+                initialPlusOnePlusOneCounters);
     }
 
     /** Plain source copy with optional haste and exile at the next end step. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
                                          boolean grantHaste, boolean exileAtEndStep) {
-        this(removeLegendary, amount, null, null, false, null, null, grantHaste, exileAtEndStep);
+        this(removeLegendary, amount, null, null, false, null, null, grantHaste, exileAtEndStep, 0);
+    }
+
+    /** Full plain-copy constructor retained for callers that specify every existing option. */
+    public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
+                                         CardColor colorOverride, CardSubtype addedSubtype,
+                                         boolean removeManaCost, Integer powerOverride,
+                                         Integer toughnessOverride, boolean grantHaste,
+                                         boolean exileAtEndStep) {
+        this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost,
+                powerOverride, toughnessOverride, grantHaste, exileAtEndStep, 0);
     }
 
     /** Embalm/Eternalize-style source copy with explicit power/toughness overrides. */
@@ -52,13 +72,13 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
                                          boolean removeManaCost, Integer powerOverride,
                                          Integer toughnessOverride) {
         this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost,
-                powerOverride, toughnessOverride, false, false);
+                powerOverride, toughnessOverride, false, false, 0);
     }
 
     /** Embalm-style: color/subtype/no-mana-cost transform, keeps the source's P/T. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
                                          CardColor colorOverride, CardSubtype addedSubtype,
                                          boolean removeManaCost) {
-        this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost, null, null, false, false);
+        this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost, null, null, false, false, 0);
     }
 }

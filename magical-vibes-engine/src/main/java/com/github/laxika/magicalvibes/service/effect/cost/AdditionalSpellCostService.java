@@ -505,6 +505,9 @@ public class AdditionalSpellCostService {
                     if (matching < required) return false;
                 }
                 case ExileNCardsFromGraveyardCost cost -> {
+                    if (!includeFlashbackOnlyCosts && cost.onlyFromGraveyard()) {
+                        continue;
+                    }
                     long matchingCount = graveyard.stream()
                             .filter(c -> (cost.requiredType() == null || c.hasType(cost.requiredType()))
                                     && (cost.predicate() == null

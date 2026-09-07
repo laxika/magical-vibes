@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasin
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
+import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -740,6 +741,22 @@ public class CastingCostService {
         return reduction;
     }
 
+    /** Whether the activating player can use a static effect that replaces this equip cost with zero. */
+    public boolean hasFreeEquipAbilityCost(GameData gameData, UUID activatingPlayerId,
+                                           ActivatedAbility ability) {
+        if (!ability.isEquipAbility()
+                || gameData.playersWhoActivatedEquipAbilityThisTurn.contains(activatingPlayerId)) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(FreeEquipEffect.class::isInstance);
+    }
+
     /**
      * Generic mana removed from the activation cost of {@code sourcePermanent}'s activated ability,
      * summed over every matching reduction effect on every battlefield. Symmetric — applies
@@ -1320,8 +1337,9 @@ public class CastingCostService {
      * Computes the actual cost reduction for spells that cost less when targeting a
      * permanent matching a predicate (e.g. Ajani's Response targeting a tapped creature),
      * a controlled permanent matching a predicate (e.g. Savage Stomp targeting a Dinosaur),
-     * or a spell on the stack matching a predicate.
-     * Returns the reduction amount if the first target matches, 0 otherwise.
+     * or a spell on the stack matching a predicate. Permanent spell-self reductions inspect the
+     * target index configured by the effect; the default is the first target.
+     * Returns the reduction amount if the selected target matches, 0 otherwise.
      */
     public int computeTargetBasedCostReduction(GameData gameData, UUID playerId, Card card, List<UUID> targetIds) {
         if (targetIds.isEmpty()) {
@@ -1388,26 +1406,34 @@ public class CastingCostService {
             return battlefieldReduction;
         }
 
-        UUID firstTargetId = targetIds.getFirst();
-        Permanent firstTarget = gameQueryService.findPermanentById(gameData, firstTargetId);
-        if (firstTarget != null) {
-            ReduceOwnCastCostIfTargetingPermanentEffect permanentEffect = card.getEffects(EffectSlot.STATIC).stream()
-                    .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
-                    .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
-                    .findFirst().orElse(null);
+        ReduceOwnCastCostIfTargetingPermanentEffect permanentEffect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
+                .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
+                .findFirst().orElse(null);
+        int permanentTargetIndex = permanentEffect == null ? 0 : permanentEffect.targetIndex();
+        UUID permanentTargetId = targetAt(targetIds, permanentTargetIndex);
+        Permanent permanentTarget = permanentTargetId == null
+                ? null : gameQueryService.findPermanentById(gameData, permanentTargetId);
+        if (permanentTarget != null) {
             if (permanentEffect == null) {
                 return 0;
             }
             if (permanentEffect.controlledByCaster()
-                    && !playerId.equals(gameQueryService.findPermanentController(gameData, firstTargetId))) {
+                    && !playerId.equals(gameQueryService.findPermanentController(gameData, permanentTargetId))) {
                 return 0;
             }
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, firstTarget, permanentEffect.predicate())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(
+                    permanentTarget,
+                    permanentEffect.predicate(),
+                    FilterContext.of(gameData)
+                            .withSourceCardId(card.getId())
+                            .withSourceControllerId(playerId))) {
                 return permanentEffect.amount();
             }
             return 0;
         }
 
+        UUID firstTargetId = targetIds.getFirst();
         Card firstTargetCard = gameQueryService.findCardInGraveyardById(gameData, firstTargetId);
         if (firstTargetCard != null) {
             GraveyardCardTargetCostReductionEffect graveyardEffect = card.getEffects(EffectSlot.STATIC).stream()
@@ -1438,6 +1464,10 @@ public class CastingCostService {
             return stackEffect.amount();
         }
         return 0;
+    }
+
+    private UUID targetAt(List<UUID> targetIds, int targetIndex) {
+        return targetIndex >= 0 && targetIndex < targetIds.size() ? targetIds.get(targetIndex) : null;
     }
 
     public boolean hasTargetBasedCastCostReduction(Card card) {

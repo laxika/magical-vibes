@@ -165,8 +165,13 @@ public sealed interface MultiPermanentChoiceContext {
     record UntapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
     }
 
-    /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
-    record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
+    /** The controller returns the chosen permanents to their owners' hands. */
+    record ReturnTargetPermanentsToHand(int requiredCount) implements MultiPermanentChoiceContext {
+
+        /** Resolution-time choices that may select up to the interaction's maximum. */
+        public ReturnTargetPermanentsToHand() {
+            this(0);
+        }
     }
 
     /** Return the chosen permanents and record the number returned on the resolving stack entry. */

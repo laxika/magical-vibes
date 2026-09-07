@@ -774,9 +774,18 @@ public class EtbTriggerService {
                     : Math.max(0, amountEvaluationService.evaluate(gameData, returnEffect.dynamicMaxTargets(),
                             new AmountContext(controllerId, null, null, xValue, 0, false, null,
                                     repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card)));
+            Integer maxTotalManaValue = null;
+            if (returnEffect.hasTotalManaValueCap()) {
+                maxTotalManaValue = returnEffect.dynamicMaxTotalManaValue() == null
+                        ? returnEffect.maxTotalManaValue()
+                        : Math.max(0, amountEvaluationService.evaluate(gameData,
+                                returnEffect.dynamicMaxTotalManaValue(),
+                                new AmountContext(controllerId, null, null, xValue, 0, false, null,
+                                        repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card)));
+            }
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData, controllerId, card,
-                        List.of(effect), returnEffect, maxTargets);
+                        List.of(effect), returnEffect, maxTargets, maxTotalManaValue, xValue);
             }
         }
 

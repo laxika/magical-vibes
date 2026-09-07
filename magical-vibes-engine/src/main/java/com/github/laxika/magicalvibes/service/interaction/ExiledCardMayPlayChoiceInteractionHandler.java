@@ -59,6 +59,9 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         } else {
             exileSupport.grantPlayUntilOwnersNextTurn(gameData, chosenId, interaction.playerId());
         }
+        if (interaction.anyManaType()) {
+            gameData.exilePlayAnyManaType.add(chosenId);
+        }
         gameLogService.append(gameData, GameLog.cardThen(chosen.card(),
                 interaction.expiresAtEndOfTurn()
                         ? " may be played until the end of this turn."

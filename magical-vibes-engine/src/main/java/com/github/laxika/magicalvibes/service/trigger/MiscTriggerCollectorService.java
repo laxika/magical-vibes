@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -646,6 +647,35 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainPutCounterOnTarget(TriggerMatchContext match,
+            PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(match.controllerId());
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(match.permanent().getCard().getId())
+                .withSourceControllerId(match.controllerId())
+                .withSourcePermanentId(match.permanent().getId());
+        boolean hasLegalTarget = battlefield != null && battlefield.stream().anyMatch(permanent ->
+                effect.targetPredicate() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(permanent,
+                        effect.targetPredicate(), filterContext));
+        if (!hasLegalTarget) {
+            return false;
+        }
+        gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                match.permanent().getCard(),
+                match.controllerId(),
+                List.of(effect),
+                "life-gain",
+                match.permanent().getId()));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on life gain (put counter on target)",
+                gameData.id, match.permanent().getCard().getName());
         return true;
     }
 

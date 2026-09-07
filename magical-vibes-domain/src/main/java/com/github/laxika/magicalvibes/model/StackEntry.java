@@ -43,6 +43,8 @@ public class StackEntry {
     @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
     @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
+    /** Amount of Treasure-produced mana spent to activate this ability, snapshotted at activation. */
+    @Setter private int activationTreasureManaSpent;
     private final Zone targetZone;
     @Setter private List<UUID> targetCardIds;
     private Map<CardEffect, List<UUID>> targetCardIdsByEffect = Map.of();
@@ -108,6 +110,10 @@ public class StackEntry {
     @Setter private boolean putCounterCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
+    /** The last-known power of the permanent or card used to pay this spell's behold cost. */
+    @Setter private int beholdPower;
+    /** The permanent used to pay this spell's behold cost, when the choice was from the battlefield. */
+    @Setter private UUID beholdPermanentId;
     /**
      * The individual mana payments the caster chose for this spell's
      * {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}, one entry
@@ -522,6 +528,7 @@ public class StackEntry {
         this.counters.putAll(source.counters);
         this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
+        this.activationTreasureManaSpent = source.activationTreasureManaSpent;
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
         this.targetCardIdsByEffect = copyTargetCardIdsByEffect(source.targetCardIdsByEffect);
@@ -543,6 +550,8 @@ public class StackEntry {
         this.buyback = source.buyback;
         this.putCounterCostPaid = source.putCounterCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
+        this.beholdPower = source.beholdPower;
+        this.beholdPermanentId = source.beholdPermanentId;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;

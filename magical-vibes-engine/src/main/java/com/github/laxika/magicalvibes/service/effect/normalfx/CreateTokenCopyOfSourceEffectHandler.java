@@ -63,8 +63,14 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     }
                 }
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
-                int totalAmount = e.amount() * tokenMultiplier;
+                List<CardSubtype> tokenSubtypes = sourceCard.getSubtypes() == null
+                        ? new ArrayList<>()
+                        : new ArrayList<>(sourceCard.getSubtypes());
+                if (e.addedSubtype() != null && !tokenSubtypes.contains(e.addedSubtype())) {
+                    tokenSubtypes.add(e.addedSubtype());
+                }
+                int totalAmount = gameQueryService.getTokenCreationAmount(
+                        gameData, entry.getControllerId(), e.amount(), tokenSubtypes);
                 for (int copy = 0; copy < totalAmount; copy++) {
                     // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)
                     Card tokenCard = new Card();
@@ -144,6 +150,18 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                             gameData, entry.getControllerId(), tokenCard);
                     Permanent tokenPermanent = new Permanent(tokenCard);
+
+                    if (e.initialPlusOnePlusOneCounters() > 0
+                            && !gameQueryService.cantHavePlusOnePlusOneCounters(
+                            gameData, tokenPermanent, entry.getControllerId())) {
+                        int initialCounters = gameQueryService.doublePlusOnePlusOneCounters(
+                                gameData, tokenPermanent, entry.getControllerId(),
+                                e.initialPlusOnePlusOneCounters());
+                        if (initialCounters > 0) {
+                            tokenPermanent.setCounterCount(
+                                    CounterType.PLUS_ONE_PLUS_ONE, initialCounters);
+                        }
+                    }
 
                     // Planeswalker tokens enter with loyalty counters and no summoning sickness
                     if (tokenCard.getType() == CardType.PLANESWALKER) {

@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayin
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -298,6 +299,9 @@ public class LibraryChoiceHandlerService {
                         sourceCards.remove(i);
                         break;
                     }
+                }
+                if (librarySearch.sourceSideboard()) {
+                    gameData.outsideGamePlayPermissions.remove(chosenCard.getId());
                 }
             }
 
@@ -585,6 +589,9 @@ public class LibraryChoiceHandlerService {
 
         if (!removed) {
             throw new IllegalStateException("Chosen card not found in library");
+        }
+        if (librarySearch.sourceSideboard()) {
+            gameData.outsideGamePlayPermissions.remove(chosenCard.getId());
         }
 
         if (destination == LibrarySearchDestination.EXILE_AND_CREATE_TOKENS) {
@@ -1897,6 +1904,7 @@ public class LibraryChoiceHandlerService {
         }
 
         if (libraryRevealChoice.selectedToHand()) {
+            insertSelectedCardFollowUpIfApplicable(gameData, selectedCards, libraryRevealChoice);
             resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
                     libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard(),
                     libraryRevealChoice.remainingToExile(), libraryRevealChoice.randomRemainingToBottom(),
@@ -2014,6 +2022,23 @@ public class LibraryChoiceHandlerService {
         }
 
         finishSearchAndResume(gameData);
+    }
+
+    private void insertSelectedCardFollowUpIfApplicable(GameData gameData, List<Card> selectedCards,
+                                                         PendingInteraction.LibraryRevealChoice choice) {
+        CardPredicate predicate = choice.selectedCardPredicate();
+        StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+        if (selectedCards.isEmpty() || predicate == null || choice.effectIfSelectedCardMatches() == null
+                || sourceEntry == null) {
+            return;
+        }
+        Card sourceCard = sourceEntry.getCard();
+        UUID sourceCardId = sourceCard == null ? null : sourceCard.getId();
+        if (predicateEvaluationService.matchesCardPredicate(selectedCards.getFirst(), predicate,
+                sourceCardId, gameData, choice.playerId())) {
+            sourceEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                    List.of(choice.effectIfSelectedCardMatches()));
+        }
     }
 
     private void handleDubiousChallengeInitialChoice(

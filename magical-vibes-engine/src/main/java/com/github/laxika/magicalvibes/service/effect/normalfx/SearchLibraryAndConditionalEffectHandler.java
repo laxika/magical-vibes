@@ -27,7 +27,8 @@ public class SearchLibraryAndConditionalEffectHandler implements NormalEffectHan
         searchLibraryEffectHandler.resolveWithFollowUp(
                 gameData,
                 entry,
-                new SearchLibraryEffect(conditional.searchFilter(), conditional.destination()),
+                new SearchLibraryEffect(conditional.searchFilter(), conditional.destination(),
+                        conditional.manaValueBound(), conditional.shuffleAfterSelection()),
                 LibrarySearchFollowUp.forSelectedCard(
                         conditional.selectedCardFilter(), conditional.conditionalEffect()));
     }

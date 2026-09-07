@@ -873,8 +873,22 @@ public class CastingPermissionService {
     }
 
     public boolean canPlayLandFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
-        return canPlayLandsFromTopOfLibrary(gameData, playerId)
-                && canPlayLandNow(gameData, playerId, card);
+        if (!card.hasType(CardType.LAND)) {
+            return false;
+        }
+        UUID libraryOwnerId = findLibraryTopOwner(gameData, playerId);
+        if (libraryOwnerId == null) {
+            return false;
+        }
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+        if (deck == null || deck.isEmpty() || !deck.getFirst().getId().equals(card.getId())) {
+            return false;
+        }
+        boolean permission = libraryOwnerId.equals(playerId)
+                ? canPlayLandsFromTopOfLibrary(gameData, playerId)
+                    || hasLibraryTopCardFreePlayPermission(gameData, playerId, card)
+                : hasLibraryTopPermission(gameData, playerId, libraryOwnerId);
+        return permission && canPlayLandNow(gameData, playerId, card);
     }
 
     /**
@@ -1096,9 +1110,48 @@ public class CastingPermissionService {
         return card.getId().equals(gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId));
     }
 
+    /** Returns whether the caster may use the specified opponent's current library top. */
+    public boolean hasLibraryTopPermission(GameData gameData, UUID castingPlayerId, UUID libraryOwnerId) {
+        return gameData.libraryTopCardPermissionsUntilEndOfTurn.stream()
+                .anyMatch(permission -> permission.castingPlayerId().equals(castingPlayerId)
+                        && permission.libraryOwnerId().equals(libraryOwnerId));
+    }
+
+    /** Returns the library whose top card is exposed to the player, preferring temporary access grants. */
+    public UUID findLibraryTopOwner(GameData gameData, UUID playerId) {
+        for (UUID libraryOwnerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(libraryOwnerId)
+                    || !hasLibraryTopPermission(gameData, playerId, libraryOwnerId)) {
+                continue;
+            }
+            List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+            if (deck != null && !deck.isEmpty()) {
+                return libraryOwnerId;
+            }
+        }
+        List<Card> ownDeck = gameData.playerDecks.get(playerId);
+        return ownDeck != null && !ownDeck.isEmpty() ? playerId : null;
+    }
+
+    private boolean hasLibraryTopPermissionForCard(GameData gameData, UUID castingPlayerId, Card card) {
+        for (GameData.LibraryTopCardPermission permission : gameData.libraryTopCardPermissionsUntilEndOfTurn) {
+            if (!permission.castingPlayerId().equals(castingPlayerId)) {
+                continue;
+            }
+            List<Card> deck = gameData.playerDecks.get(permission.libraryOwnerId());
+            if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Returns whether a specific card may be cast from the top of the player's library. */
     public boolean canCastFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
         if (!card.hasType(CardType.LAND) && hasLibraryTopCardFreePlayPermission(gameData, playerId, card)) {
+            return true;
+        }
+        if (!card.hasType(CardType.LAND) && hasLibraryTopPermissionForCard(gameData, playerId, card)) {
             return true;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1122,6 +1175,9 @@ public class CastingPermissionService {
      * spend mana of any type to cast spells sharing one of this card's types (e.g. creature spells).
      */
     public boolean canSpendAnyManaTypeToCast(GameData gameData, UUID playerId, Card card) {
+        if (hasLibraryTopPermissionForCard(gameData, playerId, card)) {
+            return true;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {

@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithM
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -283,6 +284,23 @@ class ActivatedAbilityExecutionServiceTest {
                     3, null, null, false);
 
             verify(lifeSupport).applyLifeLoss(gameData, player1Id, 3, "Krumar Initiate");
+            assertThat(gameData.stack).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Activated ability pays one life for each card in hand")
+        void payLifeForEachCardInHandCostPaysCurrentHandSize() {
+            Card card = createCard("Hand Cost Equipment", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerHands.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
+            List<CardEffect> effects = List.of(new PayLifeForEachCardInHandCost());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects,
+                    "Equip—Pay one life for each card in hand.");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects,
+                    0, null, null, false);
+
+            verify(lifeSupport).applyLifePayment(gameData, player1Id, 3, "Hand Cost Equipment");
             assertThat(gameData.stack).hasSize(1);
         }
 

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
@@ -542,6 +543,34 @@ class AbilityActivationServiceTest {
                     .hasMessageContaining("Not enough life");
 
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(3);
+            verify(activatedAbilityExecutionService, times(0)).completeActivationAfterCosts(
+                    any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Life-per-card-in-hand cost is checked before an activated ability's mana is paid")
+        void payLifeForEachCardInHandIsCheckedBeforeManaPayment() {
+            Card card = createCreatureCard("Hand Cost Creature", 2, 2);
+            card.addActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{1}",
+                    List.of(new PayLifeForEachCardInHandCost()),
+                    "Pay one life for each card in hand."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+            gameData.playerHands.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
+            gameData.playerLifeTotals.put(player1Id, 2);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, 0, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Not enough life");
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(1);
             verify(activatedAbilityExecutionService, times(0)).completeActivationAfterCosts(
                     any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any());
         }

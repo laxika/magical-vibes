@@ -63,6 +63,9 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
+        if (e.enterWithCounter() != null) {
+            permanent.setCounterCount(e.enterWithCounter(), 1);
+        }
         if (e.tapped()) {
             permanent.tap();
         }

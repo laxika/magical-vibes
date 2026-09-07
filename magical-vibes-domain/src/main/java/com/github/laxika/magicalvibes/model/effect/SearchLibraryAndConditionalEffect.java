@@ -8,6 +8,24 @@ public record SearchLibraryAndConditionalEffect(
         CardPredicate searchFilter,
         LibrarySearchDestination destination,
         CardPredicate selectedCardFilter,
-        CardEffect conditionalEffect
+        CardEffect conditionalEffect,
+        ManaValueBound manaValueBound,
+        boolean shuffleAfterSelection
 ) implements CardEffect {
+
+    public SearchLibraryAndConditionalEffect(CardPredicate searchFilter, LibrarySearchDestination destination,
+                                             CardPredicate selectedCardFilter, CardEffect conditionalEffect) {
+        this(searchFilter, destination, selectedCardFilter, conditionalEffect, null, true);
+    }
+
+    public SearchLibraryAndConditionalEffect(CardPredicate searchFilter, LibrarySearchDestination destination,
+                                             CardPredicate selectedCardFilter, CardEffect conditionalEffect,
+                                             ManaValueBound manaValueBound, boolean shuffleAfterSelection) {
+        this.searchFilter = searchFilter;
+        this.destination = destination;
+        this.selectedCardFilter = selectedCardFilter;
+        this.conditionalEffect = conditionalEffect;
+        this.manaValueBound = manaValueBound;
+        this.shuffleAfterSelection = shuffleAfterSelection;
+    }
 }

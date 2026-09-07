@@ -50,7 +50,8 @@ public class PopulateSupport {
     /** Creates a token copy of {@code sourceToken} for {@code controllerId}, once per token multiplier. */
     public void createCopy(GameData gameData, UUID controllerId, Permanent sourceToken) {
         Card sourceCard = sourceToken.getCard();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                gameData, controllerId, 1, sourceCard.getSubtypes());
 
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(

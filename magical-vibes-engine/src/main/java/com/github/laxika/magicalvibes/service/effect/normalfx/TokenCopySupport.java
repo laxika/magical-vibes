@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -37,22 +38,31 @@ public class TokenCopySupport {
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
 
-    public void createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
-                                  Permanent sourcePermanent,
-                                  CreateTokenCopyOfTargetPermanentEffect effect) {
-        createTokenCopies(gameData, entry, sourceCards, sourcePermanent, entry.getControllerId(), effect);
+    public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                        Permanent sourcePermanent,
+                                        CreateTokenCopyOfTargetPermanentEffect effect) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, entry.getControllerId(), effect,
+                null);
     }
 
-    public void createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
-                                  Permanent sourcePermanent, UUID tokenControllerId,
-                                  CreateTokenCopyOfTargetPermanentEffect effect) {
+    public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                        Permanent sourcePermanent, UUID tokenControllerId,
+                                        CreateTokenCopyOfTargetPermanentEffect effect) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect, null);
+    }
+
+    public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                        Permanent sourcePermanent, UUID tokenControllerId,
+                                        CreateTokenCopyOfTargetPermanentEffect effect,
+                                        List<UUID> attackTargetIds) {
         if (sourceCards == null || sourceCards.isEmpty()) {
-            return;
+            return List.of();
         }
 
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, tokenControllerId);
         List<Permanent> tokens = new ArrayList<>();
         for (Card sourceCard : sourceCards) {
+            int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                    gameData, tokenControllerId, 1, tokenSubtypes(sourceCard, effect));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 Card tokenCard = buildTokenCopyCard(sourceCard, effect);
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
@@ -63,10 +73,13 @@ public class TokenCopySupport {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<UUID> createdIds = new ArrayList<>();
+        int tokenIndex = 0;
         for (Permanent tokenPermanent : tokens) {
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered);
             entry.getCreatedPermanentIds().add(tokenPermanent.getId());
+            createdIds.add(tokenPermanent.getId());
             if (effect.trackWithSource() && entry.getSourcePermanentId() != null) {
                 gameData.sourceCreatedTokens
                         .computeIfAbsent(entry.getSourcePermanentId(), ignored -> ConcurrentHashMap.newKeySet())
@@ -76,14 +89,21 @@ public class TokenCopySupport {
             if (effect.tappedAndAttacking()) {
                 tokenPermanent.tap();
                 tokenPermanent.setAttacking(true);
-                if (sourcePermanent != null) {
+                if (attackTargetIds != null && tokenIndex < attackTargetIds.size()) {
+                    tokenPermanent.setAttackTarget(attackTargetIds.get(tokenIndex));
+                } else if (attackTargetIds == null && sourcePermanent != null) {
                     tokenPermanent.setAttackTarget(sourcePermanent.getAttackTarget());
                 }
             }
+            tokenIndex++;
 
             if (effect.exileAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+            }
+            if (effect.exileAtEndOfCombat()) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
             }
             if (effect.sacrificeAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
@@ -106,6 +126,22 @@ public class TokenCopySupport {
             }
             simultaneouslyEntered.add(tokenPermanent);
         }
+        return createdIds;
+    }
+
+    private static List<CardSubtype> tokenSubtypes(Card sourceCard,
+                                                    CreateTokenCopyOfTargetPermanentEffect effect) {
+        List<CardSubtype> subtypes = sourceCard.getSubtypes() == null
+                ? new ArrayList<>()
+                : new ArrayList<>(sourceCard.getSubtypes());
+        if (effect.additionalSubtypes() != null) {
+            for (CardSubtype subtype : effect.additionalSubtypes()) {
+                if (!subtypes.contains(subtype)) {
+                    subtypes.add(subtype);
+                }
+            }
+        }
+        return subtypes;
     }
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
@@ -122,7 +158,14 @@ public class TokenCopySupport {
         tokenCard.setColors(effect.colorOverride() != null
                 ? List.of(effect.colorOverride())
                 : sourceCard.getColors());
-        tokenCard.setSupertypes(sourceCard.getSupertypes());
+        Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+        if (sourceCard.getSupertypes() != null) {
+            supertypes.addAll(sourceCard.getSupertypes());
+        }
+        if (effect.nonlegendary()) {
+            supertypes.remove(CardSupertype.LEGENDARY);
+        }
+        tokenCard.setSupertypes(supertypes);
         tokenCard.setPower(effect.powerOverride() != null ? effect.powerOverride() : sourceCard.getPower());
         tokenCard.setToughness(effect.toughnessOverride() != null ? effect.toughnessOverride() : sourceCard.getToughness());
         tokenCard.setCardText(sourceCard.getCardText());

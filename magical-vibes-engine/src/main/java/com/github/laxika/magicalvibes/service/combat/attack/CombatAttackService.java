@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
+import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
@@ -876,6 +877,15 @@ public class CombatAttackService {
                         && ce.condition() instanceof MinimumAttackers
                         ? ce.wrapped() : e);
 
+                // Pack-tactics-style conditions qualify the attack event itself, so the condition
+                // is measured now and the surviving effect is not re-evaluated during resolution.
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
+                        ? ce.wrapped() : e);
+
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
                     // effects that need the normal resolution path (mandatory effects and targeting may effects
@@ -1251,22 +1261,32 @@ public class CombatAttackService {
                     }
 
                     if (!mandatoryEffects.isEmpty()) {
-                        StackEntry attackTrigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s attack trigger",
-                                mandatoryEffects,
-                                null,
-                                perm.getId()
-                        );
-                        attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
-                        // Record the triggering attacker as a non-targeting reference so effects that
-                        // act on "that creature" (e.g. Shared Animosity's +1/+0 boost) can find it.
-                        // Non-targeting so this never fizzles triggers that ignore it (e.g. Hellrider).
-                        attackTrigger.setTargetId(attacker.getId());
-                        attackTrigger.setNonTargeting(true);
-                        gameData.stack.add(attackTrigger);
+                        boolean needsTarget = mandatoryEffects.stream()
+                                .anyMatch(effect -> perm.getCard().getEffectTargetIndex(effect) >= 0
+                                        && (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)));
+                        if (needsTarget) {
+                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                    perm.getCard(), playerId, mandatoryEffects, attacker.getId(),
+                                    playerId, attacker.getAttackTarget()));
+                        } else {
+                            StackEntry attackTrigger = new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    playerId,
+                                    perm.getCard().getName() + "'s attack trigger",
+                                    mandatoryEffects,
+                                    null,
+                                    perm.getId()
+                            );
+                            attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                            // Record the triggering attacker as a non-targeting reference so effects that
+                            // act on "that creature" (e.g. Shared Animosity's +1/+0 boost) can find it.
+                            // Non-targeting so this never fizzles triggers that ignore it (e.g. Hellrider).
+                            attackTrigger.setTargetId(attacker.getId());
+                            attackTrigger.setNonTargeting(true);
+                            gameData.stack.add(attackTrigger);
+                        }
                     }
 
                     gameLogService.append(gameData,

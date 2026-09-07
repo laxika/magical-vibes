@@ -56,8 +56,9 @@ public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implement
             sourceCards.add(permanent.getCard());
         }
 
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
         for (Card sourceCard : sourceCards) {
+            int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                    gameData, entry.getControllerId(), 1, sourceCard.getSubtypes());
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 createTokenCopy(gameData, entry, sourceCard);
             }

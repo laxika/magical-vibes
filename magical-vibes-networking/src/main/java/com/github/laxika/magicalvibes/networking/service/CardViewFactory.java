@@ -312,6 +312,7 @@ public class CardViewFactory {
                         .findFirst()
                         .orElse(null),
                 ability.isRequiresXValue(),
+                ability.getMinimumXValue(),
                 ability.isXValueFromControlledCreatureCounters(),
                 ability.getXValueFromCardsInHandColor(),
                 modalEffect != null ? modalEffect.choicesRequired() : 0,

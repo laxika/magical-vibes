@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.List;
@@ -433,6 +435,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  int amount, int tokenCount, boolean sacrificeAtEndStep,
                                  List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
 
+    /** Remembers the attack target for each tapped and attacking token copy. */
+    record CreateTokenCopiesAttacking(UUID controllerId, UUID targetPermanentId, UUID sourcePermanentId,
+                                      CreateTokenCopyOfTargetPermanentEffect copyEffect, int tokenCount,
+                                      List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
+
     /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */
     record ExileReturnAttackTarget(PendingExileReturn pending, List<PendingExileReturn> remaining)
             implements PermanentChoiceContext {
@@ -733,15 +740,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeArtifactForDividedDamage(UUID controllerId, Card sourceCard, Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {}
 
-    /** Heart-Piercer Manticore: choose the creature whose sacrifice creates the reflexive trigger. */
-    record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
+    /** Choose the creature whose sacrifice creates the reflexive trigger. */
+    record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
+                                                   PermanentPredicate targetPredicate) implements PermanentChoiceContext {
+        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard) {
+            this(controllerId, sourceCard, null);
+        }
+    }
 
     record SacrificeAnotherCreatureGainLifeAndDraw(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
 
     record SacrificeCreatureThenMassDamageEqualToPower(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
 
     record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
-                                boolean copy, List<UUID> chosenTargets, int genericCostReduction) implements PermanentChoiceContext {
+                                boolean copy, List<UUID> chosenTargets, int genericCostReduction,
+                                boolean payManaCost) implements PermanentChoiceContext {
         // {@code copy=true} marks a Paradigm copy that must cease to exist rather than being placed in
         // a zone (CR 707.10a) — both on resolution and when it can't be legally cast. Defaults to false
         // for real cards cast from exile.
@@ -749,16 +762,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         // order, while a multi-target spell walks its target slots one at a time. Empty for the
         // single-target path (which stores its lone target as the StackEntry's {@code targetId}).
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType, boolean copy) {
-            this(cardToCast, controllerId, spellEffects, spellType, copy, List.of(), 0);
+            this(cardToCast, controllerId, spellEffects, spellType, copy, List.of(), 0, false);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, false, List.of(), 0);
+            this(cardToCast, controllerId, spellEffects, spellType, false, List.of(), 0, false);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                     StackEntryType spellType, boolean copy, List<UUID> chosenTargets) {
-            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, 0);
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, 0, false);
+        }
+
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                    StackEntryType spellType, boolean copy, List<UUID> chosenTargets,
+                                    int genericCostReduction) {
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets,
+                    genericCostReduction, false);
         }
     }
 
@@ -1083,6 +1103,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID sourcePermanentId,
             List<UUID> remainingOpponentIds,
             int count
+    ) implements PermanentChoiceContext {}
+
+    /** Each opponent chooses a creature to sacrifice instead of letting the source's controller create a token. */
+    record EachOpponentCreatesTokenUnlessSacrificesCreature(
+            UUID sacrificingPlayerId,
+            UUID sourceControllerId,
+            Card sourceCard,
+            UUID sourcePermanentId,
+            Permanent sourcePermanentSnapshot,
+            CreateTokenEffect token,
+            List<UUID> remainingOpponentIds
     ) implements PermanentChoiceContext {}
 
     /** Each targeted player chooses a creature to sacrifice after the life loss has been applied. */

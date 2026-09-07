@@ -1322,6 +1322,7 @@ public class DamageTriggerCollectorService {
                 equipment.getId());
         entry.setNonTargeting(true);
         entry.setEventValue(sd.totalDamage());
+        entry.setSourcePermanentSnapshot(new Permanent(equipment));
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));

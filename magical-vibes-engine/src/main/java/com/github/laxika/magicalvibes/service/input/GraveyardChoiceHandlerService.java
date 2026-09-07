@@ -166,6 +166,7 @@ public class GraveyardChoiceHandlerService {
         CardSubtype grantSourceHasteIfSubtype = graveyardChoice.grantSourceHasteIfSubtype();
         UUID grantSourceHasteSourcePermanentId = graveyardChoice.grantSourceHasteSourcePermanentId();
         boolean enterTapped = graveyardChoice.enterTapped();
+        CardEffect grantOnDeathEffect = graveyardChoice.grantOnDeathEffect();
         // May ability graveyard targeting context
         Card mayAbilitySourceCard = graveyardChoice.mayAbilitySourceCard();
         UUID mayAbilityControllerId = graveyardChoice.mayAbilityControllerId();
@@ -293,6 +294,11 @@ public class GraveyardChoiceHandlerService {
                         perm.tap();
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+                    if (cardGraveyardOwnerId != null && !cardGraveyardOwnerId.equals(playerId)) {
+                        graveyardReturnSupport.trackStolenCreature(
+                                gameData, perm.getId(), playerId, cardGraveyardOwnerId);
+                    }
+                    graveyardReturnSupport.grantOnDeathEffect(perm, grantOnDeathEffect, cardGraveyardOwnerId);
 
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " , card, " from a graveyard onto the battlefield."));
                     log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());
@@ -501,6 +507,31 @@ public class GraveyardChoiceHandlerService {
         for (UUID cardId : cardIds) {
             if (!validIds.contains(cardId)) {
                 throw new IllegalStateException("Invalid card: " + cardId);
+            }
+        }
+
+        Integer totalManaValueCap = gameData.graveyardTargetOperation.totalManaValueCap;
+        if (totalManaValueCap != null) {
+            int totalManaValue = cardIds.stream()
+                    .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                    .filter(java.util.Objects::nonNull)
+                    .mapToInt(Card::getManaValue)
+                    .sum();
+            if (totalManaValue > totalManaValueCap) {
+                throw new IllegalStateException("Selected cards' total mana value cannot exceed "
+                        + totalManaValueCap);
+            }
+        }
+
+        if (gameData.graveyardTargetOperation.card != null
+                && gameData.graveyardTargetOperation.card.getMultiTargetConstraint()
+                == com.github.laxika.magicalvibes.model.MultiTargetConstraint.DIFFERENT_MANA_VALUES) {
+            Set<Integer> manaValues = new HashSet<>();
+            for (UUID cardId : cardIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null && !manaValues.add(card.getManaValue())) {
+                    throw new IllegalStateException("The selected cards must have different mana values");
+                }
             }
         }
 
@@ -934,6 +965,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = false;
         gameData.graveyardTargetOperation.singleGraveyard = false;
+        gameData.graveyardTargetOperation.totalManaValueCap = null;
         gameData.graveyardTargetOperation.targetPlayerId = null;
         gameData.graveyardTargetOperation.flashback = false;
         gameData.graveyardTargetOperation.sourcePermanentId = null;

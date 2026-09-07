@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -49,6 +50,12 @@ public class CardRegistry implements CardCatalog {
 
     private static final Logger LOG = Logger.getLogger(CardRegistry.class.getName());
     private static final Pattern NON_IDENTIFIER = Pattern.compile("[^a-z0-9]");
+    private static final Pattern PLUS_NUMBER = Pattern.compile("\\+(\\d+)");
+    private static final String[] NUMBER_WORDS = {
+        "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+        "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen",
+        "Eighteen", "Nineteen", "Twenty"
+    };
 
     private final OracleLoader loader;
     private final OracleLoadMode loadMode;
@@ -330,7 +337,23 @@ public class CardRegistry implements CardCatalog {
     private static boolean readsAs(String classNameChars, String cardName) {
         return classNameChars.equals(identifierChars(cardName))
                 || classNameChars.equals(
-                        identifierChars(Normalizer.normalize(cardName, Normalizer.Form.NFKD)));
+                        identifierChars(Normalizer.normalize(cardName, Normalizer.Form.NFKD)))
+                || classNameChars.equals(identifierChars(plusNumberWords(cardName)));
+    }
+
+    /** Card classes spell a leading numeric plus sign as {@code PlusTwo}, not {@code 2}. */
+    private static String plusNumberWords(String cardName) {
+        Matcher matcher = PLUS_NUMBER.matcher(cardName);
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            int number = Integer.parseInt(matcher.group(1));
+            if (number >= NUMBER_WORDS.length) {
+                return cardName;
+            }
+            matcher.appendReplacement(result, "Plus " + NUMBER_WORDS[number]);
+        }
+        matcher.appendTail(result);
+        return result.toString();
     }
 
     /** Lowercases and drops everything a Java identifier cannot contain, accented letters included. */

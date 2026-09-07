@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -10,5 +11,5 @@ public interface ControlledPermanentEntryReplacementEffect extends CardEffect {
 
     PermanentPredicate enteringPermanentPredicate();
 
-    int additionalCounterCount(Permanent enteringPermanent);
+    int additionalCounterCount(GameData gameData, Permanent enteringPermanent);
 }

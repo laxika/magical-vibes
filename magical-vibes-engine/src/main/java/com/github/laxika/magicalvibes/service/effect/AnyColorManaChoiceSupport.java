@@ -97,6 +97,23 @@ public final class AnyColorManaChoiceSupport {
                                            UUID sourcePermanentId,
                                            UUID recipientPlayerId,
                                            boolean fromSnowSource) {
+        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
+                fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId,
+                fromSnowSource, false);
+    }
+
+    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameData gameData,
+                                           UUID playerId,
+                                           AwardAnyColorManaEffect effect,
+                                           int amount,
+                                           boolean fromCreature,
+                                           CardSubtype chosenSubtype,
+                                           Card sourceCard,
+                                           UUID sourcePermanentId,
+                                           UUID recipientPlayerId,
+                                           boolean fromSnowSource,
+                                           boolean fromTreasureSource) {
         if (amount <= 0) {
             return false;
         }
@@ -118,6 +135,9 @@ public final class AnyColorManaChoiceSupport {
         if (fromSnowSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withSnowSource(true);
         }
+        if (fromTreasureSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+            choiceContext = manaColorChoice.withTreasureSource(true);
+        }
         List<ManaColor> allowedColors = effect.restriction() == ManaSpendRestriction.IMPRINTED_CARD_COLORS
                 ? imprintedCardColors(gameData, sourceCard)
                 : ManaColor.COLORS;
@@ -128,6 +148,9 @@ public final class AnyColorManaChoiceSupport {
             manaPool.add(effectiveColor, amount);
             if (fromCreature) {
                 manaPool.addCreatureMana(effectiveColor, amount);
+            }
+            if (fromTreasureSource) {
+                manaPool.addTreasureMana(effectiveColor, amount);
             }
             return false;
         }

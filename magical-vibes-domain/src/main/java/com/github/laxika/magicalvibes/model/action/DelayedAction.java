@@ -44,6 +44,7 @@ public sealed interface DelayedAction permits
         DelayedPlusZeroPlusOneCounters,
         DelayedUntapPermanents,
         DelayedCreateToken,
+        DelayedCreateTokenCopy,
         DelayedExileCreatedPermanentsAtEndStep,
         DelayedNontokenAttackTokenCreation,
         DelayedAttackTokenCreation,
@@ -100,5 +101,6 @@ public sealed interface DelayedAction permits
         ReboundAtNextUpkeep,
         PendingExileReturn,
         EachPlayerHandExileReturnAtNextEndStep,
-        TargetPlayerHandExileReturnAtNextTurnEndStep {
+        TargetPlayerHandExileReturnAtNextTurnEndStep,
+        ExpireControlAtEndOfNextTurn {
 }

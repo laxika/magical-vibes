@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateToken
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -53,6 +55,16 @@ public class GraveyardTargetingSupport {
                     return nested;
                 }
             }
+            if (targetEffect instanceof RollD20Effect rollD20) {
+                Target nested = findTarget(java.util.stream.Stream.of(
+                                rollD20.zeroOrLess(), rollD20.oneToNine(), rollD20.tenToNineteen(), rollD20.twenty())
+                        .filter(java.util.Objects::nonNull)
+                        .toList());
+                if (nested != null) {
+                    return nested;
+                }
+                continue;
+            }
             Target target = targetOf(targetEffect);
             if (target != null) {
                 return target;
@@ -84,6 +96,9 @@ public class GraveyardTargetingSupport {
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
             return new Target(imprint.filter(), imprint.scope(), "to exile", 1, 1);
+        }
+        if (effect instanceof ExileTargetCardFromGraveyardAndMayCastCopyEffect exileCopy) {
+            return new Target(exileCopy.filter(), exileCopy.scope(), "to exile", 1, 0);
         }
         if (effect instanceof GrantTargetGraveyardCardCastEffect grantCast) {
             return new Target(grantCast.filter(), grantCast.scope(), "to cast", 1, 1);

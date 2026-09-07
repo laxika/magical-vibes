@@ -58,6 +58,7 @@ class CostEffectClassificationTest {
             "OpponentGainsLifeCost",
             "GainControlOfPermanentsCost",
             "PayEnergyCost",
+            "PayLifeForEachCardInHandCost",
             "PayManaCost",
             "PutCounterOnSourceCost",
             "PutCounterOnOpponentCreatureCost",

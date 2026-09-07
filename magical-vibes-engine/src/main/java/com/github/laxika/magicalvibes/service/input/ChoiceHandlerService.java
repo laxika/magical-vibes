@@ -156,6 +156,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.RestrictedManaColorChoice ctx) {
+            handleRestrictedManaColorChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.ManaColorSpellChoice ctx) {
             handleManaColorSpellChosen(gameData, player, colorName, ctx);
             return;
@@ -682,6 +687,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsRiot()) {
             manaPool.add(manaColor, 1);
             manaPool.addRiotGrantingMana(manaColor, 1);
+            if (ctx.fromTreasureSource()) {
+                manaPool.addTreasureMana(manaColor, 1);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, 1);
             }
@@ -697,6 +705,7 @@ public class ChoiceHandlerService {
             if (remaining > 0) {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.riotColorCombination(
                         ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions());
+                nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -710,6 +719,9 @@ public class ChoiceHandlerService {
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, 1);
             }
+            if (ctx.fromTreasureSource()) {
+                manaPool.addTreasureMana(manaColor, 1);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, 1);
             }
@@ -722,7 +734,8 @@ public class ChoiceHandlerService {
             if (remaining > 0) {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.fixedColorCombination(
                         ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions())
-                        .withSnowSource(ctx.fromSnowSource());
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withTreasureSource(ctx.fromTreasureSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -783,6 +796,9 @@ public class ChoiceHandlerService {
             if (ctx.fromSnowSource()) {
                 manaPool.addSnowManaTag(manaColor, amount);
             }
+            if (ctx.fromTreasureSource()) {
+                manaPool.addTreasureMana(manaColor, amount);
+            }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);
             }
@@ -820,6 +836,44 @@ public class ChoiceHandlerService {
 
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleRestrictedManaColorChosen(GameData gameData, Player player, String colorName,
+                                                  ChoiceContext.RestrictedManaColorChoice ctx) {
+        if (!ctx.fixedColorOptions().contains(ManaColor.valueOf(colorName))) {
+            throw new IllegalArgumentException("Invalid mana color choice");
+        }
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(
+                gameData, ctx.playerId(), ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        ctx.restriction().applyTo(manaPool, manaColor, 1);
+        String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
+                + " mana (" + ctx.restriction().description() + ").";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} adds one {} restricted mana ({})", gameData.id,
+                player.getUsername(), colorName.toLowerCase(), ctx.restriction().description());
+
+        int remaining = ctx.amount() - 1;
+        if (remaining > 0) {
+            List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    ctx.playerId(), null, null,
+                    new ChoiceContext.RestrictedManaColorChoice(
+                            ctx.playerId(), ctx.fromCreature(), remaining,
+                            ctx.fixedColorOptions(), ctx.restriction()),
+                    colors, "Choose a color of mana to add."));
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1038,6 +1092,8 @@ public class ChoiceHandlerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

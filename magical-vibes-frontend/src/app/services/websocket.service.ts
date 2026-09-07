@@ -139,6 +139,7 @@ export interface ActivatedAbilityView {
   /** CounterType name whose counters the ability removes X of as a cost, or null. */
   variableCounterCostType: string | null;
   requiresXValue?: boolean;
+  xValueMin?: number;
   xValueFromControlledCreatureCounters?: boolean;
   xValueFromCardsInHandColor?: string | null;
   modalChoicesRequired?: number;

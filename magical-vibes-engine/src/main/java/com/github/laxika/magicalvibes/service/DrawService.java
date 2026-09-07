@@ -43,6 +43,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
@@ -137,6 +139,12 @@ public class DrawService {
         Permanent sharedFateSource = findSharedFateSource(gameData);
         if (sharedFateSource != null) {
             resolveSharedFateDrawReplacement(gameData, playerId, sharedFateSource);
+            return;
+        }
+
+        Permanent exileTopCardSource = findExileTopCardFaceDownInsteadOfDrawSource(gameData, playerId);
+        if (exileTopCardSource != null) {
+            resolveExileTopCardFaceDownInsteadOfDraw(gameData, playerId, exileTopCardSource);
             return;
         }
 
@@ -447,6 +455,46 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    private Permanent findExileTopCardFaceDownInsteadOfDrawSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance);
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    /** Replaces the controller's draw with a face-down exile tracked with the source permanent. */
+    private void resolveExileTopCardFaceDownInsteadOfDraw(
+            GameData gameData, UUID playerId, Permanent source) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + "'s draw is replaced; ", source.getCard(), " exiles nothing."));
+            return;
+        }
+
+        Card exiled = deck.removeFirst();
+        exileService.exileCardFaceDown(gameData, playerId, exiled, source.getId());
+
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + " exiles a card face down with ")
+                .card(source.getCard())
+                .text(" instead of drawing.")
+                .build());
+        log.info("Game {} - {} exiles the top card of their library face down with {} instead of drawing",
+                gameData.id, playerName, source.getCard().getName());
     }
 
     /** Shared Fate replaces the draw with a face-down exile from the opponent's library. */
@@ -1279,6 +1327,20 @@ public class DrawService {
 
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} controller-draw any-target trigger queued",
+                            gameData.id, perm.getCard().getName());
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                            perm.getCard(),
+                            drawingPlayerId,
+                            new ArrayList<>(List.of(effect)),
+                            "draw",
+                            perm.getId()
+                    ));
+
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} controller-draw targeted trigger queued",
                             gameData.id, perm.getCard().getName());
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else {

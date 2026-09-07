@@ -2448,10 +2448,15 @@ public abstract class AiDecisionEngine {
                     .count());
         }
         if (xScaledToHandEffect != null) {
-            maxX = Math.min(maxX, (int) graveyard.stream()
+            var matchingCards = graveyard.stream()
                     .filter(c -> predicateEvaluationService.matchesCardPredicate(
                             c, xScaledToHandEffect.filter(), card.getId()))
-                    .count());
+                    .toList();
+            int matchingCount = card.getMultiTargetConstraint()
+                    == com.github.laxika.magicalvibes.model.MultiTargetConstraint.DIFFERENT_MANA_VALUES
+                    ? (int) matchingCards.stream().map(Card::getManaValue).distinct().count()
+                    : matchingCards.size();
+            maxX = Math.min(maxX, matchingCount);
         }
         return maxX;
     }

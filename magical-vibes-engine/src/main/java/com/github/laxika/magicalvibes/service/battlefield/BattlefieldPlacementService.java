@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 import com.github.laxika.magicalvibes.model.effect.EntryCostReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentsWithSameNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersWithCountersEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -158,6 +159,7 @@ public class BattlefieldPlacementService {
         applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
         RevealSubtypeOrEntersTappedEffect conditionalRevealEffect = null;
+        RevealSubtypeOrEntersWithCountersEffect conditionalRevealWithCountersEffect = null;
         try {
             if (sacrificeAllPermanentsAsEntersEffectHandler != null) {
                 sacrificeAllPermanentsAsEntersEffectHandler.applyIfPresent(gameData, controllerId, permanent);
@@ -166,6 +168,8 @@ public class BattlefieldPlacementService {
             carrySpellColorOverride(gameData, controllerId, permanent);
             applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
             conditionalRevealEffect = findActiveConditionalRevealEffect(gameData, controllerId, permanent);
+            conditionalRevealWithCountersEffect = findActiveConditionalRevealWithCountersEffect(
+                    gameData, controllerId, permanent);
             applyEnterTappedEffects(permanent, enterTappedTypes);
             applySelfEnterTapped(permanent);
             applyConditionalEnterTapped(gameData, controllerId, permanent);
@@ -230,6 +234,8 @@ public class BattlefieldPlacementService {
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent, conditionalRevealEffect);
+        applyRevealSubtypeOrEntersWithCounters(gameData, controllerId, permanent,
+                conditionalRevealWithCountersEffect);
         applyMayPayLifeOrEntersTapped(gameData, controllerId, permanent);
         applyUnleash(gameData, controllerId, permanent);
         applyRiot(gameData, controllerId, permanent, simultaneouslyEntered);
@@ -522,6 +528,61 @@ public class BattlefieldPlacementService {
                 List.of(activeEffect),
                 permanent.getCard().getName() + " — Reveal a " + subtypeDescription
                         + " card from your hand? (If you don't, it enters tapped.)",
+                null,
+                null,
+                permanent.getId()));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
+    private RevealSubtypeOrEntersWithCountersEffect findActiveConditionalRevealWithCountersEffect(
+            GameData gameData, UUID controllerId, Permanent permanent) {
+        ConditionContext ctx = ConditionContext.forPermanent(permanent, controllerId);
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof ConditionalReplacementEffect conditional
+                        && conditional.upgradedEffect() instanceof RevealSubtypeOrEntersWithCountersEffect
+                        && conditionEvaluationService.isMet(gameData, conditional.condition(), ctx))
+                .map(ConditionalReplacementEffect.class::cast)
+                .map(conditional -> (RevealSubtypeOrEntersWithCountersEffect) conditional.upgradedEffect())
+                .findFirst().orElse(null);
+    }
+
+    private void applyRevealSubtypeOrEntersWithCounters(
+            GameData gameData, UUID controllerId, Permanent permanent,
+            RevealSubtypeOrEntersWithCountersEffect activeConditionalEffect) {
+        RevealSubtypeOrEntersWithCountersEffect effect = null;
+        for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (staticEffect instanceof RevealSubtypeOrEntersWithCountersEffect revealEffect) {
+                effect = revealEffect;
+                break;
+            }
+            if (staticEffect instanceof ConditionalReplacementEffect conditional
+                    && conditional.upgradedEffect() instanceof RevealSubtypeOrEntersWithCountersEffect revealEffect
+                    && revealEffect == activeConditionalEffect) {
+                effect = revealEffect;
+                break;
+            }
+        }
+        if (effect == null) {
+            return;
+        }
+        RevealSubtypeOrEntersWithCountersEffect activeEffect = effect;
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        boolean canReveal = hand != null && hand.stream()
+                .anyMatch(card -> card.getSubtypes().stream().anyMatch(activeEffect.subtypes()::contains));
+        if (!canReveal) {
+            return;
+        }
+        String subtypeDescription = activeEffect.subtypes().stream()
+                .map(CardSubtype::getDisplayName)
+                .collect(Collectors.joining(" or "));
+        String counterDescription = activeEffect.counterType() == CounterType.PLUS_ONE_PLUS_ONE
+                ? "+1/+1" : activeEffect.counterType().name().toLowerCase().replace('_', ' ');
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                permanent.getCard(),
+                controllerId,
+                List.of(activeEffect),
+                permanent.getCard().getName() + " — Reveal a " + subtypeDescription
+                        + " card from your hand? (If you do, it enters with a " + counterDescription + " counter.)",
                 null,
                 null,
                 permanent.getId()));
@@ -1275,7 +1336,7 @@ public class BattlefieldPlacementService {
                 if (!(effect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
                 if (predicateEvaluationService.matchesPermanentPredicate(
                         permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
-                    additionalCounters += Math.max(0, replacement.additionalCounterCount(permanent));
+                    additionalCounters += Math.max(0, replacement.additionalCounterCount(gameData, permanent));
                 }
             }
         }

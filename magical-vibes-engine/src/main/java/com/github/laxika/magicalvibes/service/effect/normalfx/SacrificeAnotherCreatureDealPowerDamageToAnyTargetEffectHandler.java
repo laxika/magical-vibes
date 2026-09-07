@@ -39,6 +39,8 @@ public class SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffectHandler imp
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect sacrificeEffect =
+                (SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect) effect;
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
 
@@ -63,7 +65,7 @@ public class SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffectHandler imp
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage(
-                        controllerId, entry.getCard()));
+                        controllerId, entry.getCard(), sacrificeEffect.targetPredicate()));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 entry.getCard().getName() + " — Choose another creature to sacrifice.");
 

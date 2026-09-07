@@ -17,6 +17,8 @@ public class ManaPool {
     /** Snow mana is a tag on regular mana, like creature mana, and is not a separate mana type. */
     private final EnumMap<ManaColor, Integer> snowMana = new EnumMap<>(ManaColor.class);
     private boolean snowManaSpendableAsAnyColor;
+    /** Mana produced by a Treasure source, tagged on regular mana. */
+    private final EnumMap<ManaColor, Integer> treasureMana = new EnumMap<>(ManaColor.class);
     private final EnumMap<ManaColor, Integer> creatureMana = new EnumMap<>(ManaColor.class);
     /**
      * Mana that may only be spent to cast spells (e.g. mana from lands tapped via Piracy). Tracked as a
@@ -71,6 +73,7 @@ public class ManaPool {
     private int kickedOnlyGreen;
     private int instantSorceryOnlyColorless;
     private int foretellOrInstantSorceryOnlyColorless;
+    private int instantSorceryOrClassLevelOnlyColorless;
     private int foretellSpellOnlyColorless;
     /** Colorless mana spendable only on costs that contain {X} (Rosheen Meanderer). */
     private int xCostOnlyColorless;
@@ -79,6 +82,7 @@ public class ManaPool {
     /** Colored mana that can only be spent to cast instant or sorcery spells (e.g. Abstract Paintmage). */
     private final EnumMap<ManaColor, Integer> instantSorceryOnlyColored = new EnumMap<>(ManaColor.class);
     private final EnumMap<ManaColor, Integer> foretellOrInstantSorceryOnlyColored = new EnumMap<>(ManaColor.class);
+    private final EnumMap<ManaColor, Integer> instantSorceryOrClassLevelOnlyColored = new EnumMap<>(ManaColor.class);
     private final EnumMap<ManaColor, Integer> foretellSpellOnlyColored = new EnumMap<>(ManaColor.class);
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeOrLegendaryCreatureMana = new HashMap<>();
     /** Colored mana spendable only to pay cumulative upkeep costs (Adarkar Unicorn). */
@@ -153,11 +157,14 @@ public class ManaPool {
     /** Permission flag (not mana): while set, blue mana in this pool may additionally pay any
      * colored requirement of an activated ability of the current source creature. */
     private boolean blueSpendableAsAnyColorForActivatedAbilities;
+    /** Permission flag: the instant/sorcery-or-Class-level bucket may pay an instant or sorcery spell. */
+    private boolean instantSorceryOrClassLevelManaUsableForInstantSorcery;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
             pool.put(color, 0);
             snowMana.put(color, 0);
+            treasureMana.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
         abilityOnlyMana.put(color, 0);
@@ -172,6 +179,7 @@ public class ManaPool {
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
+            instantSorceryOrClassLevelOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
             creatureSpellOrAbilityMana.put(color, 0);
             artifactOnlyMana.put(color, 0);
@@ -185,6 +193,7 @@ public class ManaPool {
     public ManaPool(ManaPool source) {
         pool.putAll(source.pool);
         snowMana.putAll(source.snowMana);
+        treasureMana.putAll(source.treasureMana);
         creatureMana.putAll(source.creatureMana);
         spellOnlyMana.putAll(source.spellOnlyMana);
         abilityOnlyMana.putAll(source.abilityOnlyMana);
@@ -208,11 +217,13 @@ public class ManaPool {
         this.kickedOnlyGreen = source.kickedOnlyGreen;
         this.instantSorceryOnlyColorless = source.instantSorceryOnlyColorless;
         this.foretellOrInstantSorceryOnlyColorless = source.foretellOrInstantSorceryOnlyColorless;
+        this.instantSorceryOrClassLevelOnlyColorless = source.instantSorceryOrClassLevelOnlyColorless;
         this.foretellSpellOnlyColorless = source.foretellSpellOnlyColorless;
         this.xCostOnlyColorless = source.xCostOnlyColorless;
         this.cumulativeUpkeepOnlyColorless = source.cumulativeUpkeepOnlyColorless;
         instantSorceryOnlyColored.putAll(source.instantSorceryOnlyColored);
         foretellOrInstantSorceryOnlyColored.putAll(source.foretellOrInstantSorceryOnlyColored);
+        instantSorceryOrClassLevelOnlyColored.putAll(source.instantSorceryOrClassLevelOnlyColored);
         foretellSpellOnlyColored.putAll(source.foretellSpellOnlyColored);
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeOrLegendaryCreatureMana.entrySet()) {
             subtypeOrLegendaryCreatureMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
@@ -251,6 +262,8 @@ public class ManaPool {
         this.allManaSpendableAsAnyColor = source.allManaSpendableAsAnyColor;
         this.snowManaSpendableAsAnyColor = source.snowManaSpendableAsAnyColor;
         this.blueSpendableAsAnyColorForActivatedAbilities = source.blueSpendableAsAnyColorForActivatedAbilities;
+        this.instantSorceryOrClassLevelManaUsableForInstantSorcery =
+                source.instantSorceryOrClassLevelManaUsableForInstantSorcery;
     }
 
     /** See {@link #whiteSpendableAsRed}. */
@@ -305,6 +318,14 @@ public class ManaPool {
         this.blueSpendableAsAnyColorForActivatedAbilities = enabled;
     }
 
+    public boolean isInstantSorceryOrClassLevelManaUsableForInstantSorcery() {
+        return instantSorceryOrClassLevelManaUsableForInstantSorcery;
+    }
+
+    public void setInstantSorceryOrClassLevelManaUsableForInstantSorcery(boolean enabled) {
+        instantSorceryOrClassLevelManaUsableForInstantSorcery = enabled;
+    }
+
     public void add(ManaColor color) {
         pool.merge(color, 1, Integer::sum);
     }
@@ -335,6 +356,19 @@ public class ManaPool {
     /** Returns a defensive snapshot of the snow tags currently available by color. */
     public EnumMap<ManaColor, Integer> getSnowManaTotals() {
         return new EnumMap<>(snowMana);
+    }
+
+    /** Adds a Treasure-produced mana tag to regular mana already added to this pool. */
+    public void addTreasureMana(ManaColor color, int amount) {
+        treasureMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getTreasureMana(ManaColor color) {
+        return treasureMana.getOrDefault(color, 0);
+    }
+
+    public int getTreasureManaTotal() {
+        return treasureMana.values().stream().mapToInt(Integer::intValue).sum();
     }
 
     /** Changes the color a snow mana may be spent as while retaining its snow tag. */
@@ -373,6 +407,7 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             pool.put(color, 0);
             snowMana.put(color, 0);
+            treasureMana.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
@@ -396,14 +431,16 @@ public class ManaPool {
         legendarySpellOnlyColorless = 0;
         restrictedRed = 0;
         kickedOnlyGreen = 0;
-        instantSorceryOnlyColorless = 0;
-        foretellOrInstantSorceryOnlyColorless = 0;
+            instantSorceryOnlyColorless = 0;
+            foretellOrInstantSorceryOnlyColorless = 0;
+            instantSorceryOrClassLevelOnlyColorless = 0;
         foretellSpellOnlyColorless = 0;
         xCostOnlyColorless = 0;
         cumulativeUpkeepOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             instantSorceryOnlyColored.put(color, 0);
             foretellOrInstantSorceryOnlyColored.put(color, 0);
+            instantSorceryOrClassLevelOnlyColored.put(color, 0);
             foretellSpellOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
@@ -473,8 +510,11 @@ public class ManaPool {
         total += kickedOnlyGreen;
         total += instantSorceryOnlyColorless;
         total += foretellOrInstantSorceryOnlyColorless;
+        total += instantSorceryOrClassLevelOnlyColorless;
         total += foretellSpellOnlyColorless;
-        total += getInstantSorceryOnlyColoredTotal();
+        total += instantSorceryOnlyColored.values().stream().mapToInt(Integer::intValue).sum();
+        total += foretellOrInstantSorceryOnlyColored.values().stream().mapToInt(Integer::intValue).sum();
+        total += getInstantSorceryOrClassLevelOnlyColoredTotal();
         total += getForetellSpellOnlyColoredTotal();
         total += xCostOnlyColorless;
         total += cumulativeUpkeepOnlyColorless;
@@ -593,6 +633,10 @@ public class ManaPool {
         if (snow > 0) {
             snowMana.put(color, snow - 1);
         }
+        int treasure = treasureMana.getOrDefault(color, 0);
+        if (treasure > 0) {
+            treasureMana.put(color, treasure - 1);
+        }
         int promotedAbilityOnly = promotedAbilityOnlyMana.getOrDefault(color, 0);
         if (promotedAbilityOnly > 0) {
             promotedAbilityOnlyMana.put(color, promotedAbilityOnly - 1);
@@ -641,6 +685,9 @@ public class ManaPool {
         }
         if (riotGrantingMana.getOrDefault(color, 0) > total) {
             riotGrantingMana.put(color, total);
+        }
+        if (treasureMana.getOrDefault(color, 0) > total) {
+            treasureMana.put(color, total);
         }
     }
 
@@ -1019,7 +1066,9 @@ public class ManaPool {
     }
 
     public int getInstantSorceryOnlyColorless() {
-        return instantSorceryOnlyColorless + foretellOrInstantSorceryOnlyColorless;
+        return instantSorceryOnlyColorless + foretellOrInstantSorceryOnlyColorless
+                + (instantSorceryOrClassLevelManaUsableForInstantSorcery
+                ? instantSorceryOrClassLevelOnlyColorless : 0);
     }
 
     public void addForetellOrInstantSorceryOnlyColorless(int amount) {
@@ -1042,7 +1091,43 @@ public class ManaPool {
         int fromForetell = Math.min(amount, foretellOrInstantSorceryOnlyColorless);
         foretellOrInstantSorceryOnlyColorless -= fromForetell;
         amount -= fromForetell;
+        if (instantSorceryOrClassLevelManaUsableForInstantSorcery && amount > 0) {
+            int fromClassLevel = Math.min(amount, instantSorceryOrClassLevelOnlyColorless);
+            instantSorceryOrClassLevelOnlyColorless -= fromClassLevel;
+            amount -= fromClassLevel;
+        }
         instantSorceryOnlyColorless = Math.max(0, instantSorceryOnlyColorless - amount);
+    }
+
+    public void addInstantSorceryOrClassLevelOnlyMana(ManaColor color, int amount) {
+        if (color == ManaColor.COLORLESS) {
+            instantSorceryOrClassLevelOnlyColorless += amount;
+        } else {
+            instantSorceryOrClassLevelOnlyColored.merge(color, amount, Integer::sum);
+        }
+    }
+
+    public int getInstantSorceryOrClassLevelOnlyColorless() {
+        return instantSorceryOrClassLevelOnlyColorless;
+    }
+
+    public void removeInstantSorceryOrClassLevelOnlyColorless(int amount) {
+        instantSorceryOrClassLevelOnlyColorless = Math.max(0,
+                instantSorceryOrClassLevelOnlyColorless - amount);
+    }
+
+    public int getInstantSorceryOrClassLevelOnlyColored(ManaColor color) {
+        return instantSorceryOrClassLevelOnlyColored.getOrDefault(color, 0);
+    }
+
+    public int getInstantSorceryOrClassLevelOnlyColoredTotal() {
+        return instantSorceryOrClassLevelOnlyColored.values().stream()
+                .mapToInt(Integer::intValue).sum();
+    }
+
+    public void removeInstantSorceryOrClassLevelOnlyColored(ManaColor color, int amount) {
+        int current = instantSorceryOrClassLevelOnlyColored.getOrDefault(color, 0);
+        instantSorceryOrClassLevelOnlyColored.put(color, Math.max(0, current - amount));
     }
 
     public int getForetellSpellOnlyColorless() {
@@ -1241,7 +1326,9 @@ public class ManaPool {
 
     public int getInstantSorceryOnlyColored(ManaColor color) {
         return instantSorceryOnlyColored.getOrDefault(color, 0)
-                + foretellOrInstantSorceryOnlyColored.getOrDefault(color, 0);
+                + foretellOrInstantSorceryOnlyColored.getOrDefault(color, 0)
+                + (instantSorceryOrClassLevelManaUsableForInstantSorcery
+                ? instantSorceryOrClassLevelOnlyColored.getOrDefault(color, 0) : 0);
     }
 
     public int getInstantSorceryOnlyColoredTotal() {
@@ -1261,6 +1348,12 @@ public class ManaPool {
         if (fromForetell > 0) {
             removeForetellOrInstantSorceryOnlyColored(color, fromForetell);
             amount -= fromForetell;
+        }
+        if (instantSorceryOrClassLevelManaUsableForInstantSorcery && amount > 0) {
+            int fromClassLevel = Math.min(amount,
+                    instantSorceryOrClassLevelOnlyColored.getOrDefault(color, 0));
+            removeInstantSorceryOrClassLevelOnlyColored(color, fromClassLevel);
+            amount -= fromClassLevel;
         }
         int current = instantSorceryOnlyColored.getOrDefault(color, 0);
         instantSorceryOnlyColored.put(color, Math.max(0, current - amount));
@@ -1856,6 +1949,45 @@ public class ManaPool {
         }
     }
 
+    /** Temporarily exposes instant/sorcery-or-Class-level mana to the Class-level payment path. */
+    public EnumMap<ManaColor, Integer> promoteInstantSorceryOrClassLevelOnlyMana() {
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            int amount = color == ManaColor.COLORLESS
+                    ? instantSorceryOrClassLevelOnlyColorless
+                    : instantSorceryOrClassLevelOnlyColored.getOrDefault(color, 0);
+            promoted.put(color, amount);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                if (color == ManaColor.COLORLESS) {
+                    instantSorceryOrClassLevelOnlyColorless = 0;
+                } else {
+                    instantSorceryOrClassLevelOnlyColored.put(color, 0);
+                }
+            }
+        }
+        return promoted;
+    }
+
+    /** Restores the unspent portion of temporarily promoted instant/sorcery-or-Class-level mana. */
+    public void restorePromotedInstantSorceryOrClassLevelOnlyMana(
+            EnumMap<ManaColor, Integer> promoted, EnumMap<ManaColor, Integer> regularBefore) {
+        for (ManaColor color : ManaColor.values()) {
+            int promotedAmount = promoted.getOrDefault(color, 0);
+            int spent = Math.max(0, regularBefore.getOrDefault(color, 0) + promotedAmount - get(color));
+            int remaining = Math.max(0, promotedAmount - spent);
+            if (remaining <= 0) {
+                continue;
+            }
+            pool.put(color, get(color) - remaining);
+            if (color == ManaColor.COLORLESS) {
+                instantSorceryOrClassLevelOnlyColorless += remaining;
+            } else {
+                instantSorceryOrClassLevelOnlyColored.merge(color, remaining, Integer::sum);
+            }
+        }
+    }
+
     /** Adds mana spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
     public void addManaValueAtLeastFourOnlyMana(ManaColor color, int amount) {
         manaValueAtLeastFourOnlyMana.merge(color, amount, Integer::sum);
@@ -1918,6 +2050,8 @@ public class ManaPool {
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless += moveColoredManaToColorless(instantSorceryOnlyColored);
         foretellOrInstantSorceryOnlyColorless += moveColoredManaToColorless(foretellOrInstantSorceryOnlyColored);
+        instantSorceryOrClassLevelOnlyColorless += moveColoredManaToColorless(
+                instantSorceryOrClassLevelOnlyColored);
         foretellSpellOnlyColorless += moveColoredManaToColorless(foretellSpellOnlyColored);
         cumulativeUpkeepOnlyColorless += moveColoredManaToColorless(cumulativeUpkeepOnlyColored);
         moveColoredManaToColorless(flashbackOnlyMana);
@@ -2005,6 +2139,7 @@ public class ManaPool {
         drainColorBucket(abilityOnlyMana, protectedColors);
         drainColorBucket(promotedAbilityOnlyMana, protectedColors);
         drainColorBucket(instantSorceryOnlyColored, protectedColors);
+        drainColorBucket(instantSorceryOrClassLevelOnlyColored, protectedColors);
         drainColorBucket(cumulativeUpkeepOnlyColored, protectedColors);
         drainColorBucket(flashbackOnlyMana, protectedColors);
         drainColorBucket(artifactOnlyMana, protectedColors);
@@ -2031,6 +2166,7 @@ public class ManaPool {
             colorlessSubtypeSpellOrAbilityMana.clear();
             legendarySpellOnlyColorless = 0;
             instantSorceryOnlyColorless = 0;
+            instantSorceryOrClassLevelOnlyColorless = 0;
             xCostOnlyColorless = 0;
             cumulativeUpkeepOnlyColorless = 0;
         }
@@ -2091,7 +2227,8 @@ public class ManaPool {
             int amount = pool.getOrDefault(color, 0);
             if (color == ManaColor.COLORLESS) {
                 amount += artifactOnlyColorless + artifactAbilityOnlyColorless + myrOnlyColorless
-                        + powerstoneOnlyColorless + legendarySpellOnlyColorless + instantSorceryOnlyColorless + xCostOnlyColorless
+                        + powerstoneOnlyColorless + legendarySpellOnlyColorless + instantSorceryOnlyColorless
+                        + instantSorceryOrClassLevelOnlyColorless + xCostOnlyColorless
                         + colorlessSubtypeSpellOrAbilityMana.values().stream().mapToInt(Integer::intValue).sum()
                         + cumulativeUpkeepOnlyColorless;
             }
@@ -2103,7 +2240,9 @@ public class ManaPool {
             if (color == ManaColor.GREEN) {
                 amount += kickedOnlyGreen;
             }
-            amount += getInstantSorceryOnlyColored(color);
+            amount += instantSorceryOnlyColored.getOrDefault(color, 0)
+                    + foretellOrInstantSorceryOnlyColored.getOrDefault(color, 0);
+            amount += instantSorceryOrClassLevelOnlyColored.getOrDefault(color, 0);
             amount += getForetellSpellOnlyColored(color);
             amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
@@ -2147,7 +2286,9 @@ public class ManaPool {
                 continue;
             }
             int amount = pool.getOrDefault(color, 0);
-            amount += getInstantSorceryOnlyColored(color);
+            amount += instantSorceryOnlyColored.getOrDefault(color, 0)
+                    + foretellOrInstantSorceryOnlyColored.getOrDefault(color, 0);
+            amount += instantSorceryOrClassLevelOnlyColored.getOrDefault(color, 0);
             amount += getForetellSpellOnlyColored(color);
             amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);

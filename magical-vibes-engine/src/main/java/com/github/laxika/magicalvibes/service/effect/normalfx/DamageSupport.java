@@ -388,6 +388,8 @@ public class DamageSupport {
                 // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
                 if (damagedCreatureControllerId != null) {
                     triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
+                    triggerCollectionService.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+                            gameData, target, damagedCreatureControllerId, damage);
                 }
 
                 // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
@@ -565,6 +567,8 @@ public class DamageSupport {
             UUID damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
             if (damagedCreatureControllerId != null) {
                 triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
+                triggerCollectionService.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+                        gameData, target, damagedCreatureControllerId, damage);
             }
 
             // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)

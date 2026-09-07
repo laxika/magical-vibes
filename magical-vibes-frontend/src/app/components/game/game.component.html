@@ -642,7 +642,7 @@
         }
         @if (playableExileCards().length > 0) {
           <div class="revealed-hand-row">
-            <div class="revealed-hand-label">Playable From Exile</div>
+            <div class="revealed-hand-label">Playable From Exile or Outside the Game</div>
             <div class="revealed-hand-cards">
               @for (card of playableExileCards(); track card.id) {
                 <app-card-display [card]="card" class="revealed-hand-card playable"

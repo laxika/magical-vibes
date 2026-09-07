@@ -151,6 +151,10 @@ public class GameActionAvailabilityService {
                         || !PotentialManaService.meetsRequiredSourceCounters(ability, perm)) {
                     continue;
                 }
+                if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+                    payable.add(i);
+                    continue;
+                }
                 ManaPool pool = fullPool;
                 if (ability.isRequiresTap()) {
                     if (poolWithoutSource == null) {
@@ -304,6 +308,12 @@ public class GameActionAvailabilityService {
     private boolean isCardPlayableForFace(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                           int extraConvokeMana, int additionalGenericCost,
                                           SpellPlayabilityContext ctx, boolean targetsAlreadyDeclared) {
+        if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                && !pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(true);
+        }
         if (card.getCastingOption(ForetellCast.class).isPresent()
                 && pool.getForetellSpellOnlyManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
@@ -403,7 +413,7 @@ public class GameActionAvailabilityService {
         ExileNCardsFromGraveyardCost exileCost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).stream()
                 .filter(ExileNCardsFromGraveyardCost.class::isInstance)
                 .findFirst().orElse(null);
-        if (exileCost != null) {
+        if (exileCost != null && !exileCost.onlyFromGraveyard()) {
             List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
             long matchingCount = graveyard.stream()
                     .filter(c -> (exileCost.requiredType() == null || c.hasType(exileCost.requiredType()))

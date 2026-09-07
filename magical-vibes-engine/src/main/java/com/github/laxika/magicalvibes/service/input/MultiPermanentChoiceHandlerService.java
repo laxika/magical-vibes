@@ -190,6 +190,12 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand choice
+                && choice.requiredCount() > 0
+                && permanentIds.size() != choice.requiredCount()) {
+            throw new IllegalStateException("Exactly " + choice.requiredCount()
+                    + " permanents must be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice choice
                 && choice.requiresChoice() && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");

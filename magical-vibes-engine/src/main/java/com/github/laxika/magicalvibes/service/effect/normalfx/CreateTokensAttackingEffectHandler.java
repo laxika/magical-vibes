@@ -35,7 +35,8 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        int tokenCount = create.amount() * gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        int tokenCount = gameQueryService.getTokenCreationAmount(
+                gameData, entry.getControllerId(), create.amount(), create.tokenEffect().subtypes());
         PermanentChoiceContext.CreateTokensAttacking context = new PermanentChoiceContext.CreateTokensAttacking(
                 entry.getControllerId(), entry.getCard(), create.tokenEffect(), create.amount(), tokenCount,
                 create.sacrificeAtEndStep(), List.of());

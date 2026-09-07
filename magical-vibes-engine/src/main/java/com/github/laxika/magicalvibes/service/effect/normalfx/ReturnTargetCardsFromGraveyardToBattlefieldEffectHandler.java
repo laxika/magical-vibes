@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -35,6 +38,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private final PermanentCounterSupport permanentCounterSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,6 +63,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 : null;
         List<Card> cardsToReturn = new ArrayList<>();
         int totalManaValue = 0;
+        int maxTotalManaValue = e.maxTotalManaValue();
+        if (e.dynamicMaxTotalManaValue() != null) {
+            maxTotalManaValue = Math.max(0, amountEvaluationService.evaluate(
+                    gameData, e.dynamicMaxTotalManaValue(), AmountContext.forStackEntry(entry, null)));
+        }
         for (UUID targetCardId : entry.getTargetCardIds()) {
             Card card = graveyard.stream()
                     .filter(graveyardCard -> graveyardCard.getId().equals(targetCardId))
@@ -67,7 +76,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                     && (trackedIds == null || trackedIds.contains(card.getId()))
                     && predicateEvaluationService.matchesCardPredicate(card, e.filter(), entry.getCard().getId())
                     && (!e.hasTotalManaValueCap()
-                    || totalManaValue + card.getManaValue() <= e.maxTotalManaValue())) {
+                    || totalManaValue + card.getManaValue() <= maxTotalManaValue)) {
                 cardsToReturn.add(card);
                 totalManaValue += card.getManaValue();
             }
@@ -90,6 +99,9 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 Permanent permanent = new Permanent(card);
                 graveyardReturnSupport.applyPermanentGrants(permanent, e.grantColor(), e.grantSubtype());
+                if (e.grantHasteUntilEndOfTurn()) {
+                    permanent.getGrantedKeywords().add(Keyword.HASTE);
+                }
                 if (e.enterTapped()) {
                     permanent.tap();
                 }

@@ -1146,6 +1146,7 @@ public class MayCastHandlerService {
             }
 
             sideboard.remove(cardIndex);
+            gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(
                             cardToCast, player.getId(), spellEffects, spellType));
@@ -1157,6 +1158,7 @@ public class MayCastHandlerService {
         }
 
         sideboard.remove(cardIndex);
+        gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
         gameData.stack.add(new StackEntry(
                 spellType, cardToCast, player.getId(), cardToCast.getName(),
                 spellEffects, 0, (UUID) null, null));

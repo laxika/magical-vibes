@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPower
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceToughnessPredicate;
@@ -408,6 +409,22 @@ public class PredicateEvaluationService {
                             && gameQueryService.cardHasType(imprintedCard, type, gameData,
                             imprintedCard.getOwnerId()));
             }
+            case CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate ignored -> {
+                if (gameData == null || cardOwnerId == null) {
+                    yield false;
+                }
+                boolean sharesWithControlledCreature = gameQueryService
+                        .cardSharesCreatureTypeWithControlledCreature(gameData, card, cardOwnerId);
+                boolean sharesWithGraveyardCreature = gameData.playerGraveyards
+                        .getOrDefault(cardOwnerId, List.of()).stream()
+                        .filter(graveyardCard -> gameQueryService.cardHasType(
+                                graveyardCard, CardType.CREATURE, gameData, graveyardCard.getOwnerId()))
+                        .anyMatch(graveyardCard -> sharesCreatureType(
+                                gameData, card, card.getOwnerId() != null ? card.getOwnerId() : cardOwnerId,
+                                graveyardCard, graveyardCard.getOwnerId() != null
+                                        ? graveyardCard.getOwnerId() : cardOwnerId));
+                yield sharesWithControlledCreature || sharesWithGraveyardCreature;
+            }
             case CardToughnessLessThanSourceToughnessPredicate ignored -> {
                 if (gameData == null || sourceCardId == null || card.getToughness() == null) {
                     yield false;
@@ -439,6 +456,25 @@ public class PredicateEvaluationService {
             case CardTruePredicate ignored ->
                     true;
         };
+    }
+
+    private boolean sharesCreatureType(GameData gameData, Card first, UUID firstOwnerId,
+                                       Card second, UUID secondOwnerId) {
+        Set<CardSubtype> firstTypes = gameQueryService.getCardSubtypes(first, gameData, firstOwnerId).stream()
+                .filter(gameQueryService::isCreatureSubtype)
+                .collect(java.util.stream.Collectors.toSet());
+        Set<CardSubtype> secondTypes = gameQueryService.getCardSubtypes(second, gameData, secondOwnerId).stream()
+                .filter(gameQueryService::isCreatureSubtype)
+                .collect(java.util.stream.Collectors.toSet());
+        boolean firstChangeling = first.getKeywords().contains(Keyword.CHANGELING);
+        boolean secondChangeling = second.getKeywords().contains(Keyword.CHANGELING);
+        if (firstChangeling) {
+            return secondChangeling || !secondTypes.isEmpty();
+        }
+        if (secondChangeling) {
+            return !firstTypes.isEmpty();
+        }
+        return firstTypes.stream().anyMatch(secondTypes::contains);
     }
 
     // --- Permanent predicate matching ---

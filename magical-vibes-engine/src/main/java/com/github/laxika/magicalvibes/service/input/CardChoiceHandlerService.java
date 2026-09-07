@@ -970,8 +970,12 @@ public class CardChoiceHandlerService {
                 } else {
                     exileService.exileCard(gameData, targetPlayerId, exiled);
                 }
-                if (revealedHandChoice.imprintOnSource() && sourcePermanentId != null) {
-                    exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, exiled);
+                if (revealedHandChoice.imprintOnSource()) {
+                    if (sourcePermanentId != null) {
+                        exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, exiled);
+                    } else if (gameData.pendingEffectResolutionEntry != null) {
+                        gameData.setImprintedCard(gameData.pendingEffectResolutionEntry.getCard(), exiled);
+                    }
                 }
                 if (revealedHandChoice.grantPlayPermission()) {
                     if (revealedHandChoice.exilePlayOpponentTax() > 0) {

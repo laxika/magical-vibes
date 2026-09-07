@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -73,10 +76,16 @@ public class PermanentControlSupport {
      */
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                        String sourceSetCode, int power, int toughness) {
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, Map.of());
+    }
+
+    public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
+                                       String sourceSetCode, int power, int toughness,
+                                       Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
         List<UUID> createdIds = new ArrayList<>();
         Set<Keyword> grantedKeywordsUntilEndOfTurn = token.grantedKeywordsUntilEndOfTurn();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
-        int totalAmount = amount * tokenMultiplier;
+        int totalAmount = gameQueryService.getTokenCreationAmount(
+                gameData, controllerId, amount, token.subtypes());
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         // CR 614.12: all tokens from one effect are created simultaneously, so none of them may
@@ -85,6 +94,13 @@ public class PermanentControlSupport {
         boolean isCreature = token.primaryType() == CardType.CREATURE;
         for (int i = 0; i < totalAmount; i++) {
             Card tokenCard = TokenCardFactory.create(token, power, toughness, sourceSetCode);
+            if (additionalEffects != null) {
+                for (Map.Entry<EffectSlot, List<EffectRegistration>> additionalEffect : additionalEffects.entrySet()) {
+                    for (EffectRegistration registration : additionalEffect.getValue()) {
+                        tokenCard.addEffect(additionalEffect.getKey(), registration.effect(), registration.triggerMode());
+                    }
+                }
+            }
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                     gameData, controllerId, tokenCard);
 

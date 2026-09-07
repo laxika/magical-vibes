@@ -393,7 +393,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     controllerId, topCards, cardIds, toGraveyard, true,
                     !toGraveyard && !randomBottom, randomBottom, false,
                     e.loseLifePerSelectedCard(), null,
-                    max, revealPrompt, false, 0, false, e.effectIfNoCardChosen()));
+                    max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), false,
+                    e.selectedCardPredicate(), e.effectIfSelectedCardMatches()));
             return;
         }
 

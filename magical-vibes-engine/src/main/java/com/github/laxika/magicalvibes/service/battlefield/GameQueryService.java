@@ -152,9 +152,11 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayer
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToControllerAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.TokenCreationReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
@@ -166,6 +168,7 @@ import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
@@ -395,6 +398,13 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    private boolean playerBattlefieldHasGrantedEffect(GameData gameData, UUID playerId,
+                                                      Class<? extends CardEffect> effectType) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        return bf.stream().anyMatch(perm -> hasGrantedEffect(gameData, perm, effectType));
     }
 
     /**
@@ -1220,7 +1230,8 @@ public class GameQueryService {
      * {@link CantWinGameEffect}).
      */
     public boolean canPlayerLoseGame(GameData gameData, UUID playerId) {
-        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
+        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class)
+                || playerBattlefieldHasGrantedEffect(gameData, playerId, CantLoseGameEffect.class)) {
             return false;
         }
         if (playerEmblemHasActiveStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
@@ -1239,7 +1250,8 @@ public class GameQueryService {
      * winning the game.
      */
     public boolean playerHasCantWinGameEffect(GameData gameData, UUID playerId) {
-        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantWinGameEffect.class)) {
+        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantWinGameEffect.class)
+                || playerBattlefieldHasGrantedEffect(gameData, playerId, CantWinGameEffect.class)) {
             return true;
         }
         return playerEmblemHasActiveStaticEffect(gameData, playerId, CantWinGameEffect.class);
@@ -3182,6 +3194,17 @@ public class GameQueryService {
                         // re-entering computeStaticBonus (same as GrantKeywordEffect below).
                         && (grant.filter() == null || predicateEvaluationService.matchesPermanentPredicate(null, target, grant.filter()))) {
                     accumulator.addActivatedAbility(grant.ability());
+                } else if (effect instanceof DynamicStaticBoostEffect boost
+                        && (boost.scope() == GrantScope.OWN_CREATURES
+                                || boost.scope() == GrantScope.ALL_OWN_CREATURES)
+                        && isCreatureInStaticPass(board, target)
+                        && (boost.filter() == null
+                                || predicateEvaluationService.matchesPermanentPredicate(null, target, boost.filter()))) {
+                    AmountContext amountContext = boost.amountsFromTarget()
+                            ? AmountContext.forStaticEffect(target, gameData.findControllerOf(target))
+                            : AmountContext.forStaticEffect(null, emblem.controllerId());
+                    accumulator.addPower(amountEvaluationService.evaluate(gameData, boost.powerBoost(), amountContext));
+                    accumulator.addToughness(amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), amountContext));
                 } else if (effect instanceof StaticBoostEffect boost
                         && (boost.scope() == GrantScope.OWN_CREATURES || boost.scope() == GrantScope.ALL_OWN_CREATURES)
                         // Recursion-safe: isCreature(gameData, target) re-enters computeStaticBonus for
@@ -4642,6 +4665,15 @@ public class GameQueryService {
         return playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.HEXPROOF);
     }
 
+    /** Returns whether an opposing permanent currently limits this player's dungeon ventures. */
+    public boolean playerHasDungeonVentureRestriction(GameData gameData, UUID playerId) {
+        return gameData.playerBattlefields.entrySet().stream()
+                .filter(entry -> !entry.getKey().equals(playerId))
+                .flatMap(entry -> entry.getValue().stream())
+                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect.class::isInstance));
+    }
+
     /**
      * Returns whether the player has hexproof from the given color until end of turn. This is
      * targeting-only and does not provide protection from damage.
@@ -6052,17 +6084,36 @@ public class GameQueryService {
      * Multiple instances stack multiplicatively (e.g. two Parallel Lives = 4x tokens).
      */
     public int getTokenMultiplier(GameData gameData, UUID controllerId) {
+        return getTokenCreationAmount(gameData, controllerId, 1, null);
+    }
+
+    /**
+     * Applies the token-count replacements controlled by the player creating the given token
+     * profile. The no-profile multiplier method remains for callers that only need the legacy
+     * all-token multipliers.
+     */
+    public int getTokenCreationAmount(GameData gameData, UUID controllerId, int amount,
+                                      Collection<CardSubtype> tokenSubtypes) {
+        if (amount <= 0) {
+            return amount;
+        }
         UUID effectiveControllerId = resolveTokenCreationController(gameData, controllerId, false);
-        int[] multiplier = {1};
+        int[] adjustedAmount = {amount};
+        List<TokenCreationReplacementEffect> replacements = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(effectiveControllerId)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof MultiplyTokenCreationEffect mtce) {
-                    multiplier[0] *= mtce.multiplier();
+                if (effect instanceof TokenCreationReplacementEffect replacement
+                        && replacement.appliesTo(tokenSubtypes)) {
+                    replacements.add(replacement);
                 }
             }
         });
-        return multiplier[0];
+        replacements.sort(Comparator.comparingInt(TokenCreationReplacementEffect::replacementOrder));
+        for (TokenCreationReplacementEffect replacement : replacements) {
+            adjustedAmount[0] = replacement.replaceTokenCount(adjustedAmount[0]);
+        }
+        return adjustedAmount[0];
     }
 
     /** Resolves control-changing replacement effects before a token is created. */

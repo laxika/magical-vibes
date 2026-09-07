@@ -576,7 +576,8 @@ public class ValidTargetService {
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
         if (targetsExile && abilitySourcePermanentId != null) {
             validExiledCardIds.addAll(computeValidExiledTargetsForAbility(
-                    gameData, ability, sourceCard, controllerId, abilitySourcePermanentId, excludeIds));
+                    gameData, ability, sourceCard, controllerId, abilitySourcePermanentId, excludeIds,
+                    effectiveTargetScalingValue));
         }
 
         int minTargets = 1;
@@ -586,6 +587,14 @@ public class ValidTargetService {
         for (CardEffect effect : targetingEffects) {
             if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
                     && returnEffect.hasTotalManaValueCap()) {
+                Permanent sourcePermanent = abilitySourcePermanentId == null
+                        ? null : gameQueryService.findPermanentById(gameData, abilitySourcePermanentId);
+                int maxTotalManaValue = returnEffect.dynamicMaxTotalManaValue() == null
+                        ? returnEffect.maxTotalManaValue()
+                        : Math.max(0, amountEvaluationService.evaluate(gameData,
+                                returnEffect.dynamicMaxTotalManaValue(),
+                                new AmountContext(controllerId, sourcePermanent, null,
+                                        xValue == null ? 0 : xValue, 0)));
                 int selectedManaValue = (alreadySelectedIds == null ? List.<UUID>of() : alreadySelectedIds).stream()
                         .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
                         .filter(java.util.Objects::nonNull)
@@ -594,12 +603,12 @@ public class ValidTargetService {
                 validGraveyardCardIds.removeIf(id -> {
                     Card card = gameQueryService.findCardInGraveyardById(gameData, id);
                     return card == null
-                            || selectedManaValue + card.getManaValue() > returnEffect.maxTotalManaValue();
+                            || selectedManaValue + card.getManaValue() > maxTotalManaValue;
                 });
                 minTargets = 0;
                 maxTargets = validGraveyardCardIds.size();
-                prompt = "Select any number of target artifact cards with total mana value "
-                        + returnEffect.maxTotalManaValue() + " or less";
+                prompt = "Select any number of target cards with total mana value "
+                        + maxTotalManaValue + " or less";
                 break;
             }
         }
@@ -660,12 +669,13 @@ public class ValidTargetService {
 
     private List<UUID> computeValidExiledTargetsForAbility(GameData gameData, ActivatedAbility ability,
                                                             Card sourceCard, UUID controllerId,
-                                                            UUID sourcePermanentId, Set<UUID> excludeIds) {
+                                                            UUID sourcePermanentId, Set<UUID> excludeIds,
+                                                            int xValue) {
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (sourcePermanent == null) {
             return List.of();
         }
-        FilterContext context = targetFilterContext(gameData, sourceCard.getId(), controllerId, null);
+        FilterContext context = targetFilterContext(gameData, sourceCard.getId(), controllerId, xValue);
         List<UUID> validIds = new ArrayList<>();
         for (Card exiledCard : gameData.getCardsExiledByPermanent(sourcePermanentId)) {
             if (excludeIds.contains(exiledCard.getId())) {
@@ -677,7 +687,7 @@ public class ValidTargetService {
                             effect.targetSpec().targetPredicate(), exiledCard, context)
                             && targetValidationService.checkEffectTargets(List.of(effect),
                                     new TargetValidationContext(gameData, exiledCard.getId(),
-                                            com.github.laxika.magicalvibes.model.Zone.EXILE, sourceCard, 0,
+                                            com.github.laxika.magicalvibes.model.Zone.EXILE, sourceCard, xValue,
                                             controllerId, sourcePermanent)).isEmpty());
             if (valid) {
                 validIds.add(exiledCard.getId());
@@ -1181,6 +1191,13 @@ public class ValidTargetService {
                 }
                 if (constraint == MultiTargetConstraint.AT_MOST_ONE_CREATURE_AND_ONE_LAND
                         && !isValidCreatureAndLandTarget(gameData, c, excludeIds)) {
+                    continue;
+                }
+                if (constraint == MultiTargetConstraint.DIFFERENT_MANA_VALUES
+                        && excludeIds.stream()
+                        .map(id -> gameQueryService.findCardInGraveyardById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .anyMatch(selected -> selected.getManaValue() == c.getManaValue())) {
                     continue;
                 }
                 validIds.add(c.getId());

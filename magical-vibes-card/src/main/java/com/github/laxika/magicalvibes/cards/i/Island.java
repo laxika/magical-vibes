@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ISD", collectorNumber = "253")
 @CardRegistration(set = "ISD", collectorNumber = "254")
 @CardRegistration(set = "ISD", collectorNumber = "255")
+@CardRegistration(set = "AFR", collectorNumber = "269")
 @CardRegistration(set = "KLD", collectorNumber = "253")
 @CardRegistration(set = "KLD", collectorNumber = "254")
 @CardRegistration(set = "KLD", collectorNumber = "255")
@@ -247,6 +248,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "295")
 @CardRegistration(set = "SUM", collectorNumber = "296")
 @CardRegistration(set = "SUM", collectorNumber = "297")
+@CardRegistration(set = "AFR", collectorNumber = "266")
+@CardRegistration(set = "AFR", collectorNumber = "267")
+@CardRegistration(set = "AFR", collectorNumber = "268")
 public class Island extends Card {
 
     public Island() {

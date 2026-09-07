@@ -875,6 +875,7 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
+                snapshotBeheldPower(gameData, target);
                 unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
                 battlefield.remove(target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);
@@ -882,6 +883,14 @@ public class PermanentRemovalService {
             }
         }
         return Optional.empty();
+    }
+
+    private void snapshotBeheldPower(GameData gameData, Permanent target) {
+        for (StackEntry entry : gameData.stack) {
+            if (target.getId().equals(entry.getBeholdPermanentId())) {
+                entry.setBeholdPower(Math.max(0, gameQueryService.getEffectivePower(gameData, target)));
+            }
+        }
     }
 
     private void preserveBlockedStatusWhenBlockerLeaves(GameData gameData, Permanent blocker) {
@@ -1120,6 +1129,7 @@ public class PermanentRemovalService {
                     gameData, target.getOriginalCard(), controllerId, ownerId);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                gameData.creatureNamesDiedThisTurn.add(target.getCard().getName());
                 if (!target.getCard().isToken()) {
                     gameData.nontokenCreatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 }

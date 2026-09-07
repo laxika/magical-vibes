@@ -270,7 +270,7 @@ public class TargetLegalityService {
             if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
                     && returnEffect.hasTotalManaValueCap()) {
                 validateTotalManaValueGraveyardTargets(gameData, playerId, returnEffect, targetCardIds,
-                        sourceCardId);
+                        sourceCardId, xValue);
                 return;
             }
         }
@@ -561,7 +561,7 @@ public class TargetLegalityService {
     private void validateTotalManaValueGraveyardTargets(
             GameData gameData, UUID playerId,
             ReturnTargetCardsFromGraveyardToBattlefieldEffect effect,
-            List<UUID> targetCardIds, UUID sourceCardId) {
+            List<UUID> targetCardIds, UUID sourceCardId, Integer xValue) {
         if (!targetCardIds.isEmpty() && !gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
             throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");
         }
@@ -569,6 +569,11 @@ public class TargetLegalityService {
             throw new IllegalStateException("Cannot target the same card twice");
         }
 
+        int maxTotalManaValue = effect.dynamicMaxTotalManaValue() == null
+                ? effect.maxTotalManaValue()
+                : Math.max(0, amountEvaluationService.evaluate(gameData,
+                        effect.dynamicMaxTotalManaValue(),
+                        new AmountContext(playerId, null, null, xValue == null ? 0 : xValue, 0)));
         int totalManaValue = 0;
         for (UUID cardId : targetCardIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
@@ -585,9 +590,9 @@ public class TargetLegalityService {
                         + CardPredicateUtils.describeFilter(effect.filter()));
             }
             totalManaValue += card.getManaValue();
-            if (totalManaValue > effect.maxTotalManaValue()) {
+            if (totalManaValue > maxTotalManaValue) {
                 throw new IllegalStateException("Target cards' total mana value cannot exceed "
-                        + effect.maxTotalManaValue());
+                        + maxTotalManaValue);
             }
         }
     }
@@ -1745,6 +1750,10 @@ public class TargetLegalityService {
             validateAtMostOneCreatureAndOneLand(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.DIFFERENT_MANA_VALUES) {
+            validateDifferentManaValues(gameData, targetIds);
+            return;
+        }
         if (constraint == MultiTargetConstraint.SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST) {
             validateSameCreatureOrLandTypeAsFirstAuraHost(gameData, targetIds);
             return;
@@ -1782,7 +1791,8 @@ public class TargetLegalityService {
                     }
                     case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
-                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND -> {
+                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
+                         DIFFERENT_MANA_VALUES -> {
                         // Handled by early returns above.
                     }
                 }
@@ -1803,6 +1813,16 @@ public class TargetLegalityService {
             }
             if (card.hasType(CardType.SORCERY) && ++sorceryCount > 1) {
                 throw new IllegalStateException("You cannot choose more than one sorcery card");
+            }
+        }
+    }
+
+    private void validateDifferentManaValues(GameData gameData, List<UUID> targetIds) {
+        Set<Integer> manaValues = new HashSet<>();
+        for (UUID targetId : targetIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, targetId);
+            if (card != null && !manaValues.add(card.getManaValue())) {
+                throw new IllegalStateException("Chosen cards must have different mana values");
             }
         }
     }

@@ -35,7 +35,8 @@ public record ConditionContext(
         Card sacrificedCard,
         List<String> repeatedAdditionalCosts,
         boolean alternateCost,
-        boolean spectacle
+        boolean spectacle,
+        boolean treasureManaSpentToActivate
 ) {
     public ConditionContext {
         repeatedAdditionalCosts = repeatedAdditionalCosts == null
@@ -55,7 +56,7 @@ public record ConditionContext(
                 madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
-                alternateCost, false);
+                alternateCost, false, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -69,7 +70,7 @@ public record ConditionContext(
         this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl,
                 madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
-                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, false);
+                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, false, false, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -144,21 +145,22 @@ public record ConditionContext(
                 entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false,
                 entry.isPutCounterCostPaid(), entry.isBeholdCostPaid(), entry.getTriggeringPermanentId(),
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard(),
-                entry.getRepeatedAdditionalCosts(), entry.isAlternateCost(), entry.isSpectacle());
+                entry.getRepeatedAdditionalCosts(), entry.isAlternateCost(), entry.isSpectacle(),
+                entry.getActivationTreasureManaSpent() > 0);
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
         return new ConditionContext(controllerId, permanent.getId(), permanent,
                 permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), false, false, false,
                 null, 0, null, null, false, false, false, null, null, null,
-                permanent.getRepeatedAdditionalCosts(), false, permanent.isSpectacle());
+                permanent.getRepeatedAdditionalCosts(), false, permanent.isSpectacle(), false);
     }
 
     public static ConditionContext forStaticEffect(Permanent source, UUID controllerId) {
         return new ConditionContext(controllerId, source.getId(), source,
                 source.getCard(), source.isKicked(), false, source.isProwl(), false, false, false,
                 null, 0, null, null, true, false, false, null, null, null,
-                source.getRepeatedAdditionalCosts(), false, source.isSpectacle());
+                source.getRepeatedAdditionalCosts(), false, source.isSpectacle(), false);
     }
 
     public static ConditionContext forCasting(UUID castingPlayerId) {
@@ -201,6 +203,7 @@ public record ConditionContext(
                 kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone,
                 copiedXValue, copiedTargetId, copiedTriggeringCard, staticEvaluation,
                 putCounterCostPaid, beholdCostPaid, copiedTriggeringPermanentId,
-                copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost, spectacle);
+                copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost, spectacle,
+                treasureManaSpentToActivate);
     }
 }

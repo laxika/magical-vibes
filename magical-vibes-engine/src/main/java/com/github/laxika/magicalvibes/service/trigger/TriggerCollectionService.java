@@ -125,6 +125,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCr
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactEntersTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -1322,6 +1323,50 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires triggers whenever the given player rolls one or more dice. */
+    public void checkControllerRollsOneOrMoreDiceTriggers(GameData gameData, UUID rollingPlayerId,
+                                                           int diceCount) {
+        checkControllerRollsOneOrMoreDiceTriggers(gameData, rollingPlayerId, diceCount, 0);
+    }
+
+    /** Fires triggers whenever the given player rolls one or more dice, preserving the result. */
+    public void checkControllerRollsOneOrMoreDiceTriggers(GameData gameData, UUID rollingPlayerId,
+                                                           int diceCount, int result) {
+        if (rollingPlayerId == null || diceCount <= 0) return;
+
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.get(rollingPlayerId);
+        if (ownBattlefield == null) return;
+
+        var ctx = new TriggerContext.DiceRoll(rollingPlayerId, diceCount, result);
+        for (Permanent perm : List.copyOf(ownBattlefield)) {
+            dispatchSlot(gameData, perm, rollingPlayerId,
+                    EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, ctx);
+        }
+    }
+
+    /** Fires graveyard-resident triggers whenever the given player rolls a natural 20. */
+    public void checkControllerRollsNaturalTwentyTriggers(GameData gameData, UUID rollingPlayerId) {
+        if (rollingPlayerId == null) return;
+
+        List<Card> graveyard = gameData.playerGraveyards.get(rollingPlayerId);
+        if (graveyard == null) return;
+
+        for (Card card : List.copyOf(graveyard)) {
+            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20)) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        rollingPlayerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} graveyard ability triggers on a natural 20",
+                        gameData.id, card.getName());
+            }
+        }
+    }
+
     public void checkSurveilTriggers(GameData gameData, UUID surveilingPlayerId) {
         gameData.playersWhoSurveilledThisTurn.add(surveilingPlayerId);
         var ctx = new TriggerContext.Surveil(surveilingPlayerId);
@@ -1348,6 +1393,42 @@ public class TriggerCollectionService {
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} graveyard ability triggers on surveil",
+                        gameData.id, card.getName());
+            }
+        }
+    }
+
+    /** Fires battlefield and graveyard-resident triggers whenever a player completes a dungeon. */
+    public void checkDungeonCompletionTriggers(GameData gameData, UUID completingPlayerId) {
+        if (completingPlayerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(completingPlayerId);
+        if (battlefield != null) {
+            TriggerContext context = new TriggerContext.DungeonCompletion(completingPlayerId);
+            for (Permanent permanent : List.copyOf(battlefield)) {
+                dispatchSlot(gameData, permanent, completingPlayerId,
+                        EffectSlot.ON_CONTROLLER_COMPLETES_DUNGEON, context);
+            }
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(completingPlayerId);
+        if (graveyard == null) {
+            return;
+        }
+
+        for (Card card : List.copyOf(graveyard)) {
+            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON)) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        completingPlayerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} graveyard ability triggers on dungeon completion",
                         gameData.id, card.getName());
             }
         }
@@ -3241,6 +3322,20 @@ public class TriggerCollectionService {
         });
     }
 
+    /** Fires turn-scoped global triggers for damage dealt to an opponent's creature. */
+    public void checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+            GameData gameData, Permanent damagedCreature, UUID damagedCreatureControllerId, int damageDealt) {
+        if (damagedCreature == null || damagedCreatureControllerId == null || damageDealt <= 0) return;
+
+        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+            if (watcher.slot() != EffectSlot.ON_OPPONENT_CREATURE_DEALT_DAMAGE
+                    || watcher.controllerId().equals(damagedCreatureControllerId)) {
+                continue;
+            }
+            enqueueTemporaryGlobalTrigger(gameData, watcher, damagedCreature.getId(), damageDealt);
+        }
+    }
+
     /**
      * Fires excess-damage triggers on permanents whose controller is different from the damaged
      * permanent's controller.
@@ -3715,21 +3810,26 @@ public class TriggerCollectionService {
                                                int eventValue) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             if (watcher.slot() != slot) continue;
-
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())));
-            entry.setTargetId(targetId);
-            entry.setEventValue(eventValue);
-            entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} temporary global {} trigger fires",
-                    gameData.id, watcher.sourceCard().getName(), slot.name());
+            enqueueTemporaryGlobalTrigger(gameData, watcher, targetId, eventValue);
         }
+    }
+
+    private void enqueueTemporaryGlobalTrigger(GameData gameData,
+                                                TemporaryGlobalTriggeredAbility watcher,
+                                                UUID targetId, int eventValue) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.sourceCard(),
+                watcher.controllerId(),
+                watcher.sourceCard().getName() + "'s ability",
+                new ArrayList<>(List.of(watcher.effect())));
+        entry.setTargetId(targetId);
+        entry.setEventValue(eventValue);
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+        log.info("Game {} - {} temporary global {} trigger fires",
+                gameData.id, watcher.sourceCard().getName(), watcher.slot().name());
     }
 
     // ── Enchanted-permanent-tap triggers ───────────────────────────────
@@ -6065,7 +6165,7 @@ public class TriggerCollectionService {
             // Blowfly Infestation's "if it had a -1/-1 counter on it") — evaluate against the
             // dying permanent, not just its card.
             CardEffect resolvedEffect = unwrapCreatureDeathConditional(
-                    toResolve, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId);
+                    toResolve, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId, perm);
             if (resolvedEffect == null) continue;
             var match = new TriggerMatchContext(gameData, perm, playerId, resolvedEffect);
             if (dispatch(match, EffectSlot.ON_ANY_CREATURE_DIES, resolvedEffect, ctx)
@@ -7142,8 +7242,15 @@ public class TriggerCollectionService {
                     }
                 }
 
-                dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-                        effect, resolved, ctx);
+                CardEffect onceAwareEffect = unwrapOncePerTurnTrigger(gameData, perm, resolved);
+                if (onceAwareEffect == null) continue;
+
+                boolean dispatched = dispatchEnter(gameData, perm, controllerId,
+                        EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+                        effect, onceAwareEffect, ctx);
+                if (dispatched && onceAwareEffect != resolved) {
+                    gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                }
             }
         }
 
@@ -7228,6 +7335,52 @@ public class TriggerCollectionService {
                                 + trigger.damage() + " damage to any target."));
                 log.info("Game {} - {} triggers for {} entering (artifact-enter emblem)",
                         gameData.id, description, enteringCard.getName());
+            }
+        }
+    }
+
+    /** Fires emblem triggers for a combat-damage event dealt to a player. */
+    public void checkEmblemCombatDamageTriggers(GameData gameData, UUID controllerId,
+                                                UUID damagedPlayerId,
+                                                Map<Permanent, Integer> combatDamageDealtToPlayer) {
+        if (controllerId == null || damagedPlayerId == null || controllerId.equals(damagedPlayerId)
+                || combatDamageDealtToPlayer == null
+                || combatDamageDealtToPlayer.values().stream().noneMatch(damage -> damage > 0)) {
+            return;
+        }
+
+        Card fallbackSource = combatDamageDealtToPlayer.entrySet().stream()
+                .filter(entry -> entry.getValue() > 0)
+                .map(entry -> entry.getKey().getCard())
+                .findFirst()
+                .orElse(null);
+
+        for (Emblem emblem : gameData.emblems) {
+            if (!controllerId.equals(emblem.controllerId())) continue;
+
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (!(effect instanceof EmblemCombatDamageTriggerEffect trigger)) continue;
+                if (gameData.lifeLostThisTurn.getOrDefault(damagedPlayerId, 0) >= trigger.lifeThreshold()) {
+                    continue;
+                }
+
+                Card source = emblem.sourceCard() != null ? emblem.sourceCard() : fallbackSource;
+                if (source == null) continue;
+
+                String description = (emblem.sourceCard() != null ? emblem.sourceCard().getName() : "Emblem")
+                        + "'s emblem";
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source,
+                        controllerId,
+                        description,
+                        List.of(trigger.triggeredEffect()));
+                entry.setNonTargeting(true);
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData, GameLog.text(
+                        description + " triggers for combat damage dealt to an opponent."));
+                log.info("Game {} - {} triggers for combat damage dealt to an opponent",
+                        gameData.id, description);
             }
         }
     }

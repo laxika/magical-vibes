@@ -52,7 +52,8 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
         }
 
         Card sourceCard = enchanted.getCard();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                gameData, entry.getControllerId(), 1, sourceCard.getSubtypes());
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
                     sourceCard, new CreateTokenCopyOfTargetPermanentEffect());

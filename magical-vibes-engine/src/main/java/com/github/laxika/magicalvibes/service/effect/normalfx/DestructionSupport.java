@@ -924,13 +924,13 @@ public class DestructionSupport {
     public void createTokenForPlayer(GameData gameData, UUID controllerId,
                                       CreateTokenEffect token, int tokenCount,
                                       String sourceName, String sourceSetCode) {
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        int totalTokenCount = gameQueryService.getTokenCreationAmount(
+                gameData, controllerId, tokenCount, token.subtypes());
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         boolean isCreature = token.primaryType() == CardType.CREATURE;
 
-        for (int count = 0; count < tokenCount; count++) {
-            for (int copy = 0; copy < tokenMultiplier; copy++) {
+        for (int copy = 0; copy < totalTokenCount; copy++) {
                 Card tokenCard = TokenCardFactory.create(
                         token, token.tokenPower(), token.tokenToughness(), sourceSetCode);
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
@@ -967,7 +967,6 @@ public class DestructionSupport {
                     log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
                             token.tokenName(), playerName);
                 }
-            }
         }
     }
 

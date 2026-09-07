@@ -91,6 +91,8 @@ import java.util.Set;
  *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
  * @param gainLifeEqualToManaValue {@code true} if the controller gains life equal to the returned
  *                             card's mana value after it is returned (e.g. Razor Hippogriff)
+ * @param gainLifeEqualToReturnedToughness {@code true} if the controller gains life equal to the
+ *                             returned permanent's effective toughness after it enters the battlefield
  * @param loseLifeEqualToManaValue {@code true} if the controller loses life equal to the returned
  *                             card's mana value after it is returned (e.g. Reanimate); only meaningful
  *                             on the pre-targeted path
@@ -230,6 +232,8 @@ import java.util.Set;
  * @param unearth              {@code true} when the battlefield return is an unearth activation,
  *                             so the returned permanent can be recognized by effects that treat
  *                             unearth returns specially
+ * @param grantOnDeathEffect   when non-null, the returned permanent gains this persistent
+ *                             {@code ON_DEATH} ability
  */
 @Builder(toBuilder = true)
 public record ReturnCardFromGraveyardEffect(
@@ -249,6 +253,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
         PermanentPredicate attachmentTarget,
         boolean gainLifeEqualToManaValue,
+        boolean gainLifeEqualToReturnedToughness,
         boolean loseLifeEqualToManaValue,
         boolean attachToSource,
         boolean grantHaste,
@@ -297,7 +302,8 @@ public record ReturnCardFromGraveyardEffect(
         boolean shuffleGraveyardBeforeRandomSelection,
         DynamicAmount dynamicMaxManaValue,
         boolean unearth,
-        boolean exileAtNextUpkeep
+        boolean exileAtNextUpkeep,
+        CardEffect grantOnDeathEffect
 ) implements CombatDamageAmountAwareEffect {
 
     /**

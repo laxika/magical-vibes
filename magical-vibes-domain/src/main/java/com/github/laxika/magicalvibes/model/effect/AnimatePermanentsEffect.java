@@ -22,8 +22,9 @@ import java.util.Set;
  *       Warden of the Wall). Until end of turn. A {@code null} power/toughness means "use the
  *       source's printed power/toughness" (Crew on Vehicles).</li>
  *   <li>{@link GrantScope#TARGET} — a target permanent, with {@link EffectDuration#PERMANENT}
- *       (Tezzeret, Waker of the Wilds) or {@link EffectDuration#WHILE_SOURCE_ON_BATTLEFIELD}
- *       (Awakener Druid).</li>
+ *       (Tezzeret, Waker of the Wilds), {@link EffectDuration#WHILE_SOURCE_ON_BATTLEFIELD}
+ *       (Awakener Druid), or {@link EffectDuration#WHILE_SOURCE_REMAINS_TAPPED} (The Blackstaff
+ *       of Waterdeep).</li>
  *   <li>{@link GrantScope#ENCHANTED_PERMANENT} — the permanent the source Aura is attached to,
  *       re-derived at resolution and without targeting (the Genju cycle).</li>
  *   <li>{@link GrantScope#OWN_LANDS} — all lands you control (Sylvan Awakening) until end of turn

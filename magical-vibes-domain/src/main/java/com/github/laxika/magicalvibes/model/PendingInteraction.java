@@ -507,11 +507,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Choose one card among exiled cards and grant it a temporary play permission. */
     record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                   boolean expiresAtEndOfTurn)
+                                   boolean expiresAtEndOfTurn, boolean anyManaType)
             implements PendingInteraction {
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds) {
-            this(playerId, validCardIds, false);
+            this(playerId, validCardIds, false, false);
+        }
+
+        public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                       boolean expiresAtEndOfTurn) {
+            this(playerId, validCardIds, expiresAtEndOfTurn, false);
         }
 
         public ExiledCardMayPlayChoice {
@@ -1672,7 +1677,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            UUID mayAbilityControllerId, java.util.List<CardEffect> mayAbilityEffects,
                            UUID mayAbilitySourcePermanentId,
                            CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
-                           boolean enterTapped, boolean mandatory, String prompt)
+                           boolean enterTapped, boolean mandatory, CardEffect grantOnDeathEffect,
+                           String prompt)
             implements PendingInteraction {
 
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -1718,6 +1724,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private UUID grantSourceHasteSourcePermanentId;
             private boolean enterTapped;
             private boolean mandatory;
+            private CardEffect grantOnDeathEffect;
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
                             GraveyardChoiceDestination destination, String prompt) {
@@ -1793,6 +1800,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return this;
             }
 
+            public Builder grantOnDeathEffect(CardEffect effect) {
+                this.grantOnDeathEffect = effect;
+                return this;
+            }
+
             public GraveyardChoice build() {
                 return new GraveyardChoice(playerId, validIndices, destination, cardPool,
                         gainLifeEqualToManaValue, attachToSourcePermanentId, grantColor, grantSubtype,
@@ -1800,7 +1812,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
                         grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId,
-                        enterTapped, mandatory, prompt);
+                        enterTapped, mandatory, grantOnDeathEffect, prompt);
             }
         }
     }
@@ -2447,8 +2459,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean selectedToBattlefieldTapped, int minCount,
                                boolean gainLifeEqualToSelectedCardManaValue,
                                CardEffect effectIfNoCardChosen,
-                               boolean recordSelectedCount)
+                               boolean recordSelectedCount,
+                               CardPredicate selectedCardPredicate,
+                               CardEffect effectIfSelectedCardMatches)
             implements PendingInteraction {
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, null, null);
+        }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                    java.util.List<UUID> validCardIds, boolean remainingToGraveyard,

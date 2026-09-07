@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -932,7 +934,8 @@ class CastingCostServiceTest {
 
             when(gameQueryService.findPermanentById(gd, dinosaur.getId())).thenReturn(dinosaur);
             when(gameQueryService.findPermanentController(gd, dinosaur.getId())).thenReturn(player1Id);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, dinosaur, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(dinosaur), eq(predicate), any(FilterContext.class))).thenReturn(true);
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, stomp, List.of(dinosaur.getId())))
                     .isEqualTo(2);
@@ -1000,9 +1003,33 @@ class CastingCostServiceTest {
             gd.playerBattlefields.get(player2Id).add(tappedBear);
 
             when(gameQueryService.findPermanentById(gd, tappedBear.getId())).thenReturn(tappedBear);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, tappedBear, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(tappedBear), eq(predicate), any(FilterContext.class))).thenReturn(true);
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, response, List.of(tappedBear.getId())))
+                    .isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Indexed reduction applies when a later target matches")
+        void indexedPermanentReductionApplies() {
+            var predicate = new PermanentColorInPredicate(Set.of(CardColor.BLUE));
+            Card mark = new Card();
+            mark.setName("Hunter's Mark");
+            mark.setType(CardType.INSTANT);
+            mark.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+                            predicate, 3, false, 1));
+
+            Permanent source = new Permanent(new Card());
+            Permanent blueTarget = new Permanent(new Card());
+
+            when(gameQueryService.findPermanentById(gd, blueTarget.getId())).thenReturn(blueTarget);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(blueTarget), eq(predicate), any(FilterContext.class))).thenReturn(true);
+
+            assertThat(svc.computeTargetBasedCostReduction(
+                    gd, player1Id, mark, List.of(source.getId(), blueTarget.getId())))
                     .isEqualTo(3);
         }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithNormalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -77,11 +78,20 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyEffectHandler
 
         Card copy = copySupport.createCopyCard(targetCard);
         exileService.exileCard(gameData, entry.getControllerId(), copy);
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                copy,
-                entry.getControllerId(),
-                List.of(new MayCastCopyWithoutPayingManaCostEffect()),
-                "Cast the copy of " + copy.getName() + " without paying its mana cost?",
-                copy.getId()));
+        if (!copyEffect.withoutPayingManaCost()) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    copy,
+                    entry.getControllerId(),
+                    List.of(new MayCastCopyWithNormalCostEffect()),
+                    "Cast the copy of " + copy.getName() + " by paying its mana cost?",
+                    copy.getId()));
+        } else {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    copy,
+                    entry.getControllerId(),
+                    List.of(new MayCastCopyWithoutPayingManaCostEffect()),
+                    "Cast the copy of " + copy.getName() + " without paying its mana cost?",
+                    copy.getId()));
+        }
     }
 }

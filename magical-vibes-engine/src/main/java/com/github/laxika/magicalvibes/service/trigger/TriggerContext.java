@@ -76,6 +76,16 @@ public sealed interface TriggerContext {
     /** Context for controller-surveil triggers. */
     record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
 
+    /** Context for triggers caused by completing a dungeon. */
+    record DungeonCompletion(UUID completingPlayerId) implements TriggerContext {}
+
+    /** Context for triggers caused by rolling one or more dice. */
+    record DiceRoll(UUID rollingPlayerId, int diceCount, int result) implements TriggerContext {
+        public DiceRoll(UUID rollingPlayerId, int diceCount) {
+            this(rollingPlayerId, diceCount, 0);
+        }
+    }
+
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
      */
