@@ -1847,6 +1847,18 @@ public class LibraryChoiceHandlerService {
                                                         AnimatePermanentsEffect animateFound,
                                                         CounterType battlefieldCounter,
                                                         com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect enterWithCounters) {
+        placeCardsOnBattlefieldSimultaneously(gameData, cards, ownerId, tapped, grantHaste, exileAtEndStep,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, false);
+    }
+
+    private List<Permanent> placeCardsOnBattlefieldSimultaneously(GameData gameData, List<Card> cards,
+                                                        UUID ownerId, boolean tapped,
+                                                        boolean grantHaste, boolean exileAtEndStep,
+                                                        boolean returnToHandAtEndStep,
+                                                        AnimatePermanentsEffect animateFound,
+                                                        CounterType battlefieldCounter,
+                                                        com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect enterWithCounters,
+                                                        boolean cloaked) {
         List<Permanent> permanents = new ArrayList<>();
         List<Card> placedCards = new ArrayList<>();
         String ownerName = gameData.playerIdToName.get(ownerId);
@@ -1871,6 +1883,9 @@ public class LibraryChoiceHandlerService {
                 continue;
             }
             Permanent perm = new Permanent(card, Zone.LIBRARY);
+            if (cloaked) {
+                perm.setFaceDownAsCloaked();
+            }
             if (grantHaste) {
                 perm.getGrantedKeywords().add(Keyword.HASTE);
             }
@@ -1889,7 +1904,10 @@ public class LibraryChoiceHandlerService {
             permanents.add(perm);
             placedCards.add(card);
 
-            if (tapped) {
+            if (cloaked) {
+                gameLogService.append(gameData, GameLog.text(
+                        ownerName + " puts a card onto the battlefield face down."));
+            } else if (tapped) {
                 gameLogService.append(gameData, GameLog.entersBattlefieldTappedUnder(card, ownerName));
             } else {
                 gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, ownerName));
@@ -1926,8 +1944,12 @@ public class LibraryChoiceHandlerService {
             Card card = placedCards.get(i);
             Permanent perm = permanents.get(i);
 
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
-            if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+            if (cloaked) {
+                battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, ownerId, card);
+            } else {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
+            }
+            if (!cloaked && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
                 perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
                 perm.setSummoningSick(false);
             }
@@ -1936,6 +1958,7 @@ public class LibraryChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, ownerId);
         }
+        return permanents;
     }
 
     private void placeBattlefieldCounter(GameData gameData, Permanent permanent, CounterType counterType) {
@@ -2351,9 +2374,11 @@ public class LibraryChoiceHandlerService {
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         List<UUID> selectedPermanentIds = new ArrayList<>();
         if (libraryRevealChoice.selectedToBattlefieldSimultaneously()) {
-            placeCardsOnBattlefieldSimultaneously(gameData, selectedCards, controllerId,
+            List<Permanent> entered = placeCardsOnBattlefieldSimultaneously(gameData, selectedCards, controllerId,
                     libraryRevealChoice.selectedToBattlefieldTapped(), false, false, false,
-                    null, null, libraryRevealChoice.battlefieldEntryReplacement());
+                    null, null, libraryRevealChoice.battlefieldEntryReplacement(),
+                    libraryRevealChoice.selectedToBattlefieldCloaked());
+            entered.stream().map(Permanent::getId).forEach(selectedPermanentIds::add);
         } else {
             List<Permanent> simultaneouslyEntered = new ArrayList<>();
             for (Card card : selectedCards) {
