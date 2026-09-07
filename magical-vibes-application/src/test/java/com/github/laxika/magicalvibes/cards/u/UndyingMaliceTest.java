@@ -37,6 +37,8 @@ class UndyingMaliceTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(returned.isTapped()).isTrue();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .noneMatch(card -> card.getId().equals(targetCard.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(targetCard.getId()));
     }

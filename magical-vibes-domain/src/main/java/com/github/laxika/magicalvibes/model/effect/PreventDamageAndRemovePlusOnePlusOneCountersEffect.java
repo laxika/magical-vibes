@@ -14,39 +14,56 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param tokenTemplate optional token blueprint created once per point of prevented damage
  * @param preventOnlyIfCounterAvailable if true, prevent only as much damage as the number of
  *                                      counters removed
+ * @param requiresCounter if true, the replacement applies only while at least one +1/+1 counter
+ *                        remains on the permanent
+ * @param dealsPreventedDamage if true, queue a reflexive any-target damage ability for the number
+ *                             of counters removed
  */
 public record PreventDamageAndRemovePlusOnePlusOneCountersEffect(
         boolean removeOneOnly,
         CreateTokenEffect tokenTemplate,
         boolean preventOnlyIfCounterAvailable,
-        boolean requiresCounter
+        boolean requiresCounter,
+        boolean dealsPreventedDamage
 ) implements CardEffect {
 
     /** Default constructor: removes counters equal to damage (Protean Hydra behavior). */
     public PreventDamageAndRemovePlusOnePlusOneCountersEffect() {
-        this(false, null, false, false);
+        this(false, null, false, false, false);
     }
 
     public PreventDamageAndRemovePlusOnePlusOneCountersEffect(boolean removeOneOnly) {
-        this(removeOneOnly, null, false, false);
+        this(removeOneOnly, null, false, false, false);
     }
 
     /** Sekki variant: creates one token for each point of damage prevented. */
     public PreventDamageAndRemovePlusOnePlusOneCountersEffect(CreateTokenEffect tokenTemplate) {
-        this(false, tokenTemplate, false, false);
+        this(false, tokenTemplate, false, false, false);
     }
 
     public PreventDamageAndRemovePlusOnePlusOneCountersEffect(boolean removeOneOnly, CreateTokenEffect tokenTemplate) {
-        this(removeOneOnly, tokenTemplate, false, false);
+        this(removeOneOnly, tokenTemplate, false, false, false);
+    }
+
+    public PreventDamageAndRemovePlusOnePlusOneCountersEffect(boolean removeOneOnly,
+                                                               CreateTokenEffect tokenTemplate,
+                                                               boolean preventOnlyIfCounterAvailable,
+                                                               boolean requiresCounter) {
+        this(removeOneOnly, tokenTemplate, preventOnlyIfCounterAvailable, requiresCounter, false);
     }
 
     /** Rock Hydra variant: each available +1/+1 counter prevents one damage. */
     public static PreventDamageAndRemovePlusOnePlusOneCountersEffect onlyIfCounterAvailable() {
-        return new PreventDamageAndRemovePlusOnePlusOneCountersEffect(false, null, true, false);
+        return new PreventDamageAndRemovePlusOnePlusOneCountersEffect(false, null, true, false, false);
     }
 
     /** Ugin's Conjurant variant: applies only while the permanent has a +1/+1 counter. */
     public static PreventDamageAndRemovePlusOnePlusOneCountersEffect onlyWhileCountered() {
-        return new PreventDamageAndRemovePlusOnePlusOneCountersEffect(false, null, false, true);
+        return new PreventDamageAndRemovePlusOnePlusOneCountersEffect(false, null, false, true, false);
+    }
+
+    /** Magma Pummeler variant: the counters removed by the replacement trigger any-target damage. */
+    public static PreventDamageAndRemovePlusOnePlusOneCountersEffect withReflexiveDamageTrigger() {
+        return new PreventDamageAndRemovePlusOnePlusOneCountersEffect(false, null, false, true, true);
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeav
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "12")
+@CardRegistration(set = "OM1", collectorNumber = "8")
 public class SelflessPoliceCaptain extends Card {
 
     public SelflessPoliceCaptain() {

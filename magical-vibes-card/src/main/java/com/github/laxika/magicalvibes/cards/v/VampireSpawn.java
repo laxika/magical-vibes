@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "532")
+@CardRegistration(set = "AFR", collectorNumber = "123")
 public class VampireSpawn extends Card {
 
     public VampireSpawn() {

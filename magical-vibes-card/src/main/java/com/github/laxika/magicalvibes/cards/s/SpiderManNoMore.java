@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "45")
+@CardRegistration(set = "OM1", collectorNumber = "31")
 public class SpiderManNoMore extends Card {
 
     public SpiderManNoMore() {

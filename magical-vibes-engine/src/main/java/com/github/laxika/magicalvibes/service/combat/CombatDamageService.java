@@ -412,6 +412,8 @@ public class CombatDamageService {
 
         // Process combat damage to player triggers (e.g. Cephalid Constable)
         processCombatDamageToPlayerTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
+        triggerCollectionService.checkEmblemCombatDamageTriggers(
+                gameData, activeId, defenderId, state.combatDamageDealtToPlayer);
 
         // Process delayed combat damage loot triggers (e.g. Jace, Cunning Castaway's +1)
         processDelayedCombatDamageLootTriggers(gameData, state.combatDamageDealtToPlayer, activeId);
@@ -1098,6 +1100,8 @@ public class CombatDamageService {
                 // action check at the end of the damage step performs any destruction.
                 redirectTarget.addMarkedDamage(null, state.damageRedirectedToGuard);
                 gameData.recordDamageToPermanent(redirectTarget.getId(), state.damageRedirectedToGuard);
+                triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
+                        gameData, redirectTarget, state.damageRedirectedToGuard);
                 if (state.deathtouchDamageRedirectedToGuard) {
                     redirectTarget.setDamagedByDeathtouch(true);
                 }
@@ -1588,7 +1592,7 @@ public class CombatDamageService {
             }
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt);
-            checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, defenderId);
+            checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId, damageDealt);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
                     combatDamageDealtToPlayer, firedBatchedAllyTriggerSources, false);
             triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
@@ -1603,6 +1607,10 @@ public class CombatDamageService {
                 List<CardEffect> rawEffects = new ArrayList<>();
                 rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
                 rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
 
                 // Unwrap EnchantedPermanentConditionalEffect against the enchanted creature that
                 // dealt the damage, so a granted trigger gated on the creature's characteristics
@@ -1711,22 +1719,37 @@ public class CombatDamageService {
      * E.g. Curse of Stalked Prey: "Whenever a creature deals combat damage to enchanted player,
      * put a +1/+1 counter on that creature."
      */
-    private void checkPlayerAttachedCurseCombatDamageTriggers(GameData gameData, Permanent creature, UUID defenderId) {
+    private void checkPlayerAttachedCurseCombatDamageTriggers(GameData gameData, Permanent creature, UUID attackerId,
+                                                              UUID defenderId, int damageDealt) {
         gameData.forEachPermanent((ownerId, perm) -> {
-            if (perm.isAttached() && perm.getAttachedTo().equals(defenderId)) {
+            if (perm.isAttached() && defenderId.equals(perm.getAttachedTo())) {
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
                 for (CardEffect effect : effects) {
-                    if (effect instanceof PutCountersOnSourceEffect) {
-                        // "sourcePermanentId" is set to the creature that dealt damage, so counters go on it
+                    if (effect instanceof CombatDamageTriggerContextEffect contextEffect
+                            && (contextEffect.combatDamageTriggerContext()
+                            == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF
+                            || contextEffect.combatDamageTriggerContext()
+                            == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER)) {
+                        CombatDamageTriggerContextEffect.TriggerContext triggerContext =
+                                contextEffect.combatDamageTriggerContext();
+                        UUID targetId = triggerContext
+                                == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
+                                ? defenderId : null;
+                        UUID sourcePermanentId = triggerContext
+                                == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF
+                                ? creature.getId() : perm.getId();
                         StackEntry se = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 ownerId,
                                 perm.getCard().getName() + "'s triggered ability",
                                 List.of(effect),
-                                null,
-                                creature.getId()
+                                targetId,
+                                sourcePermanentId
                         );
+                        se.setTriggeringPermanentId(creature.getId());
+                        se.setTriggeringPermanentControllerId(attackerId);
+                        setCombatDamageEventValue(se, effect, damageDealt);
                         se.setNonTargeting(true);
                         gameData.stack.add(se);
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
@@ -2464,6 +2487,8 @@ public class CombatDamageService {
             UUID controllerId = state.combatDamageTargetControllers.get(damagedCreatureId);
             triggerCollectionService.checkAnyCreatureDealtDamageTriggers(
                     gameData, damaged, controllerId, entry.getValue());
+            triggerCollectionService.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+                    gameData, damaged, controllerId, entry.getValue());
         }
     }
 
@@ -2596,6 +2621,21 @@ public class CombatDamageService {
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
                     continue;
                 }
+
+                if (effectToAdd.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effectToAdd.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                    TargetFilter targetFilter = data.card().getEffectTargetIndex(effect) >= 0
+                            ? data.card().getTargetFilter() : null;
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)),
+                            !effectToAdd.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
+                            targetFilter, data.damageDealt(), data.permanentId()));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
+                    log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger awaits target",
+                            gameData.id, data.card().getName());
+                    continue;
+                }
+
                 // The combat damage dealt snapshots onto eventValue so "it deals that much damage"
                 // effects can read it with an EventValue amount (Stuffy Doll).
                 StackEntry triggerEntry = new StackEntry(
@@ -2787,6 +2827,7 @@ public class CombatDamageService {
             if (dmg > 0) {
                 Map<UUID, Integer> attributedDamage = recordCombatMarkedDamage(perm, dmg, bySource);
                 gameData.recordDamageToPermanent(perm.getId(), dmg);
+                triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, perm, dmg);
                 attributedDamage.forEach((sourceId, amount) -> {
                     Permanent damageSource = gameQueryService.findPermanentById(gameData, sourceId);
                     gameData.recordDamageToPermanentFromSource(perm.getId(), amount, sourceId,
@@ -3054,13 +3095,16 @@ public class CombatDamageService {
             Permanent pw = gameQueryService.findPermanentById(gameData, pwId);
             if (pw == null) continue; // planeswalker/battle may have left battlefield
             if (pw.getCard().hasType(CardType.BATTLE)) {
+                gameData.recordDamageToPermanent(pw.getId(), damage);
                 pw.setCounterCount(CounterType.DEFENSE, pw.getCounterCount(CounterType.DEFENSE) - damage);
+                triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, pw, damage);
                 gameLogService.append(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("
                         + pw.getCounterCount(CounterType.DEFENSE) + " defense remaining)."));
                 battleDefeatSupport.checkAfterDefenseRemoved(gameData, pw);
                 continue;
             }
             gameData.recordDamageToPermanent(pw.getId(), damage);
+            triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, pw, damage);
             int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
                     gameData, pw, damage);
             pw.setCounterCount(CounterType.LOYALTY,
@@ -3157,7 +3201,6 @@ public class CombatDamageService {
                     if (targetPerm.getCard().hasType(CardType.BATTLE)) {
                         targetPerm.setCounterCount(CounterType.DEFENSE,
                                 targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
-                        battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
                     }
                     boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
                     if (isCreature || (!targetPerm.getCard().hasType(CardType.PLANESWALKER)
@@ -3167,6 +3210,11 @@ public class CombatDamageService {
                     gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage,
                             redirect.damageSourceId(), damageSource == null ? null
                                     : gameQueryService.getEffectiveName(gameData, damageSource));
+                    triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
+                            gameData, targetPerm, effectiveDamage);
+                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
+                        battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
+                    }
                     recordQualifyingCombatDamageBySourceId(gameData, redirect.damageSourceId(), targetPerm);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());
                     gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
@@ -3781,6 +3829,7 @@ public class CombatDamageService {
             if (afterShield > 0) {
                 gameData.recordDamageToPermanent(target.getId(), afterShield, source.getId(),
                         gameQueryService.getEffectiveName(gameData, source));
+                triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, afterShield);
                 recordQualifyingCombatDamage(gameData, source, target);
             }
             // Counter damage is still damage dealt (CR 702.90e), so a deathtouch source marks

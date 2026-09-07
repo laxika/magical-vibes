@@ -125,6 +125,7 @@ public class TriggerTargetCollector {
         public static final Options DEATH = new Options(true, true, false, true);
         public static final Options DELAYED_DEATH = new Options(false, true, false, true);
         public static final Options ATTACK = new Options(false, true, false, true);
+        public static final Options EXPLOIT = new Options(false, true, false, true);
         public static final Options END_STEP = new Options(false, true, true, true);
         public static final Options UPKEEP = new Options(false, true, true, true);
         public static final Options DAY_NIGHT = new Options(false, true, true, true);
@@ -258,6 +259,7 @@ public class TriggerTargetCollector {
             // AnyTargetPredicateTargetFilter governs in the same way (Scuttling Doom Engine's death
             // trigger reaches planeswalkers, not creatures).
             boolean explicitPermanentFilter = targetFilter instanceof PermanentPredicateTargetFilter
+                    || targetFilter instanceof ControlledPermanentPredicateTargetFilter
                     || targetFilter instanceof AnyTargetPredicateTargetFilter;
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
             if (effectPredicate != null) {

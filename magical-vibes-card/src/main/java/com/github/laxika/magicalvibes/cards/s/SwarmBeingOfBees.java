@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "69")
+@CardRegistration(set = "OM1", collectorNumber = "73")
 public class SwarmBeingOfBees extends Card {
 
     public SwarmBeingOfBees() {

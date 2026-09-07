@@ -58,6 +58,17 @@ public sealed interface ManaRestriction {
     }
 
     /** Mana spendable only to cast noncreature spells. */
+    record InstantSorceryOrClassLevel() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addInstantSorceryOrClassLevelOnlyMana(color, amount);
+        }
+        @Override
+        public String description() {
+            return "instant or sorcery spells or Class levels only";
+        }
+    }
+
     record NoncreatureSpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -340,6 +351,32 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "colorless " + subtype + " spells or abilities only";
+        }
+    }
+
+    /** Mana spendable only to cast spells with devoid. */
+    record DevoidSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addDevoidSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells with devoid only";
+        }
+    }
+
+    /** Mana spendable only to cast colorless spells, activate colorless permanent abilities, or pay costs containing {C}. */
+    record ColorlessSpellsOrPermanentAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addColorlessSpellOrPermanentAbilityMana(amount);
+        }
+
+        @Override
+        public String description() {
+            return "colorless spells, colorless permanent abilities, or costs containing {C} only";
         }
     }
 

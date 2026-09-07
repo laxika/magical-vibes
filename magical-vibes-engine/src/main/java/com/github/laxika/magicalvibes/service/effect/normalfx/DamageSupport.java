@@ -460,6 +460,7 @@ public class DamageSupport {
             if (damageSource == null) {
                 recordSorcerySpellDamage(gameData, entry, damage);
             }
+            triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
             if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
                     || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
                 gameData.recordQualifyingDamageControllerToPermanent(target.getId(), sourceControllerId);
@@ -507,6 +508,8 @@ public class DamageSupport {
                 // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
                 if (damagedCreatureControllerId != null) {
                     triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
+                    triggerCollectionService.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+                            gameData, target, damagedCreatureControllerId, damage);
                 }
 
                 // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
@@ -727,6 +730,8 @@ public class DamageSupport {
             UUID damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
             if (damagedCreatureControllerId != null) {
                 triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
+                triggerCollectionService.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+                        gameData, target, damagedCreatureControllerId, damage);
             }
 
             // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
@@ -755,6 +760,7 @@ public class DamageSupport {
         target.addMarkedDamage(damageSourceKey(entry, null), damage);
         gameData.recordNoncombatDamageToPermanent(target.getId(), damage);
         recordDamageToPermanent(gameData, target.getId(), damage, entry, sourcePermanent);
+        triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
         if (damage > 0 && gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH)) {
             target.setDamagedByDeathtouch(true);
         }
@@ -1045,6 +1051,8 @@ public class DamageSupport {
                         gameData.recordQualifyingDamageControllerToPermanent(
                                 targetPermanent.getId(), entry.getControllerId());
                     }
+                    triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
+                            gameData, targetPermanent, damageDealt);
                     triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
                             gameData, sourcePermanent, entry.getControllerId(), targetPermanent.getId(),
                             damageDealt, false, null);
@@ -1819,6 +1827,10 @@ public class DamageSupport {
                     if (targetPerm.getCard().hasType(CardType.BATTLE)) {
                         targetPerm.setCounterCount(CounterType.DEFENSE,
                                 targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
+                    }
+                    triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
+                            gameData, targetPerm, effectiveDamage);
+                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
                         battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
                     }
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());

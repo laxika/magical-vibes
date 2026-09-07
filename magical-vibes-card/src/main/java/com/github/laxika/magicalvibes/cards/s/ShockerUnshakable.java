@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "89")
+@CardRegistration(set = "OM1", collectorNumber = "83")
 public class ShockerUnshakable extends Card {
 
     public ShockerUnshakable() {

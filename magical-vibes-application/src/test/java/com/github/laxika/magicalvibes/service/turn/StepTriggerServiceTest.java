@@ -1507,6 +1507,22 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Granted beginning-of-combat ability is collected")
+        void grantedBeginningOfCombatAbilityFires() {
+            Card card = createCardWithName("Granted Combat Card");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            when(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gd, permanent, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED))
+                    .thenReturn(List.of(new GainLifeEffect(1)));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Granted Combat Card");
+        }
+
+        @Test
         @DisplayName("BEGINNING_OF_COMBAT_TRIGGERED does not fire for non-active player's permanents")
         void beginningOfCombatSkipsNonActivePlayer() {
             Card card = createCardWithName("Combat Trigger Card");

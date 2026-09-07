@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "90")
 @CardRegistration(set = "FDN", collectorNumber = "175")
+@CardRegistration(set = "VOW", collectorNumber = "120")
 @CardRegistration(set = "FDN", collectorNumber = "319")
 public class HerosDownfall extends Card {
 

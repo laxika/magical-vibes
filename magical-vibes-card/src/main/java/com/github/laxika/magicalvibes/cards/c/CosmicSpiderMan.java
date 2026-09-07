@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "127")
 @CardRegistration(set = "SPM", collectorNumber = "271")
+@CardRegistration(set = "OM1", collectorNumber = "154")
 public class CosmicSpiderMan extends Card {
 
     public CosmicSpiderMan() {

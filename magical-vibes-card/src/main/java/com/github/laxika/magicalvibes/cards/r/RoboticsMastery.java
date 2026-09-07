@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "41")
+@CardRegistration(set = "OM1", collectorNumber = "41")
 public class RoboticsMastery extends Card {
 
     public RoboticsMastery() {

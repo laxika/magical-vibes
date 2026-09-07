@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "166")
 @CardRegistration(set = "SPM", collectorNumber = "279")
+@CardRegistration(set = "OM1", collectorNumber = "166")
 public class IronSpiderStarkUpgrade extends Card {
 
     public IronSpiderStarkUpgrade() {

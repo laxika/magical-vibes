@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasin
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
+import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -966,6 +967,22 @@ public class CastingCostService {
                 : reduction;
     }
 
+    /** Whether the activating player can use a static effect that replaces this equip cost with zero. */
+    public boolean hasFreeEquipAbilityCost(GameData gameData, UUID activatingPlayerId,
+                                           ActivatedAbility ability) {
+        if (!ability.isEquipAbility()
+                || gameData.playersWhoActivatedEquipAbilityThisTurn.contains(activatingPlayerId)) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(FreeEquipEffect.class::isInstance);
+    }
+
     /**
      * Generic mana removed from the activation cost of {@code sourcePermanent}'s activated ability,
      * summed over every matching reduction effect on every battlefield. Symmetric — applies
@@ -1692,8 +1709,9 @@ public class CastingCostService {
      * Computes the actual cost reduction for spells that cost less when targeting a
      * permanent matching a predicate (e.g. Ajani's Response targeting a tapped creature),
      * a controlled permanent matching a predicate (e.g. Savage Stomp targeting a Dinosaur),
-     * or a spell on the stack matching a predicate.
-     * Returns the reduction amount if the first target matches, 0 otherwise.
+     * or a spell on the stack matching a predicate. Permanent spell-self reductions inspect the
+     * target index configured by the effect; the default is the first target.
+     * Returns the reduction amount if the selected target matches, 0 otherwise.
      */
     public int computeTargetBasedCostReduction(GameData gameData, UUID playerId, Card card, List<UUID> targetIds) {
         if (targetIds.isEmpty()) {
@@ -1763,13 +1781,16 @@ public class CastingCostService {
         int ownPermanentReduction = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
                 .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
-                .mapToInt(effect -> targetIds.stream()
+                .mapToInt(effect -> (effect.targetIndex() < 0 ? targetIds.stream()
+                        : targetIds.stream().skip(effect.targetIndex()).limit(1))
                         .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
                         .filter(java.util.Objects::nonNull)
                         .filter(target -> !effect.controlledByCaster()
                                 || playerId.equals(gameQueryService.findPermanentController(gameData, target.getId())))
                         .anyMatch(target -> predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, target, effect.predicate())) ? effect.amount() : 0)
+                                target, effect.predicate(), FilterContext.of(gameData)
+                                        .withSourceCardId(card.getId())
+                                        .withSourceControllerId(playerId))) ? effect.amount() : 0)
                 .sum();
         if (ownPermanentReduction != 0) {
             return ownPermanentReduction;
@@ -1806,6 +1827,10 @@ public class CastingCostService {
             return stackEffect.amount();
         }
         return 0;
+    }
+
+    private UUID targetAt(List<UUID> targetIds, int targetIndex) {
+        return targetIndex >= 0 && targetIndex < targetIds.size() ? targetIds.get(targetIndex) : null;
     }
 
     public boolean hasTargetBasedCastCostReduction(Card card) {

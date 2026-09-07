@@ -43,9 +43,11 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPer
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
+import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
+import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
@@ -66,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
@@ -73,13 +76,10 @@ import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -984,6 +984,10 @@ public class CombatAttackService {
                         && ce.condition() instanceof MinimumAttackers
                         && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
 
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ExactlyAttackers
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
+
                 // Battalion-style attacker counts are part of the trigger event, not an intervening-if
                 // clause, so the surviving wrapper is unwrapped here: paths that route the trigger
                 // through a target-selection interaction (AttackTriggerTarget) build the stack entry
@@ -991,7 +995,18 @@ public class CombatAttackService {
                 allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof MinimumAttackers
                         ? ce.wrapped() : e);
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ExactlyAttackers
+                        ? ce.wrapped() : e);
 
+                // Pack-tactics-style conditions qualify the attack event itself, so the condition
+                // is measured now and the surviving effect is not re-evaluated during resolution.
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
+                        ? ce.wrapped() : e);
                 ConditionContext attackedTargetContext = ConditionContext.forPermanent(attacker, playerId)
                         .withTargetId(attacker.getAttackTarget());
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
@@ -1014,6 +1029,8 @@ public class CombatAttackService {
                     for (CardEffect effect : nonTargetingMayEffects) {
                         com.github.laxika.magicalvibes.model.effect.MayEffect may =
                                 (com.github.laxika.magicalvibes.model.effect.MayEffect) effect;
+                        UUID otherAttackerId = may.wrapped() instanceof OtherAttackingCreatureReferenceEffect
+                                ? findOtherAttackerId(attackerIndices, idx, battlefield) : null;
                         if (may.choicePlayer() == MayChoicePlayer.DEFENDING_PLAYER) {
                             UUID attackedTargetId = attacker.getAttackTarget();
                             UUID defendingPlayerId = attackedTargetId == null ? null
@@ -1025,7 +1042,7 @@ public class CombatAttackService {
                                         attacker.getId(), defendingPlayerId, new Permanent(attacker));
                             }
                         } else {
-                            gameData.queueMayAbility(attacker.getCard(), playerId, may, null, attacker.getId(),
+                            gameData.queueMayAbility(attacker.getCard(), playerId, may, otherAttackerId, attacker.getId(),
                                     attacker.getAttackTarget());
                         }
                     }
@@ -1182,7 +1199,7 @@ public class CombatAttackService {
             if (!hasGreaterPowerAlly) {
                 continue;
             }
-            List<CardEffect> trainingEffects = List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+            List<CardEffect> trainingEffects = List.of(new TrainEffect());
             StackEntry trainingTrigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     attacker.getCard(),
@@ -1270,6 +1287,17 @@ public class CombatAttackService {
                     }
                     filteredEffects.add(ce.wrapped());
                 } else if (effect instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ExactlyAttackers exactlyAttackers) {
+                    boolean exactCountMet = conditionEvaluationService.isMet(
+                            gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
+                    if (!exactCountMet) {
+                        log.info("Game {} - {} attack trigger skipped (not exactly {} attackers)",
+                                gameData.id, perm.getCard().getName(), exactlyAttackers.attackerCount());
+                        continue;
+                    }
+                    filteredEffects.add(ce.wrapped());
+                } else if (effect instanceof ConditionalEffect ce
                         && ce.condition() instanceof MinimumMatchingAttackers matchingAttackers) {
                     boolean met = conditionEvaluationService.isMet(gameData, ce.condition(),
                             ConditionContext.forPermanent(perm, playerId));
@@ -1308,7 +1336,8 @@ public class CombatAttackService {
                                 || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                 if (needsTarget) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            perm.getCard(), playerId, filteredEffects, perm.getId()));
+                            perm.getCard(), playerId, filteredEffects, perm.getId(), playerId, null,
+                            null, attackerIndices.size()));
                     gameLogService.append(gameData,
                             GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
                     log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK trigger queued for target selection",
@@ -1993,6 +2022,19 @@ public class CombatAttackService {
         return gameData.beginTriggeredAbilityCopies(1 +
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         gameData, controllerId, source, true));
+    }
+
+    private UUID findOtherAttackerId(List<Integer> attackerIndices, int sourceIndex,
+                                     List<Permanent> battlefield) {
+        if (attackerIndices.size() != 2) {
+            return null;
+        }
+        for (int attackerIndex : attackerIndices) {
+            if (attackerIndex != sourceIndex) {
+                return battlefield.get(attackerIndex).getId();
+            }
+        }
+        return null;
     }
 
     /**

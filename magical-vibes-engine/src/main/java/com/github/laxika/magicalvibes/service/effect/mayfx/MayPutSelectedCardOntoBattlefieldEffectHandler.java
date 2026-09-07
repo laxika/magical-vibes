@@ -33,7 +33,12 @@ public class MayPutSelectedCardOntoBattlefieldEffectHandler implements MayEffect
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        if (accepted) {
+        MayPutSelectedCardOntoBattlefieldEffect effect = ability.effects().stream()
+                .filter(MayPutSelectedCardOntoBattlefieldEffect.class::isInstance)
+                .map(MayPutSelectedCardOntoBattlefieldEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (accepted && effect != null) {
             List<Card> hand = gameData.playerHands.get(player.getId());
             Card selectedCard = hand == null ? null : hand.stream()
                     .filter(card -> card.getId().equals(ability.targetCardId()))
@@ -42,15 +47,27 @@ public class MayPutSelectedCardOntoBattlefieldEffectHandler implements MayEffect
             if (selectedCard != null) {
                 hand.remove(selectedCard);
                 Permanent permanent = new Permanent(selectedCard, Zone.LIBRARY);
-                permanent.getGrantedKeywords().add(Keyword.HASTE);
+                if (effect.grantHaste()) {
+                    permanent.getGrantedKeywords().add(Keyword.HASTE);
+                }
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
+                if (effect.tapped()) {
+                    permanent.tap();
+                }
                 if (selectedCard.hasType(CardType.CREATURE)) {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(
                             gameData, player.getId(), selectedCard, null, false);
                 }
-                gameLogService.append(gameData, GameLog.builder()
+                GameLog.Builder log = GameLog.builder()
                         .text(player.getUsername() + " puts ").card(selectedCard)
-                        .text(" onto the battlefield with haste.").build());
+                        .text(" onto the battlefield");
+                if (effect.tapped()) {
+                    log.text(" tapped");
+                }
+                if (effect.grantHaste()) {
+                    log.text(" with haste");
+                }
+                gameLogService.append(gameData, log.text(".").build());
             }
         }
 

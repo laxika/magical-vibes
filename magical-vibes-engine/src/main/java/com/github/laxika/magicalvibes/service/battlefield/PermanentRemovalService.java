@@ -41,6 +41,8 @@ import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +87,7 @@ public class PermanentRemovalService {
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final LifeSupport lifeSupport;
     private final PlayerInputService playerInputService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -99,7 +102,8 @@ public class PermanentRemovalService {
                                    @Lazy CreatureControlService creatureControlService,
                                    UnattachTriggerSupport unattachTriggerSupport,
                                    @Lazy LifeSupport lifeSupport,
-                                   @Lazy PlayerInputService playerInputService) {
+                                   @Lazy PlayerInputService playerInputService,
+                                   EffectHandlerRegistry effectHandlerRegistry) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
@@ -114,6 +118,7 @@ public class PermanentRemovalService {
         this.unattachTriggerSupport = unattachTriggerSupport;
         this.lifeSupport = lifeSupport;
         this.playerInputService = playerInputService;
+        this.effectHandlerRegistry = effectHandlerRegistry;
     }
 
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -1086,6 +1091,7 @@ public class PermanentRemovalService {
             if (effectiveDamage > 0) {
                 target.addMarkedDamage(sourcePermanentId, effectiveDamage);
                 recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage);
+        triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, effectiveDamage);
                 gameData.recordDamageDealtBySource(sourcePermanentId, effectiveDamage);
                 if (sourcePermanentId != null) {
                     gameData.recordDamageRecipientBySource(sourcePermanentId, target.getId());
@@ -1110,6 +1116,7 @@ public class PermanentRemovalService {
         target.addMarkedDamage(sourcePermanentId, effectiveDamage);
         recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage);
 
+        triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, effectiveDamage);
         if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
             if (tryDestroyPermanent(gameData, target)) {
                 gameLogService.append(gameData,
@@ -1187,6 +1194,7 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
+                snapshotBeheldPower(gameData, target);
                 snapshotChosenPermanentStats(gameData, target,
                         gameQueryService.getEffectivePower(gameData, target),
                         gameQueryService.getEffectiveToughness(gameData, target));
@@ -1204,6 +1212,14 @@ public class PermanentRemovalService {
             }
         }
         return Optional.empty();
+    }
+
+    private void snapshotBeheldPower(GameData gameData, Permanent target) {
+        for (StackEntry entry : gameData.stack) {
+            if (target.getId().equals(entry.getBeholdPermanentId())) {
+                entry.setBeholdPower(Math.max(0, gameQueryService.getEffectivePower(gameData, target)));
+            }
+        }
     }
 
     private void snapshotChosenPermanentStats(GameData gameData, Permanent target, int power, int toughness) {
@@ -1501,6 +1517,9 @@ public class PermanentRemovalService {
                 gameData.queueMayAbility(
                         opponentExileReplacement.sourceCard(), opponentExileReplacement.controllerId(),
                         may, null, opponentExileReplacement.sourcePermanentId());
+            } else if (whenExiledEffect != null) {
+                resolveMandatoryOpponentExileRider(gameData, opponentExileReplacement, whenExiledEffect,
+                        !exiledCreatureCards.isEmpty());
             }
         }
         graveyardService.notifyCardsExiledFromBattlefield(
@@ -1541,6 +1560,7 @@ public class PermanentRemovalService {
                     gameData, target, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                gameData.creatureNamesDiedThisTurn.add(target.getCard().getName());
                 gameData.creaturesPutIntoOwnGraveyardThisTurnCount.merge(ownerId, 1, Integer::sum);
                 if (!target.getCard().isToken()) {
                     gameData.nontokenCreatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
@@ -1607,6 +1627,28 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);
             }
         }
+    }
+
+    private void resolveMandatoryOpponentExileRider(
+            GameData gameData, OpponentDyingCreatureExileReplacement replacement,
+            CardEffect rider, boolean creatureExiled) {
+        if (!creatureExiled) {
+            return;
+        }
+        EffectHandler handler = effectHandlerRegistry.getHandler(rider);
+        if (handler == null) {
+            log.warn("No handler for mandatory opponent-exile rider: {}", rider.getClass().getSimpleName());
+            return;
+        }
+        StackEntry riderEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                replacement.sourceCard(),
+                replacement.controllerId(),
+                replacement.sourceCard().getName() + "'s replacement effect",
+                new ArrayList<>(List.of(rider)),
+                0,
+                replacement.sourcePermanentId());
+        handler.resolve(gameData, riderEntry, rider);
     }
 
     private boolean offerMayLibraryReplacement(GameData gameData, Permanent target) {

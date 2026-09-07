@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "OGW", collectorNumber = "91")
 @CardRegistration(set = "FDN", collectorNumber = "529")
 public class UntamedHunger extends Card {
 

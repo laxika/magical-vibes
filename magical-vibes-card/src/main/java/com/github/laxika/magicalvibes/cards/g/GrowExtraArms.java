@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "101")
+@CardRegistration(set = "OM1", collectorNumber = "107")
 public class GrowExtraArms extends Card {
 
     public GrowExtraArms() {

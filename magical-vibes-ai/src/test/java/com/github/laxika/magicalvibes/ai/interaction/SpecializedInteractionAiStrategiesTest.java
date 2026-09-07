@@ -54,6 +54,39 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void turtlesForeverSearchChoosesDifferentNamesAcrossBothSources() throws Exception {
+        Card first = card("First", "{1}");
+        Card duplicate = card("First", "{1}");
+        Card second = card("Second", "{2}");
+        Card third = card("Third", "{3}");
+        Card fourth = card("Fourth", "{4}");
+        Card fifth = card("Fifth", "{5}");
+        var interaction = new PendingInteraction.TurtlesForeverSearchChoice(
+                aiPlayerId, UUID.randomUUID(), List.of(first, duplicate, second, third, fourth, fifth),
+                List.of(first.getId(), duplicate.getId(), second.getId()),
+                List.of(third.getId(), fourth.getId(), fifth.getId()));
+
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())));
+    }
+
+    @Test
+    void turtlesForeverOpponentChoosesExactlyTwoOfferedCards() throws Exception {
+        Card first = card("First", "{1}");
+        Card second = card("Second", "{2}");
+        var interaction = new PendingInteraction.TurtlesForeverOpponentChoice(
+                aiPlayerId, UUID.randomUUID(),
+                List.of(first, second, card("Third", "{3}"), card("Fourth", "{4}")));
+
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(
+                List.of(first.getId(), second.getId())));
+    }
+
+    @Test
     void adNauseamDeclinesWhenTheNextCardWouldBeLethal() throws Exception {
         gameData.playerLifeTotals.put(aiPlayerId, 3);
         gameData.playerDecks.get(aiPlayerId).add(card("Lethal", "{3}"));

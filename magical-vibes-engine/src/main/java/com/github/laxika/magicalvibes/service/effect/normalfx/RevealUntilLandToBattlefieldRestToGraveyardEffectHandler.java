@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -74,7 +75,7 @@ public class RevealUntilLandToBattlefieldRestToGraveyardEffectHandler implements
         }
 
         for (Card card : revealedCards) {
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
         }
 
         log.info("Game {} - {} reveals {} cards, land found={}",

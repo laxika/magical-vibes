@@ -34,7 +34,12 @@ public sealed interface TriggerContext {
     /**
      * Context for spell-cast triggers (ON_ANY_PLAYER_CASTS_SPELL, ON_CONTROLLER_CASTS_SPELL, ON_OPPONENT_CASTS_SPELL).
      */
-    record SpellCast(Card spellCard, UUID castingPlayerId, Zone castZone) implements TriggerContext {
+    record SpellCast(Card spellCard, UUID castingPlayerId, Zone castZone,
+                     UUID exiledSourcePermanentId) implements TriggerContext {
+
+        public SpellCast(Card spellCard, UUID castingPlayerId, Zone castZone) {
+            this(spellCard, castingPlayerId, castZone, null);
+        }
 
         /**
          * Legacy hand/not-hand form. {@code false} maps to {@link Zone#GRAVEYARD}, matching what the
@@ -64,7 +69,13 @@ public sealed interface TriggerContext {
      * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually
      * <em>played</em>, unlike the landfall path which also sees lands put onto the battlefield.
      */
-    record LandPlayed(UUID playingPlayerId, Card landCard, Zone playZone) implements TriggerContext {
+    record LandPlayed(UUID playingPlayerId, Card landCard, Zone playZone,
+                      UUID exiledSourcePermanentId) implements TriggerContext {
+
+        public LandPlayed(UUID playingPlayerId, Card landCard, Zone playZone) {
+            this(playingPlayerId, landCard, playZone, null);
+        }
+
         public LandPlayed(UUID playingPlayerId, Card landCard) {
             this(playingPlayerId, landCard, Zone.HAND);
         }
@@ -106,6 +117,15 @@ public sealed interface TriggerContext {
     /** Context for controller-surveil triggers. */
     record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
 
+    /** Context for triggers caused by completing a dungeon. */
+    record DungeonCompletion(UUID completingPlayerId) implements TriggerContext {}
+
+    /** Context for triggers caused by rolling one or more dice. */
+    record DiceRoll(UUID rollingPlayerId, int diceCount, int result) implements TriggerContext {
+        public DiceRoll(UUID rollingPlayerId, int diceCount) {
+            this(rollingPlayerId, diceCount, 0);
+        }
+    }
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
     /** Context for controller collect-evidence triggers. */
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
@@ -174,6 +194,10 @@ public sealed interface TriggerContext {
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
+    /** Context for a creature controlled by a player exploiting a nontoken creature. */
+    record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard)
+            implements TriggerContext {}
+
     record OpponentNontokenPermanentSacrificed(UUID sacrificingPlayerId,
                                                Card sacrificedCard) implements TriggerContext {}
 
@@ -220,6 +244,10 @@ public sealed interface TriggerContext {
     /** Context for global creature-damage triggers (ON_ANY_CREATURE_DEALT_DAMAGE). */
     record AnyCreatureDealtDamage(Permanent damagedCreature, UUID damagedCreatureControllerId,
                                   int damageDealt) implements TriggerContext {}
+
+    /** Context for global permanent-damage triggers (ON_ANY_PERMANENT_DEALT_DAMAGE). */
+    record AnyPermanentDealtDamage(Permanent damagedPermanent, UUID damagedPermanentControllerId,
+                                   int damageDealt) implements TriggerContext {}
 
     /**
      * Context for enchanted-permanent-tap triggers (ON_ENCHANTED_PERMANENT_TAPPED).

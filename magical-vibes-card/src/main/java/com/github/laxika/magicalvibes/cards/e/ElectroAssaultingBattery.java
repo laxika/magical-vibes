@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "76")
 @CardRegistration(set = "SPM", collectorNumber = "260")
+@CardRegistration(set = "OM1", collectorNumber = "76")
 public class ElectroAssaultingBattery extends Card {
 
     public ElectroAssaultingBattery() {

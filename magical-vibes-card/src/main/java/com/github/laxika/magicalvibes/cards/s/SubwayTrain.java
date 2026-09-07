@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "178")
+@CardRegistration(set = "OM1", collectorNumber = "178")
 public class SubwayTrain extends Card {
 
     public SubwayTrain() {
