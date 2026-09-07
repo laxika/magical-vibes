@@ -229,14 +229,15 @@ public class SpellCastingService {
 
     // --- Helper records ---
 
-    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnly, boolean legendarySpellOnly, boolean manaValueAtLeastFour, Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext, Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext, Set<CardSubtype> subtypeSpellOnlyContext) {
+    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnly, boolean legendarySpellOnly, boolean manaValueAtLeastFour, Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext, Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext, Set<CardSubtype> subtypeSpellOnlyContext, boolean colorlessSpellOrPermanentAbilityContext) {
         boolean hasRestricted() {
             return isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                     || (subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty())
                     || (subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty())
                     || (subtypeSpellOnlyContext != null && !subtypeSpellOnlyContext.isEmpty())
                     || (subtypeCreatureSourceSpellOrAbilityContext != null && !subtypeCreatureSourceSpellOrAbilityContext.isEmpty())
-                    || (subtypeOrPlaneswalkerSpellContext != null && !subtypeOrPlaneswalkerSpellContext.isEmpty());
+                    || (subtypeOrPlaneswalkerSpellContext != null && !subtypeOrPlaneswalkerSpellContext.isEmpty())
+                    || colorlessSpellOrPermanentAbilityContext;
         }
     }
 
@@ -1030,6 +1031,7 @@ public class SpellCastingService {
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
         boolean manaValueAtLeastFour = card.getManaValue() >= 4;
+        boolean colorlessSpellOrPermanentAbilityContext = gameQueryService.getEffectiveCardColors(gameData, card).isEmpty();
         Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext =
                 new HashSet<>();
         if (card.hasType(CardType.PLANESWALKER)) {
@@ -1044,7 +1046,7 @@ public class SpellCastingService {
         return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless,
                 subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly, legendarySpellOnly,
                 manaValueAtLeastFour, subtypeOrPlaneswalkerSpellContext, subtypeCreatureContext,
-                subtypeSpellOnlyContext);
+                subtypeSpellOnlyContext, colorlessSpellOrPermanentAbilityContext);
     }
 
     private static Set<CardSubtype> nullToEmpty(Set<CardSubtype> subtypes) {
@@ -2694,7 +2696,7 @@ public class SpellCastingService {
                                     flags.manaValueAtLeastFour(),
                                     flags.subtypeOrPlaneswalkerSpellContext(),
                                     flags.subtypeCreatureSourceSpellOrAbilityContext(), false,
-                                    flags.subtypeSpellOnlyContext())) {
+                                    flags.subtypeSpellOnlyContext(), flags.colorlessSpellOrPermanentAbilityContext())) {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (!cost.canPayWithAdditionalGenericCost(
@@ -7504,7 +7506,7 @@ public class SpellCastingService {
                     flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
                     flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
                     flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
-                    flags.subtypeSpellOnlyContext())) {
+                    flags.subtypeSpellOnlyContext(), flags.colorlessSpellOrPermanentAbilityContext())) {
                 throw new IllegalStateException("Not enough mana to pay spell cost increase");
             }
             int before = pool.getTotalAllMana();
@@ -7515,7 +7517,7 @@ public class SpellCastingService {
                     flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
                     flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
                     flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
-                    flags.subtypeSpellOnlyContext());
+                    flags.subtypeSpellOnlyContext(), flags.colorlessSpellOrPermanentAbilityContext());
             return before - pool.getTotalAllMana();
         });
         gameData.addSpellCastManaSpent(card.getId(), manaSpent);
@@ -8406,10 +8408,18 @@ public class SpellCastingService {
                         ? pool.promoteMulticoloredSpellOnlyMana() : null;
         try {
             if (!card.hasType(CardType.CREATURE)) {
-                return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
-                        convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
-                        additionalGenericCost, additionalManaCost, escalateManaSuffix, sourceZone,
-                        anyManaType, collectEvidenceCostPaid);
+                ManaPool.DevoidSpellManaState devoidMana = card.hasKeyword(Keyword.DEVOID)
+                        ? pool.promoteDevoidSpellOnlyMana() : null;
+                try {
+                    return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
+                            convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
+                            additionalGenericCost, additionalManaCost, escalateManaSuffix, sourceZone,
+                            anyManaType, collectEvidenceCostPaid);
+                } finally {
+                    if (devoidMana != null) {
+                        pool.restorePromotedDevoidSpellOnlyMana(devoidMana);
+                    }
+                }
             }
 
             EnumMap<ManaColor, Integer> regularManaBefore = new EnumMap<>(ManaColor.class);
@@ -8418,10 +8428,18 @@ public class SpellCastingService {
             }
             EnumMap<ManaColor, Integer> promotedCreatureSourceMana = pool.promoteCreatureSpellOrAbilityMana();
             try {
-                return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
-                        convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
-                        additionalGenericCost, additionalManaCost, escalateManaSuffix, sourceZone,
-                        anyManaType, collectEvidenceCostPaid);
+                ManaPool.DevoidSpellManaState devoidMana = card.hasKeyword(Keyword.DEVOID)
+                        ? pool.promoteDevoidSpellOnlyMana() : null;
+                try {
+                    return computeSpellManaPaymentInternal(gameData, playerId, card, effectiveXValue,
+                            convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, targetingTax,
+                            additionalGenericCost, additionalManaCost, escalateManaSuffix, sourceZone,
+                            anyManaType, collectEvidenceCostPaid);
+                } finally {
+                    if (devoidMana != null) {
+                        pool.restorePromotedDevoidSpellOnlyMana(devoidMana);
+                    }
+                }
             } finally {
                 pool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana, regularManaBefore);
             }
@@ -8505,7 +8523,7 @@ public class SpellCastingService {
                             flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
                             flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
                             flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
-                            flags.subtypeSpellOnlyContext())
+                            flags.subtypeSpellOnlyContext(), flags.colorlessSpellOrPermanentAbilityContext())
                     : cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, additionalCost);
         } else {
             normallyPayable = flags.hasRestricted() || powerstoneContext
@@ -8517,7 +8535,7 @@ public class SpellCastingService {
                             flags.legendarySpellOnly(), flags.manaValueAtLeastFour(),
                             flags.subtypeOrPlaneswalkerSpellContext(),
                             flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
-                            flags.subtypeSpellOnlyContext())
+                            flags.subtypeSpellOnlyContext(), flags.colorlessSpellOrPermanentAbilityContext())
                     : cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost);
         }
         if (!normallyPayable) {
@@ -8577,7 +8595,7 @@ public class SpellCastingService {
                         flags.manaValueAtLeastFour(),
                         flags.subtypeOrPlaneswalkerSpellContext(),
                         flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
-                        flags.subtypeSpellOnlyContext());
+                        flags.subtypeSpellOnlyContext(), flags.colorlessSpellOrPermanentAbilityContext());
             } else {
                 cost.payWithAdditionalGenericCost(pool, effectiveXValue, additionalCost);
             }
@@ -8590,7 +8608,7 @@ public class SpellCastingService {
                         flags.creatureSpellOnly(), false, flags.legendarySpellOnly(),
                         flags.manaValueAtLeastFour(), flags.subtypeOrPlaneswalkerSpellContext(),
                         flags.subtypeCreatureSourceSpellOrAbilityContext(), powerstoneContext,
-                        flags.subtypeSpellOnlyContext());
+                        flags.subtypeSpellOnlyContext(), flags.colorlessSpellOrPermanentAbilityContext());
             } else {
                 cost.payWithAdditionalGenericCost(pool, 0, additionalCost);
             }

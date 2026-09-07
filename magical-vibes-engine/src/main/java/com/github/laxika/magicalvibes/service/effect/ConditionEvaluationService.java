@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DayNight;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -229,6 +230,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentPutThreeOrMoreCard
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentOwnsCardInExile;
+import com.github.laxika.magicalvibes.model.condition.OwnsCardInAllZones;
 import com.github.laxika.magicalvibes.model.condition.OpponentPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OilCounterEventThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NoncreaturePermanentDestroyedByOpponentThisTurn;
@@ -774,6 +776,7 @@ public class ConditionEvaluationService {
                     opponentPutThreeOrMoreCardsIntoGraveyardThisTurn(gameData, ctx);
             case OpponentOwnsCardInExile ignored ->
                     opponentOwnsCardInExile(gameData, ctx.controllerId());
+            case OwnsCardInAllZones c -> ownsCardInAllZones(gameData, ctx, c.filter());
             case OpponentSearchedLibraryThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.orderedPlayerIds.stream()
@@ -2104,6 +2107,61 @@ public class ConditionEvaluationService {
             if (matches) count++;
         }
         return count;
+    }
+
+    private boolean ownsCardInAllZones(GameData gameData, ConditionContext ctx, CardPredicate filter) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) return false;
+
+        if (!containsMatchingNontokenCard(gameData.playerHands.get(controllerId), gameData, ctx, filter)
+                || !containsMatchingNontokenCard(gameData.playerGraveyards.get(controllerId), gameData, ctx, filter)) {
+            return false;
+        }
+
+        boolean ownsMatchingCardInExile;
+        synchronized (gameData.exiledCards) {
+            ownsMatchingCardInExile = gameData.exiledCards.stream()
+                    .filter(entry -> controllerId.equals(entry.ownerId()) && !entry.faceDown())
+                    .map(ExiledCardEntry::card)
+                    .anyMatch(card -> isMatchingNontokenCard(gameData, ctx, card, filter));
+        }
+        if (!ownsMatchingCardInExile) return false;
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().isToken()
+                        || !isMatchingCard(gameData, ctx, permanent.getCard(), filter)) {
+                    continue;
+                }
+                UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), playerId);
+                if (controllerId.equals(ownerId)) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsMatchingNontokenCard(List<Card> cards, GameData gameData,
+                                                  ConditionContext ctx, CardPredicate filter) {
+        return cards != null && cards.stream()
+                .anyMatch(card -> isMatchingNontokenCard(gameData, ctx, card, filter));
+    }
+
+    private boolean isMatchingNontokenCard(GameData gameData, ConditionContext ctx,
+                                           Card card, CardPredicate filter) {
+        return !card.isToken() && isMatchingCard(gameData, ctx, card, filter);
+    }
+
+    private boolean isMatchingCard(GameData gameData, ConditionContext ctx,
+                                   Card card, CardPredicate filter) {
+        UUID sourceCardId = ctx.sourceCard() != null
+                ? ctx.sourceCard().getId()
+                : ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getOriginalCard().getId();
+        return GameQueryService.isStaticEvaluationActive()
+                ? predicateEvaluationService.matchesCardPredicate(card, filter, sourceCardId)
+                : predicateEvaluationService.matchesCardPredicate(
+                        card, filter, sourceCardId, gameData, ctx.controllerId());
     }
 
     private int countColorsAmongControlledPermanents(GameData gameData, ConditionContext ctx) {

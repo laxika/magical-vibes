@@ -735,6 +735,7 @@ public class TurnProgressionService {
                 shield -> nextActive.equals(shield.protectedPlayerId()));
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
+        gameData.playersCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.remove(nextActive);

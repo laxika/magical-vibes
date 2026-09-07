@@ -995,6 +995,10 @@ public class GameData {
     public final Map<UUID, Set<String>> opponentsCantCastNamedSpellsUntilControllerNextTurn =
             new ConcurrentHashMap<>();
 
+    /** Card names a specific player can't cast until the key player's next turn (Reflector Mage). */
+    public final Map<UUID, Map<UUID, Set<String>>> playersCantCastNamedSpellsUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
+
     /** Card names no player may cast or play until the key player's next turn. */
     public final Map<UUID, Set<String>> spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn =
             new ConcurrentHashMap<>();
@@ -4634,6 +4638,11 @@ public class GameData {
         copy.playersCantCastSpellsForRestOfGame.addAll(this.playersCantCastSpellsForRestOfGame);
         this.opponentsCantCastNamedSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
+        this.playersCantCastNamedSpellsUntilControllerNextTurn.forEach((controllerId, restrictions) -> {
+            Map<UUID, Set<String>> copiedRestrictions = new ConcurrentHashMap<>();
+            restrictions.forEach((playerId, names) -> copiedRestrictions.put(playerId, new HashSet<>(names)));
+            copy.playersCantCastNamedSpellsUntilControllerNextTurn.put(controllerId, copiedRestrictions);
+        });
         this.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.forEach((k, v) ->
                 copy.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastNoncreatureSpellsUntilControllerNextTurn.forEach((k, v) ->

@@ -38,6 +38,8 @@ import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -80,6 +82,7 @@ public class PermanentRemovalService {
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final LifeSupport lifeSupport;
     private final PlayerInputService playerInputService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -94,7 +97,8 @@ public class PermanentRemovalService {
                                    @Lazy CreatureControlService creatureControlService,
                                    UnattachTriggerSupport unattachTriggerSupport,
                                    @Lazy LifeSupport lifeSupport,
-                                   @Lazy PlayerInputService playerInputService) {
+                                   @Lazy PlayerInputService playerInputService,
+                                   EffectHandlerRegistry effectHandlerRegistry) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
@@ -109,6 +113,7 @@ public class PermanentRemovalService {
         this.unattachTriggerSupport = unattachTriggerSupport;
         this.lifeSupport = lifeSupport;
         this.playerInputService = playerInputService;
+        this.effectHandlerRegistry = effectHandlerRegistry;
     }
 
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -1273,6 +1278,9 @@ public class PermanentRemovalService {
                 gameData.queueMayAbility(
                         opponentExileReplacement.sourceCard(), opponentExileReplacement.controllerId(),
                         may, null, opponentExileReplacement.sourcePermanentId());
+            } else if (whenExiledEffect != null) {
+                resolveMandatoryOpponentExileRider(gameData, opponentExileReplacement, whenExiledEffect,
+                        !exiledCreatureCards.isEmpty());
             }
         }
         graveyardService.notifyCardsExiledFromBattlefield(
@@ -1370,6 +1378,28 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);
             }
         }
+    }
+
+    private void resolveMandatoryOpponentExileRider(
+            GameData gameData, OpponentDyingCreatureExileReplacement replacement,
+            CardEffect rider, boolean creatureExiled) {
+        if (!creatureExiled) {
+            return;
+        }
+        EffectHandler handler = effectHandlerRegistry.getHandler(rider);
+        if (handler == null) {
+            log.warn("No handler for mandatory opponent-exile rider: {}", rider.getClass().getSimpleName());
+            return;
+        }
+        StackEntry riderEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                replacement.sourceCard(),
+                replacement.controllerId(),
+                replacement.sourceCard().getName() + "'s replacement effect",
+                new ArrayList<>(List.of(rider)),
+                0,
+                replacement.sourcePermanentId());
+        handler.resolve(gameData, riderEntry, rider);
     }
 
     private boolean offerMayLibraryReplacement(GameData gameData, Permanent target) {

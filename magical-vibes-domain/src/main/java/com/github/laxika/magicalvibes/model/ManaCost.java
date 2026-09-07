@@ -780,6 +780,10 @@ public class ManaCost {
                 : new ManaPool(pool);
     }
 
+    private boolean hasColorlessCost() {
+        return coloredCosts.containsKey(ManaColor.COLORLESS);
+    }
+
     private ManaCost withoutSnowCost() {
         return new ManaCost(this, 0);
     }
@@ -849,6 +853,11 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue) {
+        if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            ManaPool promoted = copyManaPool(pool);
+            promoted.promoteColorlessSpellOrPermanentAbilityMana();
+            return canPay(promoted, xValue);
+        }
         if (snowCost > 0) {
             if (pool.getSnowManaTotal() < snowCost) {
                 return false;
@@ -902,6 +911,11 @@ public class ManaCost {
 
     /** Checks payment with a chosen X value and an independent generic-cost modifier. */
     public boolean canPayWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost) {
+        if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            ManaPool promoted = copyManaPool(pool);
+            promoted.promoteColorlessSpellOrPermanentAbilityMana();
+            return canPayWithAdditionalGenericCost(promoted, xValue, additionalGenericCost);
+        }
         if (snowCost > 0) {
             if (pool.getSnowManaTotal() < snowCost) {
                 return false;
@@ -1490,6 +1504,41 @@ public class ManaCost {
                 powerstoneContext);
     }
 
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext,
+                          boolean restrictedRedContext, boolean kickedOnlyGreenContext,
+                          boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext,
+                          Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext,
+                          boolean artifactAbilityOnlyContext, boolean legendarySpellOnlyContext,
+                          boolean manaValueAtLeastFourContext,
+                          Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                          Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                          boolean powerstoneContext, boolean colorlessSpellOrPermanentAbilityContext) {
+        return canPayWithAdditionalGenericCost(pool, xValue, 0, artifactContext, myrContext,
+                restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                powerstoneContext, Set.of(), colorlessSpellOrPermanentAbilityContext);
+    }
+
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext,
+                          boolean restrictedRedContext, boolean kickedOnlyGreenContext,
+                          boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext,
+                          Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext,
+                          boolean artifactAbilityOnlyContext, boolean legendarySpellOnlyContext,
+                          boolean manaValueAtLeastFourContext,
+                          Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                          Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                          boolean powerstoneContext, Set<CardSubtype> subtypeSpellOnlyContext,
+                          boolean colorlessSpellOrPermanentAbilityContext) {
+        return canPayWithAdditionalGenericCost(pool, xValue, 0, artifactContext, myrContext,
+                restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                powerstoneContext, subtypeSpellOnlyContext, colorlessSpellOrPermanentAbilityContext);
+    }
+
     public boolean canPayWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost,
                                                     boolean artifactContext, boolean myrContext,
                                                     boolean restrictedRedContext, boolean kickedOnlyGreenContext,
@@ -1606,6 +1655,17 @@ public class ManaCost {
                                                     Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                                                     boolean powerstoneContext,
                                                     Set<CardSubtype> subtypeSpellOnlyContext) {
+        if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            ManaPool promoted = copyManaPool(pool);
+            promoted.promoteColorlessSpellOrPermanentAbilityMana();
+            return canPayWithAdditionalGenericCost(promoted, xValue, additionalGenericCost,
+                    artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                    instantSorceryOnlyColorlessContext, subtypeCreatureContext,
+                    subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
+                    legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                    subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                    powerstoneContext, subtypeSpellOnlyContext);
+        }
         if (snowCost > 0) {
             if (pool.getSnowManaTotal() < snowCost) {
                 return false;
@@ -1846,6 +1906,36 @@ public class ManaCost {
                 + xValue * effectiveXMultiplier() + additionalGenericCost;
     }
 
+    /** Checks payment when restricted colorless mana may pay this colorless spell or permanent ability. */
+    public boolean canPayWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost,
+                                                    boolean artifactContext, boolean myrContext,
+                                                    boolean restrictedRedContext, boolean kickedOnlyGreenContext,
+                                                    boolean instantSorceryOnlyColorlessContext,
+                                                    Set<CardSubtype> subtypeCreatureContext,
+                                                    Set<CardSubtype> subtypeSpellOrAbilityContext,
+                                                    boolean creatureSpellOnlyContext,
+                                                    boolean artifactAbilityOnlyContext,
+                                                    boolean legendarySpellOnlyContext,
+                                                    boolean manaValueAtLeastFourContext,
+                                                    Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                                                    Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                                                    boolean powerstoneContext,
+                                                    Set<CardSubtype> subtypeSpellOnlyContext,
+                                                    boolean colorlessSpellOrPermanentAbilityContext) {
+        if ((colorlessSpellOrPermanentAbilityContext || hasColorlessCost())
+                && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            pool = copyManaPool(pool);
+            pool.promoteColorlessSpellOrPermanentAbilityMana();
+        }
+        return canPayWithAdditionalGenericCost(pool, xValue, additionalGenericCost,
+                artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                instantSorceryOnlyColorlessContext, subtypeCreatureContext,
+                subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
+                legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                powerstoneContext, subtypeSpellOnlyContext);
+    }
+
     /**
      * Checks whether the pool (regular + flashback-only mana) has enough to pay.
      * Flashback-only mana can pay both colored and generic costs of flashback spells.
@@ -1949,6 +2039,11 @@ public class ManaCost {
      * allowed colors (Soul Burn: black and/or red).
      */
     public boolean canPay(ManaPool pool, int xValue, Set<ManaColor> xColorRestrictions, int additionalGenericCost) {
+        if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            ManaPool promoted = copyManaPool(pool);
+            promoted.promoteColorlessSpellOrPermanentAbilityMana();
+            return canPay(promoted, xValue, xColorRestrictions, additionalGenericCost);
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             ManaPool rewritten = copyManaPool(pool);
             applyAllManaAsAnyColor(rewritten, xColorRestrictions, xValue * xSymbolCount);
@@ -2095,6 +2190,15 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue) {
+        if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            pool.promoteColorlessSpellOrPermanentAbilityMana();
+            try {
+                pay(pool, xValue);
+            } finally {
+                pool.restorePromotedColorlessSpellOrPermanentAbilityMana();
+            }
+            return;
+        }
         if (snowCost > 0) {
             pool.removeSnowMana(snowCost);
         }
@@ -2140,6 +2244,15 @@ public class ManaCost {
 
     /** Pays with a chosen X value and an independent generic-cost modifier. */
     public void payWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost) {
+        if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            pool.promoteColorlessSpellOrPermanentAbilityMana();
+            try {
+                payWithAdditionalGenericCost(pool, xValue, additionalGenericCost);
+            } finally {
+                pool.restorePromotedColorlessSpellOrPermanentAbilityMana();
+            }
+            return;
+        }
         if (snowCost > 0) {
             pool.removeSnowMana(snowCost);
         }
@@ -2764,6 +2877,23 @@ public class ManaCost {
                 powerstoneContext);
     }
 
+    public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext,
+                    boolean restrictedRedContext, boolean kickedOnlyGreenContext,
+                    boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext,
+                    Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext,
+                    boolean artifactAbilityOnlyContext, boolean legendarySpellOnlyContext,
+                    boolean manaValueAtLeastFourContext,
+                    Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                    Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                    boolean powerstoneContext, boolean colorlessSpellOrPermanentAbilityContext) {
+        payWithAdditionalGenericCost(pool, xValue, 0, artifactContext, myrContext,
+                restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                powerstoneContext, Set.of(), colorlessSpellOrPermanentAbilityContext);
+    }
+
     public void payWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost,
                                              boolean artifactContext, boolean myrContext,
                                              boolean restrictedRedContext, boolean kickedOnlyGreenContext,
@@ -2855,6 +2985,21 @@ public class ManaCost {
                                              Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                                              boolean powerstoneContext,
                                              Set<CardSubtype> subtypeSpellOnlyContext) {
+        if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            pool.promoteColorlessSpellOrPermanentAbilityMana();
+            try {
+                payWithAdditionalGenericCost(pool, xValue, additionalGenericCost,
+                        artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                        instantSorceryOnlyColorlessContext, subtypeCreatureContext,
+                        subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
+                        legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                        subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                        powerstoneContext, subtypeSpellOnlyContext);
+            } finally {
+                pool.restorePromotedColorlessSpellOrPermanentAbilityMana();
+            }
+            return;
+        }
         if (snowCost > 0) {
             pool.removeSnowMana(snowCost);
         }
@@ -3183,6 +3328,46 @@ public class ManaCost {
         payGenericPreferColorless(pool, remainingGeneric);
     }
 
+    public void payWithAdditionalGenericCost(ManaPool pool, int xValue, int additionalGenericCost,
+                                             boolean artifactContext, boolean myrContext,
+                                             boolean restrictedRedContext, boolean kickedOnlyGreenContext,
+                                             boolean instantSorceryOnlyColorlessContext,
+                                             Set<CardSubtype> subtypeCreatureContext,
+                                             Set<CardSubtype> subtypeSpellOrAbilityContext,
+                                             boolean creatureSpellOnlyContext,
+                                             boolean artifactAbilityOnlyContext,
+                                             boolean legendarySpellOnlyContext,
+                                             boolean manaValueAtLeastFourContext,
+                                             Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext,
+                                             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                                             boolean powerstoneContext,
+                                             Set<CardSubtype> subtypeSpellOnlyContext,
+                                             boolean colorlessSpellOrPermanentAbilityContext) {
+        if ((colorlessSpellOrPermanentAbilityContext || hasColorlessCost())
+                && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            pool.promoteColorlessSpellOrPermanentAbilityMana();
+            try {
+                payWithAdditionalGenericCost(pool, xValue, additionalGenericCost,
+                        artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                        instantSorceryOnlyColorlessContext, subtypeCreatureContext,
+                        subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
+                        legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                        subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                        powerstoneContext, subtypeSpellOnlyContext);
+            } finally {
+                pool.restorePromotedColorlessSpellOrPermanentAbilityMana();
+            }
+            return;
+        }
+        payWithAdditionalGenericCost(pool, xValue, additionalGenericCost,
+                artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext,
+                instantSorceryOnlyColorlessContext, subtypeCreatureContext,
+                subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext,
+                legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                powerstoneContext, subtypeSpellOnlyContext);
+    }
+
     /**
      * Pays an X cost where each point of X must come from {@code xColorRestriction}.
      *
@@ -3201,6 +3386,14 @@ public class ManaCost {
      */
     public EnumMap<ManaColor, Integer> pay(ManaPool pool, int xValue, Set<ManaColor> xColorRestrictions,
                                            int additionalGenericCost) {
+        if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+            pool.promoteColorlessSpellOrPermanentAbilityMana();
+            try {
+                return pay(pool, xValue, xColorRestrictions, additionalGenericCost);
+            } finally {
+                pool.restorePromotedColorlessSpellOrPermanentAbilityMana();
+            }
+        }
         if (pool.isAllManaSpendableAsAnyColor()) {
             applyAllManaAsAnyColor(pool, xColorRestrictions, xValue * xSymbolCount);
         }

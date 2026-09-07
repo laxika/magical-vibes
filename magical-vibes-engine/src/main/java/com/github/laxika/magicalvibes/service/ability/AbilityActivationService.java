@@ -3661,6 +3661,7 @@ public class AbilityActivationService {
         if (abilityCost != null) {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
+            boolean colorlessPermanentContext = gameQueryService.getEffectiveColors(gameData, permanent).isEmpty();
             Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, permanent, ability);
             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, permanent)
                     ? subtypeSpellOrAbilityContext : Set.of();
@@ -3673,7 +3674,7 @@ public class AbilityActivationService {
             try {
                 payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
                         subtypeSpellOrAbilityContext, subtypeCreatureSourceSpellOrAbilityContext,
-                        additionalGenericCost, ability.getXColorRestrictions());
+                        additionalGenericCost, ability.getXColorRestrictions(), colorlessPermanentContext);
             } finally {
                 if (promotedCreatureSourceMana != null) {
                     payingPool.restorePromotedCreatureAbilityMana(promotedCreatureSourceMana,
@@ -5043,20 +5044,26 @@ public class AbilityActivationService {
             Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, permanent)
                     ? soaCtx : Set.of();
             boolean powerstoneCtx = manaPool != null && manaPool.getPowerstoneOnlyColorless() > 0;
+            boolean colorlessPermanentContext = gameQueryService.getEffectiveColors(gameData, permanent).isEmpty();
             if (preCheck.hasX() && ability.getXColorRestrictions() != null) {
+                if (colorlessPermanentContext && affordabilityPool != null
+                        && affordabilityPool.getColorlessSpellOrPermanentAbilityMana() > 0) {
+                    affordabilityPool = copyManaPool(affordabilityPool);
+                    affordabilityPool.promoteColorlessSpellOrPermanentAbilityMana();
+                }
                 if (!preCheck.canPay(affordabilityPool, xValue, ability.getXColorRestrictions(), additionalGenericCost)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else if (preCheck.hasX()) {
                 if (!preCheck.canPay(affordabilityPool, xValue + additionalGenericCost, artifactCtx, myrCtx,
                         false, false, false, null, soaCtx, false, artifactCtx, false, false, Set.of(),
-                        creatureSourceSoaCtx, powerstoneCtx)) {
+                        creatureSourceSoaCtx, powerstoneCtx, colorlessPermanentContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else {
                 if (!preCheck.canPay(affordabilityPool, additionalGenericCost, artifactCtx, myrCtx,
                         false, false, false, null, soaCtx, false, artifactCtx, false, false, Set.of(),
-                        creatureSourceSoaCtx, powerstoneCtx)) {
+                        creatureSourceSoaCtx, powerstoneCtx, colorlessPermanentContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             }
@@ -6307,6 +6314,17 @@ public class AbilityActivationService {
                              Set<CardSubtype> subtypeSpellOrAbilityContext,
                              Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
                              int additionalCost, Set<ManaColor> xColorRestrictions) {
+        payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
+                subtypeSpellOrAbilityContext, subtypeCreatureSourceSpellOrAbilityContext,
+                additionalCost, xColorRestrictions, false);
+    }
+
+    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue,
+                             boolean artifactContext, boolean myrContext,
+                             Set<CardSubtype> subtypeSpellOrAbilityContext,
+                             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext,
+                             int additionalCost, Set<ManaColor> xColorRestrictions,
+                             boolean colorlessPermanentContext) {
         ManaCost cost = new ManaCost(abilityCost);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         if (cost.hasX() && xColorRestrictions != null) {
@@ -6321,7 +6339,7 @@ public class AbilityActivationService {
                 && !subtypeCreatureSourceSpellOrAbilityContext.isEmpty();
         boolean powerstoneContext = pool.getPowerstoneOnlyColorless() > 0;
         boolean hasRestricted = artifactContext || myrContext || hasSubtypeSoa
-                || hasCreatureSourceSoa || powerstoneContext;
+                || hasCreatureSourceSoa || powerstoneContext || colorlessPermanentContext;
 
         // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols before
         // generic costs consume it — but only where the rest of the cost stays payable,
@@ -6339,12 +6357,14 @@ public class AbilityActivationService {
             if (hasRestricted) {
                 if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
-                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext)) {
+                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
+                        colorlessPermanentContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
                 cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
-                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext);
+                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
+                        colorlessPermanentContext);
             } else {
                 if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
@@ -6355,12 +6375,14 @@ public class AbilityActivationService {
             if (hasRestricted) {
                 if (!cost.canPay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
-                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext)) {
+                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
+                        colorlessPermanentContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
                 cost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
-                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext);
+                        subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
+                        colorlessPermanentContext);
             } else {
                 if (additionalCost != 0) {
                     // additionalCost may be negative (a static generic-cost reduction, floored to the

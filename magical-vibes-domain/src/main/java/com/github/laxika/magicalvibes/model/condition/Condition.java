@@ -211,6 +211,7 @@ public sealed interface Condition permits
         OpponentLostLifeLastTurn,
         OpponentLostLifeThisTurn,
         OpponentOwnsCardInExile,
+        OwnsCardInAllZones,
         OpponentPermanentEnteredThisTurn,
         OilCounterEventThisTurn,
         NoncreaturePermanentDestroyedByOpponentThisTurn,

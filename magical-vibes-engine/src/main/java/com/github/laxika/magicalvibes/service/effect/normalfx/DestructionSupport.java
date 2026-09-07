@@ -791,10 +791,10 @@ public class DestructionSupport {
                     damageTargetAndTheirCreaturesHandler.resolve(gameData, entry, damageAndCreatures);
                     entry.setTargetId(previousTarget);
                 }
-            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect) {
+            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect exileLibrary) {
                 // "When a player doesn't pay this enchantment's cumulative upkeep, that player
                 // exiles all cards from their library" (Thought Lash).
-                libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId());
+                libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId(), exileLibrary.faceDown());
             } else if (elseEffect instanceof RemoveAllCountersEffect removeCounters
                     && removeCounters.subject() == CounterRemovalSubject.SOURCE) {
                 // "remove all wage counters from this creature" (Rogue Skycaptain).

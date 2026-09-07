@@ -1440,6 +1440,14 @@ public sealed interface ChoiceContext {
 
         public static final String SACRIFICE = "Sacrifice a nonland permanent";
         public static final String DISCARD = "Discard a card";
+
+        public static String discard(int count) {
+            return count == 1 ? DISCARD : "Discard " + count + " cards";
+        }
+
+        public static String sacrifice(String description) {
+            return "Sacrifice " + description;
+        }
     }
 
     /**

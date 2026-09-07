@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 
@@ -291,6 +292,9 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.ExiledSpellManaColorChoice(playerId, fromCreature, amount);
             case GRAVEYARD_SPELL_ONLY ->
                     new ChoiceContext.GraveyardManaColorChoice(playerId, fromCreature, amount);
+            case DEVOID_SPELL ->
+                    new ChoiceContext.RestrictedManaColorChoice(playerId, amount, fromCreature,
+                            effect.allowedColors(), new ManaRestriction.DevoidSpells());
             case CREATURE_SPELL_ONLY -> ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, fromCreature, amount);
             case CREATURE_OR_ENCHANTMENT_SPELL_ONLY ->
                     throw new IllegalArgumentException("Use the two-color mana effect for this restriction");
@@ -379,6 +383,7 @@ public final class AnyColorManaChoiceSupport {
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
             case EXILED_SPELL_ONLY -> "Choose a color of mana to add (spells from exile only).";
             case GRAVEYARD_SPELL_ONLY -> "Choose a color of mana to add (graveyard spells only).";
+            case DEVOID_SPELL -> "Choose a color of mana to add (spells with devoid only).";
             case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
             case SOURCE_PERMANENT_COLORS -> "Choose a color of mana to add from this creature's colors.";
             case PLANESWALKER_SPELLS -> "Choose a color of mana to add (planeswalker spells only).";

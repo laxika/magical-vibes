@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -9,6 +10,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public interface ControlledPermanentEntryReplacementEffect extends CardEffect {
 
     PermanentPredicate enteringPermanentPredicate();
+
+    default CounterType counterType() {
+        return CounterType.PLUS_ONE_PLUS_ONE;
+    }
 
     int additionalCounterCount(Permanent enteringPermanent);
 }

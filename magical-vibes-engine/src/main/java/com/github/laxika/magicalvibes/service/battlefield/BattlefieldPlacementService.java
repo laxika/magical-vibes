@@ -1454,7 +1454,7 @@ public class BattlefieldPlacementService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;
 
-        int additionalCounters = 0;
+        Map<CounterType, Integer> additionalCounters = new EnumMap<>(CounterType.class);
         for (Permanent source : battlefield) {
             FilterContext sourceContext = FilterContext.of(gameData)
                     .withSourceCardId(source.getCard().getId())
@@ -1465,18 +1465,31 @@ public class BattlefieldPlacementService {
                 if (!(effect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
                 if (predicateEvaluationService.matchesPermanentPredicate(
                         permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
-                    additionalCounters += Math.max(0, replacement.additionalCounterCount(permanent));
+                    CounterType counterType = replacement.counterType();
+                    if (counterType != null) {
+                        additionalCounters.merge(counterType,
+                                Math.max(0, replacement.additionalCounterCount(permanent)), Integer::sum);
+                    }
                 }
             }
         }
 
-        if (additionalCounters > 0) {
-            additionalCounters = gameQueryService.doublePlusOnePlusOneCounters(
-                    gameData, permanent, controllerId, additionalCounters);
-            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
-                    permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
-            log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from a mana-value entry effect",
-                    gameData.id, permanent.getCard().getName(), additionalCounters);
+        for (Map.Entry<CounterType, Integer> additionalCounter : additionalCounters.entrySet()) {
+            CounterType counterType = additionalCounter.getKey();
+            int count = additionalCounter.getValue();
+            if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+                count = gameQueryService.doublePlusOnePlusOneCounters(
+                        gameData, permanent, controllerId, count);
+            } else {
+                count = gameQueryService.replaceCounters(
+                        gameData, permanent, controllerId, counterType, count);
+            }
+            if (count > 0) {
+                permanent.setCounterCount(counterType,
+                        permanent.getCounterCount(counterType) + count);
+                log.info("Game {} - {} enters with {} additional {} counter(s) from a battlefield static effect",
+                        gameData.id, permanent.getCard().getName(), count, counterType);
+            }
         }
     }
 

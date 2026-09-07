@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagedCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
@@ -1020,7 +1021,18 @@ public class TriggerCollectionService {
             selfCastEffects.add(new ReplicateEffect(spellCard.getManaCost()));
         }
         selfCastEffects.addAll(spellCard.getEffects(EffectSlot.ON_SELF_CAST));
+        StackEntry selfCastSpellEntry = gameData.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(spellCard.getId()))
+                .findFirst()
+                .orElse(null);
         for (CardEffect effect : selfCastEffects) {
+            if (effect instanceof ConditionalEffect conditional
+                    && conditional.interveningIf()
+                    && selfCastSpellEntry != null
+                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStackEntry(selfCastSpellEntry))) {
+                continue;
+            }
             if (effect instanceof CopyThisSpellIfConditionEffect trigger) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
@@ -2144,12 +2156,19 @@ public class TriggerCollectionService {
             List<CardEffect> effects = aura.getCard().getEffects(EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE);
             if (effects.isEmpty()) return;
 
+            UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourceCreature.getId());
+            List<CardEffect> boundEffects = effects.stream()
+                    .map(effect -> effect instanceof DamageSourceControllerAwareEffect aware
+                            ? aware.bindDamageSourceController(sourceControllerId, damageDealt)
+                            : effect)
+                    .toList();
+
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     aura.getCard(),
                     auraControllerId,
                     aura.getCard().getName() + "'s ability",
-                    new ArrayList<>(effects),
+                    new ArrayList<>(boundEffects),
                     auraControllerId,
                     aura.getId());
             entry.setEventValue(damageDealt);

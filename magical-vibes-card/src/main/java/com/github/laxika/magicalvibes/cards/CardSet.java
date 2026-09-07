@@ -68,6 +68,7 @@ public enum CardSet {
     SET_WWK("WWK"),
     SET_ROE("ROE"),
     SET_BFZ("BFZ"),
+    SET_OGW("OGW"),
     SET_ZNR("ZNR"),
     SET_RTR("RTR"),
     SET_RNA("RNA"),

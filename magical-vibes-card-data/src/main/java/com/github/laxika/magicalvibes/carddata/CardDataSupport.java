@@ -82,6 +82,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Haunt", Keyword.HAUNT);
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
         KEYWORD_MAP.put("Converge", Keyword.CONVERGE);
+        KEYWORD_MAP.put("Devoid", Keyword.DEVOID);
         KEYWORD_MAP.put("Undying", Keyword.UNDYING);
         KEYWORD_MAP.put("Persist", Keyword.PERSIST);
         KEYWORD_MAP.put("Increment", Keyword.INCREMENT);

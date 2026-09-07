@@ -18,13 +18,13 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
-import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedBlockPermissionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.GlobalAttackOrBlockRestriction;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.GlobalBlockRestriction;
@@ -104,11 +104,11 @@ public class BlockLegalityService {
                 attachedByHostId.computeIfAbsent(source.getAttachedTo(), id -> new ArrayList<>(1)).add(source);
             }
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof MatchingCreaturesCantBlockMatchingCreaturesEffect restriction) {
-                    globalBlockRestrictions.add(new GlobalBlockRestriction(restriction,
+                if (effect instanceof BlockingRestrictionEffect restriction) {
+                    addGlobalBlockRestriction(globalBlockRestrictions, restriction,
                             FilterContext.of(gameData)
                                     .withSourceControllerId(playerId)
-                                    .withSourceCardId(source.getOriginalCard().getId())));
+                                    .withSourceCardId(source.getOriginalCard().getId()));
                 }
                 if (effect instanceof LandwalkIgnoredForBlockingEffect) {
                     landwalkIgnored[0] = true;
@@ -131,6 +131,14 @@ public class BlockLegalityService {
                 }
             }
         });
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (floating.effect() instanceof BlockingRestrictionEffect restriction) {
+                    addGlobalBlockRestriction(globalBlockRestrictions, restriction,
+                            FilterContext.of(gameData).withSourceControllerId(floating.controllerId()));
+                }
+            }
+        }
         List<Permanent> defenders = defenderBattlefield == null ? List.of() : defenderBattlefield;
         Set<CardSubtype> defenderCardSubtypes = EnumSet.noneOf(CardSubtype.class);
         for (Permanent defender : defenders) {
@@ -139,6 +147,15 @@ public class BlockLegalityService {
         return new BlockLegalityContext(gameData, defenders, globalBlockRestrictions,
                 globalAttackOrBlockRestrictions, tappedBlockPermissions, attachedByHostId,
                 defenderCardSubtypes, landwalkIgnored[0]);
+    }
+
+    private void addGlobalBlockRestriction(List<GlobalBlockRestriction> restrictions,
+                                           BlockingRestrictionEffect effect,
+                                           FilterContext filterContext) {
+        if (effect.globalCantBlockBlockerMatcher() != null
+                && effect.globalCantBlockAttackerMatcher() != null) {
+            restrictions.add(new GlobalBlockRestriction(effect, filterContext));
+        }
     }
 
     /**
@@ -287,12 +304,12 @@ public class BlockLegalityService {
         // Board-wide "creatures matching X can't block creatures matching Y" restrictions
         // (e.g. Boldwyr Intimidator: "Cowards can't block Warriors.").
         for (GlobalBlockRestriction restriction : context.globalBlockRestrictions) {
-            MatchingCreaturesCantBlockMatchingCreaturesEffect effect = restriction.effect();
+            BlockingRestrictionEffect effect = restriction.effect();
             if (predicateEvaluationService.matchesPermanentPredicate(
-                    blocker, effect.blockerPredicate(), restriction.filterContext())
+                    blocker, effect.globalCantBlockBlockerMatcher(), restriction.filterContext())
                     && predicateEvaluationService.matchesPermanentPredicate(
-                    attacker, effect.attackerPredicate(), restriction.filterContext())) {
-                return new BlockDenial(BlockDenial.Reason.GLOBAL_RESTRICTION, effect.description());
+                    attacker, effect.globalCantBlockAttackerMatcher(), restriction.filterContext())) {
+                return new BlockDenial(BlockDenial.Reason.GLOBAL_RESTRICTION, effect.globalCantBlockDescription());
             }
         }
         BlockDenial pairRestrictionDenial = findPairRestrictionDenial(context, blocker, atk.pairRestrictions());

@@ -284,6 +284,32 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells with devoid. */
+    record DevoidSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addDevoidSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells with devoid only";
+        }
+    }
+
+    /** Mana spendable only to cast colorless spells, activate colorless permanent abilities, or pay costs containing {C}. */
+    record ColorlessSpellsOrPermanentAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addColorlessSpellOrPermanentAbilityMana(amount);
+        }
+
+        @Override
+        public String description() {
+            return "colorless spells, colorless permanent abilities, or costs containing {C} only";
+        }
+    }
+
     /**
      * Mana spendable only to cast creature spells of the given subtype (Gnarlroot Trapper: "Add
      * {G}. Spend this mana only to cast an Elf creature spell."). Routes into the per-subtype

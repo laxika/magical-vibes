@@ -54,6 +54,7 @@ public enum Keyword {
     UNDYING,
     PERSIST,
     CONVERGE,
+    DEVOID,
     INCREMENT,
     PARADIGM,
     HORSEMANSHIP,

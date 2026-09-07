@@ -709,6 +709,12 @@ public class CastingPermissionService {
             }
             forbidden.addAll(e.getValue());
         }
+        gameData.playersCantCastNamedSpellsUntilControllerNextTurn.values().forEach(restrictions -> {
+            Set<String> names = restrictions.get(castingPlayerId);
+            if (names != null) {
+                forbidden.addAll(names);
+            }
+        });
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.values()
                 .forEach(forbidden::addAll);
         return forbidden;
