@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "107")
+@CardRegistration(set = "OM1", collectorNumber = "109")
 public class LurkingLizards extends Card {
 
     public LurkingLizards() {

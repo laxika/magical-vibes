@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "74")
 @CardRegistration(set = "SPM", collectorNumber = "259")
+@CardRegistration(set = "OM1", collectorNumber = "72")
 public class VillainousWrath extends Card {
 
     public VillainousWrath() {

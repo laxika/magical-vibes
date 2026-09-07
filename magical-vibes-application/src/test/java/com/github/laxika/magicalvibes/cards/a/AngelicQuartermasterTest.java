@@ -38,6 +38,7 @@ class AngelicQuartermasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Angelic Quartermaster");
+        harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -56,10 +57,10 @@ class AngelicQuartermasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         UUID quartermasterId = harness.getPermanentId(player1, "Angelic Quartermaster");
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
 
-        assertThat(choice.validIds()).contains(otherCreature.getId()).doesNotContain(quartermasterId);
+        assertThat(choice.validPermanentIds()).contains(otherCreature.getId()).doesNotContain(quartermasterId);
     }
 
     private void castWithTargets(List<java.util.UUID> targetIds) {

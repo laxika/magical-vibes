@@ -64,6 +64,7 @@ public enum CardSet {
     SET_SOI("SOI"),
     SET_MID("MID"),
     SET_VOW("VOW"),
+    SET_OM1("OM1"),
     SET_DKA("DKA"),
     SET_AVR("AVR"),
     SET_ZEN("ZEN"),

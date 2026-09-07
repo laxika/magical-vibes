@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "169")
+@CardRegistration(set = "OM1", collectorNumber = "169")
 public class NewsHelicopter extends Card {
 
     public NewsHelicopter() {

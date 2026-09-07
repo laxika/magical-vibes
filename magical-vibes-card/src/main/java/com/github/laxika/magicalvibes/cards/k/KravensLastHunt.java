@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "105")
 @CardRegistration(set = "SPM", collectorNumber = "226")
+@CardRegistration(set = "OM1", collectorNumber = "121")
 public class KravensLastHunt extends Card {
 
     public KravensLastHunt() {

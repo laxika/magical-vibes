@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "20")
+@CardRegistration(set = "OM1", collectorNumber = "13")
 public class Thwip extends Card {
 
     public Thwip() {

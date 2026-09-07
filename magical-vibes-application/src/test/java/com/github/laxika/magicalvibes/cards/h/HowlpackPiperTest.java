@@ -55,6 +55,7 @@ class HowlpackPiperTest extends BaseCardTest {
                 new Forest(), wolf, new Forest(), new Forest(), new Forest(), new Forest()));
 
         Permanent howler = harness.enterBattlefieldAndReturn(player1, new HowlpackPiper());
+        harness.passBothPriorities();
 
         assertThat(howler.isTransformed()).isTrue();
         assertThat(howler.getCard()).isInstanceOf(WildsongHowler.class);

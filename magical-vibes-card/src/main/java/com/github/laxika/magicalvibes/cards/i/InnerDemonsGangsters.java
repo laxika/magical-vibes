@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "57")
+@CardRegistration(set = "OM1", collectorNumber = "51")
 public class InnerDemonsGangsters extends Card {
 
     public InnerDemonsGangsters() {

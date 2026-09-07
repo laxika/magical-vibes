@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "146")
+@CardRegistration(set = "OM1", collectorNumber = "159")
 public class SkywardSpider extends Card {
 
     public SkywardSpider() {

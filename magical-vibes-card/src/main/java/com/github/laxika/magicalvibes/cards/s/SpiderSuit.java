@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "176")
+@CardRegistration(set = "OM1", collectorNumber = "161")
 public class SpiderSuit extends Card {
 
     public SpiderSuit() {
