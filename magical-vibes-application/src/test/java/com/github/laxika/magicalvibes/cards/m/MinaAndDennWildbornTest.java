@@ -37,6 +37,7 @@ class MinaAndDennWildbornTest extends BaseCardTest {
     @Test
     @DisplayName("Returns a land and gives target creature trample until end of turn")
     void returnsLandAndGrantsTrample() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new MinaAndDennWildborn());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
