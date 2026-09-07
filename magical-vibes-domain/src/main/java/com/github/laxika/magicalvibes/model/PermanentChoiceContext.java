@@ -239,6 +239,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect effect)
             implements PermanentChoiceContext {}
 
+    /** Innocent Traveler: the accepting opponent is picking which creature to sacrifice. */
+    record AnyOpponentSacrificeCreatureForTransform(
+            UUID sacrificingPlayerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureOrTransformSourceEffect effect)
+            implements PermanentChoiceContext {}
+
     /** Argothian Wurm: the accepting player is picking which land to sacrifice. */
     record AnyPlayerMaySacrificeLandPutSourceOnTop(
             UUID sacrificingPlayerId, Card sourceCard,
@@ -464,16 +470,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  differs only for text such as Erithizon's "of defending player's choice". */
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                UUID sourcePermanentId, UUID choosingPlayerId,
-                               UUID attackedTargetId) implements PermanentChoiceContext {
+                               UUID attackedTargetId, Integer xValue) implements PermanentChoiceContext {
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, controllerId, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, controllerId, null, null);
         }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID choosingPlayerId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId, null, null);
+        }
+
+        public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID choosingPlayerId,
+                                   UUID attackedTargetId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, null);
         }
     }
 
@@ -482,6 +495,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenEffect,
                                  int amount, int tokenCount, boolean sacrificeAtEndStep,
                                  List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
+
+    /** Remembers the attack target for each copy entering tapped and attacking. */
+    record CreateTokenCopiesAttacking(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                                      UUID targetPermanentId,
+                                      com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                                      int tokenCount, List<UUID> chosenAttackTargets)
+            implements PermanentChoiceContext {}
 
     /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */
     record ExileReturnAttackTarget(PendingExileReturn pending, List<PendingExileReturn> remaining)
@@ -985,16 +1005,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * fires after the sacrifice (false when the exploit permanent left before resolution).
      */
     record ExploitSacrifice(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                            boolean sourceStillOnBattlefield) implements PermanentChoiceContext {}
+                            boolean sourceStillOnBattlefield, Permanent sourcePermanent)
+            implements PermanentChoiceContext {}
 
     /**
-     * "When this creature exploits a creature" trigger that needs a stack target (spell and/or
-     * ability). {@code includeAbilities} is true when the card's stack filter includes
-     * {@code StackEntryHasTargetPredicate} (Overcharged Amalgam).
+     * "When this creature exploits a creature" trigger that needs a target. Stack targets use
+     * {@code stackFilter}; permanent/player targets use {@code targetFilter}.
      */
     record ExploitTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, StackEntryPredicate stackFilter,
-                                boolean includeAbilities) implements PermanentChoiceContext {}
+                                boolean includeAbilities, TargetFilter targetFilter)
+            implements PermanentChoiceContext {}
 
     /**
      * ETB trigger on a token copy that needs to choose a target at trigger time (CR 603.3).

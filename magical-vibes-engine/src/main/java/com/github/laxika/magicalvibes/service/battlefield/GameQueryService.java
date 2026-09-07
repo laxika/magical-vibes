@@ -682,6 +682,11 @@ public class GameQueryService {
             CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
             CardSubtype.MOUNTAIN, CardSubtype.FOREST);
 
+    private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.of(
+            CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
+            CardSubtype.MOUNTAIN, CardSubtype.FOREST, CardSubtype.DESERT,
+            CardSubtype.LAIR, CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.SPHERE);
+
     /**
      * The effective basic land types (Plains/Island/Swamp/Mountain/Forest) of a permanent,
      * respecting CR 305.7 land-type overrides (Blood Moon, Tideshaper Mystic) — when a land-type
@@ -706,6 +711,34 @@ public class GameQueryService {
             if (BASIC_LAND_SUBTYPES.contains(st)) result.add(st);
         }
         return result;
+    }
+
+    public Set<CardSubtype> effectiveLandTypes(GameData gameData, Permanent permanent) {
+        Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (!bonus.landSubtypeOverriding()) {
+            addLandTypes(result, permanent.getCard().getSubtypes());
+            addLandTypes(result, permanent.getGrantedSubtypes());
+        }
+        addLandTypes(result, bonus.grantedSubtypes());
+        addLandTypes(result, permanent.getTransientSubtypes());
+        addLandTypes(result, permanent.getUntilNextTurnSubtypes());
+        result.removeAll(permanent.getTransientRemovedSubtypes());
+        return result;
+    }
+
+    public Set<CardSubtype> landTypesOf(Card card) {
+        Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
+        addLandTypes(result, card.getSubtypes());
+        return result;
+    }
+
+    private void addLandTypes(Set<CardSubtype> target, List<CardSubtype> subtypes) {
+        for (CardSubtype subtype : subtypes) {
+            if (LAND_SUBTYPES.contains(subtype)) {
+                target.add(subtype);
+            }
+        }
     }
 
     /**
@@ -6475,6 +6508,12 @@ public class GameQueryService {
                 }
             }
         });
+        for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn
+                .getOrDefault(effectiveControllerId, List.of())) {
+            if (effect instanceof MultiplyTokenCreationEffect mtce) {
+                multiplier[0] *= mtce.multiplier();
+            }
+        }
         return multiplier[0];
     }
 

@@ -77,6 +77,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsRenownedPredicate` | `()` | renowned permanents (CR 702.112b — the marker `RenownEffect` sets on `Permanent.renowned`). Target-side counterpart of the `SourceIsRenowned` condition: pair with `TargetPermanentMatches` for "if it's renowned, …" (Enshrouding Mist) |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
+| `PermanentIsAttackingEnchantedPlayerPredicate` | `()` | creatures attacking the player enchanted by the source Aura directly; attacks against that player's planeswalker or battle do not match, and the source must be attached to a player (Curse of Hospitality) |
 | `PermanentIsAttackingOpponentOfSourceControllerPredicate` | `()` | creatures attacking one of the source controller's opponents directly; attacks against planeswalkers and battles do not match; needs a `FilterContext` with source controller (Oviya, Automech Artisan) |
 | `PermanentIsAttackingSourceControllerPredicate` | `()` | creatures attacking you (the source controller) — attack target must be the source controller, not a planeswalker/other player; needs a `FilterContext` with source controller (Blessed Reversal). Also usable as a static `StaticBoostEffect`/`GrantKeywordEffect` filter — `matchesStaticFilter` reads the source controller off the context (Boarded Window and Watchdog, "creatures attacking you get -1/-0") |
 | `PermanentIsBlockingPredicate` | `()` | blocking creatures (the blockers themselves). Also usable as a static GrantKeywordEffect/StaticBoostEffect filter (`matchesStaticFilter` supports it, like `PermanentIsAttackingPredicate`) — Snow Devil |
@@ -128,6 +129,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentToughnessAtMostControlledSubtypeCountPredicate` | `(CardSubtype)` | permanents with toughness <= the number of permanents with that subtype controlled by the source's controller (Scourge of Fleets) |
 | `PermanentPowerEqualsToughnessPredicate` | `()` | creatures whose effective power equals their effective toughness. Wrap in `PermanentNotPredicate` for "whose power and toughness aren't equal" (Gilt-Leaf Winnower) |
 | `PermanentToughnessAtLeastPredicate` | `(int minToughness)` | creatures with toughness >= N (uses effective/last-known toughness; e.g. Colfenor's Urn) |
+| `PermanentToughnessGreaterThanPowerPredicate` | `()` | permanents whose effective toughness is greater than their effective power |
 
 ### Dynamic/game-state predicates (require FilterContext)
 
@@ -341,6 +343,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardIsColorlessPredicate` | `()` | colorless cards (`Card.getColors()` empty). Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "colorless creature card" (Grizzled Angler) |
 | `CardIsDoubleFacedPredicate` | `()` | physical double-faced cards; recognizes modal, transforming, disturb, and battle double-faced cards while excluding split, flip, and meld cards |
 | `CardControllerDoesNotOwnPredicate` | `()` | a card whose owner is not the perspective player (the `cardOwnerId` argument of `matchesCardPredicate`, which is the casting player in the spell-cast trigger path). Cards with no tracked owner (tokens/copies) never match. Use as a `SpellCastTriggerEffect` filter for "a spell you don't own" (Nita, Forum Conciliator). Ownership is stamped at game setup on `Card.ownerId` and preserved across zones |
+| `CardDoesNotShareLandTypeWithControlledLandPredicate` | `()` | a card whose land types are not shared by any currently controlled land; uses effective land types, including nonbasic land types, and needs `GameData` plus the perspective player's `cardOwnerId` (Hiveheart Shaman) |
 | `CardPowerAtMostPredicate` | `(int maxPower)` | a card whose printed power is <= `maxPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for library searches like "a creature card with power 2 or less" (Imperial Recruiter) |
 | `CardPowerAtLeastPredicate` | `(int minPower)` | a card whose printed power is >= `minPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "a creature card with power 5 or greater" (Sacellum Godspeaker) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is <= the source permanent's effective power; needs `GameData` and `sourceCardId` |
@@ -349,7 +352,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is at most the source permanent's effective power; needs `GameData` and `sourceCardId` (Arcane Proxy) |
 | `CardMaxManaValuePredicate` | `(int maxManaValue)` | a card with mana value ≤ N (e.g. Teshar's "mana value 3 or less" graveyard filter) |
 | `CardMaxManaValueXPredicate` | `()` | a card with mana value ≤ the resolving spell's X; before X is chosen, it matches permissively |
-| `CardSharesCardTypeWithImprintedCardPredicate` | `()` | a card sharing at least one card type with the card imprinted on the source; without game state it matches broadly so target selection can occur before an activation cost imprints the exiled card, while resolution with game state performs the comparison (Holistic Wisdom) |
+| `CardSharesCardTypeWithImprintedCardPredicate` | `()` or `(boolean requireImprintedCard)` | a card sharing at least one card type with the card imprinted on the source; without game state it matches broadly, and the boolean form can require an actual imprint for resolution-time triggers (Holistic Wisdom, Cemetery Protector) |
 | `CardSharesNameWithAPermanentPredicate` | `()` | a card with the same name as any permanent on any battlefield (Mitotic Manipulation via `LookAtTopCardsEffect.mayPutMatchingOntoBattlefield`). Needs the `GameData` overload of `matchesCardPredicate`; matches nothing without game state |
 | `CardNameInControllerGraveyardPredicate` | `()` | a card with the same name as a card in the perspective player's graveyard; the perspective player is `cardOwnerId` during predicate evaluation (Pyromancer Ascension) |
 | `CardHasSourceChosenColorPredicate` | `()` | a card containing the color chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful for spell-cast triggers such as Jeweled Torque |

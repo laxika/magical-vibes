@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -489,6 +490,9 @@ public class EtbTriggerService {
         // Separate graveyard return-to-hand effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardReturnToHandEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToHandEffect).toList();
+        // Separate controller-graveyard top-of-library effects (multi-target selection at trigger time)
+        List<CardEffect> graveyardPutOnTopEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof PutTargetCardsFromGraveyardOnTopOfLibraryEffect).toList();
         // Separate graveyard return-to-battlefield effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardReturnToBattlefieldEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect).toList();
@@ -514,6 +518,7 @@ public class EtbTriggerService {
                 .filter(e -> !graveyardMayPlayEffects.contains(e))
                 .filter(e -> !graveyardStealEffects.contains(e))
                 .filter(e -> !graveyardReturnToHandEffects.contains(e))
+                .filter(e -> !graveyardPutOnTopEffects.contains(e))
                 .filter(e -> !graveyardReturnToBattlefieldEffects.contains(e))
                 .filter(e -> !graveyardShuffleIntoLibraryEffects.contains(e))
                 .toList();
@@ -524,6 +529,7 @@ public class EtbTriggerService {
                 .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
                 .filter(e -> !graveyardStealEffects.contains(e))
                 .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
+                .filter(e -> !graveyardPutOnTopEffects.contains(e))
                 .filter(e -> !graveyardReturnToBattlefieldEffects.contains(e))
                 .filter(e -> !targetPlayerGraveyardChoiceEffects.contains(e))
                 .filter(e -> !(e instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect))
@@ -789,6 +795,14 @@ public class EtbTriggerService {
             }
         }
 
+        // Handle putting up to N cards from the controller's graveyard on top of the library
+        for (CardEffect effect : graveyardPutOnTopEffects) {
+            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                graveyardTargetingService.handlePutOnTopOfLibraryETBTargeting(gameData, controllerId, card,
+                        List.of(effect), (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) effect);
+            }
+        }
+
         // Handle graveyard return-to-battlefield effects: up to the cast-context cap of target
         // creature cards from the controller's graveyard.
         for (CardEffect effect : graveyardReturnToBattlefieldEffects) {
@@ -817,8 +831,7 @@ public class EtbTriggerService {
         // battlefield/hand): choose the graveyard target as the trigger goes on the stack, reusing the
         // shared SpellGraveyardTargetTrigger flow. Optional effects use an up-to-one selection.
         int minimumGraveyardTargets = graveyardTargetReturnEffects.stream()
-                .anyMatch(effect -> !(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
-                        || !returnEffect.upTo()) ? 1 : 0;
+                .anyMatch(this::requiresGraveyardTarget) ? 1 : 0;
         for (CardEffect effect : graveyardTargetReturnEffects) {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
@@ -863,6 +876,19 @@ public class EtbTriggerService {
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
+    }
+
+    private boolean requiresGraveyardTarget(CardEffect effect) {
+        if (effect instanceof ReturnCardFromGraveyardEffect returnEffect) {
+            return !returnEffect.upTo();
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return requiresGraveyardTarget(conditional.wrapped());
+        }
+        if (effect instanceof MayEffect may) {
+            return requiresGraveyardTarget(may.wrapped());
+        }
+        return true;
     }
 
     private void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {

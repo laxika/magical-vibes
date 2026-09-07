@@ -134,6 +134,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Double", Keyword.DOUBLE);
         KEYWORD_MAP.put("Amass", Keyword.AMASS);
         KEYWORD_MAP.put("Plot", Keyword.PLOT);
+        KEYWORD_MAP.put("Cleave", Keyword.CLEAVE);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

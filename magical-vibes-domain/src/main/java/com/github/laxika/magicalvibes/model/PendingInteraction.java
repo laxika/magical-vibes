@@ -2079,6 +2079,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@code enterTapped} makes the chosen card enter the battlefield tapped (e.g. Embrace the Paradox).
      * {@code attachEquipmentCardId}, when non-null, is the card id of the source Equipment to attach to the
      * chosen card once it enters (e.g. Deathrender).
+     * {@code untapSourcePermanentId} and {@code untapSourceIfEnteredCardHasAnySubtype} carry a
+     * conditional source untap that applies after the chosen card enters.
      */
     record HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                           boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
@@ -2088,7 +2090,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           boolean faceDown, int faceDownPower, int faceDownToughness,
                           java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
                           UUID returnSourcePermanentId, CounterType artifactCounterType,
-                          int artifactCounterCount, boolean returnToHandAtEndStep)
+                          int artifactCounterCount, boolean returnToHandAtEndStep,
+                          UUID untapSourcePermanentId,
+                          java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype)
             implements PendingInteraction, HandChoice {
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -2104,7 +2108,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                     drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
                     faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId,
-                    returnSourcePermanentId, artifactCounterType, artifactCounterCount, false);
+                    returnSourcePermanentId, artifactCounterType, artifactCounterCount, false, null, java.util.Set.of());
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -2117,7 +2121,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                     attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                     drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
-                    faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, null, null, null, 0);
+                    faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, null, null, null, 0, false, null,
+                    java.util.Set.of());
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -2127,7 +2132,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               String drawAndRepeatLabel, boolean putAnyNumber) {
             this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
                     enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate,
-                    drawAndRepeatLabel, putAnyNumber, false, 0, 0, java.util.Set.of(), null, null, null, 0);
+                    drawAndRepeatLabel, putAnyNumber, false, 0, 0, java.util.Set.of(), null, null, null, 0, false, null,
+                    java.util.Set.of());
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -2138,7 +2144,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                     attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                     drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
-                    false, 0, 0, java.util.Set.of(), null, returnSourcePermanentId, null, 0);
+                    false, 0, 0, java.util.Set.of(), null, returnSourcePermanentId, null, 0, false, null,
+                    java.util.Set.of());
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt) {
@@ -2516,17 +2523,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * the decremented count (this replaces the old {@code InteractionState}
      * {@code discardRemainingCount} field for discards). {@code followUp} is the carry-over
      * work run when the whole sequence completes; re-begins pass it forward unchanged. When
-     * {@code stopAfterDiscardingType} is set, a matching first pick makes the next pick optional;
-     * {@code declinable} records that optional second pick.
+     * {@code stopAfterDiscardingType} or {@code stopAfterDiscardingPredicate} is set, a matching
+     * first pick makes the next pick optional; {@code declinable} records that optional second pick.
      */
     record DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
                          int remainingCount, DiscardFollowUp followUp, String prompt,
-                         CardType stopAfterDiscardingType, boolean declinable)
+                         CardType stopAfterDiscardingType, CardPredicate stopAfterDiscardingPredicate,
+                         boolean declinable)
             implements PendingInteraction, HandChoice {
 
         public DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
                              int remainingCount, DiscardFollowUp followUp, String prompt) {
-            this(playerId, validIndices, remainingCount, followUp, prompt, null, false);
+            this(playerId, validIndices, remainingCount, followUp, prompt, null, null, false);
         }
 
         @Override

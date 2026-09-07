@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EnchantedPlayerCreaturesEnterTappedEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -98,7 +99,37 @@ public class BattlefieldPlacementService {
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler;
+    private final EnchantedPlayerCreaturesEnterTappedEffectHandler enchantedPlayerCreaturesEnterTappedEffectHandler;
     private com.github.laxika.magicalvibes.service.effect.normalfx.NoteControllerLifeTotalEffectHandler noteControllerLifeTotalEffectHandler;
+
+    @Autowired
+    public BattlefieldPlacementService(GameQueryService gameQueryService,
+                                       GameLogService gameLogService,
+                                       PlayerInputService playerInputService,
+                                       PermanentCopierService permanentCopierService,
+                                       @Lazy TriggerCollectionService triggerCollectionService,
+                                       AmountEvaluationService amountEvaluationService,
+                                       ConditionEvaluationService conditionEvaluationService,
+                                       PredicateEvaluationService predicateEvaluationService,
+                                       @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport,
+                                       com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService,
+                                       @Lazy PermanentRemovalService permanentRemovalService,
+                                       com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler,
+                                       EnchantedPlayerCreaturesEnterTappedEffectHandler enchantedPlayerCreaturesEnterTappedEffectHandler) {
+        this.gameQueryService = gameQueryService;
+        this.gameLogService = gameLogService;
+        this.playerInputService = playerInputService;
+        this.permanentCopierService = permanentCopierService;
+        this.triggerCollectionService = triggerCollectionService;
+        this.amountEvaluationService = amountEvaluationService;
+        this.conditionEvaluationService = conditionEvaluationService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.permanentCounterSupport = permanentCounterSupport;
+        this.graveyardService = graveyardService;
+        this.permanentRemovalService = permanentRemovalService;
+        this.becomeDayAsEntersEffectHandler = becomeDayAsEntersEffectHandler;
+        this.enchantedPlayerCreaturesEnterTappedEffectHandler = enchantedPlayerCreaturesEnterTappedEffectHandler;
+    }
 
     public BattlefieldPlacementService(GameQueryService gameQueryService,
                                        GameLogService gameLogService,
@@ -112,18 +143,11 @@ public class BattlefieldPlacementService {
                                        com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService,
                                        @Lazy PermanentRemovalService permanentRemovalService,
                                        com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler) {
-        this.gameQueryService = gameQueryService;
-        this.gameLogService = gameLogService;
-        this.playerInputService = playerInputService;
-        this.permanentCopierService = permanentCopierService;
-        this.triggerCollectionService = triggerCollectionService;
-        this.amountEvaluationService = amountEvaluationService;
-        this.conditionEvaluationService = conditionEvaluationService;
-        this.predicateEvaluationService = predicateEvaluationService;
-        this.permanentCounterSupport = permanentCounterSupport;
-        this.graveyardService = graveyardService;
-        this.permanentRemovalService = permanentRemovalService;
-        this.becomeDayAsEntersEffectHandler = becomeDayAsEntersEffectHandler;
+        this(gameQueryService, gameLogService, playerInputService, permanentCopierService,
+                triggerCollectionService, amountEvaluationService, conditionEvaluationService,
+                predicateEvaluationService, permanentCounterSupport, graveyardService,
+                permanentRemovalService, becomeDayAsEntersEffectHandler,
+                new EnchantedPlayerCreaturesEnterTappedEffectHandler(gameQueryService));
     }
 
     @Autowired
@@ -185,6 +209,7 @@ public class BattlefieldPlacementService {
             applyAllPermanentsEnterTapped(gameData, permanent);
             applyGlobalFilteredEnterTappedEffects(gameData, permanent);
             applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
+            enchantedPlayerCreaturesEnterTappedEffectHandler.apply(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked,
                     repeatedAdditionalCosts, request.convokeCreatureCount(), request.enterWithCounters());
@@ -208,6 +233,8 @@ public class BattlefieldPlacementService {
         }
         if (plusOnePlusOneCountersAfterEntry > plusOnePlusOneCountersBeforeEntry
                 || (plusOnePlusOneCountersBeforeEntry > 0 && plusOnePlusOneCountersAfterEntry > 0)) {
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                    gameData, permanent, controllerId);
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                     gameData, permanent, controllerId);
         }
@@ -853,7 +880,7 @@ public class BattlefieldPlacementService {
         playerInputService.beginDiscardChoice(gameData, controllerId, discardable,
                 permanent.getCard().getName() + " — Discard " + effect.description()
                         + " to have it enter (choose no card to decline).", 1,
-                DiscardFollowUp.enteringPermanent(permanent, controllerId), null, true);
+                DiscardFollowUp.enteringPermanent(permanent, controllerId), (CardType) null, true);
         return false;
     }
 

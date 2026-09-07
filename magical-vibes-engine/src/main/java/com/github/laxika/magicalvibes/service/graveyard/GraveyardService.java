@@ -325,6 +325,7 @@ public class GraveyardService {
             exileService.exileCard(gameData, ownerId, card);
             gameData.extraTurns.addFirst(extraTurnControllerId);
             gameData.extraTurnSkipsUntap.addFirst(false);
+            gameData.extraTurnDamageCantBePrevented.addFirst(false);
             gameLogService.append(gameData, GameLog.cardThen(card,
                     " is exiled instead of being put into a graveyard; its controller takes an extra turn."));
             log.info("Game {} - {} replacement effect: exiled and granted an extra turn to {}",
@@ -478,6 +479,10 @@ public class GraveyardService {
         }
         if (!card.isToken() && isPermanentCard(card)) {
             triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            if (sourceZone == Zone.LIBRARY) {
+                triggerCollectionService.checkPermanentCardPutIntoGraveyardFromLibraryTriggers(
+                        gameData, ownerId, card);
+            }
         }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);

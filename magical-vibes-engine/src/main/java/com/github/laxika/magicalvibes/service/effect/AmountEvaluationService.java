@@ -60,10 +60,11 @@ import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThis
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
+import com.github.laxika.magicalvibes.model.amount.DistinctKeywordAbilitiesAmongControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaCostsAmongCardsInGraveyard;
-import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongStudyCounterCardsInExile;
+import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.amount.DistinctPowersAmongControlledCreatures;
 import com.github.laxika.magicalvibes.model.amount.DyingPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -77,6 +78,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTot
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
+import com.github.laxika.magicalvibes.model.amount.GreatestCreatureCountAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestCreatureTypeCountAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
@@ -108,6 +110,7 @@ import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
@@ -269,6 +272,8 @@ public class AmountEvaluationService {
                             .map(Card::getManaValue)
                             .distinct()
                             .count();
+            case DistinctKeywordAbilitiesAmongControlledCreatures a ->
+                    countDistinctKeywordAbilitiesAmongControlledCreatures(gameData, a, ctx);
             case DistinctPowersAmongControlledCreatures ignored ->
                     (int) gameData.playerBattlefields.getOrDefault(ctx.controllerId(), List.of()).stream()
                             .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
@@ -342,6 +347,8 @@ public class AmountEvaluationService {
                     highestOpponentLifeTotal(gameData, ctx);
             case GreatestOpponentHandSize ignored ->
                     greatestOpponentHandSize(gameData, ctx);
+            case OpponentsWithMoreCardsInHandThanController ignored ->
+                    opponentsWithMoreCardsInHandThanController(gameData, ctx);
             case TargetPlayerLifeTotal ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.playerLifeTotals.getOrDefault(ctx.targetPermanentId(), 0);
@@ -360,10 +367,12 @@ public class AmountEvaluationService {
                     greatestPowerAmongCardsInGraveyard(gameData, a, ctx);
             case GreatestManaValueAmongControlled a ->
                     greatestManaValueAmongControlled(gameData, a, ctx);
+            case GreatestCreatureCountAmongPlayers ignored ->
+                    greatestCreatureCountAmongPlayers(gameData);
             case GreatestCreatureTypeCountAmongControlled ignored ->
                     greatestCreatureTypeCountAmongControlled(gameData, ctx);
-            case GreatestToughnessAmongControlled ignored ->
-                    greatestToughnessAmongControlled(gameData, ctx);
+            case GreatestToughnessAmongControlled a ->
+                    greatestToughnessAmongControlled(gameData, a, ctx);
             case AttachmentsOnSource a ->
                     countAttachmentsOnSource(gameData, a, ctx);
             case CreaturesBlockedBySource ignored ->
@@ -901,6 +910,24 @@ public class AmountEvaluationService {
                 .count();
     }
 
+    private int countDistinctKeywordAbilitiesAmongControlledCreatures(
+            GameData gameData, DistinctKeywordAbilitiesAmongControlledCreatures amount, AmountContext ctx) {
+        if (ctx.controllerId() == null || amount.abilities().isEmpty()) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+
+        java.util.Set<Keyword> found = java.util.EnumSet.noneOf(Keyword.class);
+        for (Permanent permanent : battlefield) {
+            if (!gameQueryService.isCreature(gameData, permanent)) continue;
+            for (Keyword ability : amount.abilities()) {
+                if (gameQueryService.hasKeyword(gameData, permanent, ability)) {
+                    found.add(ability);
+                }
+            }
+        }
+        return found.size();
+    }
+
     private int countColorManaSymbolsAmongControlledPermanents(
             GameData gameData, ColorManaSymbolsAmongControlledPermanents amount, AmountContext ctx) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
@@ -1238,20 +1265,53 @@ public class AmountEvaluationService {
         return foundCreature ? greatestPower : 0;
     }
 
-    private int greatestToughnessAmongControlled(GameData gameData, AmountContext ctx) {
+    private int greatestToughnessAmongControlled(
+            GameData gameData, GreatestToughnessAmongControlled amount, AmountContext ctx) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        FilterContext filterContext = null;
+        if (amount.filter() != null) {
+            filterContext = (GameQueryService.isStaticEvaluationActive()
+                    ? FilterContext.empty()
+                    : FilterContext.of(gameData))
+                    .withSourceControllerId(ctx.controllerId())
+                    .withSourceCardId(ctx.sourceCard() == null ? null : ctx.sourceCard().getId())
+                    .withSourcePermanentSnapshot(ctx.sourcePermanent())
+                    .withSourcePermanentId(ctx.sourcePermanent() == null
+                            ? null : ctx.sourcePermanent().getId());
+        }
         int greatestToughness = 0;
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
-                    int toughness = gameQueryService.getEffectiveToughness(gameData, permanent);
-                    if (toughness > greatestToughness) {
-                        greatestToughness = toughness;
-                    }
+                if (!gameQueryService.isCreature(gameData, permanent)
+                        || (amount.filter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, amount.filter(), filterContext))) {
+                    continue;
+                }
+                int toughness = gameQueryService.getEffectiveToughness(gameData, permanent);
+                if (toughness > greatestToughness) {
+                    greatestToughness = toughness;
                 }
             }
         }
         return greatestToughness;
+    }
+
+    private int greatestCreatureCountAmongPlayers(GameData gameData) {
+        int greatest = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            int creatureCount = 0;
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    creatureCount++;
+                }
+            }
+            greatest = Math.max(greatest, creatureCount);
+        }
+        return greatest;
     }
 
     private int greatestCreatureTypeCountAmongControlled(GameData gameData, AmountContext ctx) {
@@ -1503,6 +1563,19 @@ public class AmountEvaluationService {
             greatest = Math.max(greatest, gameData.playerHands.getOrDefault(playerId, List.of()).size());
         }
         return greatest;
+    }
+
+    private int opponentsWithMoreCardsInHandThanController(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int controllerHandSize = gameData.playerHands.getOrDefault(ctx.controllerId(), List.of()).size();
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.playerHands.getOrDefault(playerId, List.of()).size() > controllerHandSize) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private int countOpponentPoisonCounters(GameData gameData, AmountContext ctx) {

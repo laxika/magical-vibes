@@ -68,6 +68,7 @@ public sealed interface PermanentPredicate permits
         PermanentInCombatWithSourcePredicate,
         PermanentIsArtifactPredicate,
         PermanentIsAttackingPredicate,
+        PermanentIsAttackingEnchantedPlayerPredicate,
         PermanentIsAttackingOpponentOfSourceControllerPredicate,
         PermanentIsAttackingSourceControllerPredicate,
         PermanentIsAuraAttachedToCreaturePredicate,
@@ -134,6 +135,7 @@ public sealed interface PermanentPredicate permits
         PermanentToughnessAtMostControlledSubtypeCountPredicate,
         PermanentToughnessAtMostXPredicate,
         PermanentToughnessAtMostXWhenMadnessOtherwisePredicate,
+        PermanentToughnessGreaterThanPowerPredicate,
         PermanentToughnessLessThanSourcePowerPredicate,
         PermanentThatSaddledSourceThisTurnPredicate,
         PermanentTruePredicate {

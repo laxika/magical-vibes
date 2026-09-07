@@ -15,7 +15,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * unfiltered case too — this record stays separate only for {@code withoutPayingManaCost}.
  */
 public record ExileTopCardMayPlayThisTurnEffect(int count, boolean withoutPayingManaCost)
-        implements CardEffect {
+        implements ExileTopCardsMayPlayThisTurnDrawReplacementEffect {
 
     /** Single-card variant (Oracle's Vault). */
     public ExileTopCardMayPlayThisTurnEffect(boolean withoutPayingManaCost) {

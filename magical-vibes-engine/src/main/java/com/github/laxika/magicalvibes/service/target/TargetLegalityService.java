@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -2428,37 +2429,78 @@ public class TargetLegalityService {
 
     private boolean isTargetCardLegalOnResolution(GameData gameData, StackEntry entry, UUID cardId) {
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-        if (card == null) {
+        if (card != null) {
+            List<CardEffect> declarativeGraveyardEffects = entry.getEffectsToResolve().stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .toList();
+            if (!declarativeGraveyardEffects.isEmpty()) {
+                return declarativeGraveyardEffects.stream().anyMatch(effect ->
+                        targetValidationService.checkEffectTargets(
+                                List.of(effect),
+                                new TargetValidationContext(gameData, cardId, Zone.GRAVEYARD,
+                                        entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                                        entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
+                                        entry.getTriggeringPermanentPowerAtTrigger()))
+                                .isEmpty());
+            }
+
+            SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect = entry.getEffectsToResolve().stream()
+                    .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
+                    .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (effect == null) {
+                return true;
+            }
+
+            return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
+                    .anyMatch(graveyardCard -> graveyardCard.getId().equals(cardId))
+                    && predicateEvaluationService.matchesCardPredicate(
+                    card, effect.returnFilter(), entry.getCard().getId());
+        }
+
+        Permanent permanent = findPermanentByCardId(gameData, cardId);
+        if (permanent == null) {
             return false;
         }
 
-        List<CardEffect> declarativeGraveyardEffects = entry.getEffectsToResolve().stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                .toList();
-        if (!declarativeGraveyardEffects.isEmpty()) {
-            return declarativeGraveyardEffects.stream().anyMatch(effect ->
-                    targetValidationService.checkEffectTargets(
-                            List.of(effect),
-                            new TargetValidationContext(gameData, cardId, Zone.GRAVEYARD,
-                                    entry.getCard(), entry.getXValue(), entry.getControllerId(),
-                                    entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                                    entry.getTriggeringPermanentPowerAtTrigger()))
-                            .isEmpty());
-        }
+        return entry.getEffectsToResolve().stream()
+                .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
+                .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
+                .anyMatch(effect -> isMixedZoneBattlefieldTargetLegal(gameData, entry, permanent, effect));
+    }
 
-        SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect = entry.getEffectsToResolve().stream()
-                .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
-                .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
-                .findFirst()
-                .orElse(null);
-        if (effect == null) {
-            return true;
+    private boolean isMixedZoneBattlefieldTargetLegal(GameData gameData, StackEntry entry,
+                                                       Permanent permanent,
+                                                       BattlefieldAndGraveyardCardChoosingEffect effect) {
+        if (effect.mixedZoneExcludesSourcePermanent()
+                && permanent.getId().equals(entry.getSourcePermanentId())) {
+            return false;
         }
+        PermanentPredicate predicate = effect.mixedZoneBattlefieldPredicate();
+        if (predicate == null) {
+            if (!gameQueryService.isCreature(gameData, permanent)) {
+                return false;
+            }
+        } else if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate)) {
+            return false;
+        }
+        return isBattlefieldTargetLegalOnResolution(gameData, entry, permanent.getId(), null);
+    }
 
-        return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
-                .anyMatch(graveyardCard -> graveyardCard.getId().equals(cardId))
-                && predicateEvaluationService.matchesCardPredicate(
-                        card, effect.returnFilter(), entry.getCard().getId());
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(cardId)) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
     }
 
     public boolean isPrimaryTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId) {

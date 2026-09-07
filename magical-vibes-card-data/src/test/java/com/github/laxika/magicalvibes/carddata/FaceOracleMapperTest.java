@@ -123,6 +123,15 @@ class FaceOracleMapperTest {
         assertThat(data.keywords()).isEmpty();
     }
 
+    @Test
+    void aMentionedKeywordIsNotTheFacesOwn() {
+        OracleData data = map(face()
+                .text("When this enters, create a token with flying.")
+                .keywords(List.of("Flying")), FRONT);
+
+        assertThat(data.keywords()).isEmpty();
+    }
+
     /** Transform heads no keyword line, so it falls out of a back face without a special case. */
     @Test
     void transformIsNotABackFaceKeyword() {

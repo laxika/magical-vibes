@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -512,6 +513,8 @@ public class TurnCleanupService {
      */
     public int getMaxHandSize(GameData gameData, UUID playerId) {
         int maxHandSize = 7;
+        List<HandSizeModifier> modifiers = new ArrayList<>();
+        int order = 0;
         // Fold every hand-size effect that applies to this player over the running value in
         // timestamp order — opponent-controlled ones from the other battlefields, and the
         // player's own "your maximum hand size is N" effects from theirs.
@@ -521,16 +524,38 @@ public class TurnCleanupService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (!own && effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
-                        maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
-                    } else if (own && effect instanceof ControllerMaxHandSizeEffect handSizeEffect) {
-                        maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize, perm);
+                    if ((!own && effect instanceof OpponentMaxHandSizeEffect)
+                            || (own && effect instanceof ControllerMaxHandSizeEffect)) {
+                        modifiers.add(new HandSizeModifier(effect, perm, perm.getTimestamp(), order++));
                     }
                 }
             }
         }
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floatingEffect : gameData.floatingEffects) {
+                if (playerId.equals(floatingEffect.affectedPlayerId())
+                        && (floatingEffect.effect() instanceof ControllerMaxHandSizeEffect
+                        || floatingEffect.effect() instanceof OpponentMaxHandSizeEffect)) {
+                    modifiers.add(new HandSizeModifier(floatingEffect.effect(), null,
+                            floatingEffect.timestamp(), order++));
+                }
+            }
+        }
+        modifiers.sort(Comparator.comparingLong(HandSizeModifier::timestamp)
+                .thenComparingInt(HandSizeModifier::order));
+        for (HandSizeModifier modifier : modifiers) {
+            if (modifier.effect() instanceof ControllerMaxHandSizeEffect handSizeEffect) {
+                maxHandSize = modifier.source() == null
+                        ? handSizeEffect.applyToMaximumHandSize(maxHandSize)
+                        : handSizeEffect.applyToMaximumHandSize(maxHandSize, modifier.source());
+            } else if (modifier.effect() instanceof OpponentMaxHandSizeEffect handSizeEffect) {
+                maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
+            }
+        }
         return maxHandSize;
     }
+
+    private record HandSizeModifier(CardEffect effect, Permanent source, long timestamp, int order) {}
 
     /**
      * Checks whether the given player's hand size is unlimited, either via

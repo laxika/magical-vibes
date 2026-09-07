@@ -36,6 +36,7 @@ public class ExtraTurnEffectHandler implements NormalEffectHandlerBean {
         for (int i = 0; i < e.count(); i++) {
             gameData.extraTurns.addFirst(targetPlayerId);
             gameData.extraTurnSkipsUntap.addFirst(false);
+            gameData.extraTurnDamageCantBePrevented.addFirst(false);
         }
 
         String logEntry = playerName + " takes " + e.count() + " extra "

@@ -315,6 +315,7 @@ public class SpellCastingService {
         triggerCollectionService.checkYouPutCountersTriggers(gameData, player.getId(), count);
         gameData.playersWhoPutCountersOnCreaturesThisTurn.add(player.getId());
         if (type == CounterType.PLUS_ONE_PLUS_ONE) {
+            gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(player.getId());
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(player.getId());
         }
         String counterName = type == CounterType.MINUS_ONE_MINUS_ONE ? "-1/-1"
@@ -1858,6 +1859,11 @@ public class SpellCastingService {
             hand.set(cardIndex, preparedCard);
         }
         final Card card = preparedCard;
+        if (usingAlternateCost) {
+            card.getCastingOption(AlternateHandCast.class)
+                    .map(AlternateHandCast::alternateTargetFilter)
+                    .ifPresent(card::setCastTimeTargetFilter);
+        }
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         int extraTargetCount = Math.max(0, targetIds.size() - 1);
@@ -5947,7 +5953,8 @@ public class SpellCastingService {
 
             battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace, true);
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace,
+                        Zone.EXILE, copy ? null : exiledEntry.sourcePermanentId());
                 turnProgressionService.resolveAutoPass(gameData);
             }
             return;
@@ -6145,7 +6152,8 @@ public class SpellCastingService {
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " casts " , card, " from exile."));
         log.info("Game {} - {} casts {} from exile", gameData.id, player.getUsername(), card.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, Zone.EXILE);
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, Zone.EXILE,
+                copy ? null : exiledEntry.sourcePermanentId());
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         if (autoPass) {
@@ -6428,6 +6436,10 @@ public class SpellCastingService {
         if (additionalCosts.chooseXValueCost() != null) {
             additionalSpellCostService.validateChooseXValueCost(card, additionalCosts.chooseXValueCost(), effectiveXValue);
         }
+        UUID topLibraryPermissionSourceId = !freeTopPlay && !useManaValueLifeAlternative
+                ? castingPermissionService.findTopLibraryCastPermissionSource(gameData, playerId, card)
+                .orElse(null)
+                : null;
 
         // Remove from library
         deck.removeFirst();
@@ -6441,6 +6453,10 @@ public class SpellCastingService {
         } else if (!freeTopPlay) {
             phyrexianManaPaidWithLife = paySpellManaCostFromNonHandZone(
                     gameData, playerId, card, effectiveXValue, Zone.LIBRARY);
+        }
+        if (topLibraryPermissionSourceId != null) {
+            castingPermissionService.markTopLibraryCastPermissionUsed(
+                    gameData, playerId, topLibraryPermissionSourceId);
         }
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());

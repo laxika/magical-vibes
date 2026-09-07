@@ -819,6 +819,7 @@ public class PermanentRemovalService {
             if (effectiveDamage > 0) {
                 target.addMarkedDamage(sourcePermanentId, effectiveDamage);
                 gameData.recordDamageToPermanent(target.getId(), effectiveDamage);
+                triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, effectiveDamage);
                 gameData.recordDamageDealtBySource(sourcePermanentId, effectiveDamage);
                 if (sourcePermanentId != null) {
                     gameData.recordDamageRecipientBySource(sourcePermanentId, target.getId());
@@ -837,6 +838,7 @@ public class PermanentRemovalService {
             return 0;
         }
 
+        triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, effectiveDamage);
         if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
             if (tryDestroyPermanent(gameData, target)) {
                 gameLogService.append(gameData,

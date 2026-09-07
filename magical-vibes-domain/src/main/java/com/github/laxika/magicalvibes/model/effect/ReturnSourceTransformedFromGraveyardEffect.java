@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Returns the source card from its owner's graveyard to the battlefield transformed,
- * under the trigger controller's control, immediately on resolution
- * ("When this creature dies, return it to the battlefield transformed under your control.").
+ * Returns the source card from its owner's graveyard to the battlefield transformed immediately
+ * on resolution. By default it enters under the trigger controller's control; when
+ * {@code underOwnerControl} is true, it enters under its owner's control.
  *
- * <p>Unlike {@link RegisterDelayedReturnSourceTransformedEffect} there is no wait for the
- * next end step.
+ * <p>Unlike {@link RegisterDelayedReturnSourceTransformedEffect} there is no wait for the next
+ * end step.
  */
-public record ReturnSourceTransformedFromGraveyardEffect() implements CardEffect {
+public record ReturnSourceTransformedFromGraveyardEffect(boolean underOwnerControl) implements CardEffect {
+
+    public ReturnSourceTransformedFromGraveyardEffect() {
+        this(false);
+    }
 }

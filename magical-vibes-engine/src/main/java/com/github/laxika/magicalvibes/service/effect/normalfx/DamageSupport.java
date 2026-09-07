@@ -370,6 +370,7 @@ public class DamageSupport {
         // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)
         if (damage > 0) {
             gameData.recordDamageToPermanent(target.getId(), damage);
+            triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
             if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
                     || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
                 gameData.recordQualifyingDamageControllerToPermanent(target.getId(), sourceControllerId);
@@ -621,6 +622,7 @@ public class DamageSupport {
         // the state-based action check performs any resulting destruction.
         target.addMarkedDamage(damageSourceKey(entry, null), damage);
         gameData.recordDamageToPermanent(target.getId(), damage);
+        triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
         if (damage > 0 && gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH)) {
             target.setDamagedByDeathtouch(true);
         }
@@ -845,6 +847,8 @@ public class DamageSupport {
                 loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 loyaltyDamage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 if (loyaltyDamage > 0) {
+                    triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
+                            gameData, targetPermanent, loyaltyDamage);
                     triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
                             gameData, sourcePermanent, entry.getControllerId(), targetPermanent.getId(),
                             loyaltyDamage, false, null);
@@ -1522,6 +1526,10 @@ public class DamageSupport {
                     if (targetPerm.getCard().hasType(CardType.BATTLE)) {
                         targetPerm.setCounterCount(CounterType.DEFENSE,
                                 targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
+                    }
+                    triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
+                            gameData, targetPerm, effectiveDamage);
+                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
                         battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
                     }
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());

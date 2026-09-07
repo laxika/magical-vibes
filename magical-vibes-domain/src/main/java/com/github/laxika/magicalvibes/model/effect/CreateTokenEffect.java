@@ -383,6 +383,11 @@ public record CreateTokenEffect(
      * "{1}, {T}, Discard a card, Sacrifice this token: Draw a card."
      */
     public static CreateTokenEffect ofBloodToken(int amount) {
+        return ofBloodToken(new Fixed(amount));
+    }
+
+    /** Dynamically many Blood tokens, with the standard Blood activated ability. */
+    public static CreateTokenEffect ofBloodToken(DynamicAmount amount) {
         return ofArtifactToken(amount, "Blood", List.of(CardSubtype.BLOOD),
                 List.of(new ActivatedAbility(
                         true, "{1}",

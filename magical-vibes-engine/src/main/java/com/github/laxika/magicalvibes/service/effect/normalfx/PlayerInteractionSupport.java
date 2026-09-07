@@ -78,11 +78,16 @@ public class PlayerInteractionSupport {
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId) {
-        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, null);
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, null, null);
     }
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId, UUID sourceCardId) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId, null);
+    }
+
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
+                                          UUID sourceEquipmentCardId, UUID sourceCardId, UUID sourcePermanentId) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
@@ -125,20 +130,24 @@ public class PlayerInteractionSupport {
         UUID returnExiledSourceCardId = effect.returnExiledSourceIfSacrificed()
                 && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getCard().getId() : null;
+        UUID untapSourcePermanentId = effect.untapSourceIfEnteredCardHasAnySubtype().isEmpty()
+                ? null : sourcePermanentId;
         if (effect.returnToHandAtEndStep()) {
             playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
                     effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
                     effect.drawAndRepeat(), repeats ? effect.predicate() : null,
                     repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
                     effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
-                    returnExiledSourceCardId, true);
+                    returnExiledSourceCardId, true, untapSourcePermanentId,
+                    effect.untapSourceIfEnteredCardHasAnySubtype());
         } else {
             playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
                     effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
                     effect.drawAndRepeat(), repeats ? effect.predicate() : null,
                     repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
                     effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
-                    returnExiledSourceCardId);
+                    returnExiledSourceCardId, false, untapSourcePermanentId,
+                    effect.untapSourceIfEnteredCardHasAnySubtype());
         }
 
     }
@@ -241,11 +250,24 @@ public class PlayerInteractionSupport {
     }
 
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount, DiscardFollowUp followUp) {
-        resolveDiscardCards(gameData, playerId, amount, followUp, null);
+        resolveDiscardCards(gameData, playerId, amount, followUp, (CardType) null);
     }
 
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount,
                                     DiscardFollowUp followUp, CardType stopAfterDiscardingType) {
+
+        resolveDiscardCards(gameData, playerId, amount, followUp, stopAfterDiscardingType, null);
+    }
+
+    public void resolveDiscardCards(GameData gameData, UUID playerId, int amount,
+                                    DiscardFollowUp followUp, CardPredicate stopAfterDiscardingPredicate) {
+
+        resolveDiscardCards(gameData, playerId, amount, followUp, null, stopAfterDiscardingPredicate);
+    }
+
+    private void resolveDiscardCards(GameData gameData, UUID playerId, int amount,
+                                     DiscardFollowUp followUp, CardType stopAfterDiscardingType,
+                                     CardPredicate stopAfterDiscardingPredicate) {
 
         if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
             return;
@@ -258,8 +280,11 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        if (stopAfterDiscardingType == null) {
+        if (stopAfterDiscardingType == null && stopAfterDiscardingPredicate == null) {
             playerInputService.beginDiscardChoice(gameData, playerId, amount, followUp);
+        } else if (stopAfterDiscardingPredicate != null) {
+            playerInputService.beginDiscardChoice(gameData, playerId, amount, followUp,
+                    stopAfterDiscardingPredicate);
         } else {
             playerInputService.beginDiscardChoice(gameData, playerId, amount, followUp,
                     stopAfterDiscardingType);
@@ -851,6 +876,49 @@ public class PlayerInteractionSupport {
                 false, true, false, null, null, 0, null, false, false, false, true));
 
         log.info("Game {} - {} may choose a card from {}'s hand to discard and draw",
+                gameData.id, casterName, targetName);
+    }
+
+    /**
+     * Revealing Eye: the caster reveals the target opponent's hand and may choose a matching card
+     * for that player to discard and draw.
+     */
+    public void resolveRevealHandChooseCardToDiscardAndDraw(GameData gameData, StackEntry entry,
+                                                             CardPredicate filter) {
+        UUID targetPlayerId = entry.getTargetId();
+        UUID casterId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String casterName = gameData.playerIdToName.get(casterId);
+
+        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+        if (hand == null || hand.isEmpty()) {
+            log.info("Game {} - {} reveals {}'s empty hand", gameData.id, casterName, targetName);
+            return;
+        }
+
+        gameData.discardCausedByOpponent = !casterId.equals(targetPlayerId);
+
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (filter == null || predicateEvaluationService.matchesCardPredicate(hand.get(i), filter, null)) {
+                validIndices.add(i);
+            }
+        }
+
+        if (validIndices.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    casterName + " cannot choose a card (" + targetName + "'s hand has no matching cards)."));
+            log.info("Game {} - {}'s hand has no matching cards for {}", gameData.id, targetName, casterName);
+            return;
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                casterId, targetPlayerId, validIndices, 1, true, false, List.of(), null,
+                "You may choose a card to discard. If you do, that player draws a card.",
+                false, true, false, null, null, 0, null, false, false, false, true));
+
+        log.info("Game {} - {} may choose a matching card from {}'s revealed hand to discard and draw",
                 gameData.id, casterName, targetName);
     }
 

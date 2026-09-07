@@ -458,7 +458,8 @@ public class CombatService {
                     perm.getCounterCount(action.counterType()) + action.amount());
             if (action.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                if (controllerId != null) {
+                if (controllerId != null && gameQueryService.isCreature(gameData, perm)) {
+                    gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(controllerId);
                     gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
                 }
             }

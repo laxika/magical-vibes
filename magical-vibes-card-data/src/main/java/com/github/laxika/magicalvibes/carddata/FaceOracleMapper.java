@@ -54,7 +54,7 @@ public final class FaceOracleMapper {
                 cardText,
                 CardDataSupport.parseInt(face.power()),
                 CardDataSupport.parseInt(face.toughness()),
-                keywordsOf(face, cardText, isBackFace),
+                keywordsOf(face, cardText),
                 // A back face carries no defense or watermark of its own, and no loyalty either
                 // unless it is itself a planeswalker — a creature that transforms into one (Kytheon,
                 // Hero of Akros) enters as its back face and needs that face's starting loyalty.
@@ -106,17 +106,19 @@ public final class FaceOracleMapper {
      * <p>Both providers report a double-faced card's keywords combined across its faces, so a back
      * face has to be narrowed to what its own text states — otherwise it inherits the front's.
      * That is not cosmetic: Defender leaking onto Awoken Horror produces a creature the combat code
-     * refuses to attack with. Narrowing also stops a face that <em>grants</em> a keyword
+     * refuses to attack with. The same filtering prevents a front face from treating a mentioned
+     * keyword as its own. Narrowing also stops a face that <em>grants</em> a keyword
      * ("Creatures you control have flying") from claiming it, and drops Transform and Prepared for
      * free, since neither heads a keyword line of any back face's text.
      *
      * <p>Order matters: this runs on {@code cardText} <em>after</em> capitalisation, which is
      * itself driven by the full combined list. Narrowing first would change which lines capitalise.
+     * With no rules text, the provider list is retained because there is no text to narrow.
      */
-    private static Set<Keyword> keywordsOf(RawFace face, String cardText, boolean isBackFace) {
-        Collection<String> stated = isBackFace
-                ? OracleTextNormalizer.keywordsStatedIn(cardText, face.keywords())
-                : face.keywords();
+    private static Set<Keyword> keywordsOf(RawFace face, String cardText) {
+        Collection<String> stated = cardText == null
+                ? face.keywords()
+                : OracleTextNormalizer.keywordsStatedIn(cardText, face.keywords());
 
         Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
         for (String raw : stated) {

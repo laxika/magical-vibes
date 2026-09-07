@@ -168,6 +168,26 @@ class CastingPermissionServiceTest {
         }
 
         @Test
+        @DisplayName("once-each-turn top-library permission is consumed per source")
+        void consumesOnceEachTurnPermissionPerSource() {
+            Card illuminator = new Card();
+            illuminator.addEffect(EffectSlot.STATIC,
+                    new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE), false, null, true));
+            Permanent source = new Permanent(illuminator);
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isTrue();
+            assertThat(svc.findTopLibraryCastPermissionSource(gd, player1Id, creature))
+                    .contains(source.getId());
+            svc.markTopLibraryCastPermissionUsed(gd, player1Id, source.getId());
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isFalse();
+            assertThat(svc.findTopLibraryCastPermissionSource(gd, player1Id, creature)).isEmpty();
+        }
+
+        @Test
         @DisplayName("conditional top-library permission applies only when its condition is met")
         void conditionalTopLibraryPermission() {
             Card augur = new Card();

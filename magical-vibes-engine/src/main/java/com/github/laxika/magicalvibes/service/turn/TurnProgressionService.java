@@ -385,10 +385,12 @@ public class TurnProgressionService {
         UUID nextActive;
         boolean currentTurnIsExtraTurn = false;
         boolean skipUntapStep = false;
+        boolean damageCantBePrevented = false;
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
             currentTurnIsExtraTurn = true;
             skipUntapStep = Boolean.TRUE.equals(gameData.extraTurnSkipsUntap.pollFirst());
+            damageCantBePrevented = Boolean.TRUE.equals(gameData.extraTurnDamageCantBePrevented.pollFirst());
             if (gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC)
                     .stream().anyMatch(ExtraTurnSkipReplacementEffect.class::isInstance))) {
                 String skippedName = gameData.playerIdToName.get(nextActive);
@@ -422,6 +424,7 @@ public class TurnProgressionService {
 
         String nextActiveName = gameData.playerIdToName.get(nextActive);
         gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
+        gameData.damageCantBePreventedThisTurn = damageCantBePrevented;
 
         // Yosei, the Morning Star: a queued "skips their next untap step" is consumed by the first
         // untap step this player would actually get (CR 614.10a).
@@ -484,6 +487,7 @@ public class TurnProgressionService {
             if (grantExtraTurnAfter) {
                 gameData.extraTurns.addFirst(nextActive);
                 gameData.extraTurnSkipsUntap.addFirst(false);
+                gameData.extraTurnDamageCantBePrevented.addFirst(false);
                 String extraLog = nextActiveName + " takes an extra turn after this one.";
                 gameLogService.append(gameData, GameLog.text(extraLog));
                 log.info("Game {} - {} granted an extra turn after the controlled turn",
@@ -516,6 +520,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
+        gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.clear();
         gameData.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn.clear();
         gameData.permanentWithOilCounterPutIntoGraveyardThisTurn = false;
         gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
@@ -610,6 +615,7 @@ public class TurnProgressionService {
         gameData.handSizeAtTurnStart.clear();
         List<Card> handAtTurnStart = gameData.playerHands.get(nextActive);
         gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
+        gameData.libraryTopCardCastPermissionsUsedThisTurn.clear();
         gameData.permanentsDealtDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();

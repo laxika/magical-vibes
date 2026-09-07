@@ -77,7 +77,7 @@ import java.util.UUID;
 
 /**
  * Trigger collectors for damage-related events (ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
- * ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, ON_DEALT_DAMAGE).
+ * ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, ON_ANY_PERMANENT_DEALT_DAMAGE, ON_DEALT_DAMAGE).
  */
 @Slf4j
 @Service
@@ -493,6 +493,26 @@ public class DamageTriggerCollectorService {
     }
 
     // ── ON_ENCHANTED_CREATURE_DEALT_DAMAGE ─────────────────────────────
+
+    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE)
+    private boolean handleAnyPermanentDealtDamageToAnyTarget(TriggerMatchContext match,
+            DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
+        TriggerContext.AnyPermanentDealtDamage dc = (TriggerContext.AnyPermanentDealtDamage) ctx;
+        if (dc.damageDealt() <= 0 || match.permanent() == null || match.controllerId() == null
+                || !match.controllerId().equals(dc.damagedPermanentControllerId())) return false;
+
+        Permanent sourcePermanent = match.permanent();
+        Card sourceCard = sourcePermanent.getCard();
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), false,
+                null, dc.damageDealt(), sourcePermanent.getId(), new Permanent(sourcePermanent)));
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} ON_ANY_PERMANENT_DEALT_DAMAGE deal-damage-to-any-target trigger fires",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
 
     @CollectsTrigger(value = DealDamageToAnyTargetEffect.class,
             slot = EffectSlot.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER)

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,7 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (CreateTokenCopyOfEnchantedPermanentEffect) effect;
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent enchanted = null;
 
@@ -53,9 +56,11 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
 
         Card sourceCard = enchanted.getCard();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect = new CreateTokenCopyOfTargetPermanentEffect(
+                e.additionalSubtypes(), Set.of(), null, null, Map.of());
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
-                    sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
+                    sourceCard, tokenCopyEffect);
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
             entry.getCreatedPermanentIds().add(tokenPermanent.getId());

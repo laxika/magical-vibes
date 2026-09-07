@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForImprintedCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenIfDyingSourceHadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
@@ -485,14 +486,14 @@ public class DeathTriggerCollectorService {
                 snapshot.put(type, count);
             }
         }
-        if (snapshot.isEmpty()) {
+        if (snapshot.isEmpty() && effect.requiresCounters()) {
             return false;
         }
 
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                 sd.dyingCard(), sd.controllerId(),
                 new ArrayList<>(List.of(new MoveDyingSourceCountersToTargetCreatureEffect(
-                        snapshot, effect.controllerOnly())))
+                        snapshot, effect.controllerOnly(), effect.requiresCounters())))
         ));
         return true;
     }
@@ -2486,6 +2487,20 @@ public class DeathTriggerCollectorService {
         ));
         logOpponentCreatureDeath(match);
         return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenIfDyingSourceHadCounterEffect.class,
+            slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
+    boolean handleOpponentCreatureDeathCreateTokenIfDyingSourceHadCounter(
+            TriggerMatchContext match, CreateTokenIfDyingSourceHadCounterEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        Permanent dyingPermanent = cd.dyingPermanent();
+        if (dyingPermanent == null
+                || dyingPermanent.getCounterCount(effect.counterType()) < 1) {
+            return false;
+        }
+        return handleOpponentCreatureDeathDefault(match, effect.tokenTemplate(), ctx);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)

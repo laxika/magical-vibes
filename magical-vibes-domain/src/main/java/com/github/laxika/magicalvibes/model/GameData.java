@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLand
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
@@ -170,6 +171,8 @@ public class GameData {
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who put at least one counter on a creature this turn. */
     public final Set<UUID> playersWhoPutCountersOnCreaturesThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who put at least one +1/+1 counter on a creature this turn. */
+    public final Set<UUID> playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who removed at least one oil counter from a permanent they controlled this turn. */
     public final Set<UUID> playersWhoRemovedOilCountersFromControlledPermanentsThisTurn = ConcurrentHashMap.newKeySet();
     /** Whether a permanent carrying an oil counter was put into a graveyard this turn. */
@@ -374,6 +377,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have ice counters (Draugr Necromancer). */
     public final Set<UUID> exiledCardsWithIceCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have croak counters (Grolnok, the Omnivore). */
+    public final Set<UUID> exiledCardsWithCroakCounters = ConcurrentHashMap.newKeySet();
     public final Set<UUID> exiledCardsWithStudyCounters = ConcurrentHashMap.newKeySet();
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
     public final List<DelayedSpellExile> delayedSpellExiles = Collections.synchronizedList(new ArrayList<>());
@@ -633,6 +638,11 @@ public class GameData {
      * in engine code pushes/polls this deque at the same end.
      */
     public final Deque<Boolean> extraTurnSkipsUntap = new ArrayDeque<>();
+    /**
+     * Parallel to {@link #extraTurns}: whether the correspondingly-positioned extra turn makes
+     * damage unpreventable. Maintained in lockstep with the other extra-turn queues.
+     */
+    public final Deque<Boolean> extraTurnDamageCantBePrevented = new ArrayDeque<>();
     /** Additional upkeep steps still to be taken during the active player's current turn. */
     public int additionalUpkeepsRemaining;
     /** Whether the current upkeep step was inserted after the turn's first upkeep. */
@@ -1577,6 +1587,8 @@ public class GameData {
     /** Tracks which permanents (by UUID) have already provided their once-each-turn "you may pay {0}"
      *  alternative cast cost this turn (As Foretold). Cleared at start of new turn. */
     public final Set<UUID> freeCastPermanentUsedThisTurn = ConcurrentHashMap.newKeySet();
+    /** Tracks source permanents whose once-each-turn top-library cast permission was used. */
+    public final Set<UUID> libraryTopCardCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect}
      *  this turn (e.g. Ghoulish Procession). Cleared at start of new turn. */
@@ -3140,6 +3152,12 @@ public class GameData {
         exiledCardsWithIceCounters.add(card.getId());
     }
 
+    /** Adds a card to exile and marks it with a croak counter. */
+    public void addToExileWithCroakCounter(UUID ownerId, Card card) {
+        addToExile(ownerId, card);
+        exiledCardsWithCroakCounters.add(card.getId());
+    }
+
     /** Adds a card to exile with source permanent tracking and an explicit face-down status. */
     public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId, boolean faceDown) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
@@ -3212,6 +3230,7 @@ public class GameData {
             antedCardIds.remove(cardId);
             stashCounterCardIds.remove(cardId);
             exiledCardsWithIceCounters.remove(cardId);
+            exiledCardsWithCroakCounters.remove(cardId);
             exiledCardsWithStudyCounters.remove(cardId);
             exiledCardRefineCounters.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
@@ -3411,6 +3430,9 @@ public class GameData {
                 sourcePermanentId
         );
         entry.setAttackedTargetId(attackedTargetId);
+        if (may.wrapped() instanceof OtherAttackingCreatureReferenceEffect) {
+            entry.setNonTargeting(true);
+        }
         stack.add(entry);
     }
 
@@ -3738,6 +3760,7 @@ public class GameData {
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
         copy.exiledCardsWithIceCounters.addAll(this.exiledCardsWithIceCounters);
+        copy.exiledCardsWithCroakCounters.addAll(this.exiledCardsWithCroakCounters);
 
         // --- List<UUID> (synchronized) ---
         copy.orderedPlayerIds.addAll(this.orderedPlayerIds);
@@ -3784,6 +3807,8 @@ public class GameData {
         copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
+        copy.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn
+                .addAll(this.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn);
         copy.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn
                 .addAll(this.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn);
         copy.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn
@@ -3850,6 +3875,7 @@ public class GameData {
             copy.qualifyingDamageControllersByPermanentThisTurn.put(k, controllers);
         });
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
+        copy.libraryTopCardCastPermissionsUsedThisTurn.addAll(this.libraryTopCardCastPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         this.oncePerCreatureTriggersFiredThisTurn.forEach((k, v) ->
                 copy.oncePerCreatureTriggersFiredThisTurn.put(k, new HashSet<>(v)));
@@ -4147,6 +4173,7 @@ public class GameData {
         copy.pendingInteractions.addAll(this.pendingInteractions);
         copy.extraTurns.addAll(this.extraTurns);
         copy.extraTurnSkipsUntap.addAll(this.extraTurnSkipsUntap);
+        copy.extraTurnDamageCantBePrevented.addAll(this.extraTurnDamageCantBePrevented);
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
 

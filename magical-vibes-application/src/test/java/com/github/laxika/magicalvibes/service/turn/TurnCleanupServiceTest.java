@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceControllerMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeToSourceCountersEffect;
@@ -779,6 +780,17 @@ class TurnCleanupServiceTest {
         @DisplayName("Returns 7 by default")
         void returnsSevenByDefault() {
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(7);
+        }
+
+        @Test
+        @DisplayName("Includes a floating controller maximum hand-size reduction")
+        void includesFloatingControllerReduction() {
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "Inspired Idea", null, player1Id,
+                    new ReduceControllerMaxHandSizeEffect(3), null, player1Id, null,
+                    EffectDuration.PERMANENT, 0));
+
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(4);
         }
 
         @Test

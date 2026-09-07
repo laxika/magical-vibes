@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "105")
+@CardRegistration(set = "VOW", collectorNumber = "104")
 public class DesperateFarmer extends Card {
 
     public DesperateFarmer() {

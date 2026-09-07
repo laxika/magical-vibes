@@ -146,6 +146,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler anyOpponentSacrificeForTransformHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenPermanentYouControlEffectHandler createTokenCopyOfChosenPermanentYouControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
@@ -758,6 +759,15 @@ public class PermanentChoiceBattlefieldHandlerService {
         anyOpponentSacrificeForTapAndCounterHandler.sacrifice(gameData, context.sacrificingPlayerId(), permanentId);
         anyOpponentSacrificeForTapAndCounterHandler.advance(
                 gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Innocent Traveler: the accepting opponent picked which creature to sacrifice. */
+    public void handleAnyOpponentSacrificeCreatureForTransform(GameData gameData, UUID permanentId,
+                                                               PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform context) {
+        anyOpponentSacrificeForTransformHandler.advance(
+                gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), permanentId);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -1636,6 +1646,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen creature no longer exists");
         }
 
+        Card exploitedCard = toSacrifice.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
@@ -1649,6 +1660,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (ctx.sourceStillOnBattlefield()) {
             triggerCollectionService.checkExploitTriggers(
                     gameData, ctx.sourceCard(), ctx.controllerId(), ctx.sourcePermanentId());
+            triggerCollectionService.checkAllyCreatureExploitTriggers(
+                    gameData, ctx.controllerId(), ctx.sourcePermanent(), exploitedCard);
             if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)
                     && !gameData.interaction.isAwaitingInput()) {
                 triggerCollectionService.processNextExploitTriggerTarget(gameData);

@@ -66,6 +66,7 @@ public class TimesifterEffectHandler implements NormalEffectHandlerBean {
                 UUID winnerId = tiedPlayers.getFirst();
                 gameData.extraTurns.addFirst(winnerId);
                 gameData.extraTurnSkipsUntap.addFirst(false);
+                gameData.extraTurnDamageCantBePrevented.addFirst(false);
                 String winnerName = gameData.playerIdToName.get(winnerId);
                 gameLogService.append(gameData,
                         GameLog.text(winnerName + " takes an extra turn after this one (Timesifter)."));

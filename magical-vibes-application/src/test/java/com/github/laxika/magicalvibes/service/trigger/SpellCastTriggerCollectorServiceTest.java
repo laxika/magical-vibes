@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
@@ -313,6 +314,32 @@ class SpellCastTriggerCollectorServiceTest {
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+            when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
+            gd.addSpellCastManaSpent(spellCard.getId(), 3);
+
+            registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("snapshots spell mana spent when a token's power references X")
+        void snapshotsSpellManaSpentForTokenPower() {
+            Permanent perm = createPermanent("Manaform Hellkite");
+            var token = new CreateTokenEffect(
+                    "Dragon Illusion", new XValue(), new XValue(), CardColor.RED,
+                    List.of(CardSubtype.DRAGON, CardSubtype.ILLUSION), Set.of(), Set.of());
+            var innerEffect = new CreateTokenForTriggeringPlayerEffect(token);
+            var effect = new SpellCastTriggerEffect(null, List.of(innerEffect));
+            Card spellCard = createCard("Lightning Bolt", CardColor.RED);
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+            when(amountEvaluationService.referencesXValue(new Fixed(1))).thenReturn(false);
             when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
             gd.addSpellCastManaSpent(spellCard.getId(), 3);
 

@@ -75,6 +75,8 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                 if (placed > 0) {
                     source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
                     permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, placed);
+                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                            gameData, source, controllerId);
                     permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, source);
                     permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
                             gameData, source, placed, controllerId);

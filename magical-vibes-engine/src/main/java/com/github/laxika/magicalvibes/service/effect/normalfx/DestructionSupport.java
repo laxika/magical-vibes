@@ -532,12 +532,21 @@ public class DestructionSupport {
     }
 
     public void performSimultaneousSacrifice(GameData gameData, List<UUID> ids) {
-        for (UUID permId : ids) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                sacrificeAndLog(gameData, perm, controllerId);
+        List<Permanent> permanents = ids.stream()
+                .map(permId -> gameQueryService.findPermanentById(gameData, permId))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        try {
+            beginSimultaneousCreatureDeaths(gameData, permanents);
+            for (Permanent permanent : permanents) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (controllerId != null) {
+                    sacrificeAndLog(gameData, permanent, controllerId);
+                }
             }
+            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
+        } finally {
+            endSimultaneousCreatureDeaths(gameData);
         }
     }
 

@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
@@ -1897,6 +1898,26 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesStaticFilter(perm, new PermanentAnyOfPredicate(List.of(
                     new PermanentIsArtifactPredicate(),
                     new PermanentIsLandPredicate())), ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("attachment-to-source-controller predicate works in static filters")
+        void attachedToCreatureControlledBySourceControllerWorksInStaticFilter() {
+            Permanent creature = addPermanent(player1Id,
+                    createCreature("Controlled Creature", 2, 2, CardColor.GREEN));
+            Permanent attachment = addPermanent(player2Id, createArtifact("Groom's Finery"));
+            attachment.setAttachedTo(creature.getId());
+
+            FilterContext sourceContext = ctx().withSourceControllerId(player1Id);
+            PermanentAttachedToCreatureControlledBySourceControllerPredicate predicate =
+                    new PermanentAttachedToCreatureControlledBySourceControllerPredicate();
+
+            assertThat(evaluator.matchesStaticFilter(attachment, predicate, sourceContext)).isTrue();
+
+            Permanent opponentCreature = addPermanent(player2Id,
+                    createCreature("Opponent Creature", 2, 2, CardColor.GREEN));
+            attachment.setAttachedTo(opponentCreature.getId());
+            assertThat(evaluator.matchesStaticFilter(attachment, predicate, sourceContext)).isFalse();
         }
 
         @Test

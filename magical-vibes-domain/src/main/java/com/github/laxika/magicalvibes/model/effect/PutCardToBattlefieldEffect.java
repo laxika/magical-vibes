@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -39,6 +40,8 @@ import java.util.Set;
  *                                without drawing (Wrenn and Seven)
  * @param returnToHandAtEndStep   if {@code true}, the chosen permanent is returned to its owner's hand at the
  *                                beginning of the next end step, if it is still on the battlefield (Surprise Deployment)
+ * @param untapSourceIfEnteredCardHasAnySubtype if non-empty, untap the source permanent after the
+ *                                               chosen card enters when it has any listed subtype
  */
 public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean enterTapped, boolean maxManaValueBoundedByX,
@@ -48,10 +51,27 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean faceDown, int faceDownPower, int faceDownToughness,
                                          Set<CardType> faceDownCardTypes,
                                          boolean returnExiledSourceIfSacrificed,
-                                         boolean returnToHandAtEndStep) implements CardEffect {
+                                         boolean returnToHandAtEndStep,
+                                         Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype) implements CardEffect {
 
     public PutCardToBattlefieldEffect {
         faceDownCardTypes = Set.copyOf(faceDownCardTypes);
+        untapSourceIfEnteredCardHasAnySubtype = Set.copyOf(untapSourceIfEnteredCardHasAnySubtype);
+    }
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
+                                      boolean enterTapped, boolean maxManaValueBoundedByX,
+                                      boolean grantHaste, boolean sacrificeAtEndStep,
+                                      boolean attachSourceEquipment, boolean enterAttacking,
+                                      boolean drawAndRepeat, boolean putAnyNumber,
+                                      boolean faceDown, int faceDownPower, int faceDownToughness,
+                                      Set<CardType> faceDownCardTypes,
+                                      boolean returnExiledSourceIfSacrificed,
+                                      boolean returnToHandAtEndStep) {
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep,
+                attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber,
+                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                returnExiledSourceIfSacrificed, returnToHandAtEndStep, Set.of());
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
@@ -155,7 +175,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, true,
-                returnToHandAtEndStep);
+                returnToHandAtEndStep, untapSourceIfEnteredCardHasAnySubtype);
     }
 
     /** Surprise Deployment: return the chosen permanent to its owner's hand at the next end step. */
@@ -163,6 +183,18 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                returnExiledSourceIfSacrificed, true);
+                returnExiledSourceIfSacrificed, true, untapSourceIfEnteredCardHasAnySubtype);
+    }
+
+    /**
+     * Untaps the source permanent after a chosen card enters when that card has any of the given
+     * subtypes. The source is identified by the resolving stack entry, and the untap is performed
+     * only if the source is still on the battlefield.
+     */
+    public PutCardToBattlefieldEffect untapSourceIfEnteredCardHasAnySubtype(Set<CardSubtype> subtypes) {
+        return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
+                grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                returnExiledSourceIfSacrificed, returnToHandAtEndStep, subtypes);
     }
 }
