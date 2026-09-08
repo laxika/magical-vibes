@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "89")
 @CardRegistration(set = "M12", collectorNumber = "88")
 @CardRegistration(set = "MRD", collectorNumber = "60")
+@CardRegistration(set = "DPA", collectorNumber = "20")
 public class ConsumeSpirit extends Card {
 
     public ConsumeSpirit() {

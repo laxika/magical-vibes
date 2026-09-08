@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "107")
 @CardRegistration(set = "7ED", collectorNumber = "104")
 @CardRegistration(set = "UDS", collectorNumber = "49")
+@CardRegistration(set = "DPA", collectorNumber = "16")
 public class ThievingMagpie extends Card {
 
     public ThievingMagpie() {
