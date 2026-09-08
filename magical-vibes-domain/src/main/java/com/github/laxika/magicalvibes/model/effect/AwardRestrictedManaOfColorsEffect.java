@@ -6,13 +6,19 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
 
-/** Adds mana of one color chosen from a fixed list, with a spend restriction. */
+/** Adds mana of a color chosen from a fixed list, with a spend restriction. */
 public record AwardRestrictedManaOfColorsEffect(List<ManaColor> colors, DynamicAmount amount,
-                                                ManaRestriction restriction)
+                                                ManaRestriction restriction,
+                                                boolean anyColorCombination)
         implements ManaProducingEffect {
 
     public AwardRestrictedManaOfColorsEffect(List<ManaColor> colors, ManaRestriction restriction) {
-        this(colors, new Fixed(1), restriction);
+        this(colors, new Fixed(1), restriction, true);
+    }
+
+    public AwardRestrictedManaOfColorsEffect(List<ManaColor> colors, DynamicAmount amount,
+                                             ManaRestriction restriction) {
+        this(colors, amount, restriction, true);
     }
 
     public AwardRestrictedManaOfColorsEffect {

@@ -146,7 +146,8 @@ public enum CardSet {
     SET_SPM("SPM"),
     SET_LCI("LCI"),
     SET_BIG("BIG"),
-    SET_TLA("TLA");
+    SET_TLA("TLA"),
+    SET_MSH("MSH");
 
     @Getter
     private final String code;

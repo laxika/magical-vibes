@@ -383,7 +383,13 @@ public final class LayerClassifier {
         map.put(GrantEffectEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(IncreaseDevotionEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(SuspectedEffect.class, fixed(Layer.L6_ABILITIES));
-        map.put(GrantStaticEffectToSourceEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GrantStaticEffectToSourceEffect.class, new Entry(Set.of(Layer.L6_ABILITIES, Layer.L7B_SET_PT),
+                (effect, fromOwnStaticSlot) -> {
+                    GrantStaticEffectToSourceEffect grant = (GrantStaticEffectToSourceEffect) effect;
+                    return grant.staticEffect() instanceof SetBasePowerToughnessToAmountEffect
+                            ? new LayerClassification(Set.of(Layer.L6_ABILITIES, Layer.L7B_SET_PT), false, false)
+                            : new LayerClassification(Set.of(Layer.L6_ABILITIES), false, false);
+                }));
         map.put(GrantHexproofFromOwnColorsEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantHexproofToChosenPlaneswalkerTypeEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantTriggeredAbilityEffect.class, fixed(Layer.L6_ABILITIES));

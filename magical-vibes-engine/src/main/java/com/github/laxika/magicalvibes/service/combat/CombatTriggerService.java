@@ -177,10 +177,17 @@ public class CombatTriggerService {
                             boolean needsTarget = effectsForStack.stream()
                                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                             if (needsTarget) {
-                                gameData.queueInteraction(
-                                        new PermanentChoiceContext.AttackTriggerTarget(
-                                                perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
-                                                auraOwnerId, null));
+                                if (perm.getCard().isAura() && perm.getCard().getSpellTargets().size() > 1) {
+                                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                            List.of(), 1, 0, List.of(0), 0, List.of(), false, null,
+                                            creature.getId()));
+                                } else {
+                                    gameData.queueInteraction(
+                                            new PermanentChoiceContext.AttackTriggerTarget(
+                                                    perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                                    auraOwnerId, null));
+                                }
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                                 log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                         gameData.id, perm.getCard().getName(), creature.getCard().getName());

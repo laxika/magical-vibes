@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
@@ -80,6 +81,8 @@ public class GameData {
     public int turnNumber;
     /** Whether the turn currently in progress was taken from the extra-turn queue. */
     public boolean currentTurnIsExtraTurn;
+    /** Whether Power-up abilities are prohibited during the current turn. */
+    public boolean powerUpAbilitiesCantBeActivatedThisTurn;
     /**
      * Number of turns each player has taken so far this game, including the turn currently in progress
      * and any extra turns. Used by cards that speak of "your first, second, or third turns of the game".
@@ -189,6 +192,8 @@ public class GameData {
     public DayNight dayNight = DayNight.NEITHER;
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
+    /** Permanent IDs declared as attackers in the current combat. */
+    public final Set<UUID> declaredAttackerIdsThisCombat = ConcurrentHashMap.newKeySet();
     /** Players who put at least one counter on a creature this turn. */
     public final Set<UUID> playersWhoPutCountersOnCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who removed at least one oil counter from a permanent they controlled this turn. */
@@ -541,6 +546,8 @@ public class GameData {
     public CardSubtype chosenSpellSubtype;
     /** Resolution-time "choose a color" answer for a spell with no permanent to store it on. */
     public CardColor chosenSpellColor;
+    /** Resolution-time odd/even mana-value answer for a spell or ability with no permanent to store it on. */
+    public ManaValueParity chosenSpellParity;
     /** Resolution-time "choose a number" answer for a spell with no permanent to store it on. */
     public Integer chosenSpellNumber;
     /** Resolution-time Turnabout permanent type choice. */
@@ -706,6 +713,8 @@ public class GameData {
      * in engine code pushes/polls this deque at the same end.
      */
     public final Deque<Boolean> extraTurnSkipsUntap = new ArrayDeque<>();
+    /** Parallel to {@link #extraTurns}: whether each queued extra turn prohibits Power-up abilities. */
+    public final Deque<Boolean> extraTurnPowerUpAbilitiesDisabled = new ArrayDeque<>();
     /** Additional upkeep steps still to be taken during the active player's current turn. */
     public int additionalUpkeepsRemaining;
     /** Whether the current upkeep step was inserted after the turn's first upkeep. */
@@ -1141,6 +1150,8 @@ public class GameData {
      *  consumed by {@link #recordSpellCast} when a matching spell is cast. Cleared at end of turn. */
     public final Map<UUID, List<CardType>> nextSpellFlashGrantsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<NextSpellCostReduction>> nextSpellCostReductionsThisTurn = new ConcurrentHashMap<>();
+    /** Pending one-shot free-cast permissions for the next matching spell this turn. */
+    public final Map<UUID, List<CardPredicate>> nextSpellFreeCastPermissionsThisTurn = new ConcurrentHashMap<>();
 
     /** Pending "the next creature spell you cast this turn ..." grants (Savage Summoning), keyed by
      *  player. Every unconsumed grant applies to the same next creature spell and is consumed by
@@ -1858,6 +1869,9 @@ public class GameData {
      *  this turn. Cleared at start of new turn. */
     public final Map<UUID, Set<UUID>> oncePerCreatureTriggersFiredThisTurn = new ConcurrentHashMap<>();
 
+    /** Counts how many times each creature permanent became tapped during the current turn. */
+    public final Map<UUID, Integer> creatureTapCountsThisTurn = new ConcurrentHashMap<>();
+
     /** Tracks permanents that have added mana with a source ability this turn. */
     public final Set<UUID> permanentsThatAddedManaWithAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Tracks keyed triggered-ability resolutions that have already happened for each permanent
@@ -2129,6 +2143,10 @@ public class GameData {
      *  those created during it. */
     public long upkeepStartTimestamp;
 
+    /** Timestamp boundary separating floating effects created before the current turn from those
+     *  created during it. */
+    public long turnStartTimestamp;
+
     /** Returns the next CR 613.7 timestamp (strictly increasing, starting at 1). */
     public long nextTimestamp() {
         return ++timestampCounter;
@@ -2203,8 +2221,9 @@ public class GameData {
      *  {@code UNTIL_END_OF_COMBAT} when combat state is cleared,
      *  {@code WHILE_SOURCE_ON_BATTLEFIELD}/{@code WHILE_ATTACHED} when the source permanent
      *  leaves the battlefield or becomes unattached, {@code UNTIL_YOUR_NEXT_TURN} at the start
-     *  of the controller's next turn, and {@code UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP} at the
-     *  end of that controller's next upkeep. */
+     *  of the controller's next turn, {@code UNTIL_END_OF_CONTROLLERS_NEXT_TURN} at the end of
+     *  that controller's next turn, and {@code UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP} at the end
+     *  of that controller's next upkeep. */
     public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
 
     /** Permanents whose temporary control effect carries a "tap it when you lose control" rider
@@ -2340,6 +2359,15 @@ public class GameData {
     public List<FloatingContinuousEffect> expireFloatingEffectsAtTurnStart(UUID playerId) {
         return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
                 && playerId.equals(fe.controllerId()));
+    }
+
+    /** Removes floating effects controlled by the given player after that player's next turn. */
+    public List<FloatingContinuousEffect> expireFloatingEffectsAtTurnEnd(UUID playerId) {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_CONTROLLERS_NEXT_TURN
+                && playerId != null
+                && playerId.equals(fe.controllerId())
+                && turnStartTimestamp > 0
+                && fe.timestamp() < turnStartTimestamp);
     }
 
     /**
@@ -2677,6 +2705,26 @@ public class GameData {
      */
     public void queueDelayedAction(DelayedAction action) {
         delayedActions.add(action);
+    }
+
+    /** Updates the last-known source snapshot of delayed spell-cast triggers before a permanent leaves. */
+    public void updateDelayedControllerSpellCastTriggerSourceSnapshot(Permanent permanent) {
+        updateDelayedControllerSpellCastTriggerSourceSnapshot(permanent, null);
+    }
+
+    /** Updates a delayed spell-cast trigger's last-known source state before a permanent leaves. */
+    public void updateDelayedControllerSpellCastTriggerSourceSnapshot(
+            Permanent permanent, Integer powerAtLastKnown) {
+        synchronized (delayedActions) {
+            for (int i = 0; i < delayedActions.size(); i++) {
+                DelayedAction action = delayedActions.get(i);
+                if (action instanceof DelayedControllerSpellCastTrigger delayed
+                        && permanent.getId().equals(delayed.sourcePermanentId())) {
+                    delayedActions.set(i, delayed.withSourcePermanentSnapshot(
+                            new Permanent(permanent), powerAtLastKnown));
+                }
+            }
+        }
     }
 
     /**
@@ -3060,6 +3108,12 @@ public class GameData {
         nextSpellCostReductionsThisTurn
                 .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
                 .add(reduction);
+    }
+
+    public void addNextSpellFreeCastPermission(UUID playerId, CardPredicate predicate) {
+        nextSpellFreeCastPermissionsThisTurn
+                .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
+                .add(predicate);
     }
 
     private void consumeNextSpellCostReductions(UUID playerId, Card card) {
@@ -3849,7 +3903,13 @@ public class GameData {
      * directly onto the stack.  The may choice happens at resolution time, not trigger time.
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId) {
-        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0);
+        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0, false);
+    }
+
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+                                UUID sourcePermanentId, boolean markSourceOncePerTurnOnAcceptance) {
+        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0,
+                markSourceOncePerTurnOnAcceptance);
     }
 
     /** Queues a resolution-time may ability while preserving its active-player context. */
@@ -3917,6 +3977,12 @@ public class GameData {
      * Cold-Eyed Selkie's "you may draw that many cards").
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId, int eventValue) {
+        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, eventValue, false);
+    }
+
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+                                UUID sourcePermanentId, int eventValue,
+                                boolean markSourceOncePerTurnOnAcceptance) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -3927,6 +3993,7 @@ public class GameData {
                 sourcePermanentId
         );
         entry.setEventValue(eventValue);
+        entry.setMarkSourceOncePerTurnOnAcceptance(markSourceOncePerTurnOnAcceptance);
         stack.add(entry);
     }
 
@@ -3984,6 +4051,7 @@ public class GameData {
         copy.untapStepPlayerId = this.untapStepPlayerId;
         copy.turnNumber = this.turnNumber;
         copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
+        copy.powerUpAbilitiesCantBeActivatedThisTurn = this.powerUpAbilitiesCantBeActivatedThisTurn;
         copy.additionalUpkeepsRemaining = this.additionalUpkeepsRemaining;
         copy.currentUpkeepIsAdditional = this.currentUpkeepIsAdditional;
         copy.permanentWithOilCounterPutIntoGraveyardThisTurn = this.permanentWithOilCounterPutIntoGraveyardThisTurn;
@@ -4027,6 +4095,7 @@ public class GameData {
         copy.pendingAbilityCounterCostActivation = this.pendingAbilityCounterCostActivation;
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.chosenSpellColor = this.chosenSpellColor;
+        copy.chosenSpellParity = this.chosenSpellParity;
         copy.chosenSpellNumber = this.chosenSpellNumber;
         copy.chosenSpellPermanentType = this.chosenSpellPermanentType;
         copy.chosenSpellCardType = this.chosenSpellCardType;
@@ -4162,6 +4231,7 @@ public class GameData {
         copy.domainStateVersion = this.domainStateVersion;
         copy.timestampCounter = this.timestampCounter;
         copy.upkeepStartTimestamp = this.upkeepStartTimestamp;
+        copy.turnStartTimestamp = this.turnStartTimestamp;
         copy.graveyardEntryVersion = this.graveyardEntryVersion;
         copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
@@ -4340,6 +4410,7 @@ public class GameData {
         copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);
         copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
+        copy.declaredAttackerIdsThisCombat.addAll(this.declaredAttackerIdsThisCombat);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
         copy.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn
                 .addAll(this.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn);
@@ -4434,6 +4505,7 @@ public class GameData {
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         this.oncePerCreatureTriggersFiredThisTurn.forEach((k, v) ->
                 copy.oncePerCreatureTriggersFiredThisTurn.put(k, new HashSet<>(v)));
+        copy.creatureTapCountsThisTurn.putAll(this.creatureTapCountsThisTurn);
         copy.permanentsThatAddedManaWithAbilityThisTurn.addAll(this.permanentsThatAddedManaWithAbilityThisTurn);
         this.firstResolutionTriggerKeysThisTurn.forEach((k, v) -> {
             Set<String> keys = ConcurrentHashMap.newKeySet();
@@ -4592,7 +4664,15 @@ public class GameData {
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
         //     per-mechanic fields it replaced were copied) ---
-        copy.delayedActions.addAll(this.delayedActions);
+        this.delayedActions.forEach(action -> {
+            if (action instanceof DelayedControllerSpellCastTrigger delayed
+                    && delayed.sourcePermanentSnapshot() != null) {
+                copy.delayedActions.add(delayed.withSourcePermanentSnapshot(
+                        new Permanent(delayed.sourcePermanentSnapshot()), delayed.sourcePowerAtLastKnown()));
+            } else {
+                copy.delayedActions.add(action);
+            }
+        });
 
         // --- Exile-until-source-leaves map (O-ring style) ---
         this.exileReturnOnPermanentLeave.forEach((k, v) ->
@@ -4775,6 +4855,7 @@ public class GameData {
         copy.pendingInteractions.addAll(this.pendingInteractions);
         copy.extraTurns.addAll(this.extraTurns);
         copy.extraTurnSkipsUntap.addAll(this.extraTurnSkipsUntap);
+        copy.extraTurnPowerUpAbilitiesDisabled.addAll(this.extraTurnPowerUpAbilitiesDisabled);
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
 
@@ -5040,6 +5121,8 @@ public class GameData {
                 copy.nextSpellFlashGrantsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextSpellCostReductionsThisTurn.forEach((k, v) ->
                 copy.nextSpellCostReductionsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        this.nextSpellFreeCastPermissionsThisTurn.forEach((k, v) ->
+                copy.nextSpellFreeCastPermissionsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowermentsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);

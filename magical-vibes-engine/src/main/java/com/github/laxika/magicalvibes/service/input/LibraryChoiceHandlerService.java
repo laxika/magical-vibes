@@ -2525,6 +2525,7 @@ public class LibraryChoiceHandlerService {
                                                LibrarySelectionFollowUp followUp,
                                                List<UUID> selectedPermanentIds) {
         if (followUp == null || selectedPermanentIds.isEmpty()
+                || !followUp.shouldOffer(gameData, selectedPermanentIds)
                 || gameData.pendingEffectResolutionEntry == null) {
             return;
         }

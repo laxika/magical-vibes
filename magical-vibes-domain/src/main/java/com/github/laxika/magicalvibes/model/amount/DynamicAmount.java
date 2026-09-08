@@ -150,6 +150,7 @@ public sealed interface DynamicAmount permits
         TargetToughness,
         TargetPower,
         TriggeringSpellColorCount,
+        TriggeringSpellColorManaSymbols,
         TargetPowerPlusToughness,
         TopCardOfLibraryManaValue,
         TotalManaValueOfCardsExiledWithSource,

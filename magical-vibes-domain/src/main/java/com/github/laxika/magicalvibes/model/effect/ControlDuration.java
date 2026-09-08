@@ -24,11 +24,15 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@code WHILE_SOURCE_REMAINS_TAPPED} — the effect ends when the source leaves the
  *       battlefield or becomes untapped, regardless of who controls the source (Vedalken
  *       Shackles).</li>
+ *   <li>{@code UNTIL_END_OF_YOUR_NEXT_TURN} — the effect wears off during the cleanup step
+ *       of the controller's next turn
+ *       ({@code EffectDuration.UNTIL_END_OF_CONTROLLERS_NEXT_TURN}).</li>
  * </ul>
  */
 public enum ControlDuration {
     PERMANENT,
     END_OF_TURN,
+    UNTIL_END_OF_YOUR_NEXT_TURN,
     WHILE_SOURCE_ON_BATTLEFIELD,
     WHILE_SOURCE_REMAINS,
     WHILE_SOURCE_TAPPED,
@@ -50,6 +54,7 @@ public enum ControlDuration {
         return switch (this) {
             case PERMANENT -> EffectDuration.PERMANENT;
             case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+            case UNTIL_END_OF_YOUR_NEXT_TURN -> EffectDuration.UNTIL_END_OF_CONTROLLERS_NEXT_TURN;
             case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
             case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
             case WHILE_SOURCE_TAPPED -> EffectDuration.WHILE_SOURCE_TAPPED;

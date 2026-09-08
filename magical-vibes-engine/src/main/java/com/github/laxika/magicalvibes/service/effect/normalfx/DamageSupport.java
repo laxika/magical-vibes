@@ -400,6 +400,7 @@ public class DamageSupport {
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, targetControllerId, damage);
             damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, targetControllerId, damage);
         }
+        damagePreventionService.applyDamageHealingReplacement(gameData, target, damage);
 
         if (damageSource != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
@@ -605,7 +606,7 @@ public class DamageSupport {
     public void dealCreatureDamageUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
         // Defense in depth: a creature can never deal negative damage. Guards against any upstream
         // computation (e.g. future power-based effects) that might produce a negative value.
-        // Skip applyCreaturePreventionShield — damage is unpreventable
+        // Skip ordinary prevention, but shield counters still remove one counter when damage is dealt.
         int damage = Math.max(0, rawDamage);
         if (!target.isDamageCantBePreventedOrRedirectedThisTurn() && damage > 0) {
             UUID redirectedPlayerId = damagePreventionService.getTargetSorceryDamageRedirectController(gameData, entry);
@@ -651,6 +652,8 @@ public class DamageSupport {
         if (applyDralnuReplacement(gameData, target, damage) > 0) {
             return;
         }
+        damagePreventionService.consumeShieldCounterForDamage(target, damage);
+        damagePreventionService.applyDamageHealingReplacement(gameData, target, damage);
 
         if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
@@ -1474,6 +1477,10 @@ public class DamageSupport {
                 // Night Dealings: "whenever a source you control deals damage to another player".
                 triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
                         gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
+                if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
+                    triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
+                            gameData, sourceControllerId, playerId, List.of(sourcePermanent));
+                }
                 triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(
                         gameData, playerId, entry.getControllerId(), effectiveDamage);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
@@ -1709,6 +1716,7 @@ public class DamageSupport {
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
+                    damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
                     // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle
                     // destination that many defense counters (CR 120.3h); a permanent that is also
                     // a creature additionally gets marked damage (CR 120.3e).

@@ -111,6 +111,9 @@ final class TokenCardFactory {
                 tokenCard.addActivatedAbility(ability);
             }
         }
+        if (token.tokenTargetFilter() != null) {
+            tokenCard.target(token.tokenTargetFilter());
+        }
 
         if ("Incubator".equals(token.tokenName())) {
             Card backFace = new Card();

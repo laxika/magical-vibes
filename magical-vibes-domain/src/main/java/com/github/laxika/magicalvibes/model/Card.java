@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -658,6 +659,7 @@ public class Card {
             }
             case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case SacrificePermanentThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
+            case SacrificeSelfThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case MayPayManaEffect e -> {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
@@ -1178,6 +1180,11 @@ public class Card {
                 "Ninjutsu " + cost + " (" + cost + ", Return an unblocked attacker you control to hand: "
                         + "Put this card onto the battlefield from your hand tapped and attacking.)")
                 .withNinjutsu());
+    }
+
+    /** Adds a Sneak alternate cast from hand. */
+    public void addSneak(String cost) {
+        addCastingOption(AlternateHandCast.sneak(cost));
     }
 
     /**

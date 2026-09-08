@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfE
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageHealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
@@ -259,6 +260,36 @@ public class DamagePreventionService {
         return applyCreaturePreventionShield(gameData, permanent, damage, false);
     }
 
+    /** Removes one shield counter when a positive damage event reaches a permanent. */
+    public boolean consumeShieldCounterForDamage(Permanent permanent, int damage) {
+        if (permanent == null || damage <= 0 || permanent.getCounterCount(CounterType.SHIELD) <= 0) {
+            return false;
+        }
+        permanent.setCounterCount(CounterType.SHIELD,
+                permanent.getCounterCount(CounterType.SHIELD) - 1);
+        return true;
+    }
+
+    /** Heals all damage previously marked on a permanent when a positive damage event reaches it. */
+    public void applyDamageHealingReplacement(GameData gameData, Permanent permanent, int damage) {
+        if (permanent == null || damage <= 0) {
+            return;
+        }
+        if (gameQueryService.hasActiveStaticEffect(gameData, permanent, DamageHealingEffect.class)) {
+            permanent.healDamage();
+        }
+    }
+
+    /** Replaces effect-based destruction by removing one shield counter. */
+    public boolean replaceDestructionWithShieldCounter(Permanent permanent) {
+        if (permanent == null || permanent.getCounterCount(CounterType.SHIELD) <= 0) {
+            return false;
+        }
+        permanent.setCounterCount(CounterType.SHIELD,
+                permanent.getCounterCount(CounterType.SHIELD) - 1);
+        return true;
+    }
+
     /** Returns whether a permanent replaces damage to itself with +1/+1 counters. */
     public boolean hasDamageToPlusOnePlusOneCounterReplacement(Permanent permanent) {
         return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -300,6 +331,9 @@ public class DamagePreventionService {
                 }
             }
             return 0;
+        }
+        if (damage > 0 && consumeShieldCounterForDamage(permanent, damage)) {
+            return gameQueryService.isDamagePreventable(gameData) ? 0 : damage;
         }
         if (permanent.isDamageCantBePreventedOrRedirectedThisTurn()) return damage;
         // Kiora, the Crashing Wave: prevent all damage dealt to the targeted permanent until its

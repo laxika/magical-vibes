@@ -390,6 +390,7 @@ public class GraveyardService {
             exileService.exileCard(gameData, ownerId, card);
             gameData.extraTurns.addFirst(extraTurnControllerId);
             gameData.extraTurnSkipsUntap.addFirst(false);
+            gameData.extraTurnPowerUpAbilitiesDisabled.addFirst(false);
             gameLogService.append(gameData, GameLog.cardThen(card,
                     " is exiled instead of being put into a graveyard; its controller takes an extra turn."));
             log.info("Game {} - {} replacement effect: exiled and granted an extra turn to {}",

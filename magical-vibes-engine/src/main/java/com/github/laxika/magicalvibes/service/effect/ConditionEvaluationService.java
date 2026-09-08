@@ -130,6 +130,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsMoreCreaturesThanO
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.ControlsVillainWithGreaterManaValueThanTarget;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherThanTriggeringPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlledOtherPermanentsPlusGraveyardCardsAtLeast;
@@ -195,6 +196,7 @@ import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
+import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.condition.AllBendingTypesCompletedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.condition.PutCounterOnCreatureThisTurn;
@@ -481,6 +483,8 @@ public class ConditionEvaluationService {
                     ctx.beholdCostPaid();
             case WaterbendCostPaid ignored ->
                     ctx.waterbendCostPaid();
+            case TeamworkCostPaid ignored ->
+                    ctx.teamworkCostPaid();
             case AllBendingTypesCompletedThisTurn ignored ->
                     gameData.completedAllBendingTypes(ctx.controllerId());
             case CollectEvidenceCostPaid ignored ->
@@ -559,6 +563,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && !gameData.hasGainedLifeThisTurn(ctx.controllerId());
             case ControlsPermanent c ->
                     controlsMatchingPermanent(gameData, ctx, c.filter());
+            case ControlsVillainWithGreaterManaValueThanTarget ignored ->
+                    controlsVillainWithGreaterManaValueThanTarget(gameData, ctx);
             case ControlsAnotherPermanent c ->
                     controlsAnotherMatchingPermanent(gameData, ctx, c.filter());
             case ControlsDistinctPermanentNamesCount c ->
@@ -1660,6 +1666,22 @@ public class ConditionEvaluationService {
     }
 
     /** True if any opponent controls strictly more lands than the controller (Gift of Estates). */
+    private boolean controlsVillainWithGreaterManaValueThanTarget(GameData gameData,
+                                                                    ConditionContext ctx) {
+        if (ctx.controllerId() == null || ctx.targetId() == null) {
+            return false;
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (target == null || battlefield == null) {
+            return false;
+        }
+        PermanentPredicate villain = new PermanentHasSubtypePredicate(CardSubtype.VILLAIN);
+        return battlefield.stream()
+                .filter(permanent -> matchesPermanent(gameData, permanent, villain, ctx))
+                .anyMatch(permanent -> permanent.getCard().getManaValue() > target.getCard().getManaValue());
+    }
+
     /**
      * Resolves the source permanent from the context, preferring the permanent handed in by
      * the call site and falling back to a battlefield lookup by id.

@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -1306,6 +1307,7 @@ public class GameSimulator {
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
+                    || effect instanceof TeamworkCost
                     || effect instanceof WaterbendCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
@@ -1384,6 +1386,24 @@ public class GameSimulator {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == fixed.value() ? chosen : List.of();
+            }
+            if (effect instanceof TeamworkCost cost) {
+                int totalPower = 0;
+                List<UUID> chosen = new ArrayList<>();
+                List<Permanent> candidates = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> gameQueryService.isCreature(gd, p))
+                        .sorted(Comparator.comparingInt(
+                                (Permanent p) -> gameQueryService.getEffectivePower(gd, p)).reversed())
+                        .toList();
+                for (Permanent candidate : candidates) {
+                    chosen.add(candidate.getId());
+                    totalPower += gameQueryService.getEffectivePower(gd, candidate);
+                    if (totalPower >= cost.requiredPower()) {
+                        return chosen;
+                    }
+                }
+                return List.of();
             }
             if (effect instanceof ReturnAnyNumberOfPermanentsToHandCost cost) {
                 return battlefield.stream()

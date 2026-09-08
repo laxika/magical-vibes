@@ -103,6 +103,12 @@ public interface CardEffect {
     default boolean usesEnteringPermanentReference() { return false; }
 
     /**
+     * Returns whether a hand-choice follow-up reads the permanent just put onto the battlefield.
+     * The hand-choice completion code binds that permanent as the follow-up's chosen reference.
+     */
+    default boolean usesChosenPermanentReference() { return false; }
+
+    /**
      * Returns whether this effect or one of its nested effects branches on the source ability's
      * resolution count for the current turn.
      */

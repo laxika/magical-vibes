@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingConnive;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawBeforeConniveReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
+    private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -31,13 +34,20 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
         List<UUID> targetIds = e.targetPermanent()
                 ? entry.targetsForEffect(effect)
                 : null;
-        UUID sourcePermanentId = e.targetPermanent()
-                ? targetIds == null ? null : targetIds.stream().findFirst().orElse(null)
+        UUID sourcePermanentId = e.useEnteringPermanentReference()
+                ? entry.getTargetId() != null ? entry.getTargetId() : entry.getTriggeringPermanentId()
+                : e.targetPermanent()
+                ? targetIds == null ? entry.getTargetId() : targetIds.stream().findFirst().orElse(entry.getTargetId())
                 : entry.getSourcePermanentId();
         if (e.targetPermanent() && sourcePermanentId == null) {
             return;
         }
 
+        int replacementDraws = gameQueryService.countPlayerControlledStaticEffects(
+                gameData, controllerId, DrawBeforeConniveReplacementEffect.class);
+        for (int i = 0; i < replacementDraws; i++) {
+            drawService.resolveDrawCard(gameData, controllerId);
+        }
         drawService.resolveDrawCard(gameData, controllerId);
         gameData.pendingConnive = null;
         List<Card> hand = gameData.playerHands.get(controllerId);

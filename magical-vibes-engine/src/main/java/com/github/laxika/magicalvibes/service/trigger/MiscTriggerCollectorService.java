@@ -924,6 +924,31 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
 
+        if (sourceCard.getSpellTargets().stream()
+                .anyMatch(target -> target.getDynamicMaxTargets() != null)) {
+            int lifeGained = ((TriggerContext.LifeGain) ctx).lifeGainedAmount();
+            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    sourceCard,
+                    match.controllerId(),
+                    List.of(effect),
+                    match.permanent().getId(),
+                    List.of(),
+                    0,
+                    0,
+                    List.of(),
+                    0,
+                    List.of(),
+                    false,
+                    null,
+                    null,
+                    lifeGained));
+
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers on life gain (multi-target counter placement)",
+                    gameData.id, sourceCard.getName());
+            return true;
+        }
+
         gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
                 sourceCard,
                 match.controllerId(),

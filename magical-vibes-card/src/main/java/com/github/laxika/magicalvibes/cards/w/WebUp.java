@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "21")
+@CardRegistration(set = "MSH", collectorNumber = "41")
 public class WebUp extends Card {
 
     public WebUp() {

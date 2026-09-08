@@ -313,8 +313,15 @@ public class PlayerInputService {
 
     public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount,
                                           MultiPermanentChoiceContext context, String prompt) {
+        beginMultiPermanentChoice(gameData, playerId, validIds, List.of(), maxCount, context, prompt);
+    }
+
+    public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds,
+                                          List<UUID> validCardIds, int maxCount,
+                                          MultiPermanentChoiceContext context, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiPermanentChoice(
-                playerId, new ArrayList<>(validIds), maxCount, context, prompt));
+                playerId, new ArrayList<>(validIds), List.of(), new ArrayList<>(validCardIds),
+                maxCount, context, prompt));
     }
 
     public void beginMultiPermanentOrPlayerChoice(GameData gameData, UUID playerId,
@@ -1123,6 +1130,10 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose odd or even", gameData.id, playerName);
+    }
+
+    public void beginSpellManaValueParityChoice(GameData gameData, UUID playerId) {
+        beginManaValueParityChoice(gameData, playerId, null);
     }
 
     public void beginNumberChoice(GameData gameData, UUID playerId, UUID permanentId, int min, int max) {

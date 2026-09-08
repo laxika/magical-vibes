@@ -61,9 +61,16 @@ public sealed interface ChoiceContext {
 
     record RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
                                      List<ManaColor> fixedColorOptions,
-                                     ManaRestriction restriction) implements ChoiceContext {
+                                     ManaRestriction restriction,
+                                     boolean anyColorCombination) implements ChoiceContext {
         public RestrictedManaColorChoice {
             fixedColorOptions = List.copyOf(fixedColorOptions);
+        }
+
+        public RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
+                                         List<ManaColor> fixedColorOptions,
+                                         ManaRestriction restriction) {
+            this(playerId, amount, fromCreature, fixedColorOptions, restriction, true);
         }
     }
 
@@ -557,6 +564,17 @@ public sealed interface ChoiceContext {
 
     record DifferentColorManaChoice(UUID playerId, int amount, ManaSpendRestriction restriction,
                                     ManaColor firstColor) implements ChoiceContext {}
+
+    record CreatureAbilityManaColorChoice(UUID playerId, int amount, List<ManaColor> fixedColorOptions,
+                                           UUID recipientPlayerId) implements ChoiceContext {
+        public CreatureAbilityManaColorChoice(UUID playerId, int amount, List<ManaColor> fixedColorOptions) {
+            this(playerId, amount, fixedColorOptions, null);
+        }
+
+        public CreatureAbilityManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
+            return new CreatureAbilityManaColorChoice(playerId, amount, fixedColorOptions, recipientPlayerId);
+        }
+    }
 
     /** A mana ability that adds mana equal to the chosen color's devotion. */
     record DevotionManaColorChoice(UUID playerId, UUID sourcePermanentId, boolean fromCreature,

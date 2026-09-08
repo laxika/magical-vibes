@@ -139,6 +139,14 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for batched ally-creature damage-to-player triggers. */
+    record AllyCreaturesDealDamageToPlayer(UUID damagedPlayerId, UUID sourceControllerId,
+                                            List<Permanent> damageDealers) implements TriggerContext {
+        public AllyCreaturesDealDamageToPlayer {
+            damageDealers = List.copyOf(damageDealers);
+        }
+    }
+
     /**
      * Context for ally-permanent-sacrificed triggers (ON_ALLY_PERMANENT_SACRIFICED).
      */

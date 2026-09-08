@@ -62,4 +62,11 @@ public record RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spel
         return new RegisterDelayedControllerSpellCastTriggerEffect(
                 null, stackEntryFilter, resolvedEffects, false, sourceMustRemainOnBattlefield, null);
     }
+
+    public static RegisterDelayedControllerSpellCastTriggerEffect withStackEntryFilter(
+            StackEntryPredicate stackEntryFilter, List<CardEffect> resolvedEffects,
+            boolean oneShot, boolean sourceMustRemainOnBattlefield) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(
+                null, stackEntryFilter, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, null);
+    }
 }

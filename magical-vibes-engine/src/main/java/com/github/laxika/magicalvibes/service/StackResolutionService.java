@@ -337,6 +337,9 @@ public class StackResolutionService {
             perm.setBestow(true);
         } else if (entry.getPhysicalCard() != card) {
             perm.setCard(characteristics);
+            if (entry.isCastTransformed()) {
+                perm.setTransformed(true);
+            }
         } else if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
             perm.setCard(characteristics);
             perm.setTransformed(true);
@@ -524,6 +527,10 @@ public class StackResolutionService {
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
+        }
+        if (entry.isSneak()) {
+            perm.setAttacking(true);
+            perm.setAttackTarget(entry.getAttackedTargetId());
         }
         gameData.transferCardsExiledByPermanent(entry.getPhysicalCard().getId(), perm.getId());
         registerBeheldCardReturn(gameData, entry, perm);

@@ -18,6 +18,8 @@ public enum EffectDuration {
     /** One-shot effect that lasts until the beginning of the controller's next turn.
      *  Survives end-of-turn cleanup; cleared at the start of the controller's next turn. */
     UNTIL_YOUR_NEXT_TURN,
+    /** One-shot effect that lasts through the end of the effect controller's next turn. */
+    UNTIL_END_OF_CONTROLLERS_NEXT_TURN,
     /** One-shot effect that lasts until the affected permanent's controller's next untap step
      *  (e.g. Orcish Farmer "becomes a Swamp until its controller's next untap step"). Keyed to the
      *  affected permanent's controller, not the effect's controller. Survives end-of-turn cleanup;

@@ -316,6 +316,9 @@ public class CardChoiceHandlerService {
                     if (pendingEntry != null) {
                         if (thenCondition == null || predicateEvaluationService.matchesCardPredicate(
                                 card, thenCondition, sourceCardId, gameData, playerId)) {
+                            if (thenEffect.usesChosenPermanentReference()) {
+                                pendingEntry.setChosenPermanentId(enteredPermanent.getId());
+                            }
                             pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                                     List.of(thenEffect));
                         }

@@ -87,6 +87,11 @@ import java.util.Set;
  *                             {@code cardsPutIntoGraveyardFromBattlefieldThisTurn} tracking of the
  *                             graveyard's owner and is only meaningful when {@link #targetGraveyard} is
  *                             {@code true}
+ * @param targetPutIntoGraveyardFromAnywhereThisTurn {@code true} to restrict the <b>targeted</b>
+ *                             graveyard card to one that was put into a graveyard from anywhere this turn
+ *                             (e.g. Night Nurse, Healer of Heroes); reads the
+ *                             {@code cardsPutIntoGraveyardFromAnywhereThisTurn} tracking of the graveyard's
+ *                             owner and is only meaningful when {@link #targetGraveyard} is {@code true}
  * @param targetNotPutIntoGraveyardThisCombat {@code true} to exclude targeted graveyard cards put into
  *                             a graveyard during the current combat phase (e.g. Storrev, Devkarin Lich);
  *                             only meaningful when {@link #targetGraveyard} is {@code true}
@@ -262,6 +267,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean discardedOrCycledThisTurn,
         boolean discardedByOpponentThisTurn,
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
+        boolean targetPutIntoGraveyardFromAnywhereThisTurn,
         boolean targetNotPutIntoGraveyardThisCombat,
         PermanentPredicate attachmentTarget,
         boolean chooseAuraAttachment,

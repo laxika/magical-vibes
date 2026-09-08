@@ -291,6 +291,7 @@ public class TurnProgressionService {
                             combatControllerName, combatPlayerName);
                 }
                 gameData.cardsPutIntoGraveyardThisCombat.clear();
+                gameData.declaredAttackerIdsThisCombat.clear();
                 gameData.forEachPermanent((playerId, p) -> {
                     p.setAttackedThisCombat(false);
                     p.setBlockedThisCombat(false);
@@ -445,15 +446,19 @@ public class TurnProgressionService {
         UUID nextActive;
         boolean currentTurnIsExtraTurn = false;
         boolean skipUntapStep = false;
+        boolean powerUpAbilitiesDisabled = false;
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
             currentTurnIsExtraTurn = true;
             skipUntapStep = Boolean.TRUE.equals(gameData.extraTurnSkipsUntap.pollFirst());
+            powerUpAbilitiesDisabled = Boolean.TRUE.equals(gameData.extraTurnPowerUpAbilitiesDisabled.pollFirst());
             if (gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC)
                     .stream().anyMatch(ExtraTurnSkipReplacementEffect.class::isInstance))) {
                 String skippedName = gameData.playerIdToName.get(nextActive);
                 gameLogService.append(gameData, GameLog.text(skippedName + " skips their extra turn."));
                 log.info("Game {} - {} skips their extra turn", gameData.id, skippedName);
+                gameData.currentTurnIsExtraTurn = false;
+                gameData.powerUpAbilitiesCantBeActivatedThisTurn = false;
                 advanceTurn(gameData, false);
                 return;
             }
@@ -482,6 +487,7 @@ public class TurnProgressionService {
 
         String nextActiveName = gameData.playerIdToName.get(nextActive);
         gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
+        gameData.powerUpAbilitiesCantBeActivatedThisTurn = powerUpAbilitiesDisabled;
 
         // Yosei, the Morning Star: a queued "skips their next untap step" is consumed by the first
         // untap step this player would actually get (CR 614.10a).
@@ -498,6 +504,7 @@ public class TurnProgressionService {
         }
 
         gameData.activePlayerId = nextActive;
+        gameData.turnStartTimestamp = gameData.timestampCounter + 1;
 
         // Check for pending Taunt on the new active player: promote it to an active this-turn requirement
         gameData.tauntedThisTurn.clear();
@@ -545,6 +552,7 @@ public class TurnProgressionService {
             if (grantExtraTurnAfter) {
                 gameData.extraTurns.addFirst(nextActive);
                 gameData.extraTurnSkipsUntap.addFirst(false);
+                gameData.extraTurnPowerUpAbilitiesDisabled.addFirst(false);
                 String extraLog = nextActiveName + " takes an extra turn after this one.";
                 gameLogService.append(gameData, GameLog.text(extraLog));
                 log.info("Game {} - {} granted an extra turn after the controlled turn",
@@ -699,6 +707,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
+        gameData.creatureTapCountsThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();

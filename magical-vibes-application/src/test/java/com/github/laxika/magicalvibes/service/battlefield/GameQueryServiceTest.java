@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneCounterToArtifactOrCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlayerCounterEffect;
@@ -51,6 +52,9 @@ import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -68,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchan
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -1423,6 +1428,21 @@ class GameQueryServiceTest {
 
             assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(-3);
             assertThat(gqs.getEffectiveCombatDamage(gd, perm)).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("honors a toughness-assignment effect granted by a floating static effect")
+        void honorsGrantedToughnessAssignmentEffect() {
+            Permanent perm = addPermanent(player1Id,
+                    createCreature("Wimpy Dinosaur", 1, 5, CardColor.GREEN));
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "Test Grant", null, player1Id,
+                    new GrantEffectEffect(new AssignCombatDamageWithToughnessEffect(
+                            GrantScope.SELF, new PermanentToughnessGreaterThanPowerPredicate()),
+                            GrantScope.TARGET),
+                    perm.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+
+            assertThat(gqs.getEffectiveCombatDamage(gd, perm)).isEqualTo(5);
         }
     }
 

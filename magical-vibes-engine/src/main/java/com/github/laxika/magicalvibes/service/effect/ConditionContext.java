@@ -41,7 +41,8 @@ public record ConditionContext(
         boolean castDuringMainPhase,
         int eventValue,
         boolean waterbendCostPaid,
-        boolean giftPromised
+        boolean giftPromised,
+        boolean teamworkCostPaid
 ) {
     public ConditionContext {
         repeatedAdditionalCosts = repeatedAdditionalCosts == null
@@ -64,7 +65,7 @@ public record ConditionContext(
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
                 alternateCost, spectacle, controlledMountAsCast, collectEvidenceCostPaid,
-                castDuringMainPhase, eventValue, waterbendCostPaid, false);
+                castDuringMainPhase, eventValue, waterbendCostPaid, false, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -222,7 +223,7 @@ public record ConditionContext(
                 entry.getRepeatedAdditionalCosts(), entry.isAlternateCost(), entry.isSpectacle(),
                 entry.isControlledMountAsCast(), entry.isCollectEvidenceCostPaid(),
                 entry.isCastDuringMainPhase(), entry.getEventValue(), entry.isWaterbendCostPaid(),
-                entry.isGiftPromised());
+                entry.isGiftPromised(), entry.isTeamworkCostPaid());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
@@ -246,10 +247,15 @@ public record ConditionContext(
     }
 
     public static ConditionContext forCasting(UUID castingPlayerId, boolean collectEvidenceCostPaid) {
+        return forCasting(castingPlayerId, collectEvidenceCostPaid, false);
+    }
+
+    public static ConditionContext forCasting(UUID castingPlayerId, boolean collectEvidenceCostPaid,
+                                              boolean teamworkCostPaid) {
         return new ConditionContext(castingPlayerId, null, null, null,
                 false, false, false, false, false, false, null, 0, null, null, false,
                 false, false, null, null, null, List.of(), false, false, false,
-                collectEvidenceCostPaid, false, 0, false);
+                collectEvidenceCostPaid, false, 0, false, false, teamworkCostPaid);
     }
 
     public static ConditionContext forCard(Card card, UUID controllerId) {
@@ -290,7 +296,8 @@ public record ConditionContext(
                 putCounterCostPaid, beholdCostPaid, copiedTriggeringPermanentId,
                 copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost,
                 spectacle, controlledMountAsCast, collectEvidenceCostPaid,
-                castDuringMainPhase, copiedEventValue, waterbendCostPaid, giftPromised);
+                castDuringMainPhase, copiedEventValue, waterbendCostPaid, giftPromised,
+                teamworkCostPaid);
     }
 
     public ConditionContext withEventValue(int newEventValue) {

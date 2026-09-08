@@ -30,6 +30,9 @@ import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessExilesGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessGetsPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsOrPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
@@ -501,6 +504,88 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessDiscardsOrPaysChoice(GameData gameData, Player player,
+                                                         boolean accepted, PendingMayAbility ability) {
+        CounterUnlessDiscardsOrPaysEffect effect = ability.effects().stream()
+                .filter(CounterUnlessDiscardsOrPaysEffect.class::isInstance)
+                .map(CounterUnlessDiscardsOrPaysEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null
+                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        ManaCost cost = new ManaCost("{" + effect.amount() + "}");
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        if (accepted && cost.canPay(pool)) {
+            cost.pay(pool);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays {" + effect.amount() + "}. ",
+                    targetEntry.getCard(), " is not countered."));
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(targetEntry.getControllerId());
+        if (hand != null && !hand.isEmpty()) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    ability.sourceCard(), targetEntry.getControllerId(),
+                    List.of(new CounterUnlessDiscardsEffect()),
+                    "Discard a card to prevent " + targetEntry.getCard().getName()
+                            + " from being countered?",
+                    targetCardId, ability.sourceControllerId()));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessGetsPoisonCountersChoice(GameData gameData, Player player,
+                                                             boolean accepted, PendingMayAbility ability) {
+        CounterUnlessGetsPoisonCountersEffect effect = ability.effects().stream()
+                .filter(CounterUnlessGetsPoisonCountersEffect.class::isInstance)
+                .map(CounterUnlessGetsPoisonCountersEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null
+                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                        gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted && gameQueryService.canPlayerGetPoisonCounters(gameData, player.getId())) {
+            lifeSupport.applyPoisonCounters(gameData, player.getId(), effect.amount(),
+                    ability.sourceCard().getName(), ability.sourceControllerId());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " gets " + effect.amount() + " poison counters. ",
+                    targetEntry.getCard(), " is not countered."));
+        } else {
+            counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        }
+
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

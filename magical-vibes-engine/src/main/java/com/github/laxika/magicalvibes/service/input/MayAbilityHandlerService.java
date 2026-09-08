@@ -402,6 +402,9 @@ public class MayAbilityHandlerService {
                     && discard.useEntryTarget())) {
                 entry.setNonTargeting(true);
             }
+            if (ability.effects().stream().anyMatch(CardEffect::usesEnteringPermanentReference)) {
+                entry.setNonTargeting(true);
+            }
             entry.setAttackedTargetId(ability.attackedTargetId());
 
             gameData.stack.add(entry);

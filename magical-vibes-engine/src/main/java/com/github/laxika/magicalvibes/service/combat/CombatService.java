@@ -179,6 +179,7 @@ public class CombatService {
         gameData.expireEndOfCombatFloatingEffects();
         gameData.forEachBattlefield((playerId, battlefield) ->
                 battlefield.forEach(Permanent::clearCombatState));
+        gameData.declaredAttackerIdsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatDamagePendingIndices.clear();
         gameData.combatDamageBlockerAssignments.clear();

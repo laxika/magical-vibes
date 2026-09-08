@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureCardInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
@@ -45,6 +46,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
+import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
@@ -876,11 +879,17 @@ public class ValidTargetService {
     /** As above, evaluating an X-dependent target filter at {@code xValue} ({@code null} means X = 0). */
     private boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard,
                                                   UUID castingPlayerId, Integer xValue) {
-        return canPermanentBeTargetedBySpell(gameData, perm, spellCard, castingPlayerId, xValue, null);
+        return canPermanentBeTargetedBySpell(gameData, perm, spellCard, castingPlayerId, xValue, null, false);
     }
 
     private boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard,
                                                   UUID castingPlayerId, Integer xValue, Boolean kicked) {
+        return canPermanentBeTargetedBySpell(gameData, perm, spellCard, castingPlayerId, xValue, kicked, false);
+    }
+
+    private boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard,
+                                                  UUID castingPlayerId, Integer xValue, Boolean kicked,
+                                                  boolean teamworkCostPaid) {
         // Structural targeting rules (protection, can't-be-targeted, shroud, hexproof, hexproof-from-color)
         // are owned by the shared spell-target core; enumeration adds only the card's TargetFilter.
         if (!targetLegalityService.checkSpellPermanentTargetableReason(gameData, perm, spellCard, castingPlayerId).isEmpty()) {
@@ -888,7 +897,8 @@ public class ValidTargetService {
         }
 
         // Card's TargetFilter
-        if (!passesTargetFilter(gameData, targetFilterForKickedCast(spellCard.getTargetFilter(), kicked),
+        if (!passesTargetFilter(gameData, targetFilterForKickedCast(spellCard.getTargetFilter(), kicked,
+                        teamworkCostPaid),
                 perm, spellCard.getId(), castingPlayerId, xValue)) {
             return false;
         }
@@ -919,6 +929,20 @@ public class ValidTargetService {
     private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
                                             boolean isMultiTarget, TargetFilter positionFilter,
                                             List<CardEffect> spellEffects, Integer xValue, Boolean kicked) {
+        if (hasTeamworkCost(card) && hasAvailableTeamworkPayment(gameData, card, controllerId)) {
+            return isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter,
+                    spellEffects, xValue, kicked, false)
+                    || isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter,
+                    spellEffects, xValue, kicked, true);
+        }
+        return isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter,
+                spellEffects, xValue, kicked, false);
+    }
+
+    private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
+                                            boolean isMultiTarget, TargetFilter positionFilter,
+                                            List<CardEffect> spellEffects, Integer xValue, Boolean kicked,
+                                            boolean teamworkCostPaid) {
         // For multi-target spells with per-position filters, use protection/hexproof checks
         // but skip the global targetFilter from canPermanentBeTargetedBySpell, since the
         // per-position filter below handles type restriction for each target group.
@@ -927,13 +951,15 @@ public class ValidTargetService {
                 return false;
             }
         } else {
-            if (!canPermanentBeTargetedBySpell(gameData, perm, card, controllerId, xValue, kicked)) {
+            if (!canPermanentBeTargetedBySpell(gameData, perm, card, controllerId, xValue, kicked,
+                    teamworkCostPaid)) {
                 return false;
             }
         }
 
         // Per-position filter for multi-target spells
-        if (!passesTargetFilter(gameData, targetFilterForKickedCast(positionFilter, kicked),
+        if (!passesTargetFilter(gameData, targetFilterForKickedCast(positionFilter, kicked,
+                        teamworkCostPaid),
                 perm, card.getId(), controllerId, xValue)) {
             return false;
         }
@@ -1478,7 +1504,9 @@ public class ValidTargetService {
         int effectiveXValue = xValue != null ? xValue : 0;
         List<UUID> validIds = new ArrayList<>();
 
-        for (CardEffect effect : spellEffects) {
+        List<CardEffect> graveyardTargetingEffects = teamworkTargetingEffectsForEnumeration(
+                gameData, card, spellEffects, controllerId);
+        for (CardEffect effect : graveyardTargetingEffects) {
             GraveyardSearchScope scope = effect.targetSpec().graveyardScope().orElse(null);
             if (scope == null) continue;
 
@@ -1506,6 +1534,11 @@ public class ValidTargetService {
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
                             continue;
                         }
+                        if (rge.targetPutIntoGraveyardFromAnywhereThisTurn()
+                                && !gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())) {
+                            continue;
+                        }
                         if (rge.targetNotPutIntoGraveyardThisCombat()
                                 && gameData.cardsPutIntoGraveyardThisCombat
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
@@ -1530,10 +1563,34 @@ public class ValidTargetService {
                 }
             }
 
-            if (!validIds.isEmpty()) break;
+            if (!validIds.isEmpty() && !hasTeamworkCost(card)) break;
         }
 
         return validIds;
+    }
+
+    private List<CardEffect> teamworkTargetingEffectsForEnumeration(GameData gameData, Card card,
+                                                                      List<CardEffect> spellEffects,
+                                                                      UUID controllerId) {
+        if (!hasTeamworkCost(card)) {
+            return spellEffects;
+        }
+        boolean teamworkAvailable = hasAvailableTeamworkPayment(gameData, card, controllerId);
+        List<CardEffect> result = new ArrayList<>();
+        for (CardEffect effect : spellEffects) {
+            if (effect instanceof ConditionalReplacementEffect replacement
+                    && replacement.condition() instanceof TeamworkCostPaid) {
+                if (replacement.baseEffect() != null) {
+                    result.add(replacement.baseEffect());
+                }
+                if (teamworkAvailable && replacement.upgradedEffect() != null) {
+                    result.add(replacement.upgradedEffect());
+                }
+            } else {
+                result.add(effect);
+            }
+        }
+        return result;
     }
 
     private List<UUID> computeValidGraveyardTargetsForAbility(GameData gameData, ActivatedAbility ability,
@@ -1805,11 +1862,38 @@ public class ValidTargetService {
         }
     }
 
-    private TargetFilter targetFilterForKickedCast(TargetFilter targetFilter, Boolean kicked) {
+    private TargetFilter targetFilterForKickedCast(TargetFilter targetFilter, Boolean kicked,
+                                                   boolean teamworkCostPaid) {
         if (targetFilter instanceof PermanentPredicateTargetFilter filter) {
-            return new PermanentPredicateTargetFilter(filter.predicateFor(Boolean.TRUE.equals(kicked)), filter.errorMessage());
+            return new PermanentPredicateTargetFilter(
+                    filter.predicateFor(Boolean.TRUE.equals(kicked), false, teamworkCostPaid),
+                    filter.errorMessageFor(false, teamworkCostPaid));
         }
         return targetFilter;
+    }
+
+    private boolean hasTeamworkCost(Card card) {
+        return teamworkCost(card) != null;
+    }
+
+    private TeamworkCost teamworkCost(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(TeamworkCost.class::isInstance)
+                .map(TeamworkCost.class::cast)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean hasAvailableTeamworkPayment(GameData gameData, Card card, UUID controllerId) {
+        TeamworkCost cost = teamworkCost(card);
+        if (cost == null) {
+            return false;
+        }
+        int totalPower = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped() && gameQueryService.isCreature(gameData, permanent))
+                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                .sum();
+        return totalPower >= cost.requiredPower();
     }
 
     /**

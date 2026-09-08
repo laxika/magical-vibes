@@ -427,6 +427,14 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false, LibrarySearchDestination.BATTLEFIELD, true);
     }
 
+    /** You may put one matching card onto the battlefield; the rest go to the bottom randomly. */
+    public static LookAtTopCardsEffect mayPutMatchingOntoBattlefieldRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate, LibrarySelectionFollowUp followUp) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false, LibrarySearchDestination.BATTLEFIELD, true,
+                false, null, null, false, 0, false, false, false, false, 0, followUp);
+    }
+
     /** You may put one matching card within a dynamic mana-value cap onto the battlefield. */
     public static LookAtTopCardsEffect mayPutMatchingOntoBattlefieldRestOnBottomRandom(
             int lookCount, CardPredicate choosePredicate, DynamicAmount chooseManaValueAtMost) {

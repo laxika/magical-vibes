@@ -321,7 +321,7 @@ public class EtbTriggerService {
                             choice.options().size(),
                             Math.max(0, amountEvaluationService.evaluate(gameData,
                                     triggerTimeChoice.maximumChoices(),
-                                    new AmountContext(controllerId, enteringPermanent, null, 0, 0))));
+                                    new AmountContext(controllerId, enteringPermanent, null, xValue, 0))));
                     if (maximumChoices == 0) {
                         continue;
                     }

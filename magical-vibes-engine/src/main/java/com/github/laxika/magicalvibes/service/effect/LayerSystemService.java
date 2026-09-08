@@ -624,6 +624,8 @@ public class LayerSystemService {
     private static long computeBoardFingerprint(GameData gameData) {
         long h = 0x9E3779B97F4A7C15L;
         h = mix(h, gameData.timestampCounter);
+        h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
+        h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
@@ -2689,6 +2691,24 @@ public class LayerSystemService {
                                                 provenanceSourceName(instance)));
                                     }
                                 });
+                case GrantStaticEffectToSourceEffect grant -> {
+                    if (instance.floating() == null
+                            || instance.source() == null
+                            || !(grant.staticEffect() instanceof SetBasePowerToughnessToAmountEffect setPt)
+                            || setPt.scope() != GrantScope.SELF) {
+                        continue;
+                    }
+                    PermanentSlot source = instance.source();
+                    AmountContext context = AmountContext.forStaticEffect(source.permanent(), source.controllerId());
+                    Integer power = setPt.power() == null ? null
+                            : amountEvaluationService.evaluate(gameData, setPt.power(), context);
+                    Integer toughness = setPt.toughness() == null ? null
+                            : amountEvaluationService.evaluate(gameData, setPt.toughness(), context);
+                    for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
+                        entries.add(new BasePtEntry(target.permanent().getId(), power, toughness,
+                                instance.timestamp(), instance.position(), provenanceSourceName(instance)));
+                    }
+                }
                 case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored ->
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {
