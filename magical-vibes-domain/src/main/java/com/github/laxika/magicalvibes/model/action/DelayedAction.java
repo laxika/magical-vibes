@@ -40,7 +40,6 @@ public sealed interface DelayedAction permits
         ExileAndReturnTransformedAtEndOfCombat,
         DestroyNonAttackersAtEndStep,
         DestroyPermanentIfDidNotAttackAtEndStep,
-        DestroyPermanentIfAttackedAtEndStep,
         DelayedDestroyAllPermanents,
         DelayedChooseOpponentGainsControlOfSource,
         ExileToOwnerGraveyardAtNextEndStep,

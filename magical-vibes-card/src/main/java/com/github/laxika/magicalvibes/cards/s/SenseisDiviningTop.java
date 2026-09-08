@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "268")
+@CardRegistration(set = "V09", collectorNumber = "10")
 public class SenseisDiviningTop extends Card {
 
     public SenseisDiviningTop() {

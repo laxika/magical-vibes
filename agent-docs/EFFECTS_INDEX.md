@@ -1,5 +1,5 @@
 # EFFECTS_INDEX
-| `DestroyTargetIfAttackedAtEndStepEffect` | `()` | queues destruction of the targeted creature at the next end step if it attacked this turn; Berserk |
+| `DestroyTargetPermanentAtEndStepIfAttackedEffect` | `()` | queues a delayed end-step trigger that destroys the original target if it attacked this turn when the ability resolves; Berserk |
 | `SearchLibraryAndOrGraveyardForCardToBattlefieldEffect` | `(CardPredicate filter[, ManaValueBound manaValueBound[, EnterWithCountersEffect enterWithCounters]])` | choose one matching card from the controller's library and/or graveyard and put it onto the battlefield; a library choice shuffles, and optional mana-value bounds and as-enters counters are evaluated before the choice (Vision Quest) |
 | `ReduceActivatedAbilityCostEffect` | `(PermanentPredicate predicate, int amount, boolean powerUpOnly)` | when `powerUpOnly` is true, reduces the generic cost of matching controller-scoped permanents' Power-up abilities only; use a source-excluded creature predicate for "other creatures you control" (Hulk, Gamma Goliath) |
 | `RemoveCounterFromControlledCreatureThenDrawEffect` | `()` | during resolution, choose one creature you control that has a counter, remove one counter of any kind from it, then draw a card |
