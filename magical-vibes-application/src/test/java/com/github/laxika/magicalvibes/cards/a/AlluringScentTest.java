@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlluringScent.class, GrizzlyBears.class})
 class AlluringScentTest extends BaseCardTest {
 
     // ===== Casting / resolving =====
@@ -74,17 +75,45 @@ class AlluringScentTest extends BaseCardTest {
         assertThat(bears.isMustBeBlockedByAllThisTurn()).isFalse();
     }
 
+    @Test
+    @DisplayName("Casting Alluring Scent requires every able blocker to block the target")
+    void castingRequiresEveryAbleBlockerToBlockTarget() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new AlluringScent()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId()).get(1).isBlocking()).isTrue();
+    }
+
     // ===== Combat enforcement =====
 
     @Test
     @DisplayName("All able creatures must block the affected attacker")
     void allAbleCreaturesMustBlock() {
-        Permanent attacker = attackingCreature(new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setMustBeBlockedByAllThisTurn(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        attacker.setAttacking(true);
 
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
@@ -105,15 +134,13 @@ class AlluringScentTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped creatures are not forced to block")
     void tappedCreaturesNotForcedToBlock() {
-        Permanent attacker = attackingCreature(new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setMustBeBlockedByAllThisTurn(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        attacker.setAttacking(true);
 
-        Permanent untapped = readyCreature(new GrizzlyBears());
-        Permanent tapped = readyCreature(new GrizzlyBears());
+        Permanent untapped = addCreatureReady(player2, new GrizzlyBears());
+        Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
         tapped.tap();
-        gd.playerBattlefields.get(player2.getId()).add(untapped);
-        gd.playerBattlefields.get(player2.getId()).add(tapped);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -122,16 +149,4 @@ class AlluringScentTest extends BaseCardTest {
         assertThat(tapped.isBlocking()).isFalse();
     }
 
-    private Permanent attackingCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(true);
-        return permanent;
-    }
-
-    private Permanent readyCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
-    }
 }

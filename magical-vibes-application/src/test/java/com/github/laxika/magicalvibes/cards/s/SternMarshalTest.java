@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SternMarshal.class, GrizzlyBears.class})
 class SternMarshalTest extends BaseCardTest {
 
     @Test
@@ -24,6 +26,19 @@ class SternMarshalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
+        assertThat(bear.getPowerModifier()).isEqualTo(2);
+        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can boost a creature controlled by an opponent")
+    void boostsOpponentCreature() {
+        setupMarshalOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
     }
@@ -69,8 +84,8 @@ class SternMarshalTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate once attackers have been declared")
-    void cannotActivateAfterAttackersDeclared() {
+    @DisplayName("Cannot activate once the declare attackers step begins")
+    void cannotActivateAtDeclareAttackersStep() {
         setupMarshalOnMyTurn(TurnStep.DECLARE_ATTACKERS);
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
 
@@ -82,9 +97,8 @@ class SternMarshalTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate during an opponent's turn")
     void cannotActivateOnOpponentTurn() {
-        harness.addToBattlefield(player1, new SternMarshal());
+        addCreatureReady(player1, new SternMarshal());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        findPermanent(player1, "Stern Marshal").setSummoningSick(false);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -96,9 +110,8 @@ class SternMarshalTest extends BaseCardTest {
     }
 
     private void setupMarshalOnMyTurn(TurnStep step) {
-        harness.addToBattlefield(player1, new SternMarshal());
+        addCreatureReady(player1, new SternMarshal());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        findPermanent(player1, "Stern Marshal").setSummoningSick(false);
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
     }

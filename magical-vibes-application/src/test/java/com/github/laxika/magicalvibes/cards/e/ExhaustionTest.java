@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Exhaustion.class, Forest.class, GrizzlyBears.class, JayemdaeTome.class})
 class ExhaustionTest extends BaseCardTest {
 
     // ===== Spell resolution =====
@@ -46,6 +48,23 @@ class ExhaustionTest extends BaseCardTest {
             castAndResolveExhaustion(player2.getId());
 
             assertThat(forest.getSkipUntapCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Also affects creatures and lands entering before the target's next untap step")
+        void affectsPermanentsEnteringAfterResolution() {
+            castAndResolveExhaustion(player2.getId());
+
+            Permanent bears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent forest = harness.enterBattlefieldAndReturn(player2, new Forest());
+            bears.setSummoningSick(false);
+            bears.tap();
+            forest.tap();
+
+            advanceToNextTurn(player1);
+
+            assertThat(bears.isTapped()).isTrue();
+            assertThat(forest.isTapped()).isTrue();
         }
 
         @Test
@@ -141,9 +160,7 @@ class ExhaustionTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn
+        Player nextActivePlayer = currentActivePlayer.getId().equals(player1.getId()) ? player2 : player1;
+        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
     }
 }
