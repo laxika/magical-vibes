@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.w.WindingCanyons;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,34 +18,35 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Hurloon Shaman")
+@CardUsed({HurloonShaman.class, RedwoodTreefolk.class, WindingCanyons.class})
 class HurloonShamanTest extends BaseCardTest {
 
     @Test
     @DisplayName("When it dies, each player with a single land sacrifices it automatically")
     void deathTriggerMakesEachPlayerSacrificeTheirOnlyLand() {
-        harness.addToBattlefield(player1, new HurloonShaman());
-        harness.addToBattlefield(player1, new Mountain());
-        harness.addToBattlefield(player2, new Forest());
+        addCreatureReady(player1, new HurloonShaman());
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player2, new WindingCanyons());
         setupCombatWhereShamanDies();
 
-        harness.passBothPriorities(); // combat damage — Shaman dies, trigger on stack
-        harness.passBothPriorities(); // trigger resolves
+        resolveCombat();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Hurloon Shaman");
-        harness.assertNotOnBattlefield(player1, "Mountain");
-        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertNotOnBattlefield(player1, "Winding Canyons");
+        harness.assertNotOnBattlefield(player2, "Winding Canyons");
     }
 
     @Test
     @DisplayName("A player with multiple lands chooses which one to sacrifice")
     void playerWithMultipleLandsChooses() {
-        harness.addToBattlefield(player1, new HurloonShaman());
-        harness.addToBattlefield(player1, new Mountain());
-        harness.addToBattlefield(player1, new Mountain());
-        harness.addToBattlefield(player2, new Forest());
+        addCreatureReady(player1, new HurloonShaman());
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player2, new WindingCanyons());
         setupCombatWhereShamanDies();
 
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -55,28 +56,71 @@ class HurloonShamanTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.maxCount()).isEqualTo(1);
 
-        List<UUID> chosen = findPermanents(player1, "Mountain").stream().limit(1).map(Permanent::getId).toList();
+        List<UUID> chosen = findPermanents(player1, "Winding Canyons").stream()
+                .limit(1)
+                .map(Permanent::getId)
+                .toList();
         harness.handleMultiplePermanentsChosen(player1, chosen);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countLands(player1)).isEqualTo(1);
-        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Winding Canyons");
     }
 
     @Test
     @DisplayName("Only lands are sacrificed — other permanents are untouched")
     void onlyLandsAreSacrificed() {
-        harness.addToBattlefield(player1, new HurloonShaman());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new HurloonShaman());
+        harness.addToBattlefield(player1, new RedwoodTreefolk());
         // Player2 has no lands at all — unaffected.
         setupCombatWhereShamanDies();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Hurloon Shaman");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Redwood Treefolk");
+        harness.assertOnBattlefield(player2, "Redwood Treefolk");
+    }
+
+    @Test
+    @DisplayName("Each player chooses independently when each controls multiple lands")
+    void eachPlayerChoosesTheirOwnLand() {
+        addCreatureReady(player1, new HurloonShaman());
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.addToBattlefield(player2, new WindingCanyons());
+        harness.addToBattlefield(player2, new WindingCanyons());
+        setupCombatWhereShamanDies();
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice player1Choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(player1Choice).isNotNull();
+        assertThat(player1Choice.playerId()).isEqualTo(player1.getId());
+
+        List<UUID> player1Chosen = findPermanents(player1, "Winding Canyons").stream()
+                .limit(1)
+                .map(Permanent::getId)
+                .toList();
+        harness.handleMultiplePermanentsChosen(player1, player1Chosen);
+
+        PendingInteraction.MultiPermanentChoice player2Choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(player2Choice).isNotNull();
+        assertThat(player2Choice.playerId()).isEqualTo(player2.getId());
+
+        List<UUID> player2Chosen = findPermanents(player2, "Winding Canyons").stream()
+                .limit(1)
+                .map(Permanent::getId)
+                .toList();
+        harness.handleMultiplePermanentsChosen(player2, player2Chosen);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countLands(player1)).isEqualTo(1);
+        assertThat(countLands(player2)).isEqualTo(1);
     }
 
     private long countLands(com.github.laxika.magicalvibes.model.Player player) {
@@ -85,23 +129,16 @@ class HurloonShamanTest extends BaseCardTest {
                 .count();
     }
 
-    /**
-     * Attacks with the Shaman into a 2/3 body's worth of blocker so it dies in combat damage.
-     */
+    /** Attacks with the Shaman into a blocker that kills it in combat damage. */
     private void setupCombatWhereShamanDies() {
         GameData gd = harness.getGameData();
         Permanent shaman = findPermanent(player1, "Hurloon Shaman");
-        shaman.setSummoningSick(false);
-        shaman.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new RedwoodTreefolk());
+        int shamanIndex = gd.playerBattlefields.get(player1.getId()).indexOf(shaman);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
 
-        Permanent blocker = new Permanent(new HillGiant()); // 3/3 — kills the 2/3 Shaman and survives
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        declareAttackers(player1, List.of(shamanIndex));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, shamanIndex)));
     }
 }
