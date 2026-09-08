@@ -39,9 +39,9 @@ class GhastlyRemainsTest extends BaseCardTest {
     void paysToReturnFromGraveyardToHand() {
         GhastlyRemains card = new GhastlyRemains();
         harness.setGraveyard(player1, List.of(card));
-        harness.addMana(player1, ManaColor.BLACK, 3);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 3);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

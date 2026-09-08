@@ -20,10 +20,7 @@ class SummerBloomTest extends BaseCardTest {
     void grantsThreeAdditionalLandPlays() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SummerBloom()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SummerBloom(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(4);
@@ -34,10 +31,7 @@ class SummerBloomTest extends BaseCardTest {
     void grantsAdditionalLandPlaysOnlyToController() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SummerBloom()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SummerBloom(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(4);
@@ -49,10 +43,7 @@ class SummerBloomTest extends BaseCardTest {
     void additionalLandPlaysExpireAtEndOfTurn() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SummerBloom()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SummerBloom(), "{1}{G}");
         harness.passBothPriorities();
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
@@ -71,8 +62,7 @@ class SummerBloomTest extends BaseCardTest {
                 new Forest(), new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -93,8 +83,7 @@ class SummerBloomTest extends BaseCardTest {
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -105,5 +94,39 @@ class SummerBloomTest extends BaseCardTest {
         // One Forest remains in hand (index 0) but the four-land limit is now reached.
         assertThat(harness.getGameActionAvailabilityService().getPlayableCardIndices(gd, player1.getId()))
                 .doesNotContain(0);
+    }
+
+    @Test
+    @DisplayName("Additional land plays remain available after playing a land first")
+    void addsToLandPlayAlreadyUsedThisTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Forest(), new SummerBloom(),
+                new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.playLand(player1, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        for (int i = 0; i < 3; i++) {
+            harness.playLand(player1, 0);
+        }
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(4);
+        assertThat(harness.getGameActionAvailabilityService().getPlayableCardIndices(gd, player1.getId()))
+                .doesNotContain(0);
+    }
+
+    @Test
+    @DisplayName("Two Summer Blooms grant six additional land plays")
+    void multipleSummerBloomsStack() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SummerBloom(), new SummerBloom()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(7);
     }
 }

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -24,8 +26,10 @@ public class AmbushCommander extends Card {
     public AmbushCommander() {
         addEffect(EffectSlot.STATIC, new AnimatePermanentsEffect(
                 new Fixed(1), new Fixed(1), List.of(CardSubtype.ELF), Set.of(), null,
-                Set.of(), GrantScope.OWN_LANDS, EffectDuration.CONTINUOUS,
-                new PermanentHasSubtypePredicate(CardSubtype.FOREST), Set.of(CardColor.GREEN)));
+                Set.of(), GrantScope.ALL_PERMANENTS, EffectDuration.CONTINUOUS,
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentHasSubtypePredicate(CardSubtype.FOREST),
+                        new PermanentControlledBySourceControllerPredicate())), Set.of(CardColor.GREEN)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

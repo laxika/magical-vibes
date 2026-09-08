@@ -191,7 +191,7 @@ public class ValidTargetService {
             return new ValidTargetsResponse(List.of(), validOpponentIds, List.of(), List.of(),
                     1, 1, "Choose an opponent for " + card.getName());
         }
-        TargetFilter modeFilter = chosenMode != null ? chosenMode.targetFilter()
+        TargetFilter modeFilter = chosenMode != null && chosenMode.targetFilter() != null ? chosenMode.targetFilter()
                 : modalTargetFilters.size() == 1 ? modalTargetFilters.getFirst() : null;
         List<TargetFilter> targetFilters = modalTargetFilters.isEmpty()
                 ? card.getMultiTargetFilters() : modalTargetFilters;

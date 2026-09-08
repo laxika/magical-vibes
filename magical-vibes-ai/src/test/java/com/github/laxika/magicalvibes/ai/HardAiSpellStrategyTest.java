@@ -120,6 +120,7 @@ class HardAiSpellStrategyTest extends HardAiDecisionEngineTestSupport {
     @DisplayName("Hard AI casts Entrancing Melody with X matching target creature's mana value")
     void castsEntrancingMelodyWithCorrectX() {
         HardAiDecisionEngine ai = createHardAi(player1);
+        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 40));
         pinLibrariesAndHands();
         giveAiPriority(player1);
         givePlayerIslands(player1, 4); // maxX = 2

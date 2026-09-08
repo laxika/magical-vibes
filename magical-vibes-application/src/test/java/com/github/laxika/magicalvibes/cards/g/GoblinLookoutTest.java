@@ -41,6 +41,7 @@ class GoblinLookoutTest extends BaseCardTest {
     void sacrificeCostOnlyAcceptsGoblins() {
         addCreatureReady(player1, new GoblinLookout());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new RagingGoblin());
 
         harness.activateAbility(player1, 0, null, null);
 

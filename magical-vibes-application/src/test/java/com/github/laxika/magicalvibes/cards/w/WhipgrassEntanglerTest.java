@@ -22,6 +22,7 @@ class WhipgrassEntanglerTest extends BaseCardTest {
     void attackTaxCountsClericsAtDeclaration() {
         Permanent entangler = addCreatureReady(player1, new WhipgrassEntangler());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -32,7 +33,7 @@ class WhipgrassEntanglerTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(player1, List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         declareAttackers(player1, List.of(1));
 
         assertThat(attacker.isAttacking()).isTrue();
@@ -55,11 +56,11 @@ class WhipgrassEntanglerTest extends BaseCardTest {
         attacker.setAttacking(true);
         prepareDeclareBlockers(player1);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(0, 0))))
+                List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(blocker.isBlocking()).isTrue();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();

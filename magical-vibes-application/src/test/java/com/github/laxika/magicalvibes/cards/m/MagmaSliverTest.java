@@ -57,6 +57,6 @@ class MagmaSliverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a Sliver creature");
+                .hasMessageContaining("Target does not match the required predicate");
     }
 }

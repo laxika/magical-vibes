@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CorpseHarvester.class, GrizzlyBears.class, GravebaneZombie.class, Swamp.class, Forest.class})
 class CorpseHarvesterTest extends BaseCardTest {
@@ -23,12 +22,13 @@ class CorpseHarvesterTest extends BaseCardTest {
     @Test
     void searchesForAZombieAndASwamp() {
         addCreatureReady(player1, new CorpseHarvester());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        var sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         setLibrary(new GravebaneZombie(), new Swamp(), new Forest(), new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch zombieSearch =
@@ -55,13 +55,16 @@ class CorpseHarvesterTest extends BaseCardTest {
     }
 
     @Test
-    void requiresACreatureToSacrifice() {
+    void canSacrificeItself() {
         addCreatureReady(player1, new CorpseHarvester());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Corpse Harvester");
+        harness.assertInGraveyard(player1, "Corpse Harvester");
+        assertThat(gd.stack).hasSize(1);
     }
 
     private void setLibrary(Card... cards) {

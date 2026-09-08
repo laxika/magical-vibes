@@ -26,7 +26,7 @@ class HollowSpecterTest extends BaseCardTest {
         specter.setAttacking(true);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         harness.passBothPriorities();
 
         PendingInteraction.XValueChoice xChoice =
@@ -68,7 +68,7 @@ class HollowSpecterTest extends BaseCardTest {
         specter.setAttacking(true);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
 

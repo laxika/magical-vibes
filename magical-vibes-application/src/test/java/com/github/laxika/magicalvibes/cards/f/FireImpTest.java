@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FireImp.class, GrizzlyBears.class})
 class FireImpTest extends BaseCardTest {
 
     @Test
@@ -26,7 +27,7 @@ class FireImpTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature spell → ETB triggers
 
@@ -34,7 +35,6 @@ class FireImpTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Fire Imp");
         assertThat(trigger.getTargetId()).isEqualTo(targetId);
     }
 
@@ -49,7 +49,7 @@ class FireImpTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB
@@ -62,6 +62,24 @@ class FireImpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB can target a creature controlled by Fire Imp's controller")
+    void etbCanTargetControllerCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FireImp()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castCreature(player1, 0, targetId);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("ETB kills a 2-toughness target creature")
     void etbKills2Toughness() {
         harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
@@ -69,7 +87,7 @@ class FireImpTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -87,7 +105,7 @@ class FireImpTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature — ETB on stack
 

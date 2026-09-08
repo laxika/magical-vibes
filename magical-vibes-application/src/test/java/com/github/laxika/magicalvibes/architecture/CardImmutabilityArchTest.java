@@ -64,6 +64,7 @@ class CardImmutabilityArchTest {
             "BecomeAuraManifestTopCardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Lightform)
             "ReturnSourceAsAuraEffectHandler", // assembles a fresh Aura runtime copy before returning it
             "ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler", // assembles a fresh non-Aura runtime copy
+            "ReturnSourceAuraToCreatureOrAsNonAuraEffectHandler", // decorates a fresh non-Aura runtime copy before creating its Permanent
             "LicidBecomeAuraEffectHandler", // Aura face built on the fresh runtime copy (Licid cycle)
             "TokenCardFactory",        // assembles the fresh token card it just instantiated
             "PermanentControlSupport", // adds effects to a fresh token card before creating its Permanent
