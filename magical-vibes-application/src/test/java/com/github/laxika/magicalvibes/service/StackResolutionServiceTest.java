@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -101,6 +102,33 @@ class StackResolutionServiceTest {
     private static final UUID PLAYER1_ID = UUID.randomUUID();
     private static final UUID PLAYER2_ID = UUID.randomUUID();
 
+    @Test
+    void enteringRoomRetainsItsDoorAbilityTargetGroupsAfterModalCasting() {
+        Card physical = createEnchantment("Room");
+        physical.setSubtypes(List.of(CardSubtype.ROOM));
+        physical.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
+        var effect = new com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect(1,
+                new com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
+        physical.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 2)
+                .addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED, effect);
+        Card spell = physical.createRuntimeCopy();
+        spell.setSelectedRoomDoor(0);
+        spell.clearRuntimeSpellTargets();
+        StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, spell,
+                PLAYER1_ID, spell.getName(), List.of());
+        entry.setPhysicalCard(physical);
+        gd.stack.addLast(entry);
+
+        svc.resolveTopOfStack(gd);
+
+        verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
+        Permanent room = permanentCaptor.getValue();
+        assertThat(room.isRoomDoorUnlocked(0)).isTrue();
+        assertThat(room.getCard().getMaxTargets()).isEqualTo(2);
+        assertThat(room.getCard().getMinTargets()).isZero();
+    }
+
     @BeforeEach
     void setUp() {
         sagaChapterService = new SagaChapterService(gameQueryService, gameLogService, triggerCollectionService);
@@ -109,7 +137,7 @@ class StackResolutionServiceTest {
                 legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameLogService, effectResolutionService, playerInputService, triggerCollectionService,
                 creatureControlService, stateTriggerService, exileService, null, permanentCounterSupport,
-                mutationCoordinator, null, auraCopyService, null);
+                mutationCoordinator, null, auraCopyService, null, null);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -424,7 +452,7 @@ class StackResolutionServiceTest {
             Card card = createCreature("Clone");
             gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
             when(cloneService.prepareCloneReplacementEffect(
-                    any(), any(), any(), any(), anyInt(), any(), anyBoolean())).thenReturn(true);
+                    any(), any(), any(), any(), anyInt(), anyInt(), any(), anyBoolean())).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 
@@ -450,6 +478,24 @@ class StackResolutionServiceTest {
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Enchantment");
+        }
+
+        @Test
+        @DisplayName("Warped enchantment schedules exile at the next end step")
+        void warpedEnchantmentSchedulesExile() {
+            Card card = createEnchantment("Warped Enchantment");
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            entry.setCastWithWarp(true);
+            gd.stack.addLast(entry);
+            when(gameQueryService.findPermanentById(eq(gd), any())).thenReturn(new Permanent(card));
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
+            assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                    .anyMatch(action -> action.permanentId().equals(permanentCaptor.getValue().getId()));
         }
 
         @Test
@@ -503,7 +549,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
                     any(), any(), any(), anyInt(), anyBoolean());
-            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, aura);
+            verify(graveyardService).addCardToGraveyardFromSpell(gd, PLAYER1_ID, aura, PLAYER1_ID);
         }
 
         @Test
@@ -534,7 +580,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
                     any(), any(), any(), anyInt(), anyBoolean());
-            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, curse);
+            verify(graveyardService).addCardToGraveyardFromSpell(gd, PLAYER1_ID, curse, PLAYER1_ID);
         }
 
         @Test
@@ -784,7 +830,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(effectResolutionService).resolveEffects(gd, entry);
-            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, card);
+            verify(graveyardService).addCardToGraveyardFromSpell(gd, PLAYER1_ID, card, PLAYER1_ID);
         }
 
         @Test
@@ -798,7 +844,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(effectResolutionService).resolveEffects(gd, entry);
-            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, card);
+            verify(graveyardService).addCardToGraveyardFromSpell(gd, PLAYER1_ID, card, PLAYER1_ID);
         }
 
         @Test
@@ -813,7 +859,7 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, card);
+            verify(graveyardService).addCardToGraveyardFromSpell(gd, PLAYER1_ID, card, PLAYER1_ID);
             verify(effectResolutionService, never()).resolveEffects(any(), any());
         }
 
@@ -830,7 +876,7 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
         }
 
         @Test
@@ -845,7 +891,7 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
         }
 
         @Test
@@ -862,7 +908,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(exileService).exileCard(gd, PLAYER1_ID, card);
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
         }
 
         @Test
@@ -878,7 +924,7 @@ class StackResolutionServiceTest {
 
             assertThat(gd.getPlayerExiledCards(PLAYER1_ID))
                     .anyMatch(c -> c.getName().equals("Flashback Sorcery"));
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
         }
 
         @Test
@@ -912,7 +958,7 @@ class StackResolutionServiceTest {
 
             assertThat(gd.getPlayerExiledCards(PLAYER1_ID))
                     .anyMatch(c -> c.getName().equals("Exile Instant"));
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
         }
 
         @Test
@@ -928,7 +974,7 @@ class StackResolutionServiceTest {
 
             assertThat(gd.playerHands.get(PLAYER1_ID))
                     .anyMatch(c -> c.getName().equals("Buyback Sorcery"));
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
         }
 
         @Test
@@ -943,7 +989,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             // Spell disposition is deferred — card stays in limbo
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             assertThat(gd.getPlayerExiledCards(PLAYER1_ID))
                     .noneMatch(c -> c.getName().equals("Deferred Sorcery"));
             assertThat(gd.playerHands.get(PLAYER1_ID))
@@ -962,7 +1008,7 @@ class StackResolutionServiceTest {
 
             assertThat(gd.playerDecks.get(PLAYER1_ID))
                     .anyMatch(c -> c.getName().equals("Shuffle Sorcery"));
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
         }
 
         @Test
@@ -976,7 +1022,7 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             assertThat(gd.getPlayerExiledCards(PLAYER1_ID))
                     .noneMatch(c -> c.getName().equals("Copied Spell"));
         }
@@ -991,7 +1037,7 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
         }
 
         @Test
@@ -1006,7 +1052,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(exileService).exileCard(gd, PLAYER1_ID, card);
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             assertThat(gd.endTurnRequested).isFalse();
         }
 
@@ -1023,7 +1069,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(exileService, never()).exileCard(any(), any(), any());
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
         }
 
         @Test
@@ -1040,7 +1086,7 @@ class StackResolutionServiceTest {
 
             // Spell resolved normally and goes to graveyard (not fizzled)
             verify(effectResolutionService).resolveEffects(gd, entry);
-            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, card);
+            verify(graveyardService).addCardToGraveyardFromSpell(gd, PLAYER1_ID, card, PLAYER1_ID);
         }
     }
 }

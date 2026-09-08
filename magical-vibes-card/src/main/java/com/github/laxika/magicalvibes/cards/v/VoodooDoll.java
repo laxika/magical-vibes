@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "111")
+@CardRegistration(set = "LEG", collectorNumber = "298")
 public class VoodooDoll extends Card {
 
     public VoodooDoll() {

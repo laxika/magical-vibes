@@ -49,6 +49,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasNoAbilitiesPredicate) {
             return "card with no abilities";
         }
+        if (predicate instanceof CardDoesNotShareLandTypeWithControlledLandPredicate) {
+            return "card with no shared land type";
+        }
         if (predicate instanceof CardHasManaAbilityPredicate) {
             return "card with a mana ability";
         }
@@ -91,6 +94,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasExactlyTwoColorsPredicate) {
             return "card that's exactly two colors";
         }
+        if (predicate instanceof CardHasExactlyNColorsPredicate p) {
+            return "card that's exactly " + p.colorCount() + " colors";
+        }
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";
         }
@@ -114,6 +120,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardPowerAtMostPredicate p) {
             return "card with power " + p.maxPower() + " or less";
+        }
+        if (predicate instanceof CardPowerAtMostSourcePowerPredicate) {
+            return "card with power at most this creature's power";
         }
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value less than or equal to this creature's power";

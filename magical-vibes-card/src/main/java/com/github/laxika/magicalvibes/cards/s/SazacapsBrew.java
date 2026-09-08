@@ -25,7 +25,7 @@ import java.util.Set;
 public class SazacapsBrew extends Card {
 
     public SazacapsBrew() {
-        addEffect(EffectSlot.STATIC, new GiftEffect(0));
+        addEffect(EffectSlot.STATIC, new GiftEffect(1));
         addEffect(EffectSlot.SPELL, new DiscardCardTypeCost(null, null));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(fishToken())));

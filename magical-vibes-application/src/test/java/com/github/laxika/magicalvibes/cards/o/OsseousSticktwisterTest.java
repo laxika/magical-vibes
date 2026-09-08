@@ -49,6 +49,7 @@ class OsseousSticktwisterTest extends BaseCardTest {
     void opponentMaySacrificeNonlandInsteadOfTakingDamage() {
         harness.addToBattlefield(player1, new OsseousSticktwister());
         enableDelirium();
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player2, new Forest());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
@@ -68,6 +69,7 @@ class OsseousSticktwisterTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new OsseousSticktwister());
         source.setPowerModifier(2);
         enableDelirium();
+        harness.setHand(player2, List.of());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         resolveTrigger();
@@ -78,6 +80,7 @@ class OsseousSticktwisterTest extends BaseCardTest {
     }
 
     private void enableDelirium() {
+        harness.setLibrary(player2, List.of());
         harness.setGraveyard(player1, List.of(
                 new Millstone(), new GrizzlyBears(), new Shock(), new Forest()));
     }

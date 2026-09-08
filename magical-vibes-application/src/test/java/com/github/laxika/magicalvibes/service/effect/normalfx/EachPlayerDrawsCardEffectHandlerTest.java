@@ -23,8 +23,8 @@ class EachPlayerDrawsCardEffectHandlerTest extends AbstractPlayerInteractionHand
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
-                verify(drawService, times(2)).resolveDrawCard(gd, player2Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 2);
+                verify(drawService).resolveDrawCards(gd, player2Id, 2);
             }
 
             @Test
@@ -36,7 +36,7 @@ class EachPlayerDrawsCardEffectHandlerTest extends AbstractPlayerInteractionHand
 
                 resolveEffect(gd, entry, effect);
 
-                verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
-                verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
+                verify(drawService).resolveDrawCards(gd, player1Id, 1);
+                verify(drawService).resolveDrawCards(gd, player2Id, 1);
             }
 }

@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
@@ -21,7 +24,8 @@ public class MoonstoneHarbinger extends Card {
                 new BoostAllOwnCreaturesEffect(1, 0, bats),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, bats));
 
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new OncePerTurnTriggerEffect(lifeChangeEffect));
-        addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, new OncePerTurnTriggerEffect(lifeChangeEffect));
+        CardEffect ownTurnLifeChange = new ConditionalEffect(new ControllerTurn(), lifeChangeEffect);
+        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new OncePerTurnTriggerEffect(ownTurnLifeChange));
+        addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, new OncePerTurnTriggerEffect(ownTurnLifeChange));
     }
 }

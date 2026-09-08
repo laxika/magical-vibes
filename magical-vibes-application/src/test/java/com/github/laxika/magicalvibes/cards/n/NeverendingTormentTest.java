@@ -36,8 +36,8 @@ class NeverendingTormentTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(bears, shock);
-        assertThat(gd.findExiledCard(bears.getId()).faceDown()).isTrue();
-        assertThat(gd.findExiledCard(shock.getId()).faceDown()).isTrue();
+        assertThat(gd.findExiledCard(bears.getId()).faceDown()).isFalse();
+        assertThat(gd.findExiledCard(shock.getId()).faceDown()).isFalse();
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);

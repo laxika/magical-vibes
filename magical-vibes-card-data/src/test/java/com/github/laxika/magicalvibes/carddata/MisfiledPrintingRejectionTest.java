@@ -69,6 +69,11 @@ class MisfiledPrintingRejectionTest {
         assertThat(matches("MishrasSelfReplicator", "Mishra's Self-Replicator")).isTrue();
     }
 
+    @Test
+    void acceptsTheProjectSpellingForAPlusNumberCardName() {
+        assertThat(matches("PlusTwoMace", "+2 Mace")).isTrue();
+    }
+
     /** Both spellings occur in the card classes, so both have to be accepted. */
     @Test
     void acceptsAnAccentedLetterFoldedOntoItsBaseLetterOrDroppedOutright() {

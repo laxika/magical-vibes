@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "81")
+@CardRegistration(set = "ONS", collectorNumber = "79")
 public class Discombobulate extends Card {
 
     public Discombobulate() {

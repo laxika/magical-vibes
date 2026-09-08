@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,16 +10,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AmbushParty.class, AnabaShaman.class})
+@CardUsed({AmbushParty.class, AysenBureaucrats.class})
 class AmbushPartyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Haste lets Ambush Party attack the turn it enters")
     void hasteLetsItAttackImmediately() {
-        harness.setHand(player1, List.of(new AmbushParty()));
-        harness.addMana(player1, ManaColor.RED, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AmbushParty(), "{4}{R}");
         harness.passBothPriorities();
 
         declareAttackers(List.of(0));
@@ -29,10 +25,10 @@ class AmbushPartyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("First strike destroys a 2/2 blocker before regular combat damage")
+    @DisplayName("First strike destroys a blocker before regular combat damage")
     void firstStrikeDestroysBlockerBeforeRegularDamage() {
         addCreatureReady(player1, new AmbushParty());
-        addCreatureReady(player2, new AnabaShaman());
+        addCreatureReady(player2, new AysenBureaucrats());
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();
@@ -40,6 +36,6 @@ class AmbushPartyTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertOnBattlefield(player1, "Ambush Party");
-        harness.assertInGraveyard(player2, "Anaba Shaman");
+        harness.assertInGraveyard(player2, "Aysen Bureaucrats");
     }
 }

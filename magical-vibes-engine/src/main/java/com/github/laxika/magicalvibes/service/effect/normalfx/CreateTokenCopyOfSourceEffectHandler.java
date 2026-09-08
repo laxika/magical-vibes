@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -69,9 +70,20 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     }
                 }
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(
-                        gameData, entry.getControllerId(), sourceCard.hasType(CardType.CREATURE));
-                int totalAmount = e.amount() * tokenMultiplier;
+                List<CardSubtype> tokenSubtypes = sourceCard.getSubtypes() == null
+                        ? new ArrayList<>()
+                        : new ArrayList<>(sourceCard.getSubtypes());
+                if (e.addedSubtype() != null && !tokenSubtypes.contains(e.addedSubtype())) {
+                    tokenSubtypes.add(e.addedSubtype());
+                }
+                AmountContext amountContext = AmountContext.forStackEntry(entry, sourceForRelativeValues);
+                int amount = amountEvaluationService.evaluate(gameData, e.amount(), amountContext);
+                if (amount <= 0) {
+                    return;
+                }
+                int totalAmount = gameQueryService.getTokenCreationAmount(gameData, entry.getControllerId(), amount, tokenSubtypes, sourceCard.hasType(CardType.CREATURE));
+                Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+                List<Permanent> simultaneouslyEntered = new ArrayList<>();
                 for (int copy = 0; copy < totalAmount; copy++) {
                     // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)
                     Card tokenCard = new Card();
@@ -161,17 +173,34 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                             gameData, entry.getControllerId(), tokenCard);
                     Permanent tokenPermanent = new Permanent(tokenCard);
 
+                    if (e.initialPlusOnePlusOneCounters() > 0
+                            && !gameQueryService.cantHavePlusOnePlusOneCounters(
+                            gameData, tokenPermanent, entry.getControllerId())) {
+                        int initialCounters = gameQueryService.doublePlusOnePlusOneCounters(
+                                gameData, tokenPermanent, entry.getControllerId(),
+                                e.initialPlusOnePlusOneCounters());
+                        if (initialCounters > 0) {
+                            tokenPermanent.setCounterCount(
+                                    CounterType.PLUS_ONE_PLUS_ONE, initialCounters);
+                        }
+                    }
+
                     // Planeswalker tokens enter with loyalty counters and no summoning sickness
                     if (tokenCard.getType() == CardType.PLANESWALKER) {
                         tokenPermanent.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty() != null ? tokenCard.getLoyalty() : 0);
                         tokenPermanent.setSummoningSick(false);
                     }
+                    if (e.tappedAndAttacking()) {
+                        tokenPermanent.tap();
+                    }
 
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+                    battlefieldEntryService.putPermanentOntoBattlefield(
+                            gameData, entry.getControllerId(), tokenPermanent,
+                            enterTappedTypesSnapshot, simultaneouslyEntered);
+                    simultaneouslyEntered.add(tokenPermanent);
                     entry.getCreatedPermanentIds().add(tokenPermanent.getId());
 
                     if (e.tappedAndAttacking()) {
-                        tokenPermanent.tap();
                         tokenPermanent.setAttacking(true);
                         if (sourceForRelativeValues != null) {
                             tokenPermanent.setAttackTarget(sourceForRelativeValues.getAttackTarget());
@@ -198,7 +227,6 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
 
                     if (e.initialCounters() != null && !e.initialCounters().isEmpty()
                             && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
-                        AmountContext amountContext = AmountContext.forStackEntry(entry, sourceForRelativeValues);
                         for (var counterEntry : e.initialCounters().entrySet()) {
                             int count = amountEvaluationService.evaluate(
                                     gameData, counterEntry.getValue(), amountContext);

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M13", collectorNumber = "109")
+@CardRegistration(set = "FUT", collectorNumber = "76")
 public class ShimianSpecter extends Card {
 
     public ShimianSpecter() {

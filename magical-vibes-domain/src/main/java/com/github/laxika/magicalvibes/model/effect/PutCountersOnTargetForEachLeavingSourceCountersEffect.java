@@ -16,7 +16,7 @@ import java.util.Map;
 public record PutCountersOnTargetForEachLeavingSourceCountersEffect(
         Map<CounterType, Integer> counters,
         PermanentPredicate targetPredicate
-) implements CardEffect {
+) implements CardEffect, ArtifactGraveyardCountersAwareEffect {
 
     public PutCountersOnTargetForEachLeavingSourceCountersEffect {
         counters = Map.copyOf(counters);
@@ -28,6 +28,11 @@ public record PutCountersOnTargetForEachLeavingSourceCountersEffect(
 
     public PutCountersOnTargetForEachLeavingSourceCountersEffect(PermanentPredicate targetPredicate) {
         this(Map.of(), targetPredicate);
+    }
+
+    @Override
+    public CardEffect boundToArtifactGraveyardCounters(Map<CounterType, Integer> counters) {
+        return new PutCountersOnTargetForEachLeavingSourceCountersEffect(counters, targetPredicate);
     }
 
     @Override

@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
+import com.github.laxika.magicalvibes.cards.m.MtendaGriffin;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +13,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Chaosphere.class, MtendaGriffin.class, FemerefScouts.class})
 class ChaosphereTest extends BaseCardTest {
 
     @Test
     @DisplayName("A flying creature can't block a creature without flying")
     void flierCannotBlockGroundCreature() {
         addChaosphere();
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
-        addCreatureReady(player2, new AirElemental());
+        addCreatureReady(player1, new FemerefScouts()).setAttacking(true);
+        addCreatureReady(player2, new MtendaGriffin());
 
         prepareDeclareBlockers();
 
@@ -34,33 +34,33 @@ class ChaosphereTest extends BaseCardTest {
     @DisplayName("A flying creature can still block a flying attacker")
     void flierCanBlockFlier() {
         addChaosphere();
-        addCreatureReady(player1, new AirElemental()).setAttacking(true);
-        addCreatureReady(player2, new AirElemental());
+        addCreatureReady(player1, new MtendaGriffin()).setAttacking(true);
+        addCreatureReady(player2, new MtendaGriffin());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     @Test
     @DisplayName("A creature without flying gains reach and can block a flying attacker")
     void groundCreatureGainsReach() {
         addChaosphere();
-        addCreatureReady(player1, new AirElemental()).setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new MtendaGriffin()).setAttacking(true);
+        addCreatureReady(player2, new FemerefScouts());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     @Test
     @DisplayName("Without Chaosphere a creature without flying still can't block a flier")
     void noReachWithoutChaosphere() {
-        addCreatureReady(player1, new AirElemental()).setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new MtendaGriffin()).setAttacking(true);
+        addCreatureReady(player2, new FemerefScouts());
 
         prepareDeclareBlockers();
 
@@ -68,9 +68,7 @@ class ChaosphereTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addChaosphere() {
-        Permanent perm = new Permanent(new Chaosphere());
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+    private void addChaosphere() {
+        harness.addToBattlefieldAndReturn(player1, new Chaosphere());
     }
 }

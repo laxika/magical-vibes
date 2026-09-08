@@ -6,16 +6,35 @@ public record PermanentPredicateTargetFilter(
         String errorMessage,
         PermanentPredicate kickedPredicate,
         PermanentPredicate giftPredicate,
-        String giftErrorMessage
+        String giftErrorMessage,
+        boolean activePlayerChoosesTarget
 ) implements TargetFilter {
 
     public PermanentPredicateTargetFilter(PermanentPredicate predicate, String errorMessage) {
-        this(predicate, errorMessage, null, null, null);
+        this(predicate, errorMessage, null, null, null, false);
     }
 
     public PermanentPredicateTargetFilter(PermanentPredicate predicate, String errorMessage,
-                                          PermanentPredicate kickedPredicate) {
-        this(predicate, errorMessage, kickedPredicate, null, null);
+                                           PermanentPredicate kickedPredicate) {
+        this(predicate, errorMessage, kickedPredicate, null, null, false);
+    }
+
+    public PermanentPredicateTargetFilter(PermanentPredicate predicate, String errorMessage,
+                                          boolean activePlayerChoosesTarget) {
+        this(predicate, errorMessage, null, null, null, activePlayerChoosesTarget);
+    }
+
+    public PermanentPredicateTargetFilter(PermanentPredicate predicate, String errorMessage,
+                                          PermanentPredicate kickedPredicate,
+                                          boolean activePlayerChoosesTarget) {
+        this(predicate, errorMessage, kickedPredicate, null, null, activePlayerChoosesTarget);
+    }
+
+    public PermanentPredicateTargetFilter(PermanentPredicate predicate, String errorMessage,
+                                          PermanentPredicate kickedPredicate,
+                                          PermanentPredicate giftPredicate,
+                                          String giftErrorMessage) {
+        this(predicate, errorMessage, kickedPredicate, giftPredicate, giftErrorMessage, false);
     }
 
     public PermanentPredicate predicateFor(boolean kicked) {

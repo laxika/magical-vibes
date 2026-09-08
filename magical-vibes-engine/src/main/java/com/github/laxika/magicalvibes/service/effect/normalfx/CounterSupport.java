@@ -67,6 +67,11 @@ public class CounterSupport {
         return findCounterTarget(gameData, targetCardId, counterSource, false);
     }
 
+    public StackEntry findCounterTargetIgnoringCounterability(GameData gameData, UUID targetCardId,
+                                                               StackEntry counterSource) {
+        return findCounterTargetEntry(gameData, targetCardId, counterSource, false);
+    }
+
     public StackEntry findCounterTargetExcludingSource(GameData gameData, UUID targetCardId,
                                                         StackEntry counterSource) {
         return findCounterTarget(gameData, targetCardId, counterSource, true);
@@ -74,19 +79,8 @@ public class CounterSupport {
 
     private StackEntry findCounterTarget(GameData gameData, UUID targetCardId, StackEntry counterSource,
                                          boolean excludeSource) {
-        StackEntry targetEntry = null;
-        for (StackEntry se : gameData.stack) {
-            if (excludeSource && se == counterSource) {
-                continue;
-            }
-            if (se.getCard().getId().equals(targetCardId)) {
-                targetEntry = se;
-                break;
-            }
-        }
-
+        StackEntry targetEntry = findCounterTargetEntry(gameData, targetCardId, counterSource, excludeSource);
         if (targetEntry == null) {
-            log.info("Game {} - Counter target no longer on stack", gameData.id);
             return null;
         }
 
@@ -102,6 +96,25 @@ public class CounterSupport {
             return null;
         }
 
+        return targetEntry;
+    }
+
+    private StackEntry findCounterTargetEntry(GameData gameData, UUID targetCardId, StackEntry counterSource,
+                                              boolean excludeSource) {
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (excludeSource && se == counterSource) {
+                continue;
+            }
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter target no longer on stack", gameData.id);
+        }
         return targetEntry;
     }
 
@@ -122,7 +135,7 @@ public class CounterSupport {
             if (target.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
             } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
-                exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
+                exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
             } else {
                 graveyardService.addCardToGraveyardFromSpell(gameData, target.getOwnerId(),
                         target.getPhysicalCard(), target.getControllerId());
@@ -217,7 +230,7 @@ public class CounterSupport {
             return null;
         }
 
-        gameData.playerDecks.get(target.getControllerId()).add(0, target.getPhysicalCard());
+        gameData.playerDecks.get(target.getOwnerId()).add(0, target.getPhysicalCard());
         notifyCounteredSpell(gameData, source.getControllerId(), target);
         return target.getPhysicalCard();
     }
@@ -261,6 +274,11 @@ public class CounterSupport {
     }
 
     public boolean counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target) {
+        return counterSpellAndExile(gameData, source, target, target.getOwnerId());
+    }
+
+    public boolean counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target,
+                                        UUID exileOwnerId) {
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -270,7 +288,7 @@ public class CounterSupport {
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
                 return false;
             }
-            exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
+            exileService.exileCard(gameData, exileOwnerId, target.getPhysicalCard());
         }
 
         notifyCounteredSpell(gameData, source.getControllerId(), target);
@@ -300,7 +318,7 @@ public class CounterSupport {
         }
 
         Card spell = target.getPhysicalCard();
-        exileService.exileCard(gameData, target.getControllerId(), spell);
+        exileService.exileCard(gameData, target.getOwnerId(), spell);
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 spell,
                 counterControllerId,

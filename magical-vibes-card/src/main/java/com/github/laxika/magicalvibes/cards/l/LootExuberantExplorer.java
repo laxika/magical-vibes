@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "106")
+@CardRegistration(set = "FDN", collectorNumber = "336")
+@CardRegistration(set = "FDN", collectorNumber = "398")
+@CardRegistration(set = "FDN", collectorNumber = "470")
 public class LootExuberantExplorer extends Card {
 
     public LootExuberantExplorer() {

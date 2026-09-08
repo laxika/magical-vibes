@@ -16,7 +16,7 @@ public class Oasis extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(PreventDamageEffect.nextToTarget(1)),
+                List.of(PreventDamageEffect.nextToTargetCreature(1)),
                 "{T}: Prevent the next 1 damage that would be dealt to target creature this turn.",
                 TargetFilters.creature()
         ));

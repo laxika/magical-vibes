@@ -1,19 +1,22 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VexingArcanix.class, Incinerate.class})
 class VexingArcanixTest extends BaseCardTest {
 
     @Test
@@ -38,13 +41,13 @@ class VexingArcanixTest extends BaseCardTest {
         addReadyArcanix(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        Card topCard = createNamedCard("Lightning Bolt");
-        gd.playerDecks.get(player2.getId()).addFirst(topCard);
+        Card topCard = new Incinerate();
+        harness.setLibrary(player2, List.of(topCard));
         int handBefore = gd.playerHands.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Lightning Bolt");
+        harness.handleListChoice(player2, "Incinerate");
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player2.getId())).anyMatch(c -> c.getId().equals(topCard.getId()));
@@ -59,13 +62,13 @@ class VexingArcanixTest extends BaseCardTest {
         addReadyArcanix(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        Card topCard = createNamedCard("Grizzly Bears");
-        gd.playerDecks.get(player2.getId()).addFirst(topCard);
+        Card topCard = new Incinerate();
+        harness.setLibrary(player2, List.of(topCard));
         int handBefore = gd.playerHands.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Lightning Bolt");
+        harness.handleListChoice(player2, "Vexing Arcanix");
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getId().equals(topCard.getId()));
@@ -80,32 +83,40 @@ class VexingArcanixTest extends BaseCardTest {
         addReadyArcanix(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
         int handBefore = gd.playerHands.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Lightning Bolt");
+        harness.handleListChoice(player2, "Vexing Arcanix");
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private Permanent addReadyArcanix(Player player) {
-        VexingArcanix card = new VexingArcanix();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("A miss still deals damage if the source leaves before the name is chosen")
+    void missDealsDamageAfterSourceLeavesBattlefield() {
+        harness.setLife(player2, 20);
+        Permanent arcanix = addReadyArcanix(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        Card topCard = new Incinerate();
+        harness.setLibrary(player2, List.of(topCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(arcanix);
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "Vexing Arcanix");
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getId().equals(topCard.getId()));
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    private static Card createNamedCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.RED);
-        return card;
+    private Permanent addReadyArcanix(Player player) {
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new VexingArcanix());
+        perm.setSummoningSick(false);
+        return perm;
     }
 }

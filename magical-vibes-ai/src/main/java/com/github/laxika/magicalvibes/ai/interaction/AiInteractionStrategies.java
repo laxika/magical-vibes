@@ -24,6 +24,9 @@ public final class AiInteractionStrategies {
         register(new HandBottomExileChoiceAiStrategy());
         register(new EcologicalAppreciationSearchChoiceAiStrategy());
         register(new EcologicalAppreciationOpponentChoiceAiStrategy());
+        register(new EmergentUltimatumSearchChoiceAiStrategy());
+        register(new EmergentUltimatumOpponentSelectionChoiceAiStrategy());
+        register(new EmergentUltimatumOpponentChoiceAiStrategy());
         register(new VerdantMasterySearchChoiceAiStrategy());
         register(new VerdantMasteryLandChoiceAiStrategy());
         register(new PutCardsFromHandOnLibraryCardChoiceAiStrategy());
@@ -63,6 +66,8 @@ public final class AiInteractionStrategies {
         register(new SearchLibraryAndOrGraveyardChoiceAiStrategy());
         register(new SearchLibraryToTopChoiceAiStrategy());
         register(new IntuitionSearchChoiceAiStrategy());
+        register(new TurtlesForeverSearchChoiceAiStrategy());
+        register(new TurtlesForeverOpponentChoiceAiStrategy());
         register(new GuidedPassageChoiceAiStrategy());
         register(new PermanentAuctionChoiceAiStrategy());
         register(new IllicitAuctionBidChoiceAiStrategy());
@@ -88,6 +93,7 @@ public final class AiInteractionStrategies {
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardExileCostChoiceAiStrategy());
+        register(new RemoveTimeCounterCostChoiceAiStrategy());
         register(new CraftMaterialChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
@@ -107,6 +113,7 @@ public final class AiInteractionStrategies {
         register(new PutCardFromHandOrGraveyardChoiceAiStrategy());
         register(new NivMizzetColorPairChoiceAiStrategy());
         register(new FaceUpExiledCardChoiceAiStrategy());
+        register(new ETBExiledCardTargetChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

@@ -34,6 +34,8 @@ public enum MultiTargetConstraint {
     CONTROLLED_BY_FIRST_TARGET,
     /** Every permanent chosen after the first must be attached to the first target. */
     ATTACHED_TO_FIRST_TARGET,
+    /** Every creature chosen after the first target must have been blocked by the first target this turn. */
+    BLOCKED_BY_FIRST_TARGET,
     /**
      * At most two of the chosen permanents may be creatures and at most two may be lands
      * ("Untap up to two target creatures and up to two target lands" — Nissa, Genesis Mage +2).
@@ -56,6 +58,8 @@ public enum MultiTargetConstraint {
     SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST,
     /** At most one selected card may be assigned to each color. */
     AT_MOST_ONE_PER_COLOR,
+    /** The chosen graveyard cards must have different mana values. */
+    DIFFERENT_MANA_VALUES,
     /** The chosen targets must have different names. */
     DIFFERENT_NAMES
 }

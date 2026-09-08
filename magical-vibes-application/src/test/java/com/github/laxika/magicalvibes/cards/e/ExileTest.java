@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TundraWolves;
+import com.github.laxika.magicalvibes.cards.v.VitoThornOfTheDuskRose;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Exile.class, GrizzlyBears.class, TundraWolves.class, VitoThornOfTheDuskRose.class})
 class ExileTest extends BaseCardTest {
 
     private void castExile(UUID targetId) {
@@ -74,10 +76,26 @@ class ExileTest extends BaseCardTest {
     }
 
     @Test
+    void exilesTargetBeforeLifeGainTriggers() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+        Permanent attacker = addAttacker(player2, new VitoThornOfTheDuskRose());
+
+        castExile(attacker.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof VitoThornOfTheDuskRose);
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(13);
+        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Cannot target a white attacking creature")
     void cannotTargetWhiteAttackingCreature() {
         addAttacker(player2, new GrizzlyBears()); // valid nonwhite target elsewhere so spell is playable
-        Permanent whiteAttacker = addAttacker(player1, new EliteVanguard());
+        Permanent whiteAttacker = addAttacker(player1, new TundraWolves());
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

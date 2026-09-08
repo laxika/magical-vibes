@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IvoryCup;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Seeker.class, GrizzlyBears.class, SavannahLions.class, Ornithopter.class, IvoryCup.class})
 class SeekerTest extends BaseCardTest {
 
     @Test
@@ -23,9 +24,7 @@ class SeekerTest extends BaseCardTest {
     void cannotBeBlockedByOrdinaryCreature() {
         enchantedAttacker();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
@@ -39,9 +38,7 @@ class SeekerTest extends BaseCardTest {
     void canBeBlockedByWhiteCreature() {
         enchantedAttacker();
 
-        Permanent vanguard = new Permanent(new EliteVanguard());
-        vanguard.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(vanguard);
+        Permanent vanguard = addCreatureReady(player2, new SavannahLions());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -54,9 +51,7 @@ class SeekerTest extends BaseCardTest {
     void canBeBlockedByArtifactCreature() {
         enchantedAttacker();
 
-        Permanent thopter = new Permanent(new Ornithopter());
-        thopter.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(thopter);
+        Permanent thopter = addCreatureReady(player2, new Ornithopter());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -68,11 +63,11 @@ class SeekerTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent with Seeker")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new IvoryCup());
         harness.setHand(player1, List.of(new Seeker()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Ivory Cup");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -80,13 +75,10 @@ class SeekerTest extends BaseCardTest {
     }
 
     private void enchantedAttacker() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent aura = new Permanent(new Seeker());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Seeker());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
     }
 }

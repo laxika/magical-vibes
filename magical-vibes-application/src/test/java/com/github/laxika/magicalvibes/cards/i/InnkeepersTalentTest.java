@@ -55,12 +55,12 @@ class InnkeepersTalentTest extends BaseCardTest {
         levelUp(talent, 1, 3);
         Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player2);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new BurstOfStrength()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.castInstant(player2, 0, opponentBears.getId());
+        harness.setHand(player1, List.of(new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, opponentBears.getId());
         harness.passBothPriorities();
 
         assertThat(opponentBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -73,12 +73,12 @@ class InnkeepersTalentTest extends BaseCardTest {
         levelUp(talent, 0, 0);
         levelUp(talent, 1, 3);
 
-        harness.forceActivePlayer(player2);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new IchorRats()));
-        harness.addMana(player2, ManaColor.BLACK, 3);
-        harness.castCreature(player2, 0);
+        harness.setHand(player1, List.of(new IchorRats()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 

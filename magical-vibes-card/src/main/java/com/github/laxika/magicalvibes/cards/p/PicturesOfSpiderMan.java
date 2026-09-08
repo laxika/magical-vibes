@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "109")
+@CardRegistration(set = "OM1", collectorNumber = "99")
 public class PicturesOfSpiderMan extends Card {
 
     public PicturesOfSpiderMan() {

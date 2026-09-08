@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
@@ -36,10 +37,12 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -120,6 +123,26 @@ class ActivatedAbilityExecutionServiceTest {
     private UUID player1Id;
     private UUID player2Id;
 
+    @Test
+    void restrictedManaBatchRequestsOneColorForTheEntireAmount() {
+        Permanent permanent = addReadyPermanent(player1Id, createCard("Mana creature", CardType.CREATURE));
+        var effect = new com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect(
+                List.of(ManaColor.RED, ManaColor.GREEN), new Fixed(2),
+                new ManaRestriction.TurnPermanentsFaceUp(), true);
+        List<CardEffect> effects = List.of(effect);
+        ActivatedAbility ability = new ActivatedAbility(true, null, effects, "Add two mana of one color.");
+        stubIsCreature(permanent, true);
+
+        service.completeActivationAfterCosts(gameData, player1, permanent, ability, effects,
+                0, null, null, false);
+
+        verify(interactionHandlerRegistry).begin(eq(gameData), argThat(interaction ->
+                interaction instanceof com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice choice
+                        && choice.context() instanceof com.github.laxika.magicalvibes.model.ChoiceContext.RestrictedManaColorChoice context
+                        && context.sameColor() && context.amount() == 2));
+        assertThat(gameData.stack).isEmpty();
+    }
+
     @BeforeEach
     void setUp() {
         player1Id = UUID.randomUUID();
@@ -153,7 +176,7 @@ class ActivatedAbilityExecutionServiceTest {
                 .thenAnswer(inv -> inv.getArgument(1) instanceof Fixed f ? f.value() : 0);
 
         // No Mana Reflection in these tests — every mana production is 1x.
-        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
+        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class), any(Permanent.class)))
                 .thenReturn(1);
         lenient().when(gameQueryService.lifeAfterDamage(eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(invocation -> gameData.getLife(invocation.getArgument(1))
@@ -297,7 +320,24 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects,
                     3, null, null, false);
 
-            verify(lifeSupport).applyLifeLoss(gameData, player1Id, 3, "Krumar Initiate");
+            verify(lifeSupport).applyLifePayment(gameData, player1Id, 3, "Krumar Initiate");
+            assertThat(gameData.stack).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Activated ability pays one life for each card in hand")
+        void payLifeForEachCardInHandCostPaysCurrentHandSize() {
+            Card card = createCard("Hand Cost Equipment", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerHands.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
+            List<CardEffect> effects = List.of(new PayLifeForEachCardInHandCost());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects,
+                    "Equip—Pay one life for each card in hand.");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects,
+                    0, null, null, false);
+
+            verify(lifeSupport).applyLifePayment(gameData, player1Id, 3, "Hand Cost Equipment");
             assertThat(gameData.stack).hasSize(1);
         }
 
@@ -387,6 +427,29 @@ class ActivatedAbilityExecutionServiceTest {
 
             verify(lifeSupport).applyGainLife(gameData, player1Id, 1, perm.getCard().getName(),
                     perm.getCard(), StackEntryType.ACTIVATED_ABILITY, player1Id);
+        }
+
+        @Test
+        @DisplayName("Opponent GainLifeEffect rider delegates to the opponent")
+        void opponentGainLifeEffectDelegatesToOpponent() {
+            Card card = createCard("Test Mana Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(
+                    new AwardManaEffect(ManaColor.RED, 1),
+                    new GainLifeEffect(new Fixed(1), GainLifeRecipient.OPPONENT));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}: Add {R}. An opponent gains 1 life.");
+
+            stubIsCreature(perm, false);
+            when(amountEvaluationService.evaluate(eq(gameData), eq(new Fixed(1)), any())).thenReturn(1);
+            when(gameQueryService.getOpponentId(gameData, player1Id)).thenReturn(player2Id);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(lifeSupport).applyGainLife(gameData, player2Id, 1, card.getName(), card,
+                    StackEntryType.ACTIVATED_ABILITY, player1Id);
+            verify(lifeSupport, never()).applyGainLife(gameData, player1Id, 1, card.getName(), card,
+                    StackEntryType.ACTIVATED_ABILITY, player1Id);
         }
 
         @Test
@@ -977,7 +1040,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            verify(permanentRemovalService).removePermanentToExile(gameData, perm);
+            verify(permanentRemovalService).removePermanentToExile(gameData, perm, null);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
 
@@ -998,6 +1061,29 @@ class ActivatedAbilityExecutionServiceTest {
                     .noneMatch(e -> e instanceof ExileSelfCost);
             assertThat(gameData.stack.getFirst().getEffectsToResolve())
                     .anyMatch(e -> e instanceof DrawCardEffect);
+        }
+    }
+
+    @Nested
+    @DisplayName("exile source equipment cost")
+    class ExileSourceEquipmentCostFlow {
+
+        @Test
+        @DisplayName("ExileSourceEquipmentCost exiles the granting Equipment")
+        void exileSourceEquipmentCostExilesGrantingEquipment() {
+            Permanent creature = addReadyPermanent(player1Id, createCreature("Equipped Creature"));
+            Permanent equipment = addReadyPermanent(player1Id, createCard("Test Equipment", CardType.ARTIFACT));
+            List<CardEffect> effects = List.of(new ExileSourceEquipmentCost(), new DrawCardEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects,
+                    "Exile the granting Equipment: draw a card").withGrantSource(equipment.getId());
+            when(gameQueryService.findPermanentById(gameData, equipment.getId())).thenReturn(equipment);
+
+            service.completeActivationAfterCosts(gameData, player1, creature, ability, effects,
+                    0, null, null, false);
+
+            verify(permanentRemovalService).removePermanentToExile(gameData, equipment);
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
+                    .noneMatch(e -> e instanceof ExileSourceEquipmentCost);
         }
     }
 

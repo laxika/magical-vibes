@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "23")
+@CardRegistration(set = "FDN", collectorNumber = "301")
+@CardRegistration(set = "FDN", collectorNumber = "370")
+@CardRegistration(set = "FDN", collectorNumber = "448")
 public class SkyknightSquire extends Card {
 
     public SkyknightSquire() {

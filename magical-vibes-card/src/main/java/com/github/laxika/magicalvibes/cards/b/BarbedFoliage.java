@@ -18,12 +18,12 @@ public class BarbedFoliage extends Card {
         // Whenever a creature attacks you, it loses flanking until end of turn.
         // The trigger's non-targeting targetId is the attacking creature, so GrantScope.TARGET
         // strips flanking from it without any target selection.
-        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU,
+        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
                 new RemoveKeywordEffect(Keyword.FLANKING, GrantScope.TARGET));
 
         // Whenever a creature without flying attacks you, this enchantment deals 1 damage to it.
         PermanentPredicate withoutFlying = new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING));
-        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU,
+        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
                 new DealDamageToTriggeringAttackerEffect(1, withoutFlying));
     }
 }

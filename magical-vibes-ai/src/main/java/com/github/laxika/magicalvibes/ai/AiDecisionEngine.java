@@ -496,7 +496,7 @@ public abstract class AiDecisionEngine {
 
     protected boolean tryPlayLand(GameData gameData) {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(aiPlayer.getId(), 0);
-        if (landsPlayed >= gameData.getMaxLandsThisTurn(aiPlayer.getId())) {
+        if (landsPlayed >= (gameData.getMaxLandsThisTurn(aiPlayer.getId()) + gameQueryService.getConditionalAdditionalLandPlays(gameData, aiPlayer.getId()))) {
             return false;
         }
 
@@ -2254,8 +2254,11 @@ public abstract class AiDecisionEngine {
         boolean canPay = cost.hasX()
                 ? cost.canPayWithAdditionalGenericCost(pool, xValue, costModifier - delveReduction)
                 : cost.canPay(pool, costModifier - delveReduction);
-        return canPay && (!card.isRequiresCreatureMana()
-                || cost.canPayCreatureOnly(pool, costModifier - delveReduction));
+        return canPay
+                && (!card.isRequiresCreatureMana()
+                || cost.canPayCreatureOnly(pool, costModifier - delveReduction))
+                && (!card.isRequiresBasicLandMana()
+                || cost.canPayBasicLandOnly(pool, xValue, costModifier - delveReduction));
     }
 
     /**
@@ -2700,10 +2703,15 @@ public abstract class AiDecisionEngine {
                     .count());
         }
         if (xScaledToHandEffect != null) {
-            maxX = Math.min(maxX, (int) graveyard.stream()
+            var matchingCards = graveyard.stream()
                     .filter(c -> predicateEvaluationService.matchesCardPredicate(
                             c, xScaledToHandEffect.filter(), card.getId()))
-                    .count());
+                    .toList();
+            int matchingCount = card.getMultiTargetConstraint()
+                    == com.github.laxika.magicalvibes.model.MultiTargetConstraint.DIFFERENT_MANA_VALUES
+                    ? (int) matchingCards.stream().map(Card::getManaValue).distinct().count()
+                    : matchingCards.size();
+            maxX = Math.min(maxX, matchingCount);
         }
         if (exactXGraveyardChoice != null) {
             maxX = Math.min(maxX,
@@ -3288,7 +3296,9 @@ public abstract class AiDecisionEngine {
         ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         return cost.canPay(virtualPool, costModifier)
-                && (!card.isRequiresCreatureMana() || cost.canPayCreatureOnly(virtualPool, costModifier));
+                && (!card.isRequiresCreatureMana() || cost.canPayCreatureOnly(virtualPool, costModifier))
+                && (!card.isRequiresBasicLandMana()
+                || cost.canPayBasicLandOnly(virtualPool, 0, costModifier));
     }
 
     /**
@@ -3692,7 +3702,9 @@ public abstract class AiDecisionEngine {
                     ? cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, remainingModifier)
                     : cost.canPay(pool, remainingModifier);
             if (canPay && (!card.isRequiresCreatureMana()
-                    || cost.canPayCreatureOnly(pool, remainingModifier))) {
+                    || cost.canPayCreatureOnly(pool, remainingModifier))
+                    && (!card.isRequiresBasicLandMana()
+                    || cost.canPayBasicLandOnly(pool, effectiveXValue, remainingModifier))) {
                 if (count == 0 || sacrificeAllowed) {
                     return new CostReductionPlan(
                             creatures.subList(0, count).stream().map(Permanent::getId).toList(), reduction);
@@ -3778,6 +3790,9 @@ public abstract class AiDecisionEngine {
         ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax - delveReduction - costReduction;
+        if (card.isRequiresBasicLandMana()) {
+            return manaManager.canPayBasicLandCost(gameData, aiPlayer.getId(), manaCost, costModifier);
+        }
         if (card.isRequiresCreatureMana()) {
             return manaManager.canPayCost(gameData, aiPlayer.getId(), cost, costModifier,
                     true, excludedPermanentIds);
@@ -3817,6 +3832,11 @@ public abstract class AiDecisionEngine {
         AiManaManager.ManaTapAction tap = manaTapAction();
         int stackSizeBeforePayment = gameData.stack.size();
 
+        if (card.isRequiresBasicLandMana()) {
+            manaManager.tapBasicLandsForCostExcluding(gameData, aiPlayer.getId(), manaCost,
+                    costModifier, tap, excludedPermanentIds);
+            return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
+        }
         if (card.isRequiresCreatureMana()) {
             manaManager.tapCreaturesForCostExcluding(gameData, aiPlayer.getId(), cost,
                     costModifier, tap, excludedPermanentIds);

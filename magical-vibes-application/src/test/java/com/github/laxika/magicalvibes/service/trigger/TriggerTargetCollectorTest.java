@@ -241,6 +241,27 @@ class TriggerTargetCollectorTest {
     }
 
     @Test
+    @DisplayName("DEATH option with a controlled land filter allows non-creature targets")
+    void deathControlledLandFilterAllowsNonCreatures() {
+        Permanent noncreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(noncreature);
+        lenient().when(gameQueryService.isCreature(gd, noncreature)).thenReturn(false);
+        lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                        any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenReturn(true);
+
+        lenient().when(predicateEvaluationService.matchesFilters(
+                eq(noncreature), anySet(), any(FilterContext.class))).thenReturn(true);
+        TargetFilter filter = TargetFilters.landYouControl();
+        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, filter, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
+
+        assertThat(result.validTargets()).contains(noncreature.getId());
+    }
+
+    @Test
     @DisplayName("ATTACK any-target excludes lands (creature / planeswalker / player only)")
     void attackAnyTargetExcludesLands() {
         Permanent creature = new Permanent(new Card());

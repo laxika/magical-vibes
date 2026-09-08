@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PrimitiveJustice.class, GrizzlyBears.class, Ornithopter.class})
 class PrimitiveJusticeTest extends BaseCardTest {
 
     @Test
@@ -95,6 +97,40 @@ class PrimitiveJusticeTest extends BaseCardTest {
 
         List<UUID> twoTargets = List.of(a1.getId(), a2.getId());
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, twoTargets))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Must choose the base artifact target even without additional payments")
+    void requiresBaseArtifactTarget() {
+        harness.setHand(player1, List.of(new PrimitiveJustice()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithRepeatedCosts(player1, 0, List.of(), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Must choose one additional artifact target for each additional payment")
+    void requiresTargetForEachAdditionalPayment() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new PrimitiveJustice()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorceryWithRepeatedCosts(player1, 0, List.of("{1}{R}"),
+                List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target the same artifact more than once")
+    void cannotTargetSameArtifactMoreThanOnce() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new PrimitiveJustice()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorceryWithRepeatedCosts(player1, 0, List.of("{1}{R}"),
+                List.of(artifact.getId(), artifact.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "81")
+@CardRegistration(set = "FDN", collectorNumber = "360")
+@CardRegistration(set = "FDN", collectorNumber = "420")
 public class ChandraFlameshaper extends Card {
 
     public ChandraFlameshaper() {

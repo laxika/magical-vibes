@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "160")
+@CardRegistration(set = "FDN", collectorNumber = "311")
+@CardRegistration(set = "SNC", collectorNumber = "51")
 public class AnOfferYouCantRefuse extends Card {
 
     public AnOfferYouCantRefuse() {

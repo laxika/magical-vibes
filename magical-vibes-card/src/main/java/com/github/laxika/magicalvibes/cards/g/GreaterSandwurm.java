@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 
 @CardRegistration(set = "AKH", collectorNumber = "168")
 @CardRegistration(set = "AKR", collectorNumber = "192")
+@CardRegistration(set = "IKO", collectorNumber = "157")
 public class GreaterSandwurm extends Card {
 
     public GreaterSandwurm() {

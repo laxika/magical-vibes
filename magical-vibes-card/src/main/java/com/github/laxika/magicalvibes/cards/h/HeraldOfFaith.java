@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M19", collectorNumber = "13")
+@CardRegistration(set = "FDN", collectorNumber = "494")
 public class HeraldOfFaith extends Card {
 
     public HeraldOfFaith() {

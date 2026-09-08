@@ -12,12 +12,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BottomlessVault.class})
 class BottomlessVaultTest extends BaseCardTest {
-
-    // ===== Enters tapped =====
-
     @Test
     @DisplayName("Bottomless Vault enters the battlefield tapped")
     void entersTapped() {
@@ -29,9 +27,6 @@ class BottomlessVaultTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Bottomless Vault").isTapped()).isTrue();
     }
-
-    // ===== Upkeep storage-counter accrual =====
-
     @Test
     @DisplayName("Upkeep adds a storage counter while the land is tapped")
     void upkeepAddsStorageCounterWhileTapped() {
@@ -99,9 +94,6 @@ class BottomlessVaultTest extends BaseCardTest {
 
         assertThat(vault.getCounterCount(CounterType.STORAGE)).isZero();
     }
-
-    // ===== Mana ability =====
-
     @Test
     @DisplayName("Removing all storage counters adds that much black mana")
     void removingAllCountersAddsThatMuchBlack() {
@@ -152,8 +144,16 @@ class BottomlessVaultTest extends BaseCardTest {
         assertThat(vault.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The mana ability cannot be activated while Bottomless Vault is tapped")
+    void cannotActivateManaAbilityWhileTapped() {
+        Permanent vault = addVaultWithCounters(3);
+        vault.tap();
 
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
     private void beginPlayer1UntapChoice() {
         harness.forceActivePlayer(player2);
         harness.setHand(player1, List.of());

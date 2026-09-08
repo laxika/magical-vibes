@@ -12,12 +12,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(SandSilos.class)
 class SandSilosTest extends BaseCardTest {
-
-    // ===== Enters tapped =====
-
     @Test
     @DisplayName("Sand Silos enters the battlefield tapped")
     void entersTapped() {
@@ -29,9 +27,6 @@ class SandSilosTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Sand Silos").isTapped()).isTrue();
     }
-
-    // ===== Upkeep storage-counter accrual =====
-
     @Test
     @DisplayName("Upkeep adds a storage counter while the land is tapped")
     void upkeepAddsStorageCounterWhileTapped() {
@@ -99,9 +94,6 @@ class SandSilosTest extends BaseCardTest {
 
         assertThat(silos.getCounterCount(CounterType.STORAGE)).isZero();
     }
-
-    // ===== Mana ability =====
-
     @Test
     @DisplayName("Removing all storage counters adds that much blue mana")
     void removingAllCountersAddsThatMuchBlue() {
@@ -125,6 +117,20 @@ class SandSilosTest extends BaseCardTest {
 
         assertThat(blueMana()).isEqualTo(1);
         assertThat(silos.getCounterCount(CounterType.STORAGE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing storage counters leaves other counter types untouched")
+    void removingStorageCountersLeavesOtherCounterTypesUntouched() {
+        Permanent silos = addSilosWithCounters(2);
+        silos.setCounterCount(CounterType.CHARGE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "1");
+
+        assertThat(blueMana()).isEqualTo(1);
+        assertThat(silos.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(silos.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -152,8 +158,16 @@ class SandSilosTest extends BaseCardTest {
         assertThat(silos.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The mana ability cannot be activated while Sand Silos is tapped")
+    void cannotActivateManaAbilityWhileTapped() {
+        Permanent silos = addSilosWithCounters(3);
+        silos.tap();
 
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
     private void beginPlayer1UntapChoice() {
         harness.forceActivePlayer(player2);
         harness.setHand(player1, List.of());

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "36")
+@CardRegistration(set = "OM1", collectorNumber = "36")
 public class MadameWebClairvoyant extends Card {
 
     public MadameWebClairvoyant() {

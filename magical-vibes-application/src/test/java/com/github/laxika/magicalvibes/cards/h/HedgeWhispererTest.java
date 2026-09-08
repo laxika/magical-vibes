@@ -76,6 +76,9 @@ class HedgeWhispererTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, forest)).doesNotContain(CardColor.GREEN);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, forest))
+                .doesNotContain(CardSubtype.PLANT, CardSubtype.BOAR);
     }
 
     @Test

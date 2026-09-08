@@ -5,9 +5,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({CryptRats.class, GrizzlyBears.class})
 class CryptRatsTest extends BaseCardTest {
 
     @Test
@@ -29,10 +33,21 @@ class CryptRatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot spend nonblack mana on X")
+    void cannotSpendNonblackManaOnX() {
+        addCryptRats(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
     @DisplayName("X=0 deals no damage and kills nothing")
     void zeroDamageDoesNothing() {
         addCryptRats(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
@@ -46,8 +61,6 @@ class CryptRatsTest extends BaseCardTest {
     }
 
     private Permanent addCryptRats(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new CryptRats());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new CryptRats());
     }
 }

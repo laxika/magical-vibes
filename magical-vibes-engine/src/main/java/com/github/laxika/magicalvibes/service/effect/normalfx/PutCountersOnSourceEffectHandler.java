@@ -53,7 +53,7 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
             if (amount <= 0) return;
             source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
             permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, amount);
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source, entry.getControllerId());
         } else if (plusZeroPlusOne) {
             amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ZERO_PLUS_ONE,
                     amount, entry.getControllerId());
@@ -71,6 +71,10 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
         gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets " + amount + " " + counterLabel + " counter(s).").build());
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), amount, counterLabel);
         permanentCounterSupport.recordCounterPlacedOnCreature(gameData, source, entry.getControllerId());
+        if (e.powerModifier() > 0) {
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                    gameData, source, entry.getControllerId());
+        }
 
         if (e.powerModifier() > 0) {
             permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(

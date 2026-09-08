@@ -55,7 +55,7 @@ public class EachPlayerRevealsTopCardLosesLifeEqualToManaValueThenToHandEffectHa
                 lifeSupport.applyLifeLoss(gameData, playerId, manaValue, sourceName);
             }
 
-            gameData.playerHands.get(playerId).add(topCard);
+            gameData.addCardToHand(playerId, topCard);
 
             log.info("Game {} - {} reveals {} (MV {}) and puts it into hand via {}",
                     gameData.id, playerName, topCard.getName(), manaValue, sourceName);

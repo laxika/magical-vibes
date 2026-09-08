@@ -504,6 +504,7 @@ foreach ($set in $setList) {
         base       = $baseSize
         total      = $total
         impl       = $implementedCount
+        missing    = [Math]::Max(0, $total - $implementedCount)
         supported  = [bool] $supportedLookup.ContainsKey($code)
         onlineOnly = [bool] $set.isOnlineOnly
     })
@@ -514,15 +515,17 @@ foreach ($set in $setList) {
 foreach ($code in $implemented.SetCounts.Keys) {
     if (-not $seenCodes.ContainsKey($code)) {
         Write-Warning "Set code '$code' has $($implemented.SetCounts[$code]) implemented printings but is not in the MTGJSON set list."
+        $count = $implemented.SetCounts[$code]
         $sets.Add([pscustomobject][ordered]@{
             code       = $code
             name       = $code
             released   = ""
             type       = "unknown"
             keyrune    = ""
-            base       = $implemented.SetCounts[$code]
-            total      = $implemented.SetCounts[$code]
-            impl       = $implemented.SetCounts[$code]
+            base       = $count
+            total      = $count
+            impl       = $count
+            missing    = 0
             supported  = [bool] $supportedLookup.ContainsKey($code)
             onlineOnly = $false
         })
@@ -535,11 +538,8 @@ $supportedImpl = ($supportedSets | Measure-Object -Property impl -Sum).Sum
 if (-not $supportedTotal) { $supportedTotal = 0 }
 if (-not $supportedImpl) { $supportedImpl = 0 }
 
-$missingInSupported = 0
-foreach ($set in $supportedSets) {
-    $gap = $set.total - $set.impl
-    if ($gap -gt 0) { $missingInSupported += $gap }
-}
+$missingInSupported = ($supportedSets | Measure-Object -Property missing -Sum).Sum
+if (-not $missingInSupported) { $missingInSupported = 0 }
 
 # $sets now holds exactly the tracked universe, so the headline figures and the table always
 # describe the same thing.
@@ -549,6 +549,11 @@ $startedSets = @($sets | Where-Object { $_.impl -gt 0 }).Count
 $printingsInMagic = ($sets | Measure-Object -Property total -Sum).Sum
 if (-not $printingsInMagic) { $printingsInMagic = 0 }
 $missingPrintings = [Math]::Max(0, $printingsInMagic - $implemented.TotalPrintings)
+$missingUniqueCards = if ($uniqueCardNamesInMagic -gt 0) {
+    [Math]::Max(0, $uniqueCardNamesInMagic - $implemented.UniqueCards)
+} else {
+    $null
+}
 
 $payload = [ordered]@{
     generated = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm 'UTC'")
@@ -566,6 +571,7 @@ $payload = [ordered]@{
         uniqueCardsInMagic = $uniqueCardNamesInMagic
         printingsInMagic   = $printingsInMagic
         missingPrintings   = $missingPrintings
+        missingUniqueCards = $missingUniqueCards
     }
     sets      = @($sets)
 }
@@ -738,6 +744,60 @@ body {
 
 .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 
+.type-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(196, 168, 130, 0.55);
+}
+
+.type-filters-label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--color-text-brown);
+  margin-right: 2px;
+}
+
+.type-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--color-text-brown);
+  cursor: pointer;
+  user-select: none;
+}
+
+.type-filter input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--meter-fill);
+  cursor: pointer;
+}
+
+.type-filter-action {
+  padding: 2px 8px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-text-brown);
+  background: transparent;
+  border: 1px solid var(--color-border-tan);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.type-filter-action:hover { background: rgba(92, 58, 46, 0.09); }
+
 .search {
   flex: 1;
   min-width: 190px;
@@ -848,6 +908,7 @@ tbody tr:last-child td { border-bottom: none; }
 .col-rel { width: 96px; }
 .col-meter { width: 168px; }
 .col-count { width: 104px; }
+.col-missing { width: 72px; }
 .col-pct { width: 58px; }
 
 .ss { font-size: 19px; color: #4a3323; }
@@ -941,8 +1002,10 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
         <option value="oldest">Oldest first</option>
         <option value="name">Name (A&ndash;Z)</option>
         <option value="size">Largest set</option>
+        <option value="missing">Most missing</option>
       </select>
     </div>
+    <div class="type-filters" id="type-filters" role="group" aria-label="Filter by set type"></div>
   </section>
 
   <section class="panel">
@@ -957,12 +1020,13 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
           <th class="col-rel" scope="col">Released</th>
           <th class="col-meter" scope="col">Progress</th>
           <th class="col-count num" scope="col">Cards</th>
+          <th class="col-missing num" scope="col">Missing</th>
           <th class="col-pct num" scope="col">%</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
     </table>
-    <div class="empty-state" id="empty-state" hidden>No sets match that search.</div>
+    <div class="empty-state" id="empty-state" hidden>No sets match these filters.</div>
   </section>
 
   <footer>
@@ -1030,7 +1094,9 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
     var overall = T.supportedTotal ? (T.supportedImpl / T.supportedTotal) * 100 : 0;
     document.getElementById("hero-value").textContent = overall.toFixed(1) + "%";
 
-    var missingUnique = Math.max(0, T.uniqueCardsInMagic - T.uniqueCards);
+    var missingUnique = T.missingUniqueCards != null
+      ? T.missingUniqueCards
+      : Math.max(0, T.uniqueCardsInMagic - T.uniqueCards);
 
     // Every tile is the same shape: how much of `whole` is implemented. Deliberately no
     // tile counts what is *missing* as its figure -- a near-full bar on a "missing" tile
@@ -1084,7 +1150,50 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
     }).join("");
   }
 
-  var state = { filter: "all", search: "", sort: "impl" };
+  var state = { filter: "all", search: "", sort: "impl", types: {} };
+
+  function presentTypes() {
+    var seen = {};
+    SETS.forEach(function (set) { seen[set.type || "unknown"] = true; });
+    return Object.keys(seen).sort(function (a, b) {
+      return (TYPE_LABELS[a] || a).localeCompare(TYPE_LABELS[b] || b);
+    });
+  }
+
+  presentTypes().forEach(function (type) { state.types[type] = true; });
+
+  function setAllTypes(enabled) {
+    presentTypes().forEach(function (type) { state.types[type] = enabled; });
+    Array.prototype.forEach.call(document.querySelectorAll("#type-filters input[type=checkbox]"), function (box) {
+      box.checked = enabled;
+    });
+    render();
+  }
+
+  function renderTypeFilters() {
+    var html = '<span class="type-filters-label">Type</span>';
+    html += presentTypes().map(function (type) {
+      var id = "type-" + type;
+      var label = TYPE_LABELS[type] || type;
+      return '<label class="type-filter" for="' + escapeHtml(id) + '">' +
+        '<input type="checkbox" id="' + escapeHtml(id) + '" data-type="' + escapeHtml(type) + '"' +
+        (state.types[type] ? " checked" : "") + ">" +
+        escapeHtml(label) +
+        "</label>";
+    }).join("");
+    html += '<button type="button" class="type-filter-action" id="types-all">All</button>';
+    html += '<button type="button" class="type-filter-action" id="types-none">None</button>';
+    document.getElementById("type-filters").innerHTML = html;
+
+    Array.prototype.forEach.call(document.querySelectorAll("#type-filters input[type=checkbox]"), function (box) {
+      box.addEventListener("change", function () {
+        state.types[box.dataset.type] = box.checked;
+        render();
+      });
+    });
+    document.getElementById("types-all").addEventListener("click", function () { setAllTypes(true); });
+    document.getElementById("types-none").addEventListener("click", function () { setAllTypes(false); });
+  }
 
   function isComplete(set) {
     return set.total > 0 && set.impl >= set.total;
@@ -1097,6 +1206,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
     if (state.filter === "full" && !(set.supported && isComplete(set))) { return false; }
     // Started but not finished: at least one printing implemented, and the set is not complete.
     if (state.filter === "started" && (set.impl === 0 || isComplete(set))) { return false; }
+    if (!state.types[set.type || "unknown"]) { return false; }
 
     if (state.search) {
       var needle = state.search.toLowerCase();
@@ -1114,7 +1224,8 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
     released: function (a, b) { return (b.released || "").localeCompare(a.released || "") || a.name.localeCompare(b.name); },
     oldest: function (a, b) { return (a.released || "9999").localeCompare(b.released || "9999") || a.name.localeCompare(b.name); },
     name: function (a, b) { return a.name.localeCompare(b.name); },
-    size: function (a, b) { return b.total - a.total || a.name.localeCompare(b.name); }
+    size: function (a, b) { return b.total - a.total || a.name.localeCompare(b.name); },
+    missing: function (a, b) { return b.missing - a.missing || b.total - a.total || a.name.localeCompare(b.name); }
   };
 
   function rowHtml(set) {
@@ -1123,6 +1234,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
     var symbol = set.keyrune ? '<i class="ss ss-' + escapeHtml(set.keyrune) + '" aria-hidden="true"></i>' : "";
     var badge = set.supported ? '<span class="badge">Supported</span>' : "";
     var pctText = set.impl === 0 ? "0%" : (pct >= 99.95 ? "100%" : pct.toFixed(0) + "%");
+    var missingClass = set.missing === 0 ? " zero" : "";
 
     return "<tr>" +
       '<td class="col-sym">' + symbol + "</td>" +
@@ -1132,6 +1244,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
       '<td class="col-rel rel">' + escapeHtml(set.released || "\u2014") + "</td>" +
       '<td class="col-meter"><div class="meter"><div class="' + fillClass + '" style="width:' + pct.toFixed(1) + '%"></div></div></td>' +
       '<td class="col-count num">' + fmt(set.impl) + " / " + fmt(set.total) + "</td>" +
+      '<td class="col-missing num"><span class="pct' + missingClass + '">' + fmt(set.missing) + "</span></td>" +
       '<td class="col-pct num"><span class="pct' + (set.impl === 0 ? " zero" : "") + '">' + pctText + "</span></td>" +
       "</tr>";
   }
@@ -1143,8 +1256,10 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
     document.getElementById("empty-state").hidden = visible.length > 0;
 
     var shown = visible.reduce(function (acc, set) { return acc + set.impl; }, 0);
+    var missing = visible.reduce(function (acc, set) { return acc + set.missing; }, 0);
     document.getElementById("table-caption").textContent =
-      fmt(visible.length) + " sets shown \u00b7 " + fmt(shown) + " implemented printings";
+      fmt(visible.length) + " sets shown \u00b7 " + fmt(shown) +
+      " implemented printings \u00b7 " + fmt(missing) + " missing";
   }
 
   document.getElementById("search").addEventListener("input", function (event) {
@@ -1171,6 +1286,7 @@ footer strong { color: var(--color-border-tan); font-weight: 600; }
     "Generated " + DATA.generated + " \u00b7 " + fmt(T.faceOnlyClasses) +
     " additional classes implement the back faces of transforming cards and have no printing of their own.";
 
+  renderTypeFilters();
   renderTiles();
   render();
 })();
@@ -1194,6 +1310,10 @@ Write-Host ""
 Write-Host "Wrote $OutputPath ($sizeKb KB)"
 Write-Host ("  {0} unique cards, {1} printings" -f `
     $implemented.UniqueCards, $implemented.TotalPrintings)
+if ($null -ne $missingUniqueCards) {
+    Write-Host ("  {0} unique cards still missing (of {1} in Magic)" -f `
+        $missingUniqueCards, $uniqueCardNamesInMagic)
+}
 Write-Host ("  {0}/{1} printings across {2} supported sets ({3:N1}%)" -f `
     $supportedImpl, $supportedTotal, $supportedSets.Count,
     $(if ($supportedTotal) { ($supportedImpl / $supportedTotal) * 100 } else { 0 }))

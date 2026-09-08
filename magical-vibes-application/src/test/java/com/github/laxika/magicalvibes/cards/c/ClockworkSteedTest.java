@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -102,6 +103,18 @@ class ClockworkSteedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Upkeep ability can be activated with X equal to zero")
+    void upkeepAbilityAllowsZero() {
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
+        steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 2);
+
+        activateUpkeepAbility(0);
+
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(2);
+        assertThat(steed.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Upkeep ability cannot be activated outside your upkeep")
     void cannotActivateOutsideUpkeep() {
         addCreatureReady(player1, new ClockworkSteed());
@@ -139,7 +152,7 @@ class ClockworkSteedTest extends BaseCardTest {
         steed.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(steed);
 
-        Permanent blocker = addCreatureReady(player2, new ClockworkGnomes());
+        addCreatureReady(player2, new ClockworkGnomes());
 
         prepareDeclareBlockers();
 
@@ -173,6 +186,10 @@ class ClockworkSteedTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, x, null);
         harness.passBothPriorities();
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (choice != null) {
+            harness.handleListChoice(player1, choice.options().getLast());
+        }
     }
 
     private void leaveEndOfCombat() {

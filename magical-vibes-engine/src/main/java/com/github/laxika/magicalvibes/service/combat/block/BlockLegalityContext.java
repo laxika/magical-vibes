@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.service.combat.block;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedBlockPermissionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -37,7 +38,7 @@ public final class BlockLegalityContext {
     /** The defending player's battlefield; empty rather than {@code null} when there is none. */
     final List<Permanent> defenderBattlefield;
 
-    /** Board-wide "X can't block Y" statics (e.g. Boldwyr Intimidator), collected once. */
+    /** Board-wide "X can't block Y" restrictions, collected once. */
     final List<GlobalBlockRestriction> globalBlockRestrictions;
 
     /** Board-wide "creatures matching X can't attack or block" statics, collected once. */
@@ -53,14 +54,17 @@ public final class BlockLegalityContext {
      */
     final Map<UUID, List<Permanent>> attachedByHostId;
 
-    /** Union of printed card subtypes on the defender battlefield, for landwalk checks. */
+    /** Union of card subtypes and effective basic land types on the defender battlefield. */
     final Set<CardSubtype> defenderCardSubtypes;
 
-    /**
-     * True while a permanent on the board switches landwalk off (Staff of the Ages): landwalk
-     * abilities (CR 702.14a) are ignored when checking blocks, everything else still applies.
-     */
-    final boolean landwalkIgnored;
+    /** Landwalk keywords specifically ignored by board-wide static effects. */
+    final Set<Keyword> ignoredLandwalkKeywords;
+
+    /** True while a permanent switches off every landwalk ability. */
+    final boolean allLandwalkIgnored;
+
+    /** Permanents whose landwalk abilities are ignored until the corresponding floating effect expires. */
+    final Set<UUID> landwalkIgnoredPermanentIds;
 
     final Map<UUID, AttackerFacts> attackerFacts = new HashMap<>();
     final Map<UUID, BlockerFacts> blockerFacts = new HashMap<>();
@@ -79,7 +83,9 @@ public final class BlockLegalityContext {
                          List<TappedBlockPermission> tappedBlockPermissions,
                          Map<UUID, List<Permanent>> attachedByHostId,
                          Set<CardSubtype> defenderCardSubtypes,
-                         boolean landwalkIgnored) {
+                         Set<Keyword> ignoredLandwalkKeywords,
+                         boolean allLandwalkIgnored,
+                         Set<UUID> landwalkIgnoredPermanentIds) {
         this.gameData = gameData;
         this.defenderBattlefield = defenderBattlefield;
         this.globalBlockRestrictions = globalBlockRestrictions;
@@ -87,7 +93,9 @@ public final class BlockLegalityContext {
         this.tappedBlockPermissions = tappedBlockPermissions;
         this.attachedByHostId = attachedByHostId;
         this.defenderCardSubtypes = defenderCardSubtypes;
-        this.landwalkIgnored = landwalkIgnored;
+        this.ignoredLandwalkKeywords = ignoredLandwalkKeywords;
+        this.allLandwalkIgnored = allLandwalkIgnored;
+        this.landwalkIgnoredPermanentIds = landwalkIgnoredPermanentIds;
     }
 
     /** The attached permanents on {@code host}, or an empty list when it has none. */
@@ -101,7 +109,7 @@ public final class BlockLegalityContext {
      * controller-relative (Bower Passage: "creatures you control"), so both are evaluated against the
      * source's controller rather than bare game data.
      */
-    record GlobalBlockRestriction(MatchingCreaturesCantBlockMatchingCreaturesEffect effect,
+    record GlobalBlockRestriction(BlockingRestrictionEffect effect,
                                   FilterContext filterContext) {
     }
 
@@ -118,6 +126,10 @@ public final class BlockLegalityContext {
      * with the source controller context used to evaluate that predicate.
      */
     record TappedBlockPermission(TappedBlockPermissionEffect effect, FilterContext filterContext) {
+    }
+
+    /** One attacker-side restriction and the permanent whose static ability imposes it. */
+    record AttackerRestriction(Permanent source, BlockabilityRestrictionEffect effect) {
     }
 
     /**
@@ -140,7 +152,7 @@ public final class BlockLegalityContext {
                          boolean cantBeBlockedByLessPower,
                          boolean cantBeBlockedByPowerLessThanIslandCount,
                          Set<CardColor> colors,
-                         List<BlockabilityRestrictionEffect> pairRestrictions,
+                         List<AttackerRestriction> pairRestrictions,
                          BlockDenial landwalkDenial,
                          boolean landwalkUnblockable,
                          boolean unblockableForOtherReason) {
@@ -163,6 +175,7 @@ public final class BlockLegalityContext {
                         boolean shadow,
                         boolean blocksShadowAsThoughShadow,
                         boolean blocksLandwalkAsThoughNoLandwalk,
+                        List<PermanentPredicate> blocksAsThoughReachForAttackers,
                         boolean artifact,
                         Set<CardColor> colors,
                         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions,

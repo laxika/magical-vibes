@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "118")
 @CardRegistration(set = "SPM", collectorNumber = "267")
+@CardRegistration(set = "OM1", collectorNumber = "116")
 public class StrengthOfWill extends Card {
 
     public StrengthOfWill() {

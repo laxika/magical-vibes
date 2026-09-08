@@ -20,7 +20,12 @@ public class DamagePreventionReplacementSupport {
     private final PermanentCounterSupport permanentCounterSupport;
 
     public int preventDamageToControllerAndPutCounterOnSelf(GameData gameData, UUID playerId, int damage) {
-        if (damage <= 0 || !gameQueryService.isDamagePreventable(gameData)) return 0;
+        return preventDamageToControllerAndPutCounterOnSelf(gameData, playerId, damage, false);
+    }
+
+    public int preventDamageToControllerAndPutCounterOnSelf(GameData gameData, UUID playerId, int damage,
+                                                             boolean combatDamage) {
+        if (damage <= 0 || !gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;

@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.e.EkunduGriffin;
+import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +18,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DivineRetribution.class, EkunduGriffin.class, FemerefScouts.class})
 class DivineRetributionTest extends BaseCardTest {
 
-    private Permanent addAttacker(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent attacker = new Permanent(card);
-        attacker.setSummoningSick(false);
+    private Permanent addAttacker(Card card) {
+        Permanent attacker = addCreatureReady(player1, card);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
@@ -38,9 +38,9 @@ class DivineRetributionTest extends BaseCardTest {
     @Test
     @DisplayName("Deals damage equal to the number of attacking creatures")
     void dealsDamageEqualToAttackerCount() {
-        Permanent target = addAttacker(new AvatarOfMight());
-        addAttacker(new GrizzlyBears());
-        addAttacker(new GrizzlyBears());
+        Permanent target = addAttacker(new FemerefScouts());
+        addAttacker(new FemerefScouts());
+        addAttacker(new FemerefScouts());
 
         prepareCast();
         harness.castInstant(player2, 0, target.getId());
@@ -53,35 +53,35 @@ class DivineRetributionTest extends BaseCardTest {
     @Test
     @DisplayName("A lone attacker takes only 1 damage and survives")
     void loneAttackerTakesOneDamage() {
-        Permanent target = addAttacker(new GrizzlyBears());
+        Permanent target = addAttacker(new FemerefScouts());
 
         prepareCast();
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Femeref Scouts");
     }
 
     @Test
     @DisplayName("Lethal damage destroys the attacking creature")
     void lethalDamageDestroysAttacker() {
-        Permanent target = addAttacker(new GrizzlyBears());
-        addAttacker(new GrizzlyBears());
+        Permanent target = addAttacker(new EkunduGriffin());
+        addAttacker(new FemerefScouts());
 
         prepareCast();
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Ekundu Griffin");
     }
 
     @Test
     @DisplayName("Cannot target a creature that is not attacking")
     void cannotTargetNonAttackingCreature() {
-        addAttacker(new GrizzlyBears());
-        harness.addToBattlefield(player2, new HillGiant());
-        UUID targetId = harness.getPermanentId(player2, "Hill Giant");
+        addAttacker(new FemerefScouts());
+        harness.addToBattlefield(player2, new FemerefScouts());
+        UUID targetId = harness.getPermanentId(player2, "Femeref Scouts");
 
         prepareCast();
 
@@ -93,7 +93,7 @@ class DivineRetributionTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if the target leaves the battlefield before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent target = addAttacker(new GrizzlyBears());
+        Permanent target = addAttacker(new FemerefScouts());
 
         prepareCast();
         harness.castInstant(player2, 0, target.getId());
@@ -103,5 +103,20 @@ class DivineRetributionTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Divine Retribution");
+    }
+
+    @Test
+    @DisplayName("Counts attacking creatures as the spell resolves")
+    void countsAttackingCreaturesAtResolution() {
+        Permanent target = addAttacker(new FemerefScouts());
+        Permanent removedAttacker = addAttacker(new FemerefScouts());
+        addAttacker(new FemerefScouts());
+
+        prepareCast();
+        harness.castInstant(player2, 0, target.getId());
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(removedAttacker);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 }

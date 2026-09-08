@@ -1,33 +1,44 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.EnumSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KarplusanGiant.class, Mountain.class, SnowCoveredMountain.class})
 @DisplayName("Karplusan Giant")
 class KarplusanGiantTest extends BaseCardTest {
 
     private Permanent addSnowMountain() {
-        Permanent mountain = new Permanent(new Mountain());
-        TestCards.mutableCard(mountain).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        gd.playerBattlefields.get(player1.getId()).add(mountain);
-        return mountain;
+        return harness.addToBattlefieldAndReturn(player1, new SnowCoveredMountain());
     }
 
     @Test
     @DisplayName("Tapping a snow land gives +1/+1")
     void tappingSnowLandBoosts() {
         Permanent giant = addCreatureReady(player1, new KarplusanGiant());
+        Permanent snow = addSnowMountain();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);
+        assertThat(snow.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick because the source is not tapped")
+    void canActivateWhileSummoningSick() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new KarplusanGiant());
+        giant.setSummoningSick(true);
         Permanent snow = addSnowMountain();
 
         harness.activateAbility(player1, 0, null, null);
@@ -73,8 +84,7 @@ class KarplusanGiantTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
@@ -84,7 +94,7 @@ class KarplusanGiantTest extends BaseCardTest {
     @DisplayName("Cannot activate with only a nonsnow land")
     void cannotActivateWithoutSnowLand() {
         addCreatureReady(player1, new KarplusanGiant());
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Mountain()));
+        harness.addToBattlefield(player1, new Mountain());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -104,8 +114,7 @@ class KarplusanGiantTest extends BaseCardTest {
     @DisplayName("Cannot tap an opponent's snow land")
     void cannotActivateUsingOpponentsSnowLand() {
         addCreatureReady(player1, new KarplusanGiant());
-        Permanent opponentSnow = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        TestCards.mutableCard(opponentSnow).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
+        harness.addToBattlefieldAndReturn(player2, new SnowCoveredMountain());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

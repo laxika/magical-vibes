@@ -18,7 +18,7 @@ import java.util.UUID;
 /**
  * Resolves {@link SoulBurnEffect}: deal X damage, then gain life equal to the unprevented damage
  * dealt, not exceeding black mana spent on X or the target's pre-damage
- * life/loyalty/defense/toughness.
+ * life, loyalty, or toughness.
  */
 @Component
 @RequiredArgsConstructor
@@ -59,9 +59,7 @@ public class SoulBurnEffectHandler implements NormalEffectHandlerBean {
             targetCap = Math.max(0, targetPermanent.getCounterCount(CounterType.LOYALTY));
             damageBefore = targetPermanent.getCounterCount(CounterType.LOYALTY);
         } else if (targetPermanent.getCard().hasType(CardType.BATTLE)) {
-            // CR 120.3h: damage to a battle removes defense counters, so the damage actually dealt
-            // is the drop in defense — nothing is ever marked on it.
-            targetCap = Math.max(0, targetPermanent.getCounterCount(CounterType.DEFENSE));
+            targetCap = Integer.MAX_VALUE;
             damageBefore = targetPermanent.getCounterCount(CounterType.DEFENSE);
         } else {
             targetCap = Math.max(0, gameQueryService.getEffectiveToughness(gameData, targetPermanent));
@@ -69,7 +67,8 @@ public class SoulBurnEffectHandler implements NormalEffectHandlerBean {
         }
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, x, entry);
-        damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
+        int resolvedDamage = damageSupport.resolveAnyTargetDamage(
+                gameData, entry, targetId, rawDamage, false);
 
         int damageDealt;
         if (targetIsPlayer) {
@@ -84,10 +83,9 @@ public class SoulBurnEffectHandler implements NormalEffectHandlerBean {
                 int loyaltyAfter = after.getCounterCount(CounterType.LOYALTY);
                 damageDealt = Math.max(0, damageBefore - loyaltyAfter);
             } else if (after.getCard().hasType(CardType.BATTLE)) {
-                int defenseAfter = after.getCounterCount(CounterType.DEFENSE);
-                damageDealt = Math.max(0, damageBefore - defenseAfter);
+                damageDealt = resolvedDamage;
             } else {
-                damageDealt = Math.max(0, after.getMarkedDamage() - damageBefore);
+                damageDealt = resolvedDamage;
             }
         }
 

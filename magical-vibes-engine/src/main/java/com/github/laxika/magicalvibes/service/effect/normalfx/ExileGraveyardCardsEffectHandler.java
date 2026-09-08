@@ -55,8 +55,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             case OWN_ALL_MATCHING -> resolveOwnAllMatching(gameData, entry, e);
             case TARGET_CARDS_ANY_GRAVEYARD, TARGET_CARDS_CONTROLLER_GRAVEYARD ->
                     resolveTargetAnyGraveyardCards(gameData, entry, e);
-            case TARGET_CARDS_OPPONENT_GRAVEYARD -> resolveTargetOpponentCards(gameData, entry);
-            case TARGET_PLAYER_ENTIRE, DYING_CREATURE_CONTROLLER -> resolveTargetPlayerEntire(gameData, entry);
+            case TARGET_CARDS_OPPONENT_GRAVEYARD -> resolveTargetOpponentCards(gameData, entry, e);
+            case TARGET_PLAYER_ENTIRE, DYING_CREATURE_CONTROLLER -> resolveTargetPlayerEntire(gameData, entry, e);
             case TARGET_PLAYER_ALL_MATCHING -> resolveTargetPlayerAllMatching(gameData, entry, e);
             case ALL_PLAYERS -> resolveAllGraveyards(gameData, entry, e);
             case ALL_OPPONENTS -> resolveAllOpponentsGraveyards(gameData, entry);
@@ -254,7 +254,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         gameLogService.append(gameData, builder.build());
     }
 
-    private void resolveTargetOpponentCards(GameData gameData, StackEntry entry) {
+    private void resolveTargetOpponentCards(GameData gameData, StackEntry entry,
+                                            ExileGraveyardCardsEffect effect) {
         List<UUID> targetCardIds = entry.getTargetCardIds();
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
 
@@ -266,10 +267,19 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         List<Card> exiledCards = new ArrayList<>();
         for (UUID cardId : targetCardIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-            if (card != null) {
-                exiledCards.add(card);
-                graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
+            if (card == null) {
+                continue;
             }
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (graveyardOwnerId == null || graveyardOwnerId.equals(entry.getControllerId())) {
+                continue;
+            }
+            if (effect.filter() != null
+                    && !predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)) {
+                continue;
+            }
+            exiledCards.add(card);
+            graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
         }
 
         if (!exiledCards.isEmpty()) {
@@ -282,13 +292,18 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    private void resolveTargetPlayerEntire(GameData gameData, StackEntry entry) {
+    private void resolveTargetPlayerEntire(GameData gameData, StackEntry entry,
+                                            ExileGraveyardCardsEffect effect) {
         List<UUID> targetPlayerIds = entry.getTargetIds().isEmpty()
                 ? entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId())
                 : entry.getTargetIds();
         for (UUID targetPlayerId : targetPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
             String playerName = gameData.playerIdToName.get(targetPlayerId);
+            UUID sourcePermanentId = effect.trackWithSource()
+                    && entry.getSourcePermanentId() != null
+                    && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) != null
+                    ? entry.getSourcePermanentId() : null;
 
             if (graveyard == null || graveyard.isEmpty()) {
                 String logEntry = playerName + "'s graveyard is already empty.";
@@ -298,8 +313,12 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
             List<Card> toExile = new ArrayList<>(graveyard);
             int count = toExile.size();
-            for (Card card : graveyard) {
-                gameData.addToExile(targetPlayerId, card);
+            for (Card card : toExile) {
+                if (sourcePermanentId == null) {
+                    exileService.exileCard(gameData, targetPlayerId, card);
+                } else {
+                    exileService.exileCard(gameData, targetPlayerId, card, sourcePermanentId);
+                }
             }
             graveyard.clear();
             graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,19 +16,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Foul Familiar")
+@CardUsed({FoulFamiliar.class, BalduvianBears.class})
 class FoulFamiliarTest extends BaseCardTest {
 
     @Test
     @DisplayName("Foul Familiar cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent familiar = new Permanent(new FoulFamiliar());
-        familiar.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(familiar);
+        Permanent familiar = addCreatureReady(player2, new FoulFamiliar());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -83,5 +81,18 @@ class FoulFamiliarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough life");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without black mana")
+    void cannotActivateWithoutBlackMana() {
+        harness.addToBattlefield(player1, new FoulFamiliar());
+        harness.setLife(player1, 20);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Foul Familiar");
     }
 }

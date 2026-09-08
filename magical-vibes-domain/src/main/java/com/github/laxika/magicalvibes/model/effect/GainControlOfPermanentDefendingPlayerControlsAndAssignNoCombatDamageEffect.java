@@ -27,4 +27,9 @@ public record GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDama
     public ControlDuration controlDuration() {
         return duration;
     }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetPredicates.permanent(), filter);
+    }
 }

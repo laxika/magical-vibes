@@ -6,7 +6,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>{@code HAND} is used when a revealed top card that wasn't cast is put into its controller's
  * hand. Other destinations are {@code GRAVEYARD}, {@code BOTTOM_OF_LIBRARY},
- * {@code BOTTOM_OF_LIBRARY_RANDOM}, {@code TOP_OF_LIBRARY}, and {@code EXILE}.
+ * {@code BOTTOM_OF_LIBRARY_RANDOM}, {@code TOP_OF_LIBRARY}, {@code EXILE}, and
+ * {@code SHUFFLE_INTO_LIBRARY}.
  */
 public enum LookDestination {
     HAND,
@@ -16,5 +17,7 @@ public enum LookDestination {
     TOP_OF_LIBRARY,
     /** Rest go to the bottom in a random order (no player reorder) — Memory Deluge. */
     BOTTOM_OF_LIBRARY_RANDOM,
-    EXILE
+    EXILE,
+    /** Rest are shuffled into the library. */
+    SHUFFLE_INTO_LIBRARY
 }

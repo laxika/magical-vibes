@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
@@ -43,6 +44,10 @@ import java.util.List;
  * with {@code -XX:TieredStopAtLevel=1}), only before/after ratios on the same machine matter.
  */
 @EnabledIfSystemProperty(named = "layerBench", matches = "true")
+@CardUsed({GloriousAnthem.class, GoblinKing.class, ElvishChampion.class, ImperiousPerfect.class,
+        LlanowarElves.class, RagingGoblin.class, GrizzlyBears.class, Forest.class, Mountain.class,
+        BloodMoon.class, MarchOfTheMachines.class, Maro.class, Nightmare.class, PaladinEnVec.class,
+        FountainOfYouth.class, CoralMerfolk.class, Swamp.class, Dub.class, Lignify.class})
 class LayerPassBenchmarkTest extends BaseCardTest {
 
     private static final long WARMUP_NANOS = 2_000_000_000L;

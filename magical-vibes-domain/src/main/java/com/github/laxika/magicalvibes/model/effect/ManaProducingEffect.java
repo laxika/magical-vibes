@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
+import java.util.List;
+
 /**
  * Marker interface for effects that produce mana. Used to identify mana abilities
  * (CR 605.1a) without listing individual effect types.
@@ -68,11 +70,20 @@ public interface ManaProducingEffect extends CardEffect {
     }
 
     /**
+     * Mutually exclusive colors this producer can add, when the color is determined by a game
+     * condition rather than chosen by a player. The amount is the same for every listed color.
+     */
+    default List<ManaColor> estimatedMutuallyExclusiveManaColors() {
+        return List.of();
+    }
+
+    /**
      * True when the estimator directly models this effect's output (a fixed color, full color
      * coverage, or a colorless wildcard) — i.e. exactly the three simple producers. Special-routing
      * producers return {@code false}.
      */
     default boolean modeledByManaEstimator() {
-        return estimatedManaColor() != null || estimatedCountsAllColors() || estimatedWildcardMana() > 0;
+        return estimatedManaColor() != null || estimatedCountsAllColors() || estimatedWildcardMana() > 0
+                || !estimatedMutuallyExclusiveManaColors().isEmpty();
     }
 }

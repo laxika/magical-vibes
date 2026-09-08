@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
+import com.github.laxika.magicalvibes.cards.r.RainbowEfreet;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeatWave.class, PantherWarriors.class, RainbowEfreet.class})
 class HeatWaveTest extends BaseCardTest {
 
     private Permanent addHeatWave() {
@@ -27,8 +28,8 @@ class HeatWaveTest extends BaseCardTest {
     @DisplayName("Blue creatures can't block creatures you control")
     void blueCreaturesCannotBlock() {
         addHeatWave();
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
-        addCreatureReady(player2, new AirElemental());
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        addCreatureReady(player2, new RainbowEfreet());
 
         prepareDeclareBlockers();
 
@@ -41,8 +42,8 @@ class HeatWaveTest extends BaseCardTest {
     @DisplayName("Nonblue creatures can block by paying 1 life each")
     void nonblueBlockCostsOneLife() {
         addHeatWave();
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new ScatheZombies());
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new PantherWarriors());
         int lifeBefore = gd.getLife(player2.getId());
 
         prepareDeclareBlockers();
@@ -56,9 +57,9 @@ class HeatWaveTest extends BaseCardTest {
     @DisplayName("Each nonblue blocker costs 1 life")
     void lifeCostScalesWithBlockers() {
         addHeatWave();
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
-        Permanent first = addCreatureReady(player2, new ScatheZombies());
-        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        Permanent first = addCreatureReady(player2, new PantherWarriors());
+        Permanent second = addCreatureReady(player2, new PantherWarriors());
         int lifeBefore = gd.getLife(player2.getId());
 
         prepareDeclareBlockers();
@@ -75,24 +76,28 @@ class HeatWaveTest extends BaseCardTest {
     @DisplayName("Block is rejected when the defender can't pay the life")
     void blockRejectedWithoutEnoughLife() {
         addHeatWave();
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new ScatheZombies());
-        gd.playerLifeTotals.put(player2.getId(), 0);
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new PantherWarriors());
+        Permanent secondBlocker = addCreatureReady(player2, new PantherWarriors());
+        gd.playerLifeTotals.put(player2.getId(), 1);
 
         prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 1))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough life to pay block cost (1 required)");
-        assertThat(blocker.isBlocking()).isFalse();
+                .hasMessageContaining("Not enough life to pay block cost (2 required)");
+        assertThat(firstBlocker.isBlocking()).isFalse();
+        assertThat(secondBlocker.isBlocking()).isFalse();
     }
 
     @Test
     @DisplayName("Restriction only covers Heat Wave's controller's creatures")
     void doesNotTaxBlocksAgainstOpponentsCreatures() {
         harness.addToBattlefield(player2, new HeatWave());
-        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new ScatheZombies());
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new PantherWarriors());
         int lifeBefore = gd.getLife(player2.getId());
 
         prepareDeclareBlockers();
@@ -117,6 +122,28 @@ class HeatWaveTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(heatWave);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep costs two red mana on the second upkeep")
+    void paysIncreasingCumulativeUpkeep() {
+        Permanent heatWave = addHeatWave();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(heatWave.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(heatWave);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 
     @Test

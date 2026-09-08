@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,12 +11,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Musician.class, BalduvianBears.class, DarksteelSentinel.class, Plains.class})
 class MusicianTest extends BaseCardTest {
 
     private Permanent addReadyMusician(Player player) {
@@ -26,7 +29,7 @@ class MusicianTest extends BaseCardTest {
     @DisplayName("Tap ability puts a music counter and grants the destroy-unless-pay upkeep ability")
     void putsMusicCounterAndGrantsAbility() {
         Permanent musician = addReadyMusician(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
         int musicianIdx = gd.playerBattlefields.get(player1.getId()).indexOf(musician);
         harness.activateAbility(player1, musicianIdx, null, bears.getId());
@@ -42,7 +45,7 @@ class MusicianTest extends BaseCardTest {
     @DisplayName("Second activation adds another music counter but does not re-grant the ability")
     void secondActivationOnlyAddsCounter() {
         Permanent musician = addReadyMusician(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
         int musicianIdx = gd.playerBattlefields.get(player1.getId()).indexOf(musician);
         harness.activateAbility(player1, musicianIdx, null, bears.getId());
@@ -60,7 +63,7 @@ class MusicianTest extends BaseCardTest {
     @DisplayName("Paying music upkeep keeps the creature; cost scales with counters")
     void payingMusicUpkeepKeepsCreature() {
         Permanent musician = addReadyMusician(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
         int musicianIdx = gd.playerBattlefields.get(player1.getId()).indexOf(musician);
         harness.activateAbility(player1, musicianIdx, null, bears.getId());
@@ -76,6 +79,7 @@ class MusicianTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player2, true);
 
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
     }
 
@@ -83,7 +87,7 @@ class MusicianTest extends BaseCardTest {
     @DisplayName("Declining music upkeep destroys the creature")
     void decliningMusicUpkeepDestroys() {
         Permanent musician = addReadyMusician(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
         int musicianIdx = gd.playerBattlefields.get(player1.getId()).indexOf(musician);
         harness.activateAbility(player1, musicianIdx, null, bears.getId());
@@ -94,7 +98,7 @@ class MusicianTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
@@ -131,7 +135,7 @@ class MusicianTest extends BaseCardTest {
     @DisplayName("Granted music ability persists after Musician leaves")
     void abilityPersistsAfterMusicianLeaves() {
         Permanent musician = addReadyMusician(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
         int musicianIdx = gd.playerBattlefields.get(player1.getId()).indexOf(musician);
         harness.activateAbility(player1, musicianIdx, null, bears.getId());
@@ -143,14 +147,14 @@ class MusicianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         Permanent musician = addReadyMusician(player1);
-        Permanent plains = harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.p.Plains());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
 
         int musicianIdx = gd.playerBattlefields.get(player1.getId()).indexOf(musician);
         assertThatThrownBy(() -> harness.activateAbility(player1, musicianIdx, null, plains.getId()))

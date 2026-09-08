@@ -3,11 +3,10 @@ package com.github.laxika.magicalvibes.service.library;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,16 +31,6 @@ public final class LibraryShuffleHelper {
         gameData.forEachPermanent((controllerId, perm) -> {
             if (controllerId.equals(shufflingPlayerId)) return;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_SHUFFLES_LIBRARY)) {
-                if (effect instanceof MayEffect may) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            perm.getCard(), controllerId,
-                            List.of(may.wrapped()),
-                            perm.getCard().getName() + " — " + may.prompt(),
-                            shufflingPlayerId,
-                            null,
-                            perm.getId()
-                    ));
-                } else {
                     StackEntry trigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
@@ -52,8 +41,8 @@ public final class LibraryShuffleHelper {
                             perm.getId()
                     );
                     trigger.setNonTargeting(true);
+                    trigger.setSourcePermanentSnapshot(new Permanent(perm));
                     gameData.enqueueTrigger(trigger);
-                }
             }
         });
     }

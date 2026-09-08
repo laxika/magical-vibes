@@ -40,7 +40,6 @@ class GrandEntrywayElegantRotundaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, firstCreature.getId());
         harness.handlePermanentChosen(player1, secondCreature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

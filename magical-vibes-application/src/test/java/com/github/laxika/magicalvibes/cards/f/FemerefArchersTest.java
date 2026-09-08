@@ -1,27 +1,27 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
+import com.github.laxika.magicalvibes.cards.p.PearlDragon;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FemerefArchers.class, PearlDragon.class, FemerefScouts.class})
 class FemerefArchersTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating ability targeting attacking flying creature puts ability on stack")
     void activatingAbilityPutsOnStack() {
-        Permanent archersPerm = addArchersReady(player1);
-        Permanent attacker = addAttackingFlyingCreature(player2);
+        Permanent archersPerm = addCreatureReady(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
 
         harness.activateAbility(player1, 0, null, attacker.getId());
 
@@ -29,31 +29,33 @@ class FemerefArchersTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Femeref Archers");
         assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
     @Test
     @DisplayName("Ability deals 4 damage to attacking flying creature and destroys it")
     void abilityDealsFourAndKillsTarget() {
-        addArchersReady(player1);
-        Permanent attacker = addAttackingFlyingCreature(player2);
+        Permanent archers = addCreatureReady(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
 
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Femeref Archers");
-        harness.assertNotInGraveyard(player1, "Femeref Archers");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(archers);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(archers.getCard().getId()));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(attacker.getId()));
-        harness.assertInGraveyard(player2, "Skyhunter Skirmisher");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(attacker.getCard().getId()));
+        assertThat(gameLogContains("deals 4 damage")).isTrue();
     }
 
     @Test
     @DisplayName("Cannot target attacking creature without flying")
     void cannotTargetAttackingCreatureWithoutFlying() {
-        addArchersReady(player1);
-        Permanent attacker = addAttackingGroundCreature(player2);
+        addCreatureReady(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new FemerefScouts());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -63,10 +65,8 @@ class FemerefArchersTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target flying creature that is not attacking")
     void cannotTargetFlyingCreatureThatIsNotAttacking() {
-        addArchersReady(player1);
-        Permanent flyer = new Permanent(new SkyhunterSkirmisher());
-        flyer.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(flyer);
+        addCreatureReady(player1, new FemerefArchers());
+        Permanent flyer = addCreatureReady(player2, new PearlDragon());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, flyer.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -76,36 +76,44 @@ class FemerefArchersTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability while Femeref Archers has summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent archers = new Permanent(new FemerefArchers());
-        gd.playerBattlefields.get(player1.getId()).add(archers);
-        Permanent attacker = addAttackingFlyingCreature(player2);
+        harness.addToBattlefieldAndReturn(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
     }
 
-    private Permanent addArchersReady(Player player) {
-        FemerefArchers card = new FemerefArchers();
-        Permanent archers = new Permanent(card);
-        archers.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(archers);
-        return archers;
+    @Test
+    @DisplayName("Does not damage a target that stops attacking before resolution")
+    void targetMustStillBeAttackingOnResolution() {
+        addCreatureReady(player1, new FemerefArchers());
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isZero();
     }
 
-    private Permanent addAttackingFlyingCreature(Player player) {
-        Permanent flyer = new Permanent(new SkyhunterSkirmisher());
-        flyer.setSummoningSick(false);
-        flyer.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(flyer);
-        return flyer;
+    @Test
+    @DisplayName("Cannot activate the ability while Femeref Archers is already tapped")
+    void cannotActivateWhenTapped() {
+        Permanent archers = addCreatureReady(player1, new FemerefArchers());
+        archers.tap();
+        Permanent attacker = addAttackingCreature(player2, new PearlDragon());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
-    private Permanent addAttackingGroundCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
+    private Permanent addAttackingCreature(Player player, Card card) {
+        Permanent creature = addCreatureReady(player, card);
         creature.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 }

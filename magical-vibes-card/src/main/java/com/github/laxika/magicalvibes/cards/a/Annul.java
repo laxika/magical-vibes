@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "THS", collectorNumber = "38")
 @CardRegistration(set = "USG", collectorNumber = "59")
 @CardRegistration(set = "KHM", collectorNumber = "42")
+@CardRegistration(set = "EOE", collectorNumber = "46")
 public class Annul extends Card {
 
     public Annul() {

@@ -89,6 +89,5 @@ class CreepingPeeperTest extends BaseCardTest {
 
     private void activatePeeperMana() {
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
     }
 }

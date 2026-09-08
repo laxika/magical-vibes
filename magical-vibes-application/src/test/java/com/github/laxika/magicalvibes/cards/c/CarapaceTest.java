@@ -99,6 +99,25 @@ class CarapaceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Carapace's regeneration shield prevents lethal damage")
+    void regenerationShieldPreventsLethalDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AnabaBodyguard());
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Carapace());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        creature.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Anaba Bodyguard");
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent with Carapace")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new AnabaBodyguard());

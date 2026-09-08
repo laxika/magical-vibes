@@ -1,26 +1,19 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RemoveTargetFromCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
+    private final CombatRemovalSupport combatRemovalSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,29 +22,10 @@ public class RemoveTargetFromCombatEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        var target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
-
-        if (target.isAttacking()) {
-            target.setAttacking(false);
-            target.setAttackTarget(null);
-        }
-        if (target.isBlocking()) {
-            for (UUID attackerId : target.getBlockingTargetIds()) {
-                Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
-                if (attacker != null && attacker.isAttacking()) {
-                    attacker.setBlockedWithoutBlockers(true);
-                }
-            }
-            target.setBlocking(false);
-            target.getBlockingTargets().clear();
-            target.getBlockingTargetIds().clear();
-        }
-
-        
-        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " removes ", target.getCard(), " from combat."));
-        log.info("Game {} - {} removes {} from combat", gameData.id, entry.getCard().getName(), target.getCard().getName());
+        combatRemovalSupport.removeFromCombat(gameData, entry, target);
     }
 }

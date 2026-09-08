@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "1")
+@CardRegistration(set = "FDN", collectorNumber = "362")
 public class SireOfSevenDeaths extends Card {
 
     public SireOfSevenDeaths() {

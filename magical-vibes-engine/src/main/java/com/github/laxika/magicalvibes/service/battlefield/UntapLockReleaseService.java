@@ -42,10 +42,6 @@ public class UntapLockReleaseService {
                 .filter(RemoveCountersWhenUntapLockEndsEffect.class::isInstance)
                 .map(e -> ((RemoveCountersWhenUntapLockEndsEffect) e).counterType())
                 .toList();
-        if (counterTypes.isEmpty()) {
-            return;
-        }
-
         UUID sourceId = source.getId();
         List<Permanent> locked = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {

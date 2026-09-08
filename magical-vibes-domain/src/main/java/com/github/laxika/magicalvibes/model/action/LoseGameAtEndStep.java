@@ -15,5 +15,10 @@ import com.github.laxika.magicalvibes.model.Card;
  * so it skips both the scheduling turn's own end step and every opponent's end step, firing at the
  * scheduling player's own next end step ("your next end step").
  */
-public record LoseGameAtEndStep(UUID playerId, Card sourceCard, int registeredTurnNumber) implements DelayedAction {
+public record LoseGameAtEndStep(UUID playerId, Card sourceCard, int registeredTurnNumber,
+                                Long extraTurnSequence) implements DelayedAction {
+
+    public LoseGameAtEndStep(UUID playerId, Card sourceCard, int registeredTurnNumber) {
+        this(playerId, sourceCard, registeredTurnNumber, null);
+    }
 }

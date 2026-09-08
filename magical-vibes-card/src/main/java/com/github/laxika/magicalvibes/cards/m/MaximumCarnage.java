@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "83")
 @CardRegistration(set = "SPM", collectorNumber = "225")
+@CardRegistration(set = "OM1", collectorNumber = "87")
 public class MaximumCarnage extends Card {
 
     public MaximumCarnage() {

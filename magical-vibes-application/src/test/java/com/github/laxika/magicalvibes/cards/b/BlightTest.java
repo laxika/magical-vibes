@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Blight.class, Forest.class, GrizzlyBears.class, Twiddle.class})
 class BlightTest extends BaseCardTest {
 
     // ===== Casting and targeting =====
@@ -22,8 +26,7 @@ class BlightTest extends BaseCardTest {
     @Test
     @DisplayName("Can cast Blight targeting a land")
     void canTargetLand() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new Blight()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player1);
@@ -40,8 +43,7 @@ class BlightTest extends BaseCardTest {
     @DisplayName("Cannot cast Blight targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature = findPermanent(player1, "Grizzly Bears");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Blight()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player1);
@@ -54,8 +56,7 @@ class BlightTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Blight attaches it to the target land")
     void resolvingAttachesToLand() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new Blight()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player1);
@@ -109,16 +110,35 @@ class BlightTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
     }
 
+    @Test
+    void tappingOpponentsLandWithTwiddleDestroysIt() {
+        Permanent land = addLandWithAura(player2);
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+
+        harness.castInstant(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveStackFully();
+
+        harness.assertNotOnBattlefield(player2, Forest.class.getSimpleName());
+    }
+
     // ===== Helpers =====
 
     /**
-     * Places a Forest on player1's battlefield (index 0) with a Blight attached (index 1).
+     * Places a Forest on {@code landController}'s battlefield (index 0) with a Blight controlled by
+     * player1 attached (index 1 on player1's battlefield).
      *
      * @return the Forest permanent
      */
     private Permanent addLandWithAura() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+        return addLandWithAura(player1);
+    }
+
+    private Permanent addLandWithAura(Player landController) {
+        Permanent land = harness.addToBattlefieldAndReturn(landController, new Forest());
 
         Blight auraCard = new Blight();
         Permanent aura = new Permanent(auraCard);

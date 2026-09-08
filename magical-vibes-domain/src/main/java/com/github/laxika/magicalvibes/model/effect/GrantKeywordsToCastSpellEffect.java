@@ -6,7 +6,8 @@ import java.util.Set;
 
 /**
  * Grants keywords to the spell that caused the surrounding spell-cast trigger.
- * The grant is carried by the spell's stack entry and transferred to the permanent it becomes.
+ * The grant is carried by the spell's stack entry and transferred to the permanent it becomes,
+ * or consumed by spell-resolution logic when the granted keyword applies to a nonpermanent spell.
  */
 public record GrantKeywordsToCastSpellEffect(Set<Keyword> keywords) implements CardEffect {
 

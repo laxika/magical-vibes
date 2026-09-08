@@ -43,19 +43,30 @@ public class ReturnEnchantedCreatureToBattlefieldOnDeathEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnEnchantedCreatureToBattlefieldOnDeathEffect) effect;
 
-        UUID dyingCreatureCardId = e.dyingCreatureCardId();
-        if (dyingCreatureCardId == null) {
+        if (e.dyingCreatureCardIds().isEmpty()) {
             log.info("Game {} - {} death trigger fizzles (no dying creature card ID)",
                     gameData.id, entry.getCard().getName());
             return;
         }
 
+        boolean returnedAny = false;
+        for (UUID dyingCreatureCardId : e.dyingCreatureCardIds()) {
+            returnedAny |= returnCard(gameData, entry, e, dyingCreatureCardId);
+        }
+        if (!returnedAny) {
+            gameLogService.append(gameData, GameLog.cardThen(
+                    entry.getCard(), "'s ability fizzles (creature not in graveyard)."));
+        }
+    }
+
+    private boolean returnCard(GameData gameData, StackEntry entry,
+                               ReturnEnchantedCreatureToBattlefieldOnDeathEffect e,
+                               UUID dyingCreatureCardId) {
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
         if (creatureCard == null) {
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (creature not in graveyard)."));
             log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
-            return;
+            return false;
         }
 
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCreatureCardId);
@@ -65,13 +76,13 @@ public class ReturnEnchantedCreatureToBattlefieldOnDeathEffectHandler implements
         if (controllerId == null || controllerId.equals(ownerId)) {
             graveyardReturnSupport.putCardOntoBattlefield(gameData, ownerId, creatureCard,
                     null, null, e.enterTapped(), false, e.enterWithCounter());
-            return;
+            return true;
         }
 
         Permanent permanent = graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, creatureCard,
                 null, null, e.enterTapped(), false, e.enterWithCounter());
         if (permanent == null) {
-            return;
+            return false;
         }
 
         // The Aura's controller keeps the creature (CR 613.1b — layer 2, control-changing effects),
@@ -80,5 +91,6 @@ public class ReturnEnchantedCreatureToBattlefieldOnDeathEffectHandler implements
         // graveyard" triggers fire for them rather than for the Aura's controller.
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), controllerId, ownerId);
+        return true;
     }
 }

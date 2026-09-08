@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -57,10 +58,16 @@ public class ActivatedAbility {
     private Integer maxCardsInHandToActivate;
     /** When true, any player (not just the source's controller) may activate this ability, e.g. Oona's Prowler. Set via {@link #withActivatableByAnyPlayer()}. */
     private boolean activatableByAnyPlayer;
+    /** When true, only the source card's owner may activate this ability. */
+    private boolean activatableOnlyByOwner;
     /** When true, only the controller of the permanent this Aura is attached to may activate this ability, e.g. Volrath's Curse. Set via {@link #withActivatableOnlyByEnchantedPermanentController()}. */
     private boolean activatableOnlyByEnchantedPermanentController;
     /** When true, only opponents of the source permanent's controller may activate this ability, e.g. Soul Ransom. Set via {@link #withActivatableOnlyByOpponents()}. */
     private boolean activatableOnlyByOpponents;
+    /** Whether only the player who granted this ability may activate it. */
+    private boolean activatableOnlyByGrantingPlayer;
+    /** The player who granted this ability when {@link #activatableOnlyByGrantingPlayer} is set. */
+    private UUID grantingPlayerId;
     /** When true, the ability's cost includes the untap symbol {@code {Q}}: the permanent must be tapped and is untapped to pay (e.g. Order of Whiteclay). Set via {@link #withRequiresUntap()}. */
     private boolean requiresUntap;
     /** When true, the source permanent must have another activated ability to activate this ability. */
@@ -123,7 +130,7 @@ public class ActivatedAbility {
     private CounterType sourceCounterScaledTargetsType;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
     private boolean requiresXValue;
-    /** Minimum value that may be chosen for X in this ability's mana cost. */
+    /** Minimum value that may be announced for this ability's {@code X} cost. */
     private int minimumXValue;
     /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
     private boolean modalChoiceAtActivation;
@@ -280,9 +287,12 @@ public class ActivatedAbility {
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
         copy.maxCardsInHandToActivate = this.maxCardsInHandToActivate;
         copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
+        copy.activatableOnlyByOwner = this.activatableOnlyByOwner;
         copy.activatableOnlyByEnchantedPermanentController = this.activatableOnlyByEnchantedPermanentController;
         copy.manaCostOfEnchantedPermanent = this.manaCostOfEnchantedPermanent;
         copy.activatableOnlyByOpponents = this.activatableOnlyByOpponents;
+        copy.activatableOnlyByGrantingPlayer = this.activatableOnlyByGrantingPlayer;
+        copy.grantingPlayerId = this.grantingPlayerId;
         copy.requiresUntap = this.requiresUntap;
         copy.requiresAnotherActivatedAbility = this.requiresAnotherActivatedAbility;
         copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
@@ -556,6 +566,13 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Makes the ability reachable only by the source card's owner, including after control changes. */
+    public ActivatedAbility withActivatableOnlyByOwner() {
+        this.activatableByAnyPlayer = true;
+        this.activatableOnlyByOwner = true;
+        return this;
+    }
+
     /**
      * Narrows {@link #withActivatableByAnyPlayer()} to the controller of the permanent this Aura
      * is attached to (Volrath's Curse: "That creature's controller may sacrifice a permanent…").
@@ -584,6 +601,21 @@ public class ActivatedAbility {
     public ActivatedAbility withActivatableOnlyByOpponents() {
         this.activatableOnlyByOpponents = true;
         return this;
+    }
+
+    public ActivatedAbility withActivatableOnlyByGrantingPlayer() {
+        this.activatableByAnyPlayer = true;
+        this.activatableOnlyByGrantingPlayer = true;
+        return this;
+    }
+
+    public ActivatedAbility withGrantingPlayer(UUID playerId) {
+        if (!activatableOnlyByGrantingPlayer) {
+            return this;
+        }
+        ActivatedAbility copy = copyWith(grantSourcePermanentId, maxActivationsPerTurn);
+        copy.grantingPlayerId = playerId;
+        return copy;
     }
 
     /**
@@ -633,6 +665,7 @@ public class ActivatedAbility {
         this.requiresXValue = true;
         return this;
     }
+
 
     /** Marks the modal choice as part of activating this ability rather than resolving it. */
     public ActivatedAbility withModalChoiceAtActivation() {
@@ -700,6 +733,11 @@ public class ActivatedAbility {
         return effects.stream()
                 .filter(effect -> !(effect instanceof CostEffect))
                 .anyMatch(ManaProducingEffect.class::isInstance);
+    }
+
+    /** Whether this activated ability is an equip ability. */
+    public boolean isEquipAbility() {
+        return effects.stream().anyMatch(EquipEffect.class::isInstance);
     }
 
     /**

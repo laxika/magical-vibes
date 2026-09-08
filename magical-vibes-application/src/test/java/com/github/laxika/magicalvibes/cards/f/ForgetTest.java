@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -82,6 +83,35 @@ class ForgetTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
+    }
+
+    @Test
+    @DisplayName("Opponent-caused Dodecapod replacement still counts toward the draw")
+    void opponentCausedDodecapodReplacementStillCountsTowardDraw() {
+        Dodecapod dodecapod = new Dodecapod();
+        GrizzlyBears discarded = new GrizzlyBears();
+        Island drawnFirst = new Island();
+        Island drawnSecond = new Island();
+        harness.setHand(player2, new ArrayList<>(List.of(dodecapod, discarded)));
+        harness.setLibrary(player2, new ArrayList<>(List.of(drawnFirst, drawnSecond)));
+        harness.setHand(player1, List.of(new Forget()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player2, 0); // Dodecapod enters the battlefield instead.
+        harness.handleCardChosen(player2, 0); // discard the remaining card
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnFirst, drawnSecond);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded)
+                .doesNotContain(dodecapod);
+        assertThat(gd.playerBattlefields.get(player2.getId())).anySatisfy(permanent -> {
+            assertThat(permanent.getCard()).isSameAs(dodecapod);
+            assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        });
     }
 
     @Test

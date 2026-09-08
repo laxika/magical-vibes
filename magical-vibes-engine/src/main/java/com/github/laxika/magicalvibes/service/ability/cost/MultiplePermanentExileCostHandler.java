@@ -20,6 +20,7 @@ public class MultiplePermanentExileCostHandler implements PermanentChoiceCostHan
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentExileAction exileAction;
     private final UUID sourcePermanentId;
+    private final UUID trackingSourcePermanentId;
 
     public MultiplePermanentExileCostHandler(ExilePermanentCost cost,
                                              PredicateEvaluationService predicateEvaluationService,
@@ -29,6 +30,7 @@ public class MultiplePermanentExileCostHandler implements PermanentChoiceCostHan
         this.predicateEvaluationService = predicateEvaluationService;
         this.exileAction = exileAction;
         this.sourcePermanentId = cost.excludeSource() ? sourcePermanentId : null;
+        this.trackingSourcePermanentId = cost.trackWithSource() ? sourcePermanentId : null;
     }
 
     @Override
@@ -70,7 +72,7 @@ public class MultiplePermanentExileCostHandler implements PermanentChoiceCostHan
         if (sourcePermanentId != null && chosen.getId().equals(sourcePermanentId)) {
             throw new IllegalStateException("Cannot exile this permanent to its own ability");
         }
-        exileAction.exile(gameData, player, chosen);
+        exileAction.exile(gameData, player, chosen, trackingSourcePermanentId);
     }
 
     @Override

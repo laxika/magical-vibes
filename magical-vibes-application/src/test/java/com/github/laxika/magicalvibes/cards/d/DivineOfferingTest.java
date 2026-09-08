@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +18,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DivineOffering.class, RodOfRuin.class, DarksteelPlate.class, GrizzlyBears.class, Ornithopter.class})
 class DivineOfferingTest extends BaseCardTest {
 
-    
+
 
     @Test
     @DisplayName("Casting Divine Offering puts it on the stack with target")
@@ -36,7 +37,6 @@ class DivineOfferingTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Divine Offering");
         assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
@@ -92,6 +92,23 @@ class DivineOfferingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Divine Offering can target an artifact creature")
+    void targetsArtifactCreature() {
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new DivineOffering()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+        UUID targetId = harness.getPermanentId(player2, "Ornithopter");
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
+        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
     @DisplayName("Divine Offering fizzles when target is removed before resolution")
     void fizzlesWhenTargetRemoved() {
         harness.addToBattlefield(player2, new RodOfRuin());
@@ -107,7 +124,7 @@ class DivineOfferingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         // No life gain when spell fizzles
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }

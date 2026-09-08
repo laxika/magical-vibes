@@ -11,10 +11,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * Returns targeted cards from the configured graveyard scope to the battlefield.
  *
  * <p>The one-argument form returns exactly the spell's paid X cards. The fixed-cap form returns up
- * to {@code maxTargets} cards and can restrict them to cards put into the graveyard from the
- * battlefield this turn. It can also put counters on each returned permanent. The dynamic-cap form
- * is used by ETB abilities whose cap comes from the cast context, such as multikicker payments.
- * The single-graveyard form can add haste and a delayed sacrifice rider to the returned permanents.</p>
+ * to {@code maxTargets} cards, or at least {@code minTargets} when configured, and can restrict
+ * them to cards put into the graveyard from the battlefield this turn. It can also put counters on
+ * each returned permanent. The dynamic-cap form is used by ETB abilities whose cap comes from the
+ * cast context, such as multikicker payments. The single-graveyard form can add haste and a delayed
+ * sacrifice rider to the returned permanents.</p>
  */
 public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         CardPredicate filter,
@@ -23,6 +24,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean enterTapped,
         DynamicAmount dynamicMaxTargets,
         int maxTotalManaValue,
+        DynamicAmount dynamicMaxTotalManaValue,
         CardColor grantColor,
         CardSubtype grantSubtype,
         CounterType counterType,
@@ -30,7 +32,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         GraveyardSearchScope source,
         boolean singleGraveyard,
         boolean grantHaste,
-        boolean sacrificeAtEndStep
+        boolean sacrificeAtEndStep,
+        int minTargets
 ) implements CardEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
@@ -51,6 +54,13 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
                                                               CounterType counterType, int counterCount) {
         this(filter, maxTargets, false, false, null, 0, null, null, counterType, counterCount,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false);
+    }
+
+    /** Creates a fixed-cap form that also restricts the chosen cards' total mana value. */
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              int maxTotalManaValue) {
+        this(filter, maxTargets, false, false, null, maxTotalManaValue, null, null, null, 0,
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false);
     }
 
@@ -113,8 +123,55 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               boolean singleGraveyard,
                                                               boolean grantHaste,
                                                               boolean sacrificeAtEndStep) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets,
+                maxTotalManaValue, grantColor, grantSubtype, counterType, counterCount, source,
+                singleGraveyard, grantHaste, sacrificeAtEndStep, 0);
+    }
+
+    /** Creates a fixed-cap form with a required minimum number of targets. */
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect withTargetBounds(
+            CardPredicate filter, int maxTargets, int minTargets) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(filter, maxTargets, false, false, null, 0, null, null, null, 0,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, minTargets);
+    }
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped,
+                                                              DynamicAmount dynamicMaxTargets,
+                                                              int maxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount,
+                                                              GraveyardSearchScope source,
+                                                              boolean singleGraveyard,
+                                                              boolean grantHaste,
+                                                              boolean sacrificeAtEndStep,
+                                                              int minTargets) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets, maxTotalManaValue, null, grantColor, grantSubtype, counterType, counterCount, source, singleGraveyard, grantHaste, sacrificeAtEndStep, minTargets);
+    }
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped,
+                                                              DynamicAmount dynamicMaxTargets,
+                                                              int maxTotalManaValue,
+                                                              DynamicAmount dynamicMaxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount,
+                                                              GraveyardSearchScope source,
+                                                              boolean singleGraveyard,
+                                                              boolean grantHaste,
+                                                              boolean sacrificeAtEndStep,
+                                                              int minTargets) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
+        }
+        if (minTargets < 0 || minTargets > maxTargets) {
+            throw new IllegalArgumentException("minTargets must be between zero and maxTargets");
         }
         if (maxTotalManaValue < 0) {
             throw new IllegalArgumentException("maxTotalManaValue cannot be negative");
@@ -125,6 +182,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.enterTapped = enterTapped;
         this.dynamicMaxTargets = dynamicMaxTargets;
         this.maxTotalManaValue = maxTotalManaValue;
+        this.dynamicMaxTotalManaValue = dynamicMaxTotalManaValue;
         this.grantColor = grantColor;
         this.grantSubtype = grantSubtype;
         this.counterType = counterType;
@@ -133,6 +191,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.singleGraveyard = singleGraveyard;
         this.grantHaste = grantHaste;
         this.sacrificeAtEndStep = sacrificeAtEndStep;
+        this.minTargets = minTargets;
     }
 
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromAllGraveyards(CardPredicate filter) {
@@ -149,12 +208,21 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.ALL_GRAVEYARDS, true, grantHaste, sacrificeAtEndStep);
     }
 
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect withinTotalManaValue(CardPredicate filter, DynamicAmount maxTotalManaValue, boolean grantHasteUntilEndOfTurn) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(filter, 0, false, false, maxTotalManaValue, 0, maxTotalManaValue, null, null, null, 0, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, grantHasteUntilEndOfTurn, false, 0);
+    }
+
+    public boolean grantHasteUntilEndOfTurn() {
+        return grantHaste;
+    }
+
     public boolean xScaled() {
-        return maxTargets == 0 && dynamicMaxTargets == null && maxTotalManaValue == 0;
+        return maxTargets == 0 && dynamicMaxTargets == null && maxTotalManaValue == 0
+                && dynamicMaxTotalManaValue == null;
     }
 
     public boolean hasTotalManaValueCap() {
-        return maxTotalManaValue > 0;
+        return maxTotalManaValue > 0 || dynamicMaxTotalManaValue != null;
     }
 
     @Override

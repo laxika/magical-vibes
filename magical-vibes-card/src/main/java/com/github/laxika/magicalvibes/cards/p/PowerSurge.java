@@ -15,7 +15,7 @@ public class PowerSurge extends Card {
         // At the beginning of each player's upkeep, deal X damage to that player, where X is the
         // number of untapped lands they controlled at the beginning of this turn. EACH_UPKEEP_TRIGGERED
         // sets the active player as target; UntappedLandsAtTurnStart reads the turn-start snapshot so
-        // tapping lands in response can't reduce the damage (CR ruling).
+        // tapping lands in response can't reduce the damage.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(new UntappedLandsAtTurnStart(), DamageRecipient.ACTIVE_PLAYER));
     }

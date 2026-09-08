@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "SPM", collectorNumber = "150")
 @CardRegistration(set = "SPM", collectorNumber = "205")
 @CardRegistration(set = "SPM", collectorNumber = "216")
+@CardRegistration(set = "OM1", collectorNumber = "157")
 public class SpiderMan2099 extends Card {
 
     public SpiderMan2099() {

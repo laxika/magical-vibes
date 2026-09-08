@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "299")
 @CardRegistration(set = "SUM", collectorNumber = "236")
 public class BlackVise extends Card {
 
     public BlackVise() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RememberTargetPlayerEffect());
         // "At the beginning of the chosen player's upkeep, Black Vise deals X damage to that player,
         // where X is the number of cards in their hand minus 4." In this 1v1 engine the chosen
         // opponent is the sole opponent, so the trigger fires on that opponent's upkeep. X clamps to

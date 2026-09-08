@@ -71,8 +71,6 @@ class SazacapsBrewTest extends BaseCardTest {
     }
 
     private void cast(List<UUID> targetIds, boolean giftPromised) {
-        gs.playCard(gd, player1, 0, 0, null, null, targetIds, List.of(), false,
-                null, null, null, null, null, false, 1, null, null, null, List.of(), false,
-                null, null, List.of(), List.of(), null, null, giftPromised);
+        gs.playCardWithGift(gd, player1, 0, 0, null, null, targetIds, 1, giftPromised);
     }
 }

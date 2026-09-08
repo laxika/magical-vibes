@@ -895,19 +895,23 @@ class AiTargetSelector {
                 case SHARE_CREATURE_TYPES -> gameQueryService.shareCreatureType(gameData, other, candidate);
                 case SHARE_NO_CREATURE_TYPES -> !gameQueryService.shareCreatureType(gameData, other, candidate);
                 case SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE ->
-                        gameQueryService.sharesArtifactCreatureOrLandType(other, candidate);
+                        gameQueryService.sharesArtifactCreatureOrLandType(gameData, other, candidate);
                 case SHARE_ARTIFACT_OR_CREATURE_TYPE ->
-                        gameQueryService.sharesArtifactOrCreatureType(other, candidate);
-                case SHARE_CARD_TYPE -> gameQueryService.sharesCardType(other, candidate);
+                        gameQueryService.sharesArtifactOrCreatureType(gameData, other, candidate);
+                case SHARE_CARD_TYPE -> gameQueryService.sharesCardType(gameData, other, candidate);
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
                 case ATTACHED_TO_FIRST_TARGET -> java.util.Objects.equals(other.getId(), candidate.getAttachedTo());
+                case BLOCKED_BY_FIRST_TARGET -> gameData.combatOpponentIdsBlockedByThisTurn
+                        .getOrDefault(other.getId(), Set.of())
+                        .contains(candidate.getId());
                 case DIFFERENT_NAMES -> !other.getCard().getName().equals(candidate.getCard().getName());
                 case AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_CONTROLLER,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                      ONE_PER_CONTROLLER_IF_ABLE, AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
-                     AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR -> true; // handled above
+                     AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR,
+                     DIFFERENT_MANA_VALUES -> true; // handled above
                 case SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST ->
                         isAnotherPermanentOfAuraHostType(gameData, other, candidate);
             };

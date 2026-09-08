@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "90")
+@CardRegistration(set = "LEG", collectorNumber = "270")
 public class XiraArien extends Card {
 
     public XiraArien() {

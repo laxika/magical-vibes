@@ -15,10 +15,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param sourcePredicate optional restriction on the creature source; {@code null} matches every
  *                        creature source
+ * @param combatOnly whether the prevention applies only to combat damage
  */
-public record PreventDamageToSelfFromCreaturesEffect(PermanentPredicate sourcePredicate) implements CardEffect {
+public record PreventDamageToSelfFromCreaturesEffect(PermanentPredicate sourcePredicate, boolean combatOnly)
+        implements CardEffect {
 
     public PreventDamageToSelfFromCreaturesEffect() {
-        this(null);
+        this(null, false);
+    }
+
+    public PreventDamageToSelfFromCreaturesEffect(PermanentPredicate sourcePredicate) {
+        this(sourcePredicate, false);
     }
 }

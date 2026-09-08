@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "160")
+@CardRegistration(set = "OM1", collectorNumber = "146")
 public class WraithViciousVigilante extends Card {
 
     public WraithViciousVigilante() {

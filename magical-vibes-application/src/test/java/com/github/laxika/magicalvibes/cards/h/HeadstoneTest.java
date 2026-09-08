@@ -90,6 +90,7 @@ class HeadstoneTest extends BaseCardTest {
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);

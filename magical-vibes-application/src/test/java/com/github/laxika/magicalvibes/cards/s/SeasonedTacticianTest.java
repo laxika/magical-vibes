@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
+import com.github.laxika.magicalvibes.cards.g.GuerrillaTactics;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeasonedTactician.class, AesthirGlider.class, GuerrillaTactics.class})
 class SeasonedTacticianTest extends BaseCardTest {
 
     @Test
@@ -23,7 +25,7 @@ class SeasonedTacticianTest extends BaseCardTest {
     void activateExilesTopFourAndPromptsForSource() {
         harness.addToBattlefield(player1, new SeasonedTactician());
         GameData gd = harness.getGameData();
-        addReadyGoblin(player2);
+        addCreatureReady(player2, new AesthirGlider());
 
         List<Card> library = gd.playerDecks.get(player1.getId());
         List<Card> topFour = List.copyOf(library.subList(0, 4));
@@ -46,7 +48,7 @@ class SeasonedTacticianTest extends BaseCardTest {
     void preventsDamageFromChosenSource() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new SeasonedTactician());
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent goblin = addCreatureReady(player2, new AesthirGlider());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -65,8 +67,8 @@ class SeasonedTacticianTest extends BaseCardTest {
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new SeasonedTactician());
-        Permanent chosen = addReadyGoblin(player2);
-        Permanent other = addReadyGoblin(player2);
+        Permanent chosen = addCreatureReady(player2, new AesthirGlider());
+        Permanent other = addCreatureReady(player2, new AesthirGlider());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -82,6 +84,32 @@ class SeasonedTacticianTest extends BaseCardTest {
     }
 
     @Test
+    void preventsDamageFromChosenSpell() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new SeasonedTactician());
+        GuerrillaTactics spell = new GuerrillaTactics();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(spell.getId());
+
+        harness.handlePermanentChosen(player1, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot activate with fewer than four cards in library")
     void cannotActivateWithTooFewLibraryCards() {
         harness.addToBattlefield(player1, new SeasonedTactician());
@@ -94,10 +122,4 @@ class SeasonedTacticianTest extends BaseCardTest {
                 .hasMessageContaining("Not enough cards in library to exile");
     }
 
-    private Permanent addReadyGoblin(Player player) {
-        Permanent perm = new Permanent(new GoblinPiker());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

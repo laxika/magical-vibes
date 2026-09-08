@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.d.Desert;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VisionCharm.class, Forest.class, GrizzlyBears.class, Island.class, Millstone.class})
 class VisionCharmTest extends BaseCardTest {
 
     @Nested
@@ -76,6 +79,21 @@ class VisionCharmTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed(Desert.class)
+        @DisplayName("Offers nonbasic land types for the first choice")
+        void offersNonBasicLandTypesForFirstChoice() {
+            harness.addToBattlefield(player1, new Desert());
+            harness.setHand(player1, List.of(new VisionCharm()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            harness.castModalInstant(player1, 0, 1, List.of());
+            harness.passBothPriorities();
+
+            var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(choice.options()).contains("DESERT");
+        }
+
+        @Test
         @DisplayName("All Forests become Islands until end of turn, including the opponent's")
         void convertsMatchingLandsGlobally() {
             Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -101,7 +119,7 @@ class VisionCharmTest extends BaseCardTest {
             castLandModeAndChoose("FOREST", "ISLAND");
 
             int forestIndex = indexOnBattlefield(player1, "Forest");
-            gs.tapPermanent(gd, player1, forestIndex);
+            harness.tapPermanent(player1, forestIndex);
 
             assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
             assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);

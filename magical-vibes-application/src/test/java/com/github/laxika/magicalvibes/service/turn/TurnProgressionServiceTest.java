@@ -190,14 +190,14 @@ class TurnProgressionServiceTest {
         }
 
         @Test
-        @DisplayName("Advances to END_OF_COMBAT and clears combat state")
+        @DisplayName("Advances to END_OF_COMBAT while retaining combat state for its triggers")
         void advancesToEndOfCombat() {
             gd.currentStep = TurnStep.COMBAT_DAMAGE;
 
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
-            verify(combatService).clearCombatState(gd);
+            verify(combatService, never()).clearCombatState(gd);
         }
 
         @Test
@@ -278,6 +278,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+            verify(combatService).clearCombatState(gd);
             verify(stepTriggerService).handlePostcombatMainTriggers(gd);
             verify(stepTriggerService).drainAddManaAtNextMainPhase(gd, false);
         }
@@ -312,7 +313,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
-            verify(combatService).clearCombatState(gd);
+            verify(combatService, never()).clearCombatState(gd);
             verify(combatService, never()).handleDeclareBlockersStep(any());
         }
 

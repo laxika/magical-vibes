@@ -88,6 +88,11 @@ public final class OracleTextNormalizer {
         Set<String> stated = new HashSet<>();
         for (String line : cardText.split("\n", -1)) {
             String[] segments = keywordSegments(line);
+            String firstKeyword = matchingKeyword(segments[0], bySpelling.keySet());
+            if (firstKeyword != null && isEmDashParameterizedKeyword(segments[0], firstKeyword)) {
+                stated.add(bySpelling.get(firstKeyword));
+                continue;
+            }
             List<String> onThisLine = new ArrayList<>(segments.length);
             for (String segment : segments) {
                 String keyword = matchingKeyword(segment, bySpelling.keySet());
@@ -102,6 +107,11 @@ public final class OracleTextNormalizer {
             }
         }
         return stated;
+    }
+
+    private static boolean isEmDashParameterizedKeyword(String segment, String keyword) {
+        return segment.length() > keyword.length()
+                && segment.charAt(keyword.length()) == '\u2014';
     }
 
     private static boolean allKeywords(String[] segments, Set<String> keywords) {
@@ -119,7 +129,9 @@ public final class OracleTextNormalizer {
         for (String keyword : keywords) {
             // equals first, so the charAt below only runs when the segment is strictly longer
             if (lower.equals(keyword)
-                    || (lower.startsWith(keyword) && lower.charAt(keyword.length()) == ' ')) {
+                    || (lower.startsWith(keyword)
+                    && (lower.charAt(keyword.length()) == ' '
+                    || lower.charAt(keyword.length()) == '\u2014'))) {
                 return keyword;
             }
         }

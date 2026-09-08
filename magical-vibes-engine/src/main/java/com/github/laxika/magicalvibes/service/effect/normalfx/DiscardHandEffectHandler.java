@@ -45,7 +45,15 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
 
         switch (e.recipient()) {
             case CONTROLLER -> discardHand(gameData, controllerId, controllerId, cardName);
-            case TARGET_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
+            case TARGET_PLAYER -> {
+                List<UUID> targetPlayerIds = entry.targetsForEffect(e);
+                if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
+                    targetPlayerIds = List.of(entry.getTargetId());
+                }
+                for (UUID targetPlayerId : targetPlayerIds) {
+                    discardHand(gameData, targetPlayerId, controllerId, cardName);
+                }
+            }
             case TRIGGERING_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
             case ACTIVE_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
             case EACH_PLAYER, EACH_OPPONENT -> {

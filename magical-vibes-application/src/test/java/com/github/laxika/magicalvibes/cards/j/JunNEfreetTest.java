@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(JunNEfreet.class)
 class JunNEfreetTest extends BaseCardTest {
 
     @Test
@@ -37,6 +39,20 @@ class JunNEfreetTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Junún Efreet");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Accepting without two black mana still sacrifices Junún Efreet")
+    void acceptingWithoutEnoughBlackManaSacrificesEfreet() {
+        harness.addToBattlefield(player1, new JunNEfreet());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve trigger -> may-pay prompt
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Junún Efreet");
+        harness.assertInGraveyard(player1, "Junún Efreet");
     }
 
     @Test

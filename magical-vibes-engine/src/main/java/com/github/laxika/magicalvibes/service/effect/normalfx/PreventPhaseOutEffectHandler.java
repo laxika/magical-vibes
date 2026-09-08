@@ -45,7 +45,7 @@ public class PreventPhaseOutEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        subject.setCantPhaseOutUntilUpkeepOf(entry.getControllerId());
+        subject.preventPhaseOutUntilUpkeepOf(entry.getControllerId());
         gameLogService.append(gameData, GameLog.cardThen(subject.getCard(), " can't phase out."));
     }
 }

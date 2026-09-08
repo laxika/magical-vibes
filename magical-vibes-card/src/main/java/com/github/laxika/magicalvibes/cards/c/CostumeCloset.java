@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "5")
+@CardRegistration(set = "OM1", collectorNumber = "7")
 public class CostumeCloset extends Card {
 
     public CostumeCloset() {

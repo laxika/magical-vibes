@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPa
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
@@ -354,6 +355,7 @@ public class GameViewProjectionFactory {
                                 : Optional.<CastingPermissionService.FilteredGraveyardPermission>empty();
                         return cardViewFactory.createForGraveyard(c, cardGranted,
                                 gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c),
+                                gameQueryService.graveyardCardsHaveLostAllAbilities(data),
                                 filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
                                         .orElse(0),
                                 filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
@@ -396,26 +398,34 @@ public class GameViewProjectionFactory {
             }
         }
 
-        boolean reveals = allHandsRevealed || opponentRevealsOwnHand || opponentHandRevealedBySource(gameData, playerId);
-        if (!reveals) {
+        boolean fullHandRevealed = allHandsRevealed
+                || opponentRevealsOwnHand
+                || opponentHandRevealedBySource(gameData, playerId);
+        if (!fullHandRevealed) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) return List.of();
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof RevealOpponentHandsEffect) {
-                        reveals = true;
-                        break;
+            if (bf != null) {
+                for (Permanent perm : bf) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof RevealOpponentHandsEffect) {
+                            fullHandRevealed = true;
+                            break;
+                        }
                     }
+                    if (fullHandRevealed) break;
                 }
-                if (reveals) break;
             }
         }
-        if (!reveals) return List.of();
         for (UUID opponentId : gameData.orderedPlayerIds) {
             if (!opponentId.equals(playerId)) {
                 List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
-                return gameData.playerHands.getOrDefault(opponentId, List.of())
-                        .stream().map(c -> cardViewFactory.create(c, granted)).toList();
+                List<Card> opponentHand = gameData.playerHands.getOrDefault(opponentId, List.of());
+                boolean revealEntireOpponentHand = fullHandRevealed;
+                return opponentHand.stream()
+                        .filter(card -> revealEntireOpponentHand
+                                || opponentId.equals(gameData.cardsRevealedInHandUntilOwnerNextTurn.get(card.getId())))
+                        .map(c -> cardViewFactory.create(c, granted, List.of(),
+                                gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, opponentId, c)))
+                        .toList();
             }
         }
         return List.of();
@@ -456,7 +466,9 @@ public class GameViewProjectionFactory {
                     && freePlayCardId.equals(deck.getFirst().getId())) {
                 revealedPlayerIds.add(pid);
             }
-            if (pid.equals(viewerId) && data.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(pid)) {
+            if ((castingPermissionService.hasLibraryTopPermission(data, viewerId, pid)
+                    || (pid.equals(viewerId) && data.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(pid)))
+                    && deck != null && !deck.isEmpty()) {
                 revealedPlayerIds.add(pid);
             }
 
@@ -573,7 +585,7 @@ public class GameViewProjectionFactory {
         Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
 
-        // Collect card IDs castable via AllowCastFromCardsExiledWithSourceEffect
+        // Collect card IDs playable via static exile permissions
         Set<UUID> castableFromExileWithSource = castingPermissionService.getCastableExiledCardIds(gameData, playerId);
         Set<UUID> anyManaTypeIds = castingPermissionService.getAnyManaTypeExiledCardIds(gameData, playerId);
         Set<UUID> snowManaAsAnyColorIds = gameData.exiledCards.stream()
@@ -586,6 +598,12 @@ public class GameViewProjectionFactory {
         List<Card> exiledCards = new ArrayList<>(gameData.getPlayerExiledCards(playerId));
         Set<UUID> alreadyIncluded = new HashSet<>();
         for (Card c : exiledCards) alreadyIncluded.add(c.getId());
+        for (Card card : gameData.playerSideboards.getOrDefault(playerId, List.of())) {
+            if (gameData.outsideGamePlayPermissions.contains(card.getId())
+                    && alreadyIncluded.add(card.getId())) {
+                exiledCards.add(card);
+            }
+        }
         for (UUID cardId : castableFromExileWithSource) {
             if (!alreadyIncluded.contains(cardId)) {
                 ExiledCardEntry entry = gameData.findExiledCard(cardId);
@@ -597,7 +615,7 @@ public class GameViewProjectionFactory {
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
             if (!alreadyIncluded.contains(entry.card().getId())
-                    && playerId.equals(gameData.exilePlayPermissions.get(entry.card().getId()))) {
+                    && castingPermissionService.hasExilePlayPermission(gameData, playerId, entry.card().getId())) {
                 exiledCards.add(entry.card());
                 alreadyIncluded.add(entry.card().getId());
             }
@@ -622,6 +640,11 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
             }
+            if (gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
+                    && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteExactlyThreeColorSpellOnlyMana();
+            }
             if ((card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT))
                     && cardPool.getCreatureOrEnchantmentSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
@@ -639,6 +662,8 @@ public class GameViewProjectionFactory {
                 cardPool.promoteRoomSpellsOrUnlocksMana();
             }
             ExiledCardEntry exiledEntry = gameData.findExiledCard(card.getId());
+            boolean fromOutsideGame = exiledEntry == null
+                    && gameData.outsideGamePlayPermissions.contains(card.getId());
             ForetellCast foretellCast = card.getCastingOption(ForetellCast.class).orElse(null);
             ManaCost foretoldCost = gameData.foretoldCardCosts.get(card.getId());
             if (foretoldCost == null && foretellCast != null && foretellCast.manaCostString() != null) {
@@ -657,8 +682,7 @@ public class GameViewProjectionFactory {
                 continue;
             }
 
-            UUID permittedPlayer = gameData.exilePlayPermissions.get(card.getId());
-            boolean hasPermission = (permittedPlayer != null && permittedPlayer.equals(playerId))
+            boolean hasPermission = fromOutsideGame || castingPermissionService.hasExilePlayPermission(gameData, playerId, card.getId())
                     || castableFromExileWithSource.contains(card.getId())
                     || foretellPermission;
             boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
@@ -675,7 +699,7 @@ public class GameViewProjectionFactory {
             }
 
             if (card.hasType(CardType.LAND)) {
-                if (isActivePlayer && isMainPhase && landsPlayed < gameData.getMaxLandsThisTurn(playerId) && stackEmpty
+                if (isActivePlayer && isMainPhase && landsPlayed < (gameData.getMaxLandsThisTurn(playerId) + gameQueryService.getConditionalAdditionalLandPlays(gameData, playerId)) && stackEmpty
                         && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                         && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                         && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
@@ -687,7 +711,8 @@ public class GameViewProjectionFactory {
             if (card.getManaCost() == null
                     || castingPermissionService.isSpellLimitReached(gameData, playerId, card)
                     || cantCastDueToAttackExile) continue;
-            if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE)) continue;
+            if (!fromOutsideGame && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE, playerId)) continue;
+            if (fromOutsideGame && !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) continue;
             if (castingPermissionService.isSpellRestricted(gameData, playerId, card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
@@ -738,7 +763,8 @@ public class GameViewProjectionFactory {
                                 : cost.canPay(cardPool, additionalCost);
                         // Check non-zero alternative cost from battlefield (e.g. Jodah)
                         if (!foretellPermission && !canAfford) {
-                            canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
+                            canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(
+                                    gameData, playerId, card, pool, additionalCost, Zone.EXILE);
                         }
                         if (!canAfford
                                 && (card.getKeywords().contains(Keyword.CONVOKE)
@@ -827,8 +853,8 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        boolean canPlayLandFromTop = castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId);
-        List<Card> deck = gameData.playerDecks.get(playerId);
+        UUID libraryOwnerId = castingPermissionService.findLibraryTopOwner(gameData, playerId);
+        List<Card> deck = libraryOwnerId == null ? null : gameData.playerDecks.get(libraryOwnerId);
         if (deck == null || deck.isEmpty()) {
             return playable;
         }
@@ -841,7 +867,7 @@ public class GameViewProjectionFactory {
             boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
             boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-            if ((freeTopPlay || lifeTopPlay || canPlayLandFromTop)
+            if ((freeTopPlay || lifeTopPlay || castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId))
                     && isActivePlayer
                     && isMainPhase
                     && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
@@ -855,7 +881,7 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
+        if (!gameQueryService.canPlayerCastSpellsFromZone(gameData, playerId, Zone.LIBRARY)) {
             return playable;
         }
         if (!gameQueryService.canCastSpellFromZone(gameData, topCard, Zone.LIBRARY, playerId)) {
@@ -896,9 +922,18 @@ public class GameViewProjectionFactory {
                 && gameData.getLife(playerId) >= topCard.getManaValue()
                 && gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
-        if (freeTopPlay || canPayLifeAlternative || castingCostService.hasAlternativeZeroCostFromBattlefield(
-                gameData, playerId, topCard, Zone.LIBRARY)) {
-            playable.add(cardViewFactory.create(topCard));
+        boolean alternativeZeroCost = castingCostService.hasAlternativeZeroCostFromBattlefield(
+                gameData, playerId, topCard, Zone.LIBRARY);
+        CardView topCardView = cardViewFactory.create(topCard);
+        if (!freeTopPlay && !lifeTopPlay && !canPayLifeAlternative && !alternativeZeroCost) {
+            int counterCost = castingPermissionService.findAdditionalCounterCostFromTopOfLibrary(
+                    gameData, playerId, topCard).orElse(0);
+            if (counterCost > 0) {
+                topCardView = topCardView.toBuilder().exileCastCounterCost(counterCost).build();
+            }
+        }
+        if (freeTopPlay || canPayLifeAlternative || alternativeZeroCost) {
+            playable.add(topCardView);
         } else {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, topCard, topCard.getParsedManaCost());
@@ -908,6 +943,11 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(pool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
             }
+            if (gameQueryService.getEffectiveCardColors(gameData, topCard).size() == 3
+                    && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteExactlyThreeColorSpellOnlyMana();
+            }
             int additionalCost = castingCostService.getCastCostModifier(
                     gameData, playerId, topCard, 0, Zone.LIBRARY);
             boolean canAfford = cost.canPay(cardPool, additionalCost);
@@ -915,10 +955,11 @@ public class GameViewProjectionFactory {
                 canAfford = cost.canPayAsGeneric(cardPool, 0, additionalCost);
             }
             if (!canAfford) {
-                canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, topCard, pool, additionalCost);
+                canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(
+                        gameData, playerId, topCard, pool, additionalCost, Zone.LIBRARY);
             }
             if (canAfford) {
-                playable.add(cardViewFactory.create(topCard));
+                playable.add(topCardView);
             }
         }
 
@@ -926,7 +967,8 @@ public class GameViewProjectionFactory {
     }
 
     private CardView createHandCardView(GameData gameData, UUID playerId, Card card, List<CardSubtype> grantedSubtypes) {
-        CardView view = cardViewFactory.create(card, grantedSubtypes);
+        CardView view = cardViewFactory.create(card, grantedSubtypes, List.of(),
+                gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, playerId, card));
         if (view.hasAlternateCastingCost()) {
             return view;
         }

@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ControlLossTapTrigger;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -15,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedToControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -85,9 +89,13 @@ public class CreatureControlService {
     public void applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
                                    CardEffect wrappedEffect, EffectDuration duration,
                                    UUID sourcePermanentId, String sourceCardName) {
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
+        FloatingContinuousEffect stamped = gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), sourceCardName, sourcePermanentId, newControllerId,
                 wrappedEffect, target.getId(), null, null, duration, 0));
+        if (duration == EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN) {
+            gameData.queueDelayedAction(new ExpireControlAtEndOfNextTurn(
+                    stamped.id(), newControllerId, gameData.turnNumber));
+        }
         recomputeControl(gameData, target);
     }
 
@@ -167,9 +175,7 @@ public class CreatureControlService {
         boolean hasControlLossUnattachTrigger = queueControlLossUnattachTriggers(
                 gameData, permanent, current);
 
-        if (gameData.permanentsToTapWhenControlLost.remove(permanent.getId())) {
-            permanent.tap();
-        }
+        queueControlLossTapTriggers(gameData, permanent, current);
 
         removeFromCombat(gameData, permanent);
         gameData.playerBattlefields.get(current).remove(permanent);
@@ -215,6 +221,8 @@ public class CreatureControlService {
         }
         log.info("Game {} - {} controls {}", gameData.id, newControllerName, permanent.getCard().getName());
 
+        queueSelfControlChangeTriggers(gameData, permanent, derived);
+
         // "For as long as you control [source]" effects keyed to THIS permanent end when it
         // changes controllers away from their creator; cascade to the permanents they held.
         expireSourceControllerDependentEffects(gameData, permanent);
@@ -240,6 +248,61 @@ public class CreatureControlService {
             queued = true;
         }
         return queued;
+    }
+
+    private void queueControlLossTapTriggers(GameData gameData, Permanent permanent,
+                                             UUID previousController) {
+        List<ControlLossTapTrigger> registrations = gameData.controlLossTapTriggersFor(permanent.getId());
+        if (registrations.isEmpty()) {
+            return;
+        }
+
+        List<ControlLossTapTrigger> remaining = new ArrayList<>();
+        for (ControlLossTapTrigger registration : registrations) {
+            if (!previousController.equals(registration.controllerId())) {
+                remaining.add(registration);
+                continue;
+            }
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    registration.sourceCard(),
+                    registration.controllerId(),
+                    registration.sourceCard().getName() + "'s delayed triggered ability",
+                    List.of(new TapPermanentsEffect(TapUntapScope.TARGET)));
+            trigger.setTargetId(permanent.getId());
+            trigger.setNonTargeting(true);
+            gameData.enqueueTrigger(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(registration.sourceCard()));
+        }
+
+        if (remaining.isEmpty()) {
+            gameData.controlLossTapTriggers.remove(permanent.getId());
+        } else {
+            gameData.controlLossTapTriggers.put(permanent.getId(),
+                    java.util.Collections.synchronizedList(remaining));
+        }
+    }
+
+    private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
+        List<CardEffect> effects = new ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+
+        for (CardEffect effect : effects) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(),
+                    controllerId,
+                    permanent.getCard().getName() + "'s ability",
+                    List.of(effect),
+                    null,
+                    permanent.getId());
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        }
     }
 
     private void removeFromCombat(GameData gameData, Permanent permanent) {

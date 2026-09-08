@@ -34,6 +34,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class BrilliantUltimatumSupport {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
@@ -161,7 +165,7 @@ public class BrilliantUltimatumSupport {
         String playerName = gameData.playerIdToName.get(playerId);
         boolean isControllersTurn = playerId.equals(gameData.activePlayerId);
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        if (!isControllersTurn || landsPlayed >= gameData.getMaxLandsThisTurn(playerId)) {
+        if (!isControllersTurn || landsPlayed >= (gameData.getMaxLandsThisTurn(playerId) + gameQueryService.getConditionalAdditionalLandPlays(gameData, playerId))) {
             String reason = !isControllersTurn ? "not your turn" : "land already played this turn";
             gameLogService.append(gameData, GameLog.builder().card(card).text(" can't be played (" + reason + ") and stays exiled.").build());
             return;

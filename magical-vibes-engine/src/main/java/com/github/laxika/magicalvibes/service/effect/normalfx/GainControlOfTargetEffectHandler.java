@@ -39,6 +39,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         switch (e.duration()) {
             case PERMANENT -> resolvePermanent(gameData, entry, e);
             case END_OF_TURN -> resolveEndOfTurn(gameData, entry, e);
+            case UNTIL_END_OF_YOUR_NEXT_TURN -> resolveEndOfTurn(gameData, entry, e);
             case WHILE_SOURCE_ON_BATTLEFIELD -> resolveWhileSource(gameData, entry, e, true, false);
             case WHILE_SOURCE_TAPPED -> resolveWhileSource(gameData, entry, e, true, true);
             case WHILE_SOURCE_REMAINS -> resolveWhileSource(gameData, entry, e, false, false);
@@ -82,7 +83,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
             // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
             if (e.tapWhenControlLost()) {
-                gameData.permanentsToTapWhenControlLost.add(target.getId());
+                gameData.registerControlLossTapTrigger(
+                        target.getId(), entry.getControllerId(), entry.getCard());
             }
         }
     }

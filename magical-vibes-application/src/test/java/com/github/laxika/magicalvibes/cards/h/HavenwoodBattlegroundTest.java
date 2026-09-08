@@ -50,6 +50,19 @@ class HavenwoodBattlegroundTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tap and sacrifice ability cannot be activated while the land is tapped")
+    void sacrificeAbilityRequiresUntappedLand() {
+        HavenwoodBattleground card = new HavenwoodBattleground();
+        harness.addToBattlefield(player1, card);
+        findPermanent(player1, "Havenwood Battleground").tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.assertOnBattlefield(player1, "Havenwood Battleground");
+    }
+
+    @Test
     @DisplayName("Tap and sacrifice adds two green mana and moves the land to the graveyard")
     void sacrificeAddsTwoGreenMana() {
         harness.addToBattlefield(player1, new HavenwoodBattleground());

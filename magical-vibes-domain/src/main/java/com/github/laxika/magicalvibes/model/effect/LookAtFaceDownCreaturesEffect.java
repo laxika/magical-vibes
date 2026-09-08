@@ -1,5 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Grants the controller permission to look at opposing face-down creatures for as long as this static effect remains active. */
+/** Static permission for the controller to look at face-down creatures they don't control. */
 public record LookAtFaceDownCreaturesEffect() implements CardEffect {
 }

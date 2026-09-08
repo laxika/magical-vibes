@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -34,15 +35,11 @@ public class PirateShip extends Card {
 
         // "When you control no Islands, sacrifice this creature." —
         // State-triggered ability (MTG rule 603.8).
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-                    if (battlefield == null) return true;
-                    return battlefield.stream()
-                            .noneMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
-                },
+        addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(0,
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentControlledBySourceControllerPredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
                 List.of(new SacrificeSelfEffect()),
-                "Pirate Ship's state-triggered ability"
-        ));
+                "Pirate Ship's state-triggered ability"));
     }
 }

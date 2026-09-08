@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "132")
+@CardRegistration(set = "OM1", collectorNumber = "135")
 public class KravenProudPredator extends Card {
 
     public KravenProudPredator() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "208")
+@CardRegistration(set = "VOW", collectorNumber = "209")
 public class MoldgrafMillipede extends Card {
 
     public MoldgrafMillipede() {

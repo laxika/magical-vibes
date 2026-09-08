@@ -92,7 +92,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
 
         if (e.random()) {
             for (UUID playerId : targetPlayers) {
-                gameData.discardCausedByOpponent = true;
+                gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
                 playerInteractionSupport.resolveRandomDiscardCards(
                         gameData, playerId, entry.getCard().getName(), amount);
             }
@@ -123,7 +123,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         switch (e.recipient()) {
             case TARGET_PLAYER -> {
                 playerId = targetPlayerOverride != null ? targetPlayerOverride : entry.getTargetId();
-                opponentCaused = true;
+                opponentCaused = !playerId.equals(entry.getControllerId());
             }
             case TRIGGERING_PLAYER -> {
                 playerId = entry.getTargetId();
@@ -197,6 +197,9 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                 }
             }
             playerInteractionSupport.resolveDiscardCards(gameData, playerId, amount, validIndices);
+        } else if (e.stopAfterDiscardingPredicate() != null) {
+            playerInteractionSupport.resolveDiscardCards(gameData, playerId, amount,
+                    DiscardFollowUp.NONE, e.stopAfterDiscardingPredicate());
         } else {
             playerInteractionSupport.resolveDiscardCards(gameData, playerId, amount,
                     DiscardFollowUp.NONE, e.stopAfterDiscardingType());

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MOR", collectorNumber = "92")
 @CardRegistration(set = "HOU", collectorNumber = "101")
 @CardRegistration(set = "M13", collectorNumber = "137")
+@CardRegistration(set = "DTK", collectorNumber = "142")
+@CardRegistration(set = "FDN", collectorNumber = "542")
 public class KindledFury extends Card {
 
     public KindledFury() {

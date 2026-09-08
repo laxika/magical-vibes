@@ -35,4 +35,14 @@ public interface GraveyardCardChoosingEffect extends CardEffect {
     default boolean graveyardChoiceExactTargets() {
         return false;
     }
+
+    /** The maximum combined power of the selected graveyard cards; {@code null} means uncapped. */
+    default Integer graveyardChoiceMaxTotalPower() {
+        return null;
+    }
+
+    /** The minimum number of selected cards; derived from exact-target choices by default. */
+    default int graveyardChoiceMinTargets() {
+        return graveyardChoiceExactTargets() ? graveyardChoiceMaxTargets() : 0;
+    }
 }

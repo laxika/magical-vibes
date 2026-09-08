@@ -8,10 +8,21 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * the battlefield. Choosing no card represents the optional instruction.
  */
 public record PutCardFromHandOrGraveyardOntoBattlefieldEffect(
-        CardPredicate predicate, String label, CounterType enterWithCounter)
+        CardPredicate predicate, String label, CounterType enterWithCounter,
+        boolean grantHaste, boolean returnToHandAtEndStep)
         implements CardEffect {
 
     public PutCardFromHandOrGraveyardOntoBattlefieldEffect(CardPredicate predicate, String label) {
-        this(predicate, label, null);
+        this(predicate, label, null, false, false);
+    }
+
+    public PutCardFromHandOrGraveyardOntoBattlefieldEffect(
+            CardPredicate predicate, String label, boolean grantHaste, boolean returnToHandAtEndStep) {
+        this(predicate, label, null, grantHaste, returnToHandAtEndStep);
+    }
+
+    public PutCardFromHandOrGraveyardOntoBattlefieldEffect(
+            CardPredicate predicate, String label, CounterType enterWithCounter) {
+        this(predicate, label, enterWithCounter, false, false);
     }
 }

@@ -28,6 +28,7 @@ class CentralElevatorPromisingStairsTest extends BaseCardTest {
     @Test
     void centralElevatorExcludesRoomsSharingAnUnlockedDoorName() {
         castRoom(new BottomlessPoolLockerRoom(), 0, 1);
+        harness.passBothPriorities();
         Card excludedRoom = new BottomlessPoolLockerRoom();
         Card eligibleRoom = new GrandEntrywayElegantRotunda();
         harness.setLibrary(player1, List.of(excludedRoom, eligibleRoom));

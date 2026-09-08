@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.EnumSet;
 import java.util.Locale;
@@ -65,6 +67,11 @@ final class TokenCardFactory {
             tokenCard.setToughness(toughness);
         }
         tokenCard.setSubtypes(token.subtypes());
+        if (token.subtypes() != null
+                && token.subtypes().contains(CardSubtype.AURA)
+                && token.subtypes().contains(CardSubtype.ROLE)) {
+            tokenCard.target(TargetFilters.creature());
+        }
         if (token.keywords() != null && !token.keywords().isEmpty()) {
             tokenCard.setKeywords(token.keywords());
             tokenCard.setCardText(keywordText(token.keywords()));
@@ -96,6 +103,14 @@ final class TokenCardFactory {
                     tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
                 }
             }
+        }
+        if (token.tokenEffects() != null) {
+            token.tokenEffects().values().stream()
+                    .filter(BandsWithOtherEffect.class::isInstance)
+                    .map(BandsWithOtherEffect.class::cast)
+                    .findFirst()
+                    .ifPresent(effect -> tokenCard.setCardText(
+                            "Bands with other creatures named " + effect.creatureName() + "."));
         }
         if (token.tokenAbilities() != null) {
             for (ActivatedAbility ability : token.tokenAbilities()) {

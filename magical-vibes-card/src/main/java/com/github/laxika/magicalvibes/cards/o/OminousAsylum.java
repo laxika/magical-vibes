@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "181")
+@CardRegistration(set = "OM1", collectorNumber = "182")
 public class OminousAsylum extends Card {
 
     public OminousAsylum() {

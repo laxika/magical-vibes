@@ -18,16 +18,13 @@ import java.util.List;
 public class PersonalIncarnation extends Card {
 
     public PersonalIncarnation() {
-        // {0}: The next 1 damage that would be dealt to this creature this turn is dealt to its owner
-        // instead. Only this creature's owner may activate this ability — abilities can only be activated
-        // by the controller, who is the owner in this engine, so no extra restriction is needed.
         addActivatedAbility(new ActivatedAbility(false, "{0}",
                 List.of(new RedirectNextDamageEffect(RedirectRole.SOURCE_PERMANENT, RedirectRole.CONTROLLER,
                         1, null)),
-                "{0}: The next 1 damage that would be dealt to this creature this turn is dealt to its owner instead. Only this creature's owner may activate this ability."));
+                "{0}: The next 1 damage that would be dealt to this creature this turn is dealt to its owner instead. Only this creature's owner may activate this ability.")
+                .withActivatableOnlyByOwner());
 
-        // When this creature dies, its owner loses half their life, rounded up.
         addEffect(EffectSlot.ON_DEATH,
-                new LoseLifeEffect(new HalfControllerLifeRoundedUp(), LoseLifeRecipient.CONTROLLER));
+                new LoseLifeEffect(new HalfControllerLifeRoundedUp(), LoseLifeRecipient.OWNER));
     }
 }

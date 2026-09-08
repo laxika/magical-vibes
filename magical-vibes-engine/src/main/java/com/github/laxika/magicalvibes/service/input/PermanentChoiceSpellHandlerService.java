@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueue
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.VaanExileCastSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -69,6 +70,7 @@ public class PermanentChoiceSpellHandlerService {
     private final CopySupport copySupport;
     private final LifeSupport lifeSupport;
     private final DealDividedDamageSupport dealDividedDamageSupport;
+    private final SpellweaverVoluteSupport spellweaverVoluteSupport;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -86,7 +88,8 @@ public class PermanentChoiceSpellHandlerService {
                                               InteractionHandlerRegistry interactionHandlerRegistry,
                                               CopySupport copySupport,
                                               LifeSupport lifeSupport,
-                                              DealDividedDamageSupport dealDividedDamageSupport) {
+                                              DealDividedDamageSupport dealDividedDamageSupport,
+                                              SpellweaverVoluteSupport spellweaverVoluteSupport) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -104,6 +107,7 @@ public class PermanentChoiceSpellHandlerService {
         this.copySupport = copySupport;
         this.lifeSupport = lifeSupport;
         this.dealDividedDamageSupport = dealDividedDamageSupport;
+        this.spellweaverVoluteSupport = spellweaverVoluteSupport;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -292,14 +296,24 @@ public class PermanentChoiceSpellHandlerService {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
-            if (ect.genericCostReduction() > 0) {
+            if (ect.genericCostReduction() > 0 || ect.payManaCost()) {
                 try {
-                    spellCastingService.playCardFromExileAsResolutionCast(gameData,
-                            new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
-                            ect.cardToCast().getId(), 0, permanentId);
+                    Player player = new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId()));
+                    if (ect.payManaCost()) {
+                        spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
+                                ect.cardToCast().getId(), 0, permanentId, ect.copy());
+                    } else {
+                        spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
+                                ect.cardToCast().getId(), 0, permanentId);
+                    }
                 } catch (IllegalStateException ex) {
-                    gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
-                    log.info("Game {} - reduced-cost exile cast of {} could not be completed",
+                    if (ect.genericCostReduction() > 0) {
+                        gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
+                    }
+                    if (ect.payManaCost() && ect.copy()) {
+                        gameData.removeFromExile(ect.cardToCast().getId());
+                    }
+                    log.info("Game {} - exile cast of {} could not be completed",
                             gameData.id, ect.cardToCast().getName());
                 }
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -344,12 +358,24 @@ public class PermanentChoiceSpellHandlerService {
 
             triggerCollectionService.checkSpellCastTriggers(gameData, ect.cardToCast(), ect.controllerId(), Zone.EXILE);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            if (ect.copy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(
+                    gameData, ect.cardToCast().getId())) {
+                return;
+            }
         } else {
             gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId());
             if (ect.genericCostReduction() > 0 || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
                 gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
                         "'s target is no longer valid and it stays exiled."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            if (ect.payManaCost() && ect.copy()) {
+                gameData.removeFromExile(ect.cardToCast().getId());
+                gameData.interaction.clearPermanentChoiceContext();
+                gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
+                        "'s target is no longer valid and the copy ceases to exist."));
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
@@ -393,6 +419,8 @@ public class PermanentChoiceSpellHandlerService {
                 gameData.spellsGrantedHasteOnEntry.remove(card.getId());
                 if (ect.genericCostReduction() > 0 || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.exilePlayCostModifiers.remove(card.getId());
+                } else if (ect.payManaCost() && ect.copy()) {
+                    gameData.removeFromExile(card.getId());
                 } else if (!ect.copy()) {
                     graveyardService.addCardToGraveyard(gameData, ect.controllerId(), card);
                 }
@@ -406,7 +434,7 @@ public class PermanentChoiceSpellHandlerService {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen,
                     ect.genericCostReduction(), ect.resolutionCast(), ect.lifeLossAfterCast(),
-                    ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()));
+                    ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard(), ect.payManaCost()));
             playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.").build());
@@ -427,13 +455,23 @@ public class PermanentChoiceSpellHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        if (ect.genericCostReduction() > 0) {
+        if (ect.genericCostReduction() > 0 || ect.payManaCost()) {
             try {
-                spellCastingService.playCardFromExileAsResolutionCast(gameData,
-                        new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
-                        card.getId(), 0, chosen);
+                Player player = new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId()));
+                if (ect.payManaCost()) {
+                    spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
+                            card.getId(), 0, chosen, ect.copy());
+                } else {
+                    spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
+                            card.getId(), 0, chosen);
+                }
             } catch (IllegalStateException ex) {
-                gameData.exilePlayCostModifiers.remove(card.getId());
+                if (ect.genericCostReduction() > 0) {
+                    gameData.exilePlayCostModifiers.remove(card.getId());
+                }
+                if (ect.payManaCost() && ect.copy()) {
+                    gameData.removeFromExile(card.getId());
+                }
                 log.info("Game {} - reduced-cost multi-target exile cast of {} could not be completed",
                         gameData.id, card.getName());
             }
@@ -467,6 +505,9 @@ public class PermanentChoiceSpellHandlerService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, ect.controllerId(), Zone.EXILE);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        if (ect.copy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(gameData, card.getId())) {
+            return;
+        }
 
         resumeAfterExileCast(gameData, ect.controllerId());
     }

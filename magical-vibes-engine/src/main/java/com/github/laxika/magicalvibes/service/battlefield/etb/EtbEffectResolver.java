@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -114,6 +116,9 @@ public class EtbEffectResolver {
         // re-evaluation at stack resolution, and source-untapped clauses are sampled at entry.
         register(ConditionalEffect.class, (ctx, effect) -> {
             ConditionalEffect conditional = (ConditionalEffect) effect;
+            if (!conditional.interveningIf()) {
+                return effect;
+            }
             Zone sourceZone = ctx.sourcePermanent() == null
                     ? (ctx.wasCastFromHand() ? Zone.HAND : null)
                     : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);
@@ -121,7 +126,7 @@ public class EtbEffectResolver {
                     && ctx.sourcePermanent().isCollectEvidenceCostPaid();
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
-                    ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false, false,
+                    ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), ctx.madness(), false, false,
                     sourceZone, 0, null, null, false, false, false, null, null, null,
                     ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
@@ -131,12 +136,15 @@ public class EtbEffectResolver {
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
                 // Not-kicked ETB clauses use the same cast-time context.
                 case NotKicked ignored -> !ctx.kicked() ? conditional.wrapped() : null;
+                case NotCondition notCondition when notCondition.inner() instanceof CastForAlternateCost ->
+                        ctx.alternateCost() ? null : conditional.wrapped();
                 // Independent additional-kicker clauses are intervening-if conditions whose
                 // payment list is snapshotted on the spell's stack entry.
                 case RepeatedAdditionalCostPaid paid ->
                         ctx.repeatedAdditionalCosts().contains(paid.manaCost()) ? conditional.wrapped() : null;
                 // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
                 case CastForProwlCost ignored -> ctx.prowl() ? conditional.wrapped() : null;
+                case CastForMadnessCost ignored -> ctx.madness() ? conditional.wrapped() : null;
                 case CastForAlternateCost ignored -> ctx.alternateCost() ? conditional.wrapped() : null;
                 // Spectacle branch selection is fixed when the permanent enters.
                 case CastForSpectacleCost ignored ->

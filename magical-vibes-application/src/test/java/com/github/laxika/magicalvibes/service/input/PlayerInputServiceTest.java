@@ -130,6 +130,18 @@ class PlayerInputServiceTest {
         return card;
     }
 
+    @Test
+    @DisplayName("Begins a spell odd/even choice with both options")
+    void beginsSpellManaValueParityChoice() {
+        svc.beginSpellManaValueParityChoice(gd, PLAYER1_ID);
+
+        PendingInteraction.ColorChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("ODD", "EVEN");
+        assertThat(choice.prompt()).isEqualTo("Choose odd or even.");
+        assertThat(choice.decidingPlayerId()).isEqualTo(PLAYER1_ID);
+    }
+
     // ========================================================================
     // Decision ownership
     // ========================================================================
@@ -557,7 +569,8 @@ class PlayerInputServiceTest {
             svc.beginSubtypeChoice(gd, PLAYER1_ID, permId);
 
             InteractionPromptMessage msg = projectedPrompt();
-            assertThat(msg.options()).doesNotContain("FOREST", "MOUNTAIN", "ISLAND", "PLAINS", "SWAMP", "AURA", "EQUIPMENT", "LOCUS");
+            assertThat(msg.options()).doesNotContain("FOREST", "MOUNTAIN", "ISLAND", "PLAINS", "SWAMP", "AURA", "EQUIPMENT", "LOCUS",
+                    "URZAS", "MINE", "POWER_PLANT", "TOWER");
             assertThat(msg.prompt()).isEqualTo("Choose a creature type.");
         }
 

@@ -69,8 +69,14 @@ public class DealDamageToTargetCreatureDamagedPlayerControlsEffectHandler
             return;
         }
 
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
-                AmountContext.forStackEntry(entry, null));
+                AmountContext.forStackEntry(entry, source));
 
         playerInputService.beginMultiPermanentChoice(gameData, chooserId, validIds, 1,
                 new MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls(entry, damage),

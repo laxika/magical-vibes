@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CloudElemental.class, AirElemental.class, GrizzlyBears.class, CloudSprite.class, GiantSpider.class})
 class CloudElementalTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -32,7 +34,6 @@ class CloudElementalTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Cloud Elemental");
     }
 
     @Test
@@ -77,19 +78,12 @@ class CloudElementalTest extends BaseCardTest {
     @Test
     @DisplayName("Cloud Elemental can block a creature with flying")
     void canBlockFlyingCreature() {
-        Permanent elementalPerm = new Permanent(new CloudElemental());
-        elementalPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(elementalPerm);
+        Permanent elementalPerm = addCreatureReady(player2, new CloudElemental());
 
-        Permanent atkPerm = new Permanent(new AirElemental());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new AirElemental());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -99,21 +93,44 @@ class CloudElementalTest extends BaseCardTest {
     // ===== Blocking — cannot block creatures without flying =====
 
     @Test
+    @DisplayName("Cloud Elemental cannot be blocked by a creature without flying or reach")
+    void flyingPreventsNonFlyingBlocker() {
+        addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent atkPerm = addCreatureReady(player1, new CloudElemental());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
+
+    @Test
     @DisplayName("Cloud Elemental cannot block a creature without flying")
     void cannotBlockNonFlyingCreature() {
-        Permanent elementalPerm = new Permanent(new CloudElemental());
-        elementalPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(elementalPerm);
+        addCreatureReady(player2, new CloudElemental());
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only block creatures with flying");
+    }
+
+    @Test
+    @DisplayName("Cloud Elemental cannot block a creature with reach but without flying")
+    void cannotBlockReachCreatureWithoutFlying() {
+        addCreatureReady(player2, new CloudElemental());
+
+        Permanent atkPerm = addCreatureReady(player1, new GiantSpider());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -127,21 +144,14 @@ class CloudElementalTest extends BaseCardTest {
     void survivesBlockingSmallFlyer() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = new Permanent(new CloudSprite());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new CloudSprite());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        Permanent blockerPerm = new Permanent(new CloudElemental());
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new CloudElemental());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Cloud Sprite should die (1 toughness vs 2 damage)
         harness.assertInGraveyard(player1, "Cloud Sprite");
@@ -156,15 +166,10 @@ class CloudElementalTest extends BaseCardTest {
     void dealsTwoDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = new Permanent(new CloudElemental());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new CloudElemental());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }

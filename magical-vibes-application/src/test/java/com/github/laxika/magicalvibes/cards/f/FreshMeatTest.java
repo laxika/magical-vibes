@@ -21,7 +21,7 @@ class FreshMeatTest extends BaseCardTest {
     @DisplayName("Creates one 3/3 Beast token per creature that died this turn")
     void createsTokensPerCreatureDeath() {
         // Simulate 2 creature deaths for player 1 this turn
-        gd.creatureDeathCountThisTurn.merge(player1.getId(), 2, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 2, Integer::sum);
 
         harness.setHand(player1, List.of(new FreshMeat()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -64,8 +64,8 @@ class FreshMeatTest extends BaseCardTest {
     @DisplayName("Only counts controller's creature deaths, not opponent's")
     void onlyCountsControllerDeaths() {
         // Opponent had 3 creatures die, controller had 1
-        gd.creatureDeathCountThisTurn.merge(player2.getId(), 3, Integer::sum);
-        gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player2.getId(), 3, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 1, Integer::sum);
 
         harness.setHand(player1, List.of(new FreshMeat()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -90,7 +90,7 @@ class FreshMeatTest extends BaseCardTest {
         // Simulate the creature dying (put it in graveyard + track the death)
         gd.playerBattlefields.get(player1.getId()).remove(elves);
         gd.playerGraveyards.get(player1.getId()).add(elves.getCard());
-        gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 1, Integer::sum);
 
         harness.setHand(player1, List.of(new FreshMeat()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -109,7 +109,7 @@ class FreshMeatTest extends BaseCardTest {
     @DisplayName("Creates tokens for multiple deaths in same turn")
     void createsTokensForMultipleDeaths() {
         // Simulate 5 creatures dying (e.g. board wipe)
-        gd.creatureDeathCountThisTurn.merge(player1.getId(), 5, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 5, Integer::sum);
 
         harness.setHand(player1, List.of(new FreshMeat()));
         harness.addMana(player1, ManaColor.GREEN, 4);

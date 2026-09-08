@@ -40,7 +40,7 @@ public class MayPayLifeEffectCompletionHandler implements MayEffectHandlerBean {
                 && gameData.getLife(playerId) >= effect.lifeCost();
         CardEffect continuation = accepted && canPay ? effect.wrapped() : effect.elseEffect();
         if (accepted && canPay) {
-            lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
+            lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
         }
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry != null && continuation != null) {
