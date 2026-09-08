@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "68")
+@CardRegistration(set = "OM1", collectorNumber = "65")
 public class TheSpotsPortal extends Card {
 
     public TheSpotsPortal() {

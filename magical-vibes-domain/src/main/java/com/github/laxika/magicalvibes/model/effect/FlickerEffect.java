@@ -292,6 +292,13 @@ public record FlickerEffect(
                 returnStep, false, null, null, 0, false, true);
     }
 
+    /** Exile every permanent matching {@code filter} and return them at the requested step. */
+    public static FlickerEffect exileAllPlayersPermanentsReturnAtStep(
+            PermanentPredicate filter, TurnStep returnStep) {
+        return new FlickerEffect(FlickerScope.ALL_PLAYERS_PERMANENTS, filter, ReturnTiming.AT_STEP,
+                returnStep, false, null, null, 0, false, false);
+    }
+
     /** Exile any number of matching permanents you control and return them at the requested step. */
     public static FlickerEffect exileControllersAnyNumberPermanentsReturnAtStep(
             PermanentPredicate filter, TurnStep returnStep, boolean returnAtControllerNextStep) {

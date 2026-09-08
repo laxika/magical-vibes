@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTrigger
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -693,6 +695,16 @@ public class MayMiscHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " begins the game with " , card, " on the battlefield."));
             log.info("Game {} - {} starts with {} on the battlefield (leyline)",
                     gameData.id, player.getUsername(), card.getName());
+
+            SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
+                    .map(SubtypeChoiceOnEnterEffect.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (subtypeChoice != null) {
+                playerInputService.beginPregameSubtypeChoice(gameData, controllerId, perm.getId(), subtypeChoice);
+                return;
+            }
         } else {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to put " , ability.sourceCard(), " on the battlefield."));
             log.info("Game {} - {} declines leyline placement for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());

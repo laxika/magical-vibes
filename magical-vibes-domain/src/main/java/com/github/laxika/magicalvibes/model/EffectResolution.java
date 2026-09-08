@@ -138,13 +138,13 @@ public final class EffectResolution {
                 if (coe.choicesRequired() == 1 && coe.choicesMax() == 1) {
                     List<ChooseOneEffect.ChooseOneOption> options = coe.options();
                     if (modeIndex >= 0 && modeIndex < options.size()) {
-                        resolved.addAll(options.get(modeIndex).effects());
+                        resolved.addAll(options.get(modeIndex).effectsForSelection());
                     } else {
                         resolved.add(effect);
                     }
                 } else if (modeIndex < 0) {
                     for (int chosenModeIndex : coe.decodeModeIndices(modeIndex)) {
-                        resolved.addAll(coe.options().get(chosenModeIndex).effects());
+                        resolved.addAll(coe.options().get(chosenModeIndex).effectsForSelection());
                     }
                 } else {
                     resolved.add(effect);

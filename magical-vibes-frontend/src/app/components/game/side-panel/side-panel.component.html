@@ -479,7 +479,9 @@
       <div class="side-prompt prompt-targeting">
         <span class="side-prompt-text">
           {{ choice.targeting.modeCardName }} &mdash; choose
-          @if (choice.targeting.modeChoicesRequired === choice.targeting.modeChoicesMax) {
+          @if (choice.targeting.modeChoicesRequired === 0) {
+            up to {{ choice.targeting.modeChoicesMax }}
+          } @else if (choice.targeting.modeChoicesRequired === choice.targeting.modeChoicesMax) {
             {{ choice.targeting.modeChoicesRequired === 1 ? (choice.targeting.modeOptional ? 'up to one' : 'one') : (choice.targeting.modeChoicesRequired === 2 ? 'two' : choice.targeting.modeChoicesRequired) }}
           } @else {
             {{ choice.targeting.modeChoicesRequired }} or more
@@ -492,6 +494,9 @@
                     (click)="choice.targeting.toggleMode($index)">
               {{ option.label }}@if (choice.targeting.modeModesMayRepeat && choice.targeting.modeSelectionCount($index) > 1) { <span> (×{{ choice.targeting.modeSelectionCount($index) }})</span> }@if (option.manaCost) { <span class="mode-option-cost">{{ option.manaCost }}</span> }
             </button>
+            @if (choice.targeting.modeModesMayRepeat && choice.targeting.modeSelectionCount($index) > 0) {
+              <button class="btn-side-prompt" (click)="choice.targeting.removeMode($index)">−</button>
+            }
           }
           <button class="btn-side-prompt"
                   [disabled]="choice.targeting.modeSelectedIndices.length < choice.targeting.modeChoicesRequired || choice.targeting.modeSelectedIndices.length > choice.targeting.modeChoicesMax"

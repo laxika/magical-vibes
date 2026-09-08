@@ -183,6 +183,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.emblems.clear();
         gameData.extraTurns.clear();
         gameData.extraTurnSkipsUntap.clear();
+        gameData.extraTurnDamageCantBePrevented.clear();
         gameData.extraTurnSequences.clear();
         gameData.currentExtraTurnSequence = null;
         gameData.pendingLibraryBottomReorders.clear();
@@ -221,6 +222,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersCantCastSpellsForRestOfGame.clear();
         gameData.clearDelayedActions(EpicDelayedTrigger.class);
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
+        gameData.playersCantCastNamedSpellsUntilControllerNextTurn.clear();
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.clear();
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.clear();
         gameData.playersCantPlayCardsFromHandUntilControllerNextTurn.clear();
@@ -231,6 +233,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.crimeCandidatesThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
+        gameData.playersWhoActivatedEquipAbilityThisTurn.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.activatedAbilityUsesThisGame.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
@@ -340,6 +343,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.creatureDeathCountThisTurn.put(playerId, 0);
             gameData.creaturesPutIntoOwnGraveyardThisTurnCount.put(playerId, 0);
+            gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.put(playerId, 0);
             gameData.nontokenCreatureDeathCountThisTurn.put(playerId, 0);
             gameData.creatureSubtypeDeathCountThisTurn.remove(playerId);
             gameData.creatureCardsDamagedThisTurnBySourcePermanent.put(playerId, ConcurrentHashMap.newKeySet());

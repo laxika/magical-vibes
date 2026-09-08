@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "4ED", collectorNumber = "347")
 @CardRegistration(set = "SUM", collectorNumber = "276")
+@CardRegistration(set = "3ED", collectorNumber = "276")
 public class SunglassesOfUrza extends Card {
 
     public SunglassesOfUrza() {

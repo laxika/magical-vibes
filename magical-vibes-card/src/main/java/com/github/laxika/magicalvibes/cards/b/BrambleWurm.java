@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "187")
 @CardRegistration(set = "INR", collectorNumber = "407")
+@CardRegistration(set = "VOW", collectorNumber = "189")
 public class BrambleWurm extends Card {
 
     public BrambleWurm() {

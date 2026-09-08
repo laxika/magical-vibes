@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "16")
+@CardRegistration(set = "TMT", collectorNumber = "196")
 public class LeonardoLeaderInBlue extends Card {
 
     public LeonardoLeaderInBlue() {

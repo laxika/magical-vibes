@@ -6,14 +6,19 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BreakingEntering.class, GrizzlyBears.class})
 class BreakingEnteringTest extends BaseCardTest {
 
     private static final int BREAKING = 0;
@@ -49,13 +54,19 @@ class BreakingEnteringTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, ENTERING, target.getId());
+        harness.castSorcery(player1, 0, ENTERING, (UUID) null);
         harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(returned.getCard()).isSameAs(target);
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -65,21 +76,22 @@ class BreakingEnteringTest extends BaseCardTest {
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears()));
-        Card target = new GrizzlyBears();
-        harness.setGraveyard(player2, List.of(target));
+        Card target = gd.playerDecks.get(player2.getId()).getFirst();
         harness.setHand(player1, List.of(new BreakingEntering()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        gs.playCard(gd, player1, 0, FUSE, target.getId(), null,
-                List.of(player2.getId(), target.getId()), List.of());
+        harness.castSorcery(player1, 0, FUSE, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        PendingInteraction.GraveyardChoice choice = gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice.cardPool()).contains(target);
+        harness.handleGraveyardCardChosen(player1, choice.cardPool().indexOf(target));
         Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(returned.getCard()).isSameAs(target);
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
     }
 }

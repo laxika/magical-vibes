@@ -42,35 +42,39 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
                 int x = (currentLife + 1) / 2; // half life total, rounded up
                 if (x < 0) x = 0;
 
-                // Create the X/X token
-                Card tokenCard = new Card();
-                tokenCard.setName(e.tokenName());
-                tokenCard.setType(CardType.CREATURE);
-                tokenCard.setManaCost("");
-                tokenCard.setToken(true);
-                tokenCard.setColor(e.color());
-                tokenCard.setPower(x);
-                tokenCard.setToughness(x);
-                tokenCard.setSubtypes(e.subtypes());
+                int tokenCount = gameQueryService.getTokenCreationAmount(
+                        gameData, controllerId, 1, e.subtypes(), true);
+                for (int copy = 0; copy < tokenCount; copy++) {
+                    // Create the X/X token
+                    Card tokenCard = new Card();
+                    tokenCard.setName(e.tokenName());
+                    tokenCard.setType(CardType.CREATURE);
+                    tokenCard.setManaCost("");
+                    tokenCard.setToken(true);
+                    tokenCard.setColor(e.color());
+                    tokenCard.setPower(x);
+                    tokenCard.setToughness(x);
+                    tokenCard.setSubtypes(e.subtypes());
 
-                CardPrintingRegistry.TokenImageData imageData = CardPrintingRegistry.getTokenImage(
-                        entry.getCard().getSetCode(), e.tokenName(), x, x, e.color()
-                );
-                if (imageData != null) {
-                    tokenCard.setSetCode(imageData.setCode());
-                    tokenCard.setCollectorNumber(imageData.collectorNumber());
+                    CardPrintingRegistry.TokenImageData imageData = CardPrintingRegistry.getTokenImage(
+                            entry.getCard().getSetCode(), e.tokenName(), x, x, e.color()
+                    );
+                    if (imageData != null) {
+                        tokenCard.setSetCode(imageData.setCode());
+                        tokenCard.setCollectorNumber(imageData.collectorNumber());
+                    }
+
+                    Card createdTokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                            gameData, controllerId, tokenCard);
+                    Permanent tokenPerm = new Permanent(createdTokenCard);
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPerm);
+
+                    String tokenLog = "A " + x + "/" + x + " black " + e.tokenName() + " creature token enters the battlefield.";
+                    gameLogService.append(gameData, GameLog.text(tokenLog));
+                    log.info("Game {} - {} {}/{} token created for {}", gameData.id, e.tokenName(), x, x, controllerId);
+
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, createdTokenCard, null, false);
                 }
-
-                tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                        gameData, controllerId, tokenCard);
-                Permanent tokenPerm = new Permanent(tokenCard);
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPerm);
-
-                String tokenLog = "A " + x + "/" + x + " black " + e.tokenName() + " creature token enters the battlefield.";
-                gameLogService.append(gameData, GameLog.text(tokenLog));
-                log.info("Game {} - {} {}/{} token created for {}", gameData.id, e.tokenName(), x, x, controllerId);
-
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
 
                 // The token deals X damage to the controller (damage source is the token, not the Saga)
                 if (x > 0) {

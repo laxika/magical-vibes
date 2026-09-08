@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "152")
+@CardRegistration(set = "TMT", collectorNumber = "244")
 public class KaraisTechnique extends Card {
 
     public KaraisTechnique() {

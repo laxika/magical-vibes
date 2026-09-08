@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 @CardRegistration(set = "5ED", collectorNumber = "101")
 @CardRegistration(set = "4ED", collectorNumber = "83")
 @CardRegistration(set = "SUM", collectorNumber = "65")
+@CardRegistration(set = "3ED", collectorNumber = "65")
 public class MagicalHack extends Card {
 
     public MagicalHack() {

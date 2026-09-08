@@ -174,14 +174,22 @@ public class StaticEffectSupport {
 
     public boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
         if (permanent.isFaceDown()) return true;
-        if (permanent.getCard().hasType(CardType.CREATURE)) return true;
+        CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
+        if (activeState != null && activeState.hasCardType(CardType.CREATURE)) return true;
+        if (activeState == null && permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
-        if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
-        if (gameData != null && permanent.getCard().hasType(CardType.LAND)
+        boolean artifact = activeState != null
+                ? activeState.hasCardType(CardType.ARTIFACT)
+                : permanent.getCard().hasType(CardType.ARTIFACT);
+        if (hasAnimateArtifacts && artifact) return true;
+        boolean land = activeState != null
+                ? activeState.hasCardType(CardType.LAND)
+                : permanent.getCard().hasType(CardType.LAND);
+        if (gameData != null && land
                 && matchesAnimateLand(gameData, permanent)) return true;
         if (gameData != null && gameQueryService.isAnimatedByStarfield(gameData, permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);

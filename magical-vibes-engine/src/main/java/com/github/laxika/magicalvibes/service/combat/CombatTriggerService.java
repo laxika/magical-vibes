@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

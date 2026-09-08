@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "SUM", collectorNumber = "105")
+@CardRegistration(set = "3ED", collectorNumber = "105")
 public class DemonicTutor extends Card {
 
     public DemonicTutor() {

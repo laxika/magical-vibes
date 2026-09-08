@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceCon
 
 @CardRegistration(set = "INR", collectorNumber = "255")
 @CardRegistration(set = "INR", collectorNumber = "439")
+@CardRegistration(set = "VOW", collectorNumber = "253")
 public class BoardedWindow extends Card {
 
     public BoardedWindow() {

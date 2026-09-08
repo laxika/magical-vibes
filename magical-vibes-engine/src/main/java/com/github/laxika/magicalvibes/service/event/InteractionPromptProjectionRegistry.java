@@ -207,6 +207,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectTargetLibraryDestinationChoice);
         register(PendingInteraction.CounteredSpellLibraryDestinationChoice.class,
                 this::projectCounteredSpellLibraryDestinationChoice);
+        register(PendingInteraction.LibrarySearchDestinationChoice.class,
+                this::projectLibrarySearchDestinationChoice);
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
@@ -1160,8 +1162,17 @@ public class InteractionPromptProjectionRegistry {
                 "Put " + interaction.cardName() + " on the " +
                         (interaction.firstOption().equalsIgnoreCase("Top")
                                 ? "top"
-                                : interaction.firstOption().toLowerCase()) +
+                        : interaction.firstOption().toLowerCase()) +
                         " or bottom of its owner's library?",
+                false);
+    }
+
+    private InteractionPromptMessage projectLibrarySearchDestinationChoice(
+            GameData gameData,
+            PendingInteraction.LibrarySearchDestinationChoice interaction) {
+        return InteractionPromptMessage.listPick(
+                PendingInteraction.LibrarySearchDestinationChoice.OPTIONS,
+                "Put " + interaction.card().getName() + " into your hand or graveyard?",
                 false);
     }
 

@@ -108,6 +108,24 @@ public class PlayCardRequestDispatchService {
                 ? CardSubtype.valueOf(request.beholdCreatureType()) : null;
         CardSubtype chosenCreatureType = request.chosenCreatureType() != null
                 ? CardSubtype.valueOf(request.chosenCreatureType()) : null;
+        List<UUID> casualtyCreatureIds = listOrEmpty(request.casualtyCreatureIds());
+        if (!casualtyCreatureIds.isEmpty()) {
+            gameService.playCardWithCasualty(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                    request.damageAssignments(), listOrEmpty(request.targetIds()), listOrEmpty(request.convokeCreatureIds()),
+                    Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(),
+                    request.phyrexianLifeCount(), nullIfEmpty(request.alternateCostSacrificePermanentIds()),
+                    request.exileGraveyardCardIndex(), nullIfEmpty(request.exileGraveyardCardIndices()),
+                    Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex(),
+                    nullIfEmpty(request.discardHandCardIndices()),
+                    nullIfEmpty(request.imposedSacrificePermanentIds()),
+                    nullIfEmpty(request.additionalCostSacrificePermanentIds()),
+                    request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of(),
+                    Boolean.TRUE.equals(request.buyback()), request.sharedColorDiscardHandCardIndex(),
+                    request.beholdPermanentId(), request.beholdHandCardIndex(),
+                    listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
+                    chosenBeholdType, casualtyCreatureIds);
+            return;
+        }
         if (Boolean.TRUE.equals(request.giftPromised())) {
             gameService.playCardWithGift(gameData, player, request.cardIndex(), request.xValue(),
                     request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()), true);

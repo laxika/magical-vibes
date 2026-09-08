@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "287")
+@CardRegistration(set = "3ED", collectorNumber = "287")
 public class Taiga extends Card {
 
     public Taiga() {

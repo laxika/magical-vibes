@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSB", collectorNumber = "8")
+@CardRegistration(set = "LGN", collectorNumber = "13")
 public class EssenceSliver extends Card {
 
     public EssenceSliver() {

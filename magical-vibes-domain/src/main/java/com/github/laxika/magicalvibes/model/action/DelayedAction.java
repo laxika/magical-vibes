@@ -122,6 +122,7 @@ public sealed interface DelayedAction permits
         ReturnExiledCardAtNextEndStepUnlessPays,
         EachPlayerHandExileReturnAtNextEndStep,
         TargetPlayerHandExileReturnAtNextTurnEndStep,
+        ExpireControlAtEndOfNextTurn,
         DelayedDamageDoubling,
         DelayedVehicleAttack,
         UnattachEquipmentAtNextEndStep {

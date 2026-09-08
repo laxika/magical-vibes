@@ -44,6 +44,8 @@ public class StackEntry {
     private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
+    @Getter(AccessLevel.NONE)
+    private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
     /** Controllers remembered before earlier effects in this resolution remove their permanents. */
     private final Map<UUID, UUID> removedPermanentControllers = new HashMap<>();
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
@@ -53,6 +55,8 @@ public class StackEntry {
     @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
     @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
+    /** Amount of Treasure-produced mana spent to activate this ability, snapshotted at activation. */
+    @Setter private int activationTreasureManaSpent;
     /** Whether mana produced by a Treasure was spent to activate this ability. */
     @Setter private boolean activationUsedTreasureMana;
     /** Mana spent to cast this spell, retained until a permanent spell enters the battlefield. */
@@ -148,6 +152,10 @@ public class StackEntry {
     @Setter private boolean collectEvidenceCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
+    /** The last-known power of the permanent or card used to pay this spell's behold cost. */
+    @Setter private int beholdPower;
+    /** The permanent used to pay this spell's behold cost, when the choice was from the battlefield. */
+    @Setter private UUID beholdPermanentId;
     /** Whether this spell's optional reveal-a-card-from-hand additional cost was paid. */
     @Setter private boolean revealCardFromHandCostPaid;
     /** Whether this spell's optional casualty additional cost was paid. */
@@ -219,6 +227,8 @@ public class StackEntry {
     @Setter private Integer dyingPermanentManaValue;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
+    /** Controller of the spell targeted by a counter effect, retained after that spell leaves the stack. */
+    @Setter private UUID counteredSpellControllerId;
     /**
      * The per-permanent player payload behind this entry — one entry per permanent involved in the
      * event, holding that permanent's controller. Stamped by
@@ -617,10 +627,12 @@ public class StackEntry {
         this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
+        this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
         this.counters.putAll(source.counters);
         this.enteringCounters.putAll(source.enteringCounters);
         this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
+        this.activationTreasureManaSpent = source.activationTreasureManaSpent;
         this.activationUsedTreasureMana = source.activationUsedTreasureMana;
         this.manaSpentToCast = source.manaSpentToCast;
         this.targetZone = source.targetZone;
@@ -657,6 +669,8 @@ public class StackEntry {
         this.putCounterCostPaid = source.putCounterCostPaid;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
+        this.beholdPower = source.beholdPower;
+        this.beholdPermanentId = source.beholdPermanentId;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.casualtyCostPaid = source.casualtyCostPaid;
         this.waterbendCostPaid = source.waterbendCostPaid;
@@ -690,6 +704,7 @@ public class StackEntry {
         this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
+        this.counteredSpellControllerId = source.counteredSpellControllerId;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
@@ -1129,6 +1144,16 @@ public class StackEntry {
             }
         }
         return false;
+    }
+
+    public void rememberLastKnownPermanentCard(UUID permanentId, Card card) {
+        if (permanentId != null && card != null) {
+            lastKnownPermanentCards.put(permanentId, card);
+        }
+    }
+
+    public Card lastKnownPermanentCard(UUID permanentId) {
+        return lastKnownPermanentCards.get(permanentId);
     }
 
     /**

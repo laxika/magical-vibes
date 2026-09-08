@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinEliteInfantry;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,13 +20,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpittingEarth.class, GoblinEliteInfantry.class, Mountain.class, Plains.class})
+@CardUsed({SpittingEarth.class, GrizzlyBears.class, HillGiant.class, Mountain.class, Plains.class})
 class SpittingEarthTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Spitting Earth targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsItOnStack() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinEliteInfantry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new SpittingEarth()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -42,7 +43,7 @@ class SpittingEarthTest extends BaseCardTest {
     @Test
     @DisplayName("Spitting Earth cannot target a player")
     void cannotTargetPlayer() {
-        harness.addToBattlefield(player2, new GoblinEliteInfantry());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new SpittingEarth()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -57,15 +58,30 @@ class SpittingEarthTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player2, new GoblinEliteInfantry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new SpittingEarth()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Goblin Elite Infantry");
-        harness.castAndResolveSorcery(player1, 0, targetId);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        harness.assertNotOnBattlefield(player2, "Goblin Elite Infantry");
-        harness.assertInGraveyard(player2, "Goblin Elite Infantry");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Spitting Earth deals exactly one damage per controlled Mountain")
+    void dealsExactDamageForEachControlledMountain() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Plains());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SpittingEarth()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     @Test
@@ -75,14 +91,14 @@ class SpittingEarthTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Mountain());
         harness.addToBattlefield(player2, new Mountain());
         harness.addToBattlefield(player2, new Mountain());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinEliteInfantry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new SpittingEarth()));
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        harness.assertOnBattlefield(player2, "Goblin Elite Infantry");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -90,7 +106,7 @@ class SpittingEarthTest extends BaseCardTest {
     void countsMountainsAtResolution() {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Mountain());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinEliteInfantry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new SpittingEarth()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -103,7 +119,7 @@ class SpittingEarthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        harness.assertOnBattlefield(player2, "Goblin Elite Infantry");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }
 

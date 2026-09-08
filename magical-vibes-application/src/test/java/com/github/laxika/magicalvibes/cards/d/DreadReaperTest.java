@@ -1,15 +1,21 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DreadReaper.class, GrizzlyBears.class})
 class DreadReaperTest extends BaseCardTest {
 
     @Test
@@ -48,10 +54,27 @@ class DreadReaperTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
+    @Test
+    @DisplayName("A creature without flying cannot block Dread Reaper")
+    void cannotBeBlockedByNonFlyingCreature() {
+        Permanent attacker = addCreatureReady(player1, new DreadReaper());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(
+                        gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot block Dread Reaper (flying)");
+    }
+
     private void castDreadReaper() {
-        harness.setHand(player1, List.of(new DreadReaper()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DreadReaper(), "{3}{B}{B}{B}");
     }
 }

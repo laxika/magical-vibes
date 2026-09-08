@@ -59,9 +59,8 @@ class RaphLeoSiblingRivalsTest extends BaseCardTest {
         Permanent raphLeo = addCreatureReady(player1, new RaphLeoSiblingRivals());
 
         declareAttackers(player1, List.of(0), 2);
-        harness.handlePermanentChosen(player1, raphLeo.getId());
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(raphLeo.isTapped()).isTrue();
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
     }

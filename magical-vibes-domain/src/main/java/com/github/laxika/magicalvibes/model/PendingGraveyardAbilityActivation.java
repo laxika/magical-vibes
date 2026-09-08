@@ -14,11 +14,13 @@ import java.util.UUID;
  * @param remainingDiscards how many discard choices are still owed (decrements after each pick)
  * @param discardCostRequiredName the name every remaining discard must match for a same-name discard
  *                                cost, fixed by the first card chosen; {@code null} otherwise
- * @param graveyardTargetIds graveyard targets chosen before the cost interaction was suspended
+ * @param awaitingGraveyardExileCost whether the pending choice is a single-card graveyard exile cost
+ * @param graveyardTargetIds graveyard-card targets preserved while the activation waits for its cost choice
  */
 public record PendingGraveyardAbilityActivation(UUID playerId, Card card, ActivatedAbility ability,
                                                 int xValue, UUID targetId, int remainingDiscards,
                                                 String discardCostRequiredName,
+                                                boolean awaitingGraveyardExileCost,
                                                 List<UUID> graveyardTargetIds) {
 
     public PendingGraveyardAbilityActivation {
@@ -27,13 +29,29 @@ public record PendingGraveyardAbilityActivation(UUID playerId, Card card, Activa
 
     public PendingGraveyardAbilityActivation(UUID playerId, Card card, ActivatedAbility ability,
                                              int xValue, UUID targetId, int remainingDiscards) {
-        this(playerId, card, ability, xValue, targetId, remainingDiscards, null, null);
+        this(playerId, card, ability, xValue, targetId, remainingDiscards, null, false, List.of());
+    }
+
+    public PendingGraveyardAbilityActivation(UUID playerId, Card card, ActivatedAbility ability,
+                                             int xValue, UUID targetId) {
+        this(playerId, card, ability, xValue, targetId, 0, null, true, List.of());
+    }
+
+    public PendingGraveyardAbilityActivation(UUID playerId, Card card, ActivatedAbility ability,
+                                             int xValue, UUID targetId, List<UUID> graveyardTargetIds) {
+        this(playerId, card, ability, xValue, targetId, 0, null, true, graveyardTargetIds);
+    }
+    public PendingGraveyardAbilityActivation(UUID playerId, Card card, ActivatedAbility ability,
+                                             int xValue, UUID targetId, int remainingDiscards,
+                                             String discardCostRequiredName, List<UUID> graveyardTargetIds) {
+        this(playerId, card, ability, xValue, targetId, remainingDiscards, discardCostRequiredName,
+                false, graveyardTargetIds);
     }
 
     public PendingGraveyardAbilityActivation(UUID playerId, Card card, ActivatedAbility ability,
                                              int xValue, UUID targetId, int remainingDiscards,
                                              String discardCostRequiredName) {
-        this(playerId, card, ability, xValue, targetId, remainingDiscards,
-                discardCostRequiredName, null);
+        this(playerId, card, ability, xValue, targetId, remainingDiscards, discardCostRequiredName,
+                false, null);
     }
 }

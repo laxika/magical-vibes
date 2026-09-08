@@ -31,7 +31,9 @@ public class CreateTokenForTriggeringPlayerEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenForTriggeringPlayerEffect) effect;
-        UUID playerId = entry.getTargetId();
+        UUID playerId = entry.getTriggeringPermanentControllerId() != null
+                ? entry.getTriggeringPermanentControllerId()
+                : entry.getTargetId();
         if (playerId == null || !gameData.playerIds.contains(playerId)) {
             return;
         }

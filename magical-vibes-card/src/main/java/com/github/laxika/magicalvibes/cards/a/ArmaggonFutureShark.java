@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMT", collectorNumber = "58")
+@CardRegistration(set = "TMT", collectorNumber = "264")
 public class ArmaggonFutureShark extends Card {
 
     public ArmaggonFutureShark() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "80")
+@CardRegistration(set = "TMT", collectorNumber = "233")
 public class SplintersTechnique extends Card {
 
     public SplintersTechnique() {

@@ -66,6 +66,8 @@ public final class AiInteractionStrategies {
         register(new SearchLibraryAndOrGraveyardChoiceAiStrategy());
         register(new SearchLibraryToTopChoiceAiStrategy());
         register(new IntuitionSearchChoiceAiStrategy());
+        register(new TurtlesForeverSearchChoiceAiStrategy());
+        register(new TurtlesForeverOpponentChoiceAiStrategy());
         register(new GuidedPassageChoiceAiStrategy());
         register(new PermanentAuctionChoiceAiStrategy());
         register(new IllicitAuctionBidChoiceAiStrategy());
@@ -96,6 +98,7 @@ public final class AiInteractionStrategies {
         register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
+        register(new LibrarySearchDestinationChoiceAiStrategy());
         register(new SearchOutsideGameOrExileCardChoiceAiStrategy());
         register(new ShuffleCardsFromOutsideGameChoiceAiStrategy());
         register(new PermanentChoiceAiStrategy());

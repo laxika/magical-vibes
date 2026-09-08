@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasin
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
+import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCost
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentLifeCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -198,6 +200,29 @@ public class CastingCostService {
         for (CollectedCostModifier costModifier : snapshot.modifiers()) {
             modifier += costModifier.handler().modifyForetellCost(
                     gameData, playerId, costModifier.effect(), costModifier.source());
+        }
+        return modifier;
+    }
+
+    /** Returns the effective mana cost of unlocking the selected door of a Room. */
+    public ManaCost getRoomUnlockCost(GameData gameData, UUID playerId, Card room, int doorIndex) {
+        ManaCost baseCost = new ManaCost(room.getRoomDoorManaCosts().get(doorIndex));
+        int modifier = getRoomUnlockCostModifier(gameData, playerId, room,
+                buildCostModifierSnapshot(gameData, playerId));
+        if (modifier == 0) {
+            return baseCost;
+        }
+        return modifier > 0
+                ? baseCost.increasedBy(new ManaCost("{" + modifier + "}"))
+                : baseCost.reducedBy(new ManaCost("{" + -modifier + "}"));
+    }
+
+    private int getRoomUnlockCostModifier(GameData gameData, UUID playerId, Card room,
+                                          CostModifierSnapshot snapshot) {
+        int modifier = 0;
+        for (CollectedCostModifier costModifier : snapshot.modifiers()) {
+            modifier += costModifier.handler().modifyRoomUnlockCost(
+                    gameData, playerId, room, costModifier.effect(), costModifier.source());
         }
         return modifier;
     }
@@ -981,6 +1006,22 @@ public class CastingCostService {
                 : reduction;
     }
 
+    /** Whether the activating player can use a static effect that replaces this equip cost with zero. */
+    public boolean hasFreeEquipAbilityCost(GameData gameData, UUID activatingPlayerId,
+                                           ActivatedAbility ability) {
+        if (!ability.isEquipAbility()
+                || gameData.playersWhoActivatedEquipAbilityThisTurn.contains(activatingPlayerId)) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(FreeEquipEffect.class::isInstance);
+    }
+
     /**
      * Generic mana removed from the activation cost of {@code sourcePermanent}'s activated ability,
      * summed over every matching reduction effect on every battlefield. Symmetric — applies
@@ -1304,7 +1345,9 @@ public class CastingCostService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AlternativeCostForSpellsEffect altCost
+                    AlternativeCostForSpellsEffect altCost = activeAlternativeCost(
+                            gameData, effect, perm, ownerId);
+                    if (altCost != null
                             && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
                             && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
                             && altCost.nonManaCost() == null
@@ -1327,6 +1370,20 @@ public class CastingCostService {
         return oncePerTurnFallback;
     }
 
+    private AlternativeCostForSpellsEffect activeAlternativeCost(GameData gameData, CardEffect effect,
+                                                                  Permanent sourcePermanent,
+                                                                  UUID sourceControllerId) {
+        CardEffect current = effect;
+        while (current instanceof ConditionalEffect conditional) {
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(sourcePermanent, sourceControllerId))) {
+                return null;
+            }
+            current = conditional.wrapped();
+        }
+        return current instanceof AlternativeCostForSpellsEffect alternative ? alternative : null;
+    }
+
     /**
      * The emblem counterpart of {@link #findFreeCastSource}: an emblem the player has whose
      * {@link AlternativeCostForSpellsEffect} offers a zero alternative cost for {@code card}
@@ -1345,6 +1402,7 @@ public class CastingCostService {
                         && altCost.manaValueCapCounter() == null
                         && altCost.manaValueCapAmount() == null
                         && !altCost.oncePerTurn()
+                        && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
                         && altCost.nonManaCost() == null
                         && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                         && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
@@ -1707,8 +1765,9 @@ public class CastingCostService {
      * Computes the actual cost reduction for spells that cost less when targeting a
      * permanent matching a predicate (e.g. Ajani's Response targeting a tapped creature),
      * a controlled permanent matching a predicate (e.g. Savage Stomp targeting a Dinosaur),
-     * or a spell on the stack matching a predicate.
-     * Returns the reduction amount if the first target matches, 0 otherwise.
+     * or a spell on the stack matching a predicate. Permanent spell-self reductions inspect the
+     * target index configured by the effect; the default is the first target.
+     * Returns the reduction amount if the selected target matches, 0 otherwise.
      */
     public int computeTargetBasedCostReduction(GameData gameData, UUID playerId, Card card, List<UUID> targetIds) {
         if (targetIds.isEmpty()) {
@@ -1778,13 +1837,16 @@ public class CastingCostService {
         int ownPermanentReduction = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
                 .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
-                .mapToInt(effect -> targetIds.stream()
+                .mapToInt(effect -> (effect.targetIndex() < 0 ? targetIds.stream()
+                        : targetIds.stream().skip(effect.targetIndex()).limit(1))
                         .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
                         .filter(java.util.Objects::nonNull)
                         .filter(target -> !effect.controlledByCaster()
                                 || playerId.equals(gameQueryService.findPermanentController(gameData, target.getId())))
                         .anyMatch(target -> predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, target, effect.predicate())) ? effect.amount() : 0)
+                                target, effect.predicate(), FilterContext.of(gameData)
+                                        .withSourceCardId(card.getId())
+                                        .withSourceControllerId(playerId))) ? effect.amount() : 0)
                 .sum();
         if (ownPermanentReduction != 0) {
             return ownPermanentReduction;
@@ -1821,6 +1883,10 @@ public class CastingCostService {
             return stackEffect.amount();
         }
         return 0;
+    }
+
+    private UUID targetAt(List<UUID> targetIds, int targetIndex) {
+        return targetIndex >= 0 && targetIndex < targetIds.size() ? targetIds.get(targetIndex) : null;
     }
 
     public boolean hasTargetBasedCastCostReduction(Card card) {
@@ -2058,6 +2124,14 @@ public class CastingCostService {
     public boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
         return additionalSpellCostService.satisfiable(gameData, playerId, card)
                 && canPayImposedSacrificeTax(gameData, playerId, card);
+    }
+
+    /** Checks the alternate mana option of a graveyard-exile-or-pay spell against a given pool. */
+    public boolean canPayExileNCardsOrPayManaOption(GameData gameData, UUID playerId, Card card,
+                                                    ExileNCardsFromGraveyardOrPayManaCost cost,
+                                                    ManaPool pool) {
+        return additionalSpellCostService.canAffordExileNCardsOrPayManaOption(
+                gameData, playerId, card, cost, pool);
     }
 
     /** Checks additional costs for a spell being cast from a graveyard zone. */

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -38,10 +39,12 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
@@ -113,6 +116,7 @@ class AbilityActivationServiceTest {
     @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameMutationCoordinator mutationCoordinator;
+    @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @InjectMocks
     private AbilityActivationService service;
@@ -650,6 +654,34 @@ class AbilityActivationServiceTest {
                     any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any(),
                     org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
+        }
+
+        @Test
+        @DisplayName("Life-per-card-in-hand cost is checked before an activated ability's mana is paid")
+        void payLifeForEachCardInHandIsCheckedBeforeManaPayment() {
+            Card card = createCreatureCard("Hand Cost Creature", 2, 2);
+            card.addActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{1}",
+                    List.of(new PayLifeForEachCardInHandCost()),
+                    "Pay one life for each card in hand."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+            gameData.playerHands.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
+            gameData.playerLifeTotals.put(player1Id, 2);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, 0, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Not enough life");
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(1);
+            verify(activatedAbilityExecutionService, times(0)).completeActivationAfterCosts(
+                    any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any());
         }
 
         @Test
@@ -1498,6 +1530,51 @@ class AbilityActivationServiceTest {
 
             assertThat(aura.getCounterCount(CounterType.TASK)).isEqualTo(1);
         }
+    }
+
+    @Test
+    @DisplayName("Graveyard ability: single instant-or-sorcery exile cost prompts and resumes activation")
+    void graveyardAbilitySingleExileCostPromptsAndResumes() {
+        Card source = createCard("Test Professor", CardType.CREATURE);
+        source.addGraveyardActivatedAbility(new ActivatedAbility(
+                false,
+                "{1}{B}",
+                List.of(new ExileCardFromGraveyardCost(CardType.INSTANT, CardType.SORCERY), new DrawCardEffect()),
+                "Exile an instant or sorcery card: Draw a card."
+        ));
+        Card instant = createCard("Test Shock", CardType.INSTANT);
+        gameData.playerGraveyards.get(player1Id).add(source);
+        gameData.playerGraveyards.get(player1Id).add(instant);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+        when(gameQueryService.canPlayersActivateGraveyardAbilities(gameData)).thenReturn(true);
+        when(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(gameData, player1Id, source))
+                .thenReturn(List.of());
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            gameData.interaction.beginInteraction(invocation.getArgument(1));
+            return null;
+        }).when(interactionHandlerRegistry).begin(eq(gameData), any(PendingInteraction.class));
+        service.activateGraveyardAbility(gameData, player1, 0, null);
+
+        assertThat(gameData.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
+        assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
+
+        service.handleActivatedAbilityGraveyardExileCostChosen(gameData, player1, 1);
+
+        assertThat(gameData.playerGraveyards.get(player1Id)).containsExactly(source);
+        assertThat(gameData.stack).hasSize(1);
+        verify(exileService).exileCard(gameData, player1Id, instant);
+    }
+
+    private Card createCard(String name, CardType type) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(type);
+        card.setManaCost("{0}");
+        return card;
     }
 
     // =========================================================================

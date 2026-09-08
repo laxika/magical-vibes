@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulBurnEffect;
 @CardRegistration(set = "4ED", collectorNumber = "132")
 @CardRegistration(set = "BTD", collectorNumber = "24")
 @CardRegistration(set = "SUM", collectorNumber = "106")
+@CardRegistration(set = "3ED", collectorNumber = "106")
 public class DrainLife extends Card {
 
     public DrainLife() {

@@ -57,10 +57,15 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
 
     private void resolveForPlayer(GameData gameData, StackEntry entry, SkipNextEffect e,
                                   UUID affectedPlayerId) {
-        queueFor(gameData, e.kind()).merge(affectedPlayerId, 1, Integer::sum);
+        if (e.allCombatPhasesOfNextTurn()) {
+            gameData.skipCombatPhasesNextTurn.add(affectedPlayerId);
+        } else {
+            queueFor(gameData, e.kind()).merge(affectedPlayerId, 1, Integer::sum);
+        }
 
         String affectedName = gameData.playerIdToName.get(affectedPlayerId);
-        String phrase = phraseFor(e.kind());
+        String phrase = e.allCombatPhasesOfNextTurn()
+                ? "skips all combat phases of their next turn" : phraseFor(e.kind());
         gameLogService.append(gameData, GameLog.text(affectedName + " " + phrase + "."));
         log.info("Game {} - {} {}", gameData.id, affectedName, phrase);
     }

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidence
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessExilesGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
@@ -293,7 +295,8 @@ public class MayPenaltyChoiceHandlerService {
             if (exileIfCountered) {
                 exileService.exileCard(gameData, counteredControllerId, targetEntry.getPhysicalCard());
             } else {
-                graveyardService.addCardToGraveyard(gameData, counteredControllerId, targetEntry.getPhysicalCard());
+                graveyardService.addCardToGraveyardFromSpell(gameData, targetEntry.getOwnerId(),
+                        targetEntry.getPhysicalCard(), targetEntry.getControllerId());
             }
         }
 
@@ -544,6 +547,18 @@ public class MayPenaltyChoiceHandlerService {
                             .map(Permanent::getId)
                             .toList();
             if (!validIds.isEmpty()) {
+                if (sacrificeEffect.requiredCount() > 1) {
+                    playerInputService.beginMultiPermanentChoice(
+                            gameData, controllerId, validIds, sacrificeEffect.requiredCount(),
+                            new MultiPermanentChoiceContext.SacrificePermanentsOrElse(
+                                    sacrificeEffect.requiredCount(), null, new CounterSpellEffect()),
+                            "Choose " + sacrificeEffect.requiredCount() + " "
+                                    + sacrificeEffect.sacrificeDescription()
+                                    + " to sacrifice (choose none to decline).");
+                    log.info("Game {} - {} accepts counter-unless-sacrifice for {}",
+                            gameData.id, player.getUsername(), ability.sourceCard().getName());
+                    return;
+                }
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.SacrificePermanentThen(controllerId, ability.sourceCard(), null));
                 playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
@@ -565,7 +580,8 @@ public class MayPenaltyChoiceHandlerService {
         boolean isAbility = targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
         if (!targetEntry.isCopy() && !isAbility) {
-            graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getPhysicalCard());
+            graveyardService.addCardToGraveyardFromSpell(gameData, targetEntry.getOwnerId(),
+                    targetEntry.getPhysicalCard(), targetEntry.getControllerId());
         }
 
         GameLog.Builder counterLog = GameLog.builder().card(targetEntry.getCard())

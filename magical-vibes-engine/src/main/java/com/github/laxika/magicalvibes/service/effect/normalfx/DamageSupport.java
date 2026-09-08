@@ -460,6 +460,7 @@ public class DamageSupport {
             if (damageSource == null) {
                 recordSorcerySpellDamage(gameData, entry, damage);
             }
+            triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
             if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
                     || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
                 gameData.recordQualifyingDamageControllerToPermanent(target.getId(), sourceControllerId);
@@ -507,6 +508,8 @@ public class DamageSupport {
                 // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
                 if (damagedCreatureControllerId != null) {
                     triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
+                    triggerCollectionService.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+                            gameData, target, damagedCreatureControllerId, damage);
                 }
 
                 // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
@@ -727,6 +730,8 @@ public class DamageSupport {
             UUID damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
             if (damagedCreatureControllerId != null) {
                 triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
+                triggerCollectionService.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+                        gameData, target, damagedCreatureControllerId, damage);
             }
 
             // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
@@ -755,6 +760,7 @@ public class DamageSupport {
         target.addMarkedDamage(damageSourceKey(entry, null), damage);
         gameData.recordNoncombatDamageToPermanent(target.getId(), damage);
         recordDamageToPermanent(gameData, target.getId(), damage, entry, sourcePermanent);
+        triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
         if (damage > 0 && gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH)) {
             target.setDamagedByDeathtouch(true);
         }
@@ -797,15 +803,16 @@ public class DamageSupport {
     }
 
     /**
-     * If the stack entry represents a spell that should have lifelink (via
-     * {@link com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect}),
-     * the controller gains life equal to the effective damage dealt.
+     * Applies lifelink for the spell or permanent that dealt the damage, using the permanent's
+     * current controller when it is still on the battlefield.
      */
     public void checkSpellLifelink(GameData gameData, StackEntry entry, int effectiveDamage) {
         if (effectiveDamage <= 0) return;
         if (!gameQueryService.shouldControllerSpellHaveLifelink(gameData, entry)) return;
-        lifeSupport.applyGainLife(gameData, entry.getControllerId(), effectiveDamage,
-                "spell lifelink", entry.getCard(), entry.getEntryType());
+        UUID controllerId = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+        lifeSupport.applyGainLife(gameData, controllerId != null ? controllerId : entry.getControllerId(), effectiveDamage,
+                "lifelink", entry.getEffectiveDamageSourceCard(), entry.getEntryType());
     }
 
     public boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
@@ -1045,6 +1052,8 @@ public class DamageSupport {
                         gameData.recordQualifyingDamageControllerToPermanent(
                                 targetPermanent.getId(), entry.getControllerId());
                     }
+                    triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
+                            gameData, targetPermanent, damageDealt);
                     triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
                             gameData, sourcePermanent, entry.getControllerId(), targetPermanent.getId(),
                             damageDealt, false, null);
@@ -1440,6 +1449,20 @@ public class DamageSupport {
                 lifeSupport.applyGainLife(gameData, playerId, purityPrevented, "prevented damage");
             }
 
+            if (damagePreventionService.hasControllerOpponentDamageMillReplacement(
+                    gameData, sourceControllerId, playerId, effectiveDamage)) {
+                int replacedDamage = effectiveDamage;
+                effectiveDamage = 0;
+                gameLogService.append(gameData, GameLog.cardThen(source,
+                        "'s " + replacedDamage + " damage to " + gameData.playerIdToName.get(playerId)
+                                + " is prevented and replaced with milling."));
+                for (UUID opponentId : gameData.orderedPlayerIds) {
+                    if (!opponentId.equals(sourceControllerId)) {
+                        graveyardService.resolveMillPlayer(gameData, opponentId, replacedDamage);
+                    }
+                }
+            }
+
             // Hostility: prevent all remaining damage a spell you control would deal to an opponent and
             // create one token per 1 damage prevented (for the spell's controller).
             var hostility = damagePreventionService.findSpellDamageToOpponentPrevention(gameData, entry, playerId, effectiveDamage);
@@ -1565,6 +1588,8 @@ public class DamageSupport {
                     gameData.recordCreatureDamageSourceToPlayer(sourcePermanent.getId(), playerId);
                 }
                 recordRedSpellDamage(gameData, entry, source, playerId);
+                triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                        gameData, playerId, effectiveDamage);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
                 // The stack entry's controller is the damage source's controller (caster/activator);
@@ -1717,6 +1742,8 @@ public class DamageSupport {
                         : redirect.sourceCard() != null && redirect.sourceCard().hasType(CardType.ARTIFACT);
                 gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
                 gameData.recordDamageRecipientBySource(redirect.sourcePermanentId(), targetId);
+                triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                        gameData, targetId, redirectEffective);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, targetId, redirect.sourcePermanentId(), redirectEffective);
             }
@@ -1797,6 +1824,8 @@ public class DamageSupport {
                             && gameQueryService.isArtifact(gameData, sourcePermanent);
                     gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
+                    triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                            gameData, targetId, redirectEffective);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(
                             gameData, targetId, redirect.damageSourceId(), redirectEffective);
                 }
@@ -1819,6 +1848,10 @@ public class DamageSupport {
                     if (targetPerm.getCard().hasType(CardType.BATTLE)) {
                         targetPerm.setCounterCount(CounterType.DEFENSE,
                                 targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
+                    }
+                    triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
+                            gameData, targetPerm, effectiveDamage);
+                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
                         battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
                     }
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());

@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SylvanTutor.class, GrizzlyBears.class, Island.class})
 class SylvanTutorTest extends BaseCardTest {
 
     @Test
@@ -33,6 +34,27 @@ class SylvanTutorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing a creature reveals it before putting it on top")
+    void choosingCreatureRevealsIt() {
+        setupLibrary();
+        cast();
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().getFirst().getName();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals())
+                .isTrue();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("reveals " + chosenName)
+                        && entry.contains("puts it on top of their library")
+                        && entry.contains("Library is shuffled."));
+    }
+
+    @Test
     @DisplayName("Choosing a creature puts it on top of the library")
     void choosingCreaturePutsOnTop() {
         setupLibrary();
@@ -43,7 +65,7 @@ class SylvanTutorTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck.getFirst().getName()).isEqualTo(chosenName);
@@ -59,7 +81,7 @@ class SylvanTutorTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -70,7 +92,7 @@ class SylvanTutorTest extends BaseCardTest {
     void noCreaturesNoInteraction() {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         deck.clear();
-        deck.addAll(List.of(new DiabolicTutor(), new Island()));
+        deck.addAll(List.of(new Island(), new Island()));
 
         cast();
         harness.passBothPriorities();
@@ -88,6 +110,6 @@ class SylvanTutorTest extends BaseCardTest {
     private void setupLibrary() {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new DiabolicTutor(), new Island()));
+        deck.addAll(List.of(new GrizzlyBears(), new Island(), new Island()));
     }
 }

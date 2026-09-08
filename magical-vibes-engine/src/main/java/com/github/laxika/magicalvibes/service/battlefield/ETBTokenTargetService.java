@@ -173,7 +173,8 @@ public class ETBTokenTargetService {
                     pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
                     pending.sourcePermanentId() == null
                             ? null
-                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
+                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()),
+                    null, pending.xValue());
             List<UUID> validSpellTargets = validMixedEtbSpellTargets(gameData, pending);
             List<UUID> validPlayerTargets = targets.validTargets().stream()
                     .filter(gameData.playerIds::contains)
@@ -360,7 +361,7 @@ public class ETBTokenTargetService {
                     for (Permanent p : battlefield) {
                         if (targetAlreadyChosen(pending, p.getId())) continue;
                         if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
-                                pending.controllerId(), card, pending.sourcePermanentId())) {
+                                pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue())) {
                             validPermanentTargets.add(p.getId());
                         }
                     }
@@ -476,8 +477,11 @@ public class ETBTokenTargetService {
     private int effectiveMaxTargets(GameData gameData,
                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
                                     SpellTarget group) {
+        int staticMax = group.isXScaled()
+                ? Math.min(pending.xValue(), group.getMaxTargets())
+                : group.getMaxTargets();
         if (group.getDynamicMaxTargets() == null) {
-            return group.getMaxTargets();
+            return staticMax;
         }
         Permanent source = pending.sourcePermanentId() == null
                 ? null
@@ -485,7 +489,7 @@ public class ETBTokenTargetService {
         int dynamicMax = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
                 new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0, false,
                         null, pending.repeatedAdditionalCosts(), null));
-        return Math.min(group.getMaxTargets(), Math.max(0, dynamicMax));
+        return Math.min(staticMax, Math.max(0, dynamicMax));
     }
 
     public int effectiveMinTargets(GameData gameData,
@@ -664,7 +668,7 @@ public class ETBTokenTargetService {
     private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
                                                   TargetFilter targetFilter,
                                                   UUID controllerId, Card sourceCard,
-                                                  UUID sourcePermanentId) {
+                                                  UUID sourcePermanentId, int xValue) {
         if (targetFilter == null) {
             return gameQueryService.isCreature(gameData, permanent);
         }
@@ -672,7 +676,7 @@ public class ETBTokenTargetService {
             return false;
         }
         FilterContext filterContext = new FilterContext(
-                gameData, sourceCard.getId(), controllerId, null, null, sourcePermanentId);
+                gameData, sourceCard.getId(), controllerId, xValue, null, sourcePermanentId);
         return predicateEvaluationService.checkTargetFilter(targetFilter, permanent, filterContext).isEmpty();
     }
 }

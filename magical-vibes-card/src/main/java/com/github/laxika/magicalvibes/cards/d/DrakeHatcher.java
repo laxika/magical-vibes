@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "35")
+@CardRegistration(set = "FDN", collectorNumber = "306")
+@CardRegistration(set = "FDN", collectorNumber = "374")
+@CardRegistration(set = "FDN", collectorNumber = "452")
 public class DrakeHatcher extends Card {
 
     public DrakeHatcher() {
