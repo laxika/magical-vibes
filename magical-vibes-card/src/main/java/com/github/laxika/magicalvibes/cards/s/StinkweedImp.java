@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DredgeEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "107")
+@CardRegistration(set = "DDC", collectorNumber = "36")
 public class StinkweedImp extends Card {
 
     public StinkweedImp() {
