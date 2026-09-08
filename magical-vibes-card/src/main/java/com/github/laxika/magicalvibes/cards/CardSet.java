@@ -129,6 +129,7 @@ public enum CardSet {
     SET_EXO("EXO"),
     SET_FEM("FEM"),
     SET_DRB("DRB"),
+    SET_V09("V09"),
     SET_UDS("UDS"),
     SET_ODY("ODY"),
     SET_USG("USG"),
