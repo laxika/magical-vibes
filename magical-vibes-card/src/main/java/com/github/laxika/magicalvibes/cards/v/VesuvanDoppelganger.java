@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SUM", collectorNumber = "88")
+@CardRegistration(set = "ME1", collectorNumber = "54")
 public class VesuvanDoppelganger extends Card {
 
     public VesuvanDoppelganger() {

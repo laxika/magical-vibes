@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "ITP", collectorNumber = "47")
 @CardRegistration(set = "RQS", collectorNumber = "46")
 @CardRegistration(set = "LEG", collectorNumber = "213")
+@CardRegistration(set = "ME1", collectorNumber = "138")
 public class WinterBlast extends Card {
 
     public WinterBlast() {

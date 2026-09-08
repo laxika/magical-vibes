@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "5ED", collectorNumber = "22")
 @CardRegistration(set = "4ED", collectorNumber = "20")
 @CardRegistration(set = "SUM", collectorNumber = "15")
+@CardRegistration(set = "ME1", collectorNumber = "6")
 public class Crusade extends Card {
 
     public Crusade() {

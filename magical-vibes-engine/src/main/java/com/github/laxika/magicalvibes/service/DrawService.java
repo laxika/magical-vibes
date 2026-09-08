@@ -348,6 +348,16 @@ public class DrawService {
             return;
         }
 
+        // Ring of Ma'rûf — one queued activation replaces one draw with a card from outside the game.
+        Integer pendingOutsideGame = gameData.pendingNextDrawFromOutsideGame.remove(playerId);
+        if (pendingOutsideGame != null) {
+            if (pendingOutsideGame > 1) {
+                gameData.pendingNextDrawFromOutsideGame.put(playerId, pendingOutsideGame - 1);
+            }
+            resolveNextDrawFromOutsideGame(gameData, playerId);
+            return;
+        }
+
         // Words of Worship — one queued activation replaces one draw with gaining 5 life.
         Integer pendingGainLife = gameData.pendingNextDrawGainLife.remove(playerId);
         if (pendingGainLife != null) {
@@ -1463,6 +1473,30 @@ public class DrawService {
                 " from the exiled pile into their hand instead of drawing."));
         log.info("Game {} - {} puts {} from the exiled pile into their hand instead of drawing",
                 gameData.id, ownerName, top.card().getName());
+    }
+
+    /** Ring of Ma'rûf's replaced draw: choose a card from outside the game and put it into hand. */
+    private void resolveNextDrawFromOutsideGame(GameData gameData, UUID playerId) {
+        List<Card> sideboard = gameData.playerSideboards.getOrDefault(playerId, List.of());
+        String playerName = gameData.playerIdToName.get(playerId);
+        if (sideboard.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " has no card outside the game to put into their hand instead of drawing."));
+            return;
+        }
+
+        String prompt = "Choose a card you own from outside the game to put into your hand.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(playerId, new ArrayList<>(sideboard))
+                        .reveals(false)
+                        .canFailToFind(false)
+                        .remainingCount(1)
+                        .destination(LibrarySearchDestination.HAND)
+                        .shuffleAfterSelection(false)
+                        .sourceSideboard(true)
+                        .build(),
+                prompt,
+                false));
     }
 
     private void resolveNextDrawLookAtTop(GameData gameData, UUID playerId, int x) {

@@ -725,6 +725,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Forcefield: choose a creature whose next unblocked combat damage to the controller leaves 1. */
+    record PreventNextCombatDamageFromUnblockedCreatureChoice(UUID controllerId)
+            implements PermanentChoiceContext {}
+
     /** "The next time a source of your choice would deal damage to any target this turn, prevent that
      *  damage." (Sanctum Guardian). Protects any recipient, not just the controller. When
      *  {@code damageRedSourceController} is true, prevented red damage is dealt back to the source's

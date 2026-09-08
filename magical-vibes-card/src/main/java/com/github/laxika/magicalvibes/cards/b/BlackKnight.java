@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "4ED", collectorNumber = "121")
 @CardRegistration(set = "ATH", collectorNumber = "20")
 @CardRegistration(set = "SUM", collectorNumber = "95")
+@CardRegistration(set = "ME1", collectorNumber = "60")
 public class BlackKnight extends Card {
 
     public BlackKnight() {

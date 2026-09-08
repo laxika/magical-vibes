@@ -1,4 +1,5 @@
 # EFFECTS_QUICK_REFERENCE
+- `DestroyTargetIfAttackedAtEndStepEffect()` - schedules the targeted creature for destruction at the next end step if it attacked this turn (Berserk).
 - `RedirectNextDamageFromChosenSourceToSelfCreatureEffect()` - tap ability with no target: the next damage event a chosen source (picked on resolution) would deal to the controller this turn is dealt to the ability's source creature instead (Beacon of Destiny). Uses the same player-only source-keyed redirect shield and shared pending redirect damage path as General's Regalia
 - `CreaturesWithToughnessGreaterThanPowerCantBlockThisTurnEffect()` — activated-ability global restriction: until end of turn, each creature whose current effective toughness is greater than its current effective power can't block. The handler stores the `BlockingRestrictionEffect` as a floating effect, and `BlockLegalityService` evaluates it at blocker declaration so later power/toughness changes and creatures entering later are included. Immobilizer Eldrazi (`OGW 97`)
 
@@ -34,6 +35,7 @@
   attackers with the given subtype as though it had reach, without gaining reach itself (Dragon Hunter).
 
 - `RegisterNextDrawCreateBearReplacementEffect()` - Words of Wilding `{1}` ability. Queues one turn-scoped replacement of the controller's next draw with creating a 2/2 green Bear creature token; repeated activations replace successive draws. Cleared at cleanup.
+- `RegisterNextDrawFromOutsideGameReplacementEffect()` — Ring of Ma'rûf `{5}, {T}, Exile this artifact` ability. Queues one turn-scoped replacement of the controller's next draw with a mandatory choice of a card they own from outside the game to put into hand; an empty outside-game pool replaces the draw with no card. Cleared at cleanup.
 
 - `ManaEchoesEffect()` — `ON_ANY_PERMANENT_ENTERS_BATTLEFIELD` trigger marker: for a creature entering the battlefield, the controller may add one colorless mana for each creature they control sharing a creature type with it; the subtype set is captured for last-known information and the live entering permanent is rechecked at resolution.
 
@@ -736,6 +738,7 @@ Implementation note: `ExileTargetPermanentUntilSourceLeavesEffect(boolean imprin
 - `RegisterDelayedUnblockedAttackerCubeCounterEffect()` — watches one target creature for the rest of the turn; when it attacks and isn't blocked, `CombatBlockService` pushes a mandatory trigger with `AssignNoCombatDamageEffect()` and `PutCountersOnSourceCardEffect(CUBE)` (Delif's Cube). Cleared at turn cleanup.
 - `RegisterDelayedUnblockedAttackerUntapRemoveFromCombatEffect()` — "Whenever a creature attacks and isn't blocked this combat, untap it and remove it from combat" (Melee). Registers a `DelayedUnblockedAttackerUntapRemoveFromCombat`; `CombatBlockService` pushes `UntapPermanentsEffect(TapUntapScope.TARGET)` + `RemoveTargetFromCombatEffect()` per unblocked attacker (any player's). Cleared at end of combat.
 - `RemoveSourceFromCombatEffect()` — removes the source permanent from combat without targeting it; use with `TapPermanentsEffect(TapUntapScope.SELF)` for self-referential attack triggers such as Mijae Djinn.
+- `RemoveSourceFromCombatAndUnblockSoleBlockersEffect()` — removes the source permanent from combat, makes attackers it was the sole blocker for this combat unblocked, and makes the source unable to block for the rest of the turn (Ydwen Efreet)
 - `RemoveReferencedPermanentFromCombatEffect(PermanentReference)` — removes a referenced permanent from combat without targeting it; `TRIGGERING` reads the permanent that caused an attack/block trigger, while `SOURCE` reads the Aura or other source permanent.
 - `RemoveSelfFromCombatEffect()` — removes the source permanent from combat without targeting it; use inside an optional sequence such as Gustcloak Cavalier's becomes-blocked trigger.
 - `ChooseBlockersThisCombatEffect()` — "You choose which creatures block this combat and how those creatures block" (Melee; Odric, Master Tactician via `ON_ATTACK` + `MinimumAttackers(4)`). Registers a `DelayedBlockerDeclarationControl`; the declare-blockers `PendingInteraction` gets `chooserId` = the resolving controller. Cleared at end of combat.
@@ -2895,6 +2898,8 @@ source card is no longer in the graveyard, the library card is not exiled and no
 - `ExileAllPermanentsAndDrawPerControllerEffect(PermanentPredicate)` — exile matching permanents, then each matched permanent's controller draws one card for each matching permanent they controlled (Martyr's Cry)
 - `ExileOtherSpellsAndCounterAbilitiesEffect()` — exile all other stack spells + counter all abilities (Summary Dismissal; see Counter spells)
 - `ExileAllPermanentsUntilSourceLeavesEffect(PermanentPredicate, boolean returnTapped)` — O-ring style mass exile: exile all matching permanents until the source leaves, then return each under its owner's control (tapped iff `returnTapped`). Realm Razer = `(new PermanentIsLandPredicate(), true)`
+- `ExileTargetCreatureAndAurasUntilSourceLeavesEffect()` — activated-ability exile: exile a target creature and every Aura attached to it, remember the creature's complete counter map, then return the creature tapped with those counters and reattach legal Auras when the source leaves or becomes untapped. Tokens and Auras that cannot legally attach remain exiled.
+- `ReturnCardsExiledWithSourceOnUntapEffect()` — `ON_SELF_BECOMES_UNTAPPED` payload that drains the source-linked exile returns while the source remains on the battlefield; used with `ExileTargetCreatureAndAurasUntilSourceLeavesEffect()` for Tawnos's Coffin.
 - `ExileDamageSourcePermanentUntilSourceLeavesEffect(PermanentPredicate filter, boolean combatOnly[, Condition intervening])` — "Whenever a creature deals combat damage to you, exile that creature until this leaves the battlefield" (Hixus, Prison Warden). `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` slot; queues a non-targeting trigger that resolves `ExileTargetPermanentUntilSourceLeavesEffect` on the damage source
 - `ExileTargetPermanentUntilTargetEnchantmentLeavesEffect()` — two-target exile: exile the first target creature or enchantment until the second target enchantment leaves the battlefield. The card's multi-target ability supplies the per-position restrictions; the handler tracks the exiled card against the second target.
 - `ExileTriggeringCreatureUntilSourceLeavesEffect(int minimumOtherCreatures)` — non-targeting global creature-entry trigger: binds the entering permanent by identity, checks the other-creature count when the trigger is created and resolves, exiles it, and returns it under its owner's control when the source leaves. Portcullis = `(2)`
@@ -3772,6 +3777,8 @@ source card is no longer in the graveyard, the library card is not exiled and no
 
 ## Turn / phase
 
+- `PhaseOutTargetCreatureUntilSourceLeavesEffect()` — phases the target creature out and keeps it phased out through its normal untap steps until the source permanent leaves; the creature then phases in tapped. Oubliette
+
 - `ControllerExtraTurnEffect(DynamicAmount)` evaluates the number of granted turns from the stack entry amount context, allowing activation-time X values such as Sage of Hours.
 
 - `ControllerExtraTurnEffect(int, boolean, boolean)` additionally makes damage unpreventable during each granted extra turn when its third argument is true (Alchemist's Gambit).
@@ -4049,6 +4056,8 @@ Tablet of the Guilds uses `ChooseColorOnEnterEffect(2)` to store two distinct co
 `PreventAllButOneDamageToControllerAndPlaneswalkersEffect()` is a static recipient-scoped prevention marker for Ajani Steadfast's emblem; `DamagePreventionService.applyAllButOneDamagePrevention` applies it to player and planeswalker damage in combat and noncombat paths.
 
 `PreventDamageFromChosenSourceEffect.nextDamageToTargetCreature()` is Samite Blessing's activated-ability form: the source is chosen on resolution, and the recipient-specific one-shot shield is consumed only by that source's damage to the targeted creature.
+
+`PreventDamageFromChosenSourceEffect.nextCombatDamageToYouFromChosenCreature()` is Forcefield's activated-ability form: the resolution-time battlefield-creature choice installs a one-shot shield consumed only by that source's unblocked combat damage to the controller, reducing that damage to 1.
 
 - `RemoveAllCountersFromTargetPermanentEffect()` — remove every concrete counter from target permanent; no-op if it has none and does not stop it from receiving counters later. "Remove all counters from target permanent" (Vampire Hexmage)
 

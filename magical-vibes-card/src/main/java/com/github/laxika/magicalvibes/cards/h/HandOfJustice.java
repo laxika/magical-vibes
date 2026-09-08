@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FEM", collectorNumber = "5")
+@CardRegistration(set = "ME1", collectorNumber = "15")
 public class HandOfJustice extends Card {
 
     public HandOfJustice() {

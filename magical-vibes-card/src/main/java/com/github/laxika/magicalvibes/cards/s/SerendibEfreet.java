@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "SUM", collectorNumber = "79")
+@CardRegistration(set = "ME1", collectorNumber = "50")
 public class SerendibEfreet extends Card {
 
     public SerendibEfreet() {

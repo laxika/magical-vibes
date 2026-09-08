@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -168,6 +169,12 @@ public class MiscTriggerCollectorService {
                 .map(triggeredEffect -> triggeredEffect instanceof DestroyLinkedPermanentEffect destroy
                         ? new DestroyLinkedPermanentEffect(
                                 destroy.cannotBeRegenerated(), match.permanent().getChosenPermanentId())
+                        : triggeredEffect instanceof ReturnCardsExiledWithSourceOnUntapEffect
+                        ? new ReturnCardsExiledWithSourceOnUntapEffect(
+                                match.gameData().exileReturnOnPermanentLeave
+                                        .getOrDefault(match.permanent().getId(), List.of()).stream()
+                                        .map(pending -> pending.card().getId())
+                                        .collect(java.util.stream.Collectors.toSet()))
                         : triggeredEffect)
                 .toList();
 

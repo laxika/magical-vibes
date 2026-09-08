@@ -1,0 +1,45 @@
+package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfAttackedAtEndStep;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetIfAttackedAtEndStepEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+/** Schedules the target for destruction at the next end step if it attacked this turn. */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class DestroyTargetIfAttackedAtEndStepEffectHandler implements NormalEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
+    private final GameLogService gameLogService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return DestroyTargetIfAttackedAtEndStepEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        gameData.queueDelayedAction(new DestroyPermanentIfAttackedAtEndStep(target.getId()));
+
+        gameLogService.append(gameData,
+                GameLog.cardThen(target.getCard(),
+                        " will be destroyed at the beginning of the next end step if it attacks this turn."));
+        log.info("Game {} - {} scheduled for conditional end-step destruction if it attacks",
+                gameData.id, target.getCard().getName());
+    }
+}

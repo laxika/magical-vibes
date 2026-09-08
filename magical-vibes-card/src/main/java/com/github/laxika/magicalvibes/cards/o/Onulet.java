@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "4ED", collectorNumber = "340")
 @CardRegistration(set = "SUM", collectorNumber = "269")
+@CardRegistration(set = "ME1", collectorNumber = "161")
 public class Onulet extends Card {
 
     public Onulet() {

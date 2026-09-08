@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FEM", collectorNumber = "21")
+@CardRegistration(set = "ME1", collectorNumber = "36")
 public class HomaridSpawningBed extends Card {
 
     public HomaridSpawningBed() {

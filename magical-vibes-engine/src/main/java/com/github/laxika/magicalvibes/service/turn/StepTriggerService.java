@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
+import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfAttackedAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ExilePermanentAtControllerEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
@@ -4177,6 +4178,24 @@ public class StepTriggerService {
                     gameLogService.append(gameData,
                             GameLog.cardThen(perm.getCard(), " is destroyed for not attacking."));
                     log.info("Game {} - {} destroyed for not attacking",
+                            gameData.id, perm.getCard().getName());
+                }
+            }
+        }
+
+        // Berserk: destroy the specific permanent if it attacked this turn.
+        if (gameData.hasDelayedAction(DestroyPermanentIfAttackedAtEndStep.class)) {
+            List<DestroyPermanentIfAttackedAtEndStep> pending =
+                    gameData.drainDelayedActions(DestroyPermanentIfAttackedAtEndStep.class);
+            for (DestroyPermanentIfAttackedAtEndStep action : pending) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
+                if (perm == null || !perm.isAttackedThisTurn()) {
+                    continue;
+                }
+                if (permanentRemovalService.tryDestroyPermanent(gameData, perm)) {
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(perm.getCard(), " is destroyed for attacking."));
+                    log.info("Game {} - {} destroyed for attacking",
                             gameData.id, perm.getCard().getName());
                 }
             }

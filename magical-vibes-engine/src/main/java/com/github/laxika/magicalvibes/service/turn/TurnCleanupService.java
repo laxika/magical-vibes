@@ -354,6 +354,7 @@ public class TurnCleanupService {
         gameData.pendingNextDrawReturnPermanents.clear();
         gameData.pendingNextDrawDiscardOpponents.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
+        gameData.pendingNextDrawFromOutsideGame.clear();
         gameData.pendingNextDrawExileTopCard.clear();
         gameData.pendingMysticReflections.clear();
         gameData.activeMysticReflectionsForEntryBatch.clear();
