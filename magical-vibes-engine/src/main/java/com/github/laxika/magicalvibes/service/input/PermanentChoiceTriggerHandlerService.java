@@ -129,6 +129,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
         entry.setSourcePermanentSnapshot(stt.sourcePermanentSnapshot());
+        entry.setSourcePlanarObject(stt.planarSource());
         entry.setEventValue(stt.spellManaSpentX());
         if (stt.targetFilter() != null) {
             entry.setTargetFilter(stt.targetFilter());
@@ -847,7 +848,7 @@ public class PermanentChoiceTriggerHandlerService {
         StackEntry spellOnStack = null;
         if (!declined && target == null && !isPlayerTarget) {
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(permanentId)) {
+                if (se.getTargetableId().equals(permanentId)) {
                     spellOnStack = se;
                     break;
                 }
@@ -1830,7 +1831,7 @@ public class PermanentChoiceTriggerHandlerService {
         Zone targetZone = targetPermanent == null ? Zone.STACK : null;
         if (targetPermanent == null) {
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(cardId)) {
+                if (se.getTargetableId().equals(cardId)) {
                     targetName = se.getCard().getName();
                     break;
                 }
@@ -2549,7 +2550,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (playerName != null) return playerName;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetId)) return se.getCard().getName();
+            if (se.getTargetableId().equals(targetId)) return se.getDescription();
         }
 
         for (UUID pid : gameData.orderedPlayerIds) {

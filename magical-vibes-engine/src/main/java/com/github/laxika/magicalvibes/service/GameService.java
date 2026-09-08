@@ -70,6 +70,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 public class GameService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -175,6 +179,40 @@ public class GameService {
             throw failure;
         }
         return true;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanarAbilityService planarAbilities;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
+
+    public void activatePlanarAbility(GameData gameData, Player player, UUID sourceId, int index,
+                                      Integer x, UUID targetId, com.github.laxika.magicalvibes.model.Zone zone) {
+        Player actor = player;
+        if (runAsActionIfNeeded(gameData, () -> activatePlanarAbility(gameData, actor, sourceId, index, x, targetId, zone))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
+            planarAbilities.activate(gameData, player.getId(), sourceId, index, x == null ? 0 : x, targetId, zone);
+            stateBasedActionService.performStateBasedActions(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+        }
+    }
+
+    public void rollPlanarDie(GameData gameData, Player player) {
+        Player actor = player;
+        if (runAsActionIfNeeded(gameData, () -> rollPlanarDie(gameData, actor))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            planechaseService.rollSpecialAction(gameData, player.getId());
+            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+            stateBasedActionService.performStateBasedActions(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+        }
     }
 
     /**

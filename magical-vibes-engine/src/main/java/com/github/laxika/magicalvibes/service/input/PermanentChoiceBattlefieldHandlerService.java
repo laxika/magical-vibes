@@ -1690,7 +1690,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         return gameData.stack.stream()
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .filter(entry -> entry.getCard().getId().equals(sourceId))
+                .filter(entry -> entry.getTargetableId().equals(sourceId))
                 .map(StackEntry::getControllerId)
                 .findFirst()
                 .orElse(null);
@@ -1831,7 +1831,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         return gameData.stack.stream()
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .filter(entry -> entry.getCard().getId().equals(sourceId))
+                .filter(entry -> entry.getTargetableId().equals(sourceId))
                 .map(StackEntry::getCard)
                 .findFirst()
                 .orElse(null);

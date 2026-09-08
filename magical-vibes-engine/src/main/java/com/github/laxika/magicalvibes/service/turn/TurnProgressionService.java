@@ -520,6 +520,7 @@ public class TurnProgressionService {
             log.info("Game {} - {} skips their turn", gameData.id, skippedName);
             // Advance turn order past the skipped player so the next selection is correct.
             gameData.activePlayerId = nextActive;
+            if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
             advanceTurn(gameData, false);
             return;
         }
@@ -546,6 +547,7 @@ public class TurnProgressionService {
 
         gameData.activePlayerId = nextActive;
         gameData.turnStartTimestamp = gameData.timestampCounter + 1;
+        if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
         if (gameData.skipCombatPhasesNextTurn.remove(nextActive)) {
             gameData.skippedStepOrPhasesThisTurn.computeIfAbsent(nextActive, id -> new HashSet<>())
                     .add(SkipStepOrPhaseKind.COMBAT_PHASE);

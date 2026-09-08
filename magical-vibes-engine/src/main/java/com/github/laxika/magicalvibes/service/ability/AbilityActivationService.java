@@ -1113,7 +1113,7 @@ public class AbilityActivationService {
                                      Integer abilityIndex, Integer discardHandCardIndex) {
         StackEntry sourceEntry = gameData.stack.stream()
                 .filter(entry -> entry.getCard() != null)
-                .filter(entry -> entry.getCard().getId().equals(stackCardId))
+                .filter(entry -> entry.getTargetableId().equals(stackCardId))
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
                 .findFirst()

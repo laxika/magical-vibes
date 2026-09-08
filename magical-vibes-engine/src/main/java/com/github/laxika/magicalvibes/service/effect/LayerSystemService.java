@@ -634,6 +634,13 @@ public class LayerSystemService {
         h = mix(h, gameData.timestampCounter);
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
+        if (gameData.planechase != null) {
+            h = mix(h, java.util.Objects.hashCode(gameData.planechase.controllerId));
+            for (var planar : gameData.planechase.faceUp) {
+                h = mix(h, planar.getId().hashCode());
+                h = mix(h, planar.getCounters().hashCode());
+            }
+        }
         h = mix(h, gameData.activePlayerId == null ? 0 : gameData.activePlayerId.hashCode());
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
@@ -926,7 +933,12 @@ public class LayerSystemService {
      */
     private record EffectInstance(PermanentSlot source, CardEffect effect, CardEffect original,
                                   FloatingContinuousEffect floating,
-                                  boolean characteristicDefining, long timestamp, int position) {
+                                  boolean characteristicDefining, long timestamp, int position,
+                                  com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource) {
+        EffectInstance(PermanentSlot source, CardEffect effect, CardEffect original,
+                       FloatingContinuousEffect floating, boolean characteristicDefining, long timestamp, int position) {
+            this(source, effect, original, floating, characteristicDefining, timestamp, position, null);
+        }
     }
 
     /**
@@ -1113,6 +1125,17 @@ public class LayerSystemService {
                             classification.characteristicDefining(), sourcePermanent.getTimestamp(), source.position()));
                 }
             }
+            }
+        }
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    var classification = classifyOrNull(effect);
+                    if (classification != null && classification.layers().contains(layer)) {
+                        instances.add(new EffectInstance(null, effect, effect, null, false,
+                                planar.getTimestamp(), Integer.MAX_VALUE, planar));
+                    }
+                }
             }
         }
         synchronized (gameData.floatingEffects) {
@@ -2572,7 +2595,7 @@ public class LayerSystemService {
                                     || harvested.isLosesAllNonManaAbilities()));
             if (!harvested.getProtectionColors().isEmpty()) {
                 state.addProtectionColors(harvested.getProtectionColors());
-                if (!instance.source().permanent().getId().equals(target.permanent().getId())) {
+                if (instance.source() == null || !instance.source().permanent().getId().equals(target.permanent().getId())) {
                     ProtectionFromColorsEffect attributedProtection =
                             new ProtectionFromColorsEffect(Set.copyOf(harvested.getProtectionColors()));
                     board.recordGrantedEffect(target.permanent().getId(),
@@ -2927,6 +2950,19 @@ public class LayerSystemService {
             // Keyed by the ORIGINAL (pre-text-change) instance — the assembly's suppression
             // check looks up the effect it iterates off the card's slot.
             board.managedL56Effects().add(instance.original());
+        }
+        if (instance.planarSource() != null) {
+            if (handler != null) {
+                UUID controller = gameData.planechase.controllerId;
+                for (PermanentSlot target : slots) {
+                    StaticBonusAccumulator harvested = new StaticBonusAccumulator();
+                    handler.apply(new StaticEffectContext(null, target.permanent(), controller,
+                            controller.equals(target.controllerId()), gameData, instance.planarSource()),
+                            instance.effect(), harvested);
+                    harvest.accept(target, harvested);
+                }
+            }
+            return;
         }
         PermanentSlot source = instance.source();
         if (source == null) {

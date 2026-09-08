@@ -213,6 +213,7 @@ export class TargetingChoiceService {
     this.exileTargetCards = [];
     this.exileTargetCardIds = [];
     this.exileTargetPrompt = '';
+    this.planarRollPending = false;
     // MTGO-style cast payment
     this.clearCastPayment();
     this.clearAbilityPayment();
@@ -491,6 +492,10 @@ export class TargetingChoiceService {
   // pool yet, so the message is held back while the player taps mana sources. It fires
   // automatically once the pool covers the cost; Cancel reverts the taps.
   payingForAbility = false;
+  planarRollPending = false;
+  private pendingPlanarRollSequence = -1;
+  private pendingPlanarTurn = -1;
+  private planarActivation: { sourceId: string; abilityIndex: number; manaCost: string | null } | null = null;
   pendingActivationSourceName = '';
   pendingActivationPermanentId: string | null = null;
   private pendingActivationManaCost: string | null = null;
@@ -502,6 +507,13 @@ export class TargetingChoiceService {
 
   handleValidTargetsResponse(msg: ValidTargetsResponse): void {
     this.pendingTargetRequest = false;
+
+    if (this.targetingSpell) {
+      this.validTargetIds.set(new Set(msg.validPermanentIds));
+      this.targetingPrompt = msg.prompt;
+      if (msg.validPermanentIds.length === 0) this.cancelSpellTargeting();
+      return;
+    }
 
     const hasGraveyardTargets = msg.validGraveyardCardIds && msg.validGraveyardCardIds.length > 0;
     const hasExileTargets = msg.validExiledCardIds && msg.validExiledCardIds.length > 0;
@@ -762,6 +774,8 @@ export class TargetingChoiceService {
       this.targetingSpell = true;
       this.targetingSpellCardIndex = index;
       this.targetingSpellCardName = card.name;
+      this.validTargetIds.set(new Set());
+      this.sendValidTargetsRequest(index, null, null);
       return;
     }
     if (card.needsTarget) {
@@ -1809,9 +1823,84 @@ export class TargetingChoiceService {
     return true;
   }
 
-  private onAbilityPaymentGameState(): void {
-    if (!this.payingForAbility) return;
+  activatePlanarAbility(sourceId: string, abilityIndex: number): void {
+    const source = this.gameSignal()?.planechase?.faceUp.find(p => p.id === sourceId);
+    const ability = source?.card.activatedAbilities[abilityIndex];
+    if (!source || !ability || this.payingForCast || this.payingForAbility) return;
+    this.planarActivation = { sourceId, abilityIndex, manaCost: ability.manaCost };
+    if (ability.needsTarget || ability.needsSpellTarget) {
+      this.selectingTarget = !ability.needsSpellTarget;
+      this.targetingSpell = ability.needsSpellTarget;
+      this.validTargetIds.set(new Set());
+      this.targetingCardName = source.card.name;
+      this.targetingAbilityIndex = abilityIndex;
+      this.pendingTargetRequest = true;
+      this.websocketService.send({ type: MessageType.VALID_TARGETS_REQUEST, planarObjectId: sourceId, abilityIndex });
+    } else {
+      this.sendPlanarActivation();
+    }
+  }
+
+  private sendPlanarActivation(targetId?: string): void {
+    const activation = this.planarActivation;
+    if (!activation) return;
+    const msg = { type: MessageType.ACTIVATE_PLANAR_ABILITY, sourceId: activation.sourceId,
+      abilityIndex: activation.abilityIndex, targetId };
+    if (activation.manaCost && !this.canPayManaCost(activation.manaCost)) {
+      this.payingForAbility = true;
+      this.pendingActivationSourceName = this.targetingCardName || 'Planar ability';
+      this.pendingActivationManaCost = activation.manaCost;
+      this.pendingActivationMessage = msg;
+    } else {
+      this.websocketService.send(msg);
+    }
+    this.planarActivation = null;
+  }
+
+  rollPlanarDie(): void {
     const g = this.gameSignal();
+    const planar = g?.planechase;
+    if (!g || !planar?.canRoll || this.payingForCast || this.payingForAbility || this.planarRollPending) return;
+    this.pendingPlanarRollSequence = planar.rollSequence;
+    this.pendingPlanarTurn = g.turnNumber;
+    if (planar.canPayRoll) {
+      this.planarRollPending = true;
+      this.websocketService.send({ type: MessageType.ROLL_PLANAR_DIE });
+    } else {
+      this.payingForAbility = true;
+      this.pendingActivationSourceName = 'Planar die';
+      this.pendingActivationManaCost = '{' + planar.rollCost + '}';
+      this.pendingActivationMessage = { type: MessageType.ROLL_PLANAR_DIE };
+    }
+  }
+
+  private onAbilityPaymentGameState(): void {
+    const planar = this.gameSignal()?.planechase;
+    if (!planar?.canRoll || planar.rollSequence !== this.pendingPlanarRollSequence) this.planarRollPending = false;
+    if (!this.payingForAbility) return;
+    if (this.pendingActivationMessage?.type === MessageType.ROLL_PLANAR_DIE) {
+      if (!planar || this.priorityMovedOn || this.gameSignal()?.turnNumber !== this.pendingPlanarTurn
+          || planar.rollSequence !== this.pendingPlanarRollSequence) {
+        this.clearAbilityPayment();
+      } else if (planar.canRoll && planar.canPayRoll) {
+        this.clearAbilityPayment();
+        this.planarRollPending = true;
+        this.websocketService.send({ type: MessageType.ROLL_PLANAR_DIE });
+      }
+      return;
+    }
+    const g = this.gameSignal();
+    if (this.pendingActivationMessage?.type === MessageType.ACTIVATE_PLANAR_ABILITY) {
+      const source = g?.planechase?.faceUp.find(p => p.id === this.pendingActivationMessage.sourceId);
+      if (!source || this.priorityMovedOn) {
+        this.clearAbilityPayment();
+      } else if (!this.pendingActivationManaCost || this.canPayManaCost(this.pendingActivationManaCost)) {
+        const message = this.pendingActivationMessage;
+        this.clearAbilityPayment();
+        this.websocketService.send(message);
+      }
+      return;
+    }
     const index = this.myBattlefieldFn().findIndex(p => p.id === this.pendingActivationPermanentId);
     if (!g || index < 0 || this.priorityMovedOn) {
       this.clearAbilityPayment();
@@ -1986,7 +2075,9 @@ export class TargetingChoiceService {
   selectTarget(permanentId: string): void {
     if (!this.selectingTarget) return;
     if (!this.validTargetIds().has(permanentId)) return;
-    if (this.targetingForGraveyardAbility) {
+    if (this.planarActivation) {
+      this.sendPlanarActivation(permanentId);
+    } else if (this.targetingForGraveyardAbility) {
       const msg: any = {
         type: MessageType.ACTIVATE_GRAVEYARD_ABILITY,
         graveyardCardIndex: this.targetingCardIndex,
@@ -2040,7 +2131,9 @@ export class TargetingChoiceService {
     if (!g) return;
     const playerId = g.playerIds[playerIndex];
     if (!this.validTargetPlayerIds().has(playerId)) return;
-    if (this.targetingForAbility) {
+    if (this.planarActivation) {
+      this.sendPlanarActivation(playerId);
+    } else if (this.targetingForAbility) {
       const msg: any = {
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingCardIndex,
@@ -2147,6 +2240,7 @@ export class TargetingChoiceService {
   }
 
   private resetTargetingState(): void {
+    this.planarActivation = null;
     this.selectingTarget = false;
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
@@ -2192,8 +2286,10 @@ export class TargetingChoiceService {
   }
 
   selectSpellTarget(entry: StackEntry): void {
-    if (!this.targetingSpell || !entry.isSpell) return;
-    if (this.targetingForAbility) {
+    if (!this.targetingSpell || this.pendingTargetRequest || (!entry.isSpell && !this.validTargetIds().has(entry.cardId))) return;
+    if (this.planarActivation) {
+      this.sendPlanarActivation(entry.cardId);
+    } else if (this.targetingForAbility) {
       this.sendActivateAbilityMessage({
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingSpellCardIndex,
@@ -2226,6 +2322,7 @@ export class TargetingChoiceService {
   }
 
   private resetSpellTargetingState(): void {
+    this.planarActivation = null;
     this.targetingSpell = false;
     this.targetingSpellCardIndex = -1;
     this.targetingSpellCardName = '';
@@ -3247,6 +3344,8 @@ export class TargetingChoiceService {
       this.targetingSpellCardName = perm.card.name;
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
+      this.validTargetIds.set(new Set());
+      this.sendValidTargetsRequest(null, permanentIndex, abilityIndex);
       return;
     }
 

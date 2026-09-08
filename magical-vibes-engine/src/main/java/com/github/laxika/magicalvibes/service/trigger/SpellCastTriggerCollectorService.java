@@ -659,7 +659,7 @@ public class SpellCastTriggerCollectorService {
         Card spellCard = sc.spellCard();
         if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) return null;
         for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(spellCard.getId())) {
+            if (se.getTargetableId().equals(spellCard.getId())) {
                 return se;
             }
         }
@@ -694,7 +694,7 @@ public class SpellCastTriggerCollectorService {
         // Find the spell on the stack
         StackEntry spellEntry = null;
         for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(sc.spellCard().getId())) {
+            if (se.getTargetableId().equals(sc.spellCard().getId())) {
                 spellEntry = se;
                 break;
             }
@@ -1030,7 +1030,7 @@ public class SpellCastTriggerCollectorService {
 
         StackEntry spellEntry = null;
         for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(sc.spellCard().getId())) {
+            if (se.getTargetableId().equals(sc.spellCard().getId())) {
                 spellEntry = se;
                 break;
             }
@@ -2535,7 +2535,7 @@ public class SpellCastTriggerCollectorService {
 
     private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(cardId)) {
+            if (se.getTargetableId().equals(cardId)) {
                 return se;
             }
         }

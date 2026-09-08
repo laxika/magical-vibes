@@ -2015,7 +2015,7 @@ public class ChoiceHandlerService {
                     continue;
                 }
                 if (!ctx.controllerId().equals(se.getControllerId())) {
-                    validSpellCardIds.add(se.getCard().getId());
+                    validSpellCardIds.add(se.getTargetableId());
                 }
             }
             if (validSpellCardIds.isEmpty()) {

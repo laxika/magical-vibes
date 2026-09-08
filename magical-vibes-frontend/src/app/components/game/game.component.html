@@ -552,6 +552,12 @@
       </div>
     </ng-template>
 
+    @if (game()?.planechase; as planar) {
+      <app-planar-panel (cardHover)="onCardHover($event)" (cardHoverEnd)="onCardHoverEnd()" [state]="planar"
+        [busy]="choice.targeting.payingForAbility || choice.targeting.payingForCast || choice.targeting.planarRollPending"
+        (roll)="choice.targeting.rollPlanarDie()"
+        (activate)="choice.targeting.activatePlanarAbility($event.sourceId, $event.abilityIndex)" />
+    }
     <div class="battlefield-area" #battlefieldArea [style.--density-zoom]="battlefieldZoom">
       <div class="battlefield-row" [style.--density-zoom]="opponentBattlefieldZoom"
         [class.active-turn]="isActivePlayer(opponentPlayerIndex)">

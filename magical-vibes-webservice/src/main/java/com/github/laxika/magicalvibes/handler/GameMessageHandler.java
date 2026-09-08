@@ -74,6 +74,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class GameMessageHandler implements MessageHandler {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.planar.PlanarAbilityService planarAbilities;
+
 
     private final LoginService loginService;
     private final GameService gameService;
@@ -208,6 +211,10 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        if (Boolean.TRUE.equals(request.planechase()) && Boolean.TRUE.equals(request.vsAi())) {
+            handleError(connection, "Planechase requires two human players");
+            return;
+        }
         boolean allRandom = Boolean.TRUE.equals(request.allRandom());
         // Blank means "All sets".
         String randomSet = (request.randomSet() != null && !request.randomSet().isBlank()) ? request.randomSet() : null;
@@ -217,7 +224,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player, request.deckId(),
-                allRandom, randomSet);
+                allRandom, randomSet, Boolean.TRUE.equals(request.planechase()));
 
         // Mark creator as in-game
         sessionManager.setInGame(connection.getId());
@@ -280,6 +287,48 @@ public class GameMessageHandler implements MessageHandler {
 
             // Broadcast GAME_UPDATED to lobby users
             broadcastToLobby(MessageType.GAME_UPDATED, lobbyGame);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleActivatePlanarAbility(Connection connection, com.github.laxika.magicalvibes.networking.message.ActivatePlanarAbilityRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.activatePlanarAbility(gameData, player, request.sourceId(), request.abilityIndex(), request.xValue(), request.targetId(), request.targetZone());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleRollPlanarDie(Connection connection, com.github.laxika.magicalvibes.networking.message.RollPlanarDieRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.rollPlanarDie(gameData, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -809,7 +858,18 @@ public class GameMessageHandler implements MessageHandler {
         try {
             ValidTargetsResponse response;
             synchronized (gameData) {
-                if (request.cardIndex() != null) {
+                if (request.planarObjectId() != null && request.abilityIndex() != null) {
+                    var source = planarAbilities.source(gameData, request.planarObjectId());
+                    var ability = planarAbilities.ability(source, request.abilityIndex());
+                    UUID actorId = player.getId().equals(gameData.mindControllerPlayerId)
+                            ? gameData.mindControlledPlayerId : player.getId();
+                    if (player.getId().equals(gameData.mindControlledPlayerId)
+                            || !planarAbilities.available(gameData, actorId, source, ability)) {
+                        throw new IllegalStateException("You cannot activate that planar ability now");
+                    }
+                    response = validTargetService.computeValidTargetsForAbility(gameData, source.getCard(), ability,
+                            actorId, -1, request.alreadySelectedIds() == null ? java.util.List.of() : request.alreadySelectedIds(), request.xValue());
+                } else if (request.cardIndex() != null) {
                     // Spell from hand
                     java.util.List<com.github.laxika.magicalvibes.model.Card> hand = gameData.playerHands.get(player.getId());
                     if (hand == null || request.cardIndex() < 0 || request.cardIndex() >= hand.size()) {

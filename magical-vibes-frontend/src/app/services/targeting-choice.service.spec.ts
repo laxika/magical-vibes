@@ -1,6 +1,6 @@
 import { signal, WritableSignal } from '@angular/core';
 import { TargetingChoiceService } from './targeting-choice.service';
-import { ActivatedAbilityView, Card, Game, MessageType, Permanent, WebsocketService } from './websocket.service';
+import { ActivatedAbilityView, Card, Game, MessageType, Permanent, StackEntry, ValidTargetsResponse, WebsocketService } from './websocket.service';
 
 const ME = 'me';
 
@@ -297,5 +297,109 @@ describe('TargetingChoiceService MTGO-style ability activation payment', () => {
 
     expect(sent.length).toBe(1);
     expect(sent[0].paymentIntent).toBeUndefined();
+  });
+});
+
+
+describe('TargetingChoiceService planar die payment', () => {
+  function planarGame(canPayRoll = false): Game {
+    return { ...gameWithPool({}), turnNumber: 2, planechase: {
+      faceUp: [], controllerId: ME, deckSize: 19, rollCost: 1,
+      canRoll: true, canPayRoll, lastRoll: null, lastRollPlayerId: null, rollSequence: 1
+    } };
+  }
+
+  it('sends an affordable roll once and waits for its result', () => {
+    const game = signal<Game | null>(planarGame(true));
+    const sent: any[] = [];
+    const service = makePaymentService([], game, sent);
+    service.rollPlanarDie();
+    service.rollPlanarDie();
+    expect(sent).toEqual([{ type: MessageType.ROLL_PLANAR_DIE }]);
+    expect(service.planarRollPending).toBe(true);
+    game.update(g => ({ ...g!, planechase: { ...g!.planechase!, rollSequence: 2 } }));
+    service.onGameStateUpdate();
+    expect(service.planarRollPending).toBe(false);
+  });
+
+  it('holds payment through a mana choice and rolls when mana is available', () => {
+    const game = signal<Game | null>(planarGame());
+    const sent: any[] = [];
+    const service = makePaymentService([land('forest')], game, sent);
+    service.rollPlanarDie();
+    expect(service.payingForAbility).toBe(true);
+    expect(service.canTapPermanent(0)).toBe(true);
+    game.update(g => ({ ...g!, priorityPlayerId: null, planechase: { ...g!.planechase!, canRoll: false } }));
+    service.onGameStateUpdate();
+    expect(service.payingForAbility).toBe(true);
+    expect(sent).toEqual([]);
+    game.set(planarGame(true));
+    service.onGameStateUpdate();
+    expect(sent).toEqual([{ type: MessageType.ROLL_PLANAR_DIE }]);
+    expect(service.payingForAbility).toBe(false);
+  });
+
+  it('abandons payment after another roll or a turn change', () => {
+    for (const change of ['roll', 'turn']) {
+      const game = signal<Game | null>(planarGame());
+      const sent: any[] = [];
+      const service = makePaymentService([], game, sent);
+      service.rollPlanarDie();
+      game.update(g => change === 'turn' ? { ...g!, turnNumber: 3 } :
+        { ...g!, planechase: { ...g!.planechase!, rollSequence: 2, canPayRoll: true } });
+      service.onGameStateUpdate();
+      expect(service.payingForAbility).toBe(false);
+      expect(sent).toEqual([]);
+    }
+  });
+
+  it('cancels payment and requests mana reversion', () => {
+    const sent: any[] = [];
+    const service = makePaymentService([], signal(planarGame()), sent);
+    service.rollPlanarDie();
+    service.cancelPendingAbility();
+    expect(service.payingForAbility).toBe(false);
+    expect(sent).toEqual([{ type: MessageType.REVERT_MANA_ACTIVATIONS }]);
+  });
+});
+
+
+describe('TargetingChoiceService source-less stack targets', () => {
+  it('selects an ability only after the server has admitted its identity', () => {
+    const sent: any[] = [];
+    const service = makePaymentService([], signal(gameWithPool({})), sent);
+    const entry = { cardId: 'planeswalk', card: null, isSpell: false,
+      entryType: 'TRIGGERED_ABILITY', description: 'Planeswalk', controllerId: 'opp' } as unknown as StackEntry;
+    service.targetingSpell = true;
+    service.targetingSpellCardIndex = 0;
+    service.selectSpellTarget(entry);
+    expect(sent).toEqual([]);
+    service.handleValidTargetsResponse({ type: MessageType.VALID_TARGETS_RESPONSE, validPermanentIds: ['planeswalk'], validPlayerIds: [],
+      validGraveyardCardIds: [], validExiledCardIds: [], minTargets: 1, maxTargets: 1,
+      prompt: 'Choose an ability' } as ValidTargetsResponse);
+    expect(service.targetingSpell).toBe(true);
+    service.selectSpellTarget(entry);
+    expect(sent).toEqual([{ type: MessageType.PLAY_CARD, cardIndex: 0, targetId: 'planeswalk' }]);
+  });
+});
+
+
+describe('TargetingChoiceService planar abilities', () => {
+  it('routes a targeted planar ability through server target selection', () => {
+    const g = gameWithPool({});
+    g.planechase = { faceUp: [{ id: 'plane', card: { name: 'Test plane',
+      activatedAbilities: [abilityView({ manaCost: null, needsSpellTarget: true })] } as Card,
+      counters: {}, availableAbilityIndices: [0] }], controllerId: ME, deckSize: 19,
+      rollCost: 0, canRoll: false, canPayRoll: false, lastRoll: null, lastRollPlayerId: null, rollSequence: 0 };
+    const sent: any[] = [];
+    const service = makePaymentService([], signal(g), sent);
+    service.activatePlanarAbility('plane', 0);
+    expect(sent[0]).toEqual({ type: MessageType.VALID_TARGETS_REQUEST, planarObjectId: 'plane', abilityIndex: 0 });
+    service.handleValidTargetsResponse({ type: MessageType.VALID_TARGETS_RESPONSE,
+      validPermanentIds: ['ability'], validPlayerIds: [], validGraveyardCardIds: [], validExiledCardIds: [],
+      minTargets: 1, maxTargets: 1, prompt: 'Choose a target' } as ValidTargetsResponse);
+    service.selectSpellTarget({ cardId: 'ability', isSpell: false } as StackEntry);
+    expect(sent[1]).toEqual({ type: MessageType.ACTIVATE_PLANAR_ABILITY,
+      sourceId: 'plane', abilityIndex: 0, targetId: 'ability' });
   });
 });

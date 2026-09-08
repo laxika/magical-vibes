@@ -5151,3 +5151,13 @@ Samite Blessing uses `PreventDamageFromChosenSourceEffect.nextDamageToTargetCrea
 | `LookAtTopCardsChooseCreaturesAndLandsEffect` | `(int count)` | privately look at the top `count` cards, may reveal up to two creature and/or land cards, route selected lands to the battlefield tapped and selected nonland creatures to hand, and put the rest on the bottom randomly. Uses the shared multi-card library choice with type-based routing. Zimone's Experiment |
 | `GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND` | `CascadeEffect()` | marker slot for a permanent that grants cascade to its controller's instant and sorcery spells cast from hand (Quandrix, the Proof). `TriggerCollectionService.checkSpellCastTriggers` checks `Zone.HAND` plus the spell type and queues the effect keyed to the spell, so a free cascade cast from the library does not retrigger the grant |
 | `EachPlayerFlipsCoinAndTailsSacrificesCreatureEffect` | `()` | Each player flips one coin; every player whose flip is tails chooses one creature they control, then all chosen creatures are sacrificed together. Choices use APNAP ordering and the shared coin-flip replacement/trigger path. Used by Goblin Assassin. |
+
+## Planechase effects
+
+| Effect | Constructor | Behavior |
+| --- | --- | --- |
+| `PlaneswalkEffect` | `()` | Turns face-up planar cards face down and reveals the next shared-deck card. |
+| `ChaosEnsuesEffect` | `()` | Causes chaos for face-up planar cards without rolling. |
+| `RollPlanarDieEffect` | `()` | Rolls the planar die without increasing the special-action cost. |
+
+See [PLANECHASE.md](PLANECHASE.md) for trigger slots and command-zone source handling.

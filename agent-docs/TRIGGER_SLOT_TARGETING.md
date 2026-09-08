@@ -697,3 +697,7 @@ Creature-enter watchers whose trigger effect targets a graveyard card use the sa
 effect belongs to the watching permanent rather than to the entering card.
 
 Controller end-step effects bound to multiple declared target groups are queued together as one ability. The slot target walker selects the groups before that ability goes on the stack.
+
+## Planar event slots
+
+`PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED` and `ENCOUNTER_TRIGGERED` are collected by `PlanechaseService`. Targeted payloads reuse `SpellTargetTriggerAnyTarget` with a planar source snapshot. Never resolve a target-requiring encounter before its choice, or let phenomenon state-based actions skip that choice. See [PLANECHASE.md](PLANECHASE.md).

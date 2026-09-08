@@ -41,6 +41,14 @@ public interface MessageHandler {
 
     void handleJoinGame(Connection connection, JoinGameRequest request) throws Exception;
 
+    default void handleActivatePlanarAbility(Connection connection, com.github.laxika.magicalvibes.networking.message.ActivatePlanarAbilityRequest request) throws Exception {
+        throw new UnsupportedOperationException("Planar abilities are not supported");
+    }
+
+    default void handleRollPlanarDie(Connection connection, com.github.laxika.magicalvibes.networking.message.RollPlanarDieRequest request) throws Exception {
+        throw new UnsupportedOperationException("Planar rolling is not supported");
+    }
+
     void handlePassPriority(Connection connection, PassPriorityRequest request) throws Exception;
 
     void handleKeepHand(Connection connection, KeepHandRequest request) throws Exception;

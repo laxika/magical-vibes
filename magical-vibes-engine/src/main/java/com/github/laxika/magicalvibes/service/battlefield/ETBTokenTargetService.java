@@ -119,7 +119,7 @@ public class ETBTokenTargetService {
                         && !targetLegalityService.matchesStackEntryPredicate(gameData, se, pending.spellFilter(), pending.controllerId())) {
                     continue;
                 }
-                validSpellCardIds.add(se.getCard().getId());
+                validSpellCardIds.add(se.getTargetableId());
             }
 
             List<UUID> validPermanentTargetIds = new ArrayList<>();
@@ -245,7 +245,7 @@ public class ETBTokenTargetService {
                 if (isSpell(stackEntry)
                         && targetLegalityService.matchesStackEntryPredicate(
                         gameData, stackEntry, spells.inner(), controllerId)) {
-                    validTargets.add(stackEntry.getCard().getId());
+                    validTargets.add(stackEntry.getTargetableId());
                 }
             }
         }

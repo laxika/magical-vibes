@@ -70,6 +70,10 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class GameViewProjectionFactory {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseViewService planarViews;
+
 
     private final CardViewFactory cardViewFactory;
     private final GameLogViewFactory gameLogViewFactory;
@@ -181,7 +185,8 @@ public class GameViewProjectionFactory {
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
-                    potentialPayableAbilityIndices, speeds, gameData.dayNight
+                    potentialPayableAbilityIndices, speeds, gameData.dayNight,
+                    gameData.planechase == null ? null : planarViews.create(gameData, playerId)
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -1034,7 +1039,8 @@ public class GameViewProjectionFactory {
                 getStackViews(data),
                 getGraveyardViews(data, playerId),
                 getSpeeds(data),
-                data.dayNight
+                data.dayNight,
+                data.planechase == null ? null : planarViews.create(data, playerId)
         );
     }
 
