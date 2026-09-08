@@ -120,6 +120,7 @@ public enum CardSet {
     SET_P02("P02"),
     SET_PTK("PTK"),
     SET_CSP("CSP"),
+    SET_CST("CST"),
     SET_TMP("TMP"),
     SET_TOR("TOR"),
     SET_STH("STH"),
