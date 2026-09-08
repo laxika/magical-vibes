@@ -7,17 +7,19 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({XanthicStatue.class})
 class XanthicStatueTest extends BaseCardTest {
 
     @Test
     @DisplayName("Xanthic Statue becomes an 8/8 Golem artifact creature with trample")
     void activatesAnimation() {
-        Permanent statue = addStatueReady();
+        Permanent statue = harness.addToBattlefieldAndReturn(player1, new XanthicStatue());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, null, null);
@@ -35,7 +37,7 @@ class XanthicStatueTest extends BaseCardTest {
     @Test
     @DisplayName("Xanthic Statue's animation ends at end of turn")
     void animationEndsAtEndOfTurn() {
-        Permanent statue = addStatueReady();
+        Permanent statue = harness.addToBattlefieldAndReturn(player1, new XanthicStatue());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, null, null);
@@ -43,19 +45,11 @@ class XanthicStatueTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, statue)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, statue)).isFalse();
         assertThat(gqs.isArtifact(statue)).isTrue();
         assertThat(statue.getTransientSubtypes()).doesNotContain(CardSubtype.GOLEM);
         assertThat(statue.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
-    }
-
-    private Permanent addStatueReady() {
-        Permanent statue = new Permanent(new XanthicStatue());
-        statue.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(statue);
-        return statue;
     }
 }

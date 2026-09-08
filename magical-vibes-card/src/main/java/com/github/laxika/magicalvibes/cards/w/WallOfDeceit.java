@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceDownEffect;
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "55")
+@CardRegistration(set = "DD2", collectorNumber = "5")
 public class WallOfDeceit extends Card {
 
     public WallOfDeceit() {

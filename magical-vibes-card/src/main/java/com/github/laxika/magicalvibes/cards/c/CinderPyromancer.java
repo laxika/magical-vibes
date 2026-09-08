@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "50")
+@CardRegistration(set = "DPA", collectorNumber = "41")
 public class CinderPyromancer extends Card {
 
     public CinderPyromancer() {

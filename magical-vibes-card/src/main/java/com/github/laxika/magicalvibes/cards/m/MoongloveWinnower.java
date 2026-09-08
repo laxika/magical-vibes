@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "126")
+@CardRegistration(set = "DPA", collectorNumber = "29")
 public class MoongloveWinnower extends Card {
 }

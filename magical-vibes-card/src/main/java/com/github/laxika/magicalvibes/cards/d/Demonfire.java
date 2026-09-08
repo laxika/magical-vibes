@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "60")
+@CardRegistration(set = "DD2", collectorNumber = "57")
 public class Demonfire extends Card {
 
     public Demonfire() {

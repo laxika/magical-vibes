@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WindbornMuse;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BloodrockCyclops.class, GrizzlyBears.class, WindbornMuse.class})
 class BloodrockCyclopsTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -52,17 +53,9 @@ class BloodrockCyclopsTest extends BaseCardTest {
     void canDeclareAsAttacker() {
         harness.setLife(player2, 20);
 
-        Permanent cyclops = new Permanent(new BloodrockCyclops());
-        cyclops.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops);
+        addCreatureReady(player1, new BloodrockCyclops());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        // No exception means declaration is valid; combat auto-resolves
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -70,16 +63,9 @@ class BloodrockCyclopsTest extends BaseCardTest {
     @Test
     @DisplayName("Declaring no attackers when Bloodrock Cyclops can attack throws exception")
     void mustAttackWhenAble() {
-        Permanent cyclops = new Permanent(new BloodrockCyclops());
-        cyclops.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops);
+        addCreatureReady(player1, new BloodrockCyclops());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -87,21 +73,11 @@ class BloodrockCyclopsTest extends BaseCardTest {
     @Test
     @DisplayName("Omitting Bloodrock Cyclops from attackers while declaring other creatures throws exception")
     void mustBeIncludedAmongAttackers() {
-        Permanent cyclops = new Permanent(new BloodrockCyclops());
-        cyclops.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops);
-
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        addCreatureReady(player1, new BloodrockCyclops());
+        addCreatureReady(player1, new GrizzlyBears());
 
         // Declare only Grizzly Bears (index 1), omitting Bloodrock Cyclops (index 0)
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -111,21 +87,11 @@ class BloodrockCyclopsTest extends BaseCardTest {
     void canDeclareWithOtherAttackers() {
         harness.setLife(player2, 20);
 
-        Permanent cyclops = new Permanent(new BloodrockCyclops());
-        cyclops.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops);
-
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        addCreatureReady(player1, new BloodrockCyclops());
+        addCreatureReady(player1, new GrizzlyBears());
 
         // No exception means declaration is valid; 3 + 2 = 5 damage
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        declareAttackers(List.of(0, 1));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -133,20 +99,16 @@ class BloodrockCyclopsTest extends BaseCardTest {
     @Test
     @DisplayName("Bloodrock Cyclops does not need to attack if tapped")
     void doesNotAttackIfTapped() {
-        Permanent cyclops = new Permanent(new BloodrockCyclops());
-        cyclops.setSummoningSick(false);
+        harness.setLife(player2, 20);
+
+        Permanent cyclops = addCreatureReady(player1, new BloodrockCyclops());
         cyclops.tap();
-        gd.playerBattlefields.get(player1.getId()).add(cyclops);
+        addCreatureReady(player1, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        declareAttackers(List.of(1));
 
-        // Tapped creature cannot attack, so empty declaration is fine
-        // (no attackable creatures means combat skips automatically)
-        // We verify it's not in attackable indices
         assertThat(cyclops.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     @Test
@@ -154,22 +116,12 @@ class BloodrockCyclopsTest extends BaseCardTest {
     void doesNotAttackWithSummoningSickness() {
         harness.setLife(player2, 20);
 
-        Permanent cyclops = new Permanent(new BloodrockCyclops());
-        // summoning sick by default
-        gd.playerBattlefields.get(player1.getId()).add(cyclops);
-
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        harness.addToBattlefield(player1, new BloodrockCyclops());
+        addCreatureReady(player1, new GrizzlyBears());
 
         // Only Grizzly Bears can attack (index 1), Cyclops has summoning sickness
         // so declaring just bears should succeed — only 2 damage from bears
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(List.of(1));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -179,19 +131,10 @@ class BloodrockCyclopsTest extends BaseCardTest {
     @Test
     @DisplayName("Bloodrock Cyclops is not forced to attack when opponent controls Windborn Muse (attack tax)")
     void notForcedToAttackWithAttackTax() {
-        Permanent cyclops = new Permanent(new BloodrockCyclops());
-        cyclops.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops);
+        Permanent cyclops = addCreatureReady(player1, new BloodrockCyclops());
 
         // Opponent has Windborn Muse (tax 2 per attacker)
-        Permanent muse = new Permanent(new WindbornMuse());
-        muse.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(muse);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        harness.addToBattlefield(player2, new WindbornMuse());
 
         // Per CR 508.1d, the player is not required to pay the attack tax
         // so Bloodrock Cyclops is not forced to attack — empty declaration is valid
@@ -201,7 +144,7 @@ class BloodrockCyclopsTest extends BaseCardTest {
         // Let's give them enough mana and verify they CAN decline
         harness.addMana(player1, ManaColor.RED, 2);
 
-        gs.declareAttackers(gd, player1, List.of());
+        declareAttackers(List.of());
 
         assertThat(cyclops.isAttacking()).isFalse();
     }
@@ -213,16 +156,9 @@ class BloodrockCyclopsTest extends BaseCardTest {
     void dealsThreeDamageUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent cyclops = new Permanent(new BloodrockCyclops());
-        cyclops.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops);
+        addCreatureReady(player1, new BloodrockCyclops());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities(); // through declare blockers (no blockers)
         harness.passBothPriorities(); // through combat damage
 
@@ -232,19 +168,12 @@ class BloodrockCyclopsTest extends BaseCardTest {
     @Test
     @DisplayName("Bloodrock Cyclops trades with a 3/3 creature in combat")
     void tradesWithThreeThree() {
-        Permanent cyclops = new Permanent(new BloodrockCyclops());
-        cyclops.setSummoningSick(false);
+        Permanent cyclops = addCreatureReady(player1, new BloodrockCyclops());
         cyclops.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops);
 
-        Permanent blocker = new Permanent(new BloodrockCyclops());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new BloodrockCyclops());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // through combat damage
@@ -259,21 +188,11 @@ class BloodrockCyclopsTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple Bloodrock Cyclops must all attack")
     void multipleMusttAllAttack() {
-        Permanent cyclops1 = new Permanent(new BloodrockCyclops());
-        cyclops1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops1);
-
-        Permanent cyclops2 = new Permanent(new BloodrockCyclops());
-        cyclops2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops2);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        addCreatureReady(player1, new BloodrockCyclops());
+        addCreatureReady(player1, new BloodrockCyclops());
 
         // Only declaring one of the two should fail
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -283,21 +202,11 @@ class BloodrockCyclopsTest extends BaseCardTest {
     void multipleCanAllAttack() {
         harness.setLife(player2, 20);
 
-        Permanent cyclops1 = new Permanent(new BloodrockCyclops());
-        cyclops1.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops1);
-
-        Permanent cyclops2 = new Permanent(new BloodrockCyclops());
-        cyclops2.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(cyclops2);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        addCreatureReady(player1, new BloodrockCyclops());
+        addCreatureReady(player1, new BloodrockCyclops());
 
         // No exception means declaration is valid; 3 + 3 = 6 damage
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        declareAttackers(List.of(0, 1));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }

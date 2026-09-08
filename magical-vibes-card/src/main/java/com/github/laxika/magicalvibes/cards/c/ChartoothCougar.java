@@ -10,12 +10,14 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "DD2", collectorNumber = "47")
 @CardRegistration(set = "SCG", collectorNumber = "84")
 public class ChartoothCougar extends Card {
 
     public ChartoothCougar() {
         addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),
                 "{R}: This creature gets +1/+0 until end of turn."));
+
         addHandActivatedAbility(new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN))),
                 "Mountaincycling {2} ({2}, Discard this card: Search your library for a Mountain card, "

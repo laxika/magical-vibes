@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
+import com.github.laxika.magicalvibes.cards.n.NullRod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,18 +16,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArgivianRestoration.class, NullRod.class, BenalishInfantry.class})
 class ArgivianRestorationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns target artifact card from your graveyard to the battlefield")
     void returnsArtifactFromGraveyardToBattlefield() {
-        Card artifact = new Ornithopter();
+        Card artifact = new NullRod();
         harness.setGraveyard(player1, List.of(artifact));
         harness.setHand(player1, List.of(new ArgivianRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, artifact.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -38,7 +39,7 @@ class ArgivianRestorationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-artifact card in the graveyard")
     void cannotTargetNonArtifactCard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new BenalishInfantry();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new ArgivianRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -50,7 +51,7 @@ class ArgivianRestorationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an artifact in an opponent's graveyard")
     void cannotTargetOpponentGraveyard() {
-        Card artifact = new Ornithopter();
+        Card artifact = new NullRod();
         harness.setGraveyard(player2, List.of(artifact));
         harness.setHand(player1, List.of(new ArgivianRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -63,7 +64,7 @@ class ArgivianRestorationTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if the target artifact leaves the graveyard before resolution")
     void fizzlesIfTargetLeavesGraveyard() {
-        Card artifact = new Ornithopter();
+        Card artifact = new NullRod();
         harness.setGraveyard(player1, List.of(artifact));
         harness.setHand(player1, List.of(new ArgivianRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 4);
