@@ -162,6 +162,7 @@ public enum CounterType {
     TOWER,
     TIME,
     TRAINING,
+    TRAP,
     TREASURE,
     UNLOCK,
     VALOR,

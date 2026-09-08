@@ -1971,6 +1971,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Invalid ability index");
         }
         ActivatedAbility ability = abilities.get(idx);
+        validateNotBlockedByCyclingRestriction(gameData, ability);
         List<CardEffect> abilityEffects = ability.getEffects();
         int effectiveXValue = xValue != null ? xValue : 0;
         if (ability.isSuspendsSourceFromHand() && ability.isSuspendTimeCountersFromX()
@@ -2377,6 +2378,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Invalid ability index");
         }
         ActivatedAbility ability = abilities.get(idx);
+        validateNotBlockedByCyclingRestriction(gameData, ability);
         List<CardEffect> abilityEffects = ability.getEffects();
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
@@ -6789,6 +6791,12 @@ public class AbilityActivationService {
         if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP
                 && (!playerId.equals(gameData.activePlayerId) || gameData.currentStep != TurnStep.UPKEEP)) {
             throw new IllegalStateException("This ability can only be activated during your upkeep");
+        }
+    }
+
+    private void validateNotBlockedByCyclingRestriction(GameData gameData, ActivatedAbility ability) {
+        if (ability.isCyclingAbility() && !gameQueryService.canPlayersCycleCards(gameData)) {
+            throw new IllegalStateException("Players can't cycle cards");
         }
     }
 

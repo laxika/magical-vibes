@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -659,6 +660,13 @@ public class TriggeredAbilityQueueService {
             if (compatibleTargetGroups.size() == 1) {
                 targetGroupIndex = compatibleTargetGroups.iterator().next();
             }
+        }
+        if (targetGroupIndex < 0 && effects.stream()
+                .anyMatch(effect -> !TargetSpec.NONE.equals(effect.targetSpec()))) {
+            // An Aura's declared target is its enchantment target, not the target of an
+            // unbound granted trigger. Let the trigger's own target specification decide
+            // whether it can target players or permanents.
+            return null;
         }
         return targetGroupIndex >= 0
                 ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()

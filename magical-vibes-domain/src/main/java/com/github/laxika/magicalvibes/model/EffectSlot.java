@@ -800,6 +800,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
      *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** Triggers whenever any creature enters the battlefield, while this card is in its owner's
+     *  graveyard. Like {@link #ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD} but fired from the graveyard.
+     *  Checked in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
+    GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a creature the controller controls dies, while this card is in the
      *  controller's graveyard. Like {@link #ON_ALLY_CREATURE_DIES} but fired from the graveyard.
      *  Checked in {@code TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers}. */

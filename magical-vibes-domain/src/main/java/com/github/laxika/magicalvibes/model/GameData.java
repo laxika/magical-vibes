@@ -890,6 +890,10 @@ public class GameData {
      *  deal to any recipient this turn is dealt to that source's controller instead. Each entry is a
      *  chosen source permanent ID, consumed on first use. */
     public final List<UUID> reflectDamageToSourceControllerShields = Collections.synchronizedList(new ArrayList<>());
+    /** One-shot redirection shields (Goblin Psychopath): the next combat damage from a source this
+     *  turn is dealt to the stored controller instead. */
+    public final List<SourceNextCombatDamageToControllerShield> sourceNextCombatDamageToControllerShields =
+            Collections.synchronizedList(new ArrayList<>());
     /** One-shot redirection shields (Opal-Eye, Konda's Yojimbo): the next damage event the chosen source
      *  would deal to any recipient this turn is dealt to a fixed permanent instead. */
     public final List<SourceNextDamageRedirectToPermanentShield> sourceNextDamageRedirectToPermanentShields =
@@ -4715,6 +4719,7 @@ public class GameData {
         copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);
         copy.eyeForAnEyeShields.addAll(this.eyeForAnEyeShields);
         copy.reflectDamageToSourceControllerShields.addAll(this.reflectDamageToSourceControllerShields);
+        copy.sourceNextCombatDamageToControllerShields.addAll(this.sourceNextCombatDamageToControllerShields);
         copy.sourceNextDamageRedirectToPermanentShields.addAll(this.sourceNextDamageRedirectToPermanentShields);
         copy.pendingEyeForAnEyeReflections.addAll(this.pendingEyeForAnEyeReflections);
         this.pendingSourceDamageForReflection.forEach((sourceId, pending) ->

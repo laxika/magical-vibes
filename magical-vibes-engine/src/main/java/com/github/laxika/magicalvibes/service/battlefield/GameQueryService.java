@@ -140,6 +140,7 @@ import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendBlueManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCycleCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
@@ -1533,6 +1534,11 @@ public class GameQueryService {
      */
     public boolean canPlayersActivateGraveyardAbilities(GameData gameData) {
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantActivateAbilitiesOfGraveyardCardsEffect.class);
+    }
+
+    /** Returns whether players may activate cycling abilities. */
+    public boolean canPlayersCycleCards(GameData gameData) {
+        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantCycleCardsEffect.class);
     }
 
     /** Returns whether cards in graveyards currently have all of their abilities removed. */

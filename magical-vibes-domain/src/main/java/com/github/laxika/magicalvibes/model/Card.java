@@ -221,8 +221,12 @@ public class Card {
     private RevealCardsFromHandCastingCost morphRevealCost;
     /** Optional permanent-return component of a morph face-up cost. */
     private ReturnPermanentsCost morphAdditionalCost;
+    /** Optional permanent-sacrifice component of a morph face-up cost. */
+    private SacrificePermanentsCost morphSacrificeCost;
     /** Optional discard component of a morph face-up cost. */
     private DiscardCardTypeCost morphDiscardCost;
+    /** Optional life component of a morph face-up cost. */
+    private LifeCastingCost morphLifeCost;
     /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
     private SpellCastTimingRestriction spellCastTimingRestriction;
     /**
@@ -365,7 +369,9 @@ public class Card {
         this.morphCostReduction = source.morphCostReduction;
         this.morphRevealCost = source.morphRevealCost;
         this.morphAdditionalCost = source.morphAdditionalCost;
+        this.morphSacrificeCost = source.morphSacrificeCost;
         this.morphDiscardCost = source.morphDiscardCost;
+        this.morphLifeCost = source.morphLifeCost;
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
@@ -450,7 +456,9 @@ public class Card {
         this.morphCostReduction = face.morphCostReduction;
         this.morphRevealCost = face.morphRevealCost;
         this.morphAdditionalCost = face.morphAdditionalCost;
+        this.morphSacrificeCost = face.morphSacrificeCost;
         this.morphDiscardCost = face.morphDiscardCost;
+        this.morphLifeCost = face.morphLifeCost;
         this.spellCastTimingRestriction = face.spellCastTimingRestriction;
         this.castCondition = face.castCondition;
         this.flashCastCondition = face.flashCastCondition;
@@ -1098,6 +1106,10 @@ public class Card {
         this.morphCost = morphCost;
         this.morphCostReduction = null;
         this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
+        this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1108,7 +1120,9 @@ public class Card {
         this.morphCostReduction = morphCostReduction;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1119,7 +1133,9 @@ public class Card {
         this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(
                 new ManaCastingCost("{3}"),
                 new RevealCardsFromHandCastingCost(revealPredicate, revealLabel))));
@@ -1129,9 +1145,25 @@ public class Card {
     public void addMorph(String morphCost, ReturnPermanentsCost additionalCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = additionalCost;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = null;
+        this.morphLifeCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds morph whose face-up cost includes sacrificing matching permanents. */
+    public void addMorph(String morphCost, SacrificePermanentsCost additionalCost) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphCostReduction = null;
+        this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
+        this.morphSacrificeCost = additionalCost;
+        this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1139,9 +1171,25 @@ public class Card {
     public void addMorph(String morphCost, DiscardCardTypeCost additionalCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = additionalCost;
+        this.morphLifeCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds morph whose face-up cost includes a life payment. */
+    public void addMorph(String morphCost, LifeCastingCost additionalCost) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphCostReduction = null;
+        this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
+        this.morphDiscardCost = null;
+        this.morphLifeCost = additionalCost;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1152,7 +1200,9 @@ public class Card {
         this.morphCostReduction = null;
         this.morphRevealCost = new RevealCardsFromHandCastingCost(revealPredicate, revealLabel);
         this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 

@@ -33,6 +33,14 @@ public class TargetRedirectionSupport {
     private final ValidTargetService validTargetService;
 
     public List<UUID> collectValidNewTargets(GameData gameData, StackEntry targetSpell) {
+        return collectValidTargets(gameData, targetSpell, false);
+    }
+
+    public List<UUID> collectValidTargetsIncludingCurrent(GameData gameData, StackEntry targetSpell) {
+        return collectValidTargets(gameData, targetSpell, true);
+    }
+
+    private List<UUID> collectValidTargets(GameData gameData, StackEntry targetSpell, boolean includeCurrentTarget) {
         UUID currentTargetId = targetSpell.getTargetId();
         List<UUID> candidates = new ArrayList<>();
 
@@ -53,7 +61,7 @@ public class TargetRedirectionSupport {
 
         List<UUID> validTargets = new ArrayList<>();
         for (UUID candidate : candidates) {
-            if (candidate.equals(currentTargetId)) {
+            if (!includeCurrentTarget && candidate.equals(currentTargetId)) {
                 continue;
             }
             if (isValidNewTargetForSpell(gameData, targetSpell, candidate)) {

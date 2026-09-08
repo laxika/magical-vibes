@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareNameWithContr
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareLandTypeWithControlledLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
@@ -145,6 +146,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubty
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEquippedCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEnchantedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
@@ -404,6 +406,14 @@ public class PredicateEvaluationService {
                 yield gameQueryService.cardHasSubtype(card, source.getChosenSubtype(), gameData, cardOwnerId)
                         || (gameQueryService.isCreatureSubtype(source.getChosenSubtype())
                         && card.hasKeyword(Keyword.CHANGELING));
+            }
+            case CardSharesCreatureTypeWithSourcePredicate ignored -> {
+                if (gameData == null || sourceCardId == null || !card.hasType(CardType.CREATURE)) {
+                    yield false;
+                }
+                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                yield source != null && gameQueryService.isCreature(gameData, source)
+                        && gameQueryService.shareCreatureType(gameData, source, card);
             }
             case CardHasSourceChosenCardTypePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -928,6 +938,10 @@ public class PredicateEvaluationService {
             case PermanentSharesCreatureTypeWithEquippedCreaturePredicate ignored -> {
                 Permanent equipped = equippedCreatureOfSource(gameData, sourceCardId, filterContext);
                 yield equipped != null && gameQueryService.shareCreatureType(gameData, permanent, equipped);
+            }
+            case PermanentSharesCreatureTypeWithEnchantedCreaturePredicate ignored -> {
+                Permanent enchanted = enchantedCreatureOfSource(gameData, sourceCardId, filterContext);
+                yield enchanted != null && gameQueryService.shareCreatureType(gameData, permanent, enchanted);
             }
             case PermanentSharesCardTypeWithSourcePermanentPredicate ignored ->
                     sharesCardTypeWithSourcePermanent(permanent, filterContext);
@@ -2065,6 +2079,9 @@ public class PredicateEvaluationService {
         if (predicate instanceof PermanentIsAuraAttachedToCreaturePredicate) {
             return true;
         }
+        if (predicate instanceof PermanentSharesCreatureTypeWithEnchantedCreaturePredicate) {
+            return true;
+        }
         if (predicate instanceof PermanentNotPredicate notPredicate) {
             return requiresGameDataForStaticFilter(notPredicate.predicate());
         }
@@ -2379,6 +2396,10 @@ public class PredicateEvaluationService {
                 Permanent equipped = equippedCreatureStatic(context);
                 yield equipped != null && sharesCreatureType(permanent, equipped);
             }
+            case PermanentSharesCreatureTypeWithEnchantedCreaturePredicate ignored -> {
+                Permanent enchanted = enchantedCreatureStatic(context);
+                yield enchanted != null && sharesCreatureType(permanent, enchanted);
+            }
             case PermanentIsLandPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsMulticoloredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsPlaneswalkerPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -2567,6 +2588,17 @@ public class PredicateEvaluationService {
         return gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
     }
 
+    private Permanent enchantedCreatureOfSource(GameData gameData, UUID sourceCardId,
+                                                FilterContext filterContext) {
+        if (gameData == null) return null;
+        Permanent aura = sourceCardId == null ? null : findPermanentByOriginalCardId(gameData, sourceCardId);
+        if (aura == null && filterContext != null) {
+            aura = filterContext.sourcePermanentSnapshot();
+        }
+        if (aura == null || !aura.isAttached()) return null;
+        return gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+    }
+
     /**
      * The creature the source Equipment is attached to, on the recursion-safe path: attachment
      * state lives on the snapshot the static pass carries, so no layered query is needed to find
@@ -2577,6 +2609,13 @@ public class PredicateEvaluationService {
         GameData gameData = context == null ? null : context.gameData();
         if (equipment == null || gameData == null || !equipment.isAttached()) return null;
         return gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+    }
+
+    private Permanent enchantedCreatureStatic(FilterContext context) {
+        Permanent aura = context == null ? null : context.sourcePermanentSnapshot();
+        GameData gameData = context == null ? null : context.gameData();
+        if (aura == null || gameData == null || !aura.isAttached()) return null;
+        return gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
     }
 
     /**

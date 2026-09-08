@@ -9833,6 +9833,8 @@ public class TriggerCollectionService {
             }
         }
 
+        checkGraveyardAnyCreatureEntersTriggers(gameData, enteringCreature, enteringPermanent);
+
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             if (watcher.slot() != EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD
                     || !watcher.controllerId().equals(controllerId)) {
@@ -9867,6 +9869,71 @@ public class TriggerCollectionService {
                                     + " entering."));
                     log.info("Game {} - {}'s emblem triggers for {} entering",
                             gameData.id, sourceCard.getName(), enteringCreature.getName());
+                }
+            }
+        }
+    }
+
+    /** Queues graveyard-resident triggers that watch any creature entering the battlefield. */
+    private void checkGraveyardAnyCreatureEntersTriggers(GameData gameData, Card enteringCreature,
+                                                          Permanent enteringPermanent) {
+        for (UUID graveyardOwnerId : List.copyOf(gameData.orderedPlayerIds)) {
+            List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+            if (graveyard == null) {
+                continue;
+            }
+
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) {
+                    continue;
+                }
+
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(
+                            effect, enteringCreature, gameData, graveyardOwnerId);
+                    if (resolved == null) {
+                        continue;
+                    }
+
+                    if (resolved instanceof TriggeringPermanentConditionalEffect conditional) {
+                        if (enteringPermanent == null) {
+                            continue;
+                        }
+                        FilterContext filterContext = FilterContext.of(gameData)
+                                .withSourceCardId(card.getId())
+                                .withSourceControllerId(graveyardOwnerId);
+                        if (!predicateEvaluationService.matchesPermanentPredicate(
+                                enteringPermanent, conditional.predicate(), filterContext)) {
+                            continue;
+                        }
+                        resolved = conditional.wrapped();
+                    }
+
+                    if (resolved instanceof MayEffect may) {
+                        if (may.usesEnteringPermanentReference() && enteringPermanent != null) {
+                            gameData.queueMayAbility(card, graveyardOwnerId, may, enteringPermanent.getId(), null);
+                        } else {
+                            gameData.queueMayAbility(card, graveyardOwnerId, may);
+                        }
+                    } else {
+                        StackEntry entry = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                graveyardOwnerId,
+                                card.getName() + "'s ability",
+                                new ArrayList<>(List.of(resolved))
+                        );
+                        if (resolved.usesEnteringPermanentReference()) {
+                            entry.setTargetId(enteringPermanent != null ? enteringPermanent.getId() : null);
+                            entry.setNonTargeting(true);
+                        }
+                        gameData.enqueueTrigger(entry);
+                    }
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} graveyard any-creature-enters trigger queued",
+                            gameData.id, card.getName());
                 }
             }
         }

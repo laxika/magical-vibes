@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
+import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToControllerShield;
 import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TargetSorceryDamageRedirectShield;
@@ -1419,6 +1420,35 @@ public class DamagePreventionService {
 
         gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
                 sourceControllerId, damage, source.getCard(), sourceControllerId));
+        return 0;
+    }
+
+    /** Redirects a source's next combat damage to the stored controller of the effect that created the shield. */
+    public int applySourceNextCombatDamageToControllerShield(GameData gameData, UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || sourcePermanentId == null
+                || gameData.sourceNextCombatDamageToControllerShields.isEmpty()) {
+            return damage;
+        }
+
+        SourceNextCombatDamageToControllerShield matchingShield = null;
+        synchronized (gameData.sourceNextCombatDamageToControllerShields) {
+            for (SourceNextCombatDamageToControllerShield shield
+                    : gameData.sourceNextCombatDamageToControllerShields) {
+                if (sourcePermanentId.equals(shield.sourcePermanentId())) {
+                    matchingShield = shield;
+                    break;
+                }
+            }
+            if (matchingShield != null) {
+                gameData.sourceNextCombatDamageToControllerShields.remove(matchingShield);
+            }
+        }
+        if (matchingShield == null || !gameData.playerIds.contains(matchingShield.controllerId())) {
+            return damage;
+        }
+
+        gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                null, sourcePermanentId, damage, matchingShield.controllerId()));
         return 0;
     }
 

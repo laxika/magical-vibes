@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "SCG", collectorNumber = "111")
 @CardRegistration(set = "DD1", collectorNumber = "1")
 public class AmbushCommander extends Card {
 

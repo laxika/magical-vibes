@@ -268,6 +268,15 @@ public class MayMiscHandlerService {
             return;
         }
 
+        if (effect.kind() == DrawReplacementKind.PARALLEL_THOUGHTS) {
+            drawService.resolveDrawFromExiledPile(gameData, drawingPlayerId, ability.sourcePermanentId());
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " replaces their draw with ",
+                    ability.sourceCard(), "."));
+            log.info("Game {} - {} replaces a draw with the Parallel Thoughts pile", gameData.id, playerName);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (effect.kind() == DrawReplacementKind.STUDY_COUNTER) {
             Permanent source = ability.sourcePermanentId() == null
                     ? null

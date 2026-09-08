@@ -3359,6 +3359,9 @@ public class CombatDamageService {
                         gameData, sourceControllerId, pwControllerId, true);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
+            damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
+                    gameData, atk.getId(), damage);
+            processSourceRedirectDamage(gameData);
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
@@ -3471,6 +3474,9 @@ public class CombatDamageService {
                         gameData, sourceControllerId, defenderId, true);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
+            damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
+                    gameData, atk.getId(), damage);
+            processSourceRedirectDamage(gameData);
             // Mirror Strike: redirect the chosen attacker's combat damage to its controller.
             damage = damagePreventionService.applyTurnSourceDamageRedirectToController(
                     gameData, defenderId, atk.getId(), damage);
@@ -3629,7 +3635,7 @@ public class CombatDamageService {
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
                 damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage, true);
-                damage -= damageSupport.applyDelayingShieldCounterReplacement(gameData, defenderId, damage);
+                damage -= damageSupport.applyDamageToControllerCounterReplacement(gameData, defenderId, damage);
                 damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                         gameData, defenderId, damage, true);
                 if (isGlobalCreaturePreventionLifeGain(gameData, atk)) {
@@ -3797,6 +3803,9 @@ public class CombatDamageService {
         processSourceRedirectDamage(gameData);
         if (damage <= 0) return;
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
+        damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
+                gameData, source.getId(), damage);
+        processSourceRedirectDamage(gameData);
         damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, source.getId(), damage);
         processEyeForAnEyeReflections(gameData);
         // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.

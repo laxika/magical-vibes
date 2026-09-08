@@ -354,6 +354,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueEq
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellManaSpentLessThanManaValue;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellManaValueAtMostGreatestControlledPermanentManaValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreCreaturesThanTargetSpellController;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellNoManaSpentToCast;
@@ -1181,6 +1182,8 @@ public class ConditionEvaluationService {
                         && targetSpell.getManaSpentToCast()
                         < targetSpell.getCard().getManaValue() + targetSpell.getXValue();
             }
+            case TargetSpellManaValueAtMostGreatestControlledPermanentManaValue ignored ->
+                    targetSpellManaValueAtMostGreatestControlledPermanentManaValue(gameData, ctx);
             case ControllerControlsMoreCreaturesThanTargetSpellController ignored ->
                     controllerControlsMoreCreaturesThanTargetSpellController(gameData, ctx);
             case TargetSpellMatches c -> {
@@ -1707,6 +1710,24 @@ public class ConditionEvaluationService {
         if (targetSpell == null) return false;
         return countCreaturesControlled(gameData, ctx.controllerId())
                 > countCreaturesControlled(gameData, targetSpell.getControllerId());
+    }
+
+    private boolean targetSpellManaValueAtMostGreatestControlledPermanentManaValue(
+            GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null || ctx.targetId() == null) return false;
+        StackEntry targetSpell = gameData.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(ctx.targetId()))
+                .findFirst()
+                .orElse(null);
+        if (targetSpell == null) return false;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return false;
+        int greatestManaValue = battlefield.stream()
+                .mapToInt(permanent -> permanent.getCard().getManaValue())
+                .max()
+                .orElse(0);
+        return targetSpell.getCard().getManaValue() + targetSpell.getXValue() <= greatestManaValue;
     }
 
     private boolean targetSpellSharesColorWithControlledCreature(GameData gameData, ConditionContext ctx) {

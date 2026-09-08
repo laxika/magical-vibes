@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNex
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.DimensionalBreachUpkeepReturn;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -70,6 +71,7 @@ import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
@@ -523,6 +525,32 @@ public class StepTriggerService {
         resolveDelayedSelfReturns(gameData,
                 pending -> pending.atNextUpkeep() && pending.ownerId().equals(gameData.activePlayerId));
         resolveDelayedGraveyardCardsUnderControlAtUpkeep(gameData);
+
+        if (gameData.hasDelayedAction(DimensionalBreachUpkeepReturn.class)) {
+            List<DimensionalBreachUpkeepReturn> pendingReturns = gameData.drainDelayedActions(
+                    DimensionalBreachUpkeepReturn.class);
+            for (DimensionalBreachUpkeepReturn action : pendingReturns) {
+                UUID sourceCardId = action.sourceCard().getId();
+                boolean hasCards = gameData.getCardsExiledByPermanent(sourceCardId).stream()
+                        .anyMatch(card -> !card.isToken());
+                if (!hasCards) {
+                    continue;
+                }
+
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), gameData.activePlayerId,
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(ReturnCardExiledWithSourceToBattlefieldEffect.ownedByController())),
+                        0, sourceCardId);
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameData.queueDelayedAction(action);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers."));
+                log.info("Game {} - {} delayed upkeep return trigger pushed onto the stack",
+                        gameData.id, action.sourceCard().getName());
+            }
+        }
 
         // Delayed "draw N cards at the beginning of the next turn's upkeep" (e.g. Library of Lat-Nam).
         // Drained regardless of who the active player is — the scheduling player draws.
