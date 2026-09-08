@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "M10", collectorNumber = "151")
 @CardRegistration(set = "M11", collectorNumber = "152")
 @CardRegistration(set = "PLC", collectorNumber = "118")
+@CardRegistration(set = "DPA", collectorNumber = "51")
 public class ProdigalPyromancer extends Card {
 
     public ProdigalPyromancer() {
