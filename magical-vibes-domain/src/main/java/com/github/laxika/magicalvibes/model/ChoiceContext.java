@@ -81,6 +81,7 @@ public sealed interface ChoiceContext {
         public RestrictedManaColorChoice {
             fixedColorOptions = List.copyOf(fixedColorOptions);
         }
+
     }
 
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
@@ -619,6 +620,16 @@ public sealed interface ChoiceContext {
     record DifferentColorManaChoice(UUID playerId, int amount, ManaSpendRestriction restriction,
                                     ManaColor firstColor) implements ChoiceContext {}
 
+    record CreatureAbilityManaColorChoice(UUID playerId, int amount, List<ManaColor> fixedColorOptions,
+                                           UUID recipientPlayerId) implements ChoiceContext {
+        public CreatureAbilityManaColorChoice(UUID playerId, int amount, List<ManaColor> fixedColorOptions) {
+            this(playerId, amount, fixedColorOptions, null);
+        }
+
+        public CreatureAbilityManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
+            return new CreatureAbilityManaColorChoice(playerId, amount, fixedColorOptions, recipientPlayerId);
+        }
+    }
 
     /** A mana ability that adds mana equal to the chosen color's devotion. */
     record DevotionManaColorChoice(UUID playerId, UUID sourcePermanentId, boolean fromCreature,

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfE
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageHealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
@@ -287,6 +288,26 @@ public class DamagePreventionService {
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         return applyCreaturePreventionShield(gameData, permanent, damage, false);
+    }
+
+    /** Heals all damage previously marked on a permanent when a positive damage event reaches it. */
+    public void applyDamageHealingReplacement(GameData gameData, Permanent permanent, int damage) {
+        if (permanent == null || damage <= 0) {
+            return;
+        }
+        if (gameQueryService.hasActiveStaticEffect(gameData, permanent, DamageHealingEffect.class)) {
+            permanent.healDamage();
+        }
+    }
+
+    /** Replaces effect-based destruction by removing one shield counter. */
+    public boolean replaceDestructionWithShieldCounter(Permanent permanent) {
+        if (permanent == null || permanent.getCounterCount(CounterType.SHIELD) <= 0) {
+            return false;
+        }
+        permanent.setCounterCount(CounterType.SHIELD,
+                permanent.getCounterCount(CounterType.SHIELD) - 1);
+        return true;
     }
 
     /** Returns whether a permanent replaces damage to itself with +1/+1 counters. */

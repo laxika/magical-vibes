@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.PendingConnive;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawBeforeConniveReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBean {
 
+    private final DrawService drawService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
@@ -35,13 +38,20 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
         List<UUID> targetIds = e.targetPermanent()
                 ? entry.targetsForEffect(effect)
                 : null;
-        UUID sourcePermanentId = e.targetPermanent()
-                ? targetIds == null ? null : targetIds.stream().findFirst().orElse(null)
+        UUID sourcePermanentId = e.useEnteringPermanentReference()
+                ? entry.getTargetId() != null ? entry.getTargetId() : entry.getTriggeringPermanentId()
+                : e.targetPermanent()
+                ? targetIds == null ? entry.getTargetId() : targetIds.stream().findFirst().orElse(entry.getTargetId())
                 : entry.getSourcePermanentId();
         if (e.targetPermanent() && sourcePermanentId == null) {
             return;
         }
 
+        int replacementDraws = gameQueryService.countPlayerControlledStaticEffects(
+                gameData, controllerId, DrawBeforeConniveReplacementEffect.class);
+        for (int i = 0; i < replacementDraws; i++) {
+            drawService.resolveDrawCard(gameData, controllerId);
+        }
         Permanent source = sourcePermanentId == null
                 ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
         int amount = Math.max(0, amountEvaluationService.evaluate(gameData, e.amount(),

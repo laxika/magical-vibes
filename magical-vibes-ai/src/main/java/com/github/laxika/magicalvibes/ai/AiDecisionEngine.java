@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -2905,6 +2906,7 @@ public abstract class AiDecisionEngine {
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
+                    || effect instanceof TeamworkCost
                     || effect instanceof WaterbendCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
@@ -3017,6 +3019,24 @@ public abstract class AiDecisionEngine {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == fixed.value() ? chosen : List.of();
+            }
+            if (effect instanceof TeamworkCost cost) {
+                int totalPower = 0;
+                List<UUID> chosen = new ArrayList<>();
+                List<Permanent> candidates = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .sorted(Comparator.comparingInt(
+                                (Permanent p) -> gameQueryService.getEffectivePower(gameData, p)).reversed())
+                        .toList();
+                for (Permanent candidate : candidates) {
+                    chosen.add(candidate.getId());
+                    totalPower += gameQueryService.getEffectivePower(gameData, candidate);
+                    if (totalPower >= cost.requiredPower()) {
+                        return chosen;
+                    }
+                }
+                return List.of();
             }
             if (effect instanceof WaterbendCost cost) {
                 return battlefield.stream()

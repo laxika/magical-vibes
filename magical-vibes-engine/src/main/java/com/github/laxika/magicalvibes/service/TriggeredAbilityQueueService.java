@@ -425,8 +425,8 @@ public class TriggeredAbilityQueueService {
             }
 
             ReturnTargetCardsFromGraveyardToHandEffect gyReturn = pending.effects().stream()
-                    .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
-                    .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                    .map(this::targetedReturnToHandEffect)
+                    .filter(java.util.Objects::nonNull)
                     .findFirst().orElse(null);
             if (gyReturn != null) {
                 if (beginSelfLeavesGraveyardReturnToHandTarget(gameData, pending, gyReturn)) {
@@ -746,6 +746,12 @@ public class TriggeredAbilityQueueService {
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s ability",
                         new ArrayList<>(pending.effects()),
+                        0,
+                        null,
+                        pending.sourcePermanentId(),
+                        Map.of(),
+                        null,
+                        List.of(),
                         List.of()
                 ));
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
@@ -760,6 +766,7 @@ public class TriggeredAbilityQueueService {
         gameData.graveyardTargetOperation.card = pending.sourceCard();
         gameData.graveyardTargetOperation.controllerId = pending.controllerId();
         gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+        gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
 
         int maxTargets = Math.min(returnEffect.maxTargets(), matchingCards.size());
         String filterLabel = CardPredicateUtils.describeFilter(returnEffect.filter());
@@ -2088,6 +2095,11 @@ public class TriggeredAbilityQueueService {
                                     .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
                         continue;
                     }
+                    if (returnEffect != null && returnEffect.targetPutIntoGraveyardFromAnywhereThisTurn()
+                            && !gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
                     if (manaValueEqualsX
                             && graveyardCard.getManaValue() != pending.xValue() + manaValueXOffset) {
                         continue;
@@ -2242,6 +2254,36 @@ public class TriggeredAbilityQueueService {
         if (effect instanceof SequenceEffect sequence) {
             return sequence.steps().stream()
                     .map(this::targetedReturnEffect)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null;
+    }
+
+    private ReturnTargetCardsFromGraveyardToHandEffect targetedReturnToHandEffect(CardEffect effect) {
+        if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
+                && returnEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            return returnEffect;
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return targetedReturnToHandEffect(conditional.wrapped());
+        }
+        if (effect instanceof MayEffect may) {
+            return targetedReturnToHandEffect(may.wrapped());
+        }
+        if (effect instanceof MayPayManaEffect mayPay) {
+            return targetedReturnToHandEffect(mayPay.wrapped());
+        }
+        if (effect instanceof SacrificePermanentThenEffect sacrificeThen) {
+            return targetedReturnToHandEffect(sacrificeThen.thenEffect());
+        }
+        if (effect instanceof SacrificeSelfThenEffect sacrificeSelfThen) {
+            return targetedReturnToHandEffect(sacrificeSelfThen.thenEffect());
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream()
+                    .map(this::targetedReturnToHandEffect)
                     .filter(java.util.Objects::nonNull)
                     .findFirst()
                     .orElse(null);
@@ -2606,9 +2648,23 @@ public class TriggeredAbilityQueueService {
                         && !predicateEvaluationService.matchesFilters(permanent, Set.of(group.filter()), filterContext)) {
                     continue;
                 }
+                if (group.maxTotalManaValue() < Integer.MAX_VALUE
+                        && sagaChapterTargetManaValue(gameData, pending) + permanent.getCard().getManaValue()
+                        > group.maxTotalManaValue()) {
+                    continue;
+                }
                 validTargets.add(permanent.getId());
             }
         }
         return validTargets;
+    }
+
+    private int sagaChapterTargetManaValue(GameData gameData,
+                                            PermanentChoiceContext.SagaChapterTarget pending) {
+        return pending.chosenTargetsSoFar().stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(permanent -> permanent.getCard().getManaValue())
+                .sum();
     }
 }

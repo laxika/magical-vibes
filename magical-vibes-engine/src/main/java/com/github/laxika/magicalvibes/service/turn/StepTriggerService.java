@@ -2248,10 +2248,11 @@ public class StepTriggerService {
                 trigger.sourceCard(),
                 TriggerTargetCollector.Options.UPKEEP);
         List<UUID> validTargets = result.validTargets();
+        List<UUID> validGraveyardCardIds = result.validGraveyardCardIds();
         boolean optionalTarget = trigger.sourceCard().getMinTargets() == 0
                 && trigger.sourceCard().getMaxTargets() == 1;
 
-        if (validTargets.isEmpty()) {
+        if (validTargets.isEmpty() && validGraveyardCardIds.isEmpty()) {
             if (optionalTarget) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -2277,7 +2278,9 @@ public class StepTriggerService {
         gameData.interaction.setPermanentChoiceContext(trigger);
 
         String targetDescription;
-        if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+        if (!validGraveyardCardIds.isEmpty() && result.canTargetPermanents()) {
+            targetDescription = "a creature or creature card in a graveyard";
+        } else if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
             targetDescription = ppf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
         } else {
             targetDescription = "target permanent";
@@ -2290,6 +2293,7 @@ public class StepTriggerService {
                     gameData,
                     choosingPlayerId,
                     validTargets,
+                    validGraveyardCardIds,
                     1,
                     new MultiPermanentChoiceContext.UpkeepOptionalPermanentTarget(
                             trigger.sourceCard(), trigger.controllerId(), trigger.effects(), trigger.sourcePermanentId()),
@@ -2948,6 +2952,8 @@ public class StepTriggerService {
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
             processNextMainPhasePlayerTarget(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
+            processNextUpkeepPermanentTarget(gameData);
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
                 && !gameData.interaction.isAwaitingInput()) {
@@ -3044,9 +3050,22 @@ public class StepTriggerService {
                         perm.getCard().getTargetFilter()));
             }
 
+            List<CardEffect> permanentTargetEffects = triggering.stream()
+                    .filter(effect -> !modalEffects.contains(effect))
+                    .filter(effect -> !playerTargetEffects.contains(effect))
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                    .filter(effect -> !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                    .toList();
+            if (!permanentTargetEffects.isEmpty()) {
+                gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
+                        perm.getCard(), activePlayerId, new ArrayList<>(permanentTargetEffects), perm.getId(),
+                        perm.getCard().getTargetFilter()));
+            }
+
             List<CardEffect> graveyardTargetEffects = triggering.stream()
                     .filter(effect -> !modalEffects.contains(effect))
                     .filter(effect -> !playerTargetEffects.contains(effect))
+                    .filter(effect -> !permanentTargetEffects.contains(effect))
                     .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                     .toList();
             if (!graveyardTargetEffects.isEmpty()) {
@@ -3057,6 +3076,7 @@ public class StepTriggerService {
             List<CardEffect> nonTargetEffects = triggering.stream()
                     .filter(effect -> !modalEffects.contains(effect)
                             && !playerTargetEffects.contains(effect)
+                            && !permanentTargetEffects.contains(effect)
                             && !graveyardTargetEffects.contains(effect))
                     .toList();
             if (!nonTargetEffects.isEmpty()) {

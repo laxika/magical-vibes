@@ -403,6 +403,7 @@ public class TurnCleanupService {
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
         gameData.nextSpellCostReductionsThisTurn.clear();
+        gameData.nextSpellFreeCastPermissionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
         gameData.spellEntryCounters.clear();

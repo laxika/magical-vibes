@@ -447,6 +447,8 @@ public class PermanentRemovalService {
         UUID ownerIdBeforeRemoval = resolvePermanentOwner(gameData, target, controllerIdBeforeRemoval);
         triggerCollectionService.checkControllerCreatureReturnedToHandTriggers(
                 gameData, target, wasCreature, ownerIdBeforeRemoval);
+        triggerCollectionService.checkControllerAnotherNonlandPermanentReturnedToHandTriggers(
+                gameData, target, controllerIdBeforeRemoval);
         triggerCollectionService.checkControllerPermanentReturnedToHandTriggers(gameData, ownerIdBeforeRemoval);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
@@ -904,6 +906,9 @@ public class PermanentRemovalService {
             log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
             return false;
         }
+        if (damagePreventionService.replaceDestructionWithShieldCounter(target)) {
+            return false;
+        }
         if (graveyardService.tryReplaceDestruction(gameData, target, !cannotBeRegenerated)) {
             return false;
         }
@@ -1199,6 +1204,8 @@ public class PermanentRemovalService {
                         gameQueryService.getEffectivePower(gameData, target),
                         gameQueryService.getEffectiveToughness(gameData, target));
                 boolean wasCreature = gameQueryService.isCreature(gameData, target);
+                gameData.updateDelayedControllerSpellCastTriggerSourceSnapshot(
+                        target, gameQueryService.getEffectivePower(gameData, target));
                 boolean wasLand = gameQueryService.isLand(gameData, target);
                 unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
                 for (StackEntry entry : gameData.stack) {

@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -67,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedColorDiscardAlternativeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -1316,13 +1318,25 @@ public class CastingCostService {
     public boolean consumeFreeCastFromBattlefield(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
         FreeCastSource source = findFreeCastSource(gameData, playerId, card, sourceZone);
         if (source == null) return false;
-        if (source.effect().oncePerTurn()) {
+        if (source.nextSpellPredicate() != null) {
+            List<CardPredicate> permissions = gameData.nextSpellFreeCastPermissionsThisTurn.get(playerId);
+            if (permissions != null) {
+                synchronized (permissions) {
+                    permissions.removeIf(predicate ->
+                            predicateEvaluationService.matchesCardPredicate(card, predicate, null));
+                    if (permissions.isEmpty()) {
+                        gameData.nextSpellFreeCastPermissionsThisTurn.remove(playerId, permissions);
+                    }
+                }
+            }
+        } else if (source.effect().oncePerTurn()) {
             gameData.freeCastPermanentUsedThisTurn.add(source.permanent().getId());
         }
         return true;
     }
 
-    private record FreeCastSource(Permanent permanent, AlternativeCostForSpellsEffect effect) {
+    private record FreeCastSource(Permanent permanent, AlternativeCostForSpellsEffect effect,
+                                  CardPredicate nextSpellPredicate) {
     }
 
     /**
@@ -1336,6 +1350,16 @@ public class CastingCostService {
      * source only counts when it applies to all players (Aluren).
      */
     private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card, Zone sourceZone) {
+        List<CardPredicate> nextSpellPermissions = gameData.nextSpellFreeCastPermissionsThisTurn.get(playerId);
+        if (nextSpellPermissions != null) {
+            synchronized (nextSpellPermissions) {
+                for (CardPredicate predicate : nextSpellPermissions) {
+                    if (predicateEvaluationService.matchesCardPredicate(card, predicate, null)) {
+                        return new FreeCastSource(null, null, predicate);
+                    }
+                }
+            }
+        }
         FreeCastSource emblemSource = findEmblemFreeCastSource(gameData, playerId, card, sourceZone);
         if (emblemSource != null) return emblemSource;
 
@@ -1358,10 +1382,10 @@ public class CastingCostService {
                             && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
                             && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
                         if (!altCost.oncePerTurn()) {
-                            return new FreeCastSource(perm, altCost);
+                            return new FreeCastSource(perm, altCost, null);
                         }
                         if (oncePerTurnFallback == null) {
-                            oncePerTurnFallback = new FreeCastSource(perm, altCost);
+                            oncePerTurnFallback = new FreeCastSource(perm, altCost, null);
                         }
                     }
                 }
@@ -1408,7 +1432,7 @@ public class CastingCostService {
                         && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
                         && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
-                    return new FreeCastSource(null, altCost);
+                    return new FreeCastSource(null, altCost, null);
                 }
             }
         }
@@ -1578,6 +1602,10 @@ public class CastingCostService {
                     .orElse(false);
         }
         AlternateHandCast altCast = altCastOpt.get();
+        if (altCast.sneak() && (gameData.currentStep != TurnStep.DECLARE_BLOCKERS
+                || !playerId.equals(gameData.activePlayerId))) {
+            return false;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
 
         // Prowl: the alternate cost is only available if the caster dealt combat damage to a

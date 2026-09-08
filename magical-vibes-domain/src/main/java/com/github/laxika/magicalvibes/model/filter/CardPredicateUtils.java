@@ -94,6 +94,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardColorPredicate p) {
             return p.color().name().toLowerCase();
         }
+        if (predicate instanceof CardHasColorManaSymbolPredicate p) {
+            return "card with a " + p.color().name().toLowerCase() + " mana symbol";
+        }
         if (predicate instanceof CardIsMulticoloredPredicate) {
             return "multicolored card";
         }
