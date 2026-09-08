@@ -2200,13 +2200,23 @@ public class TriggerCollectionService {
         if (!gameQueryService.isCreature(gameData, sourceCreature)) return;
 
         for (Permanent perm : new ArrayList<>(gameData.playerBattlefields.get(damagedPlayerId))) {
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU);
+            List<CardEffect> effects = new ArrayList<>();
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU)) {
+                CardEffect resolved = resolveTriggeringPermanentConditional(
+                        gameData, perm, damagedPlayerId, sourceCreature, effect);
+                if (resolved != null) {
+                    effects.add(resolved);
+                }
+            }
             if (effects.isEmpty()) continue;
 
             StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), damagedPlayerId,
                     perm.getCard().getName() + "'s triggered ability", List.copyOf(effects),
                     sourceCreature.getId(), perm.getId());
             se.setNonTargeting(true);
+            se.setTriggeringPermanentId(sourceCreature.getId());
+            se.setTriggeringPermanentControllerId(
+                    gameQueryService.findPermanentController(gameData, sourceCreature.getId()));
             gameData.stack.add(se);
             gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                     "'s combat damage trigger goes on the stack."));

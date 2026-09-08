@@ -377,13 +377,9 @@ public class EtbTriggerService {
                             repeatedAdditionalCosts, convokeCreatureIds);
                     continue;
                 }
-                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
-                gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
-                // Naban: extra triggers for Wizard ETB
-                for (int i = 0; i < extraTriggerCopies; i++) {
-                    gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
-                }
+                queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
+                        List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue,
+                        repeatedAdditionalCosts, convokeCreatureIds);
             }
 
             if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)

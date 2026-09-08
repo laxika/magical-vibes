@@ -1727,8 +1727,16 @@ public class PlayerInputService {
     public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
                                        boolean restrictToOpponentHands, boolean nonbasicLandOnly,
                                        UUID attachedTo, CardType requiredType) {
+        return beginCardNameChoice(gameData, playerId, card, excludedTypes, restrictToOpponentHands,
+                nonbasicLandOnly, attachedTo, requiredType, null);
+    }
+
+    public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
+                                       boolean restrictToOpponentHands, boolean nonbasicLandOnly,
+                                       UUID attachedTo, CardType requiredType, Zone landPlayZone) {
         ChoiceContext.CardNameChoice choiceContext =
-                new ChoiceContext.CardNameChoice(card, playerId, excludedTypes, nonbasicLandOnly, attachedTo, requiredType);
+                new ChoiceContext.CardNameChoice(card, playerId, excludedTypes, nonbasicLandOnly,
+                        attachedTo, requiredType, landPlayZone);
 
         List<String> cardNames;
         String prompt;

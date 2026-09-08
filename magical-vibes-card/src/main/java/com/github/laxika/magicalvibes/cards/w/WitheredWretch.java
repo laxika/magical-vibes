@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import java.util.List;
 
 @CardRegistration(set = "TSB", collectorNumber = "54")
+@CardRegistration(set = "LGN", collectorNumber = "86")
 public class WitheredWretch extends Card {
 
     public WitheredWretch() {

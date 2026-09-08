@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSour
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
@@ -338,6 +339,16 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesCardPredicate(adventure, new CardHasAdventurePredicate(), null)).isTrue();
             assertThat(evaluator.matchesCardPredicate(ordinary, new CardHasAdventurePredicate(), null)).isFalse();
+        }
+
+        @Test
+        void matchesCardsWithMorphAbility() {
+            Card morph = createCreature("Morph Creature", 2, 2, CardColor.BLUE);
+            morph.addMorph("{2}{U}");
+            Card ordinary = createCreature("Ordinary Creature", 2, 2, CardColor.GREEN);
+
+            assertThat(evaluator.matchesCardPredicate(morph, new CardHasMorphAbilityPredicate(), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(ordinary, new CardHasMorphAbilityPredicate(), null)).isFalse();
         }
 
         @Test

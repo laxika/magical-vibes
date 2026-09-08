@@ -1655,7 +1655,11 @@ public class ChoiceHandlerService {
         if (ctx.attachedTo() != null) {
             perm.setAttachedTo(ctx.attachedTo());
         }
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        if (ctx.landPlayZone() != null) {
+            battlefieldEntryService.putLandOntoBattlefield(gameData, controllerId, perm, ctx.landPlayZone());
+        } else {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        }
 
         String playerName = gameData.playerIdToName.get(controllerId);
         Card enteredCard = perm.getCard();
@@ -1668,8 +1672,15 @@ public class ChoiceHandlerService {
 
         legendRuleService.checkLegendRule(gameData, controllerId);
 
-        battlefieldEntryService.processCreatureETBEffects(
-                gameData, controllerId, perm.getCard(), ctx.attachedTo(), true);
+        if (perm.getCard().hasType(CardType.LAND)) {
+            battlefieldEntryService.processLandETBEffects(gameData, controllerId, perm.getCard());
+            if (ctx.landPlayZone() != null) {
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard());
+            }
+        } else {
+            battlefieldEntryService.processCreatureETBEffects(
+                    gameData, controllerId, perm.getCard(), ctx.attachedTo(), true);
+        }
 
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

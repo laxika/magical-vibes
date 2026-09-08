@@ -57,6 +57,8 @@ class JoinedResearchersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         UUID spellId = researchers.getPreparedSpellCardId();
+        harness.setHand(player1, List.of());
+        setDeck(player1, List.of(new Island(), new Island(), new Island()));
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);

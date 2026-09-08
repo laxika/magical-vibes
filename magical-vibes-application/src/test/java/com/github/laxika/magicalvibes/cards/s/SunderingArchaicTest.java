@@ -28,6 +28,7 @@ class SunderingArchaicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
+        UUID elfCardId = findPermanent(player2, "Llanowar Elves").getCard().getId();
         UUID elfId = harness.getPermanentId(player2, "Llanowar Elves");
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
         harness.castCreature(player1, 0);
@@ -39,7 +40,7 @@ class SunderingArchaicTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, elfId);
         harness.passBothPriorities();
 
-        assertThat(gd.findExiledCard(elfId)).isNotNull();
+        assertThat(gd.findExiledCard(elfCardId)).isNotNull();
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
 

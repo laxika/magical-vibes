@@ -65,7 +65,9 @@ class EmeritusOfIdeationAncestralRecallTest extends BaseCardTest {
 
         assertThat(emeritus.isPrepared()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(graveyard);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> !card.getId().equals(emeritus.getPreparedSpellCardId()))
+                .containsExactlyElementsOf(graveyard);
     }
 
     @Test

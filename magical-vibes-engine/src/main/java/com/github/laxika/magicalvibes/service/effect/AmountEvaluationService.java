@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTur
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
+import com.github.laxika.magicalvibes.model.amount.NontokenCreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
@@ -486,6 +487,9 @@ public class AmountEvaluationService {
                     countCreatureDeathsThisTurn(gameData, c, ctx);
             case CreaturesPutIntoOwnGraveyardThisTurn ignored ->
                     gameData.creaturesPutIntoOwnGraveyardThisTurnCount.getOrDefault(ctx.controllerId(), 0);
+            case NontokenCreaturesPutIntoOwnGraveyardThisTurn ignored ->
+                    gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount
+                            .getOrDefault(ctx.controllerId(), 0);
             case CreatureCardsExiledWithSource ignored ->
                     countCreatureCardsExiledWithSource(gameData, ctx);
             case CreaturesAttackedThisTurn c ->

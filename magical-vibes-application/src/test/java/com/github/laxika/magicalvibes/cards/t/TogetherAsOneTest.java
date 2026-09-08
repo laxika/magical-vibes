@@ -21,6 +21,7 @@ class TogetherAsOneTest extends BaseCardTest {
         Permanent damageTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLibrary(player2, List.of(new Shock(), new Shock(), new Shock()));
         harness.setHand(player1, List.of(new TogetherAsOne()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -43,6 +44,7 @@ class TogetherAsOneTest extends BaseCardTest {
         Permanent damageTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLibrary(player2, List.of(new Shock(), new Shock()));
         harness.setHand(player1, List.of(new TogetherAsOne()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         harness.castSorcery(player1, 0, List.of(player2.getId(), damageTarget.getId()));
@@ -58,6 +60,7 @@ class TogetherAsOneTest extends BaseCardTest {
     void rejectsNonPlayerDrawTarget() {
         Permanent permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new TogetherAsOne()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,

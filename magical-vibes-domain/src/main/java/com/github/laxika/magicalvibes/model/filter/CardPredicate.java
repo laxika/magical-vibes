@@ -17,6 +17,7 @@ public sealed interface CardPredicate permits
         CardHasDisturbPredicate,
         CardHasCyclingPredicate,
         CardHasAdventurePredicate,
+        CardHasMorphAbilityPredicate,
         CardHasEmbalmOrEternalizePredicate,
         CardHasForetellPredicate,
         CardHasFlashbackPredicate,

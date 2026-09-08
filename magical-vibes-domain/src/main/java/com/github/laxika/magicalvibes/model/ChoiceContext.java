@@ -628,7 +628,13 @@ public sealed interface ChoiceContext {
     record DrawReplacementChoice(UUID playerId, DrawReplacementKind kind) implements ChoiceContext {}
 
     record CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
-                          boolean nonbasicLandOnly, UUID attachedTo, CardType requiredType) implements ChoiceContext {
+                          boolean nonbasicLandOnly, UUID attachedTo, CardType requiredType,
+                          Zone landPlayZone) implements ChoiceContext {
+        public CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
+                              boolean nonbasicLandOnly, UUID attachedTo, CardType requiredType) {
+            this(card, controllerId, excludedTypes, nonbasicLandOnly, attachedTo, requiredType, null);
+        }
+
         public CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
                               boolean nonbasicLandOnly, UUID attachedTo) {
             this(card, controllerId, excludedTypes, nonbasicLandOnly, attachedTo, null);

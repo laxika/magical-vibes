@@ -794,6 +794,20 @@ class PlayerInputServiceTest {
         }
 
         @Test
+        void landNameChoicePreservesPlayZone() {
+            Card land = createCard("Forest", CardType.LAND);
+            gd.playerHands.get(PLAYER1_ID).add(land);
+
+            svc.beginCardNameChoice(gd, PLAYER1_ID, land, List.of(), false, false, null,
+                    CardType.LAND, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD);
+
+            var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            var context = (ChoiceContext.CardNameChoice) choice.context();
+            assertThat(context.landPlayZone()).isEqualTo(com.github.laxika.magicalvibes.model.Zone.GRAVEYARD);
+            assertThat(choice.options()).contains("Forest");
+        }
+
+        @Test
         @DisplayName("Restricts names to cards with the required type")
         void restrictsNamesToRequiredType() {
             Card land = createCard("Forest", CardType.LAND);

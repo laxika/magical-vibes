@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePred
 import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
@@ -472,6 +473,8 @@ public class PredicateEvaluationService {
                     card.getManaCost() != null && new ManaCost(card.getManaCost()).hasX();
             case CardHasAdventurePredicate ignored ->
                     card.getCastingOption(AdventureCast.class).isPresent();
+            case CardHasMorphAbilityPredicate ignored ->
+                    card.getMorphCost() != null;
             case CardHasDisturbPredicate ignored ->
                     card.getCastingOption(DisturbCast.class).isPresent();
             case CardHasCyclingPredicate ignored ->

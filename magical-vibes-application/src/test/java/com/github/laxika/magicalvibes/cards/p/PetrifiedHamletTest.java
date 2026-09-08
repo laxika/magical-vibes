@@ -27,13 +27,16 @@ class PetrifiedHamletTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PetrifiedHamlet(), new Forest(), new GrizzlyBears()));
 
         harness.playLand(player1, 0);
-        harness.passBothPriorities();
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).contains("Forest");
         assertThat(choice.options()).doesNotContain("Grizzly Bears");
         assertThat(choice.prompt()).isEqualTo("Choose a land card name.");
+        harness.assertNotOnBattlefield(player1, "Petrified Hamlet");
+        harness.handleListChoice(player1, "Forest");
+        assertThat(findPermanent(player1, "Petrified Hamlet").getChosenName()).isEqualTo("Forest");
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
     }
 
     @Test

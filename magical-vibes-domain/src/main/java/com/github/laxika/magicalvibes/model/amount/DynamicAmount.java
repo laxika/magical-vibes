@@ -64,6 +64,7 @@ public sealed interface DynamicAmount permits
         CreatureCardsExiledWithSource,
         CreatureDeathsThisTurn,
         CreaturesPutIntoOwnGraveyardThisTurn,
+        NontokenCreaturesPutIntoOwnGraveyardThisTurn,
         CreaturesExiledThisTurn,
         CreaturesAttackedThisTurn,
         NontokenCreatureDeathsThisTurn,

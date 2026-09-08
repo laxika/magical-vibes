@@ -684,6 +684,17 @@ public class GameQueryService {
                         && p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance));
     }
 
+    private boolean anyBattlefieldSpellsCantBeCountered(GameData gameData, Card card) {
+        return gameData.anyPermanentMatches(permanent ->
+                !permanent.isFaceDown()
+                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(SpellsCantBeCounteredEffect.class::isInstance)
+                        .map(SpellsCantBeCounteredEffect.class::cast)
+                        .anyMatch(effect -> effect.predicate() == null
+                                || predicateEvaluationService.matchesCardPredicate(card, effect.predicate(), null)));
+    }
+
     // --- Permanent / Card lookups ---
 
     /**
@@ -6246,7 +6257,7 @@ public class GameQueryService {
      * its controller has turn-scoped protection for creature spells, or because
      * a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield protects creature spells, or
      * a {@link ControllerSpellsCantBeCounteredEffect} protects spells controlled by the spell's controller,
-     * or a {@link SpellsCantBeCounteredEffect} protects every spell.
+     * or a {@link SpellsCantBeCounteredEffect} protects every spell or every matching spell.
      */
     public boolean isUncounterable(GameData gameData, Card card) {
         if (anyBattlefieldHasStaticEffect(gameData, SpellsAndAbilitiesCantBeCounteredEffect.class)) {
@@ -6277,7 +6288,7 @@ public class GameQueryService {
         if (stackEntry != null && controllerSpellsCantBeCountered(gameData, stackEntry, card)) {
             return true;
         }
-        if (anyBattlefieldHasStaticEffect(gameData, SpellsCantBeCounteredEffect.class)) {
+        if (anyBattlefieldSpellsCantBeCountered(gameData, card)) {
             return true;
         }
         if (!hasCardType(card, CardType.CREATURE)) {
@@ -6886,9 +6897,15 @@ public class GameQueryService {
                 || bonus.losesAllNonManaAbilities()) {
             return total;
         }
-        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+        UUID controllerId = findPermanentController(gameData, creature.getId());
+        List<CardEffect> effects = staticEffectsIncludingTemporary(gameData, creature, controllerId);
+        effects.addAll(bonus.grantedEffects());
+        for (CardEffect effect : effects) {
             if (effect instanceof AttackCostEffect attackCost) {
-                total += attackCost.attackCost(creature);
+                total += attackCost.dynamicAttackCost() == null
+                        ? attackCost.attackCost(creature)
+                        : amountEvaluationService.evaluate(gameData, attackCost.dynamicAttackCost(),
+                        AmountContext.forStaticEffect(creature, controllerId));
             }
         }
         return total;
@@ -6939,9 +6956,15 @@ public class GameQueryService {
                 || bonus.losesAllNonManaAbilities()) {
             return tax;
         }
-        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+        UUID controllerId = findPermanentController(gameData, blocker.getId());
+        List<CardEffect> effects = staticEffectsIncludingTemporary(gameData, blocker, controllerId);
+        effects.addAll(bonus.grantedEffects());
+        for (CardEffect effect : effects) {
             if (effect instanceof BlockCostEffect blockCost) {
-                tax += blockCost.blockCost(blocker, attackerPower);
+                tax += blockCost.dynamicBlockCost() == null
+                        ? blockCost.blockCost(blocker, attackerPower)
+                        : amountEvaluationService.evaluate(gameData, blockCost.dynamicBlockCost(),
+                        AmountContext.forStaticEffect(blocker, controllerId));
             }
         }
         return tax;

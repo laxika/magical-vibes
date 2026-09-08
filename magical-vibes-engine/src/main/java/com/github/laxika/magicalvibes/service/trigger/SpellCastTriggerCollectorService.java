@@ -2287,7 +2287,8 @@ public class SpellCastTriggerCollectorService {
                 || trigger.intervening() instanceof SpellCreatureManaSpentAtLeast;
         int spellManaSpentX = trigger.intervening() instanceof SpellCreatureManaSpentAtLeast
                 ? match.gameData().getSpellCastCreatureManaSpent(spellCard.getId())
-                : needsSpellManaSpentX ? match.gameData().getSpellCastManaSpent(spellCard.getId()) : 0;
+                : needsSpellManaSpentX ? match.gameData().getSpellCastManaSpent(spellCard.getId())
+                : triggeringSpell != null ? triggeringSpell.getXValue() : 0;
         boolean carriesTriggeringSpellManaValue = resolved.stream()
                 .anyMatch(TriggeringSpellManaValueEffect.class::isInstance);
         int triggeringSpellManaValue = carriesTriggeringSpellManaValue

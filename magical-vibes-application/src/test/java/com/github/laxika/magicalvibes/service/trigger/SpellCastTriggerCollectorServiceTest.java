@@ -190,6 +190,24 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Test
+    void spellCastTriggerPreservesChosenX() {
+        Permanent source = createPermanent("X source");
+        Card spell = createInstant("X spell");
+        StackEntry spellEntry = new StackEntry(StackEntryType.INSTANT_SPELL, spell,
+                player1Id, "X spell", List.of(), 3, (UUID) null);
+        gd.stack.add(spellEntry);
+        var effect = new SpellCastTriggerEffect(null, List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(new XValue())));
+        when(predicateEvaluationService.matchesCardPredicate(spell, null,
+                source.getOriginalCard().getId(), gd, player1Id)).thenReturn(true);
+
+        registry.dispatch(match(source, player1Id, effect), EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+                effect, new TriggerContext.SpellCast(spell, player1Id, true));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
+    }
+
+    @Test
     void secondSpellDamageRequestsATargetBeforeStacking() {
         Permanent perm = createPermanent("Second spell source");
         Card spell = createInstant("Spell");

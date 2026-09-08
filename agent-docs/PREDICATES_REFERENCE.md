@@ -367,6 +367,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 |-----------|-------------|---------|
 | `CardHasManaAbilityPredicate` | `()` | a card with an intrinsic on-tap mana effect or an activated mana ability; compose with `CardTypePredicate(ARTIFACT)` for tutors such as Moonsilver Key |
 | `CardHasNonManaActivatedAbilityPredicate` | `()` | cards with at least one activated ability that isn't a mana ability |
+| `CardHasMorphAbilityPredicate` | `()` | a card with a morph ability; use with `CardTypePredicate(CREATURE)` for Dermoplasm's hand-to-battlefield ability |
 | `CardTruePredicate` | `()` | always matches (no restriction). Card counterpart of `PermanentTruePredicate`; use for unrestricted "spells" wordings (Helm of Awakening) |
 | `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `ON_ALLY_CREATURE_ATTACKS` via `TriggeringCardConditionalEffect`) |
 | `CardIsMulticoloredPredicate` | `()` | a card with two or more colours (`Card.getColors().size() >= 2`); monocoloured and colourless cards never match. Card-in-any-zone counterpart of `PermanentIsMonocoloredPredicate`; used as a graveyard filter for "target multicolored card from your graveyard" (Reborn Hope) |

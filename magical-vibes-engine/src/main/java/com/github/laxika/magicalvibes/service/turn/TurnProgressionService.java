@@ -672,6 +672,7 @@ public class TurnProgressionService {
         gameData.creatureDeathCountThisTurn.clear();
         gameData.creatureNamesDiedThisTurn.clear();
         gameData.creaturesPutIntoOwnGraveyardThisTurnCount.clear();
+        gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
