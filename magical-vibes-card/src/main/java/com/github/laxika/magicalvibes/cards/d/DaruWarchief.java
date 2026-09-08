@@ -19,7 +19,7 @@ public class DaruWarchief extends Card {
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.SOLDIER), 1, CostModificationScope.SELF));
         // Soldier creatures you control get +1/+2.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SOLDIER)));
     }
 }

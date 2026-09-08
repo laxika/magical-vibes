@@ -38,11 +38,11 @@ class AvenLiberatorTest extends BaseCardTest {
                 .contains(target.getId())
                 .doesNotContain(opponentCreature.getId());
         harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "RED");
-        harness.passBothPriorities();
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.RED)).isTrue();
         assertThat(liberator.isFaceDown()).isFalse();
     }
 
@@ -62,13 +62,15 @@ class AvenLiberatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(liberator));
         harness.handlePermanentChosen(player1, target.getId());
-        harness.handleListChoice(player1, "BLUE");
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.BLUE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.BLUE)).isFalse();
     }
 }

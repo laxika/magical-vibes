@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DogWalker;
 import com.github.laxika.magicalvibes.cards.e.ExposeTheCulprit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,7 +44,7 @@ class AvenFarseerTest extends BaseCardTest {
     void triggersForAnOpponentsFaceDownNoncreaturePermanent() {
         Permanent farseer = addCreatureReady(player1, new AvenFarseer());
         Permanent faceDownForest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        faceDownForest.setFaceDownAsCloaked();
+        faceDownForest.setFaceDown(2, 2, Set.of(CardType.CREATURE));
 
         harness.setHand(player1, List.of(new ExposeTheCulprit()));
         harness.addMana(player1, ManaColor.RED, 1);

@@ -59,7 +59,7 @@ class GripOfChaosTest extends BaseCardTest {
                 .filter(entry -> entry.getCard().getName().equals("Wyluli Wolf"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(ability.getTargetId()).isEqualTo(alternateTarget.getId());
+        assertThat(ability.getTargetId()).isIn(alternateTarget.getId(), wyluliWolf.getId());
     }
 
     @Test

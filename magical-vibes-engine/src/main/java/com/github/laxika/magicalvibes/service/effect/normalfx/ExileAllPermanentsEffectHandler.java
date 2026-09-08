@@ -84,13 +84,13 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
     private UUID findSourcePermanentId(GameData gameData, StackEntry entry) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null) {
-            return null;
+            return entry.getCard().getId();
         }
         for (Permanent permanent : battlefield) {
             if (permanent.getCard() == entry.getCard()) {
                 return permanent.getId();
             }
         }
-        return null;
+        return entry.getCard().getId();
     }
 }

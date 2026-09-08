@@ -42,12 +42,14 @@ class AstralSteelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
     }
 
     @Test

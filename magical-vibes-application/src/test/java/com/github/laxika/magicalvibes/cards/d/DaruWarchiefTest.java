@@ -53,7 +53,7 @@ class DaruWarchiefTest extends BaseCardTest {
     void reducesOwnSoldierSpellCost() {
         harness.addToBattlefield(player1, new DaruWarchief());
         harness.setHand(player1, List.of(new YotianSoldier()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
 
@@ -76,7 +76,7 @@ class DaruWarchiefTest extends BaseCardTest {
     void doesNotReduceOpponentSoldierSpellCost() {
         harness.addToBattlefield(player1, new DaruWarchief());
         harness.setHand(player2, List.of(new YotianSoldier()));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
