@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "58")
+@CardRegistration(set = "PHUK", collectorNumber = "6")
+@CardRegistration(set = "PHUK", collectorNumber = "30")
 public class CripplingFatigue extends Card {
 
     public CripplingFatigue() {
