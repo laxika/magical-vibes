@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "82")
+@CardRegistration(set = "CP2", collectorNumber = "1")
 public class NecropolisFiend extends Card {
 
     public NecropolisFiend() {
