@@ -126,10 +126,12 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     }
 
     private List<UUID> targets(StackEntry entry, CardEffect effect) {
+        List<UUID> graveyardTargets = entry.getTargetCardIdsForEffect(effect);
+        if (!graveyardTargets.isEmpty() || entry.getTargetCardIdsByEffect().containsKey(effect)) {
+            return graveyardTargets;
+        }
         List<UUID> bound = entry.targetsForBoundEffectGroup(effect);
         if (bound != null) return bound;
-        List<UUID> graveyardTargets = entry.getTargetCardIdsForEffect(effect);
-        if (!graveyardTargets.isEmpty()) return graveyardTargets;
         Integer group = entry.getResolvingEffectTargetGroup();
         return group != null ? entry.targetsForGroup(group) : entry.targetsForEffect(effect);
     }

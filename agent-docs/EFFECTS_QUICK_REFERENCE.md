@@ -847,6 +847,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
 - `DamageDealingEffect` — deals a `DynamicAmount` to one target category; `damageAmount()`,
   `canDamageCreatures()`, `canDamagePlayers()`, and optional `triggeredTargetFilter()` for a
   target-selecting triggered ability with no cast-time target declaration. Impl `DealDamageToAnyTargetEffect`,
+  `DealDamageToTargetPlayerOrPlaneswalkerEffect`,
   `DealDamageToAnyTargetThenCantBlockIfCreatureDamagedEffect`,
   `DealDamageToAnyTargetThenRemoveKeywordIfDamagedEffect`,
   `DealDamageToTargetCreatureEffect`, `DealDamageToTargetCreatureAndAllWithSameNameEffect`,
