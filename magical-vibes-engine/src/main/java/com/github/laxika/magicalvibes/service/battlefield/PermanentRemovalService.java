@@ -1543,6 +1543,7 @@ public class PermanentRemovalService {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 gameData.creaturesPutIntoOwnGraveyardThisTurnCount.merge(ownerId, 1, Integer::sum);
                 if (!target.getCard().isToken()) {
+                    gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.merge(ownerId, 1, Integer::sum);
                     gameData.nontokenCreatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 }
                 Map<CardSubtype, Integer> subtypeCounts = gameData.creatureSubtypeDeathCountThisTurn

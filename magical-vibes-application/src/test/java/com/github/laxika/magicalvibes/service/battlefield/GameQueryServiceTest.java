@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
@@ -78,6 +79,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -1926,6 +1928,25 @@ class GameQueryServiceTest {
             assertThat(gqs.isUncounterable(gd, creature)).isTrue();
             assertThat(gqs.isUncounterable(gd, enchantment)).isTrue();
             assertThat(gqs.isUncounterable(gd, instant)).isFalse();
+        }
+
+        @Test
+        @DisplayName("global predicate-restricted protection applies to matching spells from any controller")
+        void globalPredicateRestrictedProtection() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Root Sliver", 2, 2, CardColor.GREEN,
+                    new SpellsCantBeCounteredEffect(new CardSubtypePredicate(CardSubtype.SLIVER))));
+            Card sliver = createCreatureWithSubtypes("Metallic Sliver", 1, 1, null,
+                    List.of(CardSubtype.SLIVER));
+            Card nonSliver = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN,
+                    List.of(CardSubtype.BEAR));
+            gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, sliver, player2Id,
+                    "Metallic Sliver", new ArrayList<>()));
+            gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, nonSliver, player2Id,
+                    "Grizzly Bears", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, sliver)).isTrue();
+            assertThat(gqs.isUncounterable(gd, nonSliver)).isFalse();
         }
 
         @Test

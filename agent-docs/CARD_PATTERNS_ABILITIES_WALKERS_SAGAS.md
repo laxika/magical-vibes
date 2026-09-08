@@ -30,6 +30,7 @@ All paths relative to `cards/`.
 | Pump self + conditional sacrifice | `d/DragonWhelp.java` | BoostSelfEffect activated ability + END_STEP_TRIGGERED ConditionalEffect(new ActivationCount(threshold, abilityIndex), SacrificeSelfEffect) |
 | Self unblockable (Phyrexian mana) | `t/TrespassingSouleater.java` | `(false, "{U/P}", MakeCreatureUnblockableEffect(true), ...)` — Phyrexian mana activated, self-targeting unblockable |
 | Pump target | `g/GhostWarden.java` | `(true, null, BoostTargetCreatureEffect, true)` |
+| Set this creature's base power from a target creature indefinitely | `r/RiptideMangler.java` | `SetSelfBasePowerFromTargetPowerEffect()` with `TargetFilters.creature()` |
 | Copy target creature's activated abilities until end of turn | `q/QuicksilverElemental.java` | `ActivatedAbility("{U}", GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffect)` plus a STATIC `SpendBlueManaAsAnyColorForActivatedAbilitiesEffect` permission |
 | Pump target + filter | `h/HateWeaver.java` | With PermanentPredicateTargetFilter |
 | Tap to tap target | `i/IcyManipulator.java` | TapPermanentsEffect(TapUntapScope.TARGET) + PermanentPredicateTargetFilter |

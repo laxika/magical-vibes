@@ -430,10 +430,10 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
     private boolean handleSelfBoostOnDiscard(TriggerMatchContext match, BoostSelfEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn." Cycling
-        // discards the card (CR 702.29e), so this single controller-discard trigger fires for both. Queue
-        // it as a proper triggered ability carrying the source permanent id so the self-boost lands on it.
+        // Cycling discards the card, so this controller-discard trigger handles both cycling and discard.
+        // Queue it as a proper triggered ability carrying the source permanent id so the self-boost lands on it.
         // (Hekma Sentinels)
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();

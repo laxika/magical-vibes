@@ -105,7 +105,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 e.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER ? entry.getActivePlayerId() : null,
                 defendingPlayerChoice ? choicePlayerId : null,
                 entry.getSourcePermanentSnapshot(),
-                null,
+                entry.getTriggeringPermanentControllerId(),
                 entry.getTriggeringCardId(),
                 entry.getEventValue(),
                 entry.getTriggeringPermanentId(),

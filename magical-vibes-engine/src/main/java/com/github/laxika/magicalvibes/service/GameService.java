@@ -1404,7 +1404,7 @@ public class GameService {
                 gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
                         com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
                         permanent.getCard(), controllerId, permanent.getCard().getName() + "'s ability",
-                        effects, permanent.getId(), List.of()));
+                        effects, xValue != null ? xValue : 0, permanent.getId()));
             }
         }
         if (autoPass) {

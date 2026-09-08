@@ -62,6 +62,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | vehicle, crew | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | equipment, equip, living weapon | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | activated ability, tap ability, sacrifice ability | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
+| base power from target creature, indefinitely | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | mana ability, mana dork | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | planeswalker, loyalty | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | saga, chapter, lore counter | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
@@ -75,6 +76,7 @@ When implementing a card, use these as the **best** test file to read for each c
 |---------|-------------------|-----|
 | Aura with static boost (+X/+Y or -X/-Y) | `SensoryDeprivationTest.java` | Covers casting, resolution, stat check, removal, fizzle, targeting |
 | Aura lockdown (can't attack/block) | `PacifismTest.java` | Covers combat restriction + removal |
+| Targeted temporary static combat tax | `WhipgrassEntanglerTest.java` | Covers dynamic attack/block payment and cleanup duration |
 | Simple burn spell | `ShockTest.java` | Covers creature + player targeting + fizzle |
 | Non-targeted pump | `ChargeTest.java` | Covers boost + opponent unaffected + cleanup reset |
 | ETB creature (non-targeted) | `AngelOfMercyTest.java` | Covers ETB trigger resolution |
