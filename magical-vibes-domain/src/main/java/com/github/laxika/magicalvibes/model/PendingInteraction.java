@@ -495,7 +495,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * (also re-sent on reconnect).
      */
     record LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
-                          UUID deckOwnerId, String prompt, int drawAfterReorder) implements PendingInteraction {
+                          UUID deckOwnerId, String prompt, int drawAfterReorder, boolean planar) implements PendingInteraction {
+        public LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
+                              UUID deckOwnerId, String prompt, int drawAfterReorder) {
+            this(playerId, cards, toBottom, deckOwnerId, prompt, drawAfterReorder, false);
+        }
 
         public LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
                               UUID deckOwnerId, String prompt) {

@@ -57,6 +57,7 @@ public class GameData {
     public volatile GameStatus status;
     /** "All Random" game mode: every player is dealt a randomly generated deck. */
     public volatile boolean allRandom;
+    public com.github.laxika.magicalvibes.model.planar.PlanechaseState planechase;
     /** For an {@link #allRandom} game: the set code the random decks draw from, or {@code null} for all sets. */
     public volatile String randomSetCode;
     public final Set<UUID> playerIds = ConcurrentHashMap.newKeySet();
@@ -5301,7 +5302,9 @@ public class GameData {
         copy.permanentAbilityResolutionsThisTurn.putAll(this.permanentAbilityResolutionsThisTurn);
 
         // --- Deques ---
-        copy.pendingInteractions.addAll(this.pendingInteractions);
+        this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
+                pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
+                        ? trigger.copyPlanarSnapshot() : pending));
         copy.extraTurns.addAll(this.extraTurns);
         copy.extraTurnSkipsUntap.addAll(this.extraTurnSkipsUntap);
         copy.extraTurnPowerUpAbilitiesDisabled.addAll(this.extraTurnPowerUpAbilitiesDisabled);
@@ -5636,6 +5639,7 @@ public class GameData {
 
         // --- Game-creation config ---
         copy.allRandom = this.allRandom;
+        copy.planechase = this.planechase == null ? null : this.planechase.copy();
         copy.randomSetCode = this.randomSetCode;
 
         // --- Game log (share reference for simulation — not read during MCTS) ---

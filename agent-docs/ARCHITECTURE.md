@@ -53,3 +53,7 @@ All card metadata (name, type, mana cost, color, supertypes, subtypes, card text
 ## Testing Infrastructure
 
 Card tests live in `magical-vibes-application/src/test/java/.../cards/{letter}/CardNameTest.java`, extend `BaseCardTest` (JUnit 5 + AssertJ), and declare every concrete card they construct with class- or method-level `@CardUsed`. The inherited JUnit extension preloads those cards' oracle sets before setup. The harness (`GameTestHarness`, `BaseCardTest`, `FakeConnection`, `TestGameRegistry`, `TestWebSocketSessionManager`, `GameTestDoublesConfig`) lives in `magical-vibes-engine/src/testFixtures` and is shared with the AI suite via `testFixtures(project(":magical-vibes-engine"))`; AI tests live in `magical-vibes-ai/src/test/.../ai/`. The behavioral testing rules (never assert Scryfall metadata, no white-box wiring tests) are in `CLAUDE.md` and apply everywhere.
+
+## Planechase
+
+Optional 1v1 Planechase state lives in `GameData.planechase`; face-up planar cards are command-zone objects, never battlefield permanents. See [PLANECHASE.md](PLANECHASE.md) for actions, source snapshots, projection, and extension rules.

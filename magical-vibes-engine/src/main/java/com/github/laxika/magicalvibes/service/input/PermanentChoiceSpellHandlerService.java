@@ -113,7 +113,7 @@ public class PermanentChoiceSpellHandlerService {
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
         StackEntry targetSpell = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(retarget.spellCardId())) {
+            if (se.getTargetableId().equals(retarget.spellCardId())) {
                 targetSpell = se;
                 break;
             }
@@ -707,7 +707,7 @@ public class PermanentChoiceSpellHandlerService {
         if (playerName != null) return playerName;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetId)) return se.getCard().getName();
+            if (se.getTargetableId().equals(targetId)) return se.getDescription();
         }
 
         for (UUID pid : gameData.orderedPlayerIds) {

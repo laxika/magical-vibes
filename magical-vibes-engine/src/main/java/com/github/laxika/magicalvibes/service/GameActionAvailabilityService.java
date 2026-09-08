@@ -318,6 +318,7 @@ public class GameActionAvailabilityService {
     private boolean isCardPlayableForFace(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                           int extraConvokeMana, int additionalGenericCost,
                                           SpellPlayabilityContext ctx, boolean targetsAlreadyDeclared) {
+        if (card.getType() != null && card.getType().isPlanar()) return false;
         if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                 && !pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()) {
             pool = pool instanceof VirtualManaPool virtual

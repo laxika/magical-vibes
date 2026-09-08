@@ -799,7 +799,7 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectMagesContestBidChoice(
             GameData gameData, PendingInteraction.MagesContestBidChoice interaction) {
         StackEntry target = gameData.stack.stream()
-                .filter(entry -> entry.getCard().getId().equals(interaction.targetSpellId()))
+                .filter(entry -> entry.getTargetableId().equals(interaction.targetSpellId()))
                 .findFirst()
                 .orElse(null);
         String targetName = target != null ? target.getCard().getName() : "the spell";

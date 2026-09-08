@@ -669,7 +669,7 @@ public class TriggerCollectionService {
                         continue;
                     }
                     StackEntry spellEntry = gameData.stack.stream()
-                            .filter(entry -> entry.getCard().getId().equals(spellCard.getId()))
+                            .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
                             .findFirst().orElse(null);
                     if (spellEntry == null) continue;
                     int copies = Math.max(0, gameData.getTotalSpellsCastThisTurnCount() - 1);
@@ -691,7 +691,7 @@ public class TriggerCollectionService {
                         continue;
                     }
                     StackEntry spellEntry = gameData.stack.stream()
-                            .filter(entry -> entry.getCard().getId().equals(spellCard.getId()))
+                            .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
                             .findFirst().orElse(null);
                     if (spellEntry == null) continue;
                     if (copyTrigger.requiredCastWithAdventure()
@@ -853,7 +853,7 @@ public class TriggerCollectionService {
                 && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCard.getId())) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
                     spellEntry = se;
                     break;
                 }
@@ -885,7 +885,7 @@ public class TriggerCollectionService {
                 && spellCard.getColors() != null && spellCard.getColors().contains(CardColor.RED)) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCard.getId())) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
                     spellEntry = se;
                     break;
                 }
@@ -921,7 +921,7 @@ public class TriggerCollectionService {
                 && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCard.getId())) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
                     spellEntry = se;
                     break;
                 }
@@ -972,7 +972,7 @@ public class TriggerCollectionService {
         if (pendingSpellCopies != null && pendingSpellCopies > 0) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCard.getId())) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
                     spellEntry = se;
                     break;
                 }
@@ -1007,7 +1007,7 @@ public class TriggerCollectionService {
         if (pendingFilteredCopies != null && !pendingFilteredCopies.isEmpty()) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCard.getId())) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
                     spellEntry = se;
                     break;
                 }
@@ -1077,7 +1077,7 @@ public class TriggerCollectionService {
             // Find the spell on the stack to create a snapshot
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCard.getId())) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
                     spellEntry = se;
                     break;
                 }
@@ -1105,7 +1105,7 @@ public class TriggerCollectionService {
         if (gameData.conspiredSpellIds.remove(spellCard.getId())) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCard.getId())) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
                     spellEntry = se;
                     break;
                 }
@@ -1131,7 +1131,7 @@ public class TriggerCollectionService {
         if (casualtyCopies != null && casualtyCopies > 0) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCard.getId())) {
+                if (se.getTargetableId().equals(spellCard.getId())) {
                     spellEntry = se;
                     break;
                 }
@@ -1171,7 +1171,7 @@ public class TriggerCollectionService {
         }
         selfCastEffects.addAll(spellCard.getEffects(EffectSlot.ON_SELF_CAST));
         StackEntry selfCastSpellEntry = gameData.stack.stream()
-                .filter(entry -> entry.getCard().getId().equals(spellCard.getId()))
+                .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
                 .findFirst()
                 .orElse(null);
         for (CardEffect effect : selfCastEffects) {
@@ -1185,7 +1185,7 @@ public class TriggerCollectionService {
             if (effect instanceof CopyThisSpellIfConditionEffect trigger) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
-                    if (se.getCard().getId().equals(spellCard.getId())) {
+                    if (se.getTargetableId().equals(spellCard.getId())) {
                         spellEntry = se;
                         break;
                     }
@@ -1220,7 +1220,7 @@ public class TriggerCollectionService {
             } else if (effect instanceof CopyThisSpellIfCasualtyPaidEffect casualtyTrigger) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
-                    if (se.getCard().getId().equals(spellCard.getId())) {
+                    if (se.getTargetableId().equals(spellCard.getId())) {
                         spellEntry = se;
                         break;
                     }
@@ -1242,7 +1242,7 @@ public class TriggerCollectionService {
             } else if (effect instanceof CopyThisSpellForXValueEffect) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
-                    if (se.getCard().getId().equals(spellCard.getId())) {
+                    if (se.getTargetableId().equals(spellCard.getId())) {
                         spellEntry = se;
                         break;
                     }
@@ -1263,7 +1263,7 @@ public class TriggerCollectionService {
             } else if (effect instanceof ReplicateEffect replicate) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
-                    if (se.getCard().getId().equals(spellCard.getId())) {
+                    if (se.getTargetableId().equals(spellCard.getId())) {
                         spellEntry = se;
                         break;
                     }
@@ -1288,7 +1288,7 @@ public class TriggerCollectionService {
             } else if (effect instanceof SpellCastCopyTriggerEffect copyTrigger) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
-                    if (se.getCard().getId().equals(spellCard.getId())) {
+                    if (se.getTargetableId().equals(spellCard.getId())) {
                         spellEntry = se;
                         break;
                     }
@@ -1310,7 +1310,7 @@ public class TriggerCollectionService {
             } else if (effect instanceof StormEffect storm) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
-                    if (se.getCard().getId().equals(spellCard.getId())) {
+                    if (se.getTargetableId().equals(spellCard.getId())) {
                         spellEntry = se;
                         break;
                     }
@@ -1392,7 +1392,7 @@ public class TriggerCollectionService {
                     // sees the value locked in on cast (CR 601.2b); 0 for spells without {X}.
                     int selfCastX = 0;
                     for (StackEntry se : gameData.stack) {
-                        if (se.getCard().getId().equals(spellCard.getId())) {
+                        if (se.getTargetableId().equals(spellCard.getId())) {
                             selfCastX = se.getXValue();
                             break;
                         }
@@ -1478,7 +1478,7 @@ public class TriggerCollectionService {
 
                     StackEntry spellEntry = null;
                     for (StackEntry se : gameData.stack) {
-                        if (se.getCard().getId().equals(spellCard.getId())) {
+                        if (se.getTargetableId().equals(spellCard.getId())) {
                             spellEntry = se;
                             break;
                         }
@@ -1867,6 +1867,13 @@ public class TriggerCollectionService {
     }
 
     /** Fires triggers whenever the given player rolls one or more dice. */
+    public void checkControllerRollsPlanarDieTriggers(GameData gameData, UUID rollingPlayerId) {
+        for (Permanent perm : List.copyOf(gameData.playerBattlefields.getOrDefault(rollingPlayerId, List.of()))) {
+            dispatchSlot(gameData, perm, rollingPlayerId, EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
+                    new TriggerContext.DiceRoll(rollingPlayerId, 1, 0, true));
+        }
+    }
+
     public void checkControllerRollsOneOrMoreDiceTriggers(GameData gameData, UUID rollingPlayerId,
                                                            int diceCount) {
         checkControllerRollsOneOrMoreDiceTriggers(gameData, rollingPlayerId, diceCount, 0);
@@ -3714,7 +3721,7 @@ public class TriggerCollectionService {
                         null,
                         permanent.getId()
                 );
-                trigger.setTriggeringCardId(targetEntry.getCard().getId());
+                trigger.setTriggeringCardId(targetEntry.getTargetableId());
                 gameData.enqueueTrigger(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
                 log.info("Game {} - {} triggers when targets are chosen", gameData.id,
@@ -10469,7 +10476,7 @@ public class TriggerCollectionService {
             }
 
             StackEntry spellEntry = gameData.stack.stream()
-                    .filter(entry -> entry.getCard().getId().equals(spellCard.getId()))
+                    .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
                     .findFirst()
                     .orElse(null);
             if (spellEntry == null) {

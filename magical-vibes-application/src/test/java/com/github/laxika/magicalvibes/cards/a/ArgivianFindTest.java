@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
+import com.github.laxika.magicalvibes.cards.j.JanglingAutomaton;
+import com.github.laxika.magicalvibes.cards.k.KithkinArmor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArgivianFind.class, JanglingAutomaton.class, KithkinArmor.class, BenalishInfantry.class})
 class ArgivianFindTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns target artifact card from your graveyard to your hand")
     void returnsArtifactFromGraveyardToHand() {
-        Card artifact = new Ornithopter();
+        Card artifact = new JanglingAutomaton();
         harness.setGraveyard(player1, List.of(artifact));
         harness.setHand(player1, List.of(new ArgivianFind()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -36,7 +38,7 @@ class ArgivianFindTest extends BaseCardTest {
     @Test
     @DisplayName("Returns target enchantment card from your graveyard to your hand")
     void returnsEnchantmentFromGraveyardToHand() {
-        Card enchantment = new Pacifism();
+        Card enchantment = new KithkinArmor();
         harness.setGraveyard(player1, List.of(enchantment));
         harness.setHand(player1, List.of(new ArgivianFind()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -52,7 +54,7 @@ class ArgivianFindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature card")
     void cannotTargetCreatureCard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new BenalishInfantry();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new ArgivianFind()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -64,7 +66,7 @@ class ArgivianFindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a card in an opponent's graveyard")
     void cannotTargetOpponentGraveyard() {
-        Card artifact = new Ornithopter();
+        Card artifact = new JanglingAutomaton();
         harness.setGraveyard(player2, List.of(artifact));
         harness.setHand(player1, List.of(new ArgivianFind()));
         harness.addMana(player1, ManaColor.WHITE, 1);

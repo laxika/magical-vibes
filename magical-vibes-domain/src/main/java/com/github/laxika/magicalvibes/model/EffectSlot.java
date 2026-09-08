@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
 public enum EffectSlot {
+    PLANESWALK_TO_TRIGGERED,
+    PLANESWALK_FROM_TRIGGERED,
+    CHAOS_TRIGGERED,
+    ENCOUNTER_TRIGGERED,
     ON_TAP,
     /** "Whenever you tap this permanent for mana, …" (Zhur-Taa Druid). Dispatched only from the
      *  mana-ability tap path in {@code AbilityActivationService}, so unlike

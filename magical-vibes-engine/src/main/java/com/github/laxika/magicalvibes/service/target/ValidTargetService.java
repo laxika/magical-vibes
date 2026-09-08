@@ -219,6 +219,17 @@ public class ValidTargetService {
 
         int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
 
+        if (allowedTargets.equals(Set.of(TargetType.SPELL_ON_STACK))) {
+            TargetFilter filter = positionIndex < targetFilters.size() ? targetFilters.get(positionIndex)
+                    : modeFilter != null ? modeFilter : card.getTargetFilter();
+            List<UUID> stackIds = gameData.stack.stream().map(com.github.laxika.magicalvibes.model.StackEntry::getTargetableId)
+                    .filter(id -> !excludeIds.contains(id))
+                    .filter(id -> targetLegalityService.checkSpellTargetOnStack(gameData, id, filter,
+                            controllerId, null, xValue, kicked).isEmpty()).toList();
+            return new ValidTargetsResponse(stackIds, List.of(), List.of(), List.of(),
+                    card.getMinTargets(), card.getMaxTargets(), "Select a stack target for " + card.getName());
+        }
+
         if (allowedTargets.contains(TargetType.PERMANENT)) {
             // Determine per-position filter for multi-target spells; a chosen mode's
             // filter override plays the same role for modal spells.
@@ -553,6 +564,17 @@ public class ValidTargetService {
             if (sourcePermanent != null) {
                 effectiveTargetScalingValue = sourcePermanent.getCounterCount(ability.getSourceCounterScaledTargetsType());
             }
+        }
+
+        if (EffectResolution.needsSpellTarget(targetingEffects)) {
+            Permanent source = abilitySourcePermanentId == null ? null
+                    : gameQueryService.findPermanentById(gameData, abilitySourcePermanentId);
+            List<UUID> stackIds = gameData.stack.stream().map(com.github.laxika.magicalvibes.model.StackEntry::getTargetableId)
+                    .filter(id -> !excludeIds.contains(id))
+                    .filter(id -> targetLegalityService.checkSpellTargetOnStack(gameData, id,
+                            ability.getTargetFilter(), controllerId, source, xValue).isEmpty()).toList();
+            return new ValidTargetsResponse(stackIds, List.of(), List.of(), List.of(),
+                    ability.getMinTargets(), ability.getMaxTargets(), "Select a stack target for " + sourceCard.getName());
         }
 
         // A filterless group ability ("each of up to six targets") declares no per-position filters
@@ -1423,15 +1445,9 @@ public class ValidTargetService {
         }
 
         if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {
-            // A "spell or permanent" targeter (e.g. Glamerdye) is castable when a spell is on the
-            // stack even if no permanent is available. The per-spell target filter is enforced at
-            // cast time; here it is enough that any spell (not an ability) is present.
-            boolean anySpellOnStack = gameData.stack.stream()
-                    .anyMatch(se -> se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
-                            && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY);
-            if (anySpellOnStack) {
-                return true;
-            }
+            if (gameData.stack.stream().anyMatch(entry -> targetLegalityService.checkSpellTargetOnStack(
+                    gameData, entry.getTargetableId(), card.getTargetFilter(), controllerId,
+                    null, maxXValue, kicked).isEmpty())) return true;
         }
 
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {

@@ -850,6 +850,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
 - `DamageDealingEffect` — deals a `DynamicAmount` to one target category; `damageAmount()`,
   `canDamageCreatures()`, `canDamagePlayers()`, and optional `triggeredTargetFilter()` for a
   target-selecting triggered ability with no cast-time target declaration. Impl `DealDamageToAnyTargetEffect`,
+  `DealDamageToTargetPlayerOrPlaneswalkerEffect`,
   `DealDamageToAnyTargetThenCantBlockIfCreatureDamagedEffect`,
   `DealDamageToAnyTargetThenRemoveKeywordIfDamagedEffect`,
   `DealDamageToTargetCreatureEffect`, `DealDamageToTargetCreatureAndAllWithSameNameEffect`,
@@ -4302,3 +4303,7 @@ Tablet of the Guilds uses `ChooseColorOnEnterEffect(2)` to store two distinct co
 - `RemoveCounterFromSourceThenEffect(ANY, followUp)` lets the controller choose among counter types present before creating the reflexive follow-up; damaged-player context is retained for target selection and resolution.
 - `SearchLibraryEffect.topOfLibraryAtPosition(filter, position)` — searches for one card, shuffles, then puts it at the fixed zero-indexed position from the top of the library; position `2` is third from the top (Long-Term Plans).
 - `EachPlayerFlipsCoinAndTailsSacrificesCreatureEffect()` — each player flips one coin; players whose flips are tails choose one creature they control, then all chosen creatures are sacrificed together. Uses APNAP choice ordering and the shared coin-flip replacement/trigger path. Goblin Assassin.
+
+## Planechase
+
+Use `PlaneswalkEffect()`, `ChaosEnsuesEffect()`, and `RollPlanarDieEffect()` for planar actions. Declare arrival, departure, chaos and encounter payloads in their planar `EffectSlot` values, reusing existing effects. `UNTIL_PLANESWALK` is a floating-effect duration. See [PLANECHASE.md](PLANECHASE.md).

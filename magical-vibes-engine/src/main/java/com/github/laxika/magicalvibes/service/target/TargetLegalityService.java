@@ -2733,7 +2733,7 @@ public class TargetLegalityService {
         if (entry.getTargetId() == null && entry.getTargetZone() == Zone.STACK
                 && !entry.getTargetIds().isEmpty()) {
             boolean anyStillOnStack = entry.getTargetIds().stream()
-                    .anyMatch(id -> gameData.stack.stream().anyMatch(se -> se.getCard().getId().equals(id)));
+                    .anyMatch(id -> gameData.stack.stream().anyMatch(se -> se.getTargetableId().equals(id)));
             return !anyStillOnStack;
         }
 
@@ -2742,7 +2742,7 @@ public class TargetLegalityService {
         if (entry.getTargetId() != null && entry.getTargetZone() == Zone.STACK
                 && !entry.getTargetIds().isEmpty()) {
             boolean spellTargetLegal = gameData.stack.stream()
-                    .anyMatch(se -> se.getCard().getId().equals(entry.getTargetId()));
+                    .anyMatch(se -> se.getTargetableId().equals(entry.getTargetId()));
             boolean anyPermanentTargetLegal = entry.getTargetIds().stream()
                     .anyMatch(id -> gameQueryService.findPermanentById(gameData, id) != null
                             || gameData.playerIds.contains(id));
@@ -2777,7 +2777,7 @@ public class TargetLegalityService {
                                     entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)), entry.isTeamworkCostPaid()).isPresent();
                 }
             } else if (entry.getTargetZone() == Zone.STACK) {
-                targetFizzled = gameData.stack.stream().noneMatch(se -> se.getCard().getId().equals(entry.getTargetId()));
+                targetFizzled = gameData.stack.stream().noneMatch(se -> se.getTargetableId().equals(entry.getTargetId()));
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetId())) {
@@ -3906,7 +3906,7 @@ public class TargetLegalityService {
 
     private StackEntry findSpellOnStack(GameData gameData, UUID targetId) {
         return gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetId)
+                .filter(se -> se.getTargetableId().equals(targetId)
                         && se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                         && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY)
                 .findFirst()
@@ -3915,7 +3915,7 @@ public class TargetLegalityService {
 
     StackEntry findAnyEntryOnStack(GameData gameData, UUID targetId) {
         return gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetId))
+                .filter(se -> se.getTargetableId().equals(targetId))
                 .findFirst()
                 .orElse(null);
     }
@@ -4065,7 +4065,7 @@ public class TargetLegalityService {
                     && stackEntry.getCard().getParsedManaCost().hasX();
         }
         if (predicate instanceof StackEntryIsNthSpellCastThisTurnPredicate nthSpell) {
-            return gameData.getSpellCastOrdinalThisTurn(stackEntry.getCard().getId()) == nthSpell.spellNumber();
+            return gameData.getSpellCastOrdinalThisTurn(stackEntry.getTargetableId()) == nthSpell.spellNumber();
         }
         if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
             return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
@@ -4152,7 +4152,7 @@ public class TargetLegalityService {
             if (source == null || stackEntry.getCard() == null) {
                 return false;
             }
-            UUID candidateCardId = stackEntry.getCard().getId();
+            UUID candidateCardId = stackEntry.getTargetableId();
             for (StackEntry ability : gameData.stack) {
                 if ((ability.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && ability.getEntryType() != StackEntryType.TRIGGERED_ABILITY)

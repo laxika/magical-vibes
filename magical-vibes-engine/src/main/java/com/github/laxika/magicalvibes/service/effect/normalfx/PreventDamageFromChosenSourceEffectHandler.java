@@ -211,7 +211,7 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             Permanent source = new Permanent(stackEntry.getCard());
             if (sourceFilter == null
                     || predicateEvaluationService.matchesPermanentPredicate(gameData, source, sourceFilter)) {
-                validIds.add(stackEntry.getCard().getId());
+                validIds.add(stackEntry.getTargetableId());
             }
         }
         return validIds;

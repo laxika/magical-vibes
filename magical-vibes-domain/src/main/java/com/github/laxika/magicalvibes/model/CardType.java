@@ -14,12 +14,21 @@ public enum CardType {
     ARTIFACT("Artifact"),
     PLANESWALKER("Planeswalker"),
     BATTLE("Battle"),
-    KINDRED("Kindred");
+    KINDRED("Kindred"),
+    PLANE("Plane"),
+    PHENOMENON("Phenomenon");
 
     @Getter
     private final String displayName;
 
     public boolean isPermanentType() {
-        return this != INSTANT && this != SORCERY;
+        return switch (this) {
+            case LAND, CREATURE, ENCHANTMENT, ARTIFACT, PLANESWALKER, BATTLE -> true;
+            default -> false;
+        };
+    }
+
+    public boolean isPlanar() {
+        return this == PLANE || this == PHENOMENON;
     }
 }

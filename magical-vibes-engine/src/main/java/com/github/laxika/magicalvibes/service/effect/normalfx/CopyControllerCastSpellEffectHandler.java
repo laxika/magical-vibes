@@ -52,7 +52,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         if (!e.grantedKeywords().isEmpty()) {
             spellSnapshot.getGrantedKeywordsOnEntry().addAll(e.grantedKeywords());
             for (StackEntry stackEntry : gameData.stack) {
-                if (spellCard.getId().equals(stackEntry.getCard().getId())) {
+                if (spellCard.getId().equals(stackEntry.getTargetableId())) {
                     stackEntry.getGrantedKeywordsOnEntry().addAll(e.grantedKeywords());
                     break;
                 }

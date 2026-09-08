@@ -189,7 +189,7 @@ public class MayPenaltyChoiceHandlerService {
 
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (se.getTargetableId().equals(targetCardId)) {
                 targetEntry = se;
                 break;
             }
@@ -240,7 +240,7 @@ public class MayPenaltyChoiceHandlerService {
 
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (se.getTargetableId().equals(targetCardId)) {
                 targetEntry = se;
                 break;
             }
@@ -323,7 +323,7 @@ public class MayPenaltyChoiceHandlerService {
 
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (se.getTargetableId().equals(targetCardId)) {
                 targetEntry = se;
                 break;
             }
@@ -399,7 +399,7 @@ public class MayPenaltyChoiceHandlerService {
         UUID targetCardId = ability.targetCardId();
         UUID controllerId = ability.controllerId();
         StackEntry targetEntry = gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .filter(se -> se.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
 
@@ -449,7 +449,7 @@ public class MayPenaltyChoiceHandlerService {
 
         UUID targetCardId = ability.targetCardId();
         StackEntry targetEntry = gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .filter(se -> se.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
 
@@ -494,7 +494,7 @@ public class MayPenaltyChoiceHandlerService {
         UUID targetCardId = ability.targetCardId();
         UUID controllerId = ability.controllerId();
         StackEntry targetEntry = gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .filter(se -> se.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
 
@@ -611,7 +611,7 @@ public class MayPenaltyChoiceHandlerService {
         UUID targetCardId = ability.targetCardId();
         UUID controllerId = ability.controllerId();
         StackEntry targetEntry = gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .filter(se -> se.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
 

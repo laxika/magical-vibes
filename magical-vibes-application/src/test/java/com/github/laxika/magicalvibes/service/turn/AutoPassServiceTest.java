@@ -77,6 +77,9 @@ class AutoPassServiceTest {
     @Mock
     private StateBasedActionService stateBasedActionService;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
     @InjectMocks
     private AutoPassService sut;
 
@@ -86,6 +89,7 @@ class AutoPassServiceTest {
 
     @BeforeEach
     void setUp() {
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "planechaseService", planechaseService);
         lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
                 .thenAnswer(invocation -> ((java.util.function.Supplier<?>)
                         invocation.getArgument(1)).get());
@@ -104,6 +108,16 @@ class AutoPassServiceTest {
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
         gd.playerBattlefields.put(player1Id, new ArrayList<>());
         gd.playerBattlefields.put(player2Id, new ArrayList<>());
+    }
+
+    @Test
+    void preservesPriorityWhenAPlanarRollCanBePaid() {
+        gd.planechase = new com.github.laxika.magicalvibes.model.planar.PlanechaseState();
+        when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+        when(planechaseService.canOfferRoll(gd, player1Id)).thenReturn(true);
+        sut.resolveAutoPass(gd, ignored -> { throw new AssertionError("Turn advanced past a legal roll"); });
+        assertThat(gd.priorityPassedBy).isEmpty();
+        verify(planechaseService).canOfferRoll(gd, player1Id);
     }
 
     @Nested

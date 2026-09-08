@@ -14,5 +14,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "RQS", collectorNumber = "32")
 @CardRegistration(set = "SUM", collectorNumber = "158")
 @CardRegistration(set = "3ED", collectorNumber = "158")
+@CardRegistration(set = "DPA", collectorNumber = "47")
 public class HillGiant extends Card {
 }

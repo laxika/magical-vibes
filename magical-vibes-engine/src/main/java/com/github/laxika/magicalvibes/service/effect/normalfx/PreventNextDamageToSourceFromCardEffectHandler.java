@@ -34,7 +34,7 @@ public class PreventNextDamageToSourceFromCardEffectHandler implements NormalEff
         gameData.targetSourceDamagePreventionShields.add(
                 new TargetSourceDamagePreventionShield(targetId, sourceCardId, 1));
         Card sourceCard = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getCard().getId().equals(sourceCardId))
+                .filter(stackEntry -> stackEntry.getTargetableId().equals(sourceCardId))
                 .map(StackEntry::getCard)
                 .findFirst().orElse(entry.getCard());
         gameLogService.append(gameData, GameLog.builder()

@@ -961,8 +961,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        int spellManaSpentX, UUID sourcePermanentId,
                                        Permanent sourcePermanentSnapshot, boolean optionalTarget,
                                        UUID triggeringPermanentId, UUID permanentTargetControllerId,
-                                       UUID choosingPlayerId)
+                                       UUID choosingPlayerId, com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource)
             implements PermanentChoiceContext {
+        public SpellTargetTriggerAnyTarget copyPlanarSnapshot() {
+            return planarSource == null ? this : new SpellTargetTriggerAnyTarget(sourceCard, controllerId,
+                    effects, playerTargetOnly, targetFilter, spellManaSpentX, sourcePermanentId,
+                    sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, choosingPlayerId, planarSource.copy());
+        }
+
+        public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                boolean playerTargetOnly, TargetFilter targetFilter, int spellManaSpentX,
+                UUID sourcePermanentId, Permanent sourcePermanentSnapshot, boolean optionalTarget,
+                UUID triggeringPermanentId, UUID permanentTargetControllerId, UUID choosingPlayerId) {
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
+                    sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, choosingPlayerId, null);
+        }
+
 
         /** Convenience constructor for any-target (permanents + players). */
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {

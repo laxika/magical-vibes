@@ -52,9 +52,9 @@ public class CounterSpellAndDiscardSplicedNamesEffectHandler implements NormalEf
         }
 
         UUID controllerId = targetEntry.getControllerId();
-        List<String> splicedNames = gameData.getSpellCastSplicedNames(targetEntry.getCard().getId());
+        List<String> splicedNames = gameData.getSpellCastSplicedNames(targetEntry.getTargetableId());
         counterSupport.counterSpell(gameData, entry, targetEntry);
-        gameData.clearSpellCastSplicedNames(targetEntry.getCard().getId());
+        gameData.clearSpellCastSplicedNames(targetEntry.getTargetableId());
 
         if (splicedNames.isEmpty() || controllerId == null) {
             return;

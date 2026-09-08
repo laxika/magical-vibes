@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 @CardRegistration(set = "M10", collectorNumber = "115")
 @CardRegistration(set = "LEG", collectorNumber = "124")
 @CardRegistration(set = "THB", collectorNumber = "121")
+@CardRegistration(set = "DPA", collectorNumber = "35")
 public class UnderworldDreams extends Card {
 
     public UnderworldDreams() {

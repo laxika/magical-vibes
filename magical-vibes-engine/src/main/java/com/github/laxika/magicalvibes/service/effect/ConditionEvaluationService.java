@@ -1166,7 +1166,7 @@ public class ConditionEvaluationService {
             case TargetSpellCanBeCountered ignored -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
                         : gameData.stack.stream()
-                                .filter(se -> se.getCard().getId().equals(ctx.targetId()))
+                                .filter(se -> se.getTargetableId().equals(ctx.targetId()))
                                 .findFirst().orElse(null);
                 yield targetSpell != null
                         && !gameQueryService.isUncounterable(gameData, targetSpell.getCard())
@@ -1176,7 +1176,7 @@ public class ConditionEvaluationService {
             case TargetSpellManaSpentLessThanManaValue ignored -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
                         : gameData.stack.stream()
-                                .filter(se -> se.getCard().getId().equals(ctx.targetId()))
+                                .filter(se -> se.getTargetableId().equals(ctx.targetId()))
                                 .findFirst().orElse(null);
                 yield targetSpell != null
                         && targetSpell.getManaSpentToCast()
@@ -1189,7 +1189,7 @@ public class ConditionEvaluationService {
             case TargetSpellMatches c -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
                         : gameData.stack.stream()
-                                .filter(se -> se.getCard().getId().equals(ctx.targetId()))
+                                .filter(se -> se.getTargetableId().equals(ctx.targetId()))
                                 .findFirst().orElse(null);
                 if (targetSpell == null) {
                     yield false;
@@ -1704,7 +1704,7 @@ public class ConditionEvaluationService {
             GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null || ctx.targetId() == null) return false;
         com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameData.stack.stream()
-                .filter(entry -> entry.getCard().getId().equals(ctx.targetId()))
+                .filter(entry -> entry.getTargetableId().equals(ctx.targetId()))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) return false;
@@ -1733,7 +1733,7 @@ public class ConditionEvaluationService {
     private boolean targetSpellSharesColorWithControlledCreature(GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null || ctx.targetId() == null) return false;
         com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameData.stack.stream()
-                .filter(entry -> entry.getCard().getId().equals(ctx.targetId()))
+                .filter(entry -> entry.getTargetableId().equals(ctx.targetId()))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) return false;
@@ -1751,7 +1751,7 @@ public class ConditionEvaluationService {
     private boolean targetSpellWouldDestroyLandYouControl(GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null || ctx.targetId() == null) return false;
         StackEntry targetSpell = gameData.stack.stream()
-                .filter(entry -> entry.getCard().getId().equals(ctx.targetId()))
+                .filter(entry -> entry.getTargetableId().equals(ctx.targetId()))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) return false;

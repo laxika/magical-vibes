@@ -141,7 +141,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             return null;
         }
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getCard().getId().equals(targetCardId)) {
+            if (stackEntry.getTargetableId().equals(targetCardId)) {
                 return stackEntry.getControllerId();
             }
         }

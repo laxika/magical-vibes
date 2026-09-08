@@ -51,7 +51,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
         UUID originalSpellCardId = e.originalSpellCardId();
         StackEntry originalSpell = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(originalSpellCardId)) {
+            if (se.getTargetableId().equals(originalSpellCardId)) {
                 originalSpell = se;
                 break;
             }
