@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -71,6 +72,7 @@ public class TurnSupport {
     }
 
     public void clearCombatState(GameData gameData) {
+        gameData.expireEndOfCombatFloatingEffects();
         combatService.clearCombatState(gameData);
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
         gameData.clearDelayedActions(DelayedPermanentAction.class,
@@ -78,6 +80,10 @@ public class TurnSupport {
     }
 
     public void skipToCleanupStep(GameData gameData) {
+        if (gameData.currentExtraTurnSequence != null) {
+            gameData.drainDelayedActions(LoseGameAtEndStep.class,
+                    action -> gameData.currentExtraTurnSequence.equals(action.extraTurnSequence()));
+        }
         gameData.currentStep = TurnStep.CLEANUP;
         turnCleanupService.resetEndOfTurnModifiers(gameData);
         creatureControlService.reconcileControl(gameData);

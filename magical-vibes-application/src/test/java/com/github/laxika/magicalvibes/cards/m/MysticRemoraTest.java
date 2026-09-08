@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MysticRemora.class, IcyManipulator.class, BalduvianBears.class})
 class MysticRemoraTest extends BaseCardTest {
 
     // ===== Cumulative upkeep =====
@@ -67,7 +69,7 @@ class MysticRemoraTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(remora);
-        harness.assertInGraveyard(player1, "Mystic Remora");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(remora.getCard());
     }
 
     // ===== Trigger filter =====
@@ -75,20 +77,20 @@ class MysticRemoraTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers when opponent casts a noncreature spell")
     void triggersOnOpponentNoncreatureSpell() {
-        harness.addToBattlefield(player1, new MysticRemora());
+        Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new IcyManipulator()));
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castArtifact(player2, 0);
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Mystic Remora");
+        assertThat(gd.stack.getLast().getCard()).isSameAs(remora.getCard());
     }
 
     @Test
@@ -100,8 +102,9 @@ class MysticRemoraTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new BalduvianBears()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player2, 0);
 
@@ -113,13 +116,40 @@ class MysticRemoraTest extends BaseCardTest {
     @DisplayName("Does NOT trigger when controller casts a noncreature spell")
     void doesNotTriggerOnControllerSpell() {
         harness.addToBattlefield(player1, new MysticRemora());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        IcyManipulator spell = new IcyManipulator();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castArtifact(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shock");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+    }
+
+    @Test
+    @DisplayName("A Remora trigger resolves after Remora leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent remora = harness.addToBattlefieldAndReturn(player1, new MysticRemora());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new IcyManipulator()));
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castArtifact(player2, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(remora);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
     // ===== Pay / draw resolution =====
@@ -189,12 +219,12 @@ class MysticRemoraTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new IcyManipulator()));
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castArtifact(player2, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -215,11 +245,10 @@ class MysticRemoraTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.setHand(player2, List.of(new IcyManipulator()));
+        harness.addMana(player2, ManaColor.COLORLESS, 8);
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castArtifact(player2, 0);
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);

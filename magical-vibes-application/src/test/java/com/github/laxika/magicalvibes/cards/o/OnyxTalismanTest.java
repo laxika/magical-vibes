@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.f.Facevaulter;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,14 +9,13 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OnyxTalisman.class, DarkRitual.class, BalduvianBears.class})
 class OnyxTalismanTest extends BaseCardTest {
 
     private void setUpOpponentTurn() {
@@ -25,31 +24,32 @@ class OnyxTalismanTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    private UUID addTappedBears(Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(owner, "Grizzly Bears");
-        findPermanent(owner, "Grizzly Bears").tap();
-        return bearsId;
+    private Permanent addTappedBears(Player owner) {
+        Permanent bears = addCreatureReady(owner, new BalduvianBears());
+        bears.tap();
+        return bears;
     }
 
     private void castBlackSpell(Player caster) {
-        harness.setHand(caster, List.of(new Facevaulter()));
-        harness.addMana(caster, ManaColor.BLACK, 1);
-        harness.addMana(caster, ManaColor.COLORLESS, 1);
-        harness.castCreature(caster, 0);
+        harness.castFromHand(caster, new DarkRitual(), "{B}");
     }
 
     @Test
     @DisplayName("Opponent's black spell: paying {3} untaps the chosen permanent")
     void payUntapsTarget() {
         harness.addToBattlefield(player1, new OnyxTalisman());
-        UUID bearsId = addTappedBears(player1);
+        Permanent bears = addTappedBears(player1);
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         castBlackSpell(player2);
 
-        harness.handlePermanentChosen(player1, bearsId);
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).contains(bears.getId());
+
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -58,7 +58,6 @@ class OnyxTalismanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.isTapped()).isFalse();
     }
 
@@ -66,27 +65,30 @@ class OnyxTalismanTest extends BaseCardTest {
     @DisplayName("Declining to pay {3} leaves the permanent tapped")
     void declineLeavesTapped() {
         harness.addToBattlefield(player1, new OnyxTalisman());
-        UUID bearsId = addTappedBears(player1);
+        Permanent bears = addTappedBears(player1);
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         castBlackSpell(player2);
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isTrue();
+        assertThat(bears.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Controller's own black spell triggers too — any player casting counts")
     void ownBlackSpellTriggers() {
         harness.addToBattlefield(player1, new OnyxTalisman());
-        addTappedBears(player1);
+        Permanent bears = addTappedBears(player1);
 
         castBlackSpell(player1);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).contains(bears.getId());
     }
 
     @Test
@@ -95,10 +97,7 @@ class OnyxTalismanTest extends BaseCardTest {
         harness.addToBattlefield(player1, new OnyxTalisman());
         addTappedBears(player1);
         setUpOpponentTurn();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Onyx Talisman"));
@@ -108,16 +107,34 @@ class OnyxTalismanTest extends BaseCardTest {
     @DisplayName("Any permanent may be targeted, including one an opponent controls")
     void untapsOpponentPermanent() {
         harness.addToBattlefield(player1, new OnyxTalisman());
-        UUID bearsId = addTappedBears(player2);
+        Permanent bears = addTappedBears(player2);
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         castBlackSpell(player2);
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Grizzly Bears").isTapped()).isFalse();
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Accepting without three mana leaves the target tapped")
+    void cannotPayLeavesTargetTapped() {
+        harness.addToBattlefield(player1, new OnyxTalisman());
+        Permanent bears = addTappedBears(player1);
+        setUpOpponentTurn();
+
+        castBlackSpell(player2);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.isTapped()).isTrue();
     }
 }

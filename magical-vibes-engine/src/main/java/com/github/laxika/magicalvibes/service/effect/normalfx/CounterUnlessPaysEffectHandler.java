@@ -38,8 +38,13 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 : boundTargets.stream().findFirst().orElse(null);
         if (targetCardId == null) return;
 
-        StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+        StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(
+                gameData, targetCardId, entry);
         if (targetEntry == null) return;
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                && e.onNotPaidEffects().isEmpty() && e.onPaidEffects().isEmpty()) {
+            return;
+        }
 
         int payAmount;
         if (e.dynamicAmount() != null) {
@@ -66,10 +71,13 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
                         && gameData.getLife(targetControllerId) >= lifeCost);
 
         if (!cost.canPay(pool) || !canPayLife) {
-            if (e.exileIfCountered()) {
-                counterSupport.counterSpellAndExile(gameData, entry, targetEntry);
-            } else {
-                counterSupport.counterSpell(gameData, entry, targetEntry);
+            StackEntry counterableTarget = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+            if (counterableTarget != null) {
+                if (e.exileIfCountered()) {
+                    counterSupport.counterSpellAndExile(gameData, entry, counterableTarget);
+                } else {
+                    counterSupport.counterSpell(gameData, entry, counterableTarget);
+                }
             }
             // Not paid (couldn't afford): resolve any rider against the spell's controller (Power Sink).
             counterSupport.resolveNotPaidRider(gameData, entry.getCard(), targetControllerId, e.onNotPaidEffects());

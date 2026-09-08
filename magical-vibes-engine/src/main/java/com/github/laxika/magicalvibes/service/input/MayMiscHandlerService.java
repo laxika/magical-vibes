@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTrigger
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -240,16 +242,18 @@ public class MayMiscHandlerService {
         String playerName = gameData.playerIdToName.get(drawingPlayerId);
 
         if (!accepted) {
-            drawService.resolveDrawCardWithoutStaticReplacementCheck(gameData, drawingPlayerId);
+            if (effect.kind() == DrawReplacementKind.FASTING) {
+                drawService.resolveDrawCard(gameData, drawingPlayerId);
+            } else {
+                drawService.continueDrawAfterDecliningReplacement(
+                        gameData, drawingPlayerId, ability.sourceCard().getId());
+            }
             if (effect.kind() == DrawReplacementKind.FASTING) {
                 stepTriggerService.handleDrawStepTriggers(gameData);
             }
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to use " , ability.sourceCard(), "."));
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -260,10 +264,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} skips draw step with {} and gains 2 life",
                     gameData.id, playerName, ability.sourceCard().getName());
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -279,10 +280,7 @@ public class MayMiscHandlerService {
                 log.info("Game {} - {} replaces a draw with a study counter on {}",
                         gameData.id, player.getUsername(), ability.sourceCard().getName());
             }
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -301,12 +299,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} replaces a draw with a library search from {}",
                     gameData.id, player.getUsername(), ability.sourceCard().getName());
 
-            if (!gameData.interaction.isAwaitingInput()) {
-                playerInputService.processNextMayAbility(gameData);
-            }
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -325,17 +318,14 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} skips draw with {}", gameData.id, playerName,
                     ability.sourceCard().getName());
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
         if (effect.kind() == DrawReplacementKind.ZURS_WEIRDING) {
             // The choosing player (may-ability controller) pays 2 life; the revealed top card of the
             // drawing player's library goes into that player's graveyard instead of being drawn.
-            lifeSupport.applyLifeLoss(gameData, player.getId(), 2, ability.sourceCard().getName());
+            lifeSupport.applyLifePayment(gameData, player.getId(), 2, ability.sourceCard().getName());
 
             List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
             if (deck != null && !deck.isEmpty()) {
@@ -346,10 +336,7 @@ public class MayMiscHandlerService {
                         gameData.id, playerName, top.getName(), ability.sourceCard().getName());
             }
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -374,10 +361,7 @@ public class MayMiscHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(playerName + " skips their draw with " , ability.sourceCard(), "."));
             log.info("Game {} - {} skips draw for Island Sanctuary shield", gameData.id, playerName);
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -469,11 +453,7 @@ public class MayMiscHandlerService {
         boolean canPayLife = lifeCost <= 0 || gameData.getLife(controllerId) >= lifeCost;
         if (accepted && canPayLife && deck != null && !deck.isEmpty()) {
             if (lifeCost > 0) {
-                int lifeLoss = lifeCost * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
-                int life = gameData.getLife(controllerId);
-                gameData.playerLifeTotals.put(controllerId, life - lifeLoss);
-                triggerCollectionService.checkLifePaymentTriggers(gameData, controllerId, lifeLoss);
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeLoss + " life."));
+                lifeSupport.applyLifePayment(gameData, controllerId, lifeCost, "Eye Spy");
             }
             Card topCard = deck.removeFirst();
             graveyardService.addCardToGraveyard(gameData, libraryOwnerId, topCard, Zone.LIBRARY);
@@ -706,6 +686,16 @@ public class MayMiscHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " begins the game with " , card, " on the battlefield."));
             log.info("Game {} - {} starts with {} on the battlefield (leyline)",
                     gameData.id, player.getUsername(), card.getName());
+
+            SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
+                    .map(SubtypeChoiceOnEnterEffect.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (subtypeChoice != null) {
+                playerInputService.beginPregameSubtypeChoice(gameData, controllerId, perm.getId(), subtypeChoice);
+                return;
+            }
         } else {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to put " , ability.sourceCard(), " on the battlefield."));
             log.info("Game {} - {} declines leyline placement for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());

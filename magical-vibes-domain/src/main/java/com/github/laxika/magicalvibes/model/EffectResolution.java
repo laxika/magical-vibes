@@ -152,13 +152,13 @@ public final class EffectResolution {
                 if (coe.choicesRequired() == 1 && coe.choicesMax() == 1) {
                     List<ChooseOneEffect.ChooseOneOption> options = coe.options();
                     if (modeIndex >= 0 && modeIndex < options.size()) {
-                        resolved.addAll(options.get(modeIndex).effects());
+                        resolved.addAll(options.get(modeIndex).effectsForSelection());
                     } else {
                         resolved.add(effect);
                     }
                 } else if (modeIndex < 0) {
                     for (int chosenModeIndex : coe.decodeModeIndices(modeIndex)) {
-                        resolved.addAll(coe.options().get(chosenModeIndex).effects());
+                        resolved.addAll(coe.options().get(chosenModeIndex).effectsForSelection());
                     }
                 } else {
                     resolved.add(effect);
@@ -562,11 +562,13 @@ public final class EffectResolution {
     }
 
     /**
-     * True when any spell effect reads {@link ManaSpentToCast} — the cast path must snapshot total
-     * mana spent into the stack entry's {@code xValue} (Molten Note damage; Memory Deluge look count).
+     * True when any spell or battlefield-entry effect reads {@link ManaSpentToCast} — the cast path
+     * must snapshot total mana spent into the stack entry's {@code xValue}.
      */
     public static boolean hasManaSpentToCastAmount(Card card) {
-        return hasManaSpentToCastAmount(card.getEffects(EffectSlot.SPELL));
+        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
+                .flatMap(slot -> card.getEffects(slot).stream())
+                .anyMatch(EffectResolution::effectUsesManaSpentToCast);
     }
 
     public static boolean hasManaSpentToCastAmount(List<CardEffect> effects) {
@@ -574,12 +576,18 @@ public final class EffectResolution {
     }
 
     private static boolean effectUsesManaSpentToCast(CardEffect e) {
+        if (e instanceof EnterWithCountersEffect enterWithCounters) {
+            return enterWithCounters.count() instanceof ManaSpentToCast;
+        }
         if (e instanceof DealDamageToTargetCreatureEffect d) {
             return d.damage() instanceof ManaSpentToCast;
         }
         if (e instanceof LookAtTopCardsEffect look) {
             return look.lookCount() instanceof ManaSpentToCast
                     || look.chooseCount() instanceof ManaSpentToCast;
+        }
+        if (e instanceof ReturnCardFromGraveyardEffect returnEffect) {
+            return returnEffect.dynamicMaxManaValue() instanceof ManaSpentToCast;
         }
         return false;
     }

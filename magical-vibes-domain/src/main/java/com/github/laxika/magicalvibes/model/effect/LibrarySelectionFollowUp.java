@@ -16,4 +16,9 @@ public interface LibrarySelectionFollowUp {
     default boolean shouldOffer(GameData gameData, List<UUID> selectedPermanentIds) {
         return true;
     }
+
+    /** Whether the follow-up is offered as a separate reflexive may ability. */
+    default boolean optional() {
+        return true;
+    }
 }

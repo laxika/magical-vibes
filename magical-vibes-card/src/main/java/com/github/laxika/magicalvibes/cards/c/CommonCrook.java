@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "53")
+@CardRegistration(set = "OM1", collectorNumber = "53")
 public class CommonCrook extends Card {
 
     public CommonCrook() {

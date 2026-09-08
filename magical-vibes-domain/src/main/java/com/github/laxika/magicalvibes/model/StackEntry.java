@@ -45,6 +45,10 @@ public class StackEntry {
     private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
+    @Getter(AccessLevel.NONE)
+    private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
+    /** Controllers remembered before earlier effects in this resolution remove their permanents. */
+    private final Map<UUID, UUID> removedPermanentControllers = new HashMap<>();
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
     /** Counters a permanent spell is instructed to enter with. */
     private final Map<CounterType, Integer> enteringCounters = new EnumMap<>(CounterType.class);
@@ -52,6 +56,10 @@ public class StackEntry {
     @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
     @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
+    /** Amount of Treasure-produced mana spent to activate this ability, snapshotted at activation. */
+    @Setter private int activationTreasureManaSpent;
+    /** Whether mana produced by a Treasure was spent to activate this ability. */
+    @Setter private boolean activationUsedTreasureMana;
     /** Mana spent to cast this spell, retained until a permanent spell enters the battlefield. */
     @Setter private int manaSpentToCast;
     private final Zone targetZone;
@@ -91,6 +99,8 @@ public class StackEntry {
     @Setter private boolean castWithOmen;
     /** Whether this spell was cast via Adventure; after resolving, its physical card is exiled with permission to cast the front face. */
     @Setter private boolean castWithAdventure;
+    /** Whether this permanent spell was cast for its Warp cost. */
+    @Setter private boolean castWithWarp;
     /**
      * Whether this spell was cast transformed without paying its mana cost after a Siege battle
      * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
@@ -101,6 +111,8 @@ public class StackEntry {
     /** Whether a permanent resolved from this spell enters the battlefield tapped. */
     @Setter private boolean entersTapped;
     @Setter private Zone sourceZone;
+    /** Whether this is the activated ability created by cycling a card from hand. */
+    @Setter private boolean cyclingAbility;
     /** Cards exiled from the graveyard to pay this spell's delve cost. */
     @Setter private List<UUID> delvedCardIds = List.of();
     /**
@@ -141,6 +153,14 @@ public class StackEntry {
     @Setter private boolean collectEvidenceCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
+    /** The last-known power of the permanent or card used to pay this spell's behold cost. */
+    @Setter private int beholdPower;
+    /** The permanent used to pay this spell's behold cost, when the choice was from the battlefield. */
+    @Setter private UUID beholdPermanentId;
+    /** Whether this spell's optional reveal-a-card-from-hand additional cost was paid. */
+    @Setter private boolean revealCardFromHandCostPaid;
+    /** Whether this spell's optional casualty additional cost was paid. */
+    @Setter private boolean casualtyCostPaid;
     /** Whether this spell's optional waterbend additional cost was paid. */
     @Setter private boolean waterbendCostPaid;
     /** Whether this spell's optional teamwork additional cost was paid. */
@@ -154,8 +174,7 @@ public class StackEntry {
      */
     @Setter private List<String> repeatedAdditionalCosts = List.of();
     /**
-     * Whether this spell was cast at a time a sorcery couldn't have been cast. Only stamped on hand
-     * casts, and only read by the Mirage flash clause
+     * Whether this spell used its own conditional instant-speed permission. Read by the Mirage flash clause
      * ({@code FlashCastWithCleanupSacrificeEffect}), which flags the entering permanent for
      * sacrifice at the next cleanup step when it is set.
      */
@@ -184,12 +203,19 @@ public class StackEntry {
     @Setter private boolean overloaded;
     /** Whether the spell's controller controlled a Mount when the spell was finished being cast. */
     @Setter private boolean controlledMountAsCast;
+    /** Whether the spell's controller controlled a Dragon when the spell was finished being cast. */
+    @Setter private boolean controlledDragonAsCast;
+    /** Whether the spell's controller controlled a Faerie when the spell was finished being cast. */
+    @Setter private boolean controlledFaerieAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
     @Setter private CardSubtype beholdChosenSubtype;
     @Setter private CardSubtype chosenCreatureType;
+    private final Map<UUID, CardSubtype> chosenCreatureTypes = new HashMap<>();
     @Setter private Card damageSourceCard;
+    /** Whether a continuation entry still deals damage as part of resolving its source spell. */
+    @Setter private boolean spellDamageContinuation;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
     /**
@@ -206,6 +232,8 @@ public class StackEntry {
     @Setter private Integer dyingPermanentManaValue;
     /** Permanent ids that received counters during the current effect resolution. */
     private final List<UUID> counteredPermanentIdsThisResolution = new ArrayList<>();
+    /** Controller of the spell targeted by a counter effect, retained after that spell leaves the stack. */
+    @Setter private UUID counteredSpellControllerId;
     /**
      * The per-permanent player payload behind this entry — one entry per permanent involved in the
      * event, holding that permanent's controller. Stamped by
@@ -241,6 +269,12 @@ public class StackEntry {
      * that permanent's power as the ability resolves.
      */
     @Setter private UUID chosenPermanentId;
+    /** Last-known effective power of a permanent chosen by this stack object. */
+    @Setter private Integer chosenPermanentPowerAtLastKnown;
+    /** Last-known effective toughness of a permanent chosen for stationing. */
+    @Setter private Integer chosenPermanentToughnessAtLastKnown;
+    /** Card chosen from exile for a creature-or-warped-card cost. */
+    @Setter private Card chosenObjectCard;
     /** Permanents placed onto the battlefield by the preceding library search. */
     @Setter private List<UUID> searchedPermanentIds = List.of();
     /**
@@ -268,6 +302,10 @@ public class StackEntry {
     @Setter private int sacrificedToughness;
     /** Permanents tapped to pay this spell's convoke cost, captured for effects that refer to them. */
     private List<UUID> convokeCreatureIds = List.of();
+    /** Permanents chosen to pay a cost and retained for a later effect in the same ability. */
+    private List<UUID> chosenCostPermanentIds = List.of();
+    /** Last-known snapshots of permanents chosen to pay a tracked cost. */
+    private List<Permanent> chosenCostPermanentSnapshots = List.of();
     /** Last-known card characteristics of the permanent sacrificed as an additional cast cost. */
     private Card sacrificedCard;
     /** Card id of the creature exiled as an additional cost to cast this spell, when one was paid. */
@@ -340,6 +378,8 @@ public class StackEntry {
     private final Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
     @Setter private int grantedAdditionalLoyaltyCounters;
+    /** Explicit starting loyalty for a copied planeswalker spell, when the copy defines one. */
+    @Setter private Integer startingLoyalty;
     /**
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
      * by the token-creation handlers and read back by a later effect on the same entry that acts on
@@ -594,10 +634,13 @@ public class StackEntry {
         this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
+        this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
         this.counters.putAll(source.counters);
         this.enteringCounters.putAll(source.enteringCounters);
         this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
+        this.activationTreasureManaSpent = source.activationTreasureManaSpent;
+        this.activationUsedTreasureMana = source.activationUsedTreasureMana;
         this.manaSpentToCast = source.manaSpentToCast;
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
@@ -605,6 +648,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.targetCardGroupSizes);
         this.targetCardIdsByEffect = copyTargetCardIdsByEffect(source.targetCardIdsByEffect);
         this.targetFilter = source.targetFilter;
+        this.removedPermanentControllers.putAll(source.removedPermanentControllers);
         this.copy = source.copy;
         this.nonTargeting = source.nonTargeting;
         this.spellDispositionHandled = source.spellDispositionHandled;
@@ -619,10 +663,12 @@ public class StackEntry {
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
         this.castWithAdventure = source.castWithAdventure;
+        this.castWithWarp = source.castWithWarp;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
         this.sourceZone = source.sourceZone;
+        this.cyclingAbility = source.cyclingAbility;
         this.delvedCardIds = source.delvedCardIds.isEmpty() ? List.of() : new ArrayList<>(source.delvedCardIds);
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
@@ -630,6 +676,10 @@ public class StackEntry {
         this.putCounterCostPaid = source.putCounterCostPaid;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
+        this.beholdPower = source.beholdPower;
+        this.beholdPermanentId = source.beholdPermanentId;
+        this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
+        this.casualtyCostPaid = source.casualtyCostPaid;
         this.waterbendCostPaid = source.waterbendCostPaid;
         this.teamworkCostPaid = source.teamworkCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
@@ -647,11 +697,15 @@ public class StackEntry {
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;
         this.controlledMountAsCast = source.controlledMountAsCast;
+        this.controlledDragonAsCast = source.controlledDragonAsCast;
+        this.controlledFaerieAsCast = source.controlledFaerieAsCast;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
         this.chosenCreatureType = source.chosenCreatureType;
+        this.chosenCreatureTypes.putAll(source.chosenCreatureTypes);
         this.damageSourceCard = source.damageSourceCard;
+        this.spellDamageContinuation = source.spellDamageContinuation;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
@@ -659,6 +713,7 @@ public class StackEntry {
         this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
+        this.counteredSpellControllerId = source.counteredSpellControllerId;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
@@ -667,6 +722,9 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.sacrificedAttachedEquipmentIds);
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
+        this.chosenPermanentPowerAtLastKnown = source.chosenPermanentPowerAtLastKnown;
+        this.chosenPermanentToughnessAtLastKnown = source.chosenPermanentToughnessAtLastKnown;
+        this.chosenObjectCard = source.chosenObjectCard;
         this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.searchedPermanentIds);
         this.triggeringCardId = source.triggeringCardId;
@@ -693,6 +751,10 @@ public class StackEntry {
         this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
+        this.chosenCostPermanentIds = source.chosenCostPermanentIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.chosenCostPermanentIds);
+        this.chosenCostPermanentSnapshots = source.chosenCostPermanentSnapshots.isEmpty()
+                ? List.of() : source.chosenCostPermanentSnapshots.stream().map(Permanent::new).toList();
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
         this.targetFilters = source.targetFilters.isEmpty() ? List.of() : new ArrayList<>(source.targetFilters);
         this.multiTargetConstraint = source.multiTargetConstraint;
@@ -708,6 +770,7 @@ public class StackEntry {
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
+        this.startingLoyalty = source.startingLoyalty;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
         source.noncombatExcessDamageTriggerEffectsFired.forEach((sourceId, effects) ->
                 this.noncombatExcessDamageTriggerEffectsFired.put(sourceId, new HashSet<>(effects)));
@@ -821,6 +884,16 @@ public class StackEntry {
 
     public void setConvokeCreatureIds(List<UUID> convokeCreatureIds) {
         this.convokeCreatureIds = convokeCreatureIds == null ? List.of() : List.copyOf(convokeCreatureIds);
+    }
+
+    public void setChosenCostPermanentIds(List<UUID> chosenCostPermanentIds) {
+        this.chosenCostPermanentIds = chosenCostPermanentIds == null
+                ? List.of() : List.copyOf(chosenCostPermanentIds);
+    }
+
+    public void setChosenCostPermanentSnapshots(List<Permanent> chosenCostPermanentSnapshots) {
+        this.chosenCostPermanentSnapshots = chosenCostPermanentSnapshots == null
+                ? List.of() : chosenCostPermanentSnapshots.stream().map(Permanent::new).toList();
     }
 
     public void setTargetCardIdsByEffect(Map<CardEffect, List<UUID>> targetCardIdsByEffect) {
@@ -1105,6 +1178,16 @@ public class StackEntry {
             }
         }
         return false;
+    }
+
+    public void rememberLastKnownPermanentCard(UUID permanentId, Card card) {
+        if (permanentId != null && card != null) {
+            lastKnownPermanentCards.put(permanentId, card);
+        }
+    }
+
+    public Card lastKnownPermanentCard(UUID permanentId) {
+        return lastKnownPermanentCards.get(permanentId);
     }
 
     /**

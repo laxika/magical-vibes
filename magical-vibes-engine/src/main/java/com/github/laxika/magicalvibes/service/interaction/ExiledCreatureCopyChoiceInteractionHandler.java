@@ -38,18 +38,20 @@ public class ExiledCreatureCopyChoiceInteractionHandler
         List<UUID> chosenIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
         if (chosenIds == null || chosenIds.size() != 1
                 || !interaction.validCardIds().contains(chosenIds.getFirst())) {
-            throw new IllegalStateException("Choose one creature card exiled with Lazav");
+            throw new IllegalStateException("Choose one creature card exiled with " + interaction.sourceName());
         }
 
         ExiledCardEntry chosen = gameData.findExiledCard(chosenIds.getFirst());
         if (chosen == null || !interaction.sourcePermanentId().equals(chosen.sourcePermanentId())
                 || chosen.faceDown() || !chosen.card().hasType(CardType.CREATURE)) {
-            throw new IllegalStateException("Chosen card is no longer a creature card exiled with Lazav");
+            throw new IllegalStateException("Chosen card is no longer a creature card exiled with "
+                    + interaction.sourceName());
         }
 
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry == null) {
-            throw new IllegalStateException("No pending effect resolution for Lazav's copy choice");
+            throw new IllegalStateException("No pending effect resolution for "
+                    + interaction.sourceName() + "'s copy choice");
         }
 
         gameData.interaction.clearAwaitingInput();

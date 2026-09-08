@@ -22,12 +22,15 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -39,6 +42,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
+import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -69,6 +73,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -552,6 +557,53 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — PutCounterOnReferencedPermanentEffect")
+    class PutCounterOnDamageSource {
+
+        @Test
+        @DisplayName("queues a non-targeting trigger for the creature that dealt damage")
+        void queuesTriggerForCreatureDamageSource() {
+            Permanent watcher = createPermanent("Aurification");
+            Permanent source = createPermanent("Grizzly Bears");
+            var effect = new PutCounterOnReferencedPermanentEffect(
+                    PermanentReference.TRIGGERING, CounterType.GOLD);
+            var ctx = new TriggerContext.DamageToController(player1Id, source.getId(), true);
+
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            when(gameQueryService.isCreature(gd, source)).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(watcher, player1Id, effect),
+                    EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(source.getId());
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+        }
+
+        @Test
+        @DisplayName("does not trigger for damage from a noncreature permanent")
+        void doesNotTriggerForNoncreatureDamageSource() {
+            Permanent watcher = createPermanent("Aurification");
+            Permanent source = createPermanent("Llanowar Elves");
+            var effect = new PutCounterOnReferencedPermanentEffect(
+                    PermanentReference.TRIGGERING, CounterType.GOLD);
+            var ctx = new TriggerContext.DamageToController(player1Id, source.getId(), false);
+
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            when(gameQueryService.isCreature(gd, source)).thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(watcher, player1Id, effect),
+                    EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
     @DisplayName("ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — ReturnDamageSourcePermanentToHandEffect")
     class BounceOnDamage {
 
@@ -1016,6 +1068,37 @@ class DamageTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT creature damage")
+    class AllySourceDealtNoncombatDamageToOpponentCreatureDamage {
+
+        @Test
+        @DisplayName("queues conditional creature damage and preserves the damaged player")
+        void queuesConditionalCreatureDamage() {
+            Permanent watcher = createPermanent("Fear of Burning Alive");
+            Permanent damagedCreature = createPermanent("Primordial Wurm");
+            gd.playerBattlefields.put(player2Id, List.of(damagedCreature));
+            var effect = new ConditionalEffect(new Delirium(),
+                    new DealDamageToTargetCreatureDamagedPlayerControlsEffect(new EventValue()));
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 3);
+
+            when(gameQueryService.isCreature(gd, damagedCreature)).thenReturn(true);
+            when(conditionEvaluationService.isMet(eq(gd), eq(effect.condition()),
+                    any(ConditionContext.class), eq(3))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(watcher, player1Id, effect),
+                    EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
         }
     }
 

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -20,6 +21,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachOneOfEquipmentToSamuraiEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -44,6 +47,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -78,6 +82,7 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler animalMagnetismEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
 
@@ -107,6 +112,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.DrawService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport.class),
                 murmursFromBeyondEffectHandler,
+                animalMagnetismEffectHandler,
                 memoriesReturningEffectHandler,
                 mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
@@ -137,6 +143,50 @@ class LibraryChoiceHandlerServiceTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
+    }
+
+    @Test
+    void simultaneousCloakingUsesFaceDownEntryAndTriggers() {
+        Card creature = createCard("Creature", CardType.CREATURE);
+        Card land = createCard("Land", CardType.LAND);
+        List<Card> cards = List.of(creature, land);
+        List<UUID> ids = cards.stream().map(Card::getId).toList();
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player1Id, cards, ids, false, false, false, true, false,
+                0, null, 2, "Choose.", false, 2, false, null, false,
+                true, false, null, false, true));
+
+        service.handleLibraryRevealChoice(gd, player1, ids);
+
+        verify(battlefieldEntryService, times(2)).putPermanentOntoBattlefield(
+                eq(gd), eq(player1Id), argThat(perm -> perm.isCloaked() && perm.isFaceDown()),
+                any(Set.class), any(List.class), isNull());
+        verify(battlefieldEntryService).processFaceDownCreatureETBTriggers(gd, player1Id, creature);
+        verify(battlefieldEntryService).processFaceDownCreatureETBTriggers(gd, player1Id, land);
+        verify(battlefieldEntryService, never()).handleCreatureEnteredBattlefield(
+                any(), any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void simultaneousSelectionPassesEnteredPermanentsToFollowUp() {
+        Card equipment = createCard("Equipment", CardType.ARTIFACT);
+        List<UUID> ids = List.of(equipment.getId());
+        gd.pendingEffectResolutionEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                createCard("Source", CardType.CREATURE), player1Id, "Search", List.of());
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player1Id, List.of(equipment), ids, false, false, false, true, false,
+                0, null, 1, "Choose.", false, 0, false, null, false,
+                false, false, new AttachOneOfEquipmentToSamuraiEffect(), false, true));
+
+        service.handleLibraryRevealChoice(gd, player1, ids);
+
+        ArgumentCaptor<Permanent> entered = ArgumentCaptor.forClass(Permanent.class);
+        verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                eq(gd), eq(player1Id), entered.capture(), any(Set.class), any(List.class), isNull());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(new MayEffect(
+                new AttachOneOfEquipmentToSamuraiEffect(List.of(entered.getValue().getId())),
+                "Attach one of those Equipment to a Samurai you control?"));
     }
 
     @Nested
@@ -213,6 +263,26 @@ class LibraryChoiceHandlerServiceTest {
         service.handleLibraryRevealChoice(gd, player2, List.of(second.getId()));
 
         verify(murmursFromBeyondEffectHandler).completeCardChoice(gd, revealed, List.of(second.getId()));
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
+    @Test
+    @DisplayName("Routes Animal Magnetism's opponent choice through its effect handler")
+    void animalMagnetismChoiceUsesEffectHandler() {
+        Card first = createCard("First Card", CardType.CREATURE);
+        Card second = createCard("Second Card", CardType.CREATURE);
+        Card third = createCard("Third Card");
+        List<Card> revealed = List.of(first, second, third);
+        gd.queueInteraction(new com.github.laxika.magicalvibes.model.PendingAnimalMagnetismChoice(player1Id));
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player2Id, revealed,
+                List.of(first.getId(), second.getId()),
+                true, false, false, false, false, 0, null, 1,
+                "Choose one.", false, 1, false));
+
+        service.handleLibraryRevealChoice(gd, player2, List.of(second.getId()));
+
+        verify(animalMagnetismEffectHandler).completeCardChoice(gd, revealed, List.of(second.getId()));
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
@@ -428,6 +498,38 @@ class LibraryChoiceHandlerServiceTest {
         verify(exileService).exileCardFaceDown(gd, player2Id, first, sourcePermanentId);
         verify(exileService).exileCardFaceDown(gd, player2Id, second, sourcePermanentId);
         assertThat(gd.playerDecks.get(player2Id)).containsExactly(third);
+    }
+
+    @Test
+    @DisplayName("Bounded top-of-library search takes two cards before graveyarding the rest")
+    void boundedTopOfLibrarySearchTakesTwoCards() {
+        Card first = createCard("First");
+        Card second = createCard("Second");
+        Card third = createCard("Third");
+        List<Card> sourceCards = new ArrayList<>(List.of(first, second, third));
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, new ArrayList<>(sourceCards))
+                .canFailToFind(true)
+                .remainingCount(2)
+                .sourceCards(sourceCards)
+                .restToGraveyard(true)
+                .shuffleAfterSelection(false)
+                .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose up to two", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        PendingInteraction.LibrarySearch next =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(next.params().cards()).containsExactly(second, third);
+        assertThat(next.params().remainingCount()).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(first);
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(second, first);
+        verify(graveyardService).addCardToGraveyard(gd, player1Id, third, Zone.LIBRARY);
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
     @Test
@@ -736,7 +838,7 @@ class LibraryChoiceHandlerServiceTest {
 
             // Dino should have been put onto battlefield
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class));
+                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class), isNull());
 
             // Remaining cards should be on bottom of library (not in graveyard)
             assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
@@ -786,7 +888,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class));
+                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class), isNull());
             verify(exileService).exileCard(gd, player1Id, land);
             verify(exileService).exileCard(gd, player1Id, instant);
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());

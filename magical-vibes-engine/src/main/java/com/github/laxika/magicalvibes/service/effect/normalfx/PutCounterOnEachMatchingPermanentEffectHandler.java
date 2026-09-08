@@ -97,6 +97,8 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
             permanentCounterSupport.notifyCountersPlaced(gameData, entry, p, placed);
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && placed > 0) {
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                        gameData, p, entry.getControllerId());
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                         gameData, p, placed);
                 plusOneTargets.add(p);
@@ -112,7 +114,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
                 entry.getCard().getName(), amount, counterName, count);
 
         for (Permanent p : plusOneTargets) {
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p, entry.getControllerId());
         }
         for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, placement.getKey(), placement.getValue());

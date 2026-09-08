@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ImposingVisage.class, GrizzlyBears.class, FountainOfYouth.class})
 class ImposingVisageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Imposing Visage attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ImposingVisage()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -39,9 +40,7 @@ class ImposingVisageTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has menace")
     void enchantedCreatureHasMenace() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent visagePerm = new Permanent(new ImposingVisage());
         visagePerm.setAttachedTo(bearsPerm.getId());
@@ -53,9 +52,7 @@ class ImposingVisageTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses menace when Imposing Visage is removed")
     void menaceStopsWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent visagePerm = new Permanent(new ImposingVisage());
         visagePerm.setAttachedTo(bearsPerm.getId());
@@ -71,13 +68,9 @@ class ImposingVisageTest extends BaseCardTest {
     @Test
     @DisplayName("Imposing Visage does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent visagePerm = new Permanent(new ImposingVisage());
         visagePerm.setAttachedTo(bearsPerm.getId());
@@ -87,9 +80,40 @@ class ImposingVisageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Imposing Visage can enchant an opponent's creature")
+    void canEnchantOpponentCreature() {
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ImposingVisage()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, opponentBears.getId());
+        harness.passBothPriorities();
+
+        Permanent visage = findPermanent(player1, "Imposing Visage");
+        assertThat(visage.getAttachedTo()).isEqualTo(opponentBears.getId());
+        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Menace from Imposing Visage prevents a single blocker")
+    void menacePreventsSingleBlocker() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent visage = new Permanent(new ImposingVisage());
+        visage.setAttachedTo(attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).add(visage);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.beginBlockerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("two or more creatures");
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent with Imposing Visage")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new ImposingVisage()));
         harness.addMana(player1, ManaColor.RED, 1);

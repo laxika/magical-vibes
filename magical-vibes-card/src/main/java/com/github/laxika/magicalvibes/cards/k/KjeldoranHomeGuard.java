@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceAtEndOfCombatEffect;
 
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "8")
+@CardRegistration(set = "CST", collectorNumber = "3")
+@CardRegistration(set = "CST", collectorNumber = "8")
 public class KjeldoranHomeGuard extends Card {
 
     private static final CreateTokenEffect DESERTER_TOKEN = new CreateTokenEffect(
@@ -26,6 +29,6 @@ public class KjeldoranHomeGuard extends Card {
         addEffect(EffectSlot.ON_ATTACK, new PutCounterOnSourceAtEndOfCombatEffect(
                 CounterType.MINUS_ZERO_MINUS_ONE, 1, DESERTER_TOKEN));
         addEffect(EffectSlot.ON_BLOCK, new PutCounterOnSourceAtEndOfCombatEffect(
-                CounterType.MINUS_ZERO_MINUS_ONE, 1, DESERTER_TOKEN));
+                CounterType.MINUS_ZERO_MINUS_ONE, 1, DESERTER_TOKEN), TriggerMode.ONCE_PER_BLOCK);
     }
 }

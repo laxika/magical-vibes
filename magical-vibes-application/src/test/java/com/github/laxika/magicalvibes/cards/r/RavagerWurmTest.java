@@ -25,6 +25,7 @@ class RavagerWurmTest extends BaseCardTest {
         castRavager(0, bears.getId());
         resolveCreatureAndChooseRiotCounter();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         Permanent ravager = findPermanent(player1, "Ravager Wurm");
@@ -37,6 +38,7 @@ class RavagerWurmTest extends BaseCardTest {
 
         castRavager(1, field.getId());
         resolveCreatureAndChooseRiotCounter();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Field of Ruin");

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,15 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
             }
             graveyardReturnSupport.resolvePreTargetedById(gameData, entry, e, controllerId, sourceCardId, targetCardId);
             return;
+        }
+
+        if (e.targetGraveyard()) {
+            List<UUID> boundTargets = entry.targetsForBoundEffectGroup(effect);
+            if (boundTargets != null && !boundTargets.isEmpty()) {
+                graveyardReturnSupport.resolvePreTargetedById(
+                        gameData, entry, e, controllerId, sourceCardId, boundTargets.getFirst());
+                return;
+            }
         }
 
         // Pre-targeted via targetCardIds (from triggered abilities, e.g. Teshar).

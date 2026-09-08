@@ -33,7 +33,10 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
         var e = (CreateXTokenWithXCountersEffect) effect;
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
-                : entry.getSourcePermanentSnapshot();
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         int counterAmount = amountEvaluationService.evaluate(
                 gameData, e.counterAmount(), AmountContext.forStackEntry(entry, source));
         if (counterAmount < 0) {

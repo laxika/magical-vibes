@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -31,11 +34,19 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             UUID sourceCardId, String sourceCardName) {
-        beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName, null);
+        beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName,
+                null, false, false);
     }
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             UUID sourceCardId, String sourceCardName, CounterType enterWithCounter) {
+        beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName,
+                enterWithCounter, false, false);
+    }
+
+    public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
+                            UUID sourceCardId, String sourceCardName, CounterType enterWithCounter,
+                            boolean grantHaste, boolean returnToHandAtEndStep) {
         List<UUID> validCardIds = new ArrayList<>();
         addMatchingCardIds(validCardIds, gameData.playerHands.get(playerId), predicate,
                 sourceCardId, gameData, playerId);
@@ -47,7 +58,8 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PutCardFromHandOrGraveyardChoice(
-                        playerId, validCardIds, label, sourceCardName, enterWithCounter));
+                        playerId, validCardIds, label, sourceCardName, enterWithCounter,
+                        grantHaste, returnToHandAtEndStep));
     }
 
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName) {
@@ -56,6 +68,13 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
 
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
                             CounterType enterWithCounter) {
+        applyChoice(gameData, playerId, chosenCardId, sourceCardName,
+                enterWithCounter, false, false);
+    }
+
+    public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
+                            CounterType enterWithCounter, boolean grantHaste,
+                            boolean returnToHandAtEndStep) {
         Card chosen = removeCard(gameData.playerHands.get(playerId), chosenCardId);
         String zone = "hand";
         if (chosen == null) {
@@ -74,8 +93,15 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
         if (enterWithCounter != null) {
             permanent.setCounterCount(enterWithCounter, 1);
         }
+        if (grantHaste) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent,
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of());
+        if (returnToHandAtEndStep) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    permanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+        }
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " puts "
                 + chosen.getName() + " from their " + zone + " onto the battlefield ("
                 + sourceCardName + ")."));

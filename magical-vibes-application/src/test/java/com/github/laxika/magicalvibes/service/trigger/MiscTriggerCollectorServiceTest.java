@@ -16,7 +16,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -123,6 +127,40 @@ class MiscTriggerCollectorServiceTest {
     private MiscTriggerCollectorService sut;
 
     private TriggerCollectorRegistry registry;
+
+    @Test
+    void cardsLeavingGraveyardQueueTargetChoiceBeforeTrigger() {
+        Permanent source = createPermanent("Hardened Academic");
+        var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect,
+                new TriggerContext.ControllerCardsLeaveGraveyard(player1Id));
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.sourcePermanentId()).isEqualTo(source.getId());
+    }
+
+    @Test
+    void enchantedPermanentTapModalWaitsForModeAndTargetBeforeGoingOnTheStack() {
+        Permanent aura = createPermanent("Modal aura");
+        Permanent tapped = createPermanent("Artifact");
+        var effect = new com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect();
+
+        registry.dispatch(match(aura, player1Id, effect), EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+                effect, new TriggerContext.EnchantedPermanentTap(tapped, player2Id));
+
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.pollPendingInteraction(
+                com.github.laxika.magicalvibes.model.PermanentChoiceContext.TriggeredModalTrigger.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.sourcePermanentId()).isEqualTo(aura.getId());
+    }
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -301,6 +339,42 @@ class MiscTriggerCollectorServiceTest {
 
         assertThat(result).isFalse();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("controller life-gain conditional trigger queues its wrapped effect")
+    void controllerLifeGainConditionalTriggerQueuesWrappedEffect() {
+        Permanent perm = createPermanent("Vampire Scrivener");
+        var wrapped = new PutCountersOnSourceEffect(1, 1, 1);
+        var effect = new ConditionalEffect(new ControllerTurn(), wrapped);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect,
+                new TriggerContext.LifeGain(player1Id, 3));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(wrapped);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("controller life-loss conditional trigger queues its wrapped effect")
+    void controllerLifeLossConditionalTriggerQueuesWrappedEffect() {
+        Permanent perm = createPermanent("Vampire Scrivener");
+        var wrapped = new PutCountersOnSourceEffect(1, 1, 1);
+        var effect = new ConditionalEffect(new ControllerTurn(), wrapped);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect,
+                new TriggerContext.LifeLoss(player1Id, 2));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(wrapped);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(2);
     }
 
     @Test
@@ -1136,6 +1210,34 @@ class MiscTriggerCollectorServiceTest {
         assertThat(entry.getControllerId()).isEqualTo(player1Id);
         assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
         assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_LOSES_LIFE — SequenceEffect")
+    class ControllerLifeLossSequence {
+
+        @Test
+        @DisplayName("puts triggered ability on stack with the life-loss amount")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Marina Vendrell's Grimoire");
+            var effect = SequenceEffect.of(
+                    new DiscardEffect(new EventValue(), DiscardRecipient.CONTROLLER),
+                    new ConditionalEffect(new ControllerHandEmpty(), new ControllerLosesGameEffect()));
+            var ctx = new TriggerContext.LifeLoss(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var entry = gd.stack.getLast();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        }
     }
 
     // ===== ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE — BoostSelfEffect =====

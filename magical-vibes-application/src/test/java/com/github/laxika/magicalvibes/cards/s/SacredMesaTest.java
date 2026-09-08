@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,13 +15,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SacredMesa.class, StormfrontPegasus.class})
 class SacredMesaTest extends BaseCardTest {
-
-    private long pegasusTokens() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> "Pegasus".equals(p.getCard().getName()))
-                .count();
-    }
 
     @Test
     @DisplayName("Activated ability creates a 1/1 white Pegasus token with flying")
@@ -30,11 +28,14 @@ class SacredMesaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pegasusTokens()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Sacred Mesa").isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Pegasus")).isEqualTo(1);
 
         Permanent token = findPermanent(player1, "Pegasus");
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.PEGASUS);
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
     }
 
@@ -91,6 +92,21 @@ class SacredMesaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Pegasus cannot pay Sacred Mesa's upkeep cost")
+    void opponentPegasusDoesNotPayUpkeepCost() {
+        harness.addToBattlefield(player1, new SacredMesa());
+        harness.addToBattlefield(player2, new StormfrontPegasus());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Sacred Mesa");
+        harness.assertInGraveyard(player1, "Sacred Mesa");
+        harness.assertOnBattlefield(player2, "Stormfront Pegasus");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("A Pegasus token created by Sacred Mesa can pay its own upkeep cost")
     void pegasusTokenPaysUpkeepCost() {
         harness.addToBattlefield(player1, new SacredMesa());
@@ -107,6 +123,6 @@ class SacredMesaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, findPermanent(player1, "Pegasus").getId());
 
         harness.assertOnBattlefield(player1, "Sacred Mesa");
-        assertThat(pegasusTokens()).isZero();
+        assertThat(countPermanents(player1, "Pegasus")).isZero();
     }
 }

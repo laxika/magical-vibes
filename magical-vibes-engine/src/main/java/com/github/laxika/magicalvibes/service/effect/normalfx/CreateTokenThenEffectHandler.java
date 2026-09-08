@@ -49,7 +49,12 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
         queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect());
     }
 
-    private void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+    void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        queueTargetedReflexiveAbility(gameData, entry, thenEffect, null, false);
+    }
+
+    void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect,
+                                       UUID sourcePermanentId, boolean optionalTarget) {
         if (graveyardTargetingSupport.findTarget(List.of(thenEffect)) != null) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(thenEffect)));
@@ -80,20 +85,33 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
                 ? gameData.orderedPlayerIds.stream()
                         .filter(playerId -> targetPredicateEvaluationService.matchesPlayer(
                                 targetPredicate, playerId, entry.getControllerId(), gameData))
-                        .toList()
-                : List.of();
+                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new))
+                : new ArrayList<>();
         if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
+            if (optionalTarget) {
+                gameData.stack.add(new StackEntry(
+                        com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                        entry.getCard(), entry.getControllerId(),
+                        entry.getCard().getName() + "'s reflexive ability",
+                        List.of(thenEffect), (UUID) null, sourcePermanentId));
+            }
             return;
         }
 
+        if (optionalTarget) {
+            validPlayerTargets.add(entry.getControllerId());
+        }
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                entry.getCard(), entry.getControllerId(), List.of(thenEffect)));
+                entry.getCard(), entry.getControllerId(), List.of(thenEffect),
+                sourcePermanentId, null, 0, 0, optionalTarget));
         if (validPlayerTargets.isEmpty()) {
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validPermanentTargets,
                     entry.getCard().getName() + "'s reflexive ability - Choose target.");
         } else {
             playerInputService.beginAnyTargetChoice(gameData, entry.getControllerId(), validPermanentTargets,
-                    validPlayerTargets, entry.getCard().getName() + "'s reflexive ability - Choose target.");
+                    validPlayerTargets, optionalTarget
+                            ? entry.getCard().getName() + "'s reflexive ability - Choose up to one target (choose yourself to decline)."
+                            : entry.getCard().getName() + "'s reflexive ability - Choose target.");
         }
     }
 }

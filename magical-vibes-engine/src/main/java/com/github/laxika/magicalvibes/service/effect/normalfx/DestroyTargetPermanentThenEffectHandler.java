@@ -72,13 +72,13 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
             case BASIC_LAND_SEARCH_COUNT -> 0;
         };
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
+        FilterContext conditionContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentId(entry.getSourcePermanentId());
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         boolean thenApplies = e.thenCondition() == null
-                || predicateEvaluationService.matchesPermanentPredicate(
-                        target, e.thenCondition(), filterContext);
+                || predicateEvaluationService.matchesPermanentPredicate(target, e.thenCondition(), conditionContext);
 
         // Unless the card says "dies this way", the then-effect happens regardless of whether
         // destruction succeeds (indestructible / regeneration).

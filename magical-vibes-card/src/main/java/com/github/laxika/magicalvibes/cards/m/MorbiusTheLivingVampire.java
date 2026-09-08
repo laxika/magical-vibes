@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "137")
+@CardRegistration(set = "OM1", collectorNumber = "156")
 public class MorbiusTheLivingVampire extends Card {
 
     public MorbiusTheLivingVampire() {

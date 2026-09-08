@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "170")
+@CardRegistration(set = "OM1", collectorNumber = "162")
 public class PassengerFerry extends Card {
 
     public PassengerFerry() {

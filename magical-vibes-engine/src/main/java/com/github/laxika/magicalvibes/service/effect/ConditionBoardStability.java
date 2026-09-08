@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 
@@ -19,8 +20,8 @@ import java.util.List;
  *
  * <p>{@code LayerSystemService.computeBoardFingerprint} hashes the inputs the pass reads —
  * battlefield permanents and their mutable fields, graveyards, exile, hand sizes, top-of-library
- * identity, floating effects. A condition reading anything else (life totals, the active player,
- * poison counters, the per-turn event trackers, combat state) would let a cached board hand back a
+ * identity, active player, and floating effects. A condition reading anything else (poison counters,
+ * the per-turn event trackers, combat state) would let a cached board hand back a
  * verdict that is no longer true. Such conditions stay outside the pass, where the static-bonus
  * assembly re-evaluates them on every query.
  *
@@ -51,6 +52,7 @@ public final class ConditionBoardStability {
             // Graveyard contents and the card identities/types they carry are hashed by the board
             // fingerprint, so creature-card thresholds can safely participate in layer 4.
             case GraveyardCardThreshold ignored -> true;
+            case NotControllerTurn ignored -> true;
             case NotCondition c -> readsOnlyFingerprintedState(c.inner());
             case AllConditions c -> allStable(c.conditions());
             case AllOf c -> allStable(c.conditions());

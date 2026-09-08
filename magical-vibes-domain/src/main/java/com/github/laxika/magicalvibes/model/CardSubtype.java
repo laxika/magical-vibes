@@ -17,6 +17,10 @@ public enum CardSubtype {
     DESERT("Desert"),
     CAVE("Cave"),
     LAIR("Lair"),
+    URZAS("Urza's"),
+    MINE("Mine"),
+    POWER_PLANT("Power-Plant"),
+    TOWER("Tower"),
     ANGEL("Angel"),
     ARCHON("Archon"),
     AETHERBORN("Aetherborn"),
@@ -35,8 +39,10 @@ public enum CardSubtype {
     BARD("Bard"),
     BARBARIAN("Barbarian"),
     BEAR("Bear"),
+    BEHOLDER("Beholder"),
     BERSERKER("Berserker"),
     BADGER("Badger"),
+    BALLOON("Balloon"),
     BAT("Bat"),
     BASILISK("Basilisk"),
     BOAR("Boar"),
@@ -58,6 +64,7 @@ public enum CardSubtype {
     HUMAN("Human"),
     HERO("Hero"),
     CLERIC("Cleric"),
+    CLOWN("Clown"),
     BIRD("Bird"),
     CAT("Cat"),
     CAMARID("Camarid"),
@@ -73,9 +80,11 @@ public enum CardSubtype {
     GRAVEBORN("Graveborn"),
     INKLING("Inkling"),
     AURA("Aura"),
+    ROLE("Role"),
     CASE("Case"),
     RUNE("Rune"),
     PLAN("Plan"),
+    ROOM("Room"),
     NOMAD("Nomad"),
     ALLY("Ally"),
     KOR("Kor"),
@@ -93,6 +102,7 @@ public enum CardSubtype {
     EFREET("Efreet"),
     EYE("Eye"),
     FAERIE("Faerie"),
+    FOX("Fox"),
     FISH("Fish"),
     SHARK("Shark"),
     FROG("Frog"),
@@ -131,6 +141,7 @@ public enum CardSubtype {
     DRAKE("Drake"),
     DRONE("Drone"),
     SPAWN("Spawn"),
+    SCION("Scion"),
     WARRIOR("Warrior"),
     WARLOCK("Warlock"),
     METATHRAN("Metathran"),
@@ -202,11 +213,13 @@ public enum CardSubtype {
     SHEEP("Sheep"),
     SNAKE("Snake"),
     SLIVER("Sliver"),
+    SLUG("Slug"),
     GERM("Germ"),
     LOCUS("Locus"),
     SPHERE("Sphere"),
     MYR("Myr"),
     HOUND("Hound"),
+    HAMSTER("Hamster"),
     GREMLIN("Gremlin"),
     BLINKMOTH("Blinkmoth"),
     HOMUNCULUS("Homunculus"),
@@ -244,15 +257,20 @@ public enum CardSubtype {
     LEVIATHAN("Leviathan"),
     TEFERI("Teferi"),
     TYVAR("Tyvar"),
+    UGIN("Ugin"),
     TREASURE("Treasure"),
     CLUE("Clue"),
     BLOOD("Blood"),
     MAP("Map"),
+    LANDER("Lander"),
     FOOD("Food"),
     POWERSTONE("Powerstone"),
+    TOY("Toy"),
     SHARD("Shard"),
     MOUNT("Mount"),
     VEHICLE("Vehicle"),
+    SPACECRAFT("Spacecraft"),
+    PLANET("Planet"),
     NIGHTSTALKER("Nightstalker"),
     LESSON("Lesson"),
     CITIZEN("Citizen"),
@@ -280,13 +298,29 @@ public enum CardSubtype {
     MOOGLE("Moogle"),
     TOWN("Town"),
     ROBOT("Robot"),
+    GLIMMER("Glimmer"),
     NEPHILIM("Nephilim"),
     SAND("Sand"),
     RIGGER("Rigger");
 
+    private static final List<CardSubtype> BASIC_LAND_TYPES = List.of(
+            PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST);
+
+    private static final List<CardSubtype> LAND_TYPES = List.of(
+            PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN,
+            URZAS, MINE, POWER_PLANT, TOWER);
+
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
-            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, SAMUT, YANLING);
+            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, YANLING);
+
+    public static List<CardSubtype> basicLandTypes() {
+        return BASIC_LAND_TYPES;
+    }
+
+    public static List<CardSubtype> landTypes() {
+        return LAND_TYPES;
+    }
 
     public static List<CardSubtype> planeswalkerTypes() {
         return PLANESWALKER_TYPES;

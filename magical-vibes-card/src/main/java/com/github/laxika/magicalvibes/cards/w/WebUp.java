@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "21")
 @CardRegistration(set = "MSH", collectorNumber = "41")
+@CardRegistration(set = "OM1", collectorNumber = "15")
 public class WebUp extends Card {
 
     public WebUp() {

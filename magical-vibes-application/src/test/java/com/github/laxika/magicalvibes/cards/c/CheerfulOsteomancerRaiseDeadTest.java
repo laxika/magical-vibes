@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.r.RaiseDead;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CheerfulOsteomancerRaiseDead.class, RaiseDead.class, GrizzlyBears.class})
 class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Entering the battlefield prepares Cheerful Osteomancer and exiles a castable Raise Dead copy")
@@ -57,15 +57,32 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
     @DisplayName("Prepared Raise Dead copy cannot target non-creature card in graveyard")
     void preparedRaiseDeadCannotTargetNonCreature() {
         Permanent osteomancer = castCheerfulOsteomancer();
-        Card instant = new HolyDay();
-        harness.setGraveyard(player1, List.of(instant));
+        Card sorcery = new RaiseDead();
+        harness.setGraveyard(player1, List.of(sorcery));
         UUID copyId = osteomancer.getPreparedSpellCardId();
 
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> harness.castFromExile(player1, copyId, instant.getId()))
+        assertThatThrownBy(() -> harness.castFromExile(player1, copyId, sorcery.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Raise Dead fizzles if the target creature leaves the graveyard before resolution")
+    void fizzlesIfTargetLeavesGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new RaiseDead()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, creature.getId());
+        gd.playerGraveyards.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(creature.getId()));
+        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("fizzles"));
     }
 
     @Test
@@ -99,10 +116,7 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
     }
 
     private Permanent castCheerfulOsteomancer() {
-        harness.setHand(player1, List.of(new CheerfulOsteomancerRaiseDead()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CheerfulOsteomancerRaiseDead(), "{3}{B}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB BecomePrepared trigger
 

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HealingSalve;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionRed;
+import com.github.laxika.magicalvibes.cards.s.SacredBoon;
 import com.github.laxika.magicalvibes.cards.z.ZealousInquisitor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LavaBurst.class, BalduvianBears.class, SacredBoon.class, CircleOfProtectionRed.class, ZealousInquisitor.class})
 class LavaBurstTest extends BaseCardTest {
 
     @Test
@@ -32,27 +35,28 @@ class LavaBurstTest extends BaseCardTest {
     @Test
     @DisplayName("Deals X damage to target creature, destroying it")
     void dealsXDamageToCreatureDestroysIt() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
         harness.setHand(player1, List.of(new LavaBurst()));
         harness.addMana(player1, ManaColor.RED, 3); // X=2 + {R}
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Balduvian Bears");
         harness.castSorcery(player1, 0, 2, targetId);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
     @DisplayName("Damage dealt to a creature can't be prevented")
     void creatureDamageCannotBePrevented() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
         harness.setHand(player1, List.of(new LavaBurst()));
         harness.addMana(player1, ManaColor.RED, 3); // X=2 + {R}
-        harness.setHand(player2, List.of(new HealingSalve()));
+        harness.setHand(player2, List.of(new SacredBoon()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Balduvian Bears");
         harness.castSorcery(player1, 0, 2, targetId);
         harness.passPriority(player1);
         // Player2 shields the Bears for the next 3 damage in response — but this damage
@@ -61,22 +65,25 @@ class LavaBurstTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
     @DisplayName("Damage dealt to a player can still be prevented")
     void playerDamageCanBePrevented() {
-        harness.setHand(player1, List.of(new LavaBurst()));
+        Permanent circle = addCreatureReady(player2, new CircleOfProtectionRed());
+        LavaBurst lavaBurst = new LavaBurst();
+        harness.setHand(player1, List.of(lavaBurst));
         harness.addMana(player1, ManaColor.RED, 4); // X=3 + {R}
-        harness.setHand(player2, List.of(new HealingSalve()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.setLife(player2, 20);
 
         harness.castSorcery(player1, 0, 3, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 1, player2.getId());
+        int circleIndex = gd.playerBattlefields.get(player2.getId()).indexOf(circle);
+        harness.activateAbility(player2, circleIndex, null, null);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, lavaBurst.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -86,7 +93,7 @@ class LavaBurstTest extends BaseCardTest {
     @DisplayName("Damage dealt to a creature can't be redirected")
     void creatureDamageCannotBeRedirected() {
         Permanent inquisitor = addCreatureReady(player1, new ZealousInquisitor());
-        Permanent destination = addCreatureReady(player1, new GrizzlyBears());
+        Permanent destination = addCreatureReady(player1, new BalduvianBears());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(inquisitor),

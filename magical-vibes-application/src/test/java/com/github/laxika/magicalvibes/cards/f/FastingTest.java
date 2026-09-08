@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +43,18 @@ class FastingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fasting does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotAddHungerCounter() {
+        Permanent fasting = addFasting();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(fasting.getCounterCount(CounterType.HUNGER)).isZero();
+        harness.assertOnBattlefield(player1, "Fasting");
+    }
+
+    @Test
     @DisplayName("Skipping the draw step gains 2 life and skips draw-step triggers")
     void skippingDrawStepGainsLifeAndSkipsDrawStepTriggers() {
         addFasting();
@@ -74,18 +87,35 @@ class FastingTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fasting");
     }
 
+    @Test
+    @DisplayName("An opponent drawing a card does not destroy Fasting")
+    void opponentDrawDoesNotDestroyFasting() {
+        addFasting();
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        advanceToDrawStep(player2);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize + 1);
+        harness.assertOnBattlefield(player1, "Fasting");
+    }
+
     private Permanent addFasting() {
         return harness.addToBattlefieldAndReturn(player1, new Fasting());
     }
 
     private void beginDrawStep(boolean skip) {
+        advanceToDrawStep(player1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, skip);
+    }
+
+    private void advanceToDrawStep(Player activePlayer) {
         gd.turnNumber = 2;
-        advanceToUpkeep(player1);
+        advanceToUpkeep(activePlayer);
         resolveAllTriggers();
 
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, skip);
     }
 }

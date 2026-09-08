@@ -52,6 +52,21 @@ class BasaltMonolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Basalt Monolith can be tapped again after paying to untap it")
+    void canBeTappedAgainAfterUntapping() {
+        Permanent monolith = addReadyMonolith(player1, false);
+
+        gs.tapPermanent(gd, player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        gs.tapPermanent(gd, player1, 0);
+
+        assertThat(monolith.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Basalt Monolith's untap ability requires {3}")
     void cannotUntapWithoutThreeMana() {
         addReadyMonolith(player1, true);
@@ -62,12 +77,11 @@ class BasaltMonolithTest extends BaseCardTest {
     }
 
     private Permanent addReadyMonolith(Player player, boolean tapped) {
-        Permanent monolith = new Permanent(new BasaltMonolith());
+        Permanent monolith = harness.addToBattlefieldAndReturn(player, new BasaltMonolith());
         monolith.setSummoningSick(false);
         if (tapped) {
             monolith.tap();
         }
-        gd.playerBattlefields.get(player.getId()).add(monolith);
         return monolith;
     }
 
@@ -77,8 +91,6 @@ class BasaltMonolithTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UNTAP);
     }
 }

@@ -16,10 +16,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ATH", collectorNumber = "29")
 @CardRegistration(set = "BTD", collectorNumber = "37")
 @CardRegistration(set = "SUM", collectorNumber = "150")
+@CardRegistration(set = "3ED", collectorNumber = "150")
 public class Fireball extends Card {
 
     public Fireball() {
         setAdditionalCostPerExtraTarget(1);
-        target(1, 99).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.xDividedEvenly());
+        target(0, 99).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.xDividedEvenly());
     }
 }

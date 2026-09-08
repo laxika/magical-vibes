@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -16,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.ArrayList;
 
 @Slf4j
 @Component
@@ -34,6 +34,8 @@ public class GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect) effect;
+        gameData.matchingCreatureBlockRestrictionsThisTurn
+                .computeIfAbsent(entry.getControllerId(), id -> new ArrayList<>()).add(grant);
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null) {
             return;
@@ -42,8 +44,6 @@ public class GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffectHandler implements
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                 .withSourceControllerId(entry.getControllerId());
-        CanBeBlockedOnlyByFilterEffect restriction =
-                new CanBeBlockedOnlyByFilterEffect(grant.blockerPredicate(), grant.allowedBlockersDescription());
 
         int count = 0;
         for (Permanent permanent : battlefield) {
@@ -54,7 +54,6 @@ public class GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffectHandler implements
                     && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.creatureFilter(), filterContext)) {
                 continue;
             }
-            permanent.getBlockRestrictionsUntilEndOfTurn().add(restriction);
             count++;
         }
 

@@ -38,9 +38,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                              beginning of the next end step.
  * @param etbAssignments        when {@code true}, read the target-to-counter mapping from the ETB
  *                              assignment buffer.
- * @param targetRestriction      optional narrowing predicate for ETB targets whose target group is
- *                              declared on the card.
  * @param targetRestriction     optional permanent predicate narrowing the legal targets.
+ * @param allowsNoTargets       whether the chosen distribution may contain no targets.
  */
 public record DistributeCountersAmongTargetsEffect(
         CounterType counterType,
@@ -49,13 +48,14 @@ public record DistributeCountersAmongTargetsEffect(
         boolean removeAtNextCleanup,
         boolean removeAtNextEndStep,
         boolean etbAssignments,
-        PermanentPredicate targetRestriction)
+        PermanentPredicate targetRestriction,
+        boolean allowsNoTargets)
         implements CardEffect {
 
     /** Fixed total split evenly across a {@code target(filter, 1, 2)} group (Splendid Agony). */
     public static DistributeCountersAmongTargetsEffect evenlyAmongTargets(CounterType counterType, int total) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.EVEN, false, false, false, null);
+                counterType, new Fixed(total), DivisionMode.EVEN, false, false, false, null, false);
     }
 
     /**
@@ -65,7 +65,7 @@ public record DistributeCountersAmongTargetsEffect(
      */
     public static DistributeCountersAmongTargetsEffect chosenUntilNextCleanup(CounterType counterType, int total) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.CHOSEN, true, false, false, null);
+                counterType, new Fixed(total), DivisionMode.CHOSEN, true, false, false, null, false);
     }
 
     /**
@@ -75,7 +75,7 @@ public record DistributeCountersAmongTargetsEffect(
     public static DistributeCountersAmongTargetsEffect chosenUntilNextEndStep(CounterType counterType,
                                                                                  int total) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.CHOSEN, false, true, false, null);
+                counterType, new Fixed(total), DivisionMode.CHOSEN, false, true, false, null, false);
     }
 
     /**
@@ -92,7 +92,14 @@ public record DistributeCountersAmongTargetsEffect(
     public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreatures(
             CounterType counterType, DynamicAmount total, PermanentPredicate targetRestriction) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, total, DivisionMode.CHOSEN, false, false, false, targetRestriction);
+                counterType, total, DivisionMode.CHOSEN, false, false, false, targetRestriction, false);
+    }
+
+    /** Chosen counter distribution that permits an empty target group. */
+    public static DistributeCountersAmongTargetsEffect chosenAmongAnyNumberOfTargetCreatures(
+            CounterType counterType, DynamicAmount total, PermanentPredicate targetRestriction) {
+        return new DistributeCountersAmongTargetsEffect(
+                counterType, total, DivisionMode.CHOSEN, false, false, false, targetRestriction, true);
     }
 
     /**
@@ -111,14 +118,14 @@ public record DistributeCountersAmongTargetsEffect(
     public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreaturesEtb(
             CounterType counterType, int total, PermanentPredicate targetRestriction) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.CHOSEN, false, false, true, targetRestriction);
+                counterType, new Fixed(total), DivisionMode.CHOSEN, false, false, true, targetRestriction, false);
     }
 
     /** Fixed total split evenly across a target group narrowed by a permanent predicate. */
     public static DistributeCountersAmongTargetsEffect evenlyAmongTargetPermanents(
             CounterType counterType, int total, PermanentPredicate targetRestriction) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.EVEN, false, false, false, targetRestriction);
+                counterType, new Fixed(total), DivisionMode.EVEN, false, false, false, targetRestriction, false);
     }
 
     @Override

@@ -13,10 +13,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -24,17 +26,19 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -46,6 +50,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.Set;
 import java.util.UUID;
@@ -53,9 +58,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -67,12 +70,6 @@ class LandTapTriggerCollectorServiceTest {
 
     @Mock
     private GameLogService gameLogService;
-
-    @Mock
-    private DamagePreventionService damagePreventionService;
-
-    @Mock
-    private PermanentRemovalService permanentRemovalService;
 
     @Mock
     private InteractionHandlerRegistry interactionHandlerRegistry;
@@ -87,10 +84,13 @@ class LandTapTriggerCollectorServiceTest {
     private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
-    private TriggerCollectionService triggerCollectionService;
+    private LifeSupport lifeSupport;
 
     @Mock
-    private LifeSupport lifeSupport;
+    private ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
+
+    @Mock
+    private DealDamageToPlayersEffectHandler dealDamageHandler;
 
     @InjectMocks
     private LandTapTriggerCollectorService sut;
@@ -107,14 +107,6 @@ class LandTapTriggerCollectorServiceTest {
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
-        lenient().when(gameQueryService.lifeAfterDamage(eq(gd), any(UUID.class), anyInt()))
-                .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
-                        - (int) invocation.getArgument(2));
-        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
-        lenient().when(damagePreventionService.applyChannelHarmPrevention(
-                        eq(gd), any(UUID.class), org.mockito.ArgumentMatchers.nullable(UUID.class), anyInt()))
-                .thenAnswer(invocation -> invocation.getArgument(3));
-
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
     }
@@ -210,284 +202,69 @@ class LandTapTriggerCollectorServiceTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== ON_ANY_PLAYER_TAPS_LAND — DealDamageOnLandTapEffect =====
-
     @Nested
     @DisplayName("ON_ANY_PLAYER_TAPS_LAND — DealDamageOnLandTapEffect")
     class DealDamageOnLandTap {
 
         @Test
-        @DisplayName("deals damage to the tapping player and returns true")
-        void dealsDamageToTappingPlayer() {
+        @DisplayName("Queues damage to the player who tapped the land")
+        void queuesDamageToTappingPlayer() {
             Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
             var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(1))).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(1), any()))
-                    .thenReturn(1);
-            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player2Id, UUID.randomUUID()));
 
             assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 1);
+            assertThat(gd.stack).hasSize(1);
+            var entry = gd.stack.getFirst();
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(manabarbs.getId());
+            assertThat(entry.getSourcePermanentSnapshot().getId()).isEqualTo(manabarbs.getId());
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getEffectsToResolve()).containsExactly(
+                    new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
-        @DisplayName("also damages the controller when they tap a land")
-        void damagesControllerToo() {
+        @DisplayName("Also queues damage when the source controller taps a land")
+        void queuesDamageToController() {
             Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
             var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player1Id, tappedLandId);
-
-            int lifeBefore = gd.getLife(player1Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player1Id), eq(1))).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(1), any()))
-                    .thenReturn(1);
-            when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player1Id, UUID.randomUUID()));
 
             assertThat(result).isTrue();
-            assertThat(gd.getLife(player1Id)).isEqualTo(lifeBefore - 1);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
         }
 
         @Test
-        @DisplayName("does not deal damage when source damage is prevented globally")
-        void noDamageWhenSourcePrevented() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(gameQueryService.isDamageFromPermanentSourcePrevented(gd, manabarbs)).thenReturn(true);
+        @DisplayName("Does not queue damage when the tapped land fails the filter")
+        void ignoresLandThatFailsFilter() {
+            Permanent burningEarth = createPermanent("Burning Earth");
+            Permanent tappedLand = createLandPermanent("Snow-Covered Island", ManaColor.BLUE);
+            var filter = new PermanentHasSupertypePredicate(CardSupertype.SNOW);
+            var effect = new DealDamageOnLandTapEffect(1, filter);
+            when(gameQueryService.findPermanentById(gd, tappedLand.getId())).thenReturn(tappedLand);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, tappedLand, filter)).thenReturn(false);
 
             boolean result = registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    match(burningEarth, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player2Id, tappedLand.getId()));
 
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-        }
-
-        @Test
-        @DisplayName("does not deal damage when source damage is prevented for player")
-        void noDamageWhenSourcePreventedForPlayer() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(damagePreventionService.isSourceDamagePreventedForPlayer(gd, player2Id, manabarbs.getId()))
-                    .thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-        }
-
-        @Test
-        @DisplayName("does not deal damage when color damage prevention applies")
-        void noDamageWhenColorPreventionApplies() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player2Id), any()))
-                    .thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-        }
-
-        @Test
-        @DisplayName("does not deal damage when permanent is prevented from dealing damage")
-        void noDamageWhenPermanentPrevented() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            gd.permanentsPreventedFromDealingDamage.add(manabarbs.getId());
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-
-            boolean result = registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-        }
-
-        @Test
-        @DisplayName("applies damage multiplier")
-        void appliesDamageMultiplier() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(2);
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any()))
-                    .thenReturn(2);
-            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
-
-            registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 2);
-        }
-
-        @Test
-        @DisplayName("tracks player as dealt damage this turn")
-        void tracksPlayerDealtDamageThisTurn() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(1))).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(1), any()))
-                    .thenReturn(1);
-
-            registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(gd.playersDealtDamageThisTurn).contains(player2Id);
-        }
-
-        @Test
-        @DisplayName("gives poison counters when damage should be dealt as infect")
-        void givesPoisonCountersWithInfect() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(1))).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(1), any()))
-                    .thenReturn(1);
-            when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
-
-            registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            verify(lifeSupport).applyPoisonCounters(gd, player2Id, 1, "Manabarbs", player1Id);
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-        }
-
-        @Test
-        @DisplayName("does not give poison counters when player can't get them")
-        void noPoisonWhenPlayerCantGetThem() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(1))).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(1), any()))
-                    .thenReturn(1);
-            when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
-            // canPlayerGetPoisonCounters defaults to false
-
-            registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(gd.playerPoisonCounters).doesNotContainKey(player2Id);
-        }
-
-        @Test
-        @DisplayName("does not track damage when prevention shield reduces damage to zero")
-        void noDamageTrackingWhenShieldReducesToZero() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(1))).thenReturn(0);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(0), any()))
-                    .thenReturn(0);
-
-            registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-            assertThat(gd.playersDealtDamageThisTurn).doesNotContain(player2Id);
-        }
-
-        @Test
-        @DisplayName("does not change life when player life can't change")
-        void noLifeChangeWhenPrevented() {
-            Permanent manabarbs = createPermanent("Manabarbs");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new DealDamageOnLandTapEffect(1);
-            var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.applyDamageMultiplier(gd, 1)).thenReturn(1);
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(1))).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(1), any()))
-                    .thenReturn(1);
-            // canPlayerLifeChange defaults to false — life can't change
-
-            registry.dispatch(
-                    match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
-
-    // ===== ON_ANY_PLAYER_TAPS_LAND — AddManaOnEnchantedLandTapEffect =====
 
     @Nested
     @DisplayName("ON_ANY_PLAYER_TAPS_LAND — AddManaOnEnchantedLandTapEffect")
@@ -607,6 +384,7 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player1Id, forest.getId());
 
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+            when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player1Id);
 
             int greenBefore = gd.playerManaPools.get(player1Id).get(ManaColor.GREEN);
 
@@ -698,6 +476,7 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
 
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+            when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player2Id);
             when(predicateEvaluationService.matchesPermanentPredicate(gd, forest, filter)).thenReturn(true);
 
             boolean result = registry.dispatch(
@@ -735,6 +514,50 @@ class LandTapTriggerCollectorServiceTest {
     @Nested
     @DisplayName("ON_ANY_PLAYER_TAPS_LAND — AddOneOfEachManaTypeProducedByLandEffect")
     class AddOneOfEachManaType {
+
+        @Test
+        void waitsForTheLandsManaColorChoice() {
+            Permanent source = createPermanent("Mana Flare");
+            Permanent land = new Permanent(createLandCard("City of Brass"));
+            var effect = new AddOneOfEachManaTypeProducedByLandEffect(false);
+            when(gameQueryService.findPermanentById(gd, land.getId())).thenReturn(land);
+            gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(
+                    player2Id, null, null, null, List.of("RED"), "Choose mana."));
+
+            boolean result = registry.dispatch(match(source, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player2Id, land.getId()));
+
+            assertThat(result).isTrue();
+            assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+            assertThat(gd.pendingManaAbilityTriggers.getFirst().getControllerId()).isEqualTo(player2Id);
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.RED)).isZero();
+        }
+
+        @Test
+        @DisplayName("resolves a combined mana-and-damage ability immediately")
+        void resolvesCombinedManaAndDamageAbilityImmediately() {
+            Permanent triggerPerm = createPermanent("Overabundance");
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = SequenceEffect.of(
+                    new AddOneOfEachManaTypeProducedByLandEffect(false),
+                    new DealDamageOnLandTapEffect(1));
+            var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
+
+            when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+            when(dealDamageHandlerProvider.getObject()).thenReturn(dealDamageHandler);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(gd.stack).isEmpty();
+            verify(dealDamageHandler).resolve(
+                    eq(gd), any(StackEntry.class), eq(new DealDamageToPlayersEffect(
+                            1, DamageRecipient.TARGET_PLAYER)));
+        }
 
         @Test
         @DisplayName("adds one additional mana of the type produced by the tapped land")
@@ -1042,6 +865,41 @@ class LandTapTriggerCollectorServiceTest {
                     EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("AddManaWhenLandTappedForManaEffect")
+    class AddManaWhenLandTappedForMana {
+
+        @Test
+        @DisplayName("adds fixed-color mana when the source controller taps a land")
+        void addsManaForControllerLand() {
+            Permanent triggerPerm = createPermanent("Groundchuck & Dirtbag");
+            var effect = new AddManaWhenLandTappedForManaEffect(ManaColor.GREEN);
+            var ctx = new TriggerContext.LandTap(player1Id, UUID.randomUUID());
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isOne();
+        }
+
+        @Test
+        @DisplayName("does not add fixed-color mana when an opponent taps a land")
+        void ignoresOpponentLand() {
+            Permanent triggerPerm = createPermanent("Groundchuck & Dirtbag");
+            var effect = new AddManaWhenLandTappedForManaEffect(ManaColor.GREEN);
+            var ctx = new TriggerContext.LandTap(player2Id, UUID.randomUUID());
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
         }
     }
 }

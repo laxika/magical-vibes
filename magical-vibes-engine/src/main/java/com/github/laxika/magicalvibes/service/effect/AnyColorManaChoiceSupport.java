@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 
@@ -139,6 +140,16 @@ public final class AnyColorManaChoiceSupport {
                                            Card sourceCard, UUID sourcePermanentId,
                                            UUID recipientPlayerId, boolean fromSnowSource,
                                            boolean fromCaveSource, Set<CardColor> sourceColors) {
+        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount, fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource, sourceColors, false);
+    }
+
+    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameData gameData, UUID playerId,
+                                           AwardAnyColorManaEffect effect, int amount,
+                                           boolean fromCreature, CardSubtype chosenSubtype,
+                                           Card sourceCard, UUID sourcePermanentId,
+                                           UUID recipientPlayerId, boolean fromSnowSource,
+                                           boolean fromCaveSource, Set<CardColor> sourceColors, boolean fromTreasureSource) {
         if (amount <= 0) {
             return false;
         }
@@ -169,6 +180,9 @@ public final class AnyColorManaChoiceSupport {
         } else if (fromSnowSource
                 && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withSnowSource(true);
+        }
+        if (fromTreasureSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
+            choiceContext = manaColorChoice.withTreasureSource(true);
         }
         if (fromCaveSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withCaveSource(true);
@@ -206,6 +220,9 @@ public final class AnyColorManaChoiceSupport {
                     manaPool.addCreatureMana(effectiveColor, amount);
                 }
             }
+            if (fromTreasureSource) {
+                manaPool.addTreasureMana(effectiveColor, amount);
+            }
             return false;
         }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -241,6 +258,10 @@ public final class AnyColorManaChoiceSupport {
                 return ChoiceContext.ManaColorSpellChoice.anyColorCombination(
                         playerId, amount, effect.spellOnlySubtypes());
             }
+            if (effect.restriction() == ManaSpendRestriction.CREATURE_SPELL_ONLY) {
+                return ChoiceContext.ManaColorChoice.creatureSpellOnlyColorCombination(
+                        playerId, fromCreature, amount, effect.allowedColors());
+            }
             if (effect.restriction() == ManaSpendRestriction.SPELL_ONLY) {
                 return new ChoiceContext.SpellOnlyManaColorChoice(
                         playerId, fromCreature, amount, true);
@@ -258,8 +279,11 @@ public final class AnyColorManaChoiceSupport {
         }
 
         ChoiceContext choice = switch (effect.restriction()) {
-            case NONE, INSTANT_SORCERY_COPY ->
-                    new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);
+            case NONE, INSTANT_SORCERY_COPY -> effect.restriction() == ManaSpendRestriction.NONE
+                    && sourceCard != null
+                    && sourceCard.getSubtypes().contains(CardSubtype.TREASURE)
+                    ? new ChoiceContext.TreasureManaColorChoice(playerId, amount)
+                    : new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);
             case SPELL_ONLY ->
                     new ChoiceContext.SpellOnlyManaColorChoice(playerId, fromCreature, amount, false);
             case MULTICOLORED_SPELLS ->
@@ -295,6 +319,9 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.ExiledSpellManaColorChoice(playerId, fromCreature, amount);
             case GRAVEYARD_SPELL_ONLY ->
                     new ChoiceContext.GraveyardManaColorChoice(playerId, fromCreature, amount);
+            case DEVOID_SPELL ->
+                    new ChoiceContext.RestrictedManaColorChoice(playerId, amount, fromCreature,
+                            effect.allowedColors(), new ManaRestriction.DevoidSpells());
             case CREATURE_SPELL_ONLY -> ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, fromCreature, amount);
             case CREATURE_OR_ENCHANTMENT_SPELL_ONLY ->
                     throw new IllegalArgumentException("Use the two-color mana effect for this restriction");
@@ -388,6 +415,7 @@ public final class AnyColorManaChoiceSupport {
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
             case EXILED_SPELL_ONLY -> "Choose a color of mana to add (spells from exile only).";
             case GRAVEYARD_SPELL_ONLY -> "Choose a color of mana to add (graveyard spells only).";
+            case DEVOID_SPELL -> "Choose a color of mana to add (spells with devoid only).";
             case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
             case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X ->
                     "Choose a color of mana to add (qualifying creature spells only).";

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ColossusOfSardia.class, GrizzlyBears.class})
 class ColossusOfSardiaTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -30,7 +32,7 @@ class ColossusOfSardiaTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Colossus of Sardia");
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
     @Test
@@ -42,7 +44,9 @@ class ColossusOfSardiaTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Colossus of Sardia");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard())
+                .isInstanceOf(ColossusOfSardia.class);
     }
 
     // ===== Doesn't untap during untap step =====
@@ -85,10 +89,8 @@ class ColossusOfSardiaTest extends BaseCardTest {
         Permanent colossusPerm = addColossusReady(player1);
         colossusPerm.tap();
 
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
         bearsPerm.tap();
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         // Advance to player1's turn
         advanceToNextTurn(player2);
@@ -116,7 +118,7 @@ class ColossusOfSardiaTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Colossus of Sardia");
+        assertThat(entry.getCard()).isInstanceOf(ColossusOfSardia.class);
     }
 
     @Test
@@ -204,15 +206,10 @@ class ColossusOfSardiaTest extends BaseCardTest {
     void unblockedDealsFull9Damage() {
         harness.setLife(player2, 20);
 
-        Permanent colossusPerm = new Permanent(new ColossusOfSardia());
-        colossusPerm.setSummoningSick(false);
+        Permanent colossusPerm = addCreatureReady(player1, new ColossusOfSardia());
         colossusPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(colossusPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(11);
     }
@@ -223,21 +220,14 @@ class ColossusOfSardiaTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // 9/9 Colossus attacks, blocked by 2/2 Bears
-        Permanent colossusPerm = new Permanent(new ColossusOfSardia());
-        colossusPerm.setSummoningSick(false);
+        Permanent colossusPerm = addCreatureReady(player1, new ColossusOfSardia());
         colossusPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(colossusPerm);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         // Trample creature blocked → assign lethal to blocker, excess to player
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
@@ -248,7 +238,8 @@ class ColossusOfSardiaTest extends BaseCardTest {
         // 9 power - 2 toughness = 7 trample damage to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
         // Blocker should be dead
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof GrizzlyBears);
     }
 
     @Test
@@ -257,27 +248,18 @@ class ColossusOfSardiaTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // 9/9 Colossus attacks, blocked by two 2/2 Bears
-        Permanent colossusPerm = new Permanent(new ColossusOfSardia());
-        colossusPerm.setSummoningSick(false);
+        Permanent colossusPerm = addCreatureReady(player1, new ColossusOfSardia());
         colossusPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(colossusPerm);
 
-        Permanent blocker1 = new Permanent(new GrizzlyBears());
-        blocker1.setSummoningSick(false);
+        Permanent blocker1 = addCreatureReady(player2, new GrizzlyBears());
         blocker1.setBlocking(true);
         blocker1.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker1);
 
-        Permanent blocker2 = new Permanent(new GrizzlyBears());
-        blocker2.setSummoningSick(false);
+        Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
         blocker2.setBlocking(true);
         blocker2.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         // Trample creature blocked by 2 → assign lethal to each, excess to player
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
@@ -297,26 +279,16 @@ class ColossusOfSardiaTest extends BaseCardTest {
     void noTrampleWhenBlockerHasEqualToughness() {
         harness.setLife(player2, 20);
 
-        // 9/9 Colossus attacks, blocked by a 1/9 wall
-        GrizzlyBears wall = new GrizzlyBears();
-        wall.setPower(1);
-        wall.setToughness(9);
+        // 9/9 Colossus attacks, blocked by another 9/9 Colossus
 
-        Permanent colossusPerm = new Permanent(new ColossusOfSardia());
-        colossusPerm.setSummoningSick(false);
+        Permanent colossusPerm = addCreatureReady(player1, new ColossusOfSardia());
         colossusPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(colossusPerm);
 
-        Permanent blockerPerm = new Permanent(wall);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new ColossusOfSardia());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         // 9 power - 9 toughness = 0 trample damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -325,10 +297,7 @@ class ColossusOfSardiaTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addColossusReady(Player player) {
-        Permanent perm = new Permanent(new ColossusOfSardia());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ColossusOfSardia());
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {

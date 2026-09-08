@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "210")
+@CardRegistration(set = "CST", collectorNumber = "36")
 public class OrcishLumberjack extends Card {
 
     public OrcishLumberjack() {
@@ -23,7 +24,7 @@ public class OrcishLumberjack extends Card {
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),
                                 "Sacrifice a Forest",
-                                true),
+                                false),
                         new AwardManaOfColorsEffect(List.of(ManaColor.RED, ManaColor.GREEN), 3)),
                 "{T}, Sacrifice a Forest: Add three mana in any combination of {R} and/or {G}."
         ));

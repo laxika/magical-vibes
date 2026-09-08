@@ -74,7 +74,8 @@ class WearAwayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castWithSplice(player1, 0, targetId, List.of(1));
+        gs.playCardWithSplice(gd, player1, 0, 0, null, null,
+                List.of(targetId, targetId), List.of(1));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Fountain of Youth");

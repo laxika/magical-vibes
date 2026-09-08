@@ -37,15 +37,15 @@ public class DestroyOtherCreaturesOfChosenManaValueParityEffectHandler implement
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
 
-        if (gameData.chosenSpellParity == null) {
+        if (gameData.chosenSpellManaValueParity == null) {
             gameData.rerunCurrentEffectAfterInteraction = true;
             playerInputService.beginSpellManaValueParityChoice(gameData, controllerId);
             return;
         }
 
         gameData.rerunCurrentEffectAfterInteraction = false;
-        ManaValueParity chosen = gameData.chosenSpellParity;
-        gameData.chosenSpellParity = null;
+        ManaValueParity chosen = gameData.chosenSpellManaValueParity;
+        gameData.chosenSpellManaValueParity = null;
 
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())

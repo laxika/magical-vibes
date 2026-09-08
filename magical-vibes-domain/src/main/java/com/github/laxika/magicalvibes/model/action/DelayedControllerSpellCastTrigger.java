@@ -12,8 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 /**
  * Delayed trigger: "Until end of turn, whenever you cast a [filter] spell, [effects]." Registered by
- * Mountain Titan's activated ability. Fires once per matching spell the registering controller casts
- * for the rest of the turn; the stack entry carries {@code sourcePermanentId} so self-referential
+ * Mountain Titan's activated ability. Fires once per matching spell (or once total when
+ * {@code oneShot} is true) the registering controller casts for the rest of the turn; the stack
+ * entry carries {@code sourcePermanentId} so self-referential
  * effects ({@code PutCountersOnSourceEffect}) find the permanent that granted the trigger. Cleared
  * at turn cleanup.
  *
@@ -21,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  * @param sourcePermanentId             permanent that registered the trigger
  * @param sourceCard                    card shown in the log / on the stack
  * @param spellFilter                   which cast spells trigger it; {@code null} = any spell
- * @param stackEntryFilter              optional filter evaluated against the cast spell's stack entry
+ * @param stackEntryFilter              optional filter evaluated against the cast stack entry
  * @param resolvedEffects               effects put on the stack when it fires
  * @param sourceMustRemainOnBattlefield whether the source permanent must still be on the battlefield
  *                                      for the delayed trigger to fire

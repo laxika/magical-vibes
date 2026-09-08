@@ -66,6 +66,21 @@ class SeaSpriteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flying prevents a nonflying creature from blocking")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        addCreatureReady(player1, new SeaSprite());
+        addCreatureReady(player2, new SpectralBears());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
+
+    @Test
     @DisplayName("Cannot be blocked by a red creature")
     void cannotBeBlockedByRedCreature() {
         addCreatureReady(player1, new SeaSprite());

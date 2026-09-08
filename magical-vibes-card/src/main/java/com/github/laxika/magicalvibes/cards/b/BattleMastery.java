@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "5")
 @CardRegistration(set = "M15", collectorNumber = "4")
+@CardRegistration(set = "DTK", collectorNumber = "7")
 public class BattleMastery extends Card {
 
     public BattleMastery() {

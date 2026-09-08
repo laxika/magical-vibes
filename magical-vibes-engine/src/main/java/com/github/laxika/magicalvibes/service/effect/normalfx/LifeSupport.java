@@ -166,6 +166,7 @@ public class LifeSupport {
     }
 
     public void applyLifeLoss(GameData gameData, UUID playerId, int amount, String sourceName) {
+        if (amount <= 0) return;
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
@@ -192,10 +193,21 @@ public class LifeSupport {
             return;
         }
 
-        amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (gameQueryService.hasLifePaymentReplacement(gameData, playerId)
+                && gameData.getLife(playerId) >= amount
+                && deck != null && deck.size() >= amount) {
+            for (int i = 0; i < amount; i++) {
+                gameData.addToExile(playerId, deck.removeFirst());
+            }
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " exiles " + amount + " card(s) instead of paying life (" + sourceName + ")."));
+            return;
+        }
+
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - amount);
-        gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);
 
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.text(

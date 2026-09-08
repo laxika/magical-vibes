@@ -30,16 +30,14 @@ public class SacrificeEnchantedCreatureEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        // Find the aura permanent via sourcePermanentId
+        // Find the Aura permanent via sourcePermanentId. The attachment captured when the trigger
+        // fired remains authoritative if the Aura has since left or become attached elsewhere.
         Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (auraPerm == null) {
-            log.info("Game {} - Aura {} no longer on battlefield, skipping sacrifice trigger",
-                    gameData.id, entry.getCard().getName());
-            return;
-        }
+        Permanent auraSnapshot = entry.getSourcePermanentSnapshot();
 
-        // Find the enchanted creature
-        UUID enchantedId = auraPerm.getAttachedTo();
+        UUID enchantedId = auraSnapshot != null && auraSnapshot.getAttachedTo() != null
+                ? auraSnapshot.getAttachedTo()
+                : auraPerm == null ? null : auraPerm.getAttachedTo();
         if (enchantedId == null) {
             log.info("Game {} - {} is not attached to anything, skipping sacrifice trigger",
                     gameData.id, entry.getCard().getName());

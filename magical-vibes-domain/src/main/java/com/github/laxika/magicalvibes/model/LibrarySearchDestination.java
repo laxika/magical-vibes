@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model;
 
 public enum LibrarySearchDestination {
     HAND,
+    /** Reveal the chosen card, then let the searcher put it into their hand or graveyard. */
+    HAND_OR_GRAVEYARD,
     /** Reveal the chosen card, return it to the library, then shuffle. */
     REVEAL_ONLY,
     BATTLEFIELD,
@@ -53,11 +55,15 @@ public enum LibrarySearchDestination {
     PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM,
     /** Exile one chosen card, then offer it for casting without paying its mana cost. */
     EXILE_AND_MAY_CAST_WITHOUT_PAYING,
+    /** Exile one chosen card face down and offer an eligible card for a free cast or its owner's hand. */
+    EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND,
     /** Exile the chosen card face up and hold it for a later free cast, then continue the
     *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
     EXILE_FOR_FREE_CAST,
     /** Exile the chosen card face up and offer its controller a one-time free cast. */
     EXILE_FOR_MAY_CAST,
+    /** Exile the chosen card face up and offer its controller a one-time normal-cost cast. */
+    EXILE_FOR_MAY_CAST_WITH_NORMAL_COST,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
     BATTLEFIELD_UNDER_SEARCHER,
     /** Put the chosen card onto the battlefield tapped under a specified player's control. */

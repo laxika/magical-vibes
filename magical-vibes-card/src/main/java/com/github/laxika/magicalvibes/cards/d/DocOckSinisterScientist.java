@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "29")
+@CardRegistration(set = "OM1", collectorNumber = "38")
 public class DocOckSinisterScientist extends Card {
 
     public DocOckSinisterScientist() {

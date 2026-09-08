@@ -241,6 +241,27 @@ class TriggerTargetCollectorTest {
     }
 
     @Test
+    @DisplayName("DEATH option with a controlled land filter allows non-creature targets")
+    void deathControlledLandFilterAllowsNonCreatures() {
+        Permanent noncreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(noncreature);
+        lenient().when(gameQueryService.isCreature(gd, noncreature)).thenReturn(false);
+        lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                        any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenReturn(true);
+
+        lenient().when(predicateEvaluationService.matchesFilters(
+                eq(noncreature), anySet(), any(FilterContext.class))).thenReturn(true);
+        TargetFilter filter = TargetFilters.landYouControl();
+        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, filter, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
+
+        assertThat(result.validTargets()).contains(noncreature.getId());
+    }
+
+    @Test
     @DisplayName("ATTACK any-target excludes lands (creature / planeswalker / player only)")
     void attackAnyTargetExcludesLands() {
         Permanent creature = new Permanent(new Card());
@@ -305,5 +326,25 @@ class TriggerTargetCollectorTest {
                 TriggerTargetCollector.Options.UPKEEP);
 
         assertThat(result.validTargets()).contains(ownCreature.getId()).doesNotContain(opponentCreature.getId());
+    }
+
+    @Test
+    void castXRestrictsEnterTriggerTargets() {
+        Card cheapCard = new Card();
+        cheapCard.setName("Cheap creature");
+        cheapCard.setManaCost("{2}");
+        Card expensiveCard = new Card();
+        expensiveCard.setName("Expensive creature");
+        expensiveCard.setManaCost("{4}");
+        Permanent cheap = new Permanent(cheapCard);
+        Permanent expensive = new Permanent(expensiveCard);
+        gd.playerBattlefields.get(player2Id).addAll(List.of(cheap, expensive));
+        TargetFilter filter = new PermanentPredicateTargetFilter(
+                new com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate(),
+                "Mana value must not exceed X");
+        var result = collector.collect(gd, List.of(new DestroyTargetPermanentEffect()), filter,
+                player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK, null, null, 3);
+
+        assertThat(result.validTargets()).containsExactly(cheap.getId());
     }
 }

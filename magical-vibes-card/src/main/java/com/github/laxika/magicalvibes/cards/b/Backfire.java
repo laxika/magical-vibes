@@ -15,6 +15,6 @@ public class Backfire extends Card {
                 // Whenever enchanted creature deals damage to you, this Aura deals that much
                 // damage to that creature's controller.
                 .addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU,
-                        new EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect());
+                        new EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect(true));
     }
 }

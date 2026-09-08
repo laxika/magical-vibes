@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.model.action;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 
 import java.util.UUID;
 
-/** Delayed triggered ability that puts counters on a remembered permanent at the next end step. */
+/** Delayed trigger that puts the stored counter effect on a permanent at the next end step. */
 public record PutCounterOnPermanentAtNextEndStep(
-        UUID permanentId,
-        UUID controllerId,
-        CounterType counterType,
-        int amount,
-        Card sourceCard
-) implements DelayedAction {
+        Card sourceCard, UUID controllerId, UUID permanentId, PutCounterOnTargetPermanentEffect effect)
+        implements DelayedAction {
+
+    public PutCounterOnPermanentAtNextEndStep(UUID permanentId, UUID controllerId,
+            com.github.laxika.magicalvibes.model.CounterType counterType, int amount, Card sourceCard) {
+        this(sourceCard, controllerId, permanentId, new PutCounterOnTargetPermanentEffect(counterType, amount));
+    }
 }

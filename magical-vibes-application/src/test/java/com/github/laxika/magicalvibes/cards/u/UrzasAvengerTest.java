@@ -2,35 +2,33 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(UrzasAvenger.class)
 class UrzasAvengerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability puts an activated ability on the stack")
     void activatingPutsOnStack() {
-        addAvengerReady(player1);
+        addCreatureReady(player1, new UrzasAvenger());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        StackEntry entry = gd.stack.getFirst();
-        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Urza's Avenger");
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
 
     @Test
     @DisplayName("Resolving gives -1/-1 and grants chosen flying until end of turn")
     void resolvingGrantsMinusAndFlying() {
-        Permanent avenger = addAvengerReady(player1);
+        Permanent avenger = addCreatureReady(player1, new UrzasAvenger());
         int power = gqs.getEffectivePower(gd, avenger);
         int toughness = gqs.getEffectiveToughness(gd, avenger);
 
@@ -48,7 +46,7 @@ class UrzasAvengerTest extends BaseCardTest {
     @Test
     @DisplayName("Can choose first strike")
     void canChooseFirstStrike() {
-        Permanent avenger = addAvengerReady(player1);
+        Permanent avenger = addCreatureReady(player1, new UrzasAvenger());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -60,7 +58,7 @@ class UrzasAvengerTest extends BaseCardTest {
     @Test
     @DisplayName("Can choose trample")
     void canChooseTrample() {
-        Permanent avenger = addAvengerReady(player1);
+        Permanent avenger = addCreatureReady(player1, new UrzasAvenger());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -72,7 +70,7 @@ class UrzasAvengerTest extends BaseCardTest {
     @Test
     @DisplayName("Both the -1/-1 and the granted keyword wear off at end of turn")
     void wearsOffAtEndOfTurn() {
-        Permanent avenger = addAvengerReady(player1);
+        Permanent avenger = addCreatureReady(player1, new UrzasAvenger());
         int power = gqs.getEffectivePower(gd, avenger);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -93,20 +91,12 @@ class UrzasAvengerTest extends BaseCardTest {
     @Test
     @DisplayName("Can choose banding")
     void canChooseBanding() {
-        Permanent avenger = addAvengerReady(player1);
+        Permanent avenger = addCreatureReady(player1, new UrzasAvenger());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BANDING");
 
         assertThat(gqs.hasKeyword(gd, avenger, Keyword.BANDING)).isTrue();
-    }
-
-    private Permanent addAvengerReady(Player player) {
-        UrzasAvenger card = new UrzasAvenger();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

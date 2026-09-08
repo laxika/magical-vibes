@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "193")
+@CardRegistration(set = "DD1", collectorNumber = "53")
 public class TarPitcher extends Card {
 
     public TarPitcher() {

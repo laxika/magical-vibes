@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,15 +12,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(Omen.class)
 class OmenTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Omen enters library reorder state with 3 cards")
     void resolvingEntersLibraryReorderState() {
-        harness.setHand(player1, List.of(new Omen()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -30,10 +28,7 @@ class OmenTest extends BaseCardTest {
     @Test
     @DisplayName("After reorder, player is asked to shuffle")
     void afterReorderPlayerIsAskedToShuffle() {
-        harness.setHand(player1, List.of(new Omen()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
         harness.passBothPriorities();
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
@@ -44,13 +39,10 @@ class OmenTest extends BaseCardTest {
     @Test
     @DisplayName("Reordering changes which card is drawn")
     void reorderingChangesDrawnCard() {
-        harness.setHand(player1, List.of(new Omen()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top2 = deck.get(2);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
         harness.passBothPriorities();
 
         // Put card at index 2 on top, then decline shuffle
@@ -67,10 +59,7 @@ class OmenTest extends BaseCardTest {
     void acceptShuffleRandomizesBeforeDraw() {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new Omen()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
         harness.passBothPriorities();
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
@@ -83,10 +72,7 @@ class OmenTest extends BaseCardTest {
     @Test
     @DisplayName("Omen goes to graveyard after fully resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new Omen()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
         harness.passBothPriorities();
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
@@ -94,5 +80,40 @@ class OmenTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Omen");
+    }
+
+    @Test
+    @DisplayName("A library with fewer than three cards reorders all available cards before drawing")
+    void shortLibraryReordersAllAvailableCards() {
+        Card first = new Omen();
+        Card second = new Omen();
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(first, second);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+    }
+
+    @Test
+    @DisplayName("Accepting the shuffle logs the shuffle before drawing")
+    void acceptingShuffleLogsShuffle() {
+        harness.castFromHand(player1, new Omen(), "{1}{U}");
+        harness.passBothPriorities();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their library.")).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

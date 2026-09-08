@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -763,23 +764,29 @@ public class GameSimulator {
                 .map(BeholdAndExileCost.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (cost == null) {
+        boolean chooseCreatureOrRevealCreatureCard = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(ChooseCreatureOrRevealCreatureCardCost.class::isInstance);
+        if (cost == null && !chooseCreatureOrRevealCreatureCard) {
             return new BeholdSelection(null, null);
         }
 
-        PermanentPredicate permanentFilter = new PermanentHasSubtypePredicate(cost.subtype());
+        PermanentPredicate permanentFilter = cost == null ? null : new PermanentHasSubtypePredicate(cost.subtype());
         for (Permanent permanent : gd.playerBattlefields.getOrDefault(playerId, List.of())) {
-            if (predicateEvaluationService.matchesPermanentPredicate(gd, permanent, permanentFilter)) {
+            if (chooseCreatureOrRevealCreatureCard
+                    ? gameQueryService.isCreature(gd, permanent)
+                    : predicateEvaluationService.matchesPermanentPredicate(gd, permanent, permanentFilter)) {
                 return new BeholdSelection(permanent.getId(), null);
             }
         }
 
-        CardSubtypePredicate cardFilter = new CardSubtypePredicate(cost.subtype());
+        CardSubtypePredicate cardFilter = cost == null ? null : new CardSubtypePredicate(cost.subtype());
         List<Card> hand = gd.playerHands.getOrDefault(playerId, List.of());
         for (int i = 0; i < hand.size(); i++) {
             Card candidate = hand.get(i);
             if (!candidate.getId().equals(card.getId())
-                    && predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId())) {
+                    && (chooseCreatureOrRevealCreatureCard
+                    ? candidate.hasType(CardType.CREATURE)
+                    : predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId()))) {
                 return new BeholdSelection(null, i);
             }
         }

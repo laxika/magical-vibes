@@ -13,8 +13,10 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -23,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -33,18 +36,24 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreaturesCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -88,6 +97,9 @@ class DiscardTriggerCollectorServiceTest {
     @Mock
     private LifeSupport lifeSupport;
 
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
+
     @InjectMocks
     private DiscardTriggerCollectorService sut;
 
@@ -113,7 +125,43 @@ class DiscardTriggerCollectorServiceTest {
         TriggerCollectorRegistry.scanBean(sut, registry);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Queues a conditional discard trigger only when its condition is met")
+    void queuesConditionalDiscardTriggerWhenConditionIsMet() {
+        Permanent source = createPermanent("Spacecraft");
+        var condition = new SourceCounterThreshold(1, CounterType.CHARGE);
+        var wrapped = new DrawCardEffect(1);
+        var effect = new ConditionalEffect(condition, wrapped);
+        var ctx = new TriggerContext.Discard(player2Id, createCard("Discarded card"));
+        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class)))
+                .thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(source, player1Id, effect), EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+        });
+    }
+
+    @Test
+    void cyclingQueuesKeywordGrantForItsSource() {
+        Permanent source = createPermanent("Cycling observer");
+        var effect = new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF);
+        var context = new TriggerContext.Cycle(player2Id, createCard("Cycled card"));
+
+        boolean collected = registry.dispatch(
+                match(source, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CYCLES, effect, context);
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        });
+    }
 
     private static Card createCard(String name) {
         Card card = new Card();
@@ -128,6 +176,63 @@ class DiscardTriggerCollectorServiceTest {
 
     private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — CyclingTriggerEffect")
+    class ControllerCycling {
+
+        @Test
+        @DisplayName("queues the wrapped effect only for a cycling discard")
+        void queuesOnlyForCyclingDiscard() {
+            Permanent healer = createPermanent("Drannith Healer");
+            var effect = new CyclingTriggerEffect(new GainLifeEffect(1));
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Censor"), true);
+
+            boolean result = registry.dispatch(
+                    match(healer, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve())
+                    .containsExactly(new GainLifeEffect(1));
+        }
+
+        @Test
+        @DisplayName("does not queue the wrapped effect for an ordinary discard")
+        void ignoresOrdinaryDiscard() {
+            Permanent healer = createPermanent("Drannith Healer");
+            var effect = new CyclingTriggerEffect(new GainLifeEffect(1));
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Censor"));
+
+            boolean result = registry.dispatch(
+                    match(healer, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("queues a target choice for a targeted cycling trigger")
+        void queuesTargetChoiceForTargetedCyclingTrigger() {
+            Permanent tactician = createPermanent("Snare Tactician");
+            var wrapped = new TapPermanentsEffect(TapUntapScope.TARGET);
+            var effect = new CyclingTriggerEffect(wrapped);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Censor"), true);
+
+            boolean result = registry.dispatch(
+                    match(tactician, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class))
+                    .isTrue();
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)
+                    .effects()).containsExactly(wrapped);
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     // ===== ON_OPPONENT_DISCARDS — DealDamageToDiscardingPlayerEffect =====
@@ -592,6 +697,26 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(buccaneer.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
         }
+
+        @Test
+        @DisplayName("queues conditional damage when the condition is met")
+        void queuesConditionalDamageTrigger() {
+            Permanent classPermanent = createPermanent("Cool but Rude");
+            var effect = new ConditionalEffect(
+                    new SourceCounterThreshold(1, CounterType.LEVEL),
+                    new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+            when(conditionEvaluationService.isMet(
+                    eq(gd), eq(effect.condition()), any(ConditionContext.class))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(classPermanent, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        }
     }
 
     @Nested
@@ -672,6 +797,32 @@ class DiscardTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("ON_CONTROLLER_DISCARD_EVENT — DrawCardEffect")
+    class ControllerDiscardEventDraw {
+
+        @Test
+        @DisplayName("queues a draw using the number of cards discarded in the event")
+        void queuesDrawTriggerWithDiscardedCount() {
+            Permanent rielle = createPermanent("Rielle, the Everwise");
+            var effect = new DrawCardEffect(new com.github.laxika.magicalvibes.model.amount.EventValue());
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(rielle, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(rielle.getId());
+            assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
+    @Nested
     @DisplayName("ON_CONTROLLER_DISCARD_EVENT — PutCountersOnSelfEffect")
     class ControllerDiscardEventSelfCounters {
 
@@ -696,6 +847,31 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(mako.getId());
             assertThat(entry.getEventValue()).isEqualTo(3);
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_CYCLES — PutCountersOnSelfEffect")
+    class CycleSelfCounters {
+
+        @Test
+        @DisplayName("queues a counter trigger with the source permanent")
+        void queuesCounterTrigger() {
+            Permanent aura = createPermanent("Withering Hex");
+            var effect = new PutCountersOnSelfEffect(CounterType.PLAGUE);
+            var ctx = new TriggerContext.Cycle(player1Id, createCard("Censor"));
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CYCLES, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         }
     }
 

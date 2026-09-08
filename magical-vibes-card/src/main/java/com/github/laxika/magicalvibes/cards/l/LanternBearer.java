@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 
 @CardRegistration(set = "INR", collectorNumber = "72")
+@CardRegistration(set = "VOW", collectorNumber = "66")
 public class LanternBearer extends Card {
 
     public LanternBearer() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "69")
+@CardRegistration(set = "ONS", collectorNumber = "174")
 public class Swat extends Card {
 
     public Swat() {

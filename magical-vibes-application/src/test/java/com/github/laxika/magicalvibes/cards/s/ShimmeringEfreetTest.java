@@ -1,22 +1,24 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianWalker;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShimmeringEfreet.class, PhyrexianWalker.class})
 class ShimmeringEfreetTest extends BaseCardTest {
 
     @Test
     @DisplayName("Phasing in presents a mandatory creature target to phase out")
     void phasesInPresentsTargetChoice() {
         Permanent efreet = addCreatureReady(player1, new ShimmeringEfreet());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent walker = addCreatureReady(player2, new PhyrexianWalker());
 
         advanceTurn(); // player2
         advanceTurn(); // player1 untap — efreet phases out
@@ -30,11 +32,11 @@ class ShimmeringEfreetTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, walker.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
-        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(walker);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(walker);
         // The chosen target phases out, never the Efreet that granted the ability.
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(efreet);

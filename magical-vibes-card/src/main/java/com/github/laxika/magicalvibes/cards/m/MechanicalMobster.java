@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyard
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "168")
+@CardRegistration(set = "OM1", collectorNumber = "163")
 public class MechanicalMobster extends Card {
 
     public MechanicalMobster() {

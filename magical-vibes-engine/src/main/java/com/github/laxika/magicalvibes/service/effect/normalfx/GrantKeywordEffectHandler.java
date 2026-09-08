@@ -233,7 +233,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         if (grant.scope() == GrantScope.ALL_CREATURES) {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                    .withSourceControllerId(entry.getControllerId());
+                    .withSourceControllerId(entry.getControllerId())
+                    .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
             final int[] count = {0};
             gameData.forEachPermanent((playerId, permanent) -> {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
@@ -439,7 +440,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        if (source == null || source.getBandId() == null) {
+        if (source == null || !source.isAttacking() || source.getBandId() == null) {
             return List.of();
         }
         UUID bandId = source.getBandId();
@@ -456,6 +457,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
     private EffectDuration floatingDurationFor(GrantDuration duration) {
         return switch (duration) {
+            case UNTIL_END_OF_COMBAT -> EffectDuration.UNTIL_END_OF_COMBAT;
             case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
             case UNTIL_YOUR_NEXT_UPKEEP -> EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
             case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
@@ -466,7 +468,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
     private void addLegacyBucket(Permanent permanent, GrantDuration duration, Set<Keyword> keywords) {
         if (duration != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                && duration != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP) {
+                && duration != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP
+                && duration != GrantDuration.UNTIL_END_OF_COMBAT) {
             bucketFor(permanent, duration).addAll(keywords);
         }
     }
@@ -487,6 +490,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
     private String durationLabel(GrantDuration duration) {
         return switch (duration) {
+            case UNTIL_END_OF_COMBAT -> "until end of combat";
             case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
             case UNTIL_YOUR_NEXT_UPKEEP -> "until your next upkeep";
             case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as you control its source";

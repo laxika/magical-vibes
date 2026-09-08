@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -123,6 +126,7 @@ public class TriggerTargetCollector {
         public static final Options DEATH = new Options(true, true, false, true);
         public static final Options DELAYED_DEATH = new Options(false, true, false, true);
         public static final Options ATTACK = new Options(false, true, false, true);
+        public static final Options EXPLOIT = new Options(false, true, false, true);
         public static final Options END_STEP = new Options(false, true, true, true);
         public static final Options UPKEEP = new Options(false, true, true, true);
         public static final Options DAY_NIGHT = new Options(false, true, true, true);
@@ -176,6 +180,13 @@ public class TriggerTargetCollector {
                           Options options,
                           Permanent sourcePermanentSnapshot,
                           UUID defendingPlayerId) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options,
+                sourcePermanentSnapshot, defendingPlayerId, null);
+    }
+
+    public Result collect(GameData gameData, List<CardEffect> effects, TargetFilter targetFilter,
+                          UUID controllerId, Card sourceCard, Options options,
+                          Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue) {
 
         boolean canTargetPlayers = effects.stream()
                 .map(e -> unwrap(e, options))
@@ -225,21 +236,32 @@ public class TriggerTargetCollector {
 
         if (canTargetPermanents) {
             FilterContext filterCtx = targetFilter != null
-                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, sourcePermanentSnapshot)
+                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, xValue, sourcePermanentSnapshot)
+                    .withSourcePermanentId(sourcePermanentSnapshot == null
+                            ? null : sourcePermanentSnapshot.getId())
                     .withDefendingPlayerId(defendingPlayerId)
                     : null;
 
             PermanentPredicate effectPredicate = null;
             FilterContext effectFilterCtx = null;
+            boolean excludesSource = false;
+            boolean defendingPlayerPermanentsOnly = false;
             if (options.useEffectTargetPredicate()) {
                 List<CardEffect> targetingEffects = effects.stream()
                         .map(e -> unwrap(e, options))
                         .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                         .toList();
+                excludesSource = targetingEffects.stream()
+                        .filter(BecomeCopyOfTargetCreatureEffect.class::isInstance)
+                        .map(BecomeCopyOfTargetCreatureEffect.class::cast)
+                        .anyMatch(copyEffect -> !copyEffect.canTargetSelf());
+                defendingPlayerPermanentsOnly = targetingEffects.stream().anyMatch(effect ->
+                        effect instanceof GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect
+                                || effect instanceof DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect);
                 effectPredicate = EffectResolution.declaredPermanentRestriction(targetingEffects)
                         .orElse(null);
                 if (effectPredicate != null) {
-                    effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null,
+                    effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, xValue,
                             sourcePermanentSnapshot).withDefendingPlayerId(defendingPlayerId);
                 }
             }
@@ -250,6 +272,7 @@ public class TriggerTargetCollector {
             // AnyTargetPredicateTargetFilter governs in the same way (Scuttling Doom Engine's death
             // trigger reaches planeswalkers, not creatures).
             boolean explicitPermanentFilter = targetFilter instanceof PermanentPredicateTargetFilter
+                    || targetFilter instanceof ControlledPermanentPredicateTargetFilter
                     || targetFilter instanceof AnyTargetPredicateTargetFilter;
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
             if (effectPredicate != null) {
@@ -285,13 +308,16 @@ public class TriggerTargetCollector {
                     ? declaredPermanentTarget.permanentRestriction().orElseThrow()
                     : null;
             FilterContext declaredTargetFilterCtx = declaredTargetRestriction != null
-                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, null)
+                    ? new FilterContext(gameData, sourceCard.getId(), controllerId, xValue, null)
                     : null;
 
             for (UUID pid : gameData.orderedPlayerIds) {
+                if (defendingPlayerPermanentsOnly && !pid.equals(defendingPlayerId)) continue;
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
+                    if (excludesSource && sourcePermanentSnapshot != null
+                            && p.getId().equals(sourcePermanentSnapshot.getId())) continue;
                     if (creaturesOnly && !gameQueryService.isCreature(gameData, p)) continue;
                     if (gameQueryService.cantBeTargetedByWallOnlySources(gameData, p)
                             && targetLegalityService.sourceCanTargetOnlyWalls(sourceCard, effects, targetFilter)) {

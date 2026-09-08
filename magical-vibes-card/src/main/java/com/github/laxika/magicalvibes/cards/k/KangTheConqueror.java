@@ -18,7 +18,7 @@ public class KangTheConqueror extends Card {
                 "{5}{U}{U}{U}",
                 List.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new ControllerExtraTurnEffect(1, false, true)
+                        new ControllerExtraTurnEffect(1, false, false, true)
                 ),
                 "Power-up — {5}{U}{U}{U}: Put a +1/+1 counter on Kang. Take an extra turn after this one. "
                         + "During that turn, power-up abilities can't be activated. Activate each power-up "

@@ -23,6 +23,12 @@ class FaceOracleMapperTest {
     private static final boolean BACK = true;
 
     @Test
+    void abilityWordWithSpacedDashSurvivesCommaSeparatedRulesText() {
+        assertThat(map(face().text("Converge \u2014 Draw X cards, then gain X life.")
+                .keywords(List.of("Converge")), FRONT).keywords()).containsExactly(Keyword.CONVERGE);
+    }
+
+    @Test
     void aFaceIsNamedByItsHalfOfADoubleFacedName() {
         OracleData data = map(face().name("Thing in the Ice // Awoken Horror"), FRONT);
 
@@ -132,6 +138,15 @@ class FaceOracleMapperTest {
         assertThat(data.keywords()).isEmpty();
     }
 
+    @Test
+    void aMentionedKeywordIsNotTheFacesOwn() {
+        OracleData data = map(face()
+                .text("When this enters, create a token with flying.")
+                .keywords(List.of("Flying")), FRONT);
+
+        assertThat(data.keywords()).isEmpty();
+    }
+
     /** Transform heads no keyword line, so it falls out of a back face without a special case. */
     @Test
     void transformIsNotABackFaceKeyword() {
@@ -145,6 +160,12 @@ class FaceOracleMapperTest {
     void keywordsMapCaseInsensitively() {
         assertThat(map(face().keywords(List.of("first strike")), FRONT).keywords())
                 .containsExactly(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    void keywordWithEmDashParameterIsRecognized() {
+        assertThat(map(face().text("Warp\u2014{B}, Pay 2 life.").keywords(List.of("Warp")), FRONT).keywords())
+                .containsExactly(Keyword.WARP);
     }
 
     /**

@@ -3,15 +3,14 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * One-shot spell/ability effect: every creature the controller owns that matches
- * {@link #creatureFilter} gains "can be blocked only by blockers matching {@link #blockerPredicate}"
+ * One-shot spell/ability effect: every creature the resolving player controls that matches
+ * {@link #creatureFilter} can be blocked only by blockers matching {@link #blockerPredicate}
  * until end of turn. Used by Dread Charge ("black creatures you control can't be blocked this turn
  * except by black creatures").
  *
- * <p>The set of affected creatures is snapshotted when this effect resolves (CR 611): creatures that
- * become black or come under the controller later in the turn are not affected. The restriction is
- * stored transiently on each {@code Permanent} and consumed by
- * {@code GameQueryService.getBlockRestriction}.
+ * <p>This modifies blocking rules without granting an ability. Matching is evaluated at blocking
+ * time, including creatures that enter, change color, or change controllers after resolution.
+ * The restriction is stored on {@code GameData} and expires at cleanup.
  *
  * @param creatureFilter selects which of the controller's creatures gain the restriction; {@code null} = all
  * @param blockerPredicate the only blockers that may block the affected creatures

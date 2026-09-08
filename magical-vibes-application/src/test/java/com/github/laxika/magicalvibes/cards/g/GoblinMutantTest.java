@@ -1,33 +1,31 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.c.CrawWurm;
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.j.JohtullWurm;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinMutant.class, BalduvianBarbarians.class, BalduvianBears.class, JohtullWurm.class})
 class GoblinMutantTest extends BaseCardTest {
 
     private Permanent mutant() {
-        Permanent mutant = new Permanent(new GoblinMutant());
-        mutant.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(mutant);
-        return mutant;
+        return mutant(player1);
     }
 
-    private void readyToAttack() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+    private Permanent mutant(Player player) {
+        return addCreatureReady(player, new GoblinMutant());
     }
 
     @Test
@@ -36,8 +34,7 @@ class GoblinMutantTest extends BaseCardTest {
         harness.setLife(player2, 20);
         mutant();
 
-        readyToAttack();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -46,13 +43,11 @@ class GoblinMutantTest extends BaseCardTest {
     @DisplayName("Can attack when the defending player's power 3 creature is tapped")
     void canAttackWhenBigCreatureTapped() {
         harness.setLife(player2, 20);
-        Permanent giant = new Permanent(new HillGiant()); // 3/3
+        Permanent giant = addCreatureReady(player2, new BalduvianBarbarians()); // 3/2
         giant.tap();
-        gd.playerBattlefields.get(player2.getId()).add(giant);
         mutant();
 
-        readyToAttack();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -61,11 +56,10 @@ class GoblinMutantTest extends BaseCardTest {
     @DisplayName("Can attack when the defending player's untapped creatures all have power below 3")
     void canAttackWhenOnlySmallUntappedCreatures() {
         harness.setLife(player2, 20);
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new FugitiveWizard())); // 1/1
+        addCreatureReady(player2, new BalduvianBears()); // 2/2
         Permanent mutant = mutant();
 
-        readyToAttack();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(mutant.isAttacking()).isTrue();
     }
@@ -73,57 +67,81 @@ class GoblinMutantTest extends BaseCardTest {
     @Test
     @DisplayName("Can't attack when the defending player controls an untapped creature with power 3 or greater")
     void cantAttackIntoUntappedBigCreature() {
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new HillGiant())); // 3/3
+        addCreatureReady(player2, new BalduvianBarbarians()); // 3/2
         mutant();
 
-        readyToAttack();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Can't attack when the defending player controls an untapped creature with power greater than 3")
     void cantAttackIntoUntappedCreatureWithPowerGreaterThanThree() {
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new CrawWurm())); // 6/4
+        addCreatureReady(player2, new JohtullWurm()); // 6/6
         mutant();
 
-        readyToAttack();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Can block an attacker with power below 3")
     void canBlockSmallAttacker() {
-        Permanent mutant = mutant();
-        Permanent wizard = new Permanent(new FugitiveWizard()); // 1/1
-        gd.playerBattlefields.get(player2.getId()).add(wizard);
+        Permanent mutant = mutant(player2);
+        addCreatureReady(player1, new BalduvianBears()); // 2/2
 
-        assertThat(bls.canBlockAttacker(gd, mutant, wizard,
-                gd.playerBattlefields.get(player1.getId()))).isTrue();
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(mutant.isBlocking()).isTrue();
     }
 
     @Test
     @DisplayName("Can't block an attacker with power 3 or greater")
     void cantBlockBigAttacker() {
-        Permanent mutant = mutant();
-        Permanent giant = new Permanent(new HillGiant()); // 3/3
-        gd.playerBattlefields.get(player2.getId()).add(giant);
+        mutant(player2);
+        addCreatureReady(player1, new BalduvianBarbarians()); // 3/2
 
-        assertThat(bls.canBlockAttacker(gd, mutant, giant,
-                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Can't block an attacker with power greater than 3")
     void cantBlockAttackerWithPowerGreaterThanThree() {
-        Permanent mutant = mutant();
-        Permanent wurm = new Permanent(new CrawWurm()); // 6/4
-        gd.playerBattlefields.get(player2.getId()).add(wurm);
+        mutant(player2);
+        addCreatureReady(player1, new JohtullWurm()); // 6/6
 
-        assertThat(bls.canBlockAttacker(gd, mutant, wurm,
-                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Trample deals excess combat damage to the defending player")
+    void trampleDealsExcessCombatDamage() {
+        harness.setLife(player2, 20);
+        mutant();
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears()); // 2/2
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 3));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }
 }

@@ -49,6 +49,7 @@ class CardImmutabilityArchTest {
             "CopyControllerCastSpellEffectHandler", // decorates the fresh spell-copy card
             "CopySpellEffectHandler",  // decorates the fresh spell-copy card
             "CopyDrawnInstantOrSorceryAndMayCastCopyEffectHandler", // decorates the fresh drawn-card copy
+            "TriggeredAbilityQueueService", // assembles a fresh runtime copy for modal-trigger targeting
             "MayCopyHandlerService",   // re-adds the copy ability on the fresh clone-copy card
             "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
             "BecomeCopyOfEnteringCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Unstable Shapeshifter)
@@ -63,8 +64,10 @@ class CardImmutabilityArchTest {
             "BecomeAuraManifestTopCardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Lightform)
             "ReturnSourceAsAuraEffectHandler", // assembles a fresh Aura runtime copy before returning it
             "ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler", // assembles a fresh non-Aura runtime copy
+            "ReturnSourceAuraToCreatureOrAsNonAuraEffectHandler", // decorates a fresh non-Aura runtime copy before creating its Permanent
             "LicidBecomeAuraEffectHandler", // Aura face built on the fresh runtime copy (Licid cycle)
             "TokenCardFactory",        // assembles the fresh token card it just instantiated
+            "PermanentControlSupport", // adds effects to a fresh token card before creating its Permanent
             "TokenCopySupport",        // assembles fresh token-copy cards for copy-effect handlers
             "GraveyardReturnSupport",
             "LivingWeaponEffectHandler",
@@ -75,6 +78,7 @@ class CardImmutabilityArchTest {
             "StormCopyEffectHandler", // marks the fresh copy assembled by CopySupport as a token
             "TurnFaceUpCopyService", // restores copy exceptions on the fresh runtime copy installed by PermanentCopierService
             "LudevicCopySupport", // decorates the fresh clone-copy card installed by PermanentCopierService
+            "RegisterDelayedBeginningOfCombatTriggerEffectHandler", // assembles a fresh runtime copy for the delayed trigger
             "LayerSystemService"); // assembles a fresh runtime copy for copy effects
 
     private static boolean isWhitelisted(JavaClass javaClass) {

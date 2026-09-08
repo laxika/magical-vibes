@@ -1,39 +1,25 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.SpottedGriffin;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Earthquake.class, GrizzlyBears.class, SpottedGriffin.class})
 class EarthquakeTest extends BaseCardTest {
-
-    /** A 2/2 flying creature for test purposes. */
-    private static Card flyingCreature() {
-        Card card = new Card();
-        card.setName("Wind Drake");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{2}{U}");
-        card.setColor(CardColor.BLUE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setKeywords(Set.of(Keyword.FLYING));
-        return card;
-    }
 
     @Test
     @DisplayName("Casting Earthquake puts it on the stack as a sorcery spell")
@@ -48,7 +34,6 @@ class EarthquakeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Earthquake");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
         assertThat(entry.getXValue()).isEqualTo(3);
 
@@ -61,15 +46,13 @@ class EarthquakeTest extends BaseCardTest {
     void earthquakeResolvesDealsXDamageToPlayers() {
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         GameData gd = harness.getGameData();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -79,40 +62,52 @@ class EarthquakeTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castSorcery(player1, 0, 2);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.castAndResolveSorcery(player1, 0, 2);
 
-        harness.passBothPriorities();
-
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Earthquake does not damage flying creatures")
     void earthquakeDoesNotDamageFlyingCreatures() {
-        harness.addToBattlefield(player2, flyingCreature());
+        harness.addToBattlefield(player2, new SpottedGriffin());
 
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 3);
+        harness.castAndResolveSorcery(player1, 0, 3);
 
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player2, "Wind Drake");
+        harness.assertOnBattlefield(player2, "Spotted Griffin");
     }
 
     @Test
     @DisplayName("Earthquake with X=0 deals no damage")
     void earthquakeWithXZeroDealsNoDamage() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 
-        GameData gd = harness.getGameData();
+    @Test
+    @DisplayName("Earthquake deals exactly X damage to a surviving non-flying creature")
+    void earthquakeDealsExactlyXDamageToNonFlyingCreature() {
+        Permanent grizzlyBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThat(grizzlyBears.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -132,13 +127,11 @@ class EarthquakeTest extends BaseCardTest {
         harness.setLife(player1, 3);
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
+        harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }

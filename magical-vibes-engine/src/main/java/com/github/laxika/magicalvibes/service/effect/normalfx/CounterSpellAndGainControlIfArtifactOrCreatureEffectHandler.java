@@ -37,7 +37,7 @@ public class CounterSpellAndGainControlIfArtifactOrCreatureEffectHandler impleme
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
-        UUID ownerId = targetEntry.getControllerId();
+        UUID ownerId = targetEntry.getOwnerId();
         Card gained = counterSupport.counterSpellGainingArtifactOrCreatureControl(gameData, entry, targetEntry);
         if (gained == null) return;
 

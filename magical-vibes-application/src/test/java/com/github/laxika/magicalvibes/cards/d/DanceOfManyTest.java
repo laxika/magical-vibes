@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DanceOfMany.class, FountainOfYouth.class, GrizzlyBears.class})
 class DanceOfManyTest extends BaseCardTest {
 
     private void castDanceCopying(UUID targetId) {
@@ -27,18 +29,15 @@ class DanceOfManyTest extends BaseCardTest {
     }
 
     private Permanent tokenCopy(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears") && p.getCard().isToken())
+        return findPermanents(player, "Grizzly Bears").stream()
+                .filter(p -> p.getCard().isToken())
                 .findFirst().orElse(null);
     }
 
     private Permanent danceOfMany(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dance of Many"))
+        return findPermanents(player, "Dance of Many").stream()
                 .findFirst().orElse(null);
     }
-
-    // ===== ETB token copy =====
 
     @Test
     @DisplayName("ETB creates a token copy of the target nontoken creature")
@@ -56,6 +55,37 @@ class DanceOfManyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing the copied creature does not remove the token copy")
+    void removingCopiedCreatureDoesNotRemoveTokenCopy() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
+        Permanent copiedCreature = findPermanent(player2, "Grizzly Bears");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, copiedCreature));
+
+        assertThat(tokenCopy(player1)).isNotNull();
+        assertThat(danceOfMany(player1)).isNotNull();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a token creature")
+    void cannotTargetTokenCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
+        Permanent token = tokenCopy(player1);
+        assertThat(token).isNotNull();
+
+        harness.setHand(player1, List.of(new DanceOfMany()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, token.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nontoken creature");
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         harness.addToBattlefield(player1, new FountainOfYouth());
@@ -69,7 +99,25 @@ class DanceOfManyTest extends BaseCardTest {
                 .hasMessageContaining("nontoken creature");
     }
 
-    // ===== Linked leaves-the-battlefield triggers =====
+    @Test
+    @DisplayName("A target that leaves before the ETB ability resolves produces no token")
+    void targetLeavingBeforeEtbResolutionProducesNoToken() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = findPermanent(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new DanceOfMany()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(tokenCopy(player1)).isNull();
+        assertThat(danceOfMany(player1)).isNotNull();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
 
     @Test
     @DisplayName("When the enchantment leaves the battlefield, the token is exiled")
@@ -102,8 +150,6 @@ class DanceOfManyTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Dance of Many");
     }
 
-    // ===== Upkeep sacrifice-unless-pay =====
-
     @Test
     @DisplayName("Declining to pay {U}{U} sacrifices the enchantment and exiles the token")
     void decliningUpkeepPaymentSacrificesEnchantmentAndExilesToken() {
@@ -133,5 +179,43 @@ class DanceOfManyTest extends BaseCardTest {
 
         assertThat(danceOfMany(player1)).isNotNull();
         assertThat(tokenCopy(player1)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Accepting the upkeep payment without enough mana sacrifices the enchantment")
+    void acceptingUpkeepPaymentWithoutEnoughManaSacrificesEnchantment() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(danceOfMany(player1)).isNull();
+        assertThat(tokenCopy(player1)).isNull();
+        harness.assertInGraveyard(player1, "Dance of Many");
+    }
+
+    @Test
+    @DisplayName("Leaving before the ETB ability resolves still creates an unlinked token")
+    void leavingBeforeEtbResolutionStillCreatesUnlinkedToken() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new DanceOfMany()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, bearsId);
+        harness.passBothPriorities();
+
+        Permanent dance = danceOfMany(player1);
+        assertThat(dance).isNotNull();
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dance));
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(tokenCopy(player1)).isNotNull();
+        assertThat(danceOfMany(player1)).isNull();
     }
 }

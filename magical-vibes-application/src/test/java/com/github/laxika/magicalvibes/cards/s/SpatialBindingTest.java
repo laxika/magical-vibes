@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.cards.t.TeferisCurse;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpatialBinding.class, MerfolkRaiders.class, RealityRipple.class, TeferisCurse.class})
 class SpatialBindingTest extends BaseCardTest {
 
     @Test
@@ -25,7 +28,7 @@ class SpatialBindingTest extends BaseCardTest {
 
         activateBinding(harness.getPermanentId(player2, "Merfolk Raiders"));
 
-        advanceTurn(); // player2's untap step — Merfolk Raiders would normally phase out
+        advanceTurn(player2); // player2's untap step — Merfolk Raiders would normally phase out
         harness.assertOnBattlefield(player2, "Merfolk Raiders");
         assertThat(gd.phasedOutPermanents.getOrDefault(player2.getId(), List.of())).isEmpty();
     }
@@ -67,11 +70,28 @@ class SpatialBindingTest extends BaseCardTest {
 
         activateBinding(harness.getPermanentId(player2, "Merfolk Raiders"));
 
-        advanceTurn(); // player2's turn — still protected
+        advanceTurn(player2); // player2's untap step — still protected
         harness.assertOnBattlefield(player2, "Merfolk Raiders");
-        advanceTurn(); // player1's upkeep clears the restriction
-        advanceTurn(); // player2's untap step — now it phases out
+        advanceTurn(player1); // player1's untap step clears the restriction at upkeep
+        advanceTurn(player2); // player2's untap step — now it phases out
         harness.assertNotOnBattlefield(player2, "Merfolk Raiders");
+    }
+
+    @Test
+    @DisplayName("A later activation does not replace an earlier player's restriction")
+    void overlappingActivationsKeepBothRestrictions() {
+        harness.addToBattlefield(player1, new SpatialBinding());
+        harness.addToBattlefield(player2, new SpatialBinding());
+        harness.addToBattlefield(player1, new MerfolkRaiders());
+        UUID targetId = harness.getPermanentId(player1, "Merfolk Raiders");
+
+        activateBinding(player1, targetId);
+        activateBinding(player2, targetId);
+
+        advanceTurn(player2);
+        advanceTurn(player1);
+
+        harness.assertOnBattlefield(player1, "Merfolk Raiders");
     }
 
     @Test
@@ -86,7 +106,7 @@ class SpatialBindingTest extends BaseCardTest {
 
         activateBinding(curse.getId());
 
-        advanceTurn(); // player2's untap step — the Raiders phase out, the Curse can't follow
+        advanceTurn(player2); // player2's untap step — the Raiders phase out, the Curse can't follow
 
         assertThat(gd.phasedOutPermanents.getOrDefault(player2.getId(), List.of())).contains(raiders);
         assertThat(gd.phasedOutPermanents.getOrDefault(player2.getId(), List.of())).doesNotContain(curse);
@@ -96,12 +116,17 @@ class SpatialBindingTest extends BaseCardTest {
     }
 
     private void activateBinding(UUID targetId) {
-        harness.activateAbility(player1, 0, null, targetId);
+        activateBinding(player1, targetId);
+    }
+
+    private void activateBinding(Player controller, UUID targetId) {
+        harness.activateAbility(controller, 0, null, targetId);
         harness.passBothPriorities();
     }
 
-    private void advanceTurn() {
+    private void advanceTurn(Player activePlayer) {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.UPKEEP);
     }
+
 }

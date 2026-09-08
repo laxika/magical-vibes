@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "59")
 @CardRegistration(set = "ALL", collectorNumber = "25")
+@CardRegistration(set = "CST", collectorNumber = "25")
 public class Browse extends Card {
 
     public Browse() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -38,8 +39,9 @@ import org.springframework.stereotype.Component;
  * <p>Collapses the former {@code SearchLibraryFor*} family (to-hand tutors, by-name searches,
  * to-top, creature-to-battlefield with MV/colour/subtype constraints, card-types-to-battlefield).
  * Reveal / fail-to-find behaviour is derived uniformly: a restricted search (non-null filter or a
- * mana-value bound) can fail to find, and reveals its pick for {@code HAND}/{@code TOP_OF_LIBRARY}
- * destinations; an unrestricted search does neither.
+ * mana-value bound) can fail to find, and reveals its pick for {@code HAND},
+ * {@code HAND_OR_GRAVEYARD}, or {@code TOP_OF_LIBRARY} destinations; an unrestricted search does
+ * neither.
  */
 @Component
 @RequiredArgsConstructor
@@ -51,6 +53,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final CreateTokenEffectHandler createTokenEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,7 +80,10 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = effect.searchPlayer() == LibrarySearchPlayer.ACTIVE_PLAYER
                 ? entry.getActivePlayerId() : entry.getControllerId();
         if (controllerId == null) return;
-        if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) return;
+        if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) {
+            insertNoCardFollowUp(gameData, entry, followUp);
+            return;
+        }
 
         AmountContext amountContext = AmountContext.forStackEntry(entry, resolveSource(gameData, entry));
 
@@ -98,6 +104,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
+            insertNoCardFollowUp(gameData, entry, followUp);
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty."
                     + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             return;
@@ -108,6 +115,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
+            insertNoCardFollowUp(gameData, entry, followUp);
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library."
                     + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             return;
@@ -161,6 +169,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
+            insertNoCardFollowUp(gameData, entry, followUp);
             // Pluralize the target description ("artifact card" -> "artifact cards", "card named X"
             // -> "cards named X") by promoting the first whole-word "card"; a mana-value-bound
             // description stays singular ("creature card with mana value N").
@@ -204,6 +213,21 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                 gameData.id, playerName, count, destination, matchingCards.size());
     }
 
+    private void insertNoCardFollowUp(GameData gameData, StackEntry entry, LibrarySearchFollowUp followUp) {
+        if (followUp.selectedCardFollowUp() == null
+                || followUp.selectedCardFollowUp().effectIfNoCardChosen() == null) {
+            return;
+        }
+        CardEffect effect = followUp.selectedCardFollowUp().effectIfNoCardChosen();
+        if (gameData.interaction.isAwaitingInput()
+                && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, List.of(effect));
+        } else if (effect instanceof CreateTokenEffect createTokenEffect) {
+            createTokenEffectHandler.resolve(gameData, entry, createTokenEffect);
+        }
+    }
+
     private Permanent resolveSource(GameData gameData, StackEntry entry) {
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
@@ -240,6 +264,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private boolean reveals(boolean restricted, LibrarySearchDestination destination) {
         return restricted && (destination == LibrarySearchDestination.HAND
+                || destination == LibrarySearchDestination.HAND_OR_GRAVEYARD
                 || destination == LibrarySearchDestination.TOP_OF_LIBRARY);
     }
 
@@ -251,12 +276,16 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             case HAND -> "Search your library for a " + desc + distinct
                     + (restricted ? " to reveal and put into your hand" : " to put into your hand")
                     + remaining + ".";
+            case HAND_OR_GRAVEYARD -> "Search your library for a " + desc
+                    + distinct + " to reveal and put into your hand or graveyard" + remaining + ".";
             case TOP_OF_LIBRARY -> "Search your library for a " + desc
                     + (restricted
                             ? ", reveal it, then shuffle and put that card on top."
                             : ", then shuffle and put that card on top.");
             case EXILE -> "Search your library for a " + desc + " to exile" + remaining + ".";
             case EXILE_FOR_MAY_CAST -> "Search your library for a " + desc + " to exile" + remaining + ".";
+            case EXILE_FOR_MAY_CAST_WITH_NORMAL_COST ->
+                    "Search your library for a " + desc + " to exile" + remaining + ".";
             case EXILE_PLAYABLE_ANY_NUMBER -> "Search your library for matching cards to exile (any number).";
             case GRAVEYARD -> count > 1
                     ? "Search your library for a " + desc + " to put into your graveyard" + remaining + "."

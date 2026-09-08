@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -40,7 +42,7 @@ public record CreateTokenEffect(
         Set<Keyword> grantedKeywordsUntilEndOfTurn,
         Set<CardSupertype> supertypes,
         TargetFilter tokenTargetFilter
-) implements TokenCreatingEffect, CombatDamageAmountAwareEffect {
+) implements TokenCreatingEffect, CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
 
     @Override
     public DynamicAmount tokenAmount() {
@@ -50,6 +52,18 @@ public record CreateTokenEffect(
     @Override
     public DynamicAmount combatDamageAmount() {
         return amount;
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return amount instanceof PermanentCount count && count.scope() == CountScope.TARGET_PLAYER
+                ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return amount instanceof PermanentCount count && count.scope() == CountScope.TARGET_PLAYER
+                ? TriggerContext.DAMAGED_PLAYER : null;
     }
 
     @Override
@@ -436,6 +450,11 @@ public record CreateTokenEffect(
      * "{1}, {T}, Discard a card, Sacrifice this token: Draw a card."
      */
     public static CreateTokenEffect ofBloodToken(int amount) {
+        return ofBloodToken(new Fixed(amount));
+    }
+
+    /** Dynamically many Blood tokens, with the standard Blood activated ability. */
+    public static CreateTokenEffect ofBloodToken(DynamicAmount amount) {
         return ofArtifactToken(amount, "Blood", List.of(CardSubtype.BLOOD),
                 List.of(new ActivatedAbility(
                         true, "{1}",

@@ -33,9 +33,11 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         UUID targetId = entry.getTargetId();
-        boolean colorWordsAllowed = !(effect instanceof ChangeColorTextEffect e) || e.colorWordsAllowed();
-        boolean landTypesAllowed = effect instanceof ChangeColorTextEffect e && e.landTypesAllowed();
-        boolean untilEndOfTurn = effect instanceof ChangeColorTextEffect e && e.untilEndOfTurn();
+        ChangeColorTextEffect change = (ChangeColorTextEffect) effect;
+        boolean colorWordsAllowed = change.colorWordsAllowed();
+        boolean landTypesAllowed = change.landTypesAllowed();
+        boolean creatureTypesAllowed = change.creatureTypesAllowed();
+        boolean untilEndOfTurn = change.untilEndOfTurn();
 
         // Target may be a permanent (Mind Bend) or, for Glamerdye/Magical Hack, a spell still on the stack.
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -52,11 +54,22 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
         if (landTypesAllowed) {
             options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
         }
+        if (creatureTypesAllowed) {
+            options.addAll(GameQueryService.TEXT_CHANGE_CREATURE_TYPES);
+        }
         String prompt;
-        if (colorWordsAllowed && landTypesAllowed) {
+        if (colorWordsAllowed && landTypesAllowed && creatureTypesAllowed) {
+            prompt = "Choose a color word, basic land type, or creature type to replace.";
+        } else if (colorWordsAllowed && landTypesAllowed) {
             prompt = "Choose a color word or basic land type to replace.";
+        } else if (colorWordsAllowed && creatureTypesAllowed) {
+            prompt = "Choose a color word or creature type to replace.";
+        } else if (landTypesAllowed && creatureTypesAllowed) {
+            prompt = "Choose a basic land type or creature type to replace.";
         } else if (landTypesAllowed) {
             prompt = "Choose a basic land type to replace.";
+        } else if (creatureTypesAllowed) {
+            prompt = "Choose a creature type to replace.";
         } else {
             prompt = "Choose a color word to replace.";
         }
@@ -64,7 +77,7 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
                 entry.getControllerId(), null, null, choiceContext, options, prompt));
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
-        log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);
+        log.info("Game {} - Awaiting {} to choose a word for text change", gameData.id, playerName);
     
     }
 }

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALL", collectorNumber = "44a")
 @CardRegistration(set = "ALL", collectorNumber = "44b")
+@CardRegistration(set = "CST", collectorNumber = "22")
+@CardRegistration(set = "CST", collectorNumber = "44")
 public class CastingOfBones extends Card {
 
     public CastingOfBones() {
@@ -18,6 +20,7 @@ public class CastingOfBones extends Card {
         target(TargetFilters.creature())
         // When enchanted creature dies, draw three cards, then discard one of them.
         .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
-                SequenceEffect.of(new DrawCardEffect(3), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+                SequenceEffect.of(new DrawCardEffect(3),
+                        DiscardEffect.cardsDrawnThisResolution(1, DiscardRecipient.CONTROLLER)));
     }
 }

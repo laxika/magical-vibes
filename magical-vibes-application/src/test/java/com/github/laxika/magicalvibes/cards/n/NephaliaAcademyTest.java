@@ -39,6 +39,7 @@ class NephaliaAcademyTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player2, true);
 
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");

@@ -8,6 +8,9 @@ import java.util.UUID;
 
 public interface CardEffect {
 
+    /** Whether this pending choice must finish before the next card of a draw instruction. */
+    default boolean pausesDrawInstruction() { return false; }
+
     /**
      * The declarative targeting descriptor for this effect — the single source of truth for what an
      * effect can target. Every reader consumes targeting through this ({@code targetSpec().declaredTarget()},
@@ -24,6 +27,12 @@ public interface CardEffect {
      * so the component is honoured.</p>
      */
     default TargetSpec targetSpec() { return TargetSpec.NONE; }
+
+    /**
+     * Returns the positional target-group index used by effects that resolve against a declared
+     * group rather than the entry's ordinary target. A negative value means no explicit group.
+     */
+    default int targetGroup() { return -1; }
 
     /**
      * Returns whether an upkeep trigger using this effect has its permanent target chosen by the

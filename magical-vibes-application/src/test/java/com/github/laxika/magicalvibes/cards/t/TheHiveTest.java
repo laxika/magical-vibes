@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(TheHive.class)
 class TheHiveTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -34,7 +36,6 @@ class TheHiveTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("The Hive");
     }
 
     @Test
@@ -141,16 +142,25 @@ class TheHiveTest extends BaseCardTest {
     // ===== Multiple tokens =====
 
     @Test
-    @DisplayName("Can create multiple Wasp tokens across turns")
-    void canCreateMultipleTokens() {
-        addHiveReady(player1);
+    @DisplayName("Can create multiple Wasp tokens after untapping across turns")
+    void canCreateMultipleTokensAcrossTurns() {
+        Permanent hive = addHiveReady(player1);
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        long tokenCount = countPermanents(player1, "Wasp");
-        assertThat(tokenCount).isEqualTo(1);
+        assertThat(countPermanents(player1, "Wasp")).isEqualTo(1);
+        assertThat(hive.isTapped()).isTrue();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        assertThat(hive.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Wasp")).isEqualTo(2);
     }
 
     // ===== Validation =====
@@ -209,11 +219,7 @@ class TheHiveTest extends BaseCardTest {
     // ===== Helper methods =====
 
     private Permanent addHiveReady(Player player) {
-        TheHive card = new TheHive();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new TheHive());
     }
 }
 

@@ -169,6 +169,9 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearPendingInteractions(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.ExploitTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.ExploitPermanentTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.ExploitPlayerTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.TriggeredModalTrigger.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EmblemTriggerTarget.class);
@@ -181,6 +184,9 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.extraTurns.clear();
         gameData.extraTurnSkipsUntap.clear();
         gameData.extraTurnPowerUpAbilitiesDisabled.clear();
+        gameData.extraTurnDamageCantBePrevented.clear();
+        gameData.extraTurnSequences.clear();
+        gameData.currentExtraTurnSequence = null;
         gameData.pendingLibraryBottomReorders.clear();
         gameData.openingHandRevealTriggers.clear();
         gameData.openingHandManaTriggers.clear();
@@ -191,7 +197,10 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.cardTypeFlashGrantsUntilNextTurn.clear();
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.clear();
         gameData.playersWithProtectionFromEverythingUntilNextTurn.clear();
+        gameData.playersWithDamageFromOpponentCreaturesPrevented.clear();
         gameData.playersWithDamageFromMatchingSourcesPrevented.clear();
+        gameData.playerNextDamageFromMatchingSourcesPrevented.clear();
+        gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.clear();
         gameData.playersWhoCantGainLifeRestOfGame.clear();
         gameData.priorityPassedBy.clear();
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
@@ -214,6 +223,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersCantCastSpellsForRestOfGame.clear();
         gameData.clearDelayedActions(EpicDelayedTrigger.class);
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
+        gameData.playersCantCastNamedSpellsUntilControllerNextTurn.clear();
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.clear();
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.clear();
         gameData.playersCantPlayCardsFromHandUntilControllerNextTurn.clear();
@@ -224,6 +234,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.crimeCandidatesThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
+        gameData.playersWhoActivatedEquipAbilityThisTurn.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.activatedAbilityUsesThisGame.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
@@ -244,6 +255,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.permanentsThatHaveDealtDamage.clear();
         gameData.damageRecipientsBySource.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
+        gameData.permanentsDealtNoncombatDamageThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
@@ -275,6 +287,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingTransformOnCreatureDiscard = null;
         gameData.pendingUntapOnDiscardType = null;
         gameData.combatDamageRedirectTarget = null;
+        gameData.combatDamageRedirectPlayer = null;
         gameData.globalDamagePreventionShield = 0;
         gameData.damageRedirectShields.clear();
         gameData.creaturesProtectedFromTargetingDamage.clear();
@@ -330,6 +343,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.creatureDeathCountThisTurn.put(playerId, 0);
+            gameData.creaturesPutIntoOwnGraveyardThisTurnCount.put(playerId, 0);
+            gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.put(playerId, 0);
             gameData.nontokenCreatureDeathCountThisTurn.put(playerId, 0);
             gameData.creatureSubtypeDeathCountThisTurn.remove(playerId);
             gameData.creatureCardsDamagedThisTurnBySourcePermanent.put(playerId, ConcurrentHashMap.newKeySet());

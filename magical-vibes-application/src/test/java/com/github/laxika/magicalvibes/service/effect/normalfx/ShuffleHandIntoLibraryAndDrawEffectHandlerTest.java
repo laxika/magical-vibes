@@ -39,16 +39,21 @@ class ShuffleHandIntoLibraryAndDrawEffectHandlerTest extends AbstractPlayerInter
             }
 
             @Test
-            @DisplayName("Skips player with empty hand")
-            void skipsEmptyHand() {
+            @DisplayName("An empty hand still shuffles the library without drawing")
+            void emptyHandStillShufflesLibrary() {
                 Card card = createCard("Windfall");
                 ShuffleHandIntoLibraryAndDrawEffect effect = new ShuffleHandIntoLibraryAndDrawEffect();
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
+                Card watcher = createCard("Shuffle watcher");
+                watcher.addEffect(com.github.laxika.magicalvibes.model.EffectSlot.ON_OPPONENT_SHUFFLES_LIBRARY,
+                        new com.github.laxika.magicalvibes.model.effect.DrawCardEffect());
+                gd.playerBattlefields.get(player1Id).add(new com.github.laxika.magicalvibes.model.Permanent(watcher));
                 // Both players have empty hands
 
                 resolveEffect(gd, entry, new ShuffleHandIntoLibraryAndDrawEffect());
 
                 verify(drawService, never()).resolveDrawCard(any(), any());
+                assertThat(gd.stack).hasSize(1);
                 verify(gameLogService, times(2)).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards in hand")));
             }

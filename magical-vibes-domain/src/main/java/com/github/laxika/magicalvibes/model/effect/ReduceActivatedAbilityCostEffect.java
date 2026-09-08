@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -8,12 +10,23 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * by {@code amount}. The ordinary form applies to all matching abilities symmetrically; the
  * {@code powerUpOnly} form is controller-scoped and applies only to Power-up abilities.
  */
-public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int amount,
-                                               boolean powerUpOnly)
+public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, DynamicAmount amount, boolean appliesSymmetrically, boolean powerUpOnly)
         implements ActivatedAbilityCostReducingEffect {
 
+    public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, DynamicAmount amount) {
+        this(predicate, amount, true, false);
+    }
+
     public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int amount) {
-        this(predicate, amount, false);
+        this(predicate, new Fixed(amount));
+    }
+
+    public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, DynamicAmount amount, boolean appliesSymmetrically) {
+        this(predicate, amount, appliesSymmetrically, false);
+    }
+
+    public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int amount, boolean powerUpOnly) {
+        this(predicate, new Fixed(amount), !powerUpOnly, powerUpOnly);
     }
 
     @Override
@@ -23,7 +36,12 @@ public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int
 
     @Override
     public int genericCostReduction() {
-        return amount;
+        return amount instanceof Fixed fixed ? fixed.value() : 0;
+    }
+
+    @Override
+    public DynamicAmount genericCostReductionAmount() {
+        return amount instanceof Fixed ? null : amount;
     }
 
     @Override
@@ -33,6 +51,6 @@ public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int
 
     @Override
     public boolean appliesSymmetrically() {
-        return !powerUpOnly;
+        return appliesSymmetrically && !powerUpOnly;
     }
 }

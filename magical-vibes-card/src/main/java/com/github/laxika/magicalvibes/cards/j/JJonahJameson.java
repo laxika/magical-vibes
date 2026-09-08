@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "81")
 @CardRegistration(set = "SPM", collectorNumber = "261")
+@CardRegistration(set = "OM1", collectorNumber = "88")
 public class JJonahJameson extends Card {
 
     public JJonahJameson() {

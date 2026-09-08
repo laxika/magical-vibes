@@ -3,6 +3,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -46,6 +48,28 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PermanentRemovalServiceTest {
+
+    @Test
+    void preservesLastControllerForPendingOptionalCreatureTrigger() {
+        Card card = new Card();
+        card.setName("Leaving creature");
+        card.setType(CardType.CREATURE);
+        Permanent creature = addPermanent(player2Id, card);
+        var effect = new com.github.laxika.magicalvibes.model.effect.MayEffect(
+                new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1), "Draw?", null,
+                com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);
+        var entry = new com.github.laxika.magicalvibes.model.StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                new Card(), player1Id, "Optional trigger", List.of(effect));
+        entry.setTriggeringPermanentId(creature.getId());
+        entry.setTriggeringPermanentControllerId(player1Id);
+        gd.stack.add(entry);
+
+        prs.removePermanentToHand(gd, creature);
+
+        assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+        assertThat(entry.getControllerId()).isEqualTo(player1Id);
+    }
 
     /** A sweep that found nothing to clean up. */
     private static final AuraAttachmentService.AttachmentSweepResult NO_ATTACHMENT_CHANGE =
@@ -332,6 +356,19 @@ class PermanentRemovalServiceTest {
     class RemovePermanentToGraveyard {
 
         @Test
+        void explicitDestinationKeepsTheBattlefieldControllerForDeathProcessing() {
+            Permanent creature = addPermanent(player1Id, createCreature("Exchanged creature"));
+            stubGraveyardForCreature(creature, player2Id);
+
+            boolean result = prs.removePermanentToPlayerGraveyard(gd, creature, player2Id);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(creature.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false), eq(false));
+        }
+
+        @Test
         @DisplayName("Removes permanent from battlefield and puts card in graveyard")
         void removesFromBattlefieldAndAddsToGraveyard() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
@@ -502,7 +539,7 @@ class PermanentRemovalServiceTest {
             verify(triggerCollectionService).collectDeathTrigger(
                     eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears), eq(List.of()), eq(0));
             verify(triggerCollectionService).checkAllyCreatureDeathTriggers(gd, player1Id, bears, 0);
-            verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id, bears);
+            verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id, bears, 0, 0);
             verify(triggerCollectionService).checkEquippedCreatureDeathTriggers(
                     gd, bears.getId(), player1Id, bears.getCard(), 0);
         }
@@ -511,6 +548,7 @@ class PermanentRemovalServiceTest {
         @DisplayName("Fires artifact graveyard trigger for artifacts sent to graveyard")
         void firesArtifactGraveyardTrigger() {
             Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
+            artifact.setCounterCount(CounterType.CHARGE, 2);
             when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
             when(gameQueryService.isArtifact(artifact)).thenReturn(true);
             when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
@@ -519,7 +557,8 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, artifact);
 
             verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
-                    gd, player1Id, player1Id, artifact.getCard().getManaValue());
+                    gd, player1Id, player1Id, artifact.getCard().getManaValue(),
+                    Map.of(CounterType.CHARGE, 2));
         }
 
         @Test

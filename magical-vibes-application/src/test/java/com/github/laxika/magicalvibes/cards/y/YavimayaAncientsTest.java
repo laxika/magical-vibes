@@ -4,18 +4,17 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(YavimayaAncients.class)
 class YavimayaAncientsTest extends BaseCardTest {
 
     private Permanent addAncients() {
-        Permanent perm = new Permanent(new YavimayaAncients());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new YavimayaAncients());
     }
 
     @Test
@@ -28,6 +27,19 @@ class YavimayaAncientsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(ancients.getEffectivePower()).isEqualTo(3);
+        assertThat(ancients.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick because the ability does not require tapping")
+    void canActivateWhileSummoningSick() {
+        Permanent ancients = harness.addToBattlefieldAndReturn(player1, new YavimayaAncients());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
         assertThat(ancients.getEffectivePower()).isEqualTo(3);
         assertThat(ancients.getEffectiveToughness()).isEqualTo(5);
     }
@@ -46,7 +58,7 @@ class YavimayaAncientsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ancients);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anySatisfy(card -> assertThat(card.getName()).isEqualTo("Yavimaya Ancients"));
+                .contains(ancients.getCard());
     }
 
     @Test

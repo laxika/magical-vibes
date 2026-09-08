@@ -5,15 +5,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +23,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Clone.class, AirElemental.class, AngelOfMercy.class, AngelicChorus.class,
+        ChoMannoRevolutionary.class, GrizzlyBears.class, Spellbook.class, TreasureHunter.class})
 class CloneTest extends BaseCardTest {
 
     // ===== Copying a creature =====
@@ -30,11 +33,7 @@ class CloneTest extends BaseCardTest {
     @DisplayName("Clone copies a creature's power and toughness")
     void copiesPowerAndToughness() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -68,11 +67,7 @@ class CloneTest extends BaseCardTest {
     @DisplayName("Clone copies a creature's keywords (e.g., flying)")
     void copiesKeywords() {
         harness.addToBattlefield(player2, new AirElemental());
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -95,11 +90,7 @@ class CloneTest extends BaseCardTest {
     @DisplayName("Clone copies a creature's subtypes")
     void copiesSubtypes() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -123,11 +114,7 @@ class CloneTest extends BaseCardTest {
     @DisplayName("Clone goes to graveyard as Clone (not the copied name) when destroyed")
     void goesToGraveyardAsClone() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -157,11 +144,7 @@ class CloneTest extends BaseCardTest {
     @DisplayName("Clone returns to hand as Clone when bounced")
     void returnsToHandAsClone() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -192,11 +175,7 @@ class CloneTest extends BaseCardTest {
     void triggersLegendRule() {
         ChoMannoRevolutionary choManno = new ChoMannoRevolutionary();
         harness.addToBattlefield(player1, choManno);
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -221,11 +200,7 @@ class CloneTest extends BaseCardTest {
     @DisplayName("Clone enters as 0/0 and dies when player declines to copy")
     void diesWhenPlayerDeclines() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -246,11 +221,7 @@ class CloneTest extends BaseCardTest {
     @DisplayName("Clone enters as 0/0 and dies when no creatures on battlefield")
     void diesWhenNoCreatures() {
         // No creatures on any battlefield
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -270,11 +241,7 @@ class CloneTest extends BaseCardTest {
     void copiedCreatureMandatoryETBFires() {
         // Angel of Mercy has ETB: gain 3 life
         harness.addToBattlefield(player2, new AngelOfMercy());
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -311,11 +278,7 @@ class CloneTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelicChorus());
         // Grizzly Bears is a 2/2
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -339,15 +302,11 @@ class CloneTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Clone copying a creature with may-based ETB presents the may prompt")
-    void copiedCreatureMayETBPromptAppears() {
-        // Treasure Hunter has may ETB: "You may return an artifact from your graveyard to your hand"
+    @DisplayName("Clone does not put a copied targeted ETB ability on the stack without a legal target")
+    void copiedCreatureTargetedETBIsSkippedWithoutLegalTarget() {
+        // Treasure Hunter's ETB targets an artifact card in its controller's graveyard.
         harness.addToBattlefield(player2, new TreasureHunter());
-        harness.setHand(player1, List.of(new Clone()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
@@ -360,23 +319,42 @@ class CloneTest extends BaseCardTest {
         UUID hunterId = harness.getPermanentId(player2, "Treasure Hunter");
         harness.handlePermanentChosen(player1, hunterId);
 
-        // Clone should be on the battlefield as Treasure Hunter
-        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
-                .findFirst().orElse(null);
-        assertThat(clonePerm).isNotNull();
-        assertThat(clonePerm.getCard().getName()).isEqualTo("Treasure Hunter");
-
-        // Second may prompt: copied Treasure Hunter's may ETB goes on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
-
-        // Decline it (no artifacts in graveyard anyway)
-        harness.handleMayAbilityChosen(player1, false);
-
-        // Game should proceed normally — no awaiting input
+        // The copied trigger has no legal target, so it is not put on the stack.
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).noneMatch(e ->
+                e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && e.getDescription().contains("Treasure Hunter"));
+    }
+
+    @Test
+    @DisplayName("Clone copying Treasure Hunter targets an artifact in its controller's graveyard")
+    void copiedCreatureTargetedETBOffersArtifactTarget() {
+        Spellbook spellbook = new Spellbook();
+        harness.setGraveyard(player1, List.of(spellbook));
+        harness.addToBattlefield(player2, new TreasureHunter());
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        UUID hunterId = harness.getPermanentId(player2, "Treasure Hunter");
+        harness.handlePermanentChosen(player1, hunterId);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(spellbook.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(spellbook.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Spellbook");
+        harness.assertNotInGraveyard(player1, "Spellbook");
     }
 }
 

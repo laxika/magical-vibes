@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -125,6 +126,7 @@ public class DestructionSupport {
     private final BounceSupport bounceSupport;
     private final EnergyCountersEffectHandler energyCountersEffectHandler;
     private final DrawCardEffectHandler drawCardEffectHandler;
+    private final ObjectProvider<DamageSupport> damageSupportProvider;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -312,7 +314,6 @@ public class DestructionSupport {
         Card sacrificedCard = creature.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
         gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
-        gameData.recordSacrificedPermanent(playerId, sacrificedCard);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
@@ -548,22 +549,36 @@ public class DestructionSupport {
     }
 
     public void performSimultaneousSacrifice(GameData gameData, List<UUID> ids) {
-        for (UUID permId : ids) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+        List<Permanent> permanents = ids.stream()
+                .map(permId -> gameQueryService.findPermanentById(gameData, permId))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        beginSimultaneousCreatureDeaths(gameData, permanents);
+        try {
+            for (Permanent perm : permanents) {
+                UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(perm.getId());
                 sacrificeAndLog(gameData, perm, controllerId);
             }
+            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
+        } finally {
+            endSimultaneousCreatureDeaths(gameData);
         }
     }
 
     public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
                                                   List<UUID> accumulatedSacrificeIds) {
-        beginNextForcedSacrificeFromQueue(gameData, choosers, accumulatedSacrificeIds, false);
+        beginNextForcedSacrificeFromQueue(gameData, choosers, accumulatedSacrificeIds, false, null);
     }
 
     public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
                                                   List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow) {
+        beginNextForcedSacrificeFromQueue(
+                gameData, choosers, accumulatedSacrificeIds, simultaneousFlow, null);
+    }
+
+    public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                                  List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow,
+                                                  com.github.laxika.magicalvibes.model.LibrarySearchFollowUp afterSacrifices) {
         if (choosers.isEmpty()) {
             return;
         }
@@ -573,7 +588,7 @@ public class DestructionSupport {
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
                 next.count(),
                 new MultiPermanentChoiceContext.ForcedSacrifice(next.playerId(), remainingChoosers,
-                        List.copyOf(accumulatedSacrificeIds), simultaneousFlow),
+                        List.copyOf(accumulatedSacrificeIds), simultaneousFlow, false, afterSacrifices),
                 "Choose " + next.count() + " permanent"
                         + (next.count() > 1 ? "s" : "") + " to sacrifice.");
     }
@@ -794,10 +809,10 @@ public class DestructionSupport {
                     damageTargetAndTheirCreaturesHandler.resolve(gameData, entry, damageAndCreatures);
                     entry.setTargetId(previousTarget);
                 }
-            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect) {
+            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect exileLibrary) {
                 // "When a player doesn't pay this enchantment's cumulative upkeep, that player
                 // exiles all cards from their library" (Thought Lash).
-                libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId());
+                libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId(), exileLibrary.faceDown());
             } else if (elseEffect instanceof RemoveAllCountersEffect removeCounters
                     && removeCounters.subject() == CounterRemovalSubject.SOURCE) {
                 // "remove all wage counters from this creature" (Rogue Skycaptain).
@@ -872,8 +887,7 @@ public class DestructionSupport {
     private void dealDamageToControllerThenTapSourceIfDealt(GameData gameData, StackEntry entry, int damage) {
         UUID controllerId = entry.getControllerId();
         int lifeBefore = gameData.getLife(controllerId);
-        dealNoncombatDamageToPlayer(gameData, controllerId, damage,
-                entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
+        damageSupportProvider.getObject().dealDamageToPlayer(gameData, entry, controllerId, damage);
         gameOutcomeService.checkWinCondition(gameData);
         // "If this creature deals damage to you this way, tap it" — prevention/redirect leaves it untapped.
         if (gameData.getLife(controllerId) < lifeBefore) {
@@ -950,7 +964,7 @@ public class DestructionSupport {
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature);
         CreateTokenEffect additionalFrog = TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                 gameData, controllerId, token);
-        int totalAmount = tokenCount * tokenMultiplier;
+        int totalAmount = gameQueryService.getTokenCreationAmount(gameData, controllerId, tokenCount, token.subtypes(), baseTokenIsCreature);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         for (int count = 0; count < totalAmount + (additionalFrog != null && totalAmount > 0 ? 1 : 0); count++) {

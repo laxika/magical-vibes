@@ -97,6 +97,7 @@ class AyaraWidowOfTheRealmTest extends BaseCardTest {
         declareAttackers(player1, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
     }

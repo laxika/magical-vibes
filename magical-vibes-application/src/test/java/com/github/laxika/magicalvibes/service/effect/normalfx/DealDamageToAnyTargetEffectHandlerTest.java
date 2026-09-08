@@ -24,6 +24,41 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
     }
 
     @Test
+    void enteringPermanentDamageUsesItsControllerWithoutChangingAbilityOwnership() {
+        Permanent creature = addPermanent(player2Id, createCreature("Entering creature", 3, 3));
+        StackEntry entry = new StackEntry(com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                createCard("Enchantment"), player1Id, "Damage ability", java.util.List.of(),
+                player1Id, creature.getId());
+        entry.setTriggeringPermanentControllerId(player2Id);
+        when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+        when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player2Id);
+
+        dealDamageToAnyTargetHandler.resolve(gd, entry,
+                DealDamageToAnyTargetEffect.fromEnteringPermanent(new com.github.laxika.magicalvibes.model.amount.Fixed(0)));
+
+        verify(gameQueryService).applyDamageMultiplier(eq(gd), eq(0), argThat(damageEntry ->
+                damageEntry.getControllerId().equals(player2Id)
+                        && damageEntry.getEffectiveDamageSourceCard() == creature.getCard()));
+        assertThat(entry.getControllerId()).isEqualTo(player1Id);
+    }
+
+    @Test
+    void unconditionalRegenerationPreventionAppliesWhenNoDamageIsDealt() {
+        Permanent creature = addPermanent(player2Id, createCreature("Creature", 2, 2));
+        StackEntry entry = createEntry(createCard("Damage spell"), player1Id, creature.getId());
+        when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+        when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(0, true);
+
+        dealDamageToAnyTargetHandler.resolve(gd, entry, damage);
+        assertThat(creature.isCantRegenerateThisTurn()).isFalse();
+
+        dealDamageToAnyTargetHandler.resolve(gd, entry, damage.withUnconditionalRegenerationPrevention());
+        assertThat(creature.isCantRegenerateThisTurn()).isTrue();
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
             @DisplayName("Deals lethal damage to a creature and destroys it")
             void dealsLethalDamageToCreatureAndDestroysIt() {
                 Card shockCard = createCard("Shock");
@@ -42,7 +77,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(2);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 2, player1Id, shockCard, null);
             }
 
             @Test
@@ -64,7 +100,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 assertThat(angel.getMarkedDamage()).isEqualTo(2);
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, angel, 2, player1Id, shockCard, null);
             }
 
             @Test
@@ -121,7 +158,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(3);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 3, player1Id, blazeCard, null);
             }
 
             @Test

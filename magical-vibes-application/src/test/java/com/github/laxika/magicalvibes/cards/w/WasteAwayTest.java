@@ -56,7 +56,7 @@ class WasteAwayTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantWithDiscard(player1, 0, target.getId(), 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("discard");
     }
 
     @Test

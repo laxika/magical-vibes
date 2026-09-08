@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "163")
+@CardRegistration(set = "OM1", collectorNumber = "164")
 public class EerieGravestone extends Card {
 
     public EerieGravestone() {

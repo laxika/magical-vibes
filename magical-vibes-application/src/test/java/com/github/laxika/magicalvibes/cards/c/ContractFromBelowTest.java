@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -46,5 +47,26 @@ class ContractFromBelowTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
                 .contains("Contract from Below", "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Antes the last library card before attempting to draw seven")
+    void antesLastLibraryCardBeforeDrawingSeven() {
+        GrizzlyBears antedCard = new GrizzlyBears();
+
+        harness.setHand(player1, List.of(new ContractFromBelow()));
+        harness.setLibrary(player1, List.of(antedCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(antedCard.getId());
+        assertThat(gd.antedCardIds).containsExactly(antedCard.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }

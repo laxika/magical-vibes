@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.b.BullAurochs;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Aurochs.class, BalduvianBears.class})
 class AurochsTest extends BaseCardTest {
 
     @Test
@@ -71,12 +72,26 @@ class AurochsTest extends BaseCardTest {
     @DisplayName("Non-Aurochs attackers do not count")
     void nonAurochsAttackersDoNotCount() {
         Permanent aurochs = addCreatureReady(player1, new Aurochs());
-        addCreatureReady(player1, createNonAurochsCard("Goblin Grunt"));
+        addCreatureReady(player1, new BalduvianBears());
 
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
         assertThat(aurochs.getPowerModifier()).isEqualTo(0);
+        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @CardUsed(BullAurochs.class)
+    @DisplayName("Counts another creature with the Aurochs type, not only cards named Aurochs")
+    void countsAurochsSubtypeFromAnotherCard() {
+        Permanent aurochs = addCreatureReady(player1, new Aurochs());
+        addCreatureReady(player1, new BullAurochs());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
         assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
     }
 
@@ -126,15 +141,5 @@ class AurochsTest extends BaseCardTest {
 
         assertThat(aurochs.getPowerModifier()).isEqualTo(0);
         assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
-    }
-
-    private Card createNonAurochsCard(String name) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setSubtypes(List.of(CardSubtype.GOBLIN));
-        card.setType(CardType.CREATURE);
-        card.setPower(2);
-        card.setToughness(2);
-        return card;
     }
 }

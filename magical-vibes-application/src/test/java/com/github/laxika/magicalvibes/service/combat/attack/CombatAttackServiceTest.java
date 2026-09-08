@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
+import com.github.laxika.magicalvibes.cards.f.FearOfMissingOut;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FormOfTheDragon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.j.JackalFamiliar;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.k.KeldonBerserker;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.o.Okk;
@@ -21,7 +23,9 @@ import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SightlessBrawler;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
+import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.w.WindbornMuse;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -31,6 +35,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -97,6 +102,22 @@ class CombatAttackServiceTest extends BaseCardTest {
 
         gs.declareAttackers(gd, player1, List.of(0));
 
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({FearOfMissingOut.class, GrizzlyBears.class, Forest.class, Shock.class,
+            LeoninScimitar.class})
+    @DisplayName("An unmet intervening-if attack trigger is skipped before target selection")
+    void skipsUnmetInterveningIfAttackTriggerBeforeTargetSelection() {
+        Permanent fear = addCreatureReady(player1, new FearOfMissingOut());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock(), new LeoninScimitar()));
+        enterDeclareAttackers();
+
+        gs.declareAttackers(gd, player1, List.of(index(fear)));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -216,6 +237,7 @@ class CombatAttackServiceTest extends BaseCardTest {
 
         @Test
         @DisplayName("A forced creature that cannot satisfy its group restriction may stay home")
+        @CardUsed(OrcishConscripts.class)
         void forcedRestrictedCreatureMayStayHomeWhenNoLegalDeclarationIncludesIt() {
             Permanent conscripts = addCreatureReady(player1, new OrcishConscripts());
             conscripts.setMustAttackThisTurn(true);
@@ -240,15 +262,16 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({EkunduCyclops.class, ViashinoWarrior.class})
         @DisplayName("Conditional attack requirements follow the selected attacker group")
         void conditionalRequirementFollowsSelectedAttackerGroup() {
             Permanent cyclops = addCreatureReady(player1, new EkunduCyclops());
-            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent ally = addCreatureReady(player1, new ViashinoWarrior());
 
             List<Integer> attackable = service().getAttackableCreatureIndices(gd, player1.getId());
 
             assertThat(service().getMustAttackAlongsideIndices(
-                    gd, player1.getId(), attackable, List.of(index(bears))))
+                    gd, player1.getId(), attackable, List.of(index(ally))))
                     .containsExactly(index(cyclops));
             assertThat(service().getMustAttackAlongsideIndices(
                     gd, player1.getId(), attackable, List.of(index(cyclops))))
@@ -458,7 +481,8 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("CR 508.1a: Orcish Conscripts needs the required number of other attackers")
+        @DisplayName("CR 508.1c: Orcish Conscripts needs the required number of other attackers")
+        @CardUsed({OrcishConscripts.class, GrizzlyBears.class, HillGiant.class})
         void countRestrictionNeedsEnoughOtherAttackers() {
             // Orcish Conscripts can't attack unless at least two other creatures attack.
             Permanent conscripts = addCreatureReady(player1, new OrcishConscripts());
@@ -582,6 +606,7 @@ class CombatAttackServiceTest extends BaseCardTest {
 
         @Test
         @DisplayName("A per-creature aura tax is added on top of the board-wide one")
+        @CardUsed({Brainwash.class, GrizzlyBears.class, HillGiant.class, WindbornMuse.class})
         void perCreatureAuraTaxAddsToTheBoardWideTax() {
             // Brainwash: the enchanted creature can't attack unless its controller pays {3}.
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());

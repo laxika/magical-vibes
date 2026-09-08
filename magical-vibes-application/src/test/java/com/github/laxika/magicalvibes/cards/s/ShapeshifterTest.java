@@ -1,17 +1,20 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Shapeshifter.class)
 class ShapeshifterTest extends BaseCardTest {
 
     private Permanent castAndChoose(String chosenNumber) {
@@ -30,9 +33,10 @@ class ShapeshifterTest extends BaseCardTest {
     void enteringAwaitsNumberChoice() {
         castAndChoose(null);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
-                .isInstanceOf(com.github.laxika.magicalvibes.model.ChoiceContext.NumberChoice.class);
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.NumberChoice.class);
+        assertThat(choice.options()).containsExactly("0", "1", "2", "3", "4", "5", "6", "7");
     }
 
     @Test
@@ -54,16 +58,32 @@ class ShapeshifterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing 7 makes it 7/0 and puts it into the graveyard")
+    void choosingSevenPutsItIntoGraveyard() {
+        castAndChoose(null);
+        harness.handleListChoice(player1, "7");
+
+        harness.assertNotOnBattlefield(player1, "Shapeshifter");
+        harness.assertInGraveyard(player1, "Shapeshifter");
+    }
+
+    @Test
+    @DisplayName("A number outside the offered range is rejected")
+    void rejectsOutOfRangeNumberChoice() {
+        castAndChoose(null);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "8"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     @DisplayName("Upkeep re-choice updates power and toughness")
     void upkeepReChoice() {
         Permanent shifter = harness.addToBattlefieldAndReturn(player1, new Shapeshifter());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, "you may choose" trigger goes on stack
-        harness.passBothPriorities(); // resolve triggered ability → MayEffect prompts
-        harness.handleMayAbilityChosen(player1, true); // accept → number choice begins
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "5");
 
         assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(5);
@@ -76,21 +96,15 @@ class ShapeshifterTest extends BaseCardTest {
         Permanent shifter = harness.addToBattlefieldAndReturn(player1, new Shapeshifter());
 
         // First upkeep: pick 5 (5/2).
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "5");
 
         assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(5);
 
-        // Second upkeep: decline — the 5/2 body is unchanged.
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        // Second upkeep: decline - the 5/2 body is unchanged.
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

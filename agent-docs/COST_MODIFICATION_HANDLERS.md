@@ -1,6 +1,6 @@
 # Cast-Cost Modification Handlers (`costmod`)
 
-One-shot reductions use `ReduceCastCostForNextSpellOfTypesThisTurnEffect`. Its normal-effect handler evaluates the dynamic amount when it resolves, stores a pending player-scoped reduction, and `CastingCostService` exposes it only while computing the next matching spell; `GameData.recordSpellCast` consumes it after a successful matching cast.
+One-shot reductions use `ReduceCastCostForNextSpellOfTypesThisTurnEffect` when the spell types are sufficient; its normal-effect handler evaluates the dynamic amount when it resolves, stores a pending player-scoped reduction, and `CastingCostService` exposes it only while computing the next matching spell. `ReduceCastCostForNextMatchingSpellEffect` supports arbitrary card predicates and evaluates its `DynamicAmount` at cast time, which is required for affinity-style counts. `GameData.recordSpellCast` consumes type-based reductions after a successful matching cast; matching-predicate floating reductions are consumed by `TriggerCollectionService` when the spell is cast.
 
 `ReduceColoredCastCostForMatchingSpellsEffectHandler` handles battlefield reductions that remove
 only matching colored components from a spell's mana cost. Unmatched colored reduction does not
@@ -12,7 +12,7 @@ is exhausted; Khalni Hydra uses it for one `{G}` per green creature controlled.
 
 Cast-cost modifiers (cost reductions and increases — "this spell costs {2} less", "creatures
 you cast cost {1} more", metalcraft/graveyard/opponent-count reductions, etc.) and optional
-buyback-cost modifiers are resolved by
+alternate-cost modifiers, and buyback-cost modifiers are resolved by
 one self-contained handler class per effect type in
 `magical-vibes-engine/.../service/cast/costmod/` (tests live in
 `magical-vibes-application/src/test/.../service/cast/`).
@@ -46,6 +46,9 @@ playability previews and actual payment; ordinary hand casts are unaffected.
    - `int modifyBuybackCost(CostModificationContext, CardEffect, CostModificationSource)` —
      returns a signed generic-mana delta for an optional buyback cost. It defaults to zero so
      ordinary spell-cost modifiers do not affect buyback.
+   - `int modifyAlternateCost(CostModificationContext, CardEffect, CostModificationSource)` —
+     returns a signed generic-mana delta for an alternate cost explicitly affected by the effect.
+     It defaults to zero so ordinary spell-cost modifiers do not affect alternate costs.
    - Constructor-inject `CostModificationSupport`, `GameQueryService`, and/or
      `PredicateEvaluationService` as needed.
 4. **Scoping is the handler's responsibility.** Cast the `CardEffect` to its concrete type, then
@@ -99,6 +102,8 @@ new record. Its optional source-zone set restricts which cast sources match; Pat
 `CardTypePredicate(CREATURE)` and `SELF` scope; the boolean enables the plot-from-hand-only restriction.
 `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (Semblance Anvil) keeps its own handler because
 it compares against the imprinted card rather than a predicate.
+`ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect` (Cemetery Prowler) also keeps its own
+handler because it counts distinct card types across all cards exiled with its source permanent.
 
 **Exception — target-gated reductions.** `ReduceOwnCastCostIfTargetingPermanentEffect` (whose
 `controlledByCaster` flag covers both "targets a matching permanent" and "targets one you control"),
@@ -112,7 +117,9 @@ permanent target matches; the spell-self form continues to inspect its first tar
 
 `ReduceOwnCastCostIfTargetingGraveyardCardEffect` is the corresponding target-gated record for a
 graveyard card. Its `CardPredicate` is evaluated against the chosen first graveyard target in the
-same `CastingCostService.computeTargetBasedCostReduction` path.
+same `CastingCostService.computeTargetBasedCostReduction` path. The spell-self form checks the
+effect's zero-based `targetIndex` (defaulting to the first target), while a battlefield-carried
+effect continues to reduce once when any chosen permanent target matches.
 
 Target-gated increases use the parallel `TargetBasedCastCostIncreaseEffect` interface and
 `IncreaseOwnCastCostIfTargetingPermanentEffect` record. Their surcharge is evaluated against the
@@ -133,6 +140,19 @@ override `modifyForetellCost` for the generic action cost and
 `allowsForetellDuringAnyTurn` for a source-controller timing permission; ordinary spell-cost
 modifiers do not affect foretell.
 
+Room-door unlock-cost modifiers use the same battlefield handler registry. A handler may override
+`modifyRoomUnlockCost` for the generic mana component of a Room door's unlock cost; ordinary
+spell-cost modifiers do not affect Room-door unlocks. `CastingCostService.getRoomUnlockCost` is
+the shared path for previews and payment.
+## Alternate-cost reductions
+
+Effects that reduce a named alternate cost, rather than a spell's normal mana cost, use the
+`CostModificationHandlerBean.modifyAlternateCost` channel and are included by
+`CastingCostService.getAlternateHandCastCostModifier` in both alternate-cost playability and
+actual payment. `ReduceDashCostEffect(int)` reduces only the generic mana component of dash costs
+paid by the source permanent's controller; it does not affect ordinary casts, colored mana, or
+another player's dash costs.
+
 ## Infrastructure
 
 - `cast/CostModificationHandlerBean.java` — interface.
@@ -150,20 +170,27 @@ modifiers do not affect foretell.
   caster holds a card of the subtype (other than the spell itself) to reveal from hand (Lorwyn
   "reveal a creature-type card or pay {N}" cycle, e.g. Goldmeadow Stalwart).
 - `cast/costmod/IncreaseOwnCastCostEffectHandler.java` — spell-self handler for
-  `IncreaseOwnCastCostEffect(int amount)`; returns `+amount` for the spell being cast. Wrap it in
-  `ConditionalEffect` for a cast-time condition such as `NotControllerTurn`.
+  `IncreaseOwnCastCostEffect(DynamicAmount amount)` (the `int` constructor remains available);
+  returns the evaluated generic increase for the spell being cast. Wrap it in `ConditionalEffect`
+  for a cast-time condition such as `NotControllerTurn` or `CastFromZone`.
 - `cast/costmod/ReduceCastCostForMatchingSpellsEffectHandler.java` — battlefield handler for
-  `ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope[, Set<Zone>, boolean])`; scopes by
+  `ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope[, Set<Zone>, boolean, boolean])`; scopes by
   `SELF`/`OPPONENT`/`ALL` (`ALL` = symmetric, every player's matching spells — Arcane Melee), optionally
-  restricts by source zone or hand plotting, matches the spell against the predicate, and evaluates the
-  amount with the **source permanent** in the `AmountContext` so `CountersOnSource` works ("costs {1} less
-  for each +1/+1 counter on this creature" — Herald of War).
+  restricts by source zone, hand plotting, or face-down casting, matches the spell against the predicate,
+  and evaluates the amount with the **source permanent** in the `AmountContext` so `CountersOnSource`
+  works ("costs {1} less for each +1/+1 counter on this creature" — Herald of War).
 - `cast/costmod/ReduceBuybackCostEffectHandler.java` — battlefield handler for
   `ReduceBuybackCostEffect(int)`; contributes only through `modifyBuybackCost`, so the effect is
   isolated from ordinary spell-cost calculations.
+- `cast/costmod/ReduceDashCostEffectHandler.java` — battlefield handler for
+  `ReduceDashCostEffect(int)`; contributes only through `modifyAlternateCost` when the spell is
+  cast using dash by the source controller.
 - `cast/costmod/ForetellCostReductionEffectHandler.java` — battlefield handler for
   `ForetellCostReductionEffect(int, boolean)`; contributes through the foretell action-cost and
   any-player-turn channels for the source controller.
+- `cast/costmod/ReduceRoomUnlockCostEffectHandler.java` — battlefield handler for
+  `ReduceRoomUnlockCostEffect(int)`; contributes only through the generic Room-door unlock-cost
+  channel for the source controller (Inquisitive Glimmer, `DSK`).
 - `cast/costmod/ReduceCastCostForChosenNameSpellsEffectHandler.java` — battlefield handler for
   `ReduceCastCostForChosenNameSpellsEffect(int amount)`; applies only to the source controller's spells
   whose name equals the source permanent's `chosenName` (Council of the Absolute, {2}). Its own record
@@ -196,9 +223,8 @@ modifiers do not affect foretell.
 - `cast/costmod/ConditionalBattlefieldCostModificationHandler.java` — battlefield handler for
   `ConditionalEffect`; evaluates the condition against the source permanent and delegates to the
   wrapped battlefield cost handler.
-- `cast/CostModificationContext.java` — `record(GameData gameData, UUID castingPlayerId, Card spell,
-  boolean flashbackCost, boolean fromGraveyard, int xValue)`; the zone flag lets graveyard-only
-  reductions distinguish graveyard casts from ordinary casts.
+- `cast/CostModificationContext.java` — carries the game, caster, spell, cast-mode flags, and source
+  zone so modifiers can distinguish hand plots, graveyard casts, and face-down creature spells.
 - `cast/CostModificationSource.java` — `record(Permanent sourcePermanent, UUID controllerId)`
   with `SPELL_ITSELF` constant and `controlledBy(UUID)`.
 - `cast/CostModificationSupport.java` — `@Component`, shared queries (`sharesCardType`,

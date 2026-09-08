@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(IllusionsOfGrandeur.class)
 class IllusionsOfGrandeurTest extends BaseCardTest {
 
     @Test
@@ -35,9 +37,7 @@ class IllusionsOfGrandeurTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IllusionsOfGrandeur());
         harness.setLife(player1, 40);
 
-        Permanent illusions = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof IllusionsOfGrandeur)
-                .findFirst().orElseThrow();
+        Permanent illusions = findPermanent(player1, "Illusions of Grandeur");
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, illusions));
 
@@ -98,5 +98,19 @@ class IllusionsOfGrandeurTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(illusions);
         harness.assertInGraveyard(player1, "Illusions of Grandeur");
+    }
+
+    @Test
+    @DisplayName("Declining cumulative upkeep triggers the leave-the-battlefield life loss")
+    void declineTriggersLeaveLifeLoss() {
+        harness.setLife(player1, 40);
+        harness.addToBattlefield(player1, new IllusionsOfGrandeur());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
     }
 }

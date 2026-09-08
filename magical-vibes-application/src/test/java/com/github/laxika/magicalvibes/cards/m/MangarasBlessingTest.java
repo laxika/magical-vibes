@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.d.Distress;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Sift;
+import com.github.laxika.magicalvibes.cards.g.GiantMantis;
+import com.github.laxika.magicalvibes.cards.s.Stupor;
+import com.github.laxika.magicalvibes.cards.t.TaintedSpecter;
+import com.github.laxika.magicalvibes.cards.u.UnfulfilledDesires;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MangarasBlessing.class, Stupor.class, TaintedSpecter.class, UnfulfilledDesires.class,
+        GiantMantis.class})
 class MangarasBlessingTest extends BaseCardTest {
 
     @Test
@@ -24,27 +28,23 @@ class MangarasBlessingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, (java.util.UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(25);
         harness.assertInGraveyard(player1, "Mangara's Blessing");
     }
 
     @Test
-    @DisplayName("Discarded by an opponent's Distress: gains 2 life without prompting for a target")
+    @DisplayName("Discarded by an opponent's spell: gains 2 life without prompting for a target")
     void discardedByOpponentGains2Life() {
         harness.setHand(player2, new ArrayList<>(List.of(new MangarasBlessing())));
         harness.setLife(player2, 20);
 
-        harness.setHand(player1, List.of(new Distress()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setHand(player1, List.of(new Stupor()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
-
-        // Player1 chooses Mangara's Blessing from player2's revealed hand
-        harness.handleCardChosen(player1, 0);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // The trigger is non-targeting — it goes straight on the stack, no permanent choice
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -60,12 +60,11 @@ class MangarasBlessingTest extends BaseCardTest {
     void returnsToHandAtNextEndStep() {
         harness.setHand(player2, new ArrayList<>(List.of(new MangarasBlessing())));
 
-        harness.setHand(player1, List.of(new Distress()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setHand(player1, List.of(new Stupor()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve the discard trigger
 
         harness.assertInGraveyard(player2, "Mangara's Blessing");
@@ -80,23 +79,48 @@ class MangarasBlessingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Discarded by an opponent's activated ability: gains 2 life")
+    void discardedByOpponentAbilityGains2Life() {
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new MangarasBlessing()));
+
+        harness.addToBattlefield(player1, new TaintedSpecter());
+        findPermanent(player1, "Tainted Specter").setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
+        harness.assertInGraveyard(player2, "Mangara's Blessing");
+    }
+
+    @Test
     @DisplayName("Does not trigger when its own controller discards it")
     void doesNotTriggerOnSelfDiscard() {
         harness.setLife(player1, 20);
 
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).add(new GiantMantis());
+        gd.playerDecks.get(player1.getId()).add(new GiantMantis());
+        gd.playerDecks.get(player1.getId()).add(new GiantMantis());
 
-        harness.setHand(player1, List.of(new Sift(), new MangarasBlessing()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addToBattlefield(player1, new UnfulfilledDesires());
+        harness.setHand(player1, List.of(new MangarasBlessing()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // Sift draws 3, prompts for discard
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities(); // Unfulfilled Desires draws, then prompts for discard
 
         harness.handleCardChosen(player1, 0); // discard Mangara's Blessing
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         harness.assertInGraveyard(player1, "Mangara's Blessing");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

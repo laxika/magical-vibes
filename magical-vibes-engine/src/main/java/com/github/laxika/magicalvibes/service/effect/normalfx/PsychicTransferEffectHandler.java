@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PsychicTransferEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,7 +20,7 @@ public class PsychicTransferEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,47 +67,19 @@ public class PsychicTransferEffectHandler implements NormalEffectHandlerBean {
         boolean controllerCantGain = controllerWouldGain && !gameQueryService.canPlayerGainLife(gameData, controller);
         boolean targetCantGain = targetWouldGain && !gameQueryService.canPlayerGainLife(gameData, target);
 
-        if (controllerCantGain && targetCantGain) {
+        if (controllerCantGain || targetCantGain) {
             gameLogService.append(gameData, GameLog.text(controllerName + " and " + targetName + " can't gain life. Exchange doesn't occur."));
             return;
         }
 
-        int newControllerLife = controllerCantGain ? controllerLife : targetLife;
-        int newTargetLife = targetCantGain ? targetLife : controllerLife;
+        lifeSupport.applySetLifeTotal(gameData, controller, targetLife);
+        lifeSupport.applySetLifeTotal(gameData, target, controllerLife);
 
-        if (newControllerLife < controllerLife) {
-            newControllerLife = controllerLife - (controllerLife - newControllerLife)
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, controller);
-        }
-        if (newTargetLife < targetLife) {
-            newTargetLife = targetLife - (targetLife - newTargetLife)
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, target);
-        }
-
-        if (controllerCantGain) {
-            gameLogService.append(gameData, GameLog.text(controllerName + " can't gain life."));
-        }
-        if (targetCantGain) {
-            gameLogService.append(gameData, GameLog.text(targetName + " can't gain life."));
-        }
-
+        int newControllerLife = gameData.getLife(controller);
+        int newTargetLife = gameData.getLife(target);
         gameLogService.append(gameData, GameLog.text(controllerName + " and " + targetName + " exchange life totals (" + controllerName + ": "
                         + controllerLife + " -> " + newControllerLife + ", " + targetName + ": "
                         + targetLife + " -> " + newTargetLife + ")."));
-
-        gameData.playerLifeTotals.put(controller, newControllerLife);
-        gameData.playerLifeTotals.put(target, newTargetLife);
-
-        if (newControllerLife > controllerLife) {
-            triggerCollectionService.checkLifeGainTriggers(gameData, controller, newControllerLife - controllerLife);
-        } else if (newControllerLife < controllerLife) {
-            triggerCollectionService.checkLifeLossTriggers(gameData, controller, controllerLife - newControllerLife);
-        }
-        if (newTargetLife > targetLife) {
-            triggerCollectionService.checkLifeGainTriggers(gameData, target, newTargetLife - targetLife);
-        } else if (newTargetLife < targetLife) {
-            triggerCollectionService.checkLifeLossTriggers(gameData, target, targetLife - newTargetLife);
-        }
 
         log.info("Game {} - {} and {} exchange life totals ({} -> {}, {} -> {})",
                 gameData.id, controllerName, targetName, controllerLife, newControllerLife, targetLife, newTargetLife);

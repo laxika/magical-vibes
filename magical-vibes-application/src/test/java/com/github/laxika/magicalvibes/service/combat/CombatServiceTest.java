@@ -464,6 +464,20 @@ class CombatServiceTest {
     class ProcessEndOfCombatSacrificesTest {
 
         @Test
+        void damageRiderQueuesAnAbilityEvenAfterItsSourceLeaves() {
+            Card source = createCreature("Delayed damage source");
+            UUID sourceId = UUID.randomUUID();
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(sourceId, player1Id, source, 5));
+
+            combatService.processEndOfCombatSacrifices(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourceId);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+        }
+
+        @Test
         @DisplayName("Sacrifices permanent marked for end-of-combat sacrifice")
         void sacrificesMarkedPermanent() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));

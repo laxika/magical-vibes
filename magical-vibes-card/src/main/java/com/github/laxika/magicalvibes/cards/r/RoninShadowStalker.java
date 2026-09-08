@@ -32,7 +32,7 @@ public class RoninShadowStalker extends Card {
                                 ManaColor.COLORS,
                                 new Fixed(2),
                                 new ManaRestriction.SubtypeSpellsOrAbilities(CardSubtype.EQUIPMENT),
-                                false)
+                                true)
                 ),
                 "Pay 2 life: Add two mana of any one color. Spend this mana only to cast Equipment spells or activate equip abilities.",
                 1

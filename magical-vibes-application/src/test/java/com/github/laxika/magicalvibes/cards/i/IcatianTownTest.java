@@ -59,6 +59,15 @@ class IcatianTownTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Icatian Town creates its tokens under its controller's control")
+    void createsTokensUnderItsControllersControl() {
+        castAndResolveIcatianTown();
+
+        assertThat(findPermanents(player1, "Citizen")).hasSize(4);
+        assertThat(findPermanents(player2, "Citizen")).isEmpty();
+    }
+
+    @Test
     @DisplayName("Icatian Town goes to the graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         castAndResolveIcatianTown();

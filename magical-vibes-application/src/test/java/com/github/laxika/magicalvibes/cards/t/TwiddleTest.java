@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.c.Crusade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Twiddle.class, GrizzlyBears.class, Forest.class, HowlingMine.class, Crusade.class})
 class TwiddleTest extends BaseCardTest {
 
     // ===== Tapping untapped permanents =====
@@ -29,8 +31,8 @@ class TwiddleTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -42,8 +44,8 @@ class TwiddleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -55,8 +57,8 @@ class TwiddleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -73,8 +75,8 @@ class TwiddleTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isTrue();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -94,6 +96,33 @@ class TwiddleTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an artifact, creature, or land");
     }
 
+    @Test
+    void waitsForResolutionChoice() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void canDeclineTapOrUntap() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
+    }
     // ===== After resolution =====
 
     @Test
@@ -103,8 +132,8 @@ class TwiddleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Twiddle");
@@ -120,8 +149,8 @@ class TwiddleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, ownCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ownCreature.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ownCreature.isTapped()).isFalse();
     }
@@ -129,23 +158,14 @@ class TwiddleTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyLand(Player player) {
-        Forest card = new Forest();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        AngelsFeather card = new AngelsFeather();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new HowlingMine());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        Pacifism card = new Pacifism();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Crusade());
     }
 }

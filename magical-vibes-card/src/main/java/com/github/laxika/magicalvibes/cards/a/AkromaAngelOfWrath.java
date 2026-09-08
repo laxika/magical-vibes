@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "TSB", collectorNumber = "1")
+@CardRegistration(set = "LGN", collectorNumber = "1")
 public class AkromaAngelOfWrath extends Card {
 
     public AkromaAngelOfWrath() {

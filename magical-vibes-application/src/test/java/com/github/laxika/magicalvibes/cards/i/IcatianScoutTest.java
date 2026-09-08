@@ -93,6 +93,17 @@ class IcatianScoutTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("{1}, {T} ability cannot be activated while Icatian Scout has summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefieldAndReturn(player1, new IcatianScout());
+        Permanent target = addCreatureReady(player1, new IcatianScout());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("{1}, {T} ability cannot be activated while Icatian Scout is tapped")
     void cannotActivateWhenTapped() {
         Permanent scout = addCreatureReady(player1, new IcatianScout());

@@ -11,6 +11,7 @@ public enum CounterType {
     BLAZE,
     BLIGHT,
     BLOOD,
+    BLOODLINE,
     BLOODSTAIN,
     BOUNTY,
     BORE,
@@ -37,6 +38,7 @@ public enum CounterType {
     ECHO,
     EMBER,
     ELIXIR,
+    ENLIGHTENED,
     EON,
     EYEBALL,
     FADE,
@@ -47,6 +49,7 @@ public enum CounterType {
     FINALITY,
     FIRE,
     FLAME,
+    FORESHADOW,
     FLOOD,
     FUNGUS,
     FUSE,
@@ -55,6 +58,7 @@ public enum CounterType {
     GLYPH,
     GOLD,
     GROWTH,
+    HARMONY,
     INGENUITY,
     HEALING,
     HATCHLING,
@@ -73,6 +77,7 @@ public enum CounterType {
     UNITY,
     INVITATION,
     JAVELIN,
+    JUDGMENT,
     KI,
     KNOWLEDGE,
     LANDMARK,
@@ -90,6 +95,7 @@ public enum CounterType {
     MINING,
     MUSIC,
     NET,
+    NEST,
     MUSTER,
     MINUS_ONE_MINUS_ONE,
     MINUS_ONE_MINUS_ZERO,
@@ -113,8 +119,10 @@ public enum CounterType {
     PLAGUE,
     PRESSURE,
     PREY,
+    POSSESSION,
     PUPA,
     QUEST,
+    REV,
     REVIVAL,
     REJECTION,
     RITUAL,
@@ -129,6 +137,7 @@ public enum CounterType {
     SCREAM,
     SHELL,
     SHIELD,
+    SKEWER,
     SLEIGHT,
     SLEEP,
     SLIME,
@@ -141,6 +150,7 @@ public enum CounterType {
     STUDY,
     TASK,
     STUN,
+    SUSPECT,
     THEFT,
     TIDE,
     WIND,
@@ -159,20 +169,21 @@ public enum CounterType {
     VERSE,
     VITALITY,
     VORTEX,
+    VOID,
     WAGE,
     HASTE,
     DEATHTOUCH,
     DECAYED,
     FLYING,
     FIRST_STRIKE,
+    VIGILANCE,
     DOUBLE_STRIKE,
     HEXPROOF,
     INDESTRUCTIBLE,
     LIFELINK,
+    MENACE,
     REACH,
     TRAMPLE,
-    MENACE,
-    VIGILANCE,
     WINCH;
 
     public Keyword grantedKeyword() {
@@ -186,9 +197,9 @@ public enum CounterType {
             case LIFELINK -> Keyword.LIFELINK;
             case HEXPROOF -> Keyword.HEXPROOF;
             case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
+            case MENACE -> Keyword.MENACE;
             case REACH -> Keyword.REACH;
             case TRAMPLE -> Keyword.TRAMPLE;
-            case MENACE -> Keyword.MENACE;
             case VIGILANCE -> Keyword.VIGILANCE;
             default -> null;
         };

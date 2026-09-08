@@ -19,6 +19,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast spells, not to pay activated ability costs (Leyline Immersion). */
     SPELL_ONLY,
 
+    /** Spendable only to cast spells with devoid (Corrupted Crossroads). */
+    DEVOID_SPELL,
+
     /** Spendable only to pay activated ability costs (Thran Turbine). */
     ABILITIES,
 

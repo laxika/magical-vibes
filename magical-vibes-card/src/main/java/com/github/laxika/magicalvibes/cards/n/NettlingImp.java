@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "119")
+@CardRegistration(set = "3ED", collectorNumber = "119")
 public class NettlingImp extends Card {
 
     public NettlingImp() {

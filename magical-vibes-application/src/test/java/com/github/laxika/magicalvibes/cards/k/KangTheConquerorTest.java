@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AerialDoombot;
+import com.github.laxika.magicalvibes.cards.c.CaptureOfJingzhou;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,6 +30,38 @@ class KangTheConquerorTest extends BaseCardTest {
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed(CaptureOfJingzhou.class)
+    void ordinaryExtraTurnDoesNotInheritKangsPowerUpRestriction() {
+        enableAutoStop();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent doombot = harness.enterBattlefieldAndReturn(player1, new AerialDoombot());
+        harness.enterBattlefieldAndReturn(player1, new KangTheConqueror());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, java.util.List.of(new CaptureOfJingzhou()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        advanceTurn();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(doombot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+
+        advanceTurn();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Power-up abilities can't be activated");
     }
 
     @Test

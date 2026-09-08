@@ -25,13 +25,21 @@ import com.github.laxika.magicalvibes.model.Card;
  * mana-only shape. This is not the "pay {M} or N life" choice — that is
  * {@link TargetPlayerMayPayManaOrLifeEffect}.
  *
+ * <p>{@code targetAfterPayment} marks a reflexive targeted ability whose target is chosen only
+ * after the payment succeeds, as with "when you do, create ... attached to target creature".
+ *
  * <p>{@code sourceIsTriggeringPermanent} marks an enter-the-battlefield trigger whose wrapped
  * effect uses the entering permanent as its source rather than the permanent with this ability.
  */
 public record MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt,
                                MayPayPayer payer, CardEffect elseEffect, int lifeCost,
-                               boolean sourceIsTriggeringPermanent)
+                               boolean sourceIsTriggeringPermanent, boolean targetAfterPayment)
         implements CombatDamageTriggerContextEffect, SacrificedPermanentCardAwareEffect {
+
+    public static MayPayManaEffect reflexiveTarget(String manaCost, CardEffect wrapped, String prompt) {
+        return new MayPayManaEffect(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, null, 0,
+                false, true);
+    }
 
     /**
      * Delegates to the wrapped effect, like {@link MayEffect}: the target of "you may pay {X}. If
@@ -75,33 +83,39 @@ public record MayPayManaEffect(String manaCost, CardEffect wrapped, String promp
                 ? aware.boundToSacrificedPermanent(sacrificedCard)
                 : elseEffect;
         return new MayPayManaEffect(manaCost, boundWrapped, prompt, payer, boundElse, lifeCost,
-                sourceIsTriggeringPermanent);
+                sourceIsTriggeringPermanent, targetAfterPayment);
     }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt) {
-        this(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, null, 0, false);
+        this(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, null, 0, false, false);
     }
 
     public MayPayManaEffect(String manaCost, int lifeCost, CardEffect wrapped, String prompt) {
-        this(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, null, lifeCost, false);
+        this(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, null, lifeCost, false, false);
     }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt, MayPayPayer payer) {
-        this(manaCost, wrapped, prompt, payer, null, 0, false);
+        this(manaCost, wrapped, prompt, payer, null, 0, false, false);
     }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt, CardEffect elseEffect) {
-        this(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, elseEffect, 0, false);
+        this(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, elseEffect, 0, false, false);
     }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt, MayPayPayer payer,
                             CardEffect elseEffect, int lifeCost) {
-        this(manaCost, wrapped, prompt, payer, elseEffect, lifeCost, false);
+        this(manaCost, wrapped, prompt, payer, elseEffect, lifeCost, false, false);
+    }
+
+    public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt, MayPayPayer payer,
+                            CardEffect elseEffect, int lifeCost, boolean sourceIsTriggeringPermanent) {
+        this(manaCost, wrapped, prompt, payer, elseEffect, lifeCost,
+                sourceIsTriggeringPermanent, false);
     }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt,
                             boolean sourceIsTriggeringPermanent) {
         this(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, null, 0,
-                sourceIsTriggeringPermanent);
+                sourceIsTriggeringPermanent, false);
     }
 }

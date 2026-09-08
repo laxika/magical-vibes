@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai.interaction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -82,15 +83,22 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
                     chooseCardsForDistinctFilters(validIds, maxCount, independentTargets, ctx), interaction);
         }
         Set<CardType> maxOnePerCardType = maxOnePerCardType(ctx.gameData());
-        if (maxOnePerCardType.isEmpty()) {
+        boolean differentManaValues = ctx.gameData().graveyardTargetOperation.card != null
+                && ctx.gameData().graveyardTargetOperation.card.getMultiTargetConstraint()
+                == MultiTargetConstraint.DIFFERENT_MANA_VALUES;
+        if (maxOnePerCardType.isEmpty() && !differentManaValues) {
             return applyMaximumTotalManaValue(validIds, interaction);
         }
 
         Map<CardType, Integer> selectedCounts = new EnumMap<>(CardType.class);
+        Set<Integer> selectedManaValues = new java.util.HashSet<>();
         List<UUID> chosen = new ArrayList<>();
         for (UUID cardId : validIds) {
             Card card = ctx.gameQueryService().findCardInGraveyardById(ctx.gameData(), cardId);
             if (card == null || hasReachedTypeLimit(card, maxOnePerCardType, selectedCounts)) {
+                continue;
+            }
+            if (differentManaValues && !selectedManaValues.add(card.getManaValue())) {
                 continue;
             }
             chosen.add(cardId);

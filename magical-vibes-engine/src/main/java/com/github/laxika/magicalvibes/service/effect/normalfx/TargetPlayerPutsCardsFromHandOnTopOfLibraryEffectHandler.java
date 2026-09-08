@@ -48,7 +48,8 @@ public class TargetPlayerPutsCardsFromHandOnTopOfLibraryEffectHandler implements
         List<UUID> validCardIds = handSnapshot.stream().map(Card::getId).toList();
 
         interactionHandlerRegistry.begin(gameData, PendingInteraction.PutCardsFromHandOnLibraryCardChoice
-                .putOnLibrary(targetPlayerId, validCardIds, handSnapshot, maxCount, HandToLibraryPlacement.TOP));
+                .putExactlyOnLibrary(targetPlayerId, validCardIds, handSnapshot, maxCount,
+                        HandToLibraryPlacement.TOP));
 
         log.info("Game {} - {} choosing {} card(s) from hand to put on top of library",
                 gameData.id, gameData.playerIdToName.get(targetPlayerId), maxCount);

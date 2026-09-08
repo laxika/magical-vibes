@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.ability;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -34,12 +36,15 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
@@ -111,6 +116,7 @@ class AbilityActivationServiceTest {
     @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameMutationCoordinator mutationCoordinator;
+    @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @InjectMocks
     private AbilityActivationService service;
@@ -147,7 +153,7 @@ class AbilityActivationServiceTest {
         gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
         // No Mana Reflection in these tests — every mana production is 1x.
-        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
+        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class), any(Permanent.class)))
                 .thenReturn(1);
         lenient().when(castingCostService.getImposedSacrificeRequirementForAbility(
                         eq(gameData), any()))
@@ -155,6 +161,77 @@ class AbilityActivationServiceTest {
         // No Angel of Jubilation — life payments and creature sacrifices are legal ability costs.
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData))
                 .thenReturn(true);
+    }
+
+    @Test
+    void drawStepPaymentRemovesOnlyOneIdenticalObligation() {
+        Card source = new Card();
+        LoseLifeAtNextDrawStepUnlessPays obligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player1Id, 1, 1, source);
+        gameData.queueDelayedAction(obligation);
+        gameData.queueDelayedAction(obligation);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
+        gameData.priorityPassedBy.add(player2Id);
+
+        service.payDrawStepLifeLoss(gameData, player1, source.getId());
+
+        assertThat(gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class))
+                .containsExactly(obligation);
+        assertThat(gameData.playerManaPools.get(player1Id).getTotalAllMana()).isEqualTo(1);
+        assertThat(gameData.priorityPassedBy).containsExactly(player2Id);
+        assertThat(gameData.stack).isEmpty();
+        verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
+    }
+
+    @Test
+    void failedDrawStepPaymentPreservesObligationAndMana() {
+        Card source = new Card();
+        LoseLifeAtNextDrawStepUnlessPays obligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player1Id, 1, 2, source);
+        gameData.queueDelayedAction(obligation);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> service.payDrawStepLifeLoss(gameData, player1, source.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Not enough mana");
+
+        assertThat(gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class))
+                .containsExactly(obligation);
+        assertThat(gameData.playerManaPools.get(player1Id).getTotalAllMana()).isEqualTo(1);
+    }
+
+    @Test
+    void cannotPayAnotherPlayersDrawStepObligation() {
+        Card source = new Card();
+        LoseLifeAtNextDrawStepUnlessPays obligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player1Id, 1, 1, source);
+        gameData.queueDelayedAction(obligation);
+        gameData.playerManaPools.get(player2Id).add(ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> service.payDrawStepLifeLoss(gameData, player2, source.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("No unpaid");
+
+        assertThat(gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class))
+                .containsExactly(obligation);
+        assertThat(gameData.playerManaPools.get(player2Id).getTotalAllMana()).isEqualTo(1);
+    }
+
+    @Nested
+    @DisplayName("activateAbility — source equipment costs")
+    class ActivateAbilitySourceEquipmentCosts {
+
+        @Test
+        @DisplayName("ExileSourceEquipmentCost requires the granting Equipment on the battlefield")
+        void exileSourceEquipmentCostRequiresGrantingEquipment() {
+            Permanent creature = addReadyPermanent(player1Id, createCreatureCard("Equipped Creature", 2, 2));
+            ActivatedAbility ability = new ActivatedAbility(
+                    false, null, List.of(new ExileSourceEquipmentCost()), "Exile the granting Equipment")
+                    .withGrantSource(UUID.randomUUID());
+
+            assertThatThrownBy(() -> service.validateActivationLegality(
+                    gameData, player1Id, creature, ability, 0, 0, new ManaPool(), 0))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("granting Equipment");
+        }
     }
 
     // =========================================================================
@@ -545,6 +622,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -574,7 +652,36 @@ class AbilityActivationServiceTest {
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(3);
             verify(activatedAbilityExecutionService, times(0)).completeActivationAfterCosts(
                     any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
+        }
+
+        @Test
+        @DisplayName("Life-per-card-in-hand cost is checked before an activated ability's mana is paid")
+        void payLifeForEachCardInHandIsCheckedBeforeManaPayment() {
+            Card card = createCreatureCard("Hand Cost Creature", 2, 2);
+            card.addActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{1}",
+                    List.of(new PayLifeForEachCardInHandCost()),
+                    "Pay one life for each card in hand."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+            gameData.playerHands.get(player1Id).addAll(List.of(new Card(), new Card(), new Card()));
+            gameData.playerLifeTotals.put(player1Id, 2);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, 0, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Not enough life");
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(1);
+            verify(activatedAbilityExecutionService, times(0)).completeActivationAfterCosts(
+                    any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any());
         }
 
         @Test
@@ -602,6 +709,7 @@ class AbilityActivationServiceTest {
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -797,6 +905,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -854,6 +963,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -907,6 +1017,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -941,6 +1052,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -975,6 +1087,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
     }
@@ -1252,6 +1365,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -1416,6 +1530,51 @@ class AbilityActivationServiceTest {
 
             assertThat(aura.getCounterCount(CounterType.TASK)).isEqualTo(1);
         }
+    }
+
+    @Test
+    @DisplayName("Graveyard ability: single instant-or-sorcery exile cost prompts and resumes activation")
+    void graveyardAbilitySingleExileCostPromptsAndResumes() {
+        Card source = createCard("Test Professor", CardType.CREATURE);
+        source.addGraveyardActivatedAbility(new ActivatedAbility(
+                false,
+                "{1}{B}",
+                List.of(new ExileCardFromGraveyardCost(CardType.INSTANT, CardType.SORCERY), new DrawCardEffect()),
+                "Exile an instant or sorcery card: Draw a card."
+        ));
+        Card instant = createCard("Test Shock", CardType.INSTANT);
+        gameData.playerGraveyards.get(player1Id).add(source);
+        gameData.playerGraveyards.get(player1Id).add(instant);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+        when(gameQueryService.canPlayersActivateGraveyardAbilities(gameData)).thenReturn(true);
+        when(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(gameData, player1Id, source))
+                .thenReturn(List.of());
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            gameData.interaction.beginInteraction(invocation.getArgument(1));
+            return null;
+        }).when(interactionHandlerRegistry).begin(eq(gameData), any(PendingInteraction.class));
+        service.activateGraveyardAbility(gameData, player1, 0, null);
+
+        assertThat(gameData.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
+        assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
+
+        service.handleActivatedAbilityGraveyardExileCostChosen(gameData, player1, 1);
+
+        assertThat(gameData.playerGraveyards.get(player1Id)).containsExactly(source);
+        assertThat(gameData.stack).hasSize(1);
+        verify(exileService).exileCard(gameData, player1Id, instant);
+    }
+
+    private Card createCard(String name, CardType type) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(type);
+        card.setManaCost("{0}");
+        return card;
     }
 
     // =========================================================================

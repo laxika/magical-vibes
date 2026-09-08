@@ -26,6 +26,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    record RemoveCounterFromTwoCreatures(StackEntry resolvingEntry, CounterType counterType,
+                                         CardEffect thenEffect)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The activating player chooses one or more other artifacts to exile as an ability cost. */
     record ActivatedAbilityExileArtifactsCost(UUID playerId, UUID sourcePermanentId, int abilityIndex,
                                                int xValue, UUID targetId, Zone targetZone,
@@ -86,6 +91,16 @@ public sealed interface MultiPermanentChoiceContext {
                                          UUID sourcePermanentId) implements MultiPermanentChoiceContext {
 
         public UpkeepOptionalPermanentTarget {
+            effects = List.copyOf(effects);
+        }
+    }
+
+    /** Selects up to a mutation-count number of creature targets for a mutation trigger. */
+    record SelfTriggeredAbilityTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                       String eventDescription, UUID sourcePermanentId,
+                                       Integer eventValue) implements MultiPermanentChoiceContext {
+
+        public SelfTriggeredAbilityTargets {
             effects = List.copyOf(effects);
         }
     }
@@ -198,6 +213,10 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificeAttackingCreatures() implements MultiPermanentChoiceContext {
     }
 
+    /** The attacking player chooses permanents to sacrifice as an additional attack cost. */
+    record SacrificeAttackCost(int requiredCount) implements MultiPermanentChoiceContext {
+    }
+
     /** The controller exiles the chosen attacking creatures (Resounding Silence cycling trigger). */
     record ExileAttackingCreatures() implements MultiPermanentChoiceContext {
     }
@@ -263,9 +282,17 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
-    record ReturnTargetPermanentsToHand(CardEffect thenEffect) implements MultiPermanentChoiceContext {
+    record ReturnTargetPermanentsToHand(CardEffect thenEffect, int requiredCount) implements MultiPermanentChoiceContext {
+        public ReturnTargetPermanentsToHand(CardEffect thenEffect) {
+            this(thenEffect, 0);
+        }
+
+        public ReturnTargetPermanentsToHand(int requiredCount) {
+            this(null, requiredCount);
+        }
+
         public ReturnTargetPermanentsToHand() {
-            this(null);
+            this(null, 0);
         }
     }
 
@@ -319,20 +346,30 @@ public sealed interface MultiPermanentChoiceContext {
                            java.util.List<PendingForcedSacrifice> remainingChoosers,
                            java.util.List<UUID> accumulatedSacrificeIds,
                            boolean simultaneousFlow,
-                           boolean recordSacrificedCount)
+                           boolean recordSacrificedCount,
+                           LibrarySearchFollowUp afterSacrifices)
             implements MultiPermanentChoiceContext {
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false, null);
         }
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds,
                                boolean simultaneousFlow) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, simultaneousFlow, false);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, simultaneousFlow, false, null);
+        }
+
+        public ForcedSacrifice(UUID sacrificingPlayerId,
+                               java.util.List<PendingForcedSacrifice> remainingChoosers,
+                               java.util.List<UUID> accumulatedSacrificeIds,
+                               boolean simultaneousFlow,
+                               boolean recordSacrificedCount) {
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds,
+                    simultaneousFlow, recordSacrificedCount, null);
         }
     }
 
@@ -422,6 +459,16 @@ public sealed interface MultiPermanentChoiceContext {
                                      String sourceName) implements MultiPermanentChoiceContext {
 
         public EachPlayerReturnsCreature {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenIds = List.copyOf(chosenIds);
+        }
+    }
+
+    /** Each player chooses one permanent to return to its owner's hand in active-player order. */
+    record EachPlayerReturnsPermanent(List<UUID> remainingPlayerIds, List<UUID> chosenIds,
+                                      String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerReturnsPermanent {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             chosenIds = List.copyOf(chosenIds);
         }
@@ -879,6 +926,17 @@ public sealed interface MultiPermanentChoiceContext {
         public EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandChoice {
             playerIds = java.util.List.copyOf(playerIds);
             selectedIds = java.util.List.copyOf(selectedIds);
+        }
+    }
+
+    /** Consuming Tide: the current player chose the nonland permanent they keep. */
+    record EachPlayerChoosesNonlandPermanentThenReturnRestChoice(
+            java.util.List<UUID> playerIds, int playerIndex,
+            java.util.List<UUID> keptIds, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesNonlandPermanentThenReturnRestChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            keptIds = java.util.List.copyOf(keptIds);
         }
     }
 

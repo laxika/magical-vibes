@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DwarvenCatapult.class, GiantSpider.class, GrizzlyBears.class})
+@CardUsed({DwarvenCatapult.class, GiantSpider.class, GrizzlyBears.class, Mountain.class})
 class DwarvenCatapultTest extends BaseCardTest {
 
     @Test
@@ -50,6 +51,24 @@ class DwarvenCatapultTest extends BaseCardTest {
         assertThat(battlefield).hasSize(3);
         // floor(7/3) = 2 damage each
         assertThat(battlefield).allMatch(p -> p.getMarkedDamage() == 2);
+    }
+
+    @Test
+    @DisplayName("Counts only creatures, not a noncreature permanent")
+    void countsOnlyCreatures() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        List<Permanent> creatures = List.of(
+                harness.addToBattlefieldAndReturn(player2, new GiantSpider()),
+                harness.addToBattlefieldAndReturn(player2, new GiantSpider()),
+                harness.addToBattlefieldAndReturn(player2, new GiantSpider()));
+        harness.setHand(player1, List.of(new DwarvenCatapult()));
+        harness.addMana(player1, ManaColor.RED, 8); // {7}{R}
+
+        harness.castInstant(player1, 0, 7, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(mountain.getMarkedDamage()).isZero();
+        assertThat(creatures).allMatch(p -> p.getMarkedDamage() == 2);
     }
 
     @Test

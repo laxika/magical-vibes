@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -35,14 +36,17 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -205,6 +209,10 @@ public class Card {
     /** True when this card's face is chosen while it is played from a zone, rather than transformed. */
     private boolean modalDoubleFaced;
     private List<CastingOption> castingOptions = new ArrayList<>();
+    /** Mana costs of the two Room doors, in door order, when this card is a Room. */
+    private List<String> roomDoorManaCosts = List.of();
+    /** The Room door chosen while this card was cast, carried to its entering permanent. */
+    private Integer selectedRoomDoor;
     /** Morph's face-up cost; the face-down cast uses the standard {3} alternate cost. */
     private String morphCost;
     /** Optional dynamic generic reduction applied to the morph/disguise face-up cost. */
@@ -351,6 +359,8 @@ public class Card {
         this.backFaceCard = source.backFaceCard;
         this.modalDoubleFaced = source.modalDoubleFaced;
         this.castingOptions = new ArrayList<>(source.castingOptions);
+        this.roomDoorManaCosts = List.copyOf(source.roomDoorManaCosts);
+        this.selectedRoomDoor = source.selectedRoomDoor;
         this.morphCost = source.morphCost;
         this.morphCostReduction = source.morphCostReduction;
         this.morphRevealCost = source.morphRevealCost;
@@ -434,6 +444,8 @@ public class Card {
         this.castTimeTargetFilter = face.castTimeTargetFilter;
         this.watermark = face.watermark;
         this.castingOptions = new ArrayList<>(face.castingOptions);
+        this.roomDoorManaCosts = List.copyOf(face.roomDoorManaCosts);
+        this.selectedRoomDoor = face.selectedRoomDoor;
         this.morphCost = face.morphCost;
         this.morphCostReduction = face.morphCostReduction;
         this.morphRevealCost = face.morphRevealCost;
@@ -668,6 +680,12 @@ public class Card {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
+            case RollD20Effect e -> {
+                if (e.zeroOrLess() != null) registerEffectTargetIndex(e.zeroOrLess(), targetIndex);
+                if (e.oneToNine() != null) registerEffectTargetIndex(e.oneToNine(), targetIndex);
+                if (e.tenToNineteen() != null) registerEffectTargetIndex(e.tenToNineteen(), targetIndex);
+                if (e.twenty() != null) registerEffectTargetIndex(e.twenty(), targetIndex);
+            }
             // SequenceEffect splices its steps into the resolution list; each step must keep the
             // sequence's target group (fuse halves that bundle multi-step one-target instructions).
             case SequenceEffect e -> {
@@ -695,6 +713,7 @@ public class Card {
             case TriggeringPermanentConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringArtifactControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringPermanentControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case TriggeringRoomDoorConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             default -> { }
         }
     }
@@ -725,6 +744,63 @@ public class Card {
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 targetIndices.forEach(targetIndex ->
                         registerEffectTargetIndex(effect, targetIndexOffset + targetIndex)));
+    }
+
+    /**
+     * Appends the target groups used by the supplied effects from another card. This is used when
+     * an effect copies a permanent but adds an effect whose target declaration belongs to the card
+     * creating the copy rather than to the copied permanent.
+     */
+    public void appendSpellTargetingForEffectsFrom(Card source, Collection<CardEffect> effects) {
+        assertMutable();
+        if (source == null || effects == null || effects.isEmpty()) {
+            return;
+        }
+
+        Set<CardEffect> effectSet = Collections.newSetFromMap(new IdentityHashMap<>());
+        effectSet.addAll(effects);
+        Set<Integer> sourceTargetIndices = new java.util.HashSet<>();
+        for (CardEffect effect : effectSet) {
+            List<Integer> targetIndices = source.effectTargetIndexMap.get(effect);
+            if (targetIndices != null) {
+                sourceTargetIndices.addAll(targetIndices);
+            }
+        }
+        if (sourceTargetIndices.isEmpty()) {
+            return;
+        }
+
+        Map<Integer, Integer> targetIndexMap = new HashMap<>();
+        for (SpellTarget sourceTarget : source.spellTargets) {
+            if (!sourceTargetIndices.contains(sourceTarget.getIndex())) {
+                continue;
+            }
+            int targetIndex = spellTargets.size();
+            spellTargets.add(new SpellTarget(
+                    this,
+                    sourceTarget.getFilter(),
+                    sourceTarget.getMinTargets(),
+                    sourceTarget.getMaxTargets(),
+                    sourceTarget.getKickedMinTargets(),
+                    sourceTarget.getKickedMaxTargets(),
+                    targetIndex,
+                    sourceTarget.isXScaled(),
+                    sourceTarget.getDynamicMinTargets(),
+                    sourceTarget.getDynamicMaxTargets()));
+            targetIndexMap.put(sourceTarget.getIndex(), targetIndex);
+        }
+
+        source.effectTargetIndexMap.forEach((effect, targetIndices) -> {
+            if (!effectSet.contains(effect)) {
+                return;
+            }
+            targetIndices.forEach(sourceTargetIndex -> {
+                Integer targetIndex = targetIndexMap.get(sourceTargetIndex);
+                if (targetIndex != null) {
+                    registerEffectTargetIndex(effect, targetIndex);
+                }
+            });
+        });
     }
 
     /**
@@ -993,6 +1069,23 @@ public class Card {
         castingOptions.add(option);
     }
 
+    public void setRoomDoorManaCosts(List<String> roomDoorManaCosts) {
+        assertMutable();
+        if (roomDoorManaCosts == null || roomDoorManaCosts.size() != 2
+                || roomDoorManaCosts.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("A Room must have exactly two door mana costs");
+        }
+        this.roomDoorManaCosts = List.copyOf(roomDoorManaCosts);
+    }
+
+    public void setSelectedRoomDoor(int selectedRoomDoor) {
+        assertMutable();
+        if (selectedRoomDoor < 0 || selectedRoomDoor >= roomDoorManaCosts.size()) {
+            throw new IllegalArgumentException("Invalid Room door index: " + selectedRoomDoor);
+        }
+        this.selectedRoomDoor = selectedRoomDoor;
+    }
+
     /** Adds a prototype alternate cast with its alternate color and base power/toughness. */
     public void addPrototype(String manaCost, CardColor color, int power, int toughness) {
         assertMutable();
@@ -1182,7 +1275,7 @@ public class Card {
                 .withNinjutsu());
     }
 
-    /** Adds a Sneak alternate cast from hand. */
+    /** Adds Sneak for {@code cost}. */
     public void addSneak(String cost) {
         addCastingOption(AlternateHandCast.sneak(cost));
     }

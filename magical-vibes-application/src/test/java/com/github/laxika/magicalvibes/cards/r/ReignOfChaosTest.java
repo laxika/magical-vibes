@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.j.JungleWurm;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TeferisDrake;
+import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ReignOfChaos.class, Plains.class, Island.class, ZhalfirinKnight.class, TeferisDrake.class, JungleWurm.class})
 class ReignOfChaosTest extends BaseCardTest {
 
     private Card whitePlainsCreature() {
@@ -44,16 +46,16 @@ class ReignOfChaosTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReignOfChaos()));
         giveMana();
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
-        Permanent vanguard = harness.addToBattlefieldAndReturn(player2, new EliteVanguard());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new ZhalfirinKnight());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new JungleWurm());
 
-        harness.castModalInstant(player1, 0, 0, List.of(plains.getId(), vanguard.getId()));
+        harness.castModalSorcery(player1, 0, 0, List.of(plains.getId(), knight.getId()));
         harness.passBothPriorities();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
         assertThat(battlefield).extracting(Permanent::getId)
-                .doesNotContain(plains.getId(), vanguard.getId())
-                .contains(bears.getId());
+                .doesNotContain(plains.getId(), knight.getId())
+                .contains(wurm.getId());
     }
 
     @Test
@@ -63,11 +65,23 @@ class ReignOfChaosTest extends BaseCardTest {
         giveMana();
         Permanent target = harness.addToBattlefieldAndReturn(player2, whitePlainsCreature());
 
-        harness.castModalInstant(player1, 0, 0, List.of(target.getId(), target.getId()));
+        harness.castModalSorcery(player1, 0, 0, List.of(target.getId(), target.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
                 .doesNotContain(target.getId());
+    }
+
+    @Test
+    @DisplayName("Mode 0 cannot target an Island as its land target")
+    void mode0RejectsIsland() {
+        harness.setHand(player1, List.of(new ReignOfChaos()));
+        giveMana();
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new ZhalfirinKnight());
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 0, List.of(island.getId(), knight.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -76,16 +90,28 @@ class ReignOfChaosTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReignOfChaos()));
         giveMana();
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        Permanent drake = harness.addToBattlefieldAndReturn(player2, new TeferisDrake());
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
 
-        harness.castModalInstant(player1, 0, 1, List.of(island.getId(), wizard.getId()));
+        harness.castModalSorcery(player1, 0, 1, List.of(island.getId(), drake.getId()));
         harness.passBothPriorities();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
         assertThat(battlefield).extracting(Permanent::getId)
-                .doesNotContain(island.getId(), wizard.getId())
+                .doesNotContain(island.getId(), drake.getId())
                 .contains(plains.getId());
+    }
+
+    @Test
+    @DisplayName("Mode 1 cannot target a non-blue creature")
+    void mode1RejectsNonBlueCreature() {
+        harness.setHand(player1, List.of(new ReignOfChaos()));
+        giveMana();
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new JungleWurm());
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 1, List.of(island.getId(), wurm.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -94,11 +120,11 @@ class ReignOfChaosTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReignOfChaos()));
         giveMana();
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new JungleWurm());
 
         UUID plainsId = plains.getId();
-        UUID bearsId = bears.getId();
-        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 0, List.of(plainsId, bearsId)))
+        UUID wurmId = wurm.getId();
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 0, List.of(plainsId, wurmId)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -108,11 +134,11 @@ class ReignOfChaosTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReignOfChaos()));
         giveMana();
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
-        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        Permanent drake = harness.addToBattlefieldAndReturn(player2, new TeferisDrake());
 
         UUID plainsId = plains.getId();
-        UUID wizardId = wizard.getId();
-        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(plainsId, wizardId)))
+        UUID drakeId = drake.getId();
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 1, List.of(plainsId, drakeId)))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
+import com.github.laxika.magicalvibes.cards.p.Portent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SoulBarrier.class, BalduvianBears.class, IvoryMask.class, Portent.class})
 class SoulBarrierTest extends BaseCardTest {
 
     // ===== Only triggers on opponent creature spells =====
@@ -26,14 +30,30 @@ class SoulBarrierTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Soul Barrier");
+    }
+
+    @Test
+    @DisplayName("Each Soul Barrier triggers independently")
+    void eachSoulBarrierTriggersIndependently() {
+        harness.addToBattlefield(player1, new SoulBarrier());
+        harness.addToBattlefield(player1, new SoulBarrier());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(3);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
     }
 
     @Test
@@ -45,23 +65,19 @@ class SoulBarrierTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Portent()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castSorcery(player2, 0, player1.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shock");
     }
 
     @Test
     @DisplayName("Does NOT trigger when controller casts a creature spell")
     void doesNotTriggerOnControllerCreatureSpell() {
         harness.addToBattlefield(player1, new SoulBarrier());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BalduvianBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -119,12 +135,9 @@ class SoulBarrierTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -140,17 +153,33 @@ class SoulBarrierTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
         gd.playerDamagePreventionShields.put(player2.getId(), 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("The trigger still damages an opponent with shroud")
+    void triggerDoesNotTargetCastingOpponent() {
+        harness.addToBattlefield(player1, new SoulBarrier());
+        harness.addToBattlefield(player2, new IvoryMask());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
     // ===== Damage can kill opponent =====
@@ -165,10 +194,8 @@ class SoulBarrierTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setLife(player2, 1);
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castFromHand(player2, new BalduvianBears(), "{1}{G}");
 
-        harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(-1);
@@ -183,9 +210,9 @@ class SoulBarrierTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new SuntailHawk()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new BalduvianBears()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player2, 0);
 

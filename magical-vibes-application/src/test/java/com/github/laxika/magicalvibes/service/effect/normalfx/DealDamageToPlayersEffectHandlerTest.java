@@ -143,6 +143,23 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
     class TargetPermanentController {
 
         @Test
+        void usesTheControllerRememberedBeforeAnEarlierEffectDestroyedTheTarget() {
+            UUID removedId = UUID.randomUUID();
+            StackEntry entry = createEntry(createCard("Destruction and damage"), player1Id, removedId);
+            entry.getRemovedPermanentControllers().put(removedId, player2Id);
+            stubNoDamageMultiplier();
+            stubDamageFromSourceNotPrevented();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(2,
+                    DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
+            assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
+        }
+
+        @Test
         @DisplayName("Deals to the targeted creature's controller as the victim, without remapping the damage source")
         void dealsToTargetCreatureControllerAndKeepsSourceController() {
             // Chandra's Outrage: "deals 2 damage to that creature's controller."

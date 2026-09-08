@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M13", collectorNumber = "45")
 @CardRegistration(set = "M14", collectorNumber = "47")
 @CardRegistration(set = "SUM", collectorNumber = "51")
+@CardRegistration(set = "ONS", collectorNumber = "75")
+@CardRegistration(set = "3ED", collectorNumber = "51")
 public class Clone extends Card {
 
     public Clone() {

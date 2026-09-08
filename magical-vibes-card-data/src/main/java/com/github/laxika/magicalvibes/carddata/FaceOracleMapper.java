@@ -106,12 +106,14 @@ public final class FaceOracleMapper {
      * <p>Both providers report a double-faced card's keywords combined across its faces, so each
      * face has to be narrowed to what its own text states — otherwise it inherits the other face's.
      * That is not cosmetic: Defender leaking onto Awoken Horror produces a creature the combat code
-     * refuses to attack with. Narrowing also stops a face that <em>grants</em> a keyword
+     * refuses to attack with. The same filtering prevents a front face from treating a mentioned
+     * keyword as its own. Narrowing also stops a face that <em>grants</em> a keyword
      * ("Creatures you control have flying") from claiming it, and drops Transform and Prepared for
      * free, since neither heads a keyword line of any back face's text.
      *
      * <p>Order matters: this runs on {@code cardText} <em>after</em> capitalisation, which is
      * itself driven by the full combined list. Narrowing first would change which lines capitalise.
+     * With no rules text, the provider list is retained because there is no text to narrow.
      */
     private static Set<Keyword> keywordsOf(RawFace face, String cardText) {
         Collection<String> stated = cardText == null

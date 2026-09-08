@@ -43,6 +43,9 @@ public class AirbendTargetCreatureOrSpellEffectHandler implements NormalEffectHa
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID targetId = entry.getTargetId();
         if (targetId == null) {
+            targetId = entry.targetsForEffect(effect).stream().findFirst().orElse(null);
+        }
+        if (targetId == null) {
             return;
         }
 

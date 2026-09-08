@@ -1,113 +1,159 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.f.FemerefHealer;
+import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
+import com.github.laxika.magicalvibes.cards.s.ShadowGuildmage;
+import com.github.laxika.magicalvibes.cards.t.TalruumMinotaur;
+import com.github.laxika.magicalvibes.cards.w.WallOfRoots;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({
+        MangarasEquity.class,
+        FemerefHealer.class,
+        FemerefScouts.class,
+        ShadowGuildmage.class,
+        TalruumMinotaur.class,
+        WallOfRoots.class
+})
 class MangarasEquityTest extends BaseCardTest {
 
-    private void addEquity(CardColor chosenColor) {
-        Permanent equity = new Permanent(new MangarasEquity());
+    private Permanent addEquity(Player controller, CardColor chosenColor) {
+        Permanent equity = harness.addToBattlefieldAndReturn(controller, new MangarasEquity());
         equity.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player2.getId()).add(equity);
+        return equity;
     }
 
     private Permanent attackWith(Card creature) {
-        harness.addToBattlefield(player1, creature);
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(creature.getName()))
-                .findFirst().orElseThrow();
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, creature);
         attacker.setAttacking(true);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
         return attacker;
+    }
+
+    private Permanent addBlocker(Card creature) {
+        Permanent blocker = addCreatureReady(player2, creature);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        return blocker;
+    }
+
+    private void resolveCombatAndTriggers() {
+        resolveCombat();
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield offers only black and red")
+    void entersWithRestrictedColorChoice() {
+        harness.setHand(player1, List.of(new MangarasEquity()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("BLACK", "RED");
+
+        harness.handleListChoice(player1, CardColor.BLACK.name());
     }
 
     @Test
     @DisplayName("A creature of the chosen color damaging you takes that much damage back")
     void combatDamageToControllerReflected() {
-        addEquity(CardColor.RED);
-        Permanent attacker = attackWith(new HillGiant()); // red 3/3
+        addEquity(player2, CardColor.RED);
+        Permanent attacker = attackWith(new TalruumMinotaur());
 
-        harness.passBothPriorities(); // combat damage to player2, Equity trigger queued
-        harness.passBothPriorities(); // Equity resolves: 3 damage to Hill Giant
+        resolveCombatAndTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
         assertThat(attacker.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("A creature of another color damaging you is not punished")
     void otherColorNotReflected() {
-        addEquity(CardColor.BLACK);
-        Permanent attacker = attackWith(new HillGiant()); // red 3/3
+        addEquity(player2, CardColor.BLACK);
+        Permanent attacker = attackWith(new TalruumMinotaur());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombatAndTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
         assertThat(attacker.getMarkedDamage()).isZero();
-    }
-
-    private void addWall(CardColor color) {
-        Card wall = new Card();
-        wall.setName(color + " Wall");
-        wall.setType(CardType.CREATURE);
-        wall.setManaCost("{1}");
-        wall.setColor(color);
-        wall.setPower(0);
-        wall.setToughness(5);
-
-        Permanent blocker = new Permanent(wall);
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
     }
 
     @Test
     @DisplayName("A creature of the chosen color damaging a white creature you control is punished")
     void damageToWhiteCreatureReflected() {
-        addEquity(CardColor.RED);
-        addWall(CardColor.WHITE);
-        Permanent attacker = attackWith(new HillGiant()); // red 3/3
+        addEquity(player2, CardColor.RED);
+        Permanent blocker = addBlocker(new FemerefScouts());
+        attackWith(new TalruumMinotaur());
 
-        harness.passBothPriorities(); // combat damage to the wall, Equity trigger queued
-        harness.passBothPriorities(); // Equity resolves: 3 damage to Hill Giant
+        resolveCombatAndTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player2, 20);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        harness.assertInGraveyard(player1, "Talruum Minotaur");
     }
 
     @Test
     @DisplayName("Damage to a non-white creature you control is not punished")
     void damageToNonWhiteCreatureNotReflected() {
-        addEquity(CardColor.RED);
-        addWall(CardColor.GREEN);
-        Permanent attacker = attackWith(new HillGiant()); // red 3/3
+        addEquity(player2, CardColor.RED);
+        addBlocker(new WallOfRoots());
+        Permanent attacker = attackWith(new TalruumMinotaur());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombatAndTriggers();
 
         assertThat(attacker.getMarkedDamage()).isZero();
     }
 
     @Test
+    @DisplayName("Damage to a white creature is reflected even if that creature dies")
+    void damageToWhiteCreatureThatDiesIsReflected() {
+        addEquity(player2, CardColor.RED);
+        addBlocker(new FemerefHealer());
+        attackWith(new TalruumMinotaur());
+
+        resolveCombatAndTriggers();
+
+        harness.assertInGraveyard(player2, "Femeref Healer");
+        harness.assertInGraveyard(player1, "Talruum Minotaur");
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to you from a chosen-color creature is reflected")
+    void nonCombatDamageToControllerReflected() {
+        addEquity(player2, CardColor.BLACK);
+        addCreatureReady(player1, new ShadowGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Shadow Guildmage");
+    }
+
+    @Test
     @DisplayName("Paying {1}{W} at upkeep keeps it on the battlefield")
     void payAtUpkeepKeepsIt() {
-        harness.addToBattlefield(player1, new MangarasEquity());
+        addEquity(player1, CardColor.RED);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -120,7 +166,7 @@ class MangarasEquityTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay at upkeep sacrifices it")
     void declineAtUpkeepSacrificesIt() {
-        harness.addToBattlefield(player1, new MangarasEquity());
+        addEquity(player1, CardColor.RED);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
