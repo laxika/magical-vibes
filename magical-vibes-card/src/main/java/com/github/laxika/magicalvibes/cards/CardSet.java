@@ -132,6 +132,7 @@ public enum CardSet {
     SET_ODY("ODY"),
     SET_USG("USG"),
     SET_ONS("ONS"),
+    SET_SCG("SCG"),
     SET_LGN("LGN"),
     SET_ITP("ITP"),
     SET_JUD("JUD"),
@@ -161,11 +162,14 @@ public enum CardSet {
     SET_LCI("LCI"),
     SET_BIG("BIG"),
     SET_TLA("TLA"),
+    SET_MSH("MSH"),
     SET_OM1("OM1"),
     SET_DD1("DD1"),
+    SET_DDC("DDC"),
     SET_CP1("CP1"),
     SET_CP2("CP2"),
-    SET_CP3("CP3");
+    SET_CP3("CP3"),
+    SET_PHUK("PHUK");
 
     @Getter
     private final String code;

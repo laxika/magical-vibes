@@ -39,6 +39,11 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     }
 
     @Override
+    public boolean resolvesWhenTargetIllegal() {
+        return wrapped.resolvesWhenTargetIllegal();
+    }
+
+    @Override
     public boolean usesEnteringPermanentReference() {
         return wrapped.usesEnteringPermanentReference();
     }

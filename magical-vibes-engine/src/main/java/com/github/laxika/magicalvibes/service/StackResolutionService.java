@@ -343,6 +343,9 @@ public class StackResolutionService {
             perm.setBestow(true);
         } else if (entry.getPhysicalCard() != card) {
             perm.setCard(characteristics);
+            if (entry.isCastTransformed()) {
+                perm.setTransformed(true);
+            }
         } else if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
             perm.setCard(characteristics);
             perm.setTransformed(true);

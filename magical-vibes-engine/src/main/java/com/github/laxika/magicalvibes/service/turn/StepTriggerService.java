@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNex
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.DimensionalBreachUpkeepReturn;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -70,6 +71,7 @@ import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
@@ -523,6 +525,32 @@ public class StepTriggerService {
         resolveDelayedSelfReturns(gameData,
                 pending -> pending.atNextUpkeep() && pending.ownerId().equals(gameData.activePlayerId));
         resolveDelayedGraveyardCardsUnderControlAtUpkeep(gameData);
+
+        if (gameData.hasDelayedAction(DimensionalBreachUpkeepReturn.class)) {
+            List<DimensionalBreachUpkeepReturn> pendingReturns = gameData.drainDelayedActions(
+                    DimensionalBreachUpkeepReturn.class);
+            for (DimensionalBreachUpkeepReturn action : pendingReturns) {
+                UUID sourceCardId = action.sourceCard().getId();
+                boolean hasCards = gameData.getCardsExiledByPermanent(sourceCardId).stream()
+                        .anyMatch(card -> !card.isToken());
+                if (!hasCards) {
+                    continue;
+                }
+
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), gameData.activePlayerId,
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(ReturnCardExiledWithSourceToBattlefieldEffect.ownedByController())),
+                        0, sourceCardId);
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameData.queueDelayedAction(action);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers."));
+                log.info("Game {} - {} delayed upkeep return trigger pushed onto the stack",
+                        gameData.id, action.sourceCard().getName());
+            }
+        }
 
         // Delayed "draw N cards at the beginning of the next turn's upkeep" (e.g. Library of Lat-Nam).
         // Drained regardless of who the active player is — the scheduling player draws.
@@ -2220,10 +2248,11 @@ public class StepTriggerService {
                 trigger.sourceCard(),
                 TriggerTargetCollector.Options.UPKEEP);
         List<UUID> validTargets = result.validTargets();
+        List<UUID> validGraveyardCardIds = result.validGraveyardCardIds();
         boolean optionalTarget = trigger.sourceCard().getMinTargets() == 0
                 && trigger.sourceCard().getMaxTargets() == 1;
 
-        if (validTargets.isEmpty()) {
+        if (validTargets.isEmpty() && validGraveyardCardIds.isEmpty()) {
             if (optionalTarget) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -2249,7 +2278,9 @@ public class StepTriggerService {
         gameData.interaction.setPermanentChoiceContext(trigger);
 
         String targetDescription;
-        if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+        if (!validGraveyardCardIds.isEmpty() && result.canTargetPermanents()) {
+            targetDescription = "a creature or creature card in a graveyard";
+        } else if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
             targetDescription = ppf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
         } else {
             targetDescription = "target permanent";
@@ -2262,6 +2293,7 @@ public class StepTriggerService {
                     gameData,
                     choosingPlayerId,
                     validTargets,
+                    validGraveyardCardIds,
                     1,
                     new MultiPermanentChoiceContext.UpkeepOptionalPermanentTarget(
                             trigger.sourceCard(), trigger.controllerId(), trigger.effects(), trigger.sourcePermanentId()),
@@ -2920,6 +2952,8 @@ public class StepTriggerService {
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
             processNextMainPhasePlayerTarget(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
+            processNextUpkeepPermanentTarget(gameData);
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
                 && !gameData.interaction.isAwaitingInput()) {
@@ -3016,9 +3050,22 @@ public class StepTriggerService {
                         perm.getCard().getTargetFilter()));
             }
 
+            List<CardEffect> permanentTargetEffects = triggering.stream()
+                    .filter(effect -> !modalEffects.contains(effect))
+                    .filter(effect -> !playerTargetEffects.contains(effect))
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                    .filter(effect -> !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                    .toList();
+            if (!permanentTargetEffects.isEmpty()) {
+                gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
+                        perm.getCard(), activePlayerId, new ArrayList<>(permanentTargetEffects), perm.getId(),
+                        perm.getCard().getTargetFilter()));
+            }
+
             List<CardEffect> graveyardTargetEffects = triggering.stream()
                     .filter(effect -> !modalEffects.contains(effect))
                     .filter(effect -> !playerTargetEffects.contains(effect))
+                    .filter(effect -> !permanentTargetEffects.contains(effect))
                     .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                     .toList();
             if (!graveyardTargetEffects.isEmpty()) {
@@ -3029,6 +3076,7 @@ public class StepTriggerService {
             List<CardEffect> nonTargetEffects = triggering.stream()
                     .filter(effect -> !modalEffects.contains(effect)
                             && !playerTargetEffects.contains(effect)
+                            && !permanentTargetEffects.contains(effect)
                             && !graveyardTargetEffects.contains(effect))
                     .toList();
             if (!nonTargetEffects.isEmpty()) {

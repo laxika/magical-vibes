@@ -37,6 +37,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasSourceChosenSubtypePredicate p) {
             return p.creatureOnly() ? "creature card of the chosen type" : "card of the chosen type";
         }
+        if (predicate instanceof CardSharesCreatureTypeWithSourcePredicate) {
+            return "card sharing a creature type with this creature";
+        }
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
         }
@@ -90,6 +93,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardColorPredicate p) {
             return p.color().name().toLowerCase();
+        }
+        if (predicate instanceof CardHasColorManaSymbolPredicate p) {
+            return "card with a " + p.color().name().toLowerCase() + " mana symbol";
         }
         if (predicate instanceof CardIsMulticoloredPredicate) {
             return "multicolored card";

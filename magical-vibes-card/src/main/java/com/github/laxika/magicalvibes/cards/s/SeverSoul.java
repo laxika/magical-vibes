@@ -18,6 +18,8 @@ import java.util.Set;
 
 @CardRegistration(set = "8ED", collectorNumber = "162")
 @CardRegistration(set = "MMQ", collectorNumber = "159")
+@CardRegistration(set = "PHUK", collectorNumber = "15")
+@CardRegistration(set = "PHUK", collectorNumber = "16")
 public class SeverSoul extends Card {
 
     public SeverSoul() {
