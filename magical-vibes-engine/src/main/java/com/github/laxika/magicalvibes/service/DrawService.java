@@ -301,7 +301,12 @@ public class DrawService {
                     maySkipDrawSource.card(),
                     playerId,
                     List.of(new ReplaceSingleDrawEffect(playerId, maySkipDrawSource.kind())),
-                    "Skip this draw with " + maySkipDrawSource.card().getName() + "?"
+                    maySkipDrawSource.kind() == DrawReplacementKind.PARALLEL_THOUGHTS
+                            ? "Replace this draw with " + maySkipDrawSource.card().getName() + "?"
+                            : "Skip this draw with " + maySkipDrawSource.card().getName() + "?",
+                    null,
+                    null,
+                    maySkipDrawSource.sourcePermanentId()
             ));
             return;
         }
@@ -326,7 +331,7 @@ public class DrawService {
             if (pendingPileDraws.isEmpty()) {
                 gameData.pendingNextDrawFromExiledPile.remove(playerId);
             }
-            resolveNextDrawFromExiledPile(gameData, playerId, pileSourceId);
+            resolveDrawFromExiledPile(gameData, playerId, pileSourceId);
             return;
         }
 
@@ -858,13 +863,13 @@ public class DrawService {
             if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof MaySkipDrawReplacementEffect replacement) {
-                    return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind());
+                    return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
                 }
             }
             if (gameData.currentStep == TurnStep.DRAW) {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW)) {
                     if (effect instanceof IslandSanctuaryEffect replacement) {
-                        return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind());
+                        return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
                     }
                 }
             }
@@ -872,7 +877,7 @@ public class DrawService {
         return null;
     }
 
-    private record MaySkipDrawSource(Card card, DrawReplacementKind kind) {
+    private record MaySkipDrawSource(Card card, DrawReplacementKind kind, UUID sourcePermanentId) {
     }
 
     private Permanent findUbaMaskSource(GameData gameData) {
@@ -1390,7 +1395,7 @@ public class DrawService {
      * put into its owner's hand instead of the draw. The draw is replaced either way — an empty pile
      * simply means nothing is put into a hand (no card is drawn, no draw triggers fire).
      */
-    private void resolveNextDrawFromExiledPile(GameData gameData, UUID playerId, UUID pileSourceId) {
+    public void resolveDrawFromExiledPile(GameData gameData, UUID playerId, UUID pileSourceId) {
         var top = gameData.topOfExilePile(pileSourceId);
         if (top == null) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)

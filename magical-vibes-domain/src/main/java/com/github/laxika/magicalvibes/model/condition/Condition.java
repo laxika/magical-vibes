@@ -306,6 +306,7 @@ public sealed interface Condition permits
         TargetPlayerControlsPermanent,
         TargetSpellCanBeCountered,
         TargetSpellManaSpentLessThanManaValue,
+        TargetSpellManaValueAtMostGreatestControlledPermanentManaValue,
         ControllerControlsMoreCreaturesThanTargetSpellController,
         TargetSpellMatches,
         TargetSpellNoManaSpentToCast,

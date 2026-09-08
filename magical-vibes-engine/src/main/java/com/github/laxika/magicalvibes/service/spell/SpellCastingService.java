@@ -2099,6 +2099,42 @@ public class SpellCastingService {
         }
     }
 
+    /** Validates the permanent choices for a morph face-up sacrifice cost before any cost is paid. */
+    public void validateMorphSacrificeCost(GameData gameData, Player player, SacrificePermanentsCost cost,
+                                           List<UUID> permanentIds) {
+        List<UUID> ids = permanentIds != null ? permanentIds : List.of();
+        if (ids.size() != cost.count()) {
+            throw new IllegalStateException("Must sacrifice exactly " + cost.count() + " permanents");
+        }
+        Set<UUID> uniqueIds = new HashSet<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+        for (UUID permanentId : ids) {
+            if (!uniqueIds.add(permanentId)) {
+                throw new IllegalStateException("Each permanent may be chosen only once");
+            }
+            Permanent toSacrifice = battlefield == null ? null : battlefield.stream()
+                    .filter(permanent -> permanent.getId().equals(permanentId))
+                    .findFirst()
+                    .orElse(null);
+            if (toSacrifice == null) {
+                throw new IllegalStateException("Sacrifice target not found on your battlefield");
+            }
+            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, toSacrifice, cost.filter())) {
+                throw new IllegalStateException("Sacrifice target does not match the required filter");
+            }
+        }
+    }
+
+    /** Pays the already-validated permanents for a morph face-up sacrifice cost. */
+    public void payMorphSacrificeCost(GameData gameData, Player player, Card card, SacrificePermanentsCost cost,
+                                      List<UUID> permanentIds) {
+        for (UUID permanentId : permanentIds) {
+            paySingleSacrificeCost(gameData, player, card, permanentId, "a matching permanent",
+                    permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, cost.filter()));
+        }
+    }
+
     /** Validates the discard component of a morph face-up cost before any cost is paid. */
     public void validateMorphDiscardCost(GameData gameData, Player player, Card card,
                                          DiscardCardTypeCost cost, Integer discardHandCardIndex) {
@@ -2123,6 +2159,22 @@ public class SpellCastingService {
                 .text(" face up.")
                 .build());
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+    }
+
+    /** Validates the life component of a morph face-up cost before any cost is paid. */
+    public void validateMorphLifeCost(GameData gameData, Player player, LifeCastingCost cost) {
+        UUID playerId = player.getId();
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            throw new IllegalStateException("Cannot pay life to turn the permanent face up");
+        }
+        if (gameData.getLife(playerId) < cost.amount()) {
+            throw new IllegalStateException("Not enough life to turn the permanent face up");
+        }
+    }
+
+    /** Pays the already-validated life component of a morph face-up cost. */
+    public void payMorphLifeCost(GameData gameData, Player player, Card card, LifeCastingCost cost) {
+        lifeSupport.applyLifePayment(gameData, player.getId(), cost.amount(), card.getName());
     }
 
     /**

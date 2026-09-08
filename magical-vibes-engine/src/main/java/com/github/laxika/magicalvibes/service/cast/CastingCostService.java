@@ -225,6 +225,21 @@ public class CastingCostService {
         return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId), false);
     }
 
+    /** Returns the generic adjustment to a morph cost paid to turn a permanent face up. */
+    public int getMorphCostModifier(GameData gameData, UUID playerId, Card card) {
+        return getMorphCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId));
+    }
+
+    public int getMorphCostModifier(GameData gameData, UUID playerId, Card card,
+                                    CostModifierSnapshot snapshot) {
+        CostModificationContext context = new CostModificationContext(gameData, playerId, card);
+        return snapshot.modifiers().stream()
+                .mapToInt(modifier -> modifier.handler().modifyMorphCost(
+                        context, modifier.effect(), modifier.source()))
+                .sum();
+    }
+
     /** Returns the generic cast-cost adjustment for a spell cast face down from hand. */
     public int getCastCostModifierForFaceDownSpell(GameData gameData, UUID playerId, Card card) {
         return getCastCostModifier(gameData, playerId, card,

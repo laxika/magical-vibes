@@ -262,6 +262,7 @@ public class TurnCleanupService {
         gameData.sourceNextDamageToAnyTargetShields.clear();
         gameData.eyeForAnEyeShields.clear();
         gameData.reflectDamageToSourceControllerShields.clear();
+        gameData.sourceNextCombatDamageToControllerShields.clear();
         gameData.sourceNextDamageRedirectToPermanentShields.clear();
         gameData.playerSourceNextDamageRedirectShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();

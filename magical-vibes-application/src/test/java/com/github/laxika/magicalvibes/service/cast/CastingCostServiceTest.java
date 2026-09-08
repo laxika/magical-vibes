@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ModifyFlashbackCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ModifyMorphCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
@@ -352,6 +353,27 @@ class CastingCostServiceTest {
 
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, 0, false)).isZero();
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, 0, true)).isEqualTo(-1);
+        }
+
+        @Test
+        @DisplayName("Applies morph cost modifiers with the correct player scope")
+        void appliesMorphCostModifiersWithScope() {
+            Card globalTax = new Card();
+            globalTax.addEffect(EffectSlot.STATIC,
+                    new ModifyMorphCostEffect(2, CostModificationScope.ALL));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(globalTax));
+
+            Card ownReduction = new Card();
+            ownReduction.addEffect(EffectSlot.STATIC,
+                    new ModifyMorphCostEffect(-1, CostModificationScope.SELF));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(ownReduction));
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+            Card morphCard = new Card();
+
+            assertThat(svc.getMorphCostModifier(gd, player1Id, morphCard, snapshot)).isEqualTo(1);
+            assertThat(svc.getMorphCostModifier(gd, player2Id, morphCard, snapshot)).isEqualTo(2);
+            assertThat(svc.getCastCostModifier(gd, player1Id, morphCard, snapshot)).isZero();
         }
 
         @Test

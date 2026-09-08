@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
@@ -480,6 +481,35 @@ class PredicateEvaluationServiceTest {
                     sourceCard.getId(), gd, player1Id)).isTrue();
             assertThat(evaluator.matchesCardPredicate(nonCreatureElf, predicate, sourceCard.getId(), gd, player1Id))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("CardSharesCreatureTypeWithSourcePredicate uses the source's effective type")
+        void cardSharesCreatureTypeWithSourcePredicateMatchesEffectiveSourceType() {
+            Card sourceCard = createCreatureWithSubtypes(
+                    "Mistform Warchief", 1, 3, CardColor.BLUE, List.of(CardSubtype.ILLUSION));
+            Permanent source = addPermanent(player1Id, sourceCard);
+            Card illusion = createCreatureWithSubtypes(
+                    "Illusion", 2, 1, CardColor.BLUE, List.of(CardSubtype.ILLUSION));
+            Card giant = createCreatureWithSubtypes(
+                    "Giant", 3, 3, CardColor.RED, List.of(CardSubtype.GIANT));
+            Card artifact = createArtifact("Illusion Artifact");
+            artifact.setSubtypes(List.of(CardSubtype.ILLUSION));
+            CardSharesCreatureTypeWithSourcePredicate predicate = new CardSharesCreatureTypeWithSourcePredicate();
+
+            assertThat(evaluator.matchesCardPredicate(illusion, predicate, sourceCard.getId(), gd, player1Id))
+                    .isTrue();
+            assertThat(evaluator.matchesCardPredicate(giant, predicate, sourceCard.getId(), gd, player1Id))
+                    .isFalse();
+            assertThat(evaluator.matchesCardPredicate(artifact, predicate, sourceCard.getId(), gd, player1Id))
+                    .isFalse();
+
+            source.setTransientCreatureTypeOverride(CardSubtype.GIANT);
+
+            assertThat(evaluator.matchesCardPredicate(illusion, predicate, sourceCard.getId(), gd, player1Id))
+                    .isFalse();
+            assertThat(evaluator.matchesCardPredicate(giant, predicate, sourceCard.getId(), gd, player1Id))
+                    .isTrue();
         }
 
         @Test

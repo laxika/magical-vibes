@@ -163,6 +163,7 @@ public class LibraryChoiceHandlerService {
         LibrarySearchDestination destination = librarySearch.destination() != null
                 ? librarySearch.destination()
                 : LibrarySearchDestination.HAND;
+        int topLibraryPosition = Math.max(0, librarySearch.topLibraryPosition());
         boolean toBattlefield = destination == LibrarySearchDestination.BATTLEFIELD
                 || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED
                 || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER
@@ -384,7 +385,7 @@ public class LibraryChoiceHandlerService {
                 } else if (destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
                     // Chosen card stays on top; the rest are reordered to the bottom below
                     // (Cream of the Crop). No shuffle — unlike the non-reorder TOP_OF_LIBRARY path.
-                    deck.addFirst(chosenCard);
+                    addCardAtLibraryPosition(deck, chosenCard, topLibraryPosition);
                 } else if (!toBattlefield) {
                     gameData.addCardToHand(handOwnerId, chosenCard);
                 }
@@ -1296,14 +1297,15 @@ public class LibraryChoiceHandlerService {
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
-            deck.addFirst(chosenCard);
+            addCardAtLibraryPosition(deck, chosenCard, topLibraryPosition);
+            String positionText = topLibraryPositionText(topLibraryPosition);
             gameLogService.append(gameData, reveals
                     ? GameLog.textCardText(player.getUsername() + " reveals ", chosenCard,
-                    " and puts it on top of their library. Library is shuffled.")
+                    " and puts it " + positionText + " of their library. Library is shuffled.")
                     : GameLog.text(player.getUsername()
-                    + " puts a card on top of their library. Library is shuffled."));
-            log.info("Game {} - {} searches library and puts {} on top",
-                    gameData.id, player.getUsername(), chosenCard.getName());
+                    + " puts a card " + positionText + " of their library. Library is shuffled."));
+            log.info("Game {} - {} searches library and puts {} {}",
+                    gameData.id, player.getUsername(), chosenCard.getName(), positionText);
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             finishSearchAndResume(gameData);
             return;
@@ -3805,6 +3807,31 @@ public class LibraryChoiceHandlerService {
         if (discoverValue != null) {
             triggerCollectionService.checkDiscoverTriggers(gameData, playerId, discoverValue);
         }
+    }
+
+    private static void addCardAtLibraryPosition(List<Card> deck, Card card, int position) {
+        deck.add(Math.min(position, deck.size()), card);
+    }
+
+    private static String topLibraryPositionText(int position) {
+        return switch (position) {
+            case 0 -> "on top";
+            case 1 -> "second from the top";
+            case 2 -> "third from the top";
+            default -> {
+                int ordinal = position + 1;
+                int lastTwoDigits = ordinal % 100;
+                String suffix = lastTwoDigits >= 11 && lastTwoDigits <= 13
+                        ? "th"
+                        : switch (ordinal % 10) {
+                            case 1 -> "st";
+                            case 2 -> "nd";
+                            case 3 -> "rd";
+                            default -> "th";
+                        };
+                yield ordinal + suffix + " from the top";
+            }
+        };
     }
 
     /** Appends {@code cards} as comma-separated card segments (each hoverable) to {@code builder}. */

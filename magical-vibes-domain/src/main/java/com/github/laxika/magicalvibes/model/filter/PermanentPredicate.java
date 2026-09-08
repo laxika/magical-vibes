@@ -72,6 +72,7 @@ public sealed interface PermanentPredicate permits
         PermanentSharesColorWithEquippedCreaturePredicate,
         PermanentSharesCardTypeWithSourcePermanentPredicate,
         PermanentSharesCreatureTypeWithEquippedCreaturePredicate,
+        PermanentSharesCreatureTypeWithEnchantedCreaturePredicate,
         PermanentSharesMostCommonColorPredicate,
         PermanentHasSubtypePredicate,
         PermanentHasSupertypePredicate,

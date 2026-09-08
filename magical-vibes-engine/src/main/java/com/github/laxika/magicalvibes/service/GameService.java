@@ -14,10 +14,12 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
@@ -1210,10 +1212,19 @@ public class GameService {
                 spellCastingService.validateMorphAdditionalCost(
                         gameData, player, morphAdditionalCost, additionalCostPermanentIds);
             }
+            SacrificePermanentsCost morphSacrificeCost = permanent.getCard().getMorphSacrificeCost();
+            if (!manifestedOrCloaked && morphSacrificeCost != null) {
+                spellCastingService.validateMorphSacrificeCost(
+                        gameData, player, morphSacrificeCost, additionalCostPermanentIds);
+            }
             DiscardCardTypeCost morphDiscardCost = permanent.getCard().getMorphDiscardCost();
             if (morphDiscardCost != null) {
                 spellCastingService.validateMorphDiscardCost(
                         gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
+            }
+            LifeCastingCost morphLifeCost = permanent.getCard().getMorphLifeCost();
+            if (!manifestedOrCloaked && morphLifeCost != null) {
+                spellCastingService.validateMorphLifeCost(gameData, player, morphLifeCost);
             }
             RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
             if (!manifestedOrCloaked && morphRevealCost != null) {
@@ -1235,11 +1246,21 @@ public class GameService {
                         player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
             } else if (morphDiscardCost == null) {
                 ManaCost cost = new ManaCost(faceUpCost);
+                int morphCostModifier = 0;
                 DynamicAmount morphCostReduction = permanent.getCard().getMorphCostReduction();
                 if (!manifestedOrCloaked && morphCostReduction != null && amountEvaluationService != null) {
                     int reduction = amountEvaluationService.evaluate(gameData, morphCostReduction,
                             AmountContext.forCasting(player.getId()));
-                    cost = cost.reducedBy(new ManaCost("{" + reduction + "}"));
+                    morphCostModifier -= reduction;
+                }
+                if (!manifestedOrCloaked && castingCostService != null) {
+                    morphCostModifier += castingCostService.getMorphCostModifier(
+                            gameData, player.getId(), permanent.getCard());
+                }
+                if (morphCostModifier > 0) {
+                    cost = cost.increasedBy(new ManaCost("{" + morphCostModifier + "}"));
+                } else if (morphCostModifier < 0) {
+                    cost = cost.reducedBy(new ManaCost("{" + -morphCostModifier + "}"));
                 }
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 if (pool == null) {
@@ -1278,9 +1299,16 @@ public class GameService {
                 spellCastingService.payMorphAdditionalCost(
                         gameData, player, permanent.getCard(), morphAdditionalCost, additionalCostPermanentIds);
             }
+            if (!manifestedOrCloaked && morphSacrificeCost != null) {
+                spellCastingService.payMorphSacrificeCost(
+                        gameData, player, permanent.getCard(), morphSacrificeCost, additionalCostPermanentIds);
+            }
             if (morphDiscardCost != null) {
                 spellCastingService.payMorphDiscardCost(
                         gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
+            }
+            if (!manifestedOrCloaked && morphLifeCost != null) {
+                spellCastingService.payMorphLifeCost(gameData, player, permanent.getCard(), morphLifeCost);
             }
             finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true);
         }
