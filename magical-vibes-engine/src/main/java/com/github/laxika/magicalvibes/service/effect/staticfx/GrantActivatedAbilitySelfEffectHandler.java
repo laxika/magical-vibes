@@ -45,7 +45,7 @@ public class GrantActivatedAbilitySelfEffectHandler implements StaticEffectHandl
             default -> false;
         };
         if (applies) {
-            accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
+            accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
         }
     }
 }

@@ -29,7 +29,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
         if (targetCardId == null) return;
 
         StackEntry targetOnStack = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getCard().getId().equals(targetCardId))
+                .filter(stackEntry -> stackEntry.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
         if (targetOnStack != null) {

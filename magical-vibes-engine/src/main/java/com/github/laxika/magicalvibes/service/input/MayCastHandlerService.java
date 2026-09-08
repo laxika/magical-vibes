@@ -451,7 +451,7 @@ public class MayCastHandlerService {
         boolean canTargetSpell = spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL));
         if (canTargetSpell) {
             for (StackEntry stackEntry : gameData.stack) {
-                UUID targetId = stackEntry.getCard().getId();
+                UUID targetId = stackEntry.getTargetableId();
                 if (targetLegalityService.checkSpellTargetOnStack(
                         gameData, targetId, card.getTargetFilter(), controllerId, null).isEmpty()) {
                     validTargets.add(targetId);

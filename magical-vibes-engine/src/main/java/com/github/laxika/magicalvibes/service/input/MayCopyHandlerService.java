@@ -257,7 +257,7 @@ public class MayCopyHandlerService {
         UUID copyCardId = ability.targetCardId();
         StackEntry copyEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(copyCardId)) {
+            if (se.getTargetableId().equals(copyCardId)) {
                 copyEntry = se;
                 break;
             }
@@ -275,10 +275,10 @@ public class MayCopyHandlerService {
         if (EffectResolution.needsSpellTarget(copiedCard)) {
             // Targets a spell on the stack
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(copyCardId)) continue; // exclude the copy itself
+                if (se.getTargetableId().equals(copyCardId)) continue; // exclude the copy itself
                 try {
-                    targetLegalityService.validateSpellTargetOnStack(gameData, se.getCard().getId(), copiedCard.getTargetFilter(), copyEntry.getControllerId());
-                    validTargets.add(se.getCard().getId());
+                    targetLegalityService.validateSpellTargetOnStack(gameData, se.getTargetableId(), copiedCard.getTargetFilter(), copyEntry.getControllerId());
+                    validTargets.add(se.getTargetableId());
                 } catch (IllegalStateException ignored) {
                     // Invalid target for copied spell filter; skip.
                 }
@@ -346,7 +346,7 @@ public class MayCopyHandlerService {
         UUID copyCardId = ability.targetCardId();
         StackEntry copyEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(copyCardId)) {
+            if (se.getTargetableId().equals(copyCardId)) {
                 copyEntry = se;
                 break;
             }
@@ -416,7 +416,7 @@ public class MayCopyHandlerService {
         UUID copyCardId = ability.targetCardId();
         StackEntry copyEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(copyCardId)) {
+            if (se.getTargetableId().equals(copyCardId)) {
                 copyEntry = se;
                 break;
             }
@@ -473,7 +473,7 @@ public class MayCopyHandlerService {
         UUID spellCardId = ability.targetCardId();
         StackEntry targetSpellEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(spellCardId)) {
+            if (se.getTargetableId().equals(spellCardId)) {
                 targetSpellEntry = se;
                 break;
             }
@@ -501,10 +501,10 @@ public class MayCopyHandlerService {
 
         if (EffectResolution.needsSpellTarget(spellCard)) {
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCardId)) continue;
+                if (se.getTargetableId().equals(spellCardId)) continue;
                 try {
-                    targetLegalityService.validateSpellTargetOnStack(gameData, se.getCard().getId(), spellCard.getTargetFilter(), targetSpellEntry.getControllerId());
-                    validTargets.add(se.getCard().getId());
+                    targetLegalityService.validateSpellTargetOnStack(gameData, se.getTargetableId(), spellCard.getTargetFilter(), targetSpellEntry.getControllerId());
+                    validTargets.add(se.getTargetableId());
                 } catch (IllegalStateException ignored) {
                 }
             }

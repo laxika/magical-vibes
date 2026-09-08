@@ -37,7 +37,7 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
         if (targetCardId == null) return;
 
         StackEntry targetEntry = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getCard().getId().equals(targetCardId))
+                .filter(stackEntry -> stackEntry.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
         if (targetEntry == null || targetEntry.getTargetId() == null

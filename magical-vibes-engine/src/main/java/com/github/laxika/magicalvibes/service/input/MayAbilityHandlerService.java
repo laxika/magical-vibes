@@ -417,7 +417,8 @@ public class MayAbilityHandlerService {
                     && discard.useEntryTarget())) {
                 entry.setNonTargeting(true);
             }
-            if (ability.effects().stream().anyMatch(e -> e instanceof OtherAttackingCreatureReferenceEffect)) {
+            if (ability.effects().stream().anyMatch(e -> e.usesEnteringPermanentReference()
+                    || e instanceof OtherAttackingCreatureReferenceEffect)) {
                 entry.setNonTargeting(true);
             }
             entry.setAttackedTargetId(ability.attackedTargetId());

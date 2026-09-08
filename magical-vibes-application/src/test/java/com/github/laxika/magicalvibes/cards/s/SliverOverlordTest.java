@@ -67,7 +67,7 @@ class SliverOverlordTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a Sliver");
+                .hasMessageContaining("Target does not match the required predicate");
     }
 
     private void addOverlord(com.github.laxika.magicalvibes.model.Player player) {

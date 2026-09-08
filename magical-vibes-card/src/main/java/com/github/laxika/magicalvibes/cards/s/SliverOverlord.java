@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "H09", collectorNumber = "24")
+@CardRegistration(set = "SCG", collectorNumber = "139")
 public class SliverOverlord extends Card {
 
     public SliverOverlord() {

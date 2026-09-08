@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "10E", collectorNumber = "177")
 @CardRegistration(set = "8ED", collectorNumber = "163")
 @CardRegistration(set = "ONS", collectorNumber = "166")
+@CardRegistration(set = "DPA", collectorNumber = "33")
 public class SeveredLegion extends Card {
 }

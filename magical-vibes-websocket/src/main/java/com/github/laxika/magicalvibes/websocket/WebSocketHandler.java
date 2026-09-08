@@ -96,6 +96,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case REGISTER -> messageHandler.handleRegister(connection, objectMapper.treeToValue(jsonNode, RegisterRequest.class));
                 case CREATE_GAME -> messageHandler.handleCreateGame(connection, objectMapper.treeToValue(jsonNode, CreateGameRequest.class));
                 case JOIN_GAME -> messageHandler.handleJoinGame(connection, objectMapper.treeToValue(jsonNode, JoinGameRequest.class));
+                case ACTIVATE_PLANAR_ABILITY -> messageHandler.handleActivatePlanarAbility(connection, objectMapper.treeToValue(jsonNode, com.github.laxika.magicalvibes.networking.message.ActivatePlanarAbilityRequest.class));
+                case ROLL_PLANAR_DIE -> messageHandler.handleRollPlanarDie(connection, objectMapper.treeToValue(jsonNode, com.github.laxika.magicalvibes.networking.message.RollPlanarDieRequest.class));
                 case PASS_PRIORITY -> messageHandler.handlePassPriority(connection, objectMapper.treeToValue(jsonNode, PassPriorityRequest.class));
                 case KEEP_HAND -> messageHandler.handleKeepHand(connection, objectMapper.treeToValue(jsonNode, KeepHandRequest.class));
                 case TAKE_MULLIGAN -> messageHandler.handleMulligan(connection, objectMapper.treeToValue(jsonNode, MulliganRequest.class));

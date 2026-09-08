@@ -89,6 +89,7 @@ public class TriggerTargetCollector {
                          boolean canTargetPlayers,
                          boolean canTargetPermanents,
                          boolean canTargetExiledCards,
+                         List<UUID> validGraveyardCardIds,
                          boolean opponentOnly) {
     }
 
@@ -196,12 +197,17 @@ public class TriggerTargetCollector {
         boolean canTargetExiledCards = effects.stream()
                 .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
+        boolean canTargetGraveyardCards = effects.stream()
+                .map(e -> unwrap(e, options))
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
 
         if (targetFilter instanceof PermanentPredicateTargetFilter
                 || targetFilter instanceof ControlledPermanentPredicateTargetFilter) {
             canTargetPlayers = false;
+            canTargetGraveyardCards = false;
         } else if (targetFilter instanceof PlayerPredicateTargetFilter) {
             canTargetPermanents = false;
+            canTargetGraveyardCards = false;
         }
 
         // An effect narrows the player half on its own only when it says so through
@@ -364,8 +370,28 @@ public class TriggerTargetCollector {
             }
         }
 
+        List<UUID> validGraveyardCardIds = new ArrayList<>();
+        if (canTargetGraveyardCards && targetValidationService != null) {
+            List<CardEffect> graveyardEffects = effects.stream()
+                    .map(e -> unwrap(e, options))
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .toList();
+            for (List<Card> graveyard : gameData.playerGraveyards.values()) {
+                for (Card card : graveyard) {
+                    boolean valid = graveyardEffects.stream().anyMatch(effect ->
+                            targetValidationService.checkEffectTargets(
+                                    List.of(effect),
+                                    new TargetValidationContext(gameData, card.getId(), Zone.GRAVEYARD,
+                                            sourceCard, 0, controllerId, sourcePermanentSnapshot)).isEmpty());
+                    if (valid) {
+                        validGraveyardCardIds.add(card.getId());
+                    }
+                }
+            }
+        }
+
         return new Result(validTargets, canTargetPlayers, canTargetPermanents,
-                canTargetExiledCards, opponentOnly);
+                canTargetExiledCards, validGraveyardCardIds, opponentOnly);
     }
 
     /**

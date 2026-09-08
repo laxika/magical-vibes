@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "85")
+@CardRegistration(set = "SCG", collectorNumber = "58")
 public class CallToTheGrave extends Card {
 
     public CallToTheGrave() {

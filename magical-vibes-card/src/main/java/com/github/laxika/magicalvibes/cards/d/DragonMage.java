@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "135")
+@CardRegistration(set = "SCG", collectorNumber = "87")
 public class DragonMage extends Card {
 
     public DragonMage() {

@@ -177,6 +177,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPowerPlusToughness;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
@@ -625,6 +626,8 @@ public class AmountEvaluationService {
                     targetSpellPower(gameData, ctx);
             case TriggeringSpellColorCount ignored ->
                     triggeringSpellColorCount(gameData, ctx);
+            case TriggeringSpellColorManaSymbols symbolAmount ->
+                    triggeringSpellColorManaSymbols(gameData, ctx, symbolAmount);
             case ChosenPermanentPower ignored ->
                     chosenPermanentEffectivePower(gameData, ctx);
             case ChosenCreatureOrRevealedCardPower ignored ->
@@ -832,9 +835,9 @@ public class AmountEvaluationService {
         UUID triggeringCardId = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringCardId();
         for (StackEntry se : gameData.stack) {
             boolean isTargetedSpell = ctx.targetPermanentId() != null
-                    && se.getCard().getId().equals(ctx.targetPermanentId());
+                    && se.getTargetableId().equals(ctx.targetPermanentId());
             boolean isTriggeringSpell = triggeringCardId != null
-                    && se.getCard().getId().equals(triggeringCardId);
+                    && se.getTargetableId().equals(triggeringCardId);
             if (isTargetedSpell || isTriggeringSpell) {
                 return se.getCard().getManaValue() + se.getXValue();
             }
@@ -846,7 +849,7 @@ public class AmountEvaluationService {
     private int targetSpellPower(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(ctx.targetPermanentId())) {
+            if (se.getTargetableId().equals(ctx.targetPermanentId())) {
                 Integer power = se.getCard().getPower();
                 return power == null ? 0 : Math.max(0, power);
             }
@@ -1403,18 +1406,32 @@ public class AmountEvaluationService {
         }
         return gameData.stack.stream()
                 .filter(entry -> entry.getCard() != null)
-                .filter(entry -> entry.getCard().getId().equals(ctx.sourceCard().getId()))
+                .filter(entry -> entry.getTargetableId().equals(ctx.sourceCard().getId()))
                 .findFirst()
                 .map(entry -> entry.getCounterCount(amount.counterType()))
                 .orElse(0);
     }
 
     private int triggeringSpellColorCount(GameData gameData, AmountContext ctx) {
+        Card triggeringSpell = findTriggeringSpell(gameData, ctx);
+        return triggeringSpell == null
+                ? 0
+                : gameQueryService.getEffectiveCardColors(gameData, triggeringSpell).size();
+    }
+
+    private int triggeringSpellColorManaSymbols(GameData gameData, AmountContext ctx,
+                                                TriggeringSpellColorManaSymbols amount) {
+        Card triggeringSpell = findTriggeringSpell(gameData, ctx);
+        ManaCost manaCost = triggeringSpell == null ? null : triggeringSpell.getParsedManaCost();
+        return manaCost == null ? 0 : manaCost.countColorSymbols(amount.color());
+    }
+
+    private Card findTriggeringSpell(GameData gameData, AmountContext ctx) {
         if (gameData == null || ctx.stackEntry() == null || ctx.stackEntry().getTriggeringCardId() == null) {
-            return 0;
+            return null;
         }
         UUID triggeringCardId = ctx.stackEntry().getTriggeringCardId();
-        Card triggeringSpell = gameData.stack.stream()
+        return gameData.stack.stream()
                 .filter(entry -> entry.getCard() != null)
                 .filter(entry -> triggeringCardId.equals(entry.getCard().getId()))
                 .findFirst()
@@ -1424,9 +1441,6 @@ public class AmountEvaluationService {
                         .filter(card -> triggeringCardId.equals(card.getId()))
                         .findFirst()
                         .orElse(null));
-        return triggeringSpell == null
-                ? 0
-                : gameQueryService.getEffectiveCardColors(gameData, triggeringSpell).size();
     }
 
     private int countColorManaSymbolsInHand(

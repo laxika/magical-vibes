@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "SCG", collectorNumber = "133")
 @CardRegistration(set = "DD1", collectorNumber = "17")
 public class WirewoodSymbiote extends Card {
 

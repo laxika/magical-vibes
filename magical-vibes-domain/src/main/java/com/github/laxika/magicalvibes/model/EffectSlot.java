@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
 public enum EffectSlot {
+    PLANESWALK_TO_TRIGGERED,
+    PLANESWALK_FROM_TRIGGERED,
+    CHAOS_TRIGGERED,
+    ENCOUNTER_TRIGGERED,
     ON_TAP,
     /** "Whenever you tap this permanent for mana, …" (Zhur-Taa Druid). Dispatched only from the
      *  mana-ability tap path in {@code AbilityActivationService}, so unlike
@@ -383,6 +387,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  triggering Vehicle is stored on the resulting stack entry for effects that refer to it.
      *  Checked from {@code CrewCostHandler}. */
     ON_CREWS_VEHICLE,
+    /** Triggers whenever this creature is tapped to pay a teamwork cost. */
+    ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST,
     /** Triggers whenever this permanent becomes untapped (transitions from tapped to untapped),
      *  from any source — the untap step, or an untap effect. Fires only on the permanent that
      *  became untapped. Driven from the untap call sites via
@@ -798,6 +804,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
      *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** Triggers whenever any creature enters the battlefield, while this card is in its owner's
+     *  graveyard. Like {@link #ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD} but fired from the graveyard.
+     *  Checked in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
+    GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a creature the controller controls dies, while this card is in the
      *  controller's graveyard. Like {@link #ON_ALLY_CREATURE_DIES} but fired from the graveyard.
      *  Checked in {@code TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers}. */
@@ -849,6 +859,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
     /** Triggers whenever one or more +1/+1 counters are put on a creature the controller controls. */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
+    /** Triggers whenever one or more +1/+1 counters are put on another Hero the controller controls. */
+    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO,
+    /** Triggers whenever the controller puts one or more +1/+1 counters on another creature. */
+    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE,
     /** Triggers whenever the controller puts one or more +1/+1 counters on a creature they control. */
     ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever the controller puts one or more counters on a permanent or player. */
@@ -1179,6 +1193,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CREATURE_RETURNED_TO_HAND,
     /** Triggers whenever a permanent is returned from the battlefield to this permanent's controller's hand. */
     ON_CONTROLLER_PERMANENT_RETURNED_TO_HAND,
+    /** Triggers whenever another nonland permanent controlled by this permanent's controller is returned to its owner's hand. */
+    ON_CONTROLLER_ANOTHER_NONLAND_PERMANENT_RETURNED_TO_HAND,
     /** Global watcher: triggers whenever any source (creature or spell) deals damage, regardless of
      *  who controls it or what it damages. Holds a {@code ReflectSourceDamageToItsControllerEffect}
      *  carrying the color the watcher reacts to. Fires on every permanent with this slot across all
@@ -1255,6 +1271,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers}.
      *  Used by Night Dealings. */
     ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
+    /** Triggers whenever one or more creatures the controller controls deal damage to a player. */
+    ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER,
     /** Triggers whenever a source the controller controls deals noncombat damage to another player. */
     ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat) by a

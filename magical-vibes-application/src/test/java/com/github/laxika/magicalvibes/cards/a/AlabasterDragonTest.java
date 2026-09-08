@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AlabasterDragon.class})
+@CardUsed(AlabasterDragon.class)
 class AlabasterDragonTest extends BaseCardTest {
 
     @Test
@@ -36,12 +36,13 @@ class AlabasterDragonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("When controlled by another player, it shuffles into its owner's library")
-    void diesWhileControlledByAnotherPlayerShufflesIntoOwnersLibrary() {
-        AlabasterDragon dragonCard = new AlabasterDragon();
-        dragonCard.setOwnerId(player1.getId());
+    @DisplayName("When controlled by another player, Alabaster Dragon shuffles into its owner's library")
+    void diesThenTriggerShufflesIntoOwnersLibraryWhenControlledByOpponent() {
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of());
+
+        AlabasterDragon dragonCard = new AlabasterDragon();
+        dragonCard.setOwnerId(player1.getId());
         Permanent dragon = harness.addToBattlefieldAndReturn(player2, dragonCard);
         dragon.setMarkedDamage(4);
 
@@ -49,12 +50,14 @@ class AlabasterDragonTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Alabaster Dragon");
         harness.assertNotInGraveyard(player2, "Alabaster Dragon");
+        assertThat(gd.stack).isNotEmpty();
 
         harness.passBothPriorities();
 
+        harness.assertNotInGraveyard(player1, "Alabaster Dragon");
         assertThat(gd.playerDecks.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(dragon.getCard().getId()));
+                .anyMatch(card -> card.getId().equals(dragonCard.getId()));
         assertThat(gd.playerDecks.get(player2.getId()))
-                .noneMatch(card -> card.getId().equals(dragon.getCard().getId()));
+                .noneMatch(card -> card.getId().equals(dragonCard.getId()));
     }
 }
