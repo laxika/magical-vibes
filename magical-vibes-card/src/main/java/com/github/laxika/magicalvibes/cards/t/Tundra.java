@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "SUM", collectorNumber = "289")
+@CardRegistration(set = "3ED", collectorNumber = "289")
 public class Tundra extends Card {
 
     public Tundra() {

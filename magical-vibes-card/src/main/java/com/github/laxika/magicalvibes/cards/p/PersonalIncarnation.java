@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "51")
 @CardRegistration(set = "4ED", collectorNumber = "40")
 @CardRegistration(set = "SUM", collectorNumber = "31")
+@CardRegistration(set = "3ED", collectorNumber = "31")
 public class PersonalIncarnation extends Card {
 
     public PersonalIncarnation() {

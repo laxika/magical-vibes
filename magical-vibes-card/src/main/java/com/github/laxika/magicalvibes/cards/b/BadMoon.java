@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "142")
 @CardRegistration(set = "4ED", collectorNumber = "120")
+@CardRegistration(set = "3ED", collectorNumber = "94")
 @CardRegistration(set = "SUM", collectorNumber = "94")
 @CardRegistration(set = "TSB", collectorNumber = "38")
 public class BadMoon extends Card {
