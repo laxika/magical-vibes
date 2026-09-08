@@ -803,15 +803,16 @@ public class DamageSupport {
     }
 
     /**
-     * If the stack entry represents a spell that should have lifelink (via
-     * {@link com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect}),
-     * the controller gains life equal to the effective damage dealt.
+     * Applies lifelink for the spell or permanent that dealt the damage, using the permanent's
+     * current controller when it is still on the battlefield.
      */
     public void checkSpellLifelink(GameData gameData, StackEntry entry, int effectiveDamage) {
         if (effectiveDamage <= 0) return;
         if (!gameQueryService.shouldControllerSpellHaveLifelink(gameData, entry)) return;
-        lifeSupport.applyGainLife(gameData, entry.getControllerId(), effectiveDamage,
-                "spell lifelink", entry.getCard(), entry.getEntryType());
+        UUID controllerId = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+        lifeSupport.applyGainLife(gameData, controllerId != null ? controllerId : entry.getControllerId(), effectiveDamage,
+                "lifelink", entry.getEffectiveDamageSourceCard(), entry.getEntryType());
     }
 
     public boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {

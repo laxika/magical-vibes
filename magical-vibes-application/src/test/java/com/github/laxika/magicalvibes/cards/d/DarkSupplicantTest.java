@@ -23,6 +23,7 @@ class DarkSupplicantTest extends BaseCardTest {
     @DisplayName("Requires three Clerics to activate")
     void requiresThreeClerics() {
         Permanent supplicant = harness.addToBattlefieldAndReturn(player1, new DarkSupplicant());
+        supplicant.setSummoningSick(false);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
@@ -80,9 +81,9 @@ class DarkSupplicantTest extends BaseCardTest {
     }
 
     private void addThreeSupplicants() {
-        harness.addToBattlefield(player1, new DarkSupplicant());
-        harness.addToBattlefield(player1, new DarkSupplicant());
-        harness.addToBattlefield(player1, new DarkSupplicant());
+        addCreatureReady(player1, new DarkSupplicant());
+        addCreatureReady(player1, new DarkSupplicant());
+        addCreatureReady(player1, new DarkSupplicant());
     }
 
     private Card scionOfDarkness() {

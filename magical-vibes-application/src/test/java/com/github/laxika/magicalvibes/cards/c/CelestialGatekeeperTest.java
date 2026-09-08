@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.d.DauntingDefender;
-import com.github.laxika.magicalvibes.cards.f.FalconerAdept;
+import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CelestialGatekeeper.class, WrathOfGod.class, FalconerAdept.class,
+@CardUsed({CelestialGatekeeper.class, WrathOfGod.class, StormCrow.class,
         DauntingDefender.class, GrizzlyBears.class})
 class CelestialGatekeeperTest extends BaseCardTest {
 
@@ -36,7 +36,7 @@ class CelestialGatekeeperTest extends BaseCardTest {
     @Test
     @DisplayName("When Celestial Gatekeeper dies, it exiles itself and returns up to two targeted Bird or Cleric permanents")
     void exilesItselfAndReturnsTwoMatchingPermanents() {
-        Card bird = new FalconerAdept();
+        Card bird = new StormCrow();
         Card cleric = new DauntingDefender();
         Card gatekeeperCard = killGatekeeper(List.of(bird, cleric));
 
@@ -56,7 +56,7 @@ class CelestialGatekeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Celestial Gatekeeper can return only one of its two available targets")
     void returnsOnlyOneChosenPermanent() {
-        Card bird = new FalconerAdept();
+        Card bird = new StormCrow();
         Card cleric = new DauntingDefender();
         killGatekeeper(List.of(bird, cleric));
 

@@ -539,6 +539,10 @@ public class TurnProgressionService {
         }
 
         gameData.activePlayerId = nextActive;
+        if (gameData.skipCombatPhasesNextTurn.remove(nextActive)) {
+            gameData.skippedStepOrPhasesThisTurn.computeIfAbsent(nextActive, id -> new HashSet<>())
+                    .add(SkipStepOrPhaseKind.COMBAT_PHASE);
+        }
 
         // Check for pending Taunt on the new active player: promote it to an active this-turn requirement
         gameData.tauntedThisTurn.clear();

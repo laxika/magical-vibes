@@ -102,6 +102,21 @@ class TurnProgressionServiceTest {
         }
     }
 
+    @Test
+    void skipsAllCombatsOnlyDuringAffectedNextTurn() {
+        gd.skipCombatPhasesNextTurn.add(player2Id);
+        turnProgressionService.advanceTurn(gd);
+        assertThat(gd.skipCombatPhasesNextTurn).isEmpty();
+
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+        turnProgressionService.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+
+        gd.additionalCombatMainPhasePairs = 1;
+        turnProgressionService.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+    }
+
     private PendingMayAbility newMayAbility() {
         return new PendingMayAbility(new Card(), player1Id, null, "Test may ability");
     }

@@ -35,6 +35,7 @@ class JungleLionTest extends BaseCardTest {
     @DisplayName("Jungle Lion can still be declared as an attacker")
     void canBeDeclaredAsAttacker() {
         Permanent lion = addCreatureReady(player1, new JungleLion());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
 

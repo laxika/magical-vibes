@@ -680,7 +680,8 @@ public class AdditionalSpellCostService {
                 }
                 case SacrificePermanentCost cost -> {
                     if (battlefield.stream().noneMatch(p ->
-                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) return false;
+                            (lifeAndSacAllowed || !gameQueryService.isCreature(gameData, p))
+                                    && predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) return false;
                 }
                 case SacrificeMultiplePermanentsCost cost -> {
                     long matching = battlefield.stream()
@@ -1093,9 +1094,12 @@ public class AdditionalSpellCostService {
             validateChooseCreatureOrRevealCreatureCardCost(gameData, player, card, selection);
         }
         if (costs.sacrificePermanentCost() != null) {
-            validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
+            Permanent selected = validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                     costs.sacrificePermanentCost().description(),
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, costs.sacrificePermanentCost().filter()));
+            if (gameQueryService.isCreature(gameData, selected)) {
+                validateCanSacrificeCreatureForCost(gameData, card);
+            }
         }
         if (costs.exileCreatureCost() != null) {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),

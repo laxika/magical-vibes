@@ -650,6 +650,11 @@ public class CardChoiceHandlerService {
                 continue;
             }
 
+            if (!selection.playerId().equals(gameData.discardEventPlayerId)) {
+                triggerCollectionService.finishDiscardEvent(gameData);
+                triggerCollectionService.beginDiscardEvent(gameData, selection.playerId());
+            }
+
             boolean causedByOpponent = !selection.playerId().equals(sourceControllerId);
             gameData.discardCausedByOpponent = causedByOpponent;
             boolean replacedByBattlefield = false;
@@ -679,6 +684,7 @@ public class CardChoiceHandlerService {
             checkPendingConniveOnDiscard(gameData, card);
             discardedCounts.merge(selection.playerId(), 1, Integer::sum);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
         return discardedCounts;
     }
 

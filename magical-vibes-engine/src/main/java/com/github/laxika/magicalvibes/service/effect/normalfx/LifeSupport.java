@@ -166,6 +166,7 @@ public class LifeSupport {
     }
 
     public void applyLifeLoss(GameData gameData, UUID playerId, int amount, String sourceName) {
+        if (amount <= 0) return;
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));

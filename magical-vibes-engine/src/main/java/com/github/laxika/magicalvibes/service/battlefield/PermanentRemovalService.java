@@ -1205,6 +1205,12 @@ public class PermanentRemovalService {
                     if (target.getId().equals(entry.getSourcePermanentId())) {
                         entry.setSourcePermanentSnapshot(new Permanent(target));
                     }
+                    if (target.getId().equals(entry.getTriggeringPermanentId())
+                            && entry.getEffectsToResolve().stream().anyMatch(effect ->
+                            effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
+                                    && may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)) {
+                        entry.setTriggeringPermanentControllerId(playerId);
+                    }
                 }
                 battlefield.remove(target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);

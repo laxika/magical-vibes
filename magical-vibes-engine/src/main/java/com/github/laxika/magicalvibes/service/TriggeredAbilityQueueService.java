@@ -898,6 +898,16 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             PermanentChoiceContext.EntersTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
 
+            UUID choosingPlayerId = pending.controllerId();
+            if (pending.enteringPermanentId() != null && pending.effects().stream().anyMatch(effect ->
+                    effect instanceof MayEffect may && may.choicePlayer()
+                            == com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)) {
+                UUID enteringControllerId = gameQueryService.findPermanentController(gameData, pending.enteringPermanentId());
+                if (enteringControllerId != null) {
+                    choosingPlayerId = enteringControllerId;
+                }
+            }
+
             TargetFilter targetFilter = pending.targetFilter() != null
                     ? pending.targetFilter()
                     : targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects());
@@ -958,11 +968,11 @@ public class TriggeredAbilityQueueService {
             if (optionalTarget || result.canTargetPlayers()) {
                 List<UUID> playerChoices = optionalTarget && !validPlayerTargets.contains(pending.controllerId())
                         ? new ArrayList<>(List.of(pending.controllerId())) : validPlayerTargets;
-                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), validPermanentTargets,
+                playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId, validPermanentTargets,
                         playerChoices,
                         pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
             } else {
-                playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validPermanentTargets,
+                playerInputService.beginPermanentChoice(gameData, choosingPlayerId, validPermanentTargets,
                         pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
             }
 

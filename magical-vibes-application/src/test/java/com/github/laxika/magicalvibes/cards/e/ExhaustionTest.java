@@ -28,26 +28,30 @@ class ExhaustionTest extends BaseCardTest {
     class SpellResolution {
 
         @Test
-        @DisplayName("Sets skipUntapCount on creatures target opponent controls without tapping them")
+        @DisplayName("Prevents creatures from untapping without tapping them on resolution")
         void setsSkipUntapOnCreatures() {
             harness.addToBattlefield(player2, new GrizzlyBears());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
 
             castAndResolveExhaustion(player2.getId());
 
-            assertThat(bears.getSkipUntapCount()).isEqualTo(1);
             assertThat(bears.isTapped()).isFalse();
+            bears.tap();
+            advanceToNextTurn(player1);
+            assertThat(bears.isTapped()).isTrue();
         }
 
         @Test
-        @DisplayName("Sets skipUntapCount on lands target opponent controls")
+        @DisplayName("Prevents lands target opponent controls from untapping")
         void setsSkipUntapOnLands() {
             harness.addToBattlefield(player2, new Forest());
             Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
 
             castAndResolveExhaustion(player2.getId());
 
-            assertThat(forest.getSkipUntapCount()).isEqualTo(1);
+            forest.tap();
+            advanceToNextTurn(player1);
+            assertThat(forest.isTapped()).isTrue();
         }
 
         @Test

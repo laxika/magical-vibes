@@ -814,7 +814,8 @@ public class EnterTriggerCollectorService {
     @CollectsTrigger(value = MayEffect.class,
             slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
-        if (may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.CONTROLLER) {
+        if (may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.CONTROLLER
+                || may.targetSpec() != TargetSpec.NONE) {
             return handleEnterMay(match, may, ctx);
         }
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;

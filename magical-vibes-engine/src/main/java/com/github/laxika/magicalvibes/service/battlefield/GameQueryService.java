@@ -3372,7 +3372,8 @@ public class GameQueryService {
      */
     public boolean hasCantBeBlocked(GameData gameData, Permanent creature) {
         if (creature.isCantBeBlocked()) return true;
-        if (creature.getCard().getEffects(EffectSlot.STATIC).stream()
+        if (!creature.isFaceDown() && !computeStaticBonus(gameData, creature).losesAllAbilities()
+                && creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
         if (hasAuraWithEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
         if (hasGrantedEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
@@ -3414,11 +3415,9 @@ public class GameQueryService {
     }
 
     /**
-     * True if any attacking creature is attacking the given player directly or one of the planeswalkers
-     * they control (i.e. the player "has been attacked" this combat). Defiant Stand, Kongming's Contraptions.
+     * True if a creature is attacking the given player directly.
      */
     public boolean isPlayerBeingAttacked(GameData gameData, UUID playerId) {
-        List<Permanent> playerBattlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -3427,7 +3426,6 @@ public class GameQueryService {
                 UUID target = perm.getAttackTarget();
                 if (target == null) continue;
                 if (target.equals(playerId)) return true;
-                if (playerBattlefield.stream().anyMatch(p -> p.getId().equals(target))) return true;
             }
         }
         return false;
@@ -5383,6 +5381,9 @@ public class GameQueryService {
         Permanent source = explicitSource;
         if (source == null && entry.getSourcePermanentId() != null) {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        if (source == null && entry.getSourcePermanentId() != null) {
+            source = entry.getSourcePermanentSnapshot();
         }
         if (source != null) {
             return hasKeyword(gameData, source, keyword);
@@ -8072,16 +8073,15 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the given stack entry represents an instant or sorcery spell
-     * that should have lifelink due to a {@link GrantLifelinkToControllerSpellsByColorEffect}
-     * on the controller's battlefield. A non-null required color must match the spell's color;
-     * a null required color matches every spell.
+     * Returns whether the damage source has lifelink, including a permanent dealing damage
+     * through an ability. Instant and sorcery spells can also gain lifelink from a
+     * {@link GrantLifelinkToControllerSpellsByColorEffect} on the controller's battlefield.
      */
     public boolean shouldControllerSpellHaveLifelink(GameData gameData, StackEntry entry) {
         if (entry == null) return false;
+        if (sourceHasKeyword(gameData, entry, null, Keyword.LIFELINK)) return true;
         StackEntryType type = entry.getEntryType();
         if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL) return false;
-        if (sourceHasKeyword(gameData, entry, null, Keyword.LIFELINK)) return true;
 
         boolean[] hasLifelink = {false};
         gameData.forEachPermanent((playerId, p) -> {

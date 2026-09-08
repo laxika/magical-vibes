@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -172,6 +173,25 @@ public class UntapStepService {
         phasingService.applyPhasing(gameData, activePlayerId);
         dayNightService.checkAtUntap(gameData, activePlayerId);
 
+        var untapRestrictions = gameData.matchingPermanentUntapRestrictions.remove(activePlayerId);
+        Set<UUID> restrictedPermanentIds = new java.util.HashSet<>();
+        if (untapRestrictions != null) {
+            for (var restriction : untapRestrictions) {
+                for (Permanent permanent : gameData.playerBattlefields.getOrDefault(activePlayerId, List.of())) {
+                    if (restriction.filter() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, restriction.filter())) {
+                        restrictedPermanentIds.add(permanent.getId());
+                    }
+                }
+                if (restriction.untapSteps() > 1) {
+                    gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
+                            activePlayerId, id -> new ArrayList<>()).add(
+                            new SkipNextUntapEffect(
+                                    restriction.scope(), restriction.filter(), restriction.untapSteps() - 1, true));
+                }
+            }
+        }
+
         // A permanent that phased out is treated as though it does not exist (CR 702.26b), so an
         // attachment that was kept from following it out (Spatial Binding) is now attached to
         // nothing and belongs in its owner's graveyard (CR 303.4c) — the official Spatial Binding
@@ -234,7 +254,7 @@ public class UntapStepService {
                 if (skipsNextUntap) {
                     // Decrement skip counter but don't untap this step (e.g. Vorinclex)
                     p.setSkipUntapCount(p.getSkipUntapCount() - 1);
-                } else if (blockedByStorageMatrix || blockedByStaticOrb) {
+                } else if (blockedByStorageMatrix || blockedByStaticOrb || restrictedPermanentIds.contains(p.getId())) {
                     // Storage Matrix / untap cap: not selected to untap — stays tapped this step
                 } else if (cannotBecomeUntapped) {
                     // A hard prevention effect such as Blossombind also suppresses optional untap choices.

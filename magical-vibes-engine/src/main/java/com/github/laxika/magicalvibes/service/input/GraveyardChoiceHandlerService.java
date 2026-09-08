@@ -147,6 +147,16 @@ public class GraveyardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        if (graveyardChoice.returnEffect() != null) {
+            if (cardIndex >= 0) {
+                StackEntry entry = gameData.pendingEffectResolutionEntry;
+                graveyardReturnSupport.resolvePreTargetedById(gameData, entry, graveyardChoice.returnEffect(),
+                        entry.getControllerId(), entry.getCard().getId(), cardPool.get(cardIndex).getId());
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (gameData.queenKaylaBinKroogOperation.awaitingChoice) {
             gameData.queenKaylaBinKroogOperation.awaitingChoice = false;
             gameData.queenKaylaBinKroogOperation.choiceMade = true;
