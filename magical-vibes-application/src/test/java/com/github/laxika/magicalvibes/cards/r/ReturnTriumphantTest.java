@@ -27,7 +27,7 @@ class ReturnTriumphantTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReturnTriumphant()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, centaurId);
+        harness.castSorcery(player1, 0, List.of(centaurId));
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Centaur Courser");
@@ -46,7 +46,7 @@ class ReturnTriumphantTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReturnTriumphant()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, centaur.getId());
+        harness.castSorcery(player1, 0, List.of(centaur.getId()));
         harness.passBothPriorities();
         Permanent returned = findPermanent(player1, "Centaur Courser");
         returned.setSummoningSick(false);
@@ -64,7 +64,7 @@ class ReturnTriumphantTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReturnTriumphant()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, angel.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(angel.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CloudDragon.class, GrizzlyBears.class})
 class CloudDragonTest extends BaseCardTest {
 
     // ===== Blocking — can block creatures with flying =====
@@ -21,19 +21,12 @@ class CloudDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Cloud Dragon can block a creature with flying")
     void canBlockFlyingCreature() {
-        Permanent dragonPerm = new Permanent(new CloudDragon());
-        dragonPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(dragonPerm);
+        Permanent dragonPerm = addCreatureReady(player2, new CloudDragon());
 
-        Permanent atkPerm = new Permanent(new AirElemental());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new CloudDragon());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -45,19 +38,12 @@ class CloudDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Cloud Dragon cannot block a creature without flying")
     void cannotBlockNonFlyingCreature() {
-        Permanent dragonPerm = new Permanent(new CloudDragon());
-        dragonPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(dragonPerm);
+        Permanent dragonPerm = addCreatureReady(player2, new CloudDragon());
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -71,15 +57,10 @@ class CloudDragonTest extends BaseCardTest {
     void dealsFiveDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = new Permanent(new CloudDragon());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new CloudDragon());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }

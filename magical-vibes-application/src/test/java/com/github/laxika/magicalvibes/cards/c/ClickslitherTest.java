@@ -24,7 +24,6 @@ class ClickslitherTest extends BaseCardTest {
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, goblin.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(clickslither).doesNotContain(goblin);
@@ -40,7 +39,6 @@ class ClickslitherTest extends BaseCardTest {
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, goblin.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -56,13 +54,10 @@ class ClickslitherTest extends BaseCardTest {
     @DisplayName("The sacrifice cost only accepts Goblin creatures")
     void sacrificeCostOnlyAcceptsGoblinCreatures() {
         addClickslitherReady(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        harness.activateAbility(player1, 0, null, null);
-
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, bears.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid permanent");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addClickslitherReady(Player player) {

@@ -382,6 +382,7 @@ public class TargetPolarityClassifier {
     private static final Map<String, TargetPolarity> FIXED_BY_CLASS_NAME = Map.ofEntries(
             // The target leaves the battlefield (or the board position it holds).
             entry("DestroyEachTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("DestroyUpToTargetsThenReturnFromGraveyardEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DestroyTwoTargetCreaturesIfSameColorsEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Blood Frenzy: the pump rides along, but the target still dies at the next end
             // step, so removal outranks the boost's BENEFICIAL and aims at the opponent.

@@ -561,6 +561,27 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
+    void anyCreatureMayChoiceBelongsToSourceController() {
+        UUID opponentId = UUID.randomUUID();
+        gd.orderedPlayerIds.add(opponentId);
+        gd.playerBattlefields.put(opponentId, new ArrayList<>());
+        MayEffect effect = new MayEffect(new GainLifeEffect(3), "Gain life?");
+        addAllyCreatureTrigger(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, effect);
+        Permanent source = gd.playerBattlefields.get(player1Id).getFirst();
+        Card entering = enteringCreature(2, 2);
+        gd.playerBattlefields.get(opponentId).add(new Permanent(entering));
+
+        service.checkAnyCreatureEntersTriggers(gd, opponentId, entering);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        });
+    }
+
+    @Test
     @DisplayName("Any-creature life-loss trigger targets the entering creature's controller")
     void anyCreatureLifeLossTargetsEnteringController() {
         UUID player2Id = UUID.randomUUID();

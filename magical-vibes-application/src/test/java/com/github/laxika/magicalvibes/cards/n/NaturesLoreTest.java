@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -33,8 +31,11 @@ class NaturesLoreTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .isNotEmpty()
-                .allMatch(c -> c.getSubtypes().contains(CardSubtype.FOREST));
+                .hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals())
+                .isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind())
+                .isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
     }
@@ -52,10 +53,9 @@ class NaturesLoreTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().hasType(CardType.LAND)
-                        && p.getCard().getSubtypes().contains(CardSubtype.FOREST)
-                        && !p.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("Library is shuffled"));
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -72,6 +72,9 @@ class NaturesLoreTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("chooses not to take a card")
+                && entry.plainText().contains("Library is shuffled"));
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -87,6 +90,21 @@ class NaturesLoreTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("finds no Forest cards")
+                && entry.plainText().contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Empty library ends the search without prompting and shuffles")
+    void emptyLibrary() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("library but it is empty")
                 && entry.plainText().contains("Library is shuffled"));
     }
 

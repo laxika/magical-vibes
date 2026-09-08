@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WitheringGaze.class, Forest.class, GrizzlyBears.class, GoblinPiker.class, Mountain.class})
 class WitheringGazeTest extends BaseCardTest {
 
     private void castWitheringGaze() {
         harness.setHand(player1, List.of(new WitheringGaze()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -36,6 +38,7 @@ class WitheringGazeTest extends BaseCardTest {
         // Forest (subtype) + Grizzly Bears (green) = 2 draws; Mountain matches neither.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
+        assertThat(gameLogContains("reveals their hand")).isTrue();
     }
 
     @Test
@@ -54,6 +57,19 @@ class WitheringGazeTest extends BaseCardTest {
     @DisplayName("A green card is counted via its color")
     void countsGreenCard() {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        castWitheringGaze();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+    }
+
+    @Test
+    @CardUsed(DryadArbor.class)
+    @DisplayName("Counts a card that is both a Forest and green only once")
+    void countsForestAndGreenCardOnce() {
+        harness.setHand(player2, List.of(new DryadArbor()));
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         castWitheringGaze();

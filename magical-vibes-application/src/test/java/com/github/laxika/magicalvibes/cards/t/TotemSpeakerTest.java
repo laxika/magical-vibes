@@ -32,6 +32,7 @@ class TotemSpeakerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         harness.assertLife(player1, 23);
     }
@@ -71,6 +72,7 @@ class TotemSpeakerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         harness.assertLife(player1, 23);
     }

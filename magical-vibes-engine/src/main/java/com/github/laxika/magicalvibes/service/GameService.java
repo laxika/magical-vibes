@@ -1522,7 +1522,8 @@ public class GameService {
                 gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
                         permanent.getCard(), controllerId, effects, spellFilter, includeAbilities,
                         permanent.getId()));
-            } else if (targetsPlayer || targetsPermanent) {
+            } else if (targetsPlayer || targetsPermanent
+                    || effects.stream().anyMatch(permanent.getCard()::hasEffectTargetIndex)) {
                 boolean multiTarget = permanent.getCard().getSpellTargets().size() > 1
                         || permanent.getCard().getSpellTargets().stream()
                         .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0

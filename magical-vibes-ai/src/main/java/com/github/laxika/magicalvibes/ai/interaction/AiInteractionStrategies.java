@@ -98,6 +98,7 @@ public final class AiInteractionStrategies {
         register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
+        register(new LibrarySearchDestinationChoiceAiStrategy());
         register(new SearchOutsideGameOrExileCardChoiceAiStrategy());
         register(new ShuffleCardsFromOutsideGameChoiceAiStrategy());
         register(new PermanentChoiceAiStrategy());

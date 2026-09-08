@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -60,11 +61,35 @@ class WirewoodHivemasterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent's Elf entering does not trigger Wirewood Hivemaster")
-    void opponentElfDoesNotTrigger() {
+    @DisplayName("An opponent's nontoken Elf entering may create an Insect")
+    void opponentElfTriggers() {
         harness.addToBattlefield(player1, new WirewoodHivemaster());
         castCreature(player2, new LlanowarElves(), ManaColor.GREEN, 1);
 
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Insect")).hasSize(1);
+    }
+
+    @Test
+    void tokenElfDoesNotTrigger() {
+        harness.addToBattlefield(player1, new WirewoodHivemaster());
+        Card elf = new LlanowarElves();
+        elf.setToken(true);
+
+        harness.enterBattlefieldAndReturn(player2, elf);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Insect")).isEmpty();
+    }
+
+    @Test
+    void itsOwnEntryDoesNotTrigger() {
+        castCreature(player1, new WirewoodHivemaster(), ManaColor.GREEN, 2);
+
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(findPermanents(player1, "Insect")).isEmpty();
     }
@@ -73,6 +98,9 @@ class WirewoodHivemasterTest extends BaseCardTest {
                               Card creature,
                               ManaColor color,
                               int amount) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player, List.of(creature));
         harness.addMana(player, color, amount);
         harness.castCreature(player, 0);

@@ -41,6 +41,8 @@ class VileDeaconTest extends BaseCardTest {
         assertThat(deacon.getPowerModifier()).isEqualTo(2);
         assertThat(deacon.getToughnessModifier()).isEqualTo(2);
 
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

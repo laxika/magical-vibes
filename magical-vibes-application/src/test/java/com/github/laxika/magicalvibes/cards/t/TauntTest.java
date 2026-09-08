@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Taunt.class, GrizzlyBears.class})
 class TauntTest extends BaseCardTest {
 
     private void advanceTurn() {
@@ -64,9 +66,7 @@ class TauntTest extends BaseCardTest {
     @DisplayName("A taunted player's creature that can attack becomes a must-attack requirement")
     void tauntedCreatureMustAttack() {
         gd.tauntedThisTurn.put(player2.getId(), player1.getId());
-        Permanent bear = new Permanent(new GrizzlyBears());
-        bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        addCreatureReady(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -88,19 +88,23 @@ class TauntTest extends BaseCardTest {
     void tauntedCreatureAttacksTaunter() {
         harness.setLife(player1, 20);
         gd.tauntedThisTurn.put(player2.getId(), player1.getId());
-        Permanent bear = new Permanent(new GrizzlyBears());
-        bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        // Default attack target is the opponent (player1), who is also the taunter.
-        gs.declareAttackers(gd, player2, List.of(0));
+        declareAttackers(player2, List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A creature that cannot attack is not required to attack")
+    void unableCreatureCanSkipAttack() {
+        gd.tauntedThisTurn.put(player2.getId(), player1.getId());
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        bear.tap();
+
+        declareAttackers(player2, List.of());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
     @Test
