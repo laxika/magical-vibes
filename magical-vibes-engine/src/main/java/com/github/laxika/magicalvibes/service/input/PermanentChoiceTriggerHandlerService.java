@@ -1204,6 +1204,10 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setTargetId(permanentId);
             }
             entry.setTriggeringPermanentId(ett.enteringPermanentId());
+            if (ett.enteringPermanentId() != null) {
+                entry.setTriggeringPermanentControllerId(
+                        gameQueryService.findPermanentController(gameData, ett.enteringPermanentId()));
+            }
             if (ett.sourceIsEnteringPermanent() && sourcePermanentId != null) {
                 Permanent enteringPermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (enteringPermanent != null) {
@@ -1909,7 +1913,8 @@ public class PermanentChoiceTriggerHandlerService {
                 etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
                 updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes), etbMtt.xValue(),
                 etbMtt.repeatedAdditionalCosts(),
-                etbMtt.resumePendingMayResolution(), etbMtt.triggeringCardId()));
+                etbMtt.resumePendingMayResolution(), etbMtt.triggeringCardId(),
+                etbMtt.triggeringPermanentId(), etbMtt.eventValue()));
 
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 
@@ -2105,15 +2110,8 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleUpkeepPermanentTargetTrigger(GameData gameData, UUID chosenId,
             PermanentChoiceContext.UpkeepPermanentTargetTrigger uptt) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                uptt.sourceCard(),
-                uptt.controllerId(),
-                uptt.sourceCard().getName() + "'s upkeep ability",
-                new ArrayList<>(uptt.effects()),
-                chosenId,
-                uptt.sourcePermanentId()
-        );
+        StackEntry entry = upkeepTargetEntry(gameData, uptt.sourceCard(), uptt.controllerId(),
+                uptt.effects(), chosenId, uptt.sourcePermanentId());
         if (uptt.choosingPlayerId() != null) {
             entry.setActivePlayerId(uptt.choosingPlayerId());
         }
@@ -2131,14 +2129,8 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleUpkeepOptionalPermanentTarget(GameData gameData, List<UUID> chosenIds,
             MultiPermanentChoiceContext.UpkeepOptionalPermanentTarget context) {
         UUID chosenId = chosenIds.isEmpty() ? null : chosenIds.getFirst();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(),
-                context.controllerId(),
-                context.sourceCard().getName() + "'s upkeep ability",
-                new ArrayList<>(context.effects()),
-                chosenId,
-                context.sourcePermanentId());
+        StackEntry entry = upkeepTargetEntry(gameData, context.sourceCard(), context.controllerId(),
+                context.effects(), chosenId, context.sourcePermanentId());
         pushTriggeredEntry(gameData, entry);
 
         if (chosenId == null) {
@@ -2150,6 +2142,33 @@ public class PermanentChoiceTriggerHandlerService {
                     GameLog.builder().card(context.sourceCard()).text("'s ability targets " + targetName + ".").build());
         }
         continueUpkeepPermanentTargetProcessing(gameData);
+    }
+
+    private StackEntry upkeepTargetEntry(GameData gameData, Card sourceCard, UUID controllerId,
+                                         List<CardEffect> effects, UUID chosenId, UUID sourcePermanentId) {
+        Card graveyardCard = chosenId == null
+                ? null : gameQueryService.findCardInGraveyardById(gameData, chosenId);
+        if (graveyardCard != null && effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(
+                        com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.GRAVEYARD_CARD))) {
+            return new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    controllerId,
+                    sourceCard.getName() + "'s upkeep ability",
+                    new ArrayList<>(effects),
+                    chosenId,
+                    Zone.GRAVEYARD,
+                    sourcePermanentId);
+        }
+        return new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s upkeep ability",
+                new ArrayList<>(effects),
+                chosenId,
+                sourcePermanentId);
     }
 
     private void continueUpkeepPermanentTargetProcessing(GameData gameData) {

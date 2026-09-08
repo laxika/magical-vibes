@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "35")
 @CardRegistration(set = "M13", collectorNumber = "28")
+@CardRegistration(set = "SCG", collectorNumber = "20")
 public class RainOfBlades extends Card {
 
     private static final PermanentPredicate ATTACKING_CREATURE = new PermanentAllOfPredicate(List.of(

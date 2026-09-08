@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DD2", collectorNumber = "47")
+@CardRegistration(set = "SCG", collectorNumber = "84")
 public class ChartoothCougar extends Card {
 
     public ChartoothCougar() {

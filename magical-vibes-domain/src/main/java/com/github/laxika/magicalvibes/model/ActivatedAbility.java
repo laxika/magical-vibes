@@ -152,6 +152,8 @@ public class ActivatedAbility {
     private Integer maxActivationsPerGame;
     /** Whether this is an exhaust ability, which may be activated only once per permanent object. */
     private boolean exhaustAbility;
+    /** Whether this is a Power-up ability whose cost is discounted on its source's entry turn. */
+    private boolean powerUpAbility;
     /**
      * When true this hand-activated ability's intrinsic cost exiles the source card instead of
      * discarding it ("Exile this card from your hand: Add {G}" — Elvish Spirit Guide). No discard
@@ -315,6 +317,7 @@ public class ActivatedAbility {
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
         copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
+        copy.powerUpAbility = this.powerUpAbility;
         copy.exilesSourceFromHand = this.exilesSourceFromHand;
         copy.revealsSourceFromHand = this.revealsSourceFromHand;
         copy.ninjutsuAbility = this.ninjutsuAbility;
@@ -376,6 +379,13 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withMaxActivationsPerGame(int maxActivations) {
         this.maxActivationsPerGame = maxActivations;
+        return this;
+    }
+
+    /** Marks this ability as a Power-up ability, usable only once per permanent object. */
+    public ActivatedAbility withPowerUp() {
+        this.powerUpAbility = true;
+        this.maxActivationsPerGame = 1;
         return this;
     }
 

@@ -582,6 +582,30 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
+    void enteringControllerTargetedMayQueuesTargetBeforeTheOptionalChoice() {
+        UUID opponentId = UUID.randomUUID();
+        gd.orderedPlayerIds.add(opponentId);
+        gd.playerBattlefields.put(opponentId, new ArrayList<>());
+        MayEffect effect = new MayEffect(
+                com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect.fromEnteringPermanent(
+                        new com.github.laxika.magicalvibes.model.amount.SourcePower()),
+                "Deal damage?", null, com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);
+        addAllyCreatureTrigger(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, effect);
+        Card entering = enteringCreature(3, 3);
+        Permanent permanent = new Permanent(entering);
+        gd.playerBattlefields.get(opponentId).add(permanent);
+
+        service.checkAnyCreatureEntersTriggers(gd, opponentId, entering);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        PermanentChoiceContext.EntersTriggerTarget choice =
+                gd.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.enteringPermanentId()).isEqualTo(permanent.getId());
+        assertThat(choice.sourceIsEnteringPermanent()).isTrue();
+    }
+
+    @Test
     @DisplayName("Any-creature life-loss trigger targets the entering creature's controller")
     void anyCreatureLifeLossTargetsEnteringController() {
         UUID player2Id = UUID.randomUUID();

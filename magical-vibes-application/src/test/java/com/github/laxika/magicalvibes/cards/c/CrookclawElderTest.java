@@ -30,6 +30,8 @@ class CrookclawElderTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, battlefieldIndex(player1, elder), 0, null, null);
+        harness.handlePermanentChosen(player1, bird1.getId());
+        harness.handlePermanentChosen(player1, bird2.getId());
         harness.passBothPriorities();
 
         assertThat(bird1.isTapped()).isTrue();
@@ -47,6 +49,8 @@ class CrookclawElderTest extends BaseCardTest {
         Permanent target = addReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, battlefieldIndex(player1, elder), 1, null, target.getId());
+        harness.handlePermanentChosen(player1, wizard1.getId());
+        harness.handlePermanentChosen(player1, wizard2.getId());
         harness.passBothPriorities();
 
         assertThat(wizard1.isTapped()).isTrue();
@@ -58,16 +62,14 @@ class CrookclawElderTest extends BaseCardTest {
     @DisplayName("Each ability requires two matching untapped creatures")
     void abilitiesRequireTwoMatchingCreatures() {
         Permanent elder = addReady(player1, new CrookclawElder());
-        addReady(player1, new BirdMaiden());
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(player1, elder), 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        Permanent secondElder = addReady(player1, new CrookclawElder());
         addReady(player1, new BirdMaiden());
         assertThatThrownBy(() -> harness.activateAbility(
-                player1, battlefieldIndex(player1, secondElder), 1, null, secondElder.getId()))
+                player1, battlefieldIndex(player1, elder), 1, null, elder.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

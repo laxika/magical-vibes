@@ -388,6 +388,24 @@ public class ActivatedAbilityExecutionService {
                                              List<UUID> sacrificedCardIds,
                                              Card discardedCardSnapshot,
                                              Card exiledCostCardSnapshot) {
+        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetId, targetZone, markAsNonTargetingForSacCreatureCost, targetIds, damageAssignments, chosenCostPermanentIds, sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, List.of());
+    }
+
+    public void completeActivationAfterCosts(GameData gameData,
+                                             Player player,
+                                             Permanent permanent,
+                                             ActivatedAbility ability,
+                                             List<CardEffect> abilityEffects,
+                                             int effectiveXValue,
+                                             UUID targetId,
+                                             Zone targetZone,
+                                             boolean markAsNonTargetingForSacCreatureCost,
+                                             List<UUID> targetIds,
+                                             Map<UUID, Integer> damageAssignments,
+                                             List<UUID> chosenCostPermanentIds,
+                                             List<UUID> sacrificedCardIds,
+                                             Card discardedCardSnapshot,
+                                             Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -774,7 +792,7 @@ public class ActivatedAbilityExecutionService {
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                 targetZone, targetIds, damageAssignments, chosenCostPermanentIds, tracksSacrificedCard,
                 recordsSacrificedPermanentSnapshot, sacrificedSourceSnapshot, sacrificedAttachedEquipmentIds,
-                sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot);
+                sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -1511,7 +1529,9 @@ public class ActivatedAbilityExecutionService {
                         delayed.resolvedEffects(),
                         delayed.oneShot(),
                         delayed.sourceMustRemainOnBattlefield(),
-                        delayed.targetFilter()));
+                        delayed.targetFilter(),
+                        new Permanent(permanent),
+                        null));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));
@@ -1960,7 +1980,7 @@ public class ActivatedAbilityExecutionService {
                                     List<UUID> sacrificedAttachedEquipmentIds,
                                     List<UUID> sacrificedCardIds,
                                     Card discardedCardSnapshot,
-                                    Card exiledCostCardSnapshot) {
+                                    Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds) {
         Zone effectiveTargetZone = targetZone;
         if (ability.targetsSpellOnStack(targetZone)) {
             effectiveTargetZone = Zone.STACK;
@@ -2056,6 +2076,8 @@ public class ActivatedAbilityExecutionService {
             stackEntry.setSacrificedAttachedEquipmentIds(List.copyOf(sacrificedAttachedEquipmentIds));
         }
         stackEntry.setSacrificedCardIds(sacrificedCardIds == null ? List.of() : List.copyOf(sacrificedCardIds));
+        stackEntry.setActivatedAbilityExiledCardIds(activatedAbilityExiledCardIds == null
+                ? List.of() : List.copyOf(activatedAbilityExiledCardIds));
         Map<ManaColor, Integer> activationManaSpent = gameData.abilityActivationManaSpent.get(permanent.getCard().getId());
         stackEntry.setActivationManaSpent(activationManaSpent == null ? Map.of() : Map.copyOf(activationManaSpent));
         stackEntry.setActivationTreasureManaSpent(

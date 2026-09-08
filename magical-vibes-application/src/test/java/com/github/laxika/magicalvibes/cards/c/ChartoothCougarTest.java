@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -55,9 +54,7 @@ class ChartoothCougarTest extends BaseCardTest {
     void mountaincyclingSearchesForMountain() {
         harness.setHand(player1, List.of(new ChartoothCougar()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        List<Card> library = gd.playerDecks.get(player1.getId());
-        library.clear();
-        library.addAll(List.of(new Mountain(), new Forest(), new Mountain()));
+        harness.setLibrary(player1, List.of(new Mountain(), new Forest(), new Mountain()));
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();

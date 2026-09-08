@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
+import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToControllerShield;
 import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TargetSorceryDamageRedirectShield;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfE
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageHealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
@@ -286,6 +288,26 @@ public class DamagePreventionService {
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         return applyCreaturePreventionShield(gameData, permanent, damage, false);
+    }
+
+    /** Heals all damage previously marked on a permanent when a positive damage event reaches it. */
+    public void applyDamageHealingReplacement(GameData gameData, Permanent permanent, int damage) {
+        if (permanent == null || damage <= 0) {
+            return;
+        }
+        if (gameQueryService.hasActiveStaticEffect(gameData, permanent, DamageHealingEffect.class)) {
+            permanent.healDamage();
+        }
+    }
+
+    /** Replaces effect-based destruction by removing one shield counter. */
+    public boolean replaceDestructionWithShieldCounter(Permanent permanent) {
+        if (permanent == null || permanent.getCounterCount(CounterType.SHIELD) <= 0) {
+            return false;
+        }
+        permanent.setCounterCount(CounterType.SHIELD,
+                permanent.getCounterCount(CounterType.SHIELD) - 1);
+        return true;
     }
 
     /** Returns whether a permanent replaces damage to itself with +1/+1 counters. */
@@ -1398,6 +1420,35 @@ public class DamagePreventionService {
 
         gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
                 sourceControllerId, damage, source.getCard(), sourceControllerId));
+        return 0;
+    }
+
+    /** Redirects a source's next combat damage to the stored controller of the effect that created the shield. */
+    public int applySourceNextCombatDamageToControllerShield(GameData gameData, UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || sourcePermanentId == null
+                || gameData.sourceNextCombatDamageToControllerShields.isEmpty()) {
+            return damage;
+        }
+
+        SourceNextCombatDamageToControllerShield matchingShield = null;
+        synchronized (gameData.sourceNextCombatDamageToControllerShields) {
+            for (SourceNextCombatDamageToControllerShield shield
+                    : gameData.sourceNextCombatDamageToControllerShields) {
+                if (sourcePermanentId.equals(shield.sourcePermanentId())) {
+                    matchingShield = shield;
+                    break;
+                }
+            }
+            if (matchingShield != null) {
+                gameData.sourceNextCombatDamageToControllerShields.remove(matchingShield);
+            }
+        }
+        if (matchingShield == null || !gameData.playerIds.contains(matchingShield.controllerId())) {
+            return damage;
+        }
+
+        gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                null, sourcePermanentId, damage, matchingShield.controllerId()));
         return 0;
     }
 

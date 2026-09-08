@@ -37,6 +37,7 @@ class GempalmStriderTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, nonElf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, nonElf)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Gempalm Strider");
+        harness.passBothPriorities();
         harness.assertInHand(player1, "Grizzly Bears");
     }
 

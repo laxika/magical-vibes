@@ -343,6 +343,19 @@ public class BlockLegalityService {
                 return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.allowedBlockersDescription());
             }
         }
+        if (!gameData.matchingCreatureBlockRestrictionsThisTurn.isEmpty()) {
+            UUID attackerControllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
+            if (attackerControllerId != null) {
+                for (var restriction : gameData.matchingCreatureBlockRestrictionsThisTurn
+                        .getOrDefault(attackerControllerId, List.of())) {
+                    if ((restriction.creatureFilter() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.creatureFilter()))
+                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                        return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.allowedBlockersDescription());
+                    }
+                }
+            }
+        }
         if (atk.landwalkDenial() != null && !blk.blocksLandwalkAsThoughNoLandwalk()) {
             return atk.landwalkDenial();
         }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.List;
@@ -27,6 +28,7 @@ public class ShuffleSelfFromGraveyardIntoLibraryEffectHandler implements NormalE
 
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,8 +37,9 @@ public class ShuffleSelfFromGraveyardIntoLibraryEffectHandler implements NormalE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID ownerId = entry.getControllerId();
         Card sourceCard = entry.getCard();
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCard.getId());
+        if (ownerId == null) return;
         List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
         if (graveyard == null) return;
 

@@ -18,7 +18,7 @@ class BladeSliverTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, ownSliver)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, ownSliver)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, opponentSliver)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponentSliver)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, opponentSliver)).isEqualTo(2);
     }
 

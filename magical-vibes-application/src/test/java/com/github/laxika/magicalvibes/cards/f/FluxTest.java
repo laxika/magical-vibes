@@ -65,6 +65,8 @@ class FluxTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(c -> c.getName())
                 .contains("Grizzly Bears");
+        assertThat(gd.discardEventPlayerId).isNull();
+        assertThat(gd.eachPlayerRummage.active).isFalse();
     }
 
     @Test

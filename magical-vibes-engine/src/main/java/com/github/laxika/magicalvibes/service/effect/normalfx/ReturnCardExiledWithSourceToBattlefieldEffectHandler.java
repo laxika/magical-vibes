@@ -70,6 +70,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             ExiledCardEntry target = gameData.findExiledCard(entry.getTargetId());
             if (target == null || target.faceDown()
                     || !sourcePermanentId.equals(target.sourcePermanentId())
+                    || (returnEffect.onlyCardsOwnedByController()
+                    && !controllerId.equals(target.ownerId()))
                     || !matches(entry, returnEffect, target.card())) {
                 gameLogService.append(gameData, GameLog.text(
                         "The target card is no longer legal for " + sourceName + "."));
@@ -83,6 +85,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
 
         List<Card> matching = gameData.exiledCards.stream()
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
+                .filter(e -> !returnEffect.onlyCardsOwnedByController()
+                        || controllerId.equals(e.ownerId()))
                 .map(ExiledCardEntry::card)
                 .filter(card -> matches(entry, returnEffect, card))
                 .toList();
@@ -175,7 +179,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
 
     private boolean matches(StackEntry entry, ReturnCardExiledWithSourceToBattlefieldEffect e, Card card) {
         return (e.filter() == null || predicateEvaluationService.matchesCardPredicate(
-                card, e.filter(), entry.getCard().getId()))
+                card, e.filter(), entry.getCard().getId(), null, entry.getControllerId()))
                 && (!e.requiresManaValueEqualsX() || card.getManaValue() == entry.getXValue());
     }
 }

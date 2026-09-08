@@ -329,8 +329,15 @@ public class PlayerInputService {
 
     public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount,
                                           MultiPermanentChoiceContext context, String prompt) {
+        beginMultiPermanentChoice(gameData, playerId, validIds, List.of(), maxCount, context, prompt);
+    }
+
+    public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds,
+                                          List<UUID> validCardIds, int maxCount,
+                                          MultiPermanentChoiceContext context, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiPermanentChoice(
-                playerId, new ArrayList<>(validIds), maxCount, context, prompt));
+                playerId, new ArrayList<>(validIds), List.of(), new ArrayList<>(validCardIds),
+                maxCount, context, prompt));
     }
 
     public void beginMultiPermanentOrPlayerChoice(GameData gameData, UUID playerId,
@@ -2395,7 +2402,8 @@ public class PlayerInputService {
                                     CardType stopAfterDiscardingType,
                                     CardPredicate stopAfterDiscardingPredicate, boolean declinable) {
         if (remainingCount > 0 && !validIndices.isEmpty()
-                && !followUp.targetOpponentsDiscardThenDraw()) {
+                && !followUp.targetOpponentsDiscardThenDraw()
+                && !(gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards)) {
             if (gameData.discardEventPlayerId == null) {
                 gameData.discardEventPlayerId = playerId;
                 gameData.discardEventCardCount = 0;

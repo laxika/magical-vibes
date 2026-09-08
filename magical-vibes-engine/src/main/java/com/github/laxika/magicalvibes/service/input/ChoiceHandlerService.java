@@ -209,8 +209,8 @@ public class ChoiceHandlerService {
             return;
         }
 
-        if (colorChoice.context() instanceof ChoiceContext.RestrictedManaColorChoice ctx) {
-            handleRestrictedManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
+        if (colorChoice.context() instanceof ChoiceContext.CreatureAbilityManaColorChoice ctx) {
+            handleCreatureAbilityManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
             return;
         }
 
@@ -1518,6 +1518,29 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord
                 + " " + ctx.firstColor().name().toLowerCase() + " and " + manaWord + " "
                 + manaColor.name().toLowerCase() + " mana (creature or enchantment spells only)."));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleCreatureAbilityManaColorChosen(GameData gameData, Player player, String colorName,
+                                                      ChoiceContext.CreatureAbilityManaColorChoice ctx,
+                                                      List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        UUID manaRecipientId = ctx.recipientPlayerId() != null ? ctx.recipientPlayerId() : ctx.playerId();
+        ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
+        manaPool.addCreatureAbilityOnlyMana(manaColor, ctx.amount());
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana (creature abilities only)."));
+        log.info("Game {} - {} adds {} {} creature-ability-only mana", gameData.id,
+                player.getUsername(), ctx.amount(), colorName.toLowerCase());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -3655,12 +3678,16 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
-        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        Permanent perm = ctx.permanentId() == null ? null : gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
             perm.setChosenManaValueParity(parity);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + parityName.toLowerCase() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), parityName.toLowerCase(), perm.getCard().getName());
+        } else {
+            gameData.chosenSpellManaValueParity = parity;
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses " + parityName.toLowerCase() + "."));
+            log.info("Game {} - {} chooses {} for a spell or ability", gameData.id, player.getUsername(), parityName.toLowerCase());
         }
 
         if (ctx.creatureCard() != null) {

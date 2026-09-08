@@ -55,6 +55,7 @@ class GoblinAssassinTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities();

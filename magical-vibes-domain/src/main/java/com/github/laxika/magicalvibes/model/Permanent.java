@@ -960,6 +960,12 @@ public class Permanent {
         }
     }
 
+    /** Removes all damage currently marked on this permanent and clears its deathtouch damage memory. */
+    public void healDamage() {
+        setMarkedDamage(0);
+        this.damagedByDeathtouch = false;
+    }
+
     /**
      * Records damage dealt by a specific source object and updates the total. {@code sourceId} may
      * be null when the source is unknown (total still increases; per-source map is unchanged).
@@ -1391,15 +1397,16 @@ public class Permanent {
         if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
         CounterType keywordCounter = switch (keyword) {
+            case HASTE -> CounterType.HASTE;
             case FLYING -> CounterType.FLYING;
             case FIRST_STRIKE -> CounterType.FIRST_STRIKE;
             case DOUBLE_STRIKE -> CounterType.DOUBLE_STRIKE;
             case DEATHTOUCH -> CounterType.DEATHTOUCH;
             case DECAYED -> CounterType.DECAYED;
             case LIFELINK -> CounterType.LIFELINK;
-            case VIGILANCE -> CounterType.VIGILANCE;
             case REACH -> CounterType.REACH;
             case TRAMPLE -> CounterType.TRAMPLE;
+            case VIGILANCE -> CounterType.VIGILANCE;
             case HEXPROOF -> CounterType.HEXPROOF;
             case INDESTRUCTIBLE -> CounterType.INDESTRUCTIBLE;
             case MENACE -> CounterType.MENACE;
