@@ -7,6 +7,13 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ONS", collectorNumber = "340")
+@CardRegistration(set = "PHUK", collectorNumber = "11")
+@CardRegistration(set = "PHUK", collectorNumber = "47")
+@CardRegistration(set = "PHUK", collectorNumber = "48")
+@CardRegistration(set = "PHUK", collectorNumber = "46")
+@CardRegistration(set = "PHUK", collectorNumber = "34")
+@CardRegistration(set = "PHUK", collectorNumber = "35")
+@CardRegistration(set = "PHUK", collectorNumber = "33")
 @CardRegistration(set = "3ED", collectorNumber = "299")
 @CardRegistration(set = "ONS", collectorNumber = "341")
 @CardRegistration(set = "TMT", collectorNumber = "312")
@@ -330,6 +337,23 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DTK", collectorNumber = "258")
 @CardRegistration(set = "3ED", collectorNumber = "298")
 @CardRegistration(set = "3ED", collectorNumber = "300")
+@CardRegistration(set = "PHUK", collectorNumber = "8")
+@CardRegistration(set = "PHUK", collectorNumber = "9")
+@CardRegistration(set = "PHUK", collectorNumber = "10")
+@CardRegistration(set = "PHUK", collectorNumber = "20")
+@CardRegistration(set = "PHUK", collectorNumber = "21")
+@CardRegistration(set = "PHUK", collectorNumber = "22")
+@CardRegistration(set = "PHUK", collectorNumber = "23")
+@CardRegistration(set = "PHUK", collectorNumber = "24")
+@CardRegistration(set = "PHUK", collectorNumber = "12")
+@CardRegistration(set = "PHUK", collectorNumber = "32")
+@CardRegistration(set = "PHUK", collectorNumber = "36")
+@CardRegistration(set = "PHUK", collectorNumber = "45")
+@CardRegistration(set = "PHUK", collectorNumber = "56")
+@CardRegistration(set = "PHUK", collectorNumber = "57")
+@CardRegistration(set = "PHUK", collectorNumber = "58")
+@CardRegistration(set = "PHUK", collectorNumber = "59")
+@CardRegistration(set = "PHUK", collectorNumber = "60")
 public class Swamp extends Card {
 
     public Swamp() {
