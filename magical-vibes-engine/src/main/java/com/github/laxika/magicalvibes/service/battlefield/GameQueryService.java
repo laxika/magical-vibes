@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivat
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraBoastActivationEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowExtraPowerUpActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInstantSpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraExhaustActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
@@ -295,6 +296,7 @@ public class GameQueryService {
             CardSubtype.POWER_PLANT,
             CardSubtype.TOWER,
             CardSubtype.AURA,
+            CardSubtype.PLAN,
             CardSubtype.EQUIPMENT,
             CardSubtype.FORTIFICATION,
             CardSubtype.AJANI,
@@ -3683,7 +3685,7 @@ public class GameQueryService {
             int power = getEffectivePower(gameData, creature);
             int toughness = getEffectiveToughness(gameData, creature);
 
-            if (hasSelfToughnessAssignEffect(creature)) {
+            if (hasSelfToughnessAssignEffect(gameData, creature)) {
                 return Math.max(0, toughness);
             }
 
@@ -3716,13 +3718,17 @@ public class GameQueryService {
         });
     }
 
-    private boolean hasSelfToughnessAssignEffect(Permanent creature) {
+    private boolean hasSelfToughnessAssignEffect(GameData gameData, Permanent creature) {
         List<CardEffect> effects = new ArrayList<>(creature.getCard().getEffects(EffectSlot.STATIC));
         effects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.STATIC));
         effects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.STATIC));
+        effects.addAll(computeStaticBonus(gameData, creature).grantedEffects());
         return effects.stream().anyMatch(effect ->
                 effect instanceof AssignCombatDamageWithToughnessEffect assign
-                        && assign.scope() == GrantScope.SELF);
+                        && assign.scope() == GrantScope.SELF
+                        && (assign.affectedPredicate() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, creature, assign.affectedPredicate())));
     }
 
     /**
@@ -6232,6 +6238,25 @@ public class GameQueryService {
         return playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraBoastActivationEffect.class);
     }
 
+    /** Returns the number of additional activations granted to power-up abilities by permanents
+     * the player controls. */
+    public int countExtraPowerUpActivations(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown() || hasLostAllAbilities(gameData, permanent)) {
+                continue;
+            }
+            if (hasActiveStaticEffect(gameData, permanent, AllowExtraPowerUpActivationEffect.class)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /** Returns whether a global static effect locks the given planeswalker's loyalty abilities. */
     public boolean isPlaneswalkerLoyaltyAbilityLocked(GameData gameData, Permanent permanent) {
         if (!isPlaneswalker(gameData, permanent)) {
@@ -8044,13 +8069,22 @@ public class GameQueryService {
 
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, effectSource) -> {
-            if (!playerId.equals(controllerId)) return;
+            if (!playerId.equals(controllerId)) {
+                boolean hasCrossControllerSourceMultiplier = effectSource.getCard().getEffects(EffectSlot.STATIC)
+                        .stream()
+                        .filter(SourceDamageMultiplyingEffect.class::isInstance)
+                        .map(SourceDamageMultiplyingEffect.class::cast)
+                        .anyMatch(multiplyingEffect -> !multiplyingEffect.requiresSourceControllerMatch());
+                if (!hasCrossControllerSourceMultiplier) return;
+            }
             FilterContext context = FilterContext.of(gameData)
                     .withSourceCardId(effectSource.getCard().getId())
-                    .withSourceControllerId(controllerId)
-                    .withSourcePermanentSnapshot(effectSource);
+                    .withSourceControllerId(playerId)
+                    .withSourcePermanentSnapshot(effectSource)
+                    .withSourcePermanentId(effectSource.getId());
             for (CardEffect effect : effectSource.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SourceDamageMultiplyingEffect multiplyingEffect
+                        && (!multiplyingEffect.requiresSourceControllerMatch() || playerId.equals(controllerId))
                         && predicateEvaluationService.matchesPermanentPredicate(
                         damageSource, multiplyingEffect.sourceFilter(), context)
                         && (combatDamage

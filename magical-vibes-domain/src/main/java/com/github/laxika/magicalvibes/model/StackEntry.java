@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -162,6 +163,8 @@ public class StackEntry {
     @Setter private boolean casualtyCostPaid;
     /** Whether this spell's optional waterbend additional cost was paid. */
     @Setter private boolean waterbendCostPaid;
+    /** Whether this spell's optional teamwork additional cost was paid. */
+    @Setter private boolean teamworkCostPaid;
     /**
      * The individual mana payments the caster chose for this spell's
      * {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}, one entry
@@ -187,6 +190,8 @@ public class StackEntry {
     @Setter private boolean prowl;
     /** Whether this spell was cast for its spectacle cost. */
     @Setter private boolean spectacle;
+    /** Whether this creature spell was cast for its Sneak alternate cost. */
+    @Setter private boolean sneak;
     @Setter private boolean castForForetell;
     @Setter private boolean alternateCost;
     /** Mana value of the creature returned to pay this spell's web-slinging cost, when applicable. */
@@ -307,6 +312,8 @@ public class StackEntry {
     @Setter private UUID exiledCostCardId;
     /** Last-known card of the creature exiled as an additional cost to cast this spell. */
     @Setter private Card exiledCostCardSnapshot;
+    /** Cards exiled to pay the source permanent's graveyard threshold cost for this activation. */
+    @Setter private List<UUID> activatedAbilityExiledCardIds = List.of();
     /**
      * Id of the permanent whose event produced this triggered ability, when an effect needs to act on
      * "it" rather than a chosen target — e.g. the permanent that became tapped for Freyalise's Winds'
@@ -674,6 +681,7 @@ public class StackEntry {
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.casualtyCostPaid = source.casualtyCostPaid;
         this.waterbendCostPaid = source.waterbendCostPaid;
+        this.teamworkCostPaid = source.teamworkCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
@@ -683,6 +691,7 @@ public class StackEntry {
         this.physicalCard = source.physicalCard;
         this.prowl = source.prowl;
         this.spectacle = source.spectacle;
+        this.sneak = source.sneak;
         this.castForForetell = source.castForForetell;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
@@ -735,6 +744,7 @@ public class StackEntry {
         this.sacrificedCard = source.sacrificedCard;
         this.exiledCostCardId = source.exiledCostCardId;
         this.exiledCostCardSnapshot = source.exiledCostCardSnapshot;
+        this.activatedAbilityExiledCardIds = source.activatedAbilityExiledCardIds;
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
@@ -899,8 +909,32 @@ public class StackEntry {
 
     public List<UUID> getTargetCardIdsForEffect(CardEffect effect) {
         List<UUID> effectTargetCardIds = targetCardIdsByEffect.get(effect);
-        return effectTargetCardIds != null ? effectTargetCardIds
-                : targetCardIds == null ? List.of() : targetCardIds;
+        if (effectTargetCardIds != null) {
+            return effectTargetCardIds;
+        }
+        Card targeting = getTargetingCard();
+        int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
+        if (group >= 0 && targeting != null) {
+            List<UUID> declaredTargetCardIds = targetCardIds == null ? List.of() : targetCardIds;
+            List<SpellTarget> groups = targeting.getSpellTargets();
+            int graveyardTargetOffset = 0;
+            for (SpellTarget targetGroup : groups) {
+                if (!(targetGroup.getFilter() instanceof GraveyardCardPredicateTargetFilter)) {
+                    continue;
+                }
+                int groupSize = Math.min(targetGroup.getMaxTargets(),
+                        declaredTargetCardIds.size() - graveyardTargetOffset);
+                if (targetGroup.getIndex() == group) {
+                    if (groupSize <= 0) {
+                        return List.of();
+                    }
+                    return List.copyOf(declaredTargetCardIds.subList(
+                            graveyardTargetOffset, graveyardTargetOffset + groupSize));
+                }
+                graveyardTargetOffset += Math.max(groupSize, 0);
+            }
+        }
+        return targetCardIds == null ? List.of() : targetCardIds;
     }
 
     private static Map<CardEffect, List<UUID>> copyTargetCardIdsByEffect(

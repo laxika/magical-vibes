@@ -64,7 +64,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HostileNegotiationsOpponentPileChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice,
-        PendingInteraction.PutLandsFromHandChoice,
+        PendingInteraction.PutLandsFromHandChoice, PendingInteraction.WorldsWithinWorldsChoice,
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice,
         PendingInteraction.PutCardFromHandOrGraveyardChoice,
         PendingInteraction.EachPlayerMayPutCardFromHandChoice,
@@ -560,14 +560,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Improvisation Capstone: choose any number of exiled spells to cast without paying their mana costs.
      */
     record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
-                                           String prompt)
+                                           String prompt, boolean castAsCopies)
             implements PendingInteraction {
 
         public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                int maxCount) {
-            this(playerId, validCardIds, maxCount,
-                    "You may cast any number of spells from among the exiled cards without paying "
-                            + "their mana costs.");
+            this(playerId, validCardIds, maxCount, null, false);
+        }
+
+        public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                               int maxCount, String prompt) {
+            this(playerId, validCardIds, maxCount, prompt, false);
         }
 
         public ImprovisationCapstoneCastChoice {
@@ -1082,6 +1085,34 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** The hidden creature-card choice made by one player while Worlds Within Worlds resolves. */
+    record WorldsWithinWorldsChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                    java.util.List<UUID> remainingPlayerIds,
+                                    java.util.List<UUID> exiledCardIds,
+                                    java.util.Map<UUID, java.util.List<UUID>> chosenCardIdsByPlayer,
+                                    String cardName)
+            implements PendingInteraction {
+
+        public WorldsWithinWorldsChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            exiledCardIds = java.util.List.copyOf(exiledCardIds);
+            java.util.Map<UUID, java.util.List<UUID>> copied = new java.util.LinkedHashMap<>();
+            chosenCardIdsByPlayer.forEach((id, cards) -> copied.put(id, java.util.List.copyOf(cards)));
+            chosenCardIdsByPlayer = java.util.Collections.unmodifiableMap(copied);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
+        }
+    }
+
     /** Chooses up to a bounded number of matching cards from the configured zones to enter together. */
     record PutUpToCardsFromHandOntoBattlefieldChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                       int maxCount, String cardName,
@@ -1267,14 +1298,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                              boolean librarySearchAllowed,
                                              String cardLabel,
                                              LibrarySearchDestination destination,
-                                             UUID attachToPermanentId) implements PendingInteraction {
+                                             UUID attachToPermanentId,
+                                             CounterType enterWithCounterType,
+                                             int enterWithCounterCount) implements PendingInteraction {
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
                                                  java.util.Set<UUID> libraryCardIds,
                                                  boolean librarySearchAllowed,
                                                  String cardLabel) {
             this(playerId, pool, libraryCardIds, java.util.Set.of(), java.util.Set.of(), librarySearchAllowed, cardLabel,
-                    LibrarySearchDestination.HAND, null);
+                    LibrarySearchDestination.HAND, null, null, 0);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -1284,7 +1317,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  LibrarySearchDestination destination,
                                                  UUID attachToPermanentId) {
             this(playerId, pool, libraryCardIds, handCardIds, java.util.Set.of(),
-                    librarySearchAllowed, cardLabel, destination, attachToPermanentId);
+                    librarySearchAllowed, cardLabel, destination, attachToPermanentId, null, 0);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -1292,7 +1325,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  java.util.Set<UUID> outsideGameCardIds,
                                                  boolean librarySearchAllowed, String cardLabel) {
             this(playerId, pool, libraryCardIds, java.util.Set.of(), outsideGameCardIds,
-                    librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null);
+                    librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null, null, 0);
         }
 
         public SearchLibraryAndOrGraveyardChoice {
@@ -1757,13 +1790,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * migrated onto the context).
      */
     record MultiPermanentChoice(UUID playerId, java.util.List<UUID> validIds,
-                                java.util.List<UUID> validPlayerIds, int maxCount,
+                                java.util.List<UUID> validPlayerIds,
+                                java.util.List<UUID> validCardIds, int maxCount,
                                 MultiPermanentChoiceContext context, String prompt)
             implements PendingInteraction {
 
         public MultiPermanentChoice(UUID playerId, java.util.List<UUID> validIds, int maxCount,
                                     MultiPermanentChoiceContext context, String prompt) {
-            this(playerId, validIds, java.util.List.of(), maxCount, context, prompt);
+            this(playerId, validIds, java.util.List.of(), java.util.List.of(), maxCount, context, prompt);
+        }
+
+        public MultiPermanentChoice(UUID playerId, java.util.List<UUID> validIds,
+                                    java.util.List<UUID> validPlayerIds, int maxCount,
+                                    MultiPermanentChoiceContext context, String prompt) {
+            this(playerId, validIds, validPlayerIds, java.util.List.of(), maxCount, context, prompt);
         }
 
         @Override
@@ -1773,7 +1813,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiPermanentPick(validIds, validPlayerIds, 0, maxCount);
+            return new InteractionOptions.MultiPermanentPick(validIds, validPlayerIds, validCardIds,
+                    0, maxCount);
         }
     }
 

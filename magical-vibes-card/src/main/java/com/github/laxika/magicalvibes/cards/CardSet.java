@@ -162,6 +162,7 @@ public enum CardSet {
     SET_LCI("LCI"),
     SET_BIG("BIG"),
     SET_TLA("TLA"),
+    SET_MSH("MSH"),
     SET_OM1("OM1"),
     SET_DD1("DD1"),
     SET_CP1("CP1"),

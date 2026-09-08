@@ -443,6 +443,7 @@ public class DamageSupport {
             damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, targetControllerId, damage);
             damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, targetControllerId, damage);
         }
+        damagePreventionService.applyDamageHealingReplacement(gameData, target, damage);
 
         if (damageSource != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
@@ -709,6 +710,7 @@ public class DamageSupport {
         if (applyDralnuReplacement(gameData, target, damage) > 0) {
             return;
         }
+        damagePreventionService.applyDamageHealingReplacement(gameData, target, damage);
 
         if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
@@ -1598,6 +1600,10 @@ public class DamageSupport {
                 // Night Dealings: "whenever a source you control deals damage to another player".
                 triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
                         gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
+                if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
+                    triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
+                            gameData, sourceControllerId, playerId, List.of(sourcePermanent));
+                }
                 triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(
                         gameData, playerId, entry.getControllerId(), effectiveDamage);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
@@ -1838,6 +1844,7 @@ public class DamageSupport {
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
+                    damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
                     // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle
                     // destination that many defense counters (CR 120.3h); a permanent that is also
                     // a creature additionally gets marked damage (CR 120.3e).

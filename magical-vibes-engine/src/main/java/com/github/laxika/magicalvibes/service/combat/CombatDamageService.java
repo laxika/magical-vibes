@@ -1098,6 +1098,9 @@ public class CombatDamageService {
                                           Permanent redirectTarget) {
         if (redirectTarget != null && state.infectDamageRedirectedToGuard > 0) {
             state.infectDamageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard, true);
+            if (state.infectDamageRedirectedToGuard > 0) {
+                damagePreventionService.applyDamageHealingReplacement(gameData, redirectTarget, state.infectDamageRedirectedToGuard);
+            }
             if (state.infectDamageRedirectedToGuard > 0 && !gameQueryService.cantHaveCounters(gameData, redirectTarget)) {
                 redirectTarget.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, redirectTarget.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + state.infectDamageRedirectedToGuard);
                 gameLogService.append(gameData, GameLog.cardThen(redirectTarget.getCard(),
@@ -1108,6 +1111,7 @@ public class CombatDamageService {
         if (redirectTarget != null && state.damageRedirectedToGuard > 0) {
             state.damageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.damageRedirectedToGuard, true);
             if (state.damageRedirectedToGuard > 0) {
+                damagePreventionService.applyDamageHealingReplacement(gameData, redirectTarget, state.damageRedirectedToGuard);
                 // Redirected combat damage is still damage dealt to the guard (CR 120.3d): record
                 // it as marked damage plus the CR 704.5h deathtouch memory — the state-based
                 // action check at the end of the damage step performs any destruction.
@@ -1255,6 +1259,12 @@ public class CombatDamageService {
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
+                gameData, attackerId, defenderId,
+                combatDamageDealtToPlayer.entrySet().stream()
+                        .filter(entry -> entry.getValue() > 0)
+                        .map(Map.Entry::getKey)
+                        .toList());
         // Graveyard cards whose "whenever one or more creatures you control deal combat damage"
         // trigger has already fired for this damage event — such a trigger fires only once no
         // matter how many creatures connected.
@@ -2847,6 +2857,7 @@ public class CombatDamageService {
                     ? effectiveDamage
                     : Math.max(unpreventable, effectiveDamage);
             if (dmg > 0) {
+                damagePreventionService.applyDamageHealingReplacement(gameData, perm, dmg);
                 Map<UUID, Integer> attributedDamage = recordCombatMarkedDamage(perm, dmg, bySource);
                 gameData.recordDamageToPermanent(perm.getId(), dmg);
                 triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, perm, dmg);
@@ -3218,6 +3229,7 @@ public class CombatDamageService {
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(
                         gameData, targetPerm, channelHarmAdjusted, true, damageSource);
                 if (effectiveDamage > 0) {
+                    damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
                     if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
                         int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
                                 gameData, targetPerm, effectiveDamage);
@@ -3868,6 +3880,7 @@ public class CombatDamageService {
         if (gameQueryService.dealsCounterDamageToCreatures(gameData, source)) {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(
                     gameData, target, damage, true, source);
+            damagePreventionService.applyDamageHealingReplacement(gameData, target, afterShield);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
                 // Vizier of Remedies reduces the -1/-1 counters; the deathtouch marking below still
