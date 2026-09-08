@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
  */
 public record DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount amount,
                                                            PlayerRelation playerRelation,
-                                                           boolean unpreventable) implements CardEffect {
+                                                           boolean unpreventable) implements DamageDealingEffect {
 
     public DealDamageToTargetPlayerOrPlaneswalkerEffect {
         if (playerRelation == PlayerRelation.SELF) {
@@ -62,5 +62,20 @@ public record DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount amount,
     @Override
     public PlayerRelation targetPlayerRelation() {
         return playerRelation;
+    }
+
+    @Override
+    public DynamicAmount damageAmount() {
+        return amount;
+    }
+
+    @Override
+    public boolean canDamageCreatures() {
+        return false;
+    }
+
+    @Override
+    public boolean canDamagePlayers() {
+        return true;
     }
 }

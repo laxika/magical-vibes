@@ -454,6 +454,7 @@ public class CastingPermissionService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
         return bf.stream().anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                .map(effect -> staticEffectConditionResolver.resolve(gameData, perm, playerId, effect))
                 .anyMatch(effectType::isInstance));
     }
 
@@ -864,8 +865,17 @@ public class CastingPermissionService {
                 || hasFlashGrantForCard(gameData, playerId, card)
                 || grantsItselfFlashTiming(card)
                 || hasMetFlashCastCondition(gameData, playerId, card)
-                || hasAvailableFlashAlternateCast(gameData, playerId, card);
+                || hasAvailableFlashAlternateCast(gameData, playerId, card)
+                || hasSneakTiming(gameData, playerId, card);
         return isInstantSpeed || sorceryTiming;
+    }
+
+    private boolean hasSneakTiming(GameData gameData, UUID playerId, Card card) {
+        return playerId.equals(gameData.activePlayerId)
+                && gameData.currentStep == TurnStep.DECLARE_BLOCKERS
+                && card.getCastingOption(AlternateHandCast.class)
+                .map(AlternateHandCast::sneak)
+                .orElse(false);
     }
 
     private boolean isSorcerySpeedOnlyForPlayer(GameData gameData, UUID playerId) {
@@ -901,7 +911,8 @@ public class CastingPermissionService {
      */
     public boolean flashTimingRequiresAlternateCast(GameData gameData, UUID playerId, Card card) {
         if (sorceryTimingAvailable(gameData, playerId)) return false;
-        if (!hasAvailableFlashAlternateCast(gameData, playerId, card)) return false;
+        if (!hasAvailableFlashAlternateCast(gameData, playerId, card)
+                && !hasSneakTiming(gameData, playerId, card)) return false;
         return !card.hasType(CardType.INSTANT)
                 && !card.getKeywords().contains(Keyword.FLASH)
                 && !hasFlashGrantForCard(gameData, playerId, card)
@@ -1072,7 +1083,8 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof GrantFlashToCardTypeEffect grant
+                    CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, ownerId, effect);
+                    if (resolved instanceof GrantFlashToCardTypeEffect grant
                             && (grant.appliesToAllPlayers() || ownerId.equals(playerId))
                             && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                         return true;

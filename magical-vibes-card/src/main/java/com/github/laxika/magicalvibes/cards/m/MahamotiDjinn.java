@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "90")
-@CardRegistration(set = "DPA", collectorNumber = "10")
 @CardRegistration(set = "4ED", collectorNumber = "84")
 @CardRegistration(set = "9ED", collectorNumber = "85")
 @CardRegistration(set = "8ED", collectorNumber = "88")
@@ -12,5 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "BTD", collectorNumber = "13")
 @CardRegistration(set = "SUM", collectorNumber = "66")
 @CardRegistration(set = "3ED", collectorNumber = "66")
+@CardRegistration(set = "DPA", collectorNumber = "10")
 public class MahamotiDjinn extends Card {
 }

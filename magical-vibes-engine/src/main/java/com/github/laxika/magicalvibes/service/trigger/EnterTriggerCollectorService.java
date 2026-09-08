@@ -394,9 +394,17 @@ public class EnterTriggerCollectorService {
             // The entering permanent rides along for effects phrased around "that creature"
             // (Gruul Ragebeast's fight); target-only effects such as Reaper King's ignore it.
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                        sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId(),
-                        findEnteringPermanentId(match, pe.enteringCard())));
+                UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+                if (sourceCard.getSpellTargets().size() > 1) {
+                    match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                            sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                            match.permanent().getId(), List.of(), 0, 0, List.of(), 0, List.of(),
+                            false, pe.enteringCard().getId(), enteringPermanentId));
+                } else {
+                    match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                            sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                            match.permanent().getId(), enteringPermanentId));
+                }
             }
             logTriggered(match);
             return true;
@@ -778,7 +786,8 @@ public class EnterTriggerCollectorService {
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
                     mayTargetId,
-                    match.permanent().getId());
+                    match.permanent().getId(),
+                    match.markSourceOncePerTurnOnAcceptance());
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect)",

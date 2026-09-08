@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DwarvenBerserker;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-@CardUsed({PhantomWarrior.class, GrizzlyBears.class})
+@CardUsed({PhantomWarrior.class, DwarvenBerserker.class})
 class PhantomWarriorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -68,8 +68,10 @@ class PhantomWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Phantom Warrior cannot be blocked by a ground creature")
     void cannotBeBlockedByGroundCreature() {
-        addCreatureReady(player2, new GrizzlyBears());
+        // Player2 has Dwarven Berserker as potential blocker
+        addCreatureReady(player2, new DwarvenBerserker());
 
+        // Player1 has Phantom Warrior as attacker
         Permanent atkPerm = addCreatureReady(player1, new PhantomWarrior());
         atkPerm.setAttacking(true);
 
@@ -83,7 +85,7 @@ class PhantomWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("A face-down Phantom Warrior can be blocked")
     void faceDownPhantomWarriorCanBeBlocked() {
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DwarvenBerserker());
 
         Permanent attacker = addCreatureReady(player1, new PhantomWarrior());
         attacker.setAttacking(true);

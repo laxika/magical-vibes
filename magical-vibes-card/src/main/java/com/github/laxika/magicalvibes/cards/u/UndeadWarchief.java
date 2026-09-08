@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSB", collectorNumber = "52")
+@CardRegistration(set = "SCG", collectorNumber = "78")
 public class UndeadWarchief extends Card {
 
     public UndeadWarchief() {

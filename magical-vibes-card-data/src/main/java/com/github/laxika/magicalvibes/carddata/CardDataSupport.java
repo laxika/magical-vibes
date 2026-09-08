@@ -61,6 +61,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Improvise", Keyword.IMPROVISE);
         KEYWORD_MAP.put("Harmonize", Keyword.HARMONIZE);
         KEYWORD_MAP.put("Haste", Keyword.HASTE);
+        KEYWORD_MAP.put("Heal", Keyword.HEAL);
+        KEYWORD_MAP.put("Fight", Keyword.FIGHT);
         KEYWORD_MAP.put("Riot", Keyword.RIOT);
         KEYWORD_MAP.put("Lifelink", Keyword.LIFELINK);
         KEYWORD_MAP.put("Trample", Keyword.TRAMPLE);
@@ -130,7 +132,6 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Modular", Keyword.MODULAR);
         KEYWORD_MAP.put("Prowess", Keyword.PROWESS);
         KEYWORD_MAP.put("Dash", Keyword.DASH);
-        KEYWORD_MAP.put("Sneak", Keyword.SNEAK);
         KEYWORD_MAP.put("Sunburst", Keyword.SUNBURST);
         KEYWORD_MAP.put("Prototype", Keyword.PROTOTYPE);
         KEYWORD_MAP.put("Impending", Keyword.IMPENDING);
@@ -144,6 +145,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Mobilize", Keyword.MOBILIZE);
         KEYWORD_MAP.put("Blow Up", Keyword.BLOW_UP);
         KEYWORD_MAP.put("Web-slinging", Keyword.WEB_SLINGING);
+        KEYWORD_MAP.put("Sneak", Keyword.SNEAK);
         KEYWORD_MAP.put("Mayhem", Keyword.MAYHEM);
         KEYWORD_MAP.put("Suspect", Keyword.SUSPECT);
         KEYWORD_MAP.put("Camouflage", Keyword.CAMOUFLAGE);

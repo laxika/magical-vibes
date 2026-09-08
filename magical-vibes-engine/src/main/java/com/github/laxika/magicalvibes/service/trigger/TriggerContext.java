@@ -124,7 +124,10 @@ public sealed interface TriggerContext {
     record DungeonCompletion(UUID completingPlayerId) implements TriggerContext {}
 
     /** Context for triggers caused by rolling one or more dice. */
-    record DiceRoll(UUID rollingPlayerId, int diceCount, int result) implements TriggerContext {
+    record DiceRoll(UUID rollingPlayerId, int diceCount, int result, boolean planar) implements TriggerContext {
+        public DiceRoll(UUID rollingPlayerId, int diceCount, int result) {
+            this(rollingPlayerId, diceCount, result, false);
+        }
         public DiceRoll(UUID rollingPlayerId, int diceCount) {
             this(rollingPlayerId, diceCount, 0);
         }
@@ -189,6 +192,14 @@ public sealed interface TriggerContext {
 
         public DamageToControllerAmount(UUID damagedPlayerId, int amount) {
             this(damagedPlayerId, amount, null, null);
+        }
+    }
+
+    /** Context for batched ally-creature damage-to-player triggers. */
+    record AllyCreaturesDealDamageToPlayer(UUID damagedPlayerId, UUID sourceControllerId,
+                                            List<Permanent> damageDealers) implements TriggerContext {
+        public AllyCreaturesDealDamageToPlayer {
+            damageDealers = List.copyOf(damageDealers);
         }
     }
 

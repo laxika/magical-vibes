@@ -124,7 +124,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
 
         StackEntry targetSpell = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (se.getTargetableId().equals(targetCardId)) {
                 targetSpell = se;
                 break;
             }
