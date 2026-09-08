@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "ODY", collectorNumber = "260")
 @CardRegistration(set = "TPR", collectorNumber = "185")
 @CardRegistration(set = "FDN", collectorNumber = "230")
+@CardRegistration(set = "DDD", collectorNumber = "24")
 public class Overrun extends Card {
 
     public Overrun() {
