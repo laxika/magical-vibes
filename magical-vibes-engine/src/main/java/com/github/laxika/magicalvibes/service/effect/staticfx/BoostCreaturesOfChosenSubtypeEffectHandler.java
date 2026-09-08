@@ -35,7 +35,7 @@ public class BoostCreaturesOfChosenSubtypeEffectHandler implements StaticEffectH
         if (support.matchesStaticLeaf(target, new PermanentHasSubtypePredicate(chosenSubtype))) {
             int multiplier = boost.scalingCounter() == null
                     ? 1
-                    : context.source().getCounterCount(boost.scalingCounter());
+                    : context.sourceCounterCount(boost.scalingCounter());
             accumulator.addPower(boost.powerBoost() * multiplier);
             accumulator.addToughness(boost.toughnessBoost() * multiplier);
         }

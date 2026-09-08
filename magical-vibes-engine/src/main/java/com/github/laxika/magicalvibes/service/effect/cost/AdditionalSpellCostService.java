@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.TieredManaCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -131,6 +132,7 @@ public class AdditionalSpellCostService {
             SacrificeAnyNumberOfPermanentsCost.class,
             TapAnyNumberOfPermanentsCost.class,
             TapMultiplePermanentsCost.class,
+            TeamworkCost.class,
             ReturnAnyNumberOfPermanentsToHandCost.class,
             ReturnPermanentToHandCost.class,
             ReturnCreatureToHandCost.class,
@@ -193,6 +195,7 @@ public class AdditionalSpellCostService {
             SacrificeAnyNumberOfPermanentsCost sacrificeAnyNumberCost,
             TapAnyNumberOfPermanentsCost tapAnyNumberCost,
             TapMultiplePermanentsCost tapMultipleCost,
+            TeamworkCost teamworkCost,
             ReturnAnyNumberOfPermanentsToHandCost returnAnyNumberCost,
             ReturnPermanentToHandCost returnPermanentToHand,
             boolean returnCreatureToHand,
@@ -244,7 +247,8 @@ public class AdditionalSpellCostService {
                     || sacrificePermanentOrPayManaCost != null
                     || sacrificePermanentOrDiscardCardCost != null
                     || sacrificeAnyNumberCost != null
-                    || tapAnyNumberCost != null || tapMultipleCost != null || returnAnyNumberCost != null
+                    || tapAnyNumberCost != null || tapMultipleCost != null || teamworkCost != null
+                    || returnAnyNumberCost != null
                     || returnPermanentToHand != null
                     || returnCreatureToHand || blightCost != null || putCounterCost != null || putCountersOrPayManaCost != null
                     || payXLife || payLifeCost != null || payLifeOrPayManaCost != null
@@ -427,6 +431,7 @@ public class AdditionalSpellCostService {
                 removeFirst(effects, SacrificeAnyNumberOfPermanentsCost.class);
         TapAnyNumberOfPermanentsCost tapAnyNumberCost = removeFirst(effects, TapAnyNumberOfPermanentsCost.class);
         TapMultiplePermanentsCost tapMultipleCost = removeFirst(effects, TapMultiplePermanentsCost.class);
+        TeamworkCost teamworkCost = removeFirst(effects, TeamworkCost.class);
         ReturnAnyNumberOfPermanentsToHandCost returnAnyNumberCost =
                 removeFirst(effects, ReturnAnyNumberOfPermanentsToHandCost.class);
         ReturnPermanentToHandCost returnPermanentToHand = removeFirst(effects, ReturnPermanentToHandCost.class);
@@ -482,7 +487,7 @@ public class AdditionalSpellCostService {
                 sacCreatureOrDiscardOrPayLife, casualtyCost, sacOrPay,
                 sacOrDiscard, permCost, discardOrSacrifice, exileCreatureCost, multiPermCost,
                 escalateSacrificeCost, escalateTapCost,
-                sacAnyNumberCost, tapAnyNumberCost, tapMultipleCost, returnAnyNumberCost,
+                sacAnyNumberCost, tapAnyNumberCost, tapMultipleCost, teamworkCost, returnAnyNumberCost,
                 returnPermanentToHand, returnCreature,
                 blightCost, putCounterCost, putCountersOrPayManaCost,
                 payXLife, payLifeCost, payLifeOrPayManaCost, exileGraveyardCost, exileXCardsCost,
@@ -697,6 +702,8 @@ public class AdditionalSpellCostService {
                             .count();
                     if (matching < required) return false;
                 }
+                // Teamwork is optional, so declining it is always legal.
+                case TeamworkCost ignored -> { }
                 case WaterbendCost cost -> {
                     if (cost.optional()) {
                         continue;
@@ -742,7 +749,9 @@ public class AdditionalSpellCostService {
                     if (graveyard.stream().noneMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
                 }
                 case CollectEvidenceCost cost -> {
-                    if (!cost.optional() && graveyard.stream().mapToInt(Card::getManaValue).sum()
+                    if (!cost.optional() && graveyard.stream()
+                            .filter(cardInGraveyard -> matchesCollectEvidenceCard(cardInGraveyard, cost))
+                            .mapToInt(cardInGraveyard -> collectEvidenceValue(cardInGraveyard, cost)).sum()
                             < cost.minimumManaValue()) return false;
                 }
                 case DiscardCardTypeCost cost -> {
@@ -1128,6 +1137,11 @@ public class AdditionalSpellCostService {
         if (costs.tapMultipleCost() != null) {
             validateTapMultiplePermanentsCost(gameData, player, card, costs.tapMultipleCost(),
                     selection.sacrificePermanentIds(), announcedXValue == null ? 0 : announcedXValue);
+        }
+        if (costs.teamworkCost() != null && selection.sacrificePermanentIds() != null
+                && !selection.sacrificePermanentIds().isEmpty()) {
+            validateTeamworkCost(gameData, player, card, costs.teamworkCost(),
+                    selection.sacrificePermanentIds());
         }
         if (costs.waterbendCost() != null
                 && (!costs.waterbendCost().optional() || waterbendPaid)) {
@@ -2043,6 +2057,44 @@ public class AdditionalSpellCostService {
         return chosen;
     }
 
+    /** Validates the creatures selected for an optional teamwork additional cast cost. */
+    public List<Permanent> validateTeamworkCost(GameData gameData, Player player, Card card,
+                                                 TeamworkCost cost, List<UUID> teamworkPermanentIds) {
+        List<UUID> ids = teamworkPermanentIds != null ? teamworkPermanentIds : List.of();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        if (ids.stream().distinct().count() != ids.size()) {
+            throw new IllegalStateException("Duplicate creatures chosen for teamwork for " + card.getName());
+        }
+        List<Permanent> chosen = new ArrayList<>();
+        int totalPower = 0;
+        for (UUID id : ids) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+            if (permanent == null) {
+                throw new IllegalStateException("Creature to tap for teamwork not found on battlefield");
+            }
+            if (!player.getId().equals(gameQueryService.findPermanentController(gameData, id))) {
+                throw new IllegalStateException("Can only tap creatures you control for teamwork on "
+                        + card.getName());
+            }
+            if (permanent.isTapped()) {
+                throw new IllegalStateException("Cannot tap an already tapped creature for teamwork on "
+                        + card.getName());
+            }
+            if (!gameQueryService.isCreature(gameData, permanent)) {
+                throw new IllegalStateException("Teamwork can tap only creatures");
+            }
+            totalPower += gameQueryService.getEffectivePower(gameData, permanent);
+            chosen.add(permanent);
+        }
+        if (totalPower < cost.requiredPower()) {
+            throw new IllegalStateException("The creatures tapped for teamwork must have total power at least "
+                    + cost.requiredPower() + " for " + card.getName());
+        }
+        return chosen;
+    }
+
     /** Validates the selected artifacts and creatures paying a spell's Waterbend cost. */
     public List<Permanent> validateWaterbendCost(GameData gameData, Player player, Card card,
                                                   WaterbendCost cost, List<UUID> waterbendPermanentIds) {
@@ -2322,12 +2374,30 @@ public class AdditionalSpellCostService {
             if (idx < 0 || idx >= graveyard.size()) {
                 throw new IllegalStateException("Invalid graveyard card index: " + idx);
             }
-            totalManaValue += graveyard.get(idx).getManaValue();
+            Card selected = graveyard.get(idx);
+            if (!matchesCollectEvidenceCard(selected, cost)) {
+                throw new IllegalStateException("Selected card cannot be used to collect evidence for "
+                        + card.getName());
+            }
+            totalManaValue += collectEvidenceValue(selected, cost);
         }
         if (totalManaValue < minimumManaValue) {
             throw new IllegalStateException("Must collect evidence " + minimumManaValue
                     + " to cast " + card.getName());
         }
+    }
+
+    private boolean matchesCollectEvidenceCard(Card card, CollectEvidenceCost cost) {
+        return cost.cardFilter() == null
+                || predicateEvaluationService.matchesCardPredicate(card, cost.cardFilter(), null);
+    }
+
+    private int collectEvidenceValue(Card card, CollectEvidenceCost cost) {
+        if (cost.manaSymbolColor() == null) {
+            return card.getManaValue();
+        }
+        ManaCost manaCost = card.getParsedManaCost();
+        return manaCost == null ? 0 : manaCost.countColorSymbols(cost.manaSymbolColor());
     }
 
     public int resolveCollectEvidenceMinimumManaValue(GameData gameData, CollectEvidenceCost cost,

@@ -343,6 +343,9 @@ public class StackResolutionService {
             perm.setBestow(true);
         } else if (entry.getPhysicalCard() != card) {
             perm.setCard(characteristics);
+            if (entry.isCastTransformed()) {
+                perm.setTransformed(true);
+            }
         } else if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
             perm.setCard(characteristics);
             perm.setTransformed(true);
@@ -397,7 +400,7 @@ public class StackResolutionService {
         if (entry.isGiftPromised()) {
             for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
                 StackEntry triggeredEntry = gameData.stack.get(i);
-                if (triggeredEntry.getCard().getId().equals(card.getId())) {
+                if (triggeredEntry.getTargetableId().equals(card.getId())) {
                     triggeredEntry.setGiftPromised(true);
                 }
             }
@@ -422,7 +425,7 @@ public class StackResolutionService {
         if (entry.isGiftPromised()) {
             for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
                 StackEntry triggeredEntry = gameData.stack.get(i);
-                if (triggeredEntry.getCard().getId().equals(card.getId())) {
+                if (triggeredEntry.getTargetableId().equals(card.getId())) {
                     triggeredEntry.setGiftPromised(true);
                 }
             }

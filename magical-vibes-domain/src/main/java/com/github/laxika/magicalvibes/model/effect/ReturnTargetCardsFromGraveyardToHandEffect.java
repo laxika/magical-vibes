@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.Arrays;
@@ -44,6 +45,8 @@ import java.util.Set;
  * @param targetGroupsMustShareGraveyard when {@code true}, all configured target groups must be
  *                                       cards in the same graveyard
  * @param returnToOwnersHand   when {@code true}, each returned card goes to its owner's hand
+ * @param declaresGraveyardTarget when {@code true}, the effect declares its graveyard cards as
+ *                                targets for a triggered-ability target choice
  * @param bargainedBattlefieldMaxManaValue when non-null, a bargained spell may put one of its
  *                                       targeted cards with mana value up to this value onto the
  *                                       battlefield instead of returning it to hand
@@ -63,7 +66,26 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
         boolean targetGroupsMustShareGraveyard,
         boolean returnToOwnersHand,
         Integer bargainedBattlefieldMaxManaValue
-, boolean recordsReturnedCount) implements TargetCardGroupEffect {
+, boolean recordsReturnedCount, boolean declaresGraveyardTarget) implements TargetCardGroupEffect {
+    public ReturnTargetCardsFromGraveyardToHandEffect(
+        CardPredicate filter,
+        int maxTargets,
+        DynamicAmount dynamicMaxTargets,
+        boolean xScaled,
+        boolean exactTargets,
+        int minTargets,
+        boolean requireSharedCreatureType,
+        Set<CardType> maxOnePerCardType,
+        boolean unlessAnyPlayerPaysX,
+        boolean opponentChoosesOneForHand,
+        List<Integer> targetGroups,
+        boolean targetGroupsMustShareGraveyard,
+        boolean returnToOwnersHand,
+        Integer bargainedBattlefieldMaxManaValue
+, boolean recordsReturnedCount) {
+        this(filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets, requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX, opponentChoosesOneForHand, targetGroups, targetGroupsMustShareGraveyard, returnToOwnersHand, bargainedBattlefieldMaxManaValue, recordsReturnedCount, false);
+    }
+
         public ReturnTargetCardsFromGraveyardToHandEffect(
         CardPredicate filter,
         int maxTargets,
@@ -169,7 +191,7 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
                 filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
                 requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX,
                 opponentChoosesOneForHand, targetGroups, targetGroupsMustShareGraveyard,
-                returnToOwnersHand, maxManaValue, recordsReturnedCount);
+                returnToOwnersHand, maxManaValue, recordsReturnedCount, declaresGraveyardTarget);
     }
 
     /** Returns an equivalent effect without the resolution-time payment clause. */
@@ -177,7 +199,7 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
         return new ReturnTargetCardsFromGraveyardToHandEffect(
                 filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
                 requireSharedCreatureType, maxOnePerCardType, false, opponentChoosesOneForHand, targetGroups,
-                targetGroupsMustShareGraveyard, returnToOwnersHand, bargainedBattlefieldMaxManaValue, recordsReturnedCount);
+                targetGroupsMustShareGraveyard, returnToOwnersHand, bargainedBattlefieldMaxManaValue, recordsReturnedCount, declaresGraveyardTarget);
     }
 
     public ReturnTargetCardsFromGraveyardToHandEffect withTargetGroups(int... groups) {
@@ -185,7 +207,7 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
                 filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
                 requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX,
                 opponentChoosesOneForHand, Arrays.stream(groups).boxed().toList(),
-                targetGroupsMustShareGraveyard, returnToOwnersHand, bargainedBattlefieldMaxManaValue, recordsReturnedCount);
+                targetGroupsMustShareGraveyard, returnToOwnersHand, bargainedBattlefieldMaxManaValue, recordsReturnedCount, declaresGraveyardTarget);
     }
 
     public ReturnTargetCardsFromGraveyardToHandEffect fromSameGraveyard() {
@@ -193,7 +215,7 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
                 filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
                 requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX,
                 opponentChoosesOneForHand, targetGroups, true,
-                returnToOwnersHand, bargainedBattlefieldMaxManaValue, recordsReturnedCount);
+                returnToOwnersHand, bargainedBattlefieldMaxManaValue, recordsReturnedCount, declaresGraveyardTarget);
     }
 
     public ReturnTargetCardsFromGraveyardToHandEffect toOwnersHands() {
@@ -201,15 +223,24 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
                 filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets,
                 requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX,
                 opponentChoosesOneForHand, targetGroups,
-                targetGroupsMustShareGraveyard, true, bargainedBattlefieldMaxManaValue, recordsReturnedCount);
+                targetGroupsMustShareGraveyard, true, bargainedBattlefieldMaxManaValue, recordsReturnedCount, declaresGraveyardTarget);
     }
 
     public ReturnTargetCardsFromGraveyardToHandEffect withReturnedCount() {
-        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets, requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX, opponentChoosesOneForHand, targetGroups, targetGroupsMustShareGraveyard, returnToOwnersHand, bargainedBattlefieldMaxManaValue, true);
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, maxTargets, dynamicMaxTargets, xScaled, exactTargets, minTargets, requireSharedCreatureType, maxOnePerCardType, unlessAnyPlayerPaysX, opponentChoosesOneForHand, targetGroups, targetGroupsMustShareGraveyard, returnToOwnersHand, bargainedBattlefieldMaxManaValue, true, declaresGraveyardTarget);
+    }
+
+    public static ReturnTargetCardsFromGraveyardToHandEffect forTriggeredAbility(CardPredicate filter, int maxTargets) {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, maxTargets, null, false, false, 0,
+                false, Set.of(), false, false, List.of(), false, false, null, false, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
+        if (declaresGraveyardTarget) {
+            return TargetSpec.benign(TargetPredicates.graveyardCards(
+                    filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
+        }
         return dynamicMaxTargets == null || upToXTargets()
                 ? TargetSpec.NONE
                 : TargetSpec.benign(TargetPredicates.player());

@@ -68,7 +68,7 @@ public class DiceRollTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
-        if (context instanceof TriggerContext.DiceRoll diceRoll) {
+        if (context instanceof TriggerContext.DiceRoll diceRoll && !diceRoll.planar()) {
             entry.setEventValue(diceRoll.result());
         }
         match.gameData().enqueueTrigger(entry);

@@ -155,15 +155,17 @@
         } @else {
           @for (entry of stackEntries; track $index) {
             <div class="stack-entry-wrapper"
-                 [class.spell-targetable]="choice.targeting.targetingSpell && entry.isSpell"
+                 [class.spell-targetable]="choice.targeting.targetingSpell && (entry.isSpell || choice.targeting.validTargetIds().has(entry.cardId))"
                  [class.stack-targeted]="isStackTargetSpell(entry)"
                  [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId)"
-                 (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId) ? choice.choosePermanent(entry.cardId) : (choice.targeting.targetingSpell && entry.isSpell ? choice.targeting.selectSpellTarget(entry) : null)"
-                 (mouseenter)="stackEntryHover.emit(entry); onCardHover(entry.card)"
+                 (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId) ? choice.choosePermanent(entry.cardId) : (choice.targeting.targetingSpell && (entry.isSpell || choice.targeting.validTargetIds().has(entry.cardId)) ? choice.targeting.selectSpellTarget(entry) : null)"
+                 (mouseenter)="stackEntryHover.emit(entry); entry.card && onCardHover(entry.card)"
                  (mouseleave)="stackEntryHoverEnd.emit(); onCardHoverEnd()">
-              <app-card-display
-                [card]="entry.card"
-                [attr.data-entry-type]="entry.entryType" />
+              @if (entry.card) {
+                <app-card-display [card]="entry.card" [attr.data-entry-type]="entry.entryType" />
+              } @else {
+                <div class="source-less-ability">{{ entry.description }}</div>
+              }
               <div class="stack-entry-overlay">
                 <div class="stack-entry-controller">
                   ({{ getPlayerName(entry.controllerId) }})

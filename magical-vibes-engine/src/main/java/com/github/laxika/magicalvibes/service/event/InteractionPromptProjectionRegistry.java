@@ -108,6 +108,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice.class,
                 this::projectEachPlayerChoosesOneCardOfEachColorChoice);
         register(PendingInteraction.PutLandsFromHandChoice.class, this::projectPutLandsFromHandChoice);
+        register(PendingInteraction.WorldsWithinWorldsChoice.class,
+                this::projectWorldsWithinWorldsChoice);
         register(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class,
                 this::projectEachPlayerMayPutCardFromHandChoice);
         register(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class,
@@ -576,6 +578,18 @@ public class InteractionPromptProjectionRegistry {
                 "You may put any number of land cards from your hand onto the battlefield.");
     }
 
+    private InteractionPromptMessage projectWorldsWithinWorldsChoice(
+            GameData gameData, PendingInteraction.WorldsWithinWorldsChoice interaction) {
+        List<Card> hand = gameData.playerHands.get(interaction.playerId());
+        List<CardView> cardViews = hand == null ? List.of() : hand.stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.validCardIds().size(),
+                "You may put any number of creature cards from your hand onto the battlefield.");
+    }
+
     private InteractionPromptMessage projectEachPlayerMayPutCardFromHandChoice(
             GameData gameData, PendingInteraction.EachPlayerMayPutCardFromHandChoice interaction) {
         List<Card> hand = gameData.playerHands.get(interaction.playerId());
@@ -785,7 +799,7 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectMagesContestBidChoice(
             GameData gameData, PendingInteraction.MagesContestBidChoice interaction) {
         StackEntry target = gameData.stack.stream()
-                .filter(entry -> entry.getCard().getId().equals(interaction.targetSpellId()))
+                .filter(entry -> entry.getTargetableId().equals(interaction.targetSpellId()))
                 .findFirst()
                 .orElse(null);
         String targetName = target != null ? target.getCard().getName() : "the spell";
@@ -952,8 +966,10 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectMultiPermanentChoice(
             GameData gameData, PendingInteraction.MultiPermanentChoice interaction) {
+        List<Card> cards = cardsByIds(gameData, interaction.validCardIds());
         return InteractionPromptMessage.multiPermanentPick(
                 new ArrayList<>(interaction.validIds()), new ArrayList<>(interaction.validPlayerIds()),
+                new ArrayList<>(interaction.validCardIds()), cardViews(cards),
                 interaction.maxCount(), interaction.prompt());
     }
 
@@ -1491,6 +1507,21 @@ public class InteractionPromptProjectionRegistry {
 
     private List<CardView> cardViews(List<Card> cards) {
         return cards.stream().map(cardViewFactory::create).toList();
+    }
+
+    private List<Card> cardsByIds(GameData gameData, List<UUID> cardIds) {
+        if (cardIds.isEmpty()) {
+            return List.of();
+        }
+        List<Card> cards = new ArrayList<>();
+        for (UUID cardId : cardIds) {
+            gameData.playerGraveyards.values().stream()
+                    .flatMap(List::stream)
+                    .filter(card -> card.getId().equals(cardId))
+                    .findFirst()
+                    .ifPresent(cards::add);
+        }
+        return cards;
     }
 
     private void addMatchingCardViews(

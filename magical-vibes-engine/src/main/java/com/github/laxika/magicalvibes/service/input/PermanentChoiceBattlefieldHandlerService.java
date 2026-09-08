@@ -410,8 +410,10 @@ public class PermanentChoiceBattlefieldHandlerService {
                 && context.equipmentPermanentIds().contains(equipmentId)
                 && gameQueryService.isCreature(gameData, creature)
                 && equipSupport.attachEquipment(gameData, equipment, creature)) {
-            gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(
-                    context.controllerId(), equipmentId, context.sourceCard()));
+            if (context.unattachAtNextEndStep()) {
+                gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(
+                        context.controllerId(), equipmentId, context.sourceCard()));
+            }
             gameLogService.append(gameData,
                     GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
         }
@@ -1688,7 +1690,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         return gameData.stack.stream()
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .filter(entry -> entry.getCard().getId().equals(sourceId))
+                .filter(entry -> entry.getTargetableId().equals(sourceId))
                 .map(StackEntry::getControllerId)
                 .findFirst()
                 .orElse(null);
@@ -1829,7 +1831,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         return gameData.stack.stream()
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .filter(entry -> entry.getCard().getId().equals(sourceId))
+                .filter(entry -> entry.getTargetableId().equals(sourceId))
                 .map(StackEntry::getCard)
                 .findFirst()
                 .orElse(null);

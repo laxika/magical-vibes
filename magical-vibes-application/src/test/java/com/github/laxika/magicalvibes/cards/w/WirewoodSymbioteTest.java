@@ -142,12 +142,14 @@ class WirewoodSymbioteTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player1, new WirewoodSymbiote());
+        harness.addToBattlefield(player1, new WirewoodElf());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         forest.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(forest.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Wirewood Elf");
         harness.assertOnBattlefield(player1, "Forest");
     }
 }

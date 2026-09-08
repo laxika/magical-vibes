@@ -47,7 +47,7 @@ public class PossibilityStormExileAndCastEffectHandler implements NormalEffectHa
 
         StackEntry originalSpell = null;
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getCard().getId().equals(typedEffect.originalSpellCardId())) {
+            if (stackEntry.getTargetableId().equals(typedEffect.originalSpellCardId())) {
                 originalSpell = stackEntry;
                 break;
             }

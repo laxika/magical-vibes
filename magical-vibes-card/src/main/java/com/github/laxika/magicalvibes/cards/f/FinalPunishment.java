@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "131")
+@CardRegistration(set = "SCG", collectorNumber = "67")
 public class FinalPunishment extends Card {
 
     public FinalPunishment() {

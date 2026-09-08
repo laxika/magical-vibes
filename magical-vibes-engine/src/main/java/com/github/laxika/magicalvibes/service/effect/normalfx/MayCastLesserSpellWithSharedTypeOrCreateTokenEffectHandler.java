@@ -76,7 +76,7 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
         }
         Card cardOnStack = gameData.stack.stream()
                 .filter(stackEntry -> stackEntry.getCard() != null
-                        && stackEntry.getCard().getId().equals(triggeringCardId)
+                        && stackEntry.getTargetableId().equals(triggeringCardId)
                         && isSpell(stackEntry.getEntryType()))
                 .map(StackEntry::getCard)
                 .findFirst()
@@ -92,7 +92,7 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
 
     private StackEntry findStackEntry(GameData gameData, UUID cardId) {
         return gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getCard() != null && stackEntry.getCard().getId().equals(cardId))
+                .filter(stackEntry -> stackEntry.getCard() != null && stackEntry.getTargetableId().equals(cardId))
                 .findFirst()
                 .orElse(null);
     }

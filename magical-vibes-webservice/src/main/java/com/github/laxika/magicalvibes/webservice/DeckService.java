@@ -68,6 +68,9 @@ public class DeckService implements CustomDeckSource {
             CardSet cardSet = requireSet(entry.setCode());
             CardPrinting printing = cardCatalog.findByCollectorNumber(cardSet, entry.collectorNumber());
             Card card = printing.createCard();
+            if (card.getType() != null && card.getType().isPlanar()) {
+                throw new IllegalArgumentException("Planar cards belong in the planar deck");
+            }
 
             // Basic lands are exempt from the 4-copy rule
             if (card.getSupertypes().contains(CardSupertype.BASIC)) {

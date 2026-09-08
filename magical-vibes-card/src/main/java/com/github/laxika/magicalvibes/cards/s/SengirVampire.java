@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 @CardRegistration(set = "BTD", collectorNumber = "29")
 @CardRegistration(set = "SUM", collectorNumber = "129")
 @CardRegistration(set = "TOR", collectorNumber = "80")
+@CardRegistration(set = "DPA", collectorNumber = "32")
 public class SengirVampire extends Card {
 
     public SengirVampire() {

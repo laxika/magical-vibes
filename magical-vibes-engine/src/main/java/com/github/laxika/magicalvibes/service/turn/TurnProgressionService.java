@@ -300,6 +300,7 @@ public class TurnProgressionService {
                             combatControllerName, combatPlayerName);
                 }
                 gameData.cardsPutIntoGraveyardThisCombat.clear();
+                gameData.declaredAttackerIdsThisCombat.clear();
                 gameData.forEachPermanent((playerId, p) -> {
                     p.setAttackedThisCombat(false);
                     p.setBlockedThisCombat(false);
@@ -475,11 +476,13 @@ public class TurnProgressionService {
         Long extraTurnSequence = null;
         boolean currentTurnIsExtraTurn = false;
         boolean skipUntapStep = false;
+        boolean powerUpAbilitiesDisabled = false;
         boolean damageCantBePrevented = false;
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
             currentTurnIsExtraTurn = true;
             skipUntapStep = Boolean.TRUE.equals(gameData.extraTurnSkipsUntap.pollFirst());
+            powerUpAbilitiesDisabled = Boolean.TRUE.equals(gameData.extraTurnPowerUpAbilitiesDisabled.pollFirst());
             damageCantBePrevented = Boolean.TRUE.equals(gameData.extraTurnDamageCantBePrevented.pollFirst());
             extraTurnSequence = gameData.extraTurnSequences.isEmpty()
                     ? null : gameData.extraTurnSequences.pollFirst();
@@ -493,6 +496,8 @@ public class TurnProgressionService {
                 String skippedName = gameData.playerIdToName.get(nextActive);
                 gameLogService.append(gameData, GameLog.text(skippedName + " skips their extra turn."));
                 log.info("Game {} - {} skips their extra turn", gameData.id, skippedName);
+                gameData.currentTurnIsExtraTurn = false;
+                gameData.powerUpAbilitiesCantBeActivatedThisTurn = false;
                 advanceTurn(gameData, false);
                 return;
             }
@@ -515,12 +520,14 @@ public class TurnProgressionService {
             log.info("Game {} - {} skips their turn", gameData.id, skippedName);
             // Advance turn order past the skipped player so the next selection is correct.
             gameData.activePlayerId = nextActive;
+            if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
             advanceTurn(gameData, false);
             return;
         }
 
         String nextActiveName = gameData.playerIdToName.get(nextActive);
         gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
+        gameData.powerUpAbilitiesCantBeActivatedThisTurn = powerUpAbilitiesDisabled;
         gameData.damageCantBePreventedThisTurn = damageCantBePrevented;
         gameData.currentExtraTurnSequence = extraTurnSequence;
 
@@ -539,6 +546,8 @@ public class TurnProgressionService {
         }
 
         gameData.activePlayerId = nextActive;
+        gameData.turnStartTimestamp = gameData.timestampCounter + 1;
+        if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
         if (gameData.skipCombatPhasesNextTurn.remove(nextActive)) {
             gameData.skippedStepOrPhasesThisTurn.computeIfAbsent(nextActive, id -> new HashSet<>())
                     .add(SkipStepOrPhaseKind.COMBAT_PHASE);
@@ -758,6 +767,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
+        gameData.creatureTapCountsThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();

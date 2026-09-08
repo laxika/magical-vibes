@@ -486,6 +486,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         gameData.removeFromExile(card.getId());
         Permanent returned = new Permanent(card);
         returned.setEnteredFromExile(true);
+        if (e.tapOnImmediateReturn()) {
+            returned.tap();
+        }
         if (e.returnAttacking()) {
             UUID attackTargetId = entry.getAttackedTargetId();
             if (attackTargetId == null && entry.getSourcePermanentId() != null) {

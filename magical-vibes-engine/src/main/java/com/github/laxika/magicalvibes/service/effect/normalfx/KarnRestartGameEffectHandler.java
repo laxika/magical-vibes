@@ -39,6 +39,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @RequiredArgsConstructor
 public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
 
     private final GameLogService gameLogService;
     private final GameMutationCoordinator mutationCoordinator;
@@ -183,6 +187,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.emblems.clear();
         gameData.extraTurns.clear();
         gameData.extraTurnSkipsUntap.clear();
+        gameData.extraTurnPowerUpAbilitiesDisabled.clear();
         gameData.extraTurnDamageCantBePrevented.clear();
         gameData.extraTurnSequences.clear();
         gameData.currentExtraTurnSequence = null;
@@ -391,6 +396,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playerKeptHand.clear();
         gameData.playerNeedsToBottom.clear();
         gameData.playerBottomDecisionIds.clear();
+        if (gameData.planechase != null) planechaseService.restart(gameData);
         gameData.status = GameStatus.MULLIGAN;
 
         gameLogService.append(gameData, GameLog.text("Mulligan phase — decide to keep or mulligan."));

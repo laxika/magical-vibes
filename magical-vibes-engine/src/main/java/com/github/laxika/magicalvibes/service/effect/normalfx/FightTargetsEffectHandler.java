@@ -29,12 +29,23 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
         var e = (FightTargetsEffect) effect;
 
         boolean hasCapturedTargets = e.secondTargetId() != null;
+        int firstTargetGroup = e.firstTargetGroup();
+        int secondTargetGroup = e.secondTargetGroup();
+        if (e.useBoundTargetGroupAndNext()) {
+            int boundTargetGroup = entry.getCard().getEffectTargetIndex(e);
+            if (boundTargetGroup < 0) {
+                return;
+            }
+            firstTargetGroup = boundTargetGroup;
+            secondTargetGroup = boundTargetGroup + 1;
+        }
+
         List<UUID> firstGroup = hasCapturedTargets
                 ? e.firstTargetId() == null ? List.of() : List.of(e.firstTargetId())
-                : entry.targetsForGroup(e.firstTargetGroup());
+                : entry.targetsForGroup(firstTargetGroup);
         List<UUID> secondGroup = hasCapturedTargets
                 ? List.of(e.secondTargetId())
-                : entry.targetsForGroup(e.secondTargetGroup());
+                : entry.targetsForGroup(secondTargetGroup);
         if (firstGroup.isEmpty() || secondGroup.isEmpty()) {
             return; // Optional target not chosen ("up to one") — no fight happens
         }
