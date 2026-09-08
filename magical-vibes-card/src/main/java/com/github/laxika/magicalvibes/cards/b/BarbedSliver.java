@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "163")
 @CardRegistration(set = "TPR", collectorNumber = "126")
+@CardRegistration(set = "H09", collectorNumber = "18")
 public class BarbedSliver extends Card {
 
     public BarbedSliver() {

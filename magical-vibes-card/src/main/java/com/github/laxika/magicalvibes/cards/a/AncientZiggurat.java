@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "141")
+@CardRegistration(set = "H09", collectorNumber = "31")
 public class AncientZiggurat extends Card {
 
     public AncientZiggurat() {
