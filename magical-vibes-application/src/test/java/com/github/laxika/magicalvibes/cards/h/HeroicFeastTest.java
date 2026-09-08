@@ -26,7 +26,7 @@ class HeroicFeastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent food = findPermanent(player1, "Food");
         assertThat(food.getCard().getSubtypes()).contains(CardSubtype.FOOD);

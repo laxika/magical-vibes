@@ -38,6 +38,7 @@ class EvilsThrallTest extends BaseCardTest {
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
 
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
@@ -57,12 +58,15 @@ class EvilsThrallTest extends BaseCardTest {
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
 
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
 
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
 
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
     }

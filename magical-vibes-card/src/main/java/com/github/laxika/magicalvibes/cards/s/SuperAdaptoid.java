@@ -78,6 +78,6 @@ public class SuperAdaptoid extends Card {
         return new ConditionalEffect(
                 new TargetPermanentMatches(new PermanentHasKeywordPredicate(keyword)),
                 new ConditionalEffect(new NotCondition(new SelfHasKeyword(keyword)),
-                        PutCountersOnSelfEffect.targeted(counterType)));
+                        PutCountersOnSelfEffect.targeted(counterType), false), false);
     }
 }

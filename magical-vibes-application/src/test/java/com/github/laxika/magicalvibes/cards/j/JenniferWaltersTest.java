@@ -90,7 +90,7 @@ class JenniferWaltersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.castInstant(player2, 0, sheHulk.getId());
         harness.passBothPriorities();

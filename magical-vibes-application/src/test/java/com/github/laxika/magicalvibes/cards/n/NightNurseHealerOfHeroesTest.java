@@ -22,12 +22,12 @@ class NightNurseHealerOfHeroesTest extends BaseCardTest {
     @DisplayName("ETB returns a permanent put into the graveyard from the battlefield this turn")
     void returnsPermanentPutIntoGraveyardThisTurn() {
         TormodsCrypt crypt = new TormodsCrypt();
-        harness.addToBattlefield(player1, crypt);
+        var cryptPermanent = harness.addToBattlefieldAndReturn(player1, crypt);
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, crypt.getId());
+        harness.castInstant(player1, 0, cryptPermanent.getId());
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new NightNurseHealerOfHeroes()));

@@ -354,14 +354,6 @@ public class TriggerCollectionService {
                     && !predicateEvaluationService.matchesCardPredicate(spellCard, delayed.spellFilter(), null)) {
                 continue;
             }
-            if (delayed.stackEntryFilter() != null) {
-                StackEntry spellEntry = gameQueryService.findStackEntryByCardId(gameData, spellCard.getId());
-                if (spellEntry == null || !targetLegalityService.matchesStackEntryPredicate(
-                        gameData, spellEntry, delayed.stackEntryFilter(), castingPlayerId)) {
-                    continue;
-                }
-            }
-
             StackEntry spellEntry = gameData.stack.stream()
                     .filter(candidate -> spellCard.getId().equals(candidate.getCard().getId()))
                     .findFirst()

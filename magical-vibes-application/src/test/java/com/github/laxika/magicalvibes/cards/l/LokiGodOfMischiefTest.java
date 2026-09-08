@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.z.ZelyonSword;
-import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,14 +17,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LokiGodOfMischief.class, ZuranSpellcaster.class, ZelyonSword.class, GrizzlyBears.class, Shock.class})
+@CardUsed({LokiGodOfMischief.class, ProdigalPyromancer.class, ZelyonSword.class, GrizzlyBears.class, Shock.class})
 class LokiGodOfMischiefTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws only once when its controller's abilities target players")
     void drawsOnlyOnceForControllerAbilitiesTargetingPlayers() {
-        addReadyZuranSpellcaster(player1);
-        addReadyZuranSpellcaster(player1);
+        addReadyProdigalPyromancer(player1);
+        addReadyProdigalPyromancer(player1);
         harness.addToBattlefield(player1, new LokiGodOfMischief());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -75,7 +75,7 @@ class LokiGodOfMischiefTest extends BaseCardTest {
     @DisplayName("Does not trigger for an ability controlled by an opponent")
     void doesNotTriggerForOpponentAbility() {
         harness.addToBattlefield(player1, new LokiGodOfMischief());
-        addReadyZuranSpellcaster(player2);
+        addReadyProdigalPyromancer(player2);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -85,19 +85,16 @@ class LokiGodOfMischiefTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
-    private Permanent addReadyZuranSpellcaster(Player player) {
-        Permanent permanent = new Permanent(new ZuranSpellcaster());
+    private Permanent addReadyProdigalPyromancer(Player player) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ProdigalPyromancer());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
     }
 
     private Permanent addReadySword(Player player) {
-        Permanent permanent = new Permanent(new ZelyonSword());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ZelyonSword());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;

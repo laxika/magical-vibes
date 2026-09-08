@@ -53,7 +53,6 @@ class WolverineFierceFighterTest extends BaseCardTest {
     void healsPreviouslyMarkedDamageBeforeRecordingNoncombatDamage() {
         Permanent wolverine = harness.addToBattlefieldAndReturn(player2, new WolverineFierceFighter());
         wolverine.setMarkedDamage(3);
-        wolverine.setDamagedByDeathtouch(true);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
