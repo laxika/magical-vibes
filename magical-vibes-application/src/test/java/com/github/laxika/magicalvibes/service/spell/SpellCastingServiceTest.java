@@ -353,6 +353,69 @@ class SpellCastingServiceTest {
     }
 
     @Test
+    void paysDiscardCostWhenCastingFromGraveyard() {
+        Card spell = prepareFlashbackDiscardSpell();
+        Card discarded = createCreature("Discarded Creature", "{1}{G}");
+        setHand(player1Id, List.of(discarded));
+
+        svc.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
+                List.of(), null, null, List.of(), Map.of(), List.of(), List.of(), List.of(0));
+
+        assertThat(gd.playerHands.get(player1Id)).isEmpty();
+        verify(permanentRemovalService).removeCardFromGraveyardById(gd, spell.getId());
+        verify(graveyardService).addCardToGraveyard(gd, player1Id, discarded);
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isSameAs(spell);
+            assertThat(entry.isCastWithFlashback()).isTrue();
+        });
+    }
+
+    @Test
+    void invalidGraveyardDiscardSelectionDoesNotSpendManaOrMoveSpell() {
+        Card spell = prepareFlashbackDiscardSpell();
+        setHand(player1Id, List.of());
+        int manaBefore = gd.playerManaPools.get(player1Id).getTotal();
+
+        assertThatThrownBy(() -> svc.playFlashbackSpell(gd, player1, 0, null, null,
+                List.of(), null, null, List.of(), null, null, List.of(), Map.of(),
+                List.of(), List.of(), List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(manaBefore);
+        assertThat(gd.playerGraveyards.get(player1Id)).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Card prepareFlashbackDiscardSpell() {
+        Card spell = createInstant("Discard Flashback Spell", "{2}{R}");
+        spell.addEffect(EffectSlot.SPELL,
+                new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null));
+        spell.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        spell.addCastingOption(new FlashbackCast("{3}{R}"));
+        gd.playerGraveyards.get(player1Id).add(spell);
+        addMana(player1Id, ManaColor.RED, 1);
+        addMana(player1Id, ManaColor.COLORLESS, 3);
+        when(castingPermissionService.canUseFlashback(eq(gd), eq(player1Id), any(FlashbackCast.class)))
+                .thenReturn(true);
+        when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, spell)).thenReturn(true);
+        return spell;
+    }
+
+    @Test
+    void recastingCreatureClearsCountersGrantedToItsPreviousCast() {
+        Card creature = createCreature("Recast creature", "{1}{G}");
+        setHand(player1Id, List.of(creature));
+        addMana(player1Id, ManaColor.GREEN, 2);
+        gd.spellAdditionalEnterCounters.put(creature.getId(), 2);
+        when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+        svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.spellAdditionalEnterCounters).doesNotContainKey(creature.getId());
+    }
+
+    @Test
     @DisplayName("Pays a non-X additional target cost")
     void paysAdditionalTargetCostForNonXSpell() {
         Card spell = createInstant("Strive Spell", "{W}");

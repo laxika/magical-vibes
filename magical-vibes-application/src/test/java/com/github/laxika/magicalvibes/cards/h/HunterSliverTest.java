@@ -19,7 +19,7 @@ class HunterSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Hunter Sliver lets another Sliver untap a defending creature and force it to block")
     void sliversGainProvoke() {
-        addCreatureReady(player1, new HunterSliver());
+        Permanent hunter = addCreatureReady(player1, new HunterSliver());
         Permanent attacker = addCreatureReady(player2, new MetallicSliver());
         Permanent blocker = addCreatureReady(player1, new GrizzlyBears());
         blocker.tap();
@@ -27,7 +27,7 @@ class HunterSliverTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(blocker.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(hunter.getId(), blocker.getId());
 
         harness.handlePermanentChosen(player2, blocker.getId());
         harness.passBothPriorities();
@@ -57,7 +57,7 @@ class HunterSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Hunter Sliver's provoke only offers creatures controlled by the defending player")
     void provokeFiltersTargets() {
-        addCreatureReady(player1, new HunterSliver());
+        Permanent hunter = addCreatureReady(player1, new HunterSliver());
         addCreatureReady(player2, new MetallicSliver());
         Permanent defendingCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent attackingPlayerCreature = addCreatureReady(player2, new GrizzlyBears());
@@ -66,7 +66,7 @@ class HunterSliverTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(defendingCreature.getId())
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(hunter.getId(), defendingCreature.getId())
                 .doesNotContain(attackingPlayerCreature.getId());
     }
 

@@ -34,6 +34,7 @@ class GempalmSorcererTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentWizard, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, nonWizard, Keyword.FLYING)).isFalse();
         harness.assertInGraveyard(player1, "Gempalm Sorcerer");
+        harness.passBothPriorities();
         harness.assertInHand(player1, "Grizzly Bears");
     }
 

@@ -19,6 +19,7 @@ class RiptideDirectorTest extends BaseCardTest {
     @Test
     @DisplayName("Draws a card for each Wizard controlled and ignores the opponent's Wizards")
     void drawsForEachControlledWizard() {
+        harness.setHand(player1, List.of());
         Permanent director = addCreatureReady(player1, new RiptideDirector());
         harness.addToBattlefield(player1, new FugitiveWizard());
         harness.addToBattlefield(player1, new FugitiveWizard());
