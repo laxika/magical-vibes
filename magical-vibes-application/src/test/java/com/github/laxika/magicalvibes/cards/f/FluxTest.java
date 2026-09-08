@@ -199,7 +199,7 @@ class FluxTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discards wait until every player has chosen how many cards to discard")
-    void selectedCardsStayInHandUntilEveryPlayerChooses() {
+    void selectedCardsRemainInHandUntilEveryPlayerChooses() {
         harness.setHand(player1, List.of(new Flux(), new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new Plains()));
         harness.addMana(player1, ManaColor.BLUE, 1);

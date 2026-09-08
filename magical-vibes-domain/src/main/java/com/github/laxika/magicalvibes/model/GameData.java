@@ -287,6 +287,8 @@ public class GameData {
      * in, and no leave/enter-the-battlefield trigger fires either way.
      */
     public final Map<UUID, List<Permanent>> phasedOutPermanents = new ConcurrentHashMap<>();
+    /** Directly phased-out permanent ids that remain phased out until their source leaves. */
+    public final Map<UUID, Set<UUID>> phasedOutUntilSourceLeaves = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     /**
@@ -759,6 +761,8 @@ public class GameData {
      *  replacement applies to one draw). Consumed in {@code DrawService.resolveDrawCard} and
      *  cleared at end-of-turn cleanup. */
     public final Map<UUID, List<UUID>> pendingNextDrawFromExiledPile = new ConcurrentHashMap<>();
+    /** Ring of Ma'rûf — one queued, turn-scoped replacement per activation of the controller's next draw. */
+    public final Map<UUID, Integer> pendingNextDrawFromOutsideGame = new ConcurrentHashMap<>();
     /** Player IDs → number of pending Urabrask-style next-draw replacements this turn. */
     public final Map<UUID, Integer> pendingNextDrawExileTopCard = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
@@ -4845,6 +4849,7 @@ public class GameData {
         copy.pendingNextDrawDiscardOpponents.putAll(this.pendingNextDrawDiscardOpponents);
         this.pendingNextDrawFromExiledPile.forEach((k, v) ->
                 copy.pendingNextDrawFromExiledPile.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.pendingNextDrawFromOutsideGame.putAll(this.pendingNextDrawFromOutsideGame);
         copy.pendingNextDrawExileTopCard.putAll(this.pendingNextDrawExileTopCard);
         copy.pendingMysticReflections.addAll(this.pendingMysticReflections);
         copy.activeMysticReflectionsForEntryBatch.addAll(this.activeMysticReflectionsForEntryBatch);
@@ -4989,6 +4994,11 @@ public class GameData {
         this.phasedOutPermanents.forEach((k, v) -> copy.phasedOutPermanents.put(k,
                 Collections.synchronizedList(v.stream().map(Permanent::new)
                         .collect(java.util.stream.Collectors.toCollection(ArrayList::new)))));
+        this.phasedOutUntilSourceLeaves.forEach((k, v) -> {
+            Set<UUID> targetIds = ConcurrentHashMap.newKeySet();
+            targetIds.addAll(v);
+            copy.phasedOutUntilSourceLeaves.put(k, targetIds);
+        });
 
         // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---
         this.playerManaPools.forEach((k, v) -> copy.playerManaPools.put(k, new ManaPool(v)));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -162,6 +163,14 @@ public record PreventDamageFromChosenSourceEffect(
                                                                       String sourceLabel) {
         return new PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, false, false, sourceFilter, sourceLabel, false, false, false, false);
+    }
+
+    /** Forcefield: choose a creature whose next combat damage to you, if unblocked, leaves 1 damage. */
+    public static PreventDamageFromChosenSourceEffect nextCombatDamageToYouFromChosenCreature() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.NEXT_COMBAT_DAMAGE_TO_CONTROLLER_ALL_BUT_ONE,
+                false, false, false, new PermanentIsCreaturePredicate(), "creature",
+                false, false, false, false, false, false, false, false);
     }
 
     /** Prismatic Circle: only sources of the colour chosen for this permanent may be chosen. */

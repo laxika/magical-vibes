@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "140")
+@CardRegistration(set = "ME1", collectorNumber = "177")
 public class LakeOfTheDead extends Card {
 
     public LakeOfTheDead() {

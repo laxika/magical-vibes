@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "350")
+@CardRegistration(set = "ME1", collectorNumber = "174")
 public class ZuranOrb extends Card {
 
     public ZuranOrb() {

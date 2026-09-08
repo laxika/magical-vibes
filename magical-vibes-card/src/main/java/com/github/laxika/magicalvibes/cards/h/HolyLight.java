@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DRK", collectorNumber = "10")
+@CardRegistration(set = "ME1", collectorNumber = "16")
 public class HolyLight extends Card {
 
     public HolyLight() {

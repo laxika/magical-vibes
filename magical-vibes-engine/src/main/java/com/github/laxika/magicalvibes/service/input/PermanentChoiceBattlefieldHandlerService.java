@@ -1682,6 +1682,28 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handlePreventNextCombatDamageFromUnblockedCreatureChoice(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.PreventNextCombatDamageFromUnblockedCreatureChoice ctx) {
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
+        }
+
+        gameData.playerSourceNextDamageShields.add(
+                PlayerSourceNextDamageShield.nextUnblockedCombatDamageAllButOne(
+                        ctx.controllerId(), permanentId));
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData, GameLog.text("The next time " + chosenSource.getName()
+                + " is unblocked and would deal combat damage to " + playerName
+                + " this turn, all but 1 of that damage is prevented."));
+        log.info("Game {} - {} chose {} for Forcefield's combat-damage shield", gameData.id,
+                playerName, chosenSource.getName());
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     private UUID findDamageSourceController(GameData gameData, UUID sourceId) {
         UUID permanentController = gameQueryService.findPermanentController(gameData, sourceId);
         if (permanentController != null) {
