@@ -3891,6 +3891,8 @@ public class SpellCastingService {
                         additionalCostSacrificePermanentIds);
             }
 
+            // Clear the previous cast's grants before this cast's payment can grant new counters.
+            gameData.spellAdditionalEnterCounters.remove(card.getId());
             int waterbendAdditionalGenericCost = waterbendCostPaid
                     ? additionalCosts.waterbendCost().effectiveAmount(effectiveXValue) : 0;
             convokeContributions = appendManaContributions(convokeContributions,
@@ -7352,7 +7354,7 @@ public class SpellCastingService {
                 || additionalCosts.putCountersOrPayManaCost() != null
                 || additionalCosts.exileGraveyardCost() != null
                 || additionalCosts.exileXCardsCost() != null
-                || additionalCosts.exileNCardsOrPayManaCost() != null || additionalCosts.discardCost() != null
+                || additionalCosts.exileNCardsOrPayManaCost() != null
                 || additionalCosts.discardRandomCost() != null
                 || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
                 || additionalCosts.discardXCardsCost() != null
@@ -7491,6 +7493,7 @@ public class SpellCastingService {
                 && filteredGraveyardPermission.get().permission().sneak()
                 ? findSneakAttackTargetId(gameData, sacrificePermanentId)
                 : null;
+        gameData.spellAdditionalEnterCounters.remove(card.getId());
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt,
                 grantedFlashbackOption, harmonizeOpt,
                 disturbOpt, graveyardCastOpt,
@@ -8369,6 +8372,7 @@ public class SpellCastingService {
         // Keep the card and its cast permissions in exile until the cast has passed every
         // validation and payment. A failed cast (for example, one that cannot pay its mana cost)
         // does not move the card out of exile.
+        gameData.spellAdditionalEnterCounters.remove(card.getId());
         boolean playWithoutPaying = !waterbendCast
                 && !sourceManaValueLifeAlternative
                 && (gameData.exilePlayWithoutPayingManaCost.contains(exileCardId) || sourceFreeCast);
@@ -8625,7 +8629,7 @@ public class SpellCastingService {
         gameData.stack.add(stackEntry);
 
         // Use null hand list — card was already removed from exile
-        gameData.recordSpellCast(playerId, card);
+        recordSpellCastPreservingEntryCounters(gameData, playerId, card, false);
         // "Prepared" (Secrets of Strixhaven): casting an exiled prepare-spell copy unprepares its
         // linked permanent as part of casting (not resolution), so a counter doesn't undo it.
         unprepareSourceOfCastSpell(gameData, exileCardId);
@@ -8981,6 +8985,7 @@ public class SpellCastingService {
         validateExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds);
 
         // Remove from library
+        gameData.spellAdditionalEnterCounters.remove(card.getId());
         deck.removeFirst();
         if (freeTopPlay) {
             gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
@@ -9027,7 +9032,7 @@ public class SpellCastingService {
         stampCastDuringMainPhase(gameData, stackEntry, playerId);
         gameData.stack.add(stackEntry);
 
-        gameData.recordSpellCast(playerId, card);
+        recordSpellCastPreservingEntryCounters(gameData, playerId, card, false);
         gameData.priorityPassedBy.clear();
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " casts " , card, " from the top of their library."));
@@ -9078,6 +9083,7 @@ public class SpellCastingService {
             additionalSpellCostService.validateChooseXValueCost(card, additionalCosts.chooseXValueCost(), effectiveXValue);
         }
 
+        gameData.spellAdditionalEnterCounters.remove(card.getId());
         paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue, Zone.LIBRARY);
         deck.removeIf(libraryCard -> libraryCard.getId().equals(card.getId()));
 
@@ -9095,7 +9101,7 @@ public class SpellCastingService {
         );
         stampCastDuringMainPhase(gameData, stackEntry, playerId);
         gameData.stack.add(stackEntry);
-        gameData.recordSpellCast(playerId, castCard);
+        recordSpellCastPreservingEntryCounters(gameData, playerId, castCard, false);
         gameData.priorityPassedBy.clear();
 
         gameLogService.append(gameData, GameLog.textCardText(
@@ -10839,6 +10845,16 @@ public class SpellCastingService {
         }
     }
 
+    /** Keeps this cast's payment and permission grants when recording the cast consumes other entry grants. */
+    private void recordSpellCastPreservingEntryCounters(GameData gameData, UUID playerId, Card card,
+                                                        boolean castWithWarp) {
+        Integer entryCounters = gameData.spellAdditionalEnterCounters.remove(card.getId());
+        gameData.recordSpellCast(playerId, card, castWithWarp);
+        if (entryCounters != null) {
+            gameData.spellAdditionalEnterCounters.merge(card.getId(), entryCounters, Integer::sum);
+        }
+    }
+
     /** Guildmages' Forum: each tagged mana spent on a multicolored creature spell grants one additional counter. */
     private void applyAdditionalCounterGrantingMana(GameData gameData, UUID playerId, Card card,
                                                     int additionalCounterGrantingBefore) {
@@ -12142,7 +12158,7 @@ public class SpellCastingService {
         }
 
         stampLatestCastDuringMainPhase(gameData, playerId, card);
-        gameData.recordSpellCast(playerId, castCharacteristics,
+        recordSpellCastPreservingEntryCounters(gameData, playerId, castCharacteristics,
                 castEntry != null && castEntry.isCastWithWarp());
         gameData.priorityPassedBy.clear();
 

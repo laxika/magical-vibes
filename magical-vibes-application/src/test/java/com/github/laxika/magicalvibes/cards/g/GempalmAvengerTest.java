@@ -41,6 +41,7 @@ class GempalmAvengerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, nonSoldier)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, nonSoldier, Keyword.FIRST_STRIKE)).isFalse();
         harness.assertInGraveyard(player1, "Gempalm Avenger");
+        harness.passBothPriorities();
         harness.assertInHand(player1, "Grizzly Bears");
     }
 

@@ -49,6 +49,28 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PermanentRemovalServiceTest {
 
+    @Test
+    void preservesLastControllerForPendingOptionalCreatureTrigger() {
+        Card card = new Card();
+        card.setName("Leaving creature");
+        card.setType(CardType.CREATURE);
+        Permanent creature = addPermanent(player2Id, card);
+        var effect = new com.github.laxika.magicalvibes.model.effect.MayEffect(
+                new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1), "Draw?", null,
+                com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);
+        var entry = new com.github.laxika.magicalvibes.model.StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                new Card(), player1Id, "Optional trigger", List.of(effect));
+        entry.setTriggeringPermanentId(creature.getId());
+        entry.setTriggeringPermanentControllerId(player1Id);
+        gd.stack.add(entry);
+
+        prs.removePermanentToHand(gd, creature);
+
+        assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+        assertThat(entry.getControllerId()).isEqualTo(player1Id);
+    }
+
     /** A sweep that found nothing to clean up. */
     private static final AuraAttachmentService.AttachmentSweepResult NO_ATTACHMENT_CHANGE =
             new AuraAttachmentService.AttachmentSweepResult(List.of(), false);

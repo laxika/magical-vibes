@@ -64,7 +64,7 @@ class DownDirtyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        gs.playCard(gd, player1, 0, FUSE, target.getId(), null,
+        gs.playCard(gd, player1, 0, FUSE, null, null,
                 List.of(player2.getId(), target.getId()), List.of());
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);

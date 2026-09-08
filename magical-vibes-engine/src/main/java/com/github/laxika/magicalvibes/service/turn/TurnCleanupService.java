@@ -271,6 +271,7 @@ public class TurnCleanupService {
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.additionalEnterCountersThisTurn.clear();
         gameData.skippedStepOrPhasesThisTurn.clear();
+        gameData.matchingCreatureBlockRestrictionsThisTurn.clear();
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
         gameData.combatDamageRedirectPlayer = null;

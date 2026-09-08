@@ -2395,7 +2395,8 @@ public class PlayerInputService {
                                     CardType stopAfterDiscardingType,
                                     CardPredicate stopAfterDiscardingPredicate, boolean declinable) {
         if (remainingCount > 0 && !validIndices.isEmpty()
-                && !followUp.targetOpponentsDiscardThenDraw()) {
+                && !followUp.targetOpponentsDiscardThenDraw()
+                && !(gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards)) {
             if (gameData.discardEventPlayerId == null) {
                 gameData.discardEventPlayerId = playerId;
                 gameData.discardEventCardCount = 0;

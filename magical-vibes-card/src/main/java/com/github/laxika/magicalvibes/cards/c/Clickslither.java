@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "90")
+@CardRegistration(set = "DD1", collectorNumber = "34")
 public class Clickslither extends Card {
 
     public Clickslither() {

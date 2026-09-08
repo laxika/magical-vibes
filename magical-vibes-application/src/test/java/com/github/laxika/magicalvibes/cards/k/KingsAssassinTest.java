@@ -1,16 +1,19 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KingsAssassin.class, GrizzlyBears.class, Forest.class})
 class KingsAssassinTest extends BaseCardTest {
 
     @Test
@@ -35,6 +38,45 @@ class KingsAssassinTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("tapped creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target a tapped noncreature permanent")
+    void cannotTargetTappedNoncreaturePermanent() {
+        setupAssassinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addCreatureReady(player2, new Forest());
+        target.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped creature");
+    }
+
+    @Test
+    @DisplayName("Can target a tapped creature it controls")
+    void canTargetTappedCreatureItControls() {
+        setupAssassinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addTappedBears(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a target that becomes untapped before resolution")
+    void targetMustRemainTappedAtResolution() {
+        setupAssassinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addTappedBears(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.untap();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -72,24 +114,18 @@ class KingsAssassinTest extends BaseCardTest {
     }
 
     private void setupAssassinOnMyTurn(TurnStep step) {
-        harness.addToBattlefield(player1, new KingsAssassin());
-        findPermanent(player1, "King's Assassin").setSummoningSick(false);
+        addCreatureReady(player1, new KingsAssassin());
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
     }
 
     private Permanent addTappedBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new GrizzlyBears());
         perm.tap();
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addUntappedBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }

@@ -121,6 +121,43 @@ import com.github.laxika.magicalvibes.model.CounterType;
 class GameQueryServiceTest {
 
     @Test
+    void faceDownCreatureLosesItsPrintedUnblockability() {
+        Card card = createCreatureWithStaticEffect("Unblockable", 2, 2, CardColor.BLUE, new CantBeBlockedEffect());
+        Permanent creature = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(creature);
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
+        creature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
+    }
+
+    @Test
+    void permanentAbilityDamageUsesLifelinkIncludingLastKnownSource() {
+        Permanent source = addPermanent(player1Id,
+                createCreatureWithKeywords("Lifelink creature", 3, 3, CardColor.WHITE, Set.of(Keyword.LIFELINK)));
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
+                "Damage ability", List.of(), player2Id, source.getId());
+
+        assertThat(gqs.shouldControllerSpellHaveLifelink(gd, entry)).isTrue();
+
+        entry.setSourcePermanentSnapshot(new Permanent(source));
+        gd.playerBattlefields.get(player1Id).remove(source);
+        assertThat(gqs.shouldControllerSpellHaveLifelink(gd, entry)).isTrue();
+    }
+
+    @Test
+    void attackingPlaneswalkerDoesNotCountAsAttackingItsController() {
+        Permanent planeswalker = new Permanent(createPlaneswalker("Walker"));
+        gd.playerBattlefields.get(player2Id).add(planeswalker);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2, CardColor.GREEN));
+        gd.playerBattlefields.get(player1Id).add(attacker);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(planeswalker.getId());
+        assertThat(gqs.isPlayerBeingAttacked(gd, player2Id)).isFalse();
+        attacker.setAttackTarget(player2Id);
+        assertThat(gqs.isPlayerBeingAttacked(gd, player2Id)).isTrue();
+    }
+
+    @Test
     void conditionalExtraLandPlaysRequireTheirConditionAndApplyOnlyToTheirController() {
         var condition = new com.github.laxika.magicalvibes.model.condition.ControllerTurn();
         Card card = new Card();

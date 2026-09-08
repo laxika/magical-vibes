@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "3ED", collectorNumber = "72")
 @CardRegistration(set = "4ED", collectorNumber = "91")
 @CardRegistration(set = "5ED", collectorNumber = "109")
 @CardRegistration(set = "SUM", collectorNumber = "72")

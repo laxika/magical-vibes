@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HavocDemon.class, DoomBlade.class, GrizzlyBears.class})
+@CardUsed({HavocDemon.class, Murder.class, GrizzlyBears.class})
 class HavocDemonTest extends BaseCardTest {
 
     @Test
@@ -23,7 +23,7 @@ class HavocDemonTest extends BaseCardTest {
         Permanent opposingSurvivor = addSixSix(player2);
         Permanent demon = harness.addToBattlefieldAndReturn(player1, new HavocDemon());
 
-        destroyWithDoomBlade(demon);
+        destroyWithMurder(demon);
         harness.passBothPriorities();
 
         assertThat(ownSurvivor.getEffectivePower()).isEqualTo(1);
@@ -37,7 +37,7 @@ class HavocDemonTest extends BaseCardTest {
         Permanent survivor = addSixSix(player1);
         Permanent demon = harness.addToBattlefieldAndReturn(player1, new HavocDemon());
 
-        destroyWithDoomBlade(demon);
+        destroyWithMurder(demon);
         harness.passBothPriorities();
 
         harness.forceActivePlayer(player1);
@@ -56,12 +56,12 @@ class HavocDemonTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player, card);
     }
 
-    private void destroyWithDoomBlade(Permanent target) {
+    private void destroyWithMurder(Permanent target) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();

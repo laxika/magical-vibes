@@ -1210,6 +1210,7 @@ public class GraveyardReturnSupport {
 
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, indices, effect.destination(), prompt)
+                .returnEffect(effect)
                 .enterTapped(effect.enterTapped())
                 .mandatory(effect.mandatory())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())

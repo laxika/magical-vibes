@@ -1204,6 +1204,10 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setTargetId(permanentId);
             }
             entry.setTriggeringPermanentId(ett.enteringPermanentId());
+            if (ett.enteringPermanentId() != null) {
+                entry.setTriggeringPermanentControllerId(
+                        gameQueryService.findPermanentController(gameData, ett.enteringPermanentId()));
+            }
             if (ett.sourceIsEnteringPermanent() && sourcePermanentId != null) {
                 Permanent enteringPermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (enteringPermanent != null) {

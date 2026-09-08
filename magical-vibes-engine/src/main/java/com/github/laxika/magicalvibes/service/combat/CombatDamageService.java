@@ -324,6 +324,16 @@ public class CombatDamageService {
             cardBefore.put(p.getId(), p.getCard());
         }
 
+        Map<Permanent, List<CardEffect>> damageToCreatureEffects = new HashMap<>();
+        for (Permanent source : state.combatDamageDealtToCreatures.keySet()) {
+            List<CardEffect> effects = new ArrayList<>(
+                    source.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE));
+            effects.addAll(source.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE));
+            effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, source, EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE));
+            damageToCreatureEffects.put(source, effects);
+        }
         Map<UUID, Permanent> damagedCreatureSnapshots = snapshotCombatDamagedCreatures(gameData, state);
         snapshotDelayedCombatDamageDrawSources(gameData, state);
         snapshotDelayedCombatDamageLookAtHandAndDrawSources(gameData, state, defenderId);
@@ -375,7 +385,8 @@ public class CombatDamageService {
         processSelfDealsCombatDamageToPlayerOrPlaneswalkerTriggers(gameData, state);
         processSelfDealsCombatDamageToPlayerOrBattleTriggers(gameData, state);
         processCombatDamageToBattleTriggers(gameData, state);
-        processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures, state.combatDamageDealerControllers);
+        processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures,
+                state.combatDamageDealerControllers, damageToCreatureEffects);
         processCombatDamageToBlockingCreatureTriggers(gameData, state);
 
         // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
@@ -2215,13 +2226,14 @@ public class CombatDamageService {
 
     private void processCombatDamageToCreatureTriggers(GameData gameData,
                                                         Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
-                                                        Map<Permanent, UUID> combatDamageDealerControllers) {
+                                                        Map<Permanent, UUID> combatDamageDealerControllers,
+                                                        Map<Permanent, List<CardEffect>> damageToCreatureEffects) {
         for (var entry : combatDamageDealtToCreatures.entrySet()) {
             Permanent source = entry.getKey();
             UUID controllerId = combatDamageDealerControllers.get(source);
             if (controllerId == null) continue;
 
-            List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE);
+            List<CardEffect> effects = damageToCreatureEffects.getOrDefault(source, List.of());
             if (effects.isEmpty()) continue;
 
             for (UUID damagedCreatureId : entry.getValue()) {

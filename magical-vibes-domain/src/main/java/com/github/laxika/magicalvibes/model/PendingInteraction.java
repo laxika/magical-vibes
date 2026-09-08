@@ -2436,7 +2436,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
                            boolean enterTapped, CounterType enterWithCounter, int enterWithCounterCount,
                            Set<CounterType> enterWithCounters, boolean exileIfLeavesBattlefield,
-                           UUID destinationControllerId, boolean mandatory, String prompt, CardEffect grantOnDeathEffect)
+                           UUID destinationControllerId, boolean mandatory, String prompt, CardEffect grantOnDeathEffect,
+                           com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect returnEffect)
             implements PendingInteraction {
         public GraveyardChoice(UUID playerId, java.util.List<Integer> validIndices,
                            GraveyardChoiceDestination destination, java.util.List<Card> cardPool,
@@ -2450,7 +2451,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            boolean enterTapped, CounterType enterWithCounter, int enterWithCounterCount,
                            Set<CounterType> enterWithCounters, boolean exileIfLeavesBattlefield,
                            UUID destinationControllerId, boolean mandatory, String prompt) {
-            this(playerId, validIndices, destination, cardPool, gainLifeEqualToManaValue, attachToSourcePermanentId, grantColor, grantSubtype, exileRemainingCount, gainLifeIfCreatureAmount, gainLifeIfCreaturePlayerId, trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId, mayAbilityEffects, mayAbilitySourcePermanentId, grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId, enterTapped, enterWithCounter, enterWithCounterCount, enterWithCounters, exileIfLeavesBattlefield, destinationControllerId, mandatory, prompt, null);
+            this(playerId, validIndices, destination, cardPool, gainLifeEqualToManaValue, attachToSourcePermanentId, grantColor, grantSubtype, exileRemainingCount, gainLifeIfCreatureAmount, gainLifeIfCreaturePlayerId, trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId, mayAbilityEffects, mayAbilitySourcePermanentId, grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId, enterTapped, enterWithCounter, enterWithCounterCount, enterWithCounters, exileIfLeavesBattlefield, destinationControllerId, mandatory, prompt, null, null);
         }
 
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -2503,6 +2504,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private UUID destinationControllerId;
             private boolean mandatory;
             private CardEffect grantOnDeathEffect;
+            private com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect returnEffect;
+
+            public Builder returnEffect(com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect effect) {
+                this.returnEffect = effect;
+                return this;
+            }
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
                             GraveyardChoiceDestination destination, String prompt) {
@@ -2612,7 +2619,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
                         grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId,
                         enterTapped, enterWithCounter, enterWithCounterCount, enterWithCounters,
-                        exileIfLeavesBattlefield, destinationControllerId, mandatory, prompt, grantOnDeathEffect);
+                        exileIfLeavesBattlefield, destinationControllerId, mandatory, prompt, grantOnDeathEffect, returnEffect);
             }
         }
     }

@@ -35,6 +35,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -124,6 +125,23 @@ class UntapStepServiceTest {
 
         assertThat(permanent.isTapped()).isTrue();
         assertThat(permanent.getSkipUntapCount()).isEqualTo(1);
+    }
+
+    @Test
+    void matchingRestrictionSurvivesSkippedStepAndIncludesLaterPermanents() {
+        var restriction = new com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect(
+                com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET_PLAYERS_PERMANENTS, null, 1, true);
+        gd.matchingPermanentUntapRestrictions.put(player1Id, new ArrayList<>(List.of(restriction)));
+        Permanent permanent = addPermanent(player1Id, createCardWithName("Later permanent"));
+        permanent.tap();
+
+        sut.untapPermanents(gd, player1Id, null, true);
+        assertThat(gd.matchingPermanentUntapRestrictions.get(player1Id)).containsExactly(restriction);
+        sut.untapPermanents(gd, player1Id);
+        assertThat(permanent.isTapped()).isTrue();
+        assertThat(gd.matchingPermanentUntapRestrictions).isEmpty();
+        sut.untapPermanents(gd, player1Id);
+        assertThat(permanent.isTapped()).isFalse();
     }
 
     @Nested

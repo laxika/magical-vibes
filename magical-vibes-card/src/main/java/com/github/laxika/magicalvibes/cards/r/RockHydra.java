@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "173")
+@CardRegistration(set = "3ED", collectorNumber = "173")
 public class RockHydra extends Card {
 
     public RockHydra() {

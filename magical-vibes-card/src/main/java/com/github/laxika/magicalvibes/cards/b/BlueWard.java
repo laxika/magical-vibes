@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "4ED", collectorNumber = "10")
 @CardRegistration(set = "SUM", collectorNumber = "7")
+@CardRegistration(set = "3ED", collectorNumber = "7")
 public class BlueWard extends Card {
 
     public BlueWard() {

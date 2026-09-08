@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "123")
+@CardRegistration(set = "CP1", collectorNumber = "3")
 public class FontOfFertility extends Card {
 
     public FontOfFertility() {

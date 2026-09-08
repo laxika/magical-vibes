@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BarbedSliver;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,8 +14,23 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ToxinSliver.class, BarbedSliver.class, GiantSpider.class})
+@CardUsed({ToxinSliver.class, BarbedSliver.class, GiantSpider.class, ShivanDragon.class})
 class ToxinSliverTest extends BaseCardTest {
+
+    @Test
+    void destroyTriggerSurvivesToxinSliverDyingInCombat() {
+        Permanent toxin = addCreatureReady(player1, new ToxinSliver());
+        toxin.setAttacking(true);
+        addCreatureReady(player2, new ShivanDragon());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Toxin Sliver");
+        harness.assertInGraveyard(player2, "Shivan Dragon");
+    }
 
     @Test
     @DisplayName("Destroys a creature dealt combat damage by Toxin Sliver")
@@ -41,7 +57,7 @@ class ToxinSliverTest extends BaseCardTest {
         addCreatureReady(player2, new GiantSpider());
 
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         harness.passBothPriorities();
         resolveAllTriggers();

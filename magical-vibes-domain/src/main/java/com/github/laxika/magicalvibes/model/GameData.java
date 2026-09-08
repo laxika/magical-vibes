@@ -38,6 +38,8 @@ import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferen
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -473,6 +475,14 @@ public class GameData {
     public final Map<UUID, Integer> playerCombatDamagePreventionShields = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming combat phases they must skip (Blinding Angel). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
+    /** Players whose next turn has no combat phases, including additional combats. */
+    public final Set<UUID> skipCombatPhasesNextTurn = ConcurrentHashMap.newKeySet();
+    /** Rules restricting blockers of matching creatures controlled by the keyed player this turn. */
+    public final Map<UUID, List<GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect>>
+            matchingCreatureBlockRestrictionsThisTurn = new ConcurrentHashMap<>();
+    /** Restrictions evaluated against the player's permanents during upcoming untap steps. */
+    public final Map<UUID, List<SkipNextUntapEffect>>
+            matchingPermanentUntapRestrictions = new ConcurrentHashMap<>();
     /** Player IDs → number of upcoming draw steps they must skip (Ivory Gargoyle). Decremented as each is skipped. */
     public final Map<UUID, Integer> skipNextDrawStepCount = new ConcurrentHashMap<>();
     /** Player IDs → turn number whose draw step is skipped by a current-turn effect. */
@@ -5417,6 +5427,11 @@ public class GameData {
         copy.lifeLostThisTurn.putAll(this.lifeLostThisTurn);
         copy.lifeLostLastTurn.putAll(this.lifeLostLastTurn);
         copy.skipNextCombatPhaseCount.putAll(this.skipNextCombatPhaseCount);
+        copy.skipCombatPhasesNextTurn.addAll(this.skipCombatPhasesNextTurn);
+        this.matchingCreatureBlockRestrictionsThisTurn.forEach((id, restrictions) ->
+                copy.matchingCreatureBlockRestrictionsThisTurn.put(id, new ArrayList<>(restrictions)));
+        this.matchingPermanentUntapRestrictions.forEach((id, restrictions) ->
+                copy.matchingPermanentUntapRestrictions.put(id, new ArrayList<>(restrictions)));
         copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);
         copy.skipDrawStepThisTurn.putAll(this.skipDrawStepThisTurn);
         copy.skipNextTurnCount.putAll(this.skipNextTurnCount);
