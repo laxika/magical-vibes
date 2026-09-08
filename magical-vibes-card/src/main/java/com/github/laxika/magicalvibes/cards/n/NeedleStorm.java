@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 @CardRegistration(set = "9ED", collectorNumber = "259")
 @CardRegistration(set = "POR", collectorNumber = "179")
 @CardRegistration(set = "TMP", collectorNumber = "241")
+@CardRegistration(set = "TPR", collectorNumber = "183")
 public class NeedleStorm extends Card {
 
     public NeedleStorm() {

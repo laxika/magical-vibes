@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "79")
+@CardRegistration(set = "AKR", collectorNumber = "92")
 public class BalefulAmmit extends Card {
 
     public BalefulAmmit() {

@@ -22,6 +22,7 @@ class AngelicSkirmisherTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handleListChoice(player1, "First strike");
+        harness.passBothPriorities();
 
         assertThat(skirmisher.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
         assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
@@ -36,6 +37,7 @@ class AngelicSkirmisherTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handleListChoice(player1, "Vigilance");
+        harness.passBothPriorities();
 
         assertThat(bear.hasKeyword(Keyword.VIGILANCE)).isTrue();
 
@@ -56,6 +58,7 @@ class AngelicSkirmisherTest extends BaseCardTest {
 
         advanceToCombat(player2);
         harness.handleListChoice(player1, "Lifelink");
+        harness.passBothPriorities();
 
         assertThat(skirmisher.hasKeyword(Keyword.LIFELINK)).isTrue();
         assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();

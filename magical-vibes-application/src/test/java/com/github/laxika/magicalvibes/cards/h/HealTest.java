@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Heal.class, GrizzlyBears.class, ProdigalSorcerer.class, Incinerate.class})
 class HealTest extends BaseCardTest {
 
     @Test
@@ -43,8 +45,93 @@ class HealTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Heal prevents only the next 1 damage to a targeted player")
+    void preventsOnlyNextDamageToPlayer() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new ProdigalSorcerer());
+        addCreatureReady(player1, new ProdigalSorcerer());
+        harness.setHand(player1, List.of(new Heal()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Heal prevents only the next 1 damage to a targeted creature")
+    void preventsOnlyNextDamageToCreature() {
+        addCreatureReady(player1, new ProdigalSorcerer());
+        addCreatureReady(player1, new ProdigalSorcerer());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Heal()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, targetId);
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(bears.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Heal prevents only one damage from a larger damage event")
+    void preventsOnlyOneDamageFromLargerEvent() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Heal(), new Incinerate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Heal's prevention shield expires at the end of the turn")
+    void preventionShieldExpiresAtEndOfTurn() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new ProdigalSorcerer());
+        harness.setHand(player1, List.of(new Heal()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.ensurePriority(player2);
+        advanceToUpkeep(player2);
+        assertThat(findPermanent(player2, "Grizzly Bears").getDamagePreventionShield()).isZero();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -53,7 +140,6 @@ class HealTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        GameData gd = harness.getGameData();
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -73,7 +159,6 @@ class HealTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        GameData gd = harness.getGameData();
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -82,9 +167,8 @@ class HealTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);

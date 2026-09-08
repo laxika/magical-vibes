@@ -9,12 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDrawsThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -29,8 +32,9 @@ public class IncendiaryCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Incendiary Command deals 4 damage to target player or planeswalker",
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(4),
-                        new PermanentPredicateTargetFilter(
+                        new AnyTargetPredicateTargetFilter(
                                 new PermanentIsPlaneswalkerPredicate(),
+                                new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player or planeswalker."
                         )
                 ),

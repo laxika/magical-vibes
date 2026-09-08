@@ -4,15 +4,19 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
+import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LivingInferno;
+import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -72,6 +76,22 @@ class GameSimulatorTest {
         // Should have at least one PlayCard and one PassPriority
         assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PlayCard);
         assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PassPriority);
+    }
+
+    @Test
+    @DisplayName("Auto-resolving a library reveal honors a zero maximum")
+    void autoResolvesLibraryRevealWithZeroMaximum() {
+        Card eligible = new GrizzlyBears();
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player2.getId(), List.of(eligible), List.of(eligible.getId()), false, false,
+                false, true, false, 0, null, 0, "Choose up to zero cards."));
+
+        simulator.applyAction(gd, player1.getId(), new SimulationAction.PassPriority());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).contains(eligible);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() == eligible);
     }
 
     @Test
@@ -168,6 +188,88 @@ class GameSimulatorTest {
     }
 
     @Test
+    @DisplayName("Open the Way is enumerated with X capped at the number of players")
+    void enumeratesOpenTheWayWithPlayerCountCap() {
+        OpenTheWay openTheWay = new OpenTheWay();
+        harness.setHand(player1, List.of(openTheWay));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        SimulationAction.PlayCard cast = actionsForHandCard(0).getFirst();
+
+        assertThat(cast.xValue()).isEqualTo(2);
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(), cast);
+
+        assertThat(copy.stack).hasSize(1);
+        assertThat(copy.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("X-discard spell is capped by the cards available to discard")
+    void capsXDiscardSpellByAvailableDiscardCards() {
+        AbandonHope abandonHope = new AbandonHope();
+        GrizzlyBears discard = new GrizzlyBears();
+        harness.setHand(player1, List.of(abandonHope, discard));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        SimulationAction.PlayCard cast = actionsForHandCard(0).getFirst();
+
+        assertThat(cast.targetId()).isEqualTo(player2.getId());
+        assertThat(cast.xValue()).isEqualTo(1);
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(), cast);
+
+        assertThat(copy.playerHands.get(player1.getId())).isEmpty();
+        assertThat(copy.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(copy.stack).hasSize(1);
+        assertThat(copy.stack.getFirst().getXValue()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Applying a fixed multi-card discard spell supplies every discard index")
+    void appliesFixedMultiCardDiscardSpell() {
+        CatharticReunion reunion = new CatharticReunion();
+        GrizzlyBears firstDiscard = new GrizzlyBears();
+        GrizzlyBears secondDiscard = new GrizzlyBears();
+        GrizzlyBears remainingCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(reunion, firstDiscard, secondDiscard, remainingCard));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        SimulationAction.PlayCard cast = actionsForHandCard(0).getFirst();
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(), cast);
+
+        assertThat(copy.playerHands.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(remainingCard.getId());
+        assertThat(copy.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(firstDiscard.getId(), secondDiscard.getId());
+        assertThat(copy.stack).hasSize(1);
+    }
+
+    private List<SimulationAction.PlayCard> actionsForHandCard(int handIndex) {
+        return simulator.getLegalActions(gd, player1.getId()).stream()
+                .filter(SimulationAction.PlayCard.class::isInstance)
+                .map(SimulationAction.PlayCard.class::cast)
+                .filter(action -> action.handIndex() == handIndex)
+                .toList();
+    }
+
+    @Test
     @DisplayName("Rod of Ruin enumerates creature and opponent targets as distinct ability actions")
     void rodOfRuinEnumeratesCreatureAndOpponentTargets() {
         Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
@@ -186,6 +288,21 @@ class GameSimulatorTest {
 
         assertThat(actions).extracting(SimulationAction.ActivateAbility::targetId)
                 .contains(feaster.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("Amount-distribution abilities are not enumerated without assignments")
+    void amountDistributionAbilityIsNotEnumerated() {
+        Permanent inferno = harness.addToBattlefieldAndReturn(player1, new LivingInferno());
+        inferno.setSummoningSick(false);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        assertThat(simulator.getLegalActions(gd, player1.getId()))
+                .noneMatch(action -> action instanceof SimulationAction.ActivateAbility activation
+                        && activation.permanentId().equals(inferno.getId()));
     }
 
     @Test

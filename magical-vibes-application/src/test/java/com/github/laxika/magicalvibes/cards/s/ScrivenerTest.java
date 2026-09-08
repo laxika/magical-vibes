@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ScrivenerTest extends BaseCardTest {
 
@@ -49,15 +50,15 @@ class ScrivenerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The optional return can be declined")
-    void returnCanBeDeclined() {
+    @DisplayName("The targeted return cannot be declined")
+    void returnCannotBeDeclined() {
         HolyDay holyDay = new HolyDay();
         harness.setGraveyard(player1, List.of(holyDay));
 
         castScrivener();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
-        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
 
         harness.assertInGraveyard(player1, "Holy Day");
         harness.assertNotInHand(player1, "Holy Day");

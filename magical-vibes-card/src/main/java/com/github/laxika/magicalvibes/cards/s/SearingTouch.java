@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
  * resolves (CR 702.27) instead of putting it into the graveyard.
  */
 @CardRegistration(set = "TMP", collectorNumber = "201")
+@CardRegistration(set = "TPR", collectorNumber = "155")
 public class SearingTouch extends Card {
 
     public SearingTouch() {

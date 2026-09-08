@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "250")
 @CardRegistration(set = "INV", collectorNumber = "181")
+@CardRegistration(set = "RIX", collectorNumber = "122")
 public class AggressiveUrge extends Card {
 
     public AggressiveUrge() {

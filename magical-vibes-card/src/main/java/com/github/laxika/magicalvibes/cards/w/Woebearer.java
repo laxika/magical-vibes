@@ -19,6 +19,7 @@ public class Woebearer extends Card {
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

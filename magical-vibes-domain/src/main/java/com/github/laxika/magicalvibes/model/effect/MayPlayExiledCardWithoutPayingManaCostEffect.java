@@ -12,9 +12,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * queued per eligible exiled card, and accepting any of them withdraws the remaining exclusive
  * offers so only a single spell is cast.</p>
  */
-public record MayPlayExiledCardWithoutPayingManaCostEffect(boolean exclusive) implements CardEffect {
+public record MayPlayExiledCardWithoutPayingManaCostEffect(boolean exclusive, boolean grantHaste) implements CardEffect {
+
+    public MayPlayExiledCardWithoutPayingManaCostEffect(boolean exclusive) {
+        this(exclusive, false);
+    }
 
     public MayPlayExiledCardWithoutPayingManaCostEffect() {
-        this(false);
+        this(false, false);
     }
 }

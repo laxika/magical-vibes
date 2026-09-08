@@ -11,9 +11,16 @@ import java.util.UUID;
  * beginning of the next end step." The collector bakes the dying card's id into {@code cardId}.
  *
  * <p>Also used by The Locust God on {@code ON_DEATH} with {@code cardId == null}: the handler
- * falls back to the stack-entry source card.
+ * falls back to the stack-entry source card. On creature-death slots, the trigger collector binds
+ * the dying card through {@link DyingCreatureCardAwareEffect}.
  *
  * @param cardId the UUID of the card to return, or {@code null} to use the resolving source card
  */
-public record RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId) implements CardEffect {
+public record RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId)
+        implements CardEffect, DyingCreatureCardAwareEffect {
+
+    @Override
+    public CardEffect boundToDyingCard(UUID dyingCardId) {
+        return new RegisterDelayedReturnCardFromGraveyardToHandEffect(dyingCardId);
+    }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,7 +41,7 @@ public class TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler implements 
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
                     if (gameQueryService.isCreature(gameData, permanent)) {
-                        permanent.setTransientCreatureTypeOverride(e.subtype());
+                        setCreatureTypeOverride(permanent, e.subtypes());
                         count++;
                     }
                 }
@@ -57,7 +58,7 @@ public class TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler implements 
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
                     if (gameQueryService.isCreature(gameData, permanent)) {
-                        permanent.setTransientCreatureTypeOverride(e.subtype());
+                        setCreatureTypeOverride(permanent, e.subtypes());
                         count++;
                     }
                 }
@@ -68,11 +69,33 @@ public class TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler implements 
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        UUID targetId = entry.getTargetId() != null ? entry.getTargetId()
+                : targetIds.isEmpty() ? null : targetIds.getFirst();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }
-        target.setTransientCreatureTypeOverride(e.subtype());
-        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.subtype().getDisplayName() + " until end of turn.").build());
+        setCreatureTypeOverride(target, e.subtypes());
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes a "
+                + subtypeNames(e.subtypes()) + " until end of turn.").build());
+    }
+
+    private void setCreatureTypeOverride(Permanent permanent, List<CardSubtype> subtypes) {
+        if (subtypes.size() == 1) {
+            permanent.setTransientCreatureTypeOverride(subtypes.getFirst());
+            permanent.getTransientCreatureTypeOverrides().clear();
+        } else {
+            permanent.setTransientCreatureTypeOverride(null);
+            permanent.getTransientCreatureTypeOverrides().clear();
+            permanent.getTransientCreatureTypeOverrides().addAll(subtypes);
+        }
+    }
+
+    private String subtypeNames(List<CardSubtype> subtypes) {
+        return subtypes.stream()
+                .map(CardSubtype::getDisplayName)
+                .reduce((left, right) -> left + " " + right)
+                .orElseThrow();
     }
 }

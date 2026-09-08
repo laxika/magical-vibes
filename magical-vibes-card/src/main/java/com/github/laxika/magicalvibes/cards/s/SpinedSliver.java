@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "STH", collectorNumber = "130")
+@CardRegistration(set = "TPR", collectorNumber = "213")
+@CardRegistration(set = "TSB", collectorNumber = "101")
 public class SpinedSliver extends Card {
 
     public SpinedSliver() {

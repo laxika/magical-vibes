@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "POR", collectorNumber = "157")
 @CardRegistration(set = "P02", collectorNumber = "121")
+@CardRegistration(set = "S99", collectorNumber = "124")
 public class AlluringScent extends Card {
 
     public AlluringScent() {

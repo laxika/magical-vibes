@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,17 +15,23 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -41,6 +48,7 @@ public class StateBasedActionService {
     private final GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.battlefield.CreatureControlService creatureControlService;
     private final StateTriggerService stateTriggerService;
+    private final TriggerCollectionService triggerCollectionService;
     private final LegendRuleService legendRuleService;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
 
@@ -50,6 +58,8 @@ public class StateBasedActionService {
 
     private record DeathEntry(Permanent permanent, DeathReason reason) {}
 
+    private record RoleAttachmentKey(UUID hostId, UUID controllerId) {}
+
     /**
      * Safety bound on CR 704.3 repetition. Every productive pass removes at least one permanent
      * or zeroes out a counter pair, so a legal game converges long before this; the cap only
@@ -58,6 +68,9 @@ public class StateBasedActionService {
     private static final int MAX_SBA_PASSES = 100;
 
     public void performStateBasedActions(GameData gameData) {
+        triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
+        initializeSpeedForPlayers(gameData);
+
         // CR 704.3-704.4 — all applicable state-based actions are performed as a batch, then the
         // check repeats until none are performed. One pass is not enough: a death can remove a
         // static effect (e.g. an anthem) and make another creature's marked damage newly lethal.
@@ -67,7 +80,8 @@ public class StateBasedActionService {
         boolean anyPerformed;
         int passes = 0;
         do {
-            anyPerformed = destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
+            anyPerformed = enforceCounterLimits(gameData);
+            anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
             anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
             // CR 704.5a — player with 0 or less life loses the game
@@ -90,6 +104,7 @@ public class StateBasedActionService {
             // an unrelated sweep happened to run.
             anyPerformed |= permanentRemovalService.removeOrphanedAuras(gameData);
             anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
+            anyPerformed |= removeRedundantRoles(gameData);
 
             // Debt of Loyalty: a creature that just regenerated off its shield changes controller.
             // Applied here, outside the battlefield iteration in the destroy pass that spent the
@@ -123,6 +138,24 @@ public class StateBasedActionService {
         checkEmptyLibraryLoss(gameData);
     }
 
+    private void initializeSpeedForPlayers(GameData gameData) {
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (gameData.playerSpeeds.containsKey(playerId)) {
+                return;
+            }
+            boolean hasStartYourEngines = battlefield.stream()
+                    .anyMatch(permanent -> gameQueryService.hasKeyword(
+                            gameData, permanent, Keyword.START_YOUR_ENGINES));
+            if (hasStartYourEngines) {
+                gameData.playerSpeeds.put(playerId, 1);
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + " starts their engines at speed 1."));
+                log.info("Game {} - {} starts their engines at speed 1", gameData.id, playerName);
+            }
+        });
+    }
+
     /**
      * Removes tokens from every zone other than the battlefield after their zone-change events
      * and associated triggers have already been recorded (CR 111.7).
@@ -154,18 +187,30 @@ public class StateBasedActionService {
 
         for (UUID cardId : removedTokenIds) {
             gameData.exiledCardEggCounters.remove(cardId);
+            gameData.exiledCardScreamCounters.remove(cardId);
             gameData.exiledCardDreamCounters.remove(cardId);
+            gameData.exiledCardHitCounters.remove(cardId);
             gameData.spellsWithDreamCounterOnResolution.remove(cardId);
+            gameData.spellsWithPlotOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
+            gameData.exiledCardsWithIceCounters.remove(cardId);
+            gameData.exiledCardsWithCroakCounters.remove(cardId);
+            gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayPermissionSourcePermanents.remove(cardId);
+            gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
             gameData.exilePlayAnyManaType.remove(cardId);
             gameData.exilePlayAnyManaTypeWhileExiled.remove(cardId);
+            gameData.stashCounterCardIds.remove(cardId);
             gameData.exilePlayWithoutPayingManaCost.remove(cardId);
+            gameData.exileCardsEnterTapped.remove(cardId);
             gameData.exileInsteadOfGraveyard.remove(cardId);
+            gameData.foretoldCardIds.remove(cardId);
             gameData.graveyardPlayPermissions.remove(cardId);
             gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(cardId);
+            gameData.graveyardCardsEnterTapped.remove(cardId);
         }
         gameData.imprintedCards.entrySet().removeIf(entry -> removedTokenIds.contains(entry.getValue().getId()));
         gameData.clearDelayedActions(PendingExileReturn.class,
@@ -194,44 +239,113 @@ public class StateBasedActionService {
         });
     }
 
-    private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {
-        List<DeathEntry> toDie = new ArrayList<>();
-        gameData.forEachPermanent((playerId, p) -> {
-            if (processedIds.contains(p.getId())) {
+    private boolean removeRedundantRoles(GameData gameData) {
+        Map<RoleAttachmentKey, List<Permanent>> attachedRoles = new HashMap<>();
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!permanent.isAttached()
+                    || !permanent.getCard().getSubtypes()
+                    .contains(com.github.laxika.magicalvibes.model.CardSubtype.ROLE)) {
                 return;
             }
-            if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
-                toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
-            } else if (gameQueryService.isCreature(gameData, p)
-                    && isDestroyedByLethalDamage(gameData, p)
-                    && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
-                    && !graveyardService.tryRegenerate(gameData, p)) {
-                // CR 704.5g — creature with damage >= toughness is destroyed, and
-                // CR 704.5h — creature dealt damage by a deathtouch source since the last check
-                // is destroyed (regeneration can replace either)
-                toDie.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
-            } else if (gameQueryService.isPlaneswalker(gameData, p) && p.getCounterCount(CounterType.LOYALTY) <= 0) {
-                toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
-            } else if (gameQueryService.isBattle(gameData, p) && p.getCounterCount(CounterType.DEFENSE) <= 0
-                    && !battleDefeatSupport.hasDefeatTriggerOnStack(gameData, p.getId())) {
-                // CR 704.5v — battle with no defense counters is put into the graveyard unless a
-                // "when this battle is defeated" ability is still on the stack.
-                toDie.add(new DeathEntry(p, DeathReason.ZERO_DEFENSE));
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (controllerId == null) {
+                return;
             }
+            attachedRoles.computeIfAbsent(
+                    new RoleAttachmentKey(permanent.getAttachedTo(), controllerId), ignored -> new ArrayList<>())
+                    .add(permanent);
         });
+
+        boolean changed = false;
+        for (List<Permanent> roles : attachedRoles.values()) {
+            if (roles.size() < 2) {
+                continue;
+            }
+            List<Permanent> oldestRoles = roles.stream()
+                    .sorted(Comparator.comparingLong(Permanent::getTimestamp).reversed())
+                    .skip(1)
+                    .toList();
+            for (Permanent role : oldestRoles) {
+                if (permanentRemovalService.removePermanentToGraveyard(gameData, role)) {
+                    gameLogService.append(gameData, GameLog.cardThen(role.getCard(),
+                            " is put into its owner's graveyard because its controller controls another Role attached to the same permanent."));
+                    log.info("Game {} - redundant Role {} is put into its owner's graveyard",
+                            gameData.id, role.getCard().getName());
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
+    private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {
+        List<Permanent> permanents = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> permanents.add(permanent));
+
+        List<DeathEntry> toDie = new ArrayList<>();
+        List<DeathEntry> lethalDamageCandidates = new ArrayList<>();
+        gameQueryService.withQueryScope(gameData, () -> {
+            for (Permanent p : permanents) {
+                if (processedIds.contains(p.getId())) {
+                    continue;
+                }
+                if (gameQueryService.isCreature(gameData, p)
+                        && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
+                    toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
+                } else if (gameQueryService.isCreature(gameData, p)
+                        && isDestroyedByLethalDamage(gameData, p)
+                        && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)) {
+                    // CR 704.5g — creature with damage >= toughness is destroyed, and
+                    // CR 704.5h — creature dealt damage by a deathtouch source since the last check
+                    // is destroyed (regeneration can replace either)
+                    lethalDamageCandidates.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
+                } else if (gameQueryService.isPlaneswalker(gameData, p)
+                        && p.getCounterCount(CounterType.LOYALTY) <= 0) {
+                    toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
+                } else if (gameQueryService.isBattle(gameData, p)
+                        && p.getCounterCount(CounterType.DEFENSE) <= 0
+                        && !battleDefeatSupport.hasDefeatTriggerOnStack(gameData, p.getId())) {
+                    // CR 704.5v — battle with no defense counters is put into the graveyard unless a
+                    // "when this battle is defeated" ability is still on the stack.
+                    toDie.add(new DeathEntry(p, DeathReason.ZERO_DEFENSE));
+                }
+            }
+            return null;
+        });
+
+        boolean replacementPerformed = false;
+        for (DeathEntry candidate : lethalDamageCandidates) {
+            if (graveyardService.tryRegenerate(gameData, candidate.permanent())) {
+                replacementPerformed = true;
+            } else {
+                toDie.add(candidate);
+            }
+        }
 
         // CR 704.5h spans "since the last state-based check" and this pass is that check:
         // consume the deathtouch memory so survivors (indestructible, regenerated) aren't
         // re-destroyed by a later pass or a later check.
-        gameData.forEachPermanent((playerId, p) -> p.setDamagedByDeathtouch(false));
+        for (Permanent p : permanents) {
+            p.setDamagedByDeathtouch(false);
+        }
 
         try {
             for (DeathEntry entry : toDie) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
+                if (controllerId != null) {
+                    gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), entry.permanent());
+                    gameData.simultaneousDyingPermanentControllers.put(entry.permanent().getId(), controllerId);
+                }
                 if (gameQueryService.isCreature(gameData, entry.permanent())) {
-                    UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
                     if (controllerId != null) {
                         gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
+                        gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
+                                gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                                entry.permanent().getId(),
+                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
                     }
                 }
             }
@@ -260,15 +374,46 @@ public class StateBasedActionService {
                     }
                 }
             }
+            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();
+            gameData.simultaneousDyingPermanents.clear();
+            gameData.simultaneousDyingPermanentControllers.clear();
+            gameData.simultaneousDyingPowers.clear();
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
         }
 
         if (!toDie.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
-        return !toDie.isEmpty();
+        return !toDie.isEmpty() || replacementPerformed;
+    }
+
+    private boolean enforceCounterLimits(GameData gameData) {
+        boolean changed = false;
+        List<Permanent> permanents = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> permanents.add(permanent));
+        for (Permanent permanent : permanents) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || permanent.isLosesAllAbilitiesPermanently()) {
+                continue;
+            }
+            List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects = new ArrayList<>(
+                    permanent.getCard().getEffects(EffectSlot.STATIC));
+            effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+            for (com.github.laxika.magicalvibes.model.effect.CardEffect effect : effects) {
+                if (!(effect instanceof CounterLimitEffect limit)
+                        || permanent.isStaticEffectSuppressed(effect.getClass())) {
+                    continue;
+                }
+                int current = permanent.getCounterCount(limit.counterType());
+                if (current > limit.maximum()) {
+                    permanent.setCounterCount(limit.counterType(), limit.maximum());
+                    changed = true;
+                }
+            }
+        }
+        return changed;
     }
 
     // CR 714.4 — Saga with lore counters >= final chapter is sacrificed
@@ -284,6 +429,11 @@ public class StateBasedActionService {
             boolean chapterOnStack = gameData.stack.stream()
                     .anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                             && p.getId().equals(e.getSourcePermanentId()));
+            StackEntry pendingResolution = gameData.pendingEffectResolutionEntry;
+            if (!chapterOnStack && pendingResolution != null) {
+                chapterOnStack = pendingResolution.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && p.getId().equals(pendingResolution.getSourcePermanentId());
+            }
             if (!chapterOnStack) {
                 sagasToSacrifice.add(p);
             }
@@ -352,45 +502,40 @@ public class StateBasedActionService {
         return !toSacrifice.isEmpty();
     }
 
-    /**
-     * CR 704.5k — the world rule: if two or more permanents have the supertype world, all except the
-     * one that has had it for the shortest amount of time are put into their owners' graveyards; on a
-     * tie for the shortest, all of them are. {@link Permanent#getTimestamp()} (CR 613.7, stamped on
-     * entry) is the "how long" ordering, so the newest world permanent is the one with the highest
-     * timestamp and it survives only when it holds that timestamp alone.
-     */
-    /**
-     * Gustha's Scepter: "When you lose control of this artifact, put all cards exiled with this
-     * artifact into their owner's graveyard." A player loses control both when another player gains
-     * control of it and when it leaves the battlefield, so both cases empty the pile. Modeled as an
-     * SBA-timed check like {@link #sacrificeCreaturesOnSeraphControlLoss} — the engine has no
-     * control-change triggered-ability slot.
-     */
+    /** Queues the registered control-loss ability when its watched permanent changes controller or leaves. */
     private boolean putExiledCardsIntoGraveyardOnControlLoss(GameData gameData) {
         if (gameData.exiledCardsToGraveyardOnControlLossWatch.isEmpty()) return false;
 
-        boolean anyMoved = false;
+        boolean anyQueued = false;
         for (UUID permanentId : new ArrayList<>(gameData.exiledCardsToGraveyardOnControlLossWatch.keySet())) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            UUID previousController = gameData.exiledCardsToGraveyardOnControlLossWatch.get(permanentId);
+            var watch = gameData.exiledCardsToGraveyardOnControlLossWatch.get(permanentId);
+            UUID previousController = watch.controllerId();
             UUID currentController = permanent != null ? gameData.findControllerOf(permanent) : null;
-            if (permanent != null && previousController != null && previousController.equals(currentController)) {
+            if (permanent != null && previousController.equals(currentController)) {
                 continue;
             }
 
-            for (var exiled : new ArrayList<>(gameData.exiledCards)) {
-                if (!permanentId.equals(exiled.sourcePermanentId())) continue;
-                Card card = exiled.card();
-                gameData.removeFromExile(card.getId());
-                graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), card);
-                gameLogService.append(gameData, GameLog.cardThen(card,
-                        " is put into its owner's graveyard (its controller lost control of the permanent that exiled it)."));
-                log.info("Game {} - {} put into graveyard on exiler control loss", gameData.id, card.getName());
-                anyMoved = true;
+            boolean hasLinkedCards = gameData.exiledCards.stream()
+                    .anyMatch(exiled -> permanentId.equals(exiled.sourcePermanentId()));
+            if (hasLinkedCards) {
+                Card sourceCard = watch.sourceCard();
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        previousController,
+                        sourceCard.getName() + "'s control-loss ability",
+                        List.of(new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect()),
+                        null,
+                        permanentId);
+                trigger.setNonTargeting(true);
+                gameData.enqueueTrigger(trigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+                anyQueued = true;
             }
             gameData.exiledCardsToGraveyardOnControlLossWatch.remove(permanentId);
         }
-        return anyMoved;
+        return anyQueued;
     }
 
     private boolean applyWorldRule(GameData gameData) {

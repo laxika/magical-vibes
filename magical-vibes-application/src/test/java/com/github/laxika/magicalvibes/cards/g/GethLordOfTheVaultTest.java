@@ -204,7 +204,7 @@ class GethLordOfTheVaultTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, bears.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("opponent's graveyard");
+                .hasMessageContaining("allowed graveyard");
     }
 
     @Test

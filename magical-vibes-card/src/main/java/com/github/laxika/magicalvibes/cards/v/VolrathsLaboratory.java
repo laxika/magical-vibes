@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenOfChosenColorAndSu
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "142")
+@CardRegistration(set = "TPR", collectorNumber = "234")
 public class VolrathsLaboratory extends Card {
 
     public VolrathsLaboratory() {

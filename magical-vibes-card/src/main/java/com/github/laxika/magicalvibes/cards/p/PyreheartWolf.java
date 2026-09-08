@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class PyreheartWolf extends Card {
 
     public PyreheartWolf() {
-        addEffect(EffectSlot.ON_ATTACK, new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.ON_ATTACK, new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES));
     }
 }

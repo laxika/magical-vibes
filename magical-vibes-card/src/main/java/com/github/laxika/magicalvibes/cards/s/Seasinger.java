@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
@@ -16,22 +15,21 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "121")
+@CardRegistration(set = "FEM", collectorNumber = "25")
+@CardRegistration(set = "FEM", collectorNumber = "147")
 public class Seasinger extends Card {
 
     public Seasinger() {
         // "When you control no Islands, sacrifice this creature." —
         // State-triggered ability (MTG rule 603.8).
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-                    if (battlefield == null) return true;
-                    return battlefield.stream()
-                            .noneMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
-                },
+                new PermanentNotPredicate(new PermanentControllerControlsPermanentPredicate(
+                        new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
                 List.of(new SacrificeSelfEffect()),
                 "Seasinger's state-triggered ability"
         ));

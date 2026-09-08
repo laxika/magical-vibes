@@ -30,6 +30,6 @@ public class ChooseOneEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
-                (ChooseOneEffect) effect);
+                (ChooseOneEffect) effect, false, entry.getSourcePermanentId());
     }
 }

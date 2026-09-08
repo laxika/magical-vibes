@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "54")
 @CardRegistration(set = "M14", collectorNumber = "56")
+@CardRegistration(set = "M21", collectorNumber = "51")
 public class FrostBreath extends Card {
 
     public FrostBreath() {

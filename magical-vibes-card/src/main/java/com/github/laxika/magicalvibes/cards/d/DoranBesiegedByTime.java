@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "215")
+@CardRegistration(set = "ECL", collectorNumber = "334")
 public class DoranBesiegedByTime extends Card {
 
     public DoranBesiegedByTime() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "239")
+@CardRegistration(set = "ECL", collectorNumber = "377")
 public class RaidingSchemes extends Card {
 
     public RaidingSchemes() {

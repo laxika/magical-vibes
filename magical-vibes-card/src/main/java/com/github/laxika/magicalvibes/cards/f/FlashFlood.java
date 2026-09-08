@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "21")
+@CardRegistration(set = "LEG", collectorNumber = "57")
 public class FlashFlood extends Card {
 
     public FlashFlood() {
@@ -25,17 +26,13 @@ public class FlashFlood extends Card {
                         new DestroyTargetPermanentEffect(),
                         new PermanentPredicateTargetFilter(
                                 new PermanentColorInPredicate(Set.of(CardColor.RED)),
-                                "Target must be a red permanent."
-                        )
-                ),
+                                "Target must be a red permanent.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target Mountain to its owner's hand",
                         ReturnToHandEffect.target(),
                         new PermanentPredicateTargetFilter(
                                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
-                                "Target must be a Mountain."
-                        )
-                )
+                                "Target must be a Mountain."))
         )));
     }
 }

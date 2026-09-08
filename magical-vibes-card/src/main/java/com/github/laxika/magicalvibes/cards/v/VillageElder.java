@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "251")
+@CardRegistration(set = "BRB", collectorNumber = "94")
 public class VillageElder extends Card {
 
     public VillageElder() {

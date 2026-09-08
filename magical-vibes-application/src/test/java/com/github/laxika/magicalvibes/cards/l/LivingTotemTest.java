@@ -43,9 +43,9 @@ class LivingTotemTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         castTotemAndResolveSpell();
-        harness.passBothPriorities(); // resolve trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent bears = permanentById(player1, bearsId);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -60,9 +60,9 @@ class LivingTotemTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         castTotemAndResolveSpell();
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bearsId);
 
         assertThat(permanentById(player2, bearsId).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -74,6 +74,7 @@ class LivingTotemTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         castTotemAndResolveSpell();
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -90,8 +91,6 @@ class LivingTotemTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         castTotemAndResolveSpell();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         UUID totemId = harness.getPermanentId(player1, "Living Totem");
         PendingInteraction.PermanentChoice choice =

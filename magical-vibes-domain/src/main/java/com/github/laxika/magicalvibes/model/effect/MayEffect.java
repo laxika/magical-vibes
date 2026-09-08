@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * "You may [wrapped]" — the choice is made at resolution time (by the controller by default).
  *
@@ -10,9 +13,13 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
  * @param elseEffect   optional "if you don't, [effect]" half resolved when the choosing player declines
  *                   (Petals of Insight's "Otherwise, draw three cards"); {@code null} means
  *                   declining simply does nothing
- * @param choicePlayer identifies the player who makes the choice
+ * @param choicePlayer identifies the player who makes the choice; {@code DEFENDING_PLAYER} uses
+ *                            the player attacked by an attack trigger
  */
-public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer) implements CardEffect {
+public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
+        implements GrantingPermanentAwareEffect, CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
+        TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
+        SacrificedPermanentManaValueAwareEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect) {
         this(wrapped, prompt, elseEffect, MayChoicePlayer.CONTROLLER);
@@ -29,5 +36,60 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         return wrappedSpec != TargetSpec.NONE || elseEffect == null
                 ? wrappedSpec
                 : elseEffect.targetSpec();
+    }
+
+    @Override
+    public boolean usesEnteringPermanentReference() {
+        return wrapped.usesEnteringPermanentReference();
+    }
+
+    @Override
+    public boolean referencesCombatOpponent() {
+        return referencesCombatOpponent(wrapped) || referencesCombatOpponent(elseEffect);
+    }
+
+    private static boolean referencesCombatOpponent(CardEffect effect) {
+        return effect instanceof CombatOpponentReferencingEffect combatOpponent
+                && combatOpponent.referencesCombatOpponent();
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
+                ? contextEffect.combatDamageTriggerContext()
+                : null;
+    }
+
+    @Override
+    public CardEffect withCombatDamageDealerIds(List<UUID> dealerIds) {
+        CardEffect boundWrapped = wrapped instanceof CombatDamageDealerAwareEffect aware
+                ? aware.withCombatDamageDealerIds(dealerIds)
+                : wrapped;
+        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer);
+    }
+
+    @Override
+    public CardEffect withGrantingPermanentId(UUID permanentId) {
+        CardEffect boundWrapped = wrapped instanceof GrantingPermanentAwareEffect aware
+                ? aware.withGrantingPermanentId(permanentId)
+                : wrapped;
+        CardEffect boundElse = elseEffect instanceof GrantingPermanentAwareEffect aware
+                ? aware.withGrantingPermanentId(permanentId)
+                : elseEffect;
+        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer);
+    }
+
+    @Override
+    public boolean sourceIsTriggeringPermanent() {
+        return wrapped instanceof TriggeringPermanentSourceEffect source
+                && source.sourceIsTriggeringPermanent();
+    }
+
+    @Override
+    public MayEffect boundToSacrificedPermanentManaValue(int manaValue) {
+        CardEffect boundWrapped = wrapped instanceof SacrificedPermanentManaValueAwareEffect aware
+                ? aware.boundToSacrificedPermanentManaValue(manaValue)
+                : wrapped;
+        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer);
     }
 }

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STH", collectorNumber = "93")
+@CardRegistration(set = "TPR", collectorNumber = "146")
 public class MoggInfestation extends Card {
 
     public MoggInfestation() {

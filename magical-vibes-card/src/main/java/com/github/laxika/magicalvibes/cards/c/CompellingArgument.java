@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "47")
+@CardRegistration(set = "AKR", collectorNumber = "55")
 public class CompellingArgument extends Card {
 
     public CompellingArgument() {

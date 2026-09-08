@@ -15,9 +15,18 @@ import java.util.UUID;
  * (CR 603.3d).
  *
  * @param thenEffect the payload resolved after a successful sacrifice
+ * @param reflexive whether the payload is put on the stack as a separate reflexive ability
  */
-public record SacrificeSelfThenEffect(CardEffect thenEffect)
+public record SacrificeSelfThenEffect(CardEffect thenEffect, boolean reflexive)
         implements CombatDamageTriggerContextEffect, DyingCreatureCardAwareEffect {
+
+    public SacrificeSelfThenEffect(CardEffect thenEffect) {
+        this(thenEffect, false);
+    }
+
+    public static SacrificeSelfThenEffect reflexive(CardEffect thenEffect) {
+        return new SacrificeSelfThenEffect(thenEffect, true);
+    }
 
     public SacrificeSelfThenEffect {
         if (thenEffect == null) {
@@ -32,7 +41,7 @@ public record SacrificeSelfThenEffect(CardEffect thenEffect)
     @Override
     public CardEffect boundToDyingCard(UUID dyingCardId) {
         if (thenEffect instanceof DyingCreatureCardAwareEffect aware) {
-            return new SacrificeSelfThenEffect(aware.boundToDyingCard(dyingCardId));
+            return new SacrificeSelfThenEffect(aware.boundToDyingCard(dyingCardId), reflexive);
         }
         return this;
     }
@@ -40,6 +49,9 @@ public record SacrificeSelfThenEffect(CardEffect thenEffect)
     /** The payload supplies chosen targets; the wrapper also needs its source bound for sacrifice. */
     @Override
     public TargetSpec targetSpec() {
+        if (reflexive) {
+            return TargetSpec.NONE;
+        }
         TargetSpec payload = thenEffect.targetSpec();
         return new TargetSpec(payload.declaredTarget(), payload.harmful(), payload.predicate(), true,
                 payload.playerTargetCount());

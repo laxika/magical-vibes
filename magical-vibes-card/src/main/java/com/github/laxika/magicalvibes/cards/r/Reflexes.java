@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "9ED", collectorNumber = "211")
 @CardRegistration(set = "8ED", collectorNumber = "213")
 @CardRegistration(set = "7ED", collectorNumber = "213")
+@CardRegistration(set = "USG", collectorNumber = "208")
 public class Reflexes extends Card {
 
     public Reflexes() {

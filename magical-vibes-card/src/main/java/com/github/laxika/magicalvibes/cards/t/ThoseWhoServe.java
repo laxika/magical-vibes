@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "AKH", collectorNumber = "32")
+@CardRegistration(set = "AKR", collectorNumber = "41")
 public class ThoseWhoServe extends Card {
 
     public ThoseWhoServe() {

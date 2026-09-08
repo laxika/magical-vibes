@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "65")
+@CardRegistration(set = "S99", collectorNumber = "68")
 public class ChorusOfWoe extends Card {
 
     public ChorusOfWoe() {

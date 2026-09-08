@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "22")
 @CardRegistration(set = "M19", collectorNumber = "16")
+@CardRegistration(set = "KHM", collectorNumber = "16")
 public class InvokeTheDivine extends Card {
 
     public InvokeTheDivine() {

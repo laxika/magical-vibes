@@ -26,11 +26,10 @@ class MedicineRunnerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice prompt
-        harness.handlePermanentChosen(player1, target.getId()); // choose target -> ETB on stack
-        harness.passBothPriorities(); // resolve ETB
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     @Test
@@ -67,9 +66,10 @@ class MedicineRunnerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

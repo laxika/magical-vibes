@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "73")
+@CardRegistration(set = "M21", collectorNumber = "83")
 public class VodalianArcanist extends Card {
 
     public VodalianArcanist() {

@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
+import java.util.List;
 
 /**
  * Exiles a targeted instant or sorcery card from an opponent's graveyard, then grants its
@@ -15,6 +20,10 @@ public record ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect() im
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD));
+        return TargetSpec.benign(TargetPredicates.graveyardCards(
+                new CardAnyOfPredicate(List.of(
+                        new CardTypePredicate(CardType.INSTANT),
+                        new CardTypePredicate(CardType.SORCERY))),
+                GraveyardSearchScope.OPPONENT_GRAVEYARD));
     }
 }

@@ -30,7 +30,13 @@ public class GrantEffectEffectHandler implements StaticEffectHandlerBean {
             }
             return;
         }
-        if (support.matchesCreatureScope(context, grant.scope(), grant.filter())) {
+        boolean scopeMatch = switch (grant.scope()) {
+            case ALL_PERMANENTS -> support.matchesStaticFilter(context, context.target(), grant.filter());
+            case OWN_PERMANENTS -> context.targetOnSameBattlefield()
+                    && support.matchesStaticFilter(context, context.target(), grant.filter());
+            default -> support.matchesCreatureScope(context, grant.scope(), grant.filter());
+        };
+        if (scopeMatch) {
             accumulator.addGrantedEffect(grant.effect());
         }
     }

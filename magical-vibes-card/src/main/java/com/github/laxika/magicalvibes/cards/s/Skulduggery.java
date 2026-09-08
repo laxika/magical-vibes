@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "123")
+@CardRegistration(set = "OTJ", collectorNumber = "107")
 public class Skulduggery extends Card {
 
     public Skulduggery() {

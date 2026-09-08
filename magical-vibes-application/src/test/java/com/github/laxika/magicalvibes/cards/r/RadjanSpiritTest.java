@@ -1,28 +1,32 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RadjanSpirit.class, AirElemental.class, GrizzlyBears.class, Forest.class})
 class RadjanSpiritTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target creature loses flying until end of turn")
     void targetLosesFlyingUntilEndOfTurn() {
-        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new RadjanSpirit());
-        spirit.setSummoningSick(false);
-        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent spirit = addCreatureReady(player1, new RadjanSpirit());
+        Permanent elemental = addCreatureReady(player2, new AirElemental());
 
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
 
         harness.activateAbility(player1, 0, null, elemental.getId());
+        assertThat(spirit.isTapped()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
@@ -37,14 +41,24 @@ class RadjanSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature without flying (no effect on it)")
     void targetsNonFlyer() {
-        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new RadjanSpirit());
-        spirit.setSummoningSick(false);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addCreatureReady(player1, new RadjanSpirit());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        addCreatureReady(player1, new RadjanSpirit());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 }

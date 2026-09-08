@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "199")
+@CardRegistration(set = "BTD", collectorNumber = "39")
+@CardRegistration(set = "SUM", collectorNumber = "161")
 public class KirdApe extends Card {
 
     public KirdApe() {

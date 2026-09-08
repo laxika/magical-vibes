@@ -24,7 +24,8 @@ class ChromaticSphereTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "GREEN");
 

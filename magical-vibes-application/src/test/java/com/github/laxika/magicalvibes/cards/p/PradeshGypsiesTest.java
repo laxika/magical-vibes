@@ -1,17 +1,21 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PradeshGypsies.class, GrizzlyBears.class, FountainOfYouth.class})
 class PradeshGypsiesTest extends BaseCardTest {
 
     @Test
@@ -40,6 +44,30 @@ class PradeshGypsiesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a creature controlled by an opponent")
+    void weakensOpponentsCreature() {
+        setupGypsies();
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getPowerModifier()).isEqualTo(-2);
+        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        setupGypsies();
+        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, fountain.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
     @DisplayName("Weakening wears off at cleanup")
     void weakeningWearsOff() {
         setupGypsies();
@@ -58,9 +86,8 @@ class PradeshGypsiesTest extends BaseCardTest {
     }
 
     private void setupGypsies() {
-        harness.addToBattlefield(player1, new PradeshGypsies());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        findPermanent(player1, "Pradesh Gypsies").setSummoningSick(false);
+        addCreatureReady(player1, new PradeshGypsies());
+        addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);

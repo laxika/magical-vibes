@@ -43,6 +43,7 @@ class MicaReaderOfRuinsTest extends BaseCardTest {
 
         var artifact = findPermanent(player1, "Iron Myr");
         harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
         if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
             harness.handleMayAbilityChosen(player1, false);
         }

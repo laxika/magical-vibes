@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "STH", collectorNumber = "94")
+@CardRegistration(set = "TPR", collectorNumber = "147")
 public class MoggManiac extends Card {
 
     public MoggManiac() {

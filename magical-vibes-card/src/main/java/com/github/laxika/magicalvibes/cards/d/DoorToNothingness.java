@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "203")
+@CardRegistration(set = "5DN", collectorNumber = "115")
 public class DoorToNothingness extends Card {
 
     public DoorToNothingness() {

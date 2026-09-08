@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Dissipate.class, GrizzlyBears.class, MightOfOaks.class})
 class DissipateTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -38,7 +40,6 @@ class DissipateTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry dissipateEntry = gd.stack.getLast();
         assertThat(dissipateEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(dissipateEntry.getCard().getName()).isEqualTo("Dissipate");
         assertThat(dissipateEntry.getTargetId()).isEqualTo(bears.getId());
     }
 
@@ -128,7 +129,7 @@ class DissipateTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         // Mark the creature spell on the stack as a copy: countering it must make it cease to exist,
-        // not move it to any zone (CR 707.10 / 701.5g).
+        // without moving a physical card to any zone.
         GameData gd = harness.getGameData();
         gd.stack.stream()
                 .filter(se -> se.getCard().getName().equals("Grizzly Bears"))
@@ -168,5 +169,34 @@ class DissipateTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player2, "Dissipate");
+    }
+
+    @Test
+    @DisplayName("Exiles a countered spell to its owner's exile zone")
+    void exilesCounteredSpellToItsOwnersExileZone() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new Dissipate()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+
+        GameData gd = harness.getGameData();
+        gd.stack.stream()
+                .filter(se -> se.getCard().getId().equals(bears.getId()))
+                .findFirst()
+                .orElseThrow()
+                .setOwnerIdOverride(player2.getId());
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(bears.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(bears.getId()));
     }
 }

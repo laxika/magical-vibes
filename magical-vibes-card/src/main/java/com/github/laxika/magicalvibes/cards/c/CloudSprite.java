@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Keyword;
 
 @CardRegistration(set = "10E", collectorNumber = "75")
+@CardRegistration(set = "MMQ", collectorNumber = "67")
 public class CloudSprite extends Card {
 
     public CloudSprite() {

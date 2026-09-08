@@ -18,9 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves Heart-Piercer Manticore's enter trigger once the controller accepted the "may sacrifice"
- * and the any-target was chosen. Offers the controller's other creatures to sacrifice; the actual
- * sacrifice + power-damage happens on the choice completion
+ * Resolves the sacrifice portion of Heart-Piercer Manticore's or Ziatora, the Incinerator's
+ * trigger once the controller accepts the "may sacrifice".
+ * Offers the controller's other creatures to sacrifice; the sacrifice creates the reflexive trigger
+ * and its target is chosen by the choice-completion path
  * ({@code PermanentChoiceBattlefieldHandlerService.handleSacrificeAnotherCreatureDealPowerDamage}).
  */
 @Slf4j
@@ -39,6 +40,7 @@ public class SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffectHandler imp
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var sacrificeEffect = (SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect) effect;
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
 
@@ -63,7 +65,8 @@ public class SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffectHandler imp
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage(
-                        controllerId, entry.getCard(), entry.getTargetId()));
+                        controllerId, entry.getCard(),
+                        sacrificeEffect.reflexiveFollowUps(), sacrificeEffect.targetPredicate()));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 entry.getCard().getName() + " — Choose another creature to sacrifice.");
 

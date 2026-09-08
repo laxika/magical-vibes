@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterLoseGameAtEndStepEffe
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "AKH", collectorNumber = "133")
+@CardRegistration(set = "AKR", collectorNumber = "156")
 public class GloriousEnd extends Card {
 
     public GloriousEnd() {

@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.GlobalLegendRuleExemptionEffect;
+import com.github.laxika.magicalvibes.model.effect.LegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
@@ -312,13 +315,45 @@ final class FuzzInvariants {
                 }
             }
             for (Map.Entry<String, Integer> e : legendaryNameCounts.entrySet()) {
-                if (e.getValue() >= 2) {
+                List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(pid, List.of());
+                if (e.getValue() >= 2
+                        && !hasGlobalLegendRuleExemption(gd)
+                        && !allLegendRuleExempt(gd, battlefield, e.getKey())) {
                     problems.add("player " + pid + " controls " + e.getValue()
                             + " legendary permanents named " + e.getKey());
                 }
             }
         }
         return problems.isEmpty() ? null : "legend rule violated: " + String.join("; ", problems);
+    }
+
+    private boolean hasGlobalLegendRuleExemption(GameData gd) {
+        return gd.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(GlobalLegendRuleExemptionEffect.class::isInstance));
+    }
+
+    private boolean allLegendRuleExempt(GameData gd, List<Permanent> battlefield, String name) {
+        int totalWithName = countOnBattlefield(gd, name);
+        return battlefield.stream()
+                .filter(perm -> name.equals(perm.getCard().getName()))
+                .allMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(LegendRuleExemptionEffect.class::isInstance)
+                        .map(LegendRuleExemptionEffect.class::cast)
+                        .anyMatch(exemption -> exemption.exemptFromLegendRule(totalWithName)));
+    }
+
+    private int countOnBattlefield(GameData gd, String name) {
+        int count = 0;
+        for (List<Permanent> permanents : gd.playerBattlefields.values()) {
+            for (Permanent perm : permanents) {
+                if (name.equals(perm.getCard().getName())) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     private boolean isLegendary(GameData gd, Permanent p) {

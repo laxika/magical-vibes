@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "6")
+@CardRegistration(set = "TSB", collectorNumber = "2")
 public class Auratog extends Card {
 
     public Auratog() {

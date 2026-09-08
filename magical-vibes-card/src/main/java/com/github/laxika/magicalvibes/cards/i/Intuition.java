@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "70")
+@CardRegistration(set = "TPR", collectorNumber = "54")
 public class Intuition extends Card {
 
     public Intuition() {

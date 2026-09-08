@@ -36,7 +36,10 @@ public class ExileTargetCardFromGraveyardAndImprintOnSourceEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileTargetCardFromGraveyardAndImprintOnSourceEffect) effect;
 
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        UUID targetCardId = entry.getTargetCardIds().isEmpty()
+                ? entry.getTargetId()
+                : entry.getTargetCardIds().getFirst();
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
@@ -50,7 +53,7 @@ public class ExileTargetCardFromGraveyardAndImprintOnSourceEffectHandler impleme
 
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
 
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
 
         // Add to graveyard owner's exiled cards, tracked with source permanent if available
         if (graveyardOwnerId != null) {

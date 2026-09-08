@@ -157,10 +157,11 @@ public class PsychicBattleSupport {
             try {
                 if (entry.getTargetZone() == Zone.STACK) {
                     targetLegalityService.validateMultiSpellTargetsOnStack(
-                            gameData, entry.getCard(), replacement, entry.getControllerId());
+                            gameData, entry.getCard(), replacement, entry.getControllerId(), entry.isKicked());
                 } else {
                     targetLegalityService.validateMultiSpellTargets(
-                            gameData, entry.getCard(), replacement, entry.getControllerId(), entry.getXValue());
+                            gameData, entry.getCard(), replacement, entry.getControllerId(), entry.getXValue(),
+                            entry.isKicked());
                 }
                 return true;
             } catch (IllegalStateException ignored) {

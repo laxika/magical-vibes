@@ -43,12 +43,12 @@ class PetraSphinxTest extends BaseCardTest {
         harness.handleListChoice(player2, "Lightning Bolt");
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player2.getId())).anyMatch(c -> c.getId().equals(topCard.getId()));
-        assertThat(gd.playerDecks.get(player2.getId())).noneMatch(c -> c.getId().equals(topCard.getId()));
+        assertThat(gd.playerHands.get(player2.getId())).anyMatch(card -> card.getId().equals(topCard.getId()));
+        assertThat(gd.playerDecks.get(player2.getId())).noneMatch(card -> card.getId().equals(topCard.getId()));
     }
 
     @Test
-    @DisplayName("Wrong name puts the top card into the graveyard without dealing damage")
+    @DisplayName("Wrong name puts the top card into the target's graveyard without dealing damage")
     void wrongNameGoesToGraveyardWithoutDamage() {
         harness.setLife(player2, 20);
         addReadySphinx(player1);
@@ -62,13 +62,13 @@ class PetraSphinxTest extends BaseCardTest {
         harness.handleListChoice(player2, "Lightning Bolt");
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
-        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getId().equals(topCard.getId()));
-        assertThat(gd.playerDecks.get(player2.getId())).noneMatch(c -> c.getId().equals(topCard.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card.getId().equals(topCard.getId()));
+        assertThat(gd.playerDecks.get(player2.getId())).noneMatch(card -> card.getId().equals(topCard.getId()));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     @Test
-    @DisplayName("Empty library does not prompt and does not change the target")
+    @DisplayName("Empty library does not crash or create a card choice")
     void emptyLibraryHandledGracefully() {
         harness.setLife(player2, 20);
         addReadySphinx(player1);

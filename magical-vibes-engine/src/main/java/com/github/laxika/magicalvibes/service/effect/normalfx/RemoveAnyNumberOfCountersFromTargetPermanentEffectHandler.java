@@ -67,6 +67,9 @@ public class RemoveAnyNumberOfCountersFromTargetPermanentEffectHandler implement
             }
             int count = Math.min(remaining, counter.getValue());
             target.setCounterCount(counter.getKey(), counter.getValue() - count);
+            if (counter.getKey() == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(target, count);
+            }
             remaining -= count;
             removed += count;
         }

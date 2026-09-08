@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "110")
+@CardRegistration(set = "M21", collectorNumber = "107")
 public class KitesailFreebooter extends Card {
 
     public KitesailFreebooter() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "STH", collectorNumber = "106")
+@CardRegistration(set = "TPR", collectorNumber = "169")
 public class ElvenRite extends Card {
 
     public ElvenRite() {

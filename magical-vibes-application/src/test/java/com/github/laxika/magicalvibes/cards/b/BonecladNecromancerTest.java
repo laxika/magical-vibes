@@ -25,7 +25,6 @@ class BonecladNecromancerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     @Test
@@ -36,9 +35,11 @@ class BonecladNecromancerTest extends BaseCardTest {
 
         castNecromancer();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -50,10 +51,13 @@ class BonecladNecromancerTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the ETB ability leaves the graveyard unchanged")
     void decliningLeavesGraveyardUnchanged() {
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
 
         castNecromancer();
 
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -61,14 +65,14 @@ class BonecladNecromancerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A noncreature card cannot be chosen for the ETB ability")
+    @DisplayName("The ETB ability is not put on the stack without a creature card target")
     void noncreatureCardCannotBeChosen() {
         harness.setGraveyard(player2, List.of(new Shock()));
 
         castNecromancer();
 
-        harness.handleMayAbilityChosen(player1, true);
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Shock");
         assertThat(findPermanents(player1, "Zombie")).isEmpty();
     }

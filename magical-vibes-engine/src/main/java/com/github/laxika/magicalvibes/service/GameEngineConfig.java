@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTriggers;
+import com.github.laxika.magicalvibes.service.trigger.CollectsEmblemTrigger;
+import com.github.laxika.magicalvibes.service.trigger.CollectsEmblemTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
@@ -174,6 +176,20 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                         count++;
                     }
                 }
+
+                CollectsEmblemTrigger emblemSingle = method.getAnnotation(CollectsEmblemTrigger.class);
+                if (emblemSingle != null) {
+                    registerEmblemTriggerHandler(bean, method, emblemSingle);
+                    count++;
+                }
+
+                CollectsEmblemTriggers emblemContainer = method.getAnnotation(CollectsEmblemTriggers.class);
+                if (emblemContainer != null) {
+                    for (CollectsEmblemTrigger cet : emblemContainer.value()) {
+                        registerEmblemTriggerHandler(bean, method, cet);
+                        count++;
+                    }
+                }
             }
         }
 
@@ -213,6 +229,43 @@ public class GameEngineConfig implements SmartInitializingSingleton {
             });
         } catch (IllegalAccessException e) {
             throw new IllegalStateException("Cannot access @CollectsTrigger method " + method.getName(), e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void registerEmblemTriggerHandler(Object bean, Method method, CollectsEmblemTrigger annotation) {
+        method.setAccessible(true);
+        Class<?>[] params = method.getParameterTypes();
+
+        if (params.length != 3
+                || params[0] != com.github.laxika.magicalvibes.service.trigger.EmblemTriggerMatchContext.class
+                || !CardEffect.class.isAssignableFrom(params[1])
+                || !TriggerContext.class.isAssignableFrom(params[2])) {
+            throw new IllegalStateException(
+                    "@CollectsEmblemTrigger method " + method.getDeclaringClass().getSimpleName() + "."
+                            + method.getName()
+                            + " must have signature (EmblemTriggerMatchContext, <? extends CardEffect>, TriggerContext)");
+        }
+
+        if (method.getReturnType() != boolean.class) {
+            throw new IllegalStateException(
+                    "@CollectsEmblemTrigger method " + method.getDeclaringClass().getSimpleName() + "."
+                            + method.getName() + " must return boolean");
+        }
+
+        try {
+            MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
+            Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
+
+            triggerCollectorRegistry.registerEmblem(annotation.value(), (match, innerEffect, context) -> {
+                try {
+                    return (boolean) handle.invoke(match, effectParam.cast(innerEffect), context);
+                } catch (Throwable t) {
+                    throw wrapException(t, method);
+                }
+            });
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("Cannot access @CollectsEmblemTrigger method " + method.getName(), e);
         }
     }
 

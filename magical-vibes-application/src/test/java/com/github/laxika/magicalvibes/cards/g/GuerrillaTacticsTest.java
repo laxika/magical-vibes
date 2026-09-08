@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.m.Megrim;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.Sift;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +25,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GuerrillaTactics.class, GrizzlyBears.class, Distress.class, MindRot.class, Sift.class})
 class GuerrillaTacticsTest extends BaseCardTest {
 
     // ===== Casting as a spell =====
@@ -38,7 +41,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Guerrilla Tactics");
+        assertThat(entry.getCard()).isInstanceOf(GuerrillaTactics.class);
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -67,8 +70,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GuerrillaTactics()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -81,8 +83,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -95,8 +96,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GuerrillaTactics()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Guerrilla Tactics");
@@ -114,8 +114,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1 chooses Guerrilla Tactics from player2's revealed hand
         harness.handleCardChosen(player1, 0);
@@ -135,8 +134,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1 chooses Guerrilla Tactics from player2's revealed hand
         harness.handleCardChosen(player1, 0);
@@ -163,8 +161,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1 chooses Guerrilla Tactics from player2's revealed hand
         harness.handleCardChosen(player1, 0);
@@ -190,8 +187,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player1, 0);
 
@@ -208,6 +204,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
      * planeswalker Imprisoned in the Moon turned into a colorless land is no longer an any target
      * (CR 115.4) — the same answer the spell path gives.
      */
+    @CardUsed({JaceBeleren.class, ChandraNalaar.class, ImprisonedInTheMoon.class})
     @Test
     @DisplayName("Discard trigger offers a planeswalker, but not one Imprisoned in the Moon turned into a land")
     void discardTriggerOffersPlaneswalkerUnlessLayerFourTookTheTypeAway() {
@@ -224,8 +221,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         PendingInteraction.PermanentChoice choice =
@@ -248,8 +244,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player2 discards Guerrilla Tactics first
         harness.handleCardChosen(player2, 0);
@@ -284,8 +279,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Sift(), new GuerrillaTactics()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // Resolve Sift — draws 3, prompts for discard
+        harness.castAndResolveSorcery(player1, 0, 0); // Resolve Sift — draws 3, prompts for discard
 
         // Player1 discards Guerrilla Tactics (now at some index in hand)
         // After Sift draws 3 cards, hand is: [GuerrillaTactics, drawn1, drawn2, drawn3]
@@ -308,8 +302,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player1, 0);
         harness.handlePermanentChosen(player2, player1.getId());
@@ -332,8 +325,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player1, 0);
 
@@ -344,16 +336,17 @@ class GuerrillaTacticsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Guerrilla Tactics");
+        assertThat(entry.getCard()).isInstanceOf(GuerrillaTactics.class);
         assertThat(entry.getTargetId()).isEqualTo(player1.getId());
     }
 
     // ===== Interaction with Megrim =====
 
+    @CardUsed(Megrim.class)
     @Test
     @DisplayName("Both Megrim and Guerrilla Tactics trigger when opponent forces discard")
     void interactsWithMegrim() {
-        com.github.laxika.magicalvibes.cards.m.Megrim megrim = new com.github.laxika.magicalvibes.cards.m.Megrim();
+        Megrim megrim = new Megrim();
         harness.addToBattlefield(player1, megrim);
         harness.setHand(player2, new ArrayList<>(List.of(new GuerrillaTactics())));
         harness.setLife(player1, 20);
@@ -362,8 +355,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1 chooses Guerrilla Tactics from player2's revealed hand
         harness.handleCardChosen(player1, 0);

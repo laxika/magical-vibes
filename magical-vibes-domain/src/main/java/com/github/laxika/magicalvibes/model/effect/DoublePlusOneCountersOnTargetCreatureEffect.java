@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Doubles the number of +1/+1 counters on target creature.
- *
- * <p>The effect is targeted and only doubles +1/+1 counters; other counter types remain
- * unchanged.</p>
+ * Doubles the number of +1/+1 counters on each target creature.
  */
 public record DoublePlusOneCountersOnTargetCreatureEffect() implements CardEffect {
 

@@ -75,6 +75,7 @@ class MournersShieldTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(imprintedCard.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, accept);
 

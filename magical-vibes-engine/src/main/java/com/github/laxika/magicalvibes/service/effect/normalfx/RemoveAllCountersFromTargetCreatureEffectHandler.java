@@ -37,6 +37,7 @@ public class RemoveAllCountersFromTargetCreatureEffectHandler implements NormalE
         }
 
         int removed = 0;
+        int oilRemoved = target.getCounterCount(CounterType.OIL);
         for (CounterType counterType : CounterType.values()) {
             if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
                 continue;
@@ -44,6 +45,7 @@ public class RemoveAllCountersFromTargetCreatureEffectHandler implements NormalE
             removed += target.getCounterCount(counterType);
             target.setCounterCount(counterType, 0);
         }
+        gameData.recordOilCounterRemoved(target, oilRemoved);
 
         gameLogService.append(gameData,
                 GameLog.textCardText(removed + " counter(s) removed from ", target.getCard(), "."));

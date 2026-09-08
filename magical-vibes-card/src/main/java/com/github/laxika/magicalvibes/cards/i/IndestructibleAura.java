@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CHR", collectorNumber = "7")
+@CardRegistration(set = "LEG", collectorNumber = "21")
 public class IndestructibleAura extends Card {
 
     public IndestructibleAura() {
-        // Prevent all damage that would be dealt to target creature this turn.
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, PreventDamageEffect.allToTargetCreatures());
     }

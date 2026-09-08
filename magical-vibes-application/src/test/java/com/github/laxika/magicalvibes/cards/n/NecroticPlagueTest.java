@@ -1,17 +1,23 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import com.github.laxika.magicalvibes.cards.z.Zephid;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NecroticPlague.class, GrizzlyBears.class, WhiteKnight.class, Zephid.class})
 class NecroticPlagueTest extends BaseCardTest {
 
     // ===== Upkeep sacrifice trigger =====
@@ -75,6 +81,40 @@ class NecroticPlagueTest extends BaseCardTest {
         assertThat(auraPerm.getAttachedTo()).isEqualTo(myCreature.getId());
 
         // Necrotic Plague should NOT be in any graveyard
+        harness.assertNotInGraveyard(player1, "Necrotic Plague");
+    }
+
+    @Test
+    @DisplayName("Death trigger offers only creatures it can target and enchant")
+    void deathTriggerExcludesIllegalCreatures() {
+        Permanent enchantedCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent firstLegalCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondLegalCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent protectedCreature = addCreatureReady(player1, new WhiteKnight());
+        Permanent shroudedCreature = addCreatureReady(player1, new Zephid());
+        castNecroticPlagueOn(player1, enchantedCreature);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds())
+                .containsExactlyInAnyOrder(firstLegalCreature.getId(), secondLegalCreature.getId())
+                .doesNotContain(protectedCreature.getId(), shroudedCreature.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player2, protectedCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+
+        harness.handlePermanentChosen(player2, firstLegalCreature.getId());
+
+        Permanent aura = findPermanentByName(player1, "Necrotic Plague");
+        assertThat(aura.getAttachedTo()).isEqualTo(firstLegalCreature.getId());
         harness.assertNotInGraveyard(player1, "Necrotic Plague");
     }
 

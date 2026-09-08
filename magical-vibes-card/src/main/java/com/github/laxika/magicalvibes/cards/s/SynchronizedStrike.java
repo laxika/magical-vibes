@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "190")
+@CardRegistration(set = "AKR", collectorNumber = "222")
 public class SynchronizedStrike extends Card {
 
     public SynchronizedStrike() {

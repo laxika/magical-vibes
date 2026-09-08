@@ -18,8 +18,14 @@ public enum GrantDuration {
     /** Lasts until end of turn; cleared by {@code TurnCleanupService} (via {@code Permanent.grantedKeywords}). */
     END_OF_TURN,
 
+    /** Lasts until the current combat phase ends. */
+    UNTIL_END_OF_COMBAT,
+
     /** Lasts until the start of the controller's next turn (via {@code Permanent.untilNextTurnKeywords}). */
     UNTIL_YOUR_NEXT_TURN,
+
+    /** Lasts until the beginning of the effect controller's next upkeep. */
+    UNTIL_YOUR_NEXT_UPKEEP,
 
     /**
      * "for as long as you control [source]" (Aegis Angel). Neither temporary bucket applies: the

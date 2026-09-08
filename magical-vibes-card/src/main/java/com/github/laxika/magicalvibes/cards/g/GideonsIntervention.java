@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEf
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "15")
+@CardRegistration(set = "AKR", collectorNumber = "20")
 public class GideonsIntervention extends Card {
 
     public GideonsIntervention() {

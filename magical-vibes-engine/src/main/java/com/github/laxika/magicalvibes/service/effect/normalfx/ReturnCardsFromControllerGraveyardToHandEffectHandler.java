@@ -57,12 +57,12 @@ public class ReturnCardsFromControllerGraveyardToHandEffectHandler implements No
             return;
         }
 
-        if (matching.size() <= maxCount) {
+        if (!returnEffect.optional() && matching.size() <= maxCount) {
             graveyardService.beginGraveyardLeaveBatch(gameData);
             try {
                 for (Card card : matching) {
                     if (graveyard.remove(card)) {
-                        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                         graveyardReturnSupport.moveCardToDestination(gameData, controllerId, card,
                                 GraveyardChoiceDestination.HAND, null, null, false);
                     }
@@ -74,7 +74,8 @@ public class ReturnCardsFromControllerGraveyardToHandEffectHandler implements No
         }
 
         gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
-                controllerId, maxCount, returnEffect.filter(), GraveyardChoiceDestination.HAND, false, true, false));
+                controllerId, Math.min(maxCount, matching.size()), returnEffect.filter(),
+                GraveyardChoiceDestination.HAND, returnEffect.optional(), !returnEffect.optional(), false));
         graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
     }
 }

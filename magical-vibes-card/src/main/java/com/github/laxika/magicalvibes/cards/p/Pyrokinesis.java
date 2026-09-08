@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "78")
+@CardRegistration(set = "ATH", collectorNumber = "47")
 public class Pyrokinesis extends Card {
 
     public Pyrokinesis() {

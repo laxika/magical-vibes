@@ -1,40 +1,39 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FallenAngel.class, GrizzlyBears.class})
 class FallenAngelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a creature to the ability gives Fallen Angel +2/+1")
     void resolvingAbilityBoostsAngel() {
-        addFallenAngelReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(bears.getCard().getId()));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
 
-        // Grizzly Bears is sacrificed
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-
-        Permanent angel = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(angel.getCard().getName()).isEqualTo("Fallen Angel");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(angel.getId()));
         assertThat(angel.getPowerModifier()).isEqualTo(2);
         assertThat(angel.getToughnessModifier()).isEqualTo(1);
     }
@@ -42,22 +41,20 @@ class FallenAngelTest extends BaseCardTest {
     @Test
     @DisplayName("Ability stacks when activated multiple times")
     void canActivateMultipleTimes() {
-        addFallenAngelReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
+        Permanent firstBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondBears = addCreatureReady(player1, new GrizzlyBears());
 
-        UUID first = harness.getPermanentId(player1, "Grizzly Bears");
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, first);
+        harness.handlePermanentChosen(player1, firstBears.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, secondBears.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
-        UUID second = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, second);
-        harness.passBothPriorities();
-
-        Permanent angel = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(angel.getCard().getName()).isEqualTo("Fallen Angel");
         assertThat(angel.getPowerModifier()).isEqualTo(4);
         assertThat(angel.getToughnessModifier()).isEqualTo(2);
     }
@@ -65,28 +62,64 @@ class FallenAngelTest extends BaseCardTest {
     @Test
     @DisplayName("Fallen Angel can sacrifice itself to its own ability")
     void canSacrificeItself() {
-        addFallenAngelReady(player1);
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player1, "Fallen Angel");
-        harness.assertInGraveyard(player1, "Fallen Angel");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(angel.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(angel.getCard().getId()));
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Self-sacrifice ability resolves without boosting the departed Angel")
+    void selfSacrificeAbilityResolvesWithoutBoost() {
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(angel.getPowerModifier()).isZero();
+        assertThat(angel.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can sacrifice only a creature controlled by Fallen Angel's controller")
+    void cannotSacrificeOpponentCreature() {
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentBears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+
+        harness.handlePermanentChosen(player1, ownBears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(opponentBears.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(ownBears.getCard().getId()));
+        assertThat(angel.getPowerModifier()).isEqualTo(2);
+        assertThat(angel.getToughnessModifier()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        addFallenAngelReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        Permanent angel = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(angel.getPowerModifier()).isEqualTo(2);
         assertThat(angel.getToughnessModifier()).isEqualTo(1);
 
@@ -96,13 +129,5 @@ class FallenAngelTest extends BaseCardTest {
 
         assertThat(angel.getPowerModifier()).isEqualTo(0);
         assertThat(angel.getToughnessModifier()).isEqualTo(0);
-    }
-
-    private Permanent addFallenAngelReady(Player player) {
-        FallenAngel card = new FallenAngel();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

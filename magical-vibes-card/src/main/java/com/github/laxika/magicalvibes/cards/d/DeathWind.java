@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "93")
+@CardRegistration(set = "DTK", collectorNumber = "95")
 public class DeathWind extends Card {
 
     public DeathWind() {

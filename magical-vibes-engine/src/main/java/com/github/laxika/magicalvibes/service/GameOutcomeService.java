@@ -84,12 +84,12 @@ public class GameOutcomeService {
      * if a spell or ability (such as the one from Helix Pinnacle) states that a player 'wins the
      * game.' If a player wins the game, the game ends immediately."
      *
-     * <p>The block itself is Platinum Angel's second clause ("your opponents can't win the game").
-     * This engine models both of that card's clauses with the single {@code CantLoseGameEffect} on
-     * the opponent, which is why the check reads off them.
+     * <p>The check covers both directions of game-outcome restrictions: an opponent's
+     * {@code CantLoseGameEffect} and the winner's or an opponent's {@code CantWinGameEffect}.
      */
     public boolean canPlayerWinGame(GameData gameData, UUID winnerId) {
-        return gameQueryService.canPlayerLoseGame(gameData, gameQueryService.getOpponentId(gameData, winnerId));
+        return !gameQueryService.playerHasCantWinGameEffect(gameData, winnerId)
+                && gameQueryService.canPlayerLoseGame(gameData, gameQueryService.getOpponentId(gameData, winnerId));
     }
 
     public boolean checkWinCondition(GameData gameData) {

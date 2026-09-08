@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandMayCastOrPutIntoHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -23,6 +25,7 @@ public class ExileTopUntilNonlandMayCastOrPutIntoHandEffectHandler implements No
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,11 +34,13 @@ public class ExileTopUntilNonlandMayCastOrPutIntoHandEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (ExileTopUntilNonlandMayCastOrPutIntoHandEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
-        int lifeGained = gameData.getLifeGainedThisTurn(controllerId);
+        int maxManaValue = amountEvaluationService.evaluate(gameData, e.maxManaValue(),
+                AmountContext.forStackEntry(entry, null));
 
         if (deck == null || deck.isEmpty()) {
             gameLogService.append(gameData,
@@ -63,7 +68,7 @@ public class ExileTopUntilNonlandMayCastOrPutIntoHandEffectHandler implements No
         }
 
         int manaValue = hit.getManaValue();
-        if (manaValue > lifeGained) {
+        if (manaValue > maxManaValue) {
             gameData.removeFromExile(hit.getId());
             gameData.addCardToHand(controllerId, hit);
             gameLogService.append(gameData, GameLog.builder()

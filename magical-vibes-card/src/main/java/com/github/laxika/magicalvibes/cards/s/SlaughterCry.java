@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "155")
+@CardRegistration(set = "ZEN", collectorNumber = "149")
 public class SlaughterCry extends Card {
 
     public SlaughterCry() {

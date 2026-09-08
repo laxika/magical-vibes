@@ -10,11 +10,21 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessSacrificeEffe
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsToUntapSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import java.util.List;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "98")
 @CardRegistration(set = "4ED", collectorNumber = "80")
+@CardRegistration(set = "DRK", collectorNumber = "30")
+@CardRegistration(set = "BTD", collectorNumber = "12")
+@CardRegistration(set = "TSB", collectorNumber = "23")
 public class Leviathan extends Card {
 
     public Leviathan() {
@@ -26,7 +36,11 @@ public class Leviathan extends Card {
 
         // At the beginning of your upkeep, you may sacrifice two Islands. If you do, untap Leviathan.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
-                new SacrificePermanentsToUntapSelfEffect(2, islands, "two Islands"),
+                new ConditionalEffect(new ControlsPermanentCount(2, islands), new SequenceEffect(List.of(
+                        new SacrificePermanentsEffect(2, islands, SacrificeRecipient.CONTROLLER)
+                                .withRecordedSacrificeCount(),
+                        new ConditionalEffect(new EventValueAtLeast(2),
+                                new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT), false))), false),
                 "You may sacrifice two Islands. If you do, untap this creature."
         ));
 

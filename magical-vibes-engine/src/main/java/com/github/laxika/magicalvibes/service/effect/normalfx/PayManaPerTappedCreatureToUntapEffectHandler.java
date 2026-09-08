@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,8 +64,7 @@ public class PayManaPerTappedCreatureToUntapEffectHandler implements NormalEffec
         }
 
         ManaPool pool = gameData.playerManaPools.get(actingPlayerId);
-        int available = pool != null ? pool.getTotal() : 0;
-        int affordable = e.manaPerCreature() > 0 ? available / e.manaPerCreature() : tappedMatchingIds.size();
+        int affordable = affordableCount(pool, new ManaCost(e.manaCost()), tappedMatchingIds.size());
         int maxCount = Math.min(tappedMatchingIds.size(), affordable);
 
         if (maxCount <= 0) {
@@ -73,7 +73,21 @@ public class PayManaPerTappedCreatureToUntapEffectHandler implements NormalEffec
         }
 
         playerInputService.beginMultiPermanentChoice(gameData, actingPlayerId, tappedMatchingIds, maxCount,
-                new MultiPermanentChoiceContext.PayManaPerCreatureUntap(actingPlayerId, e.manaPerCreature()),
-                "Choose any number of tapped creatures to untap (pay {" + e.manaPerCreature() + "} each).");
+                new MultiPermanentChoiceContext.PayManaPerCreatureUntap(actingPlayerId, e.manaCost()),
+                "Choose any number of tapped creatures to untap (pay " + e.manaCost() + " each).");
+    }
+
+    private int affordableCount(ManaPool pool, ManaCost perCreatureCost, int candidateCount) {
+        if (pool == null) {
+            return 0;
+        }
+
+        ManaPool remaining = new ManaPool(pool);
+        int affordable = 0;
+        while (affordable < candidateCount && perCreatureCost.canPay(remaining)) {
+            perCreatureCost.pay(remaining);
+            affordable++;
+        }
+        return affordable;
     }
 }

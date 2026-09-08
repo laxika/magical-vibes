@@ -34,7 +34,8 @@ public class GrantTriggeredAbilitySelfEffectHandler implements StaticEffectHandl
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantTriggeredAbilityEffect) effect;
         if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                || grant.scope() == GrantScope.ALL_OWN_CREATURES)
+                || grant.scope() == GrantScope.ALL_OWN_CREATURES
+                || grant.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF)
                 && support.matchesStaticFilter(context, context.target(), grant.filter())) {
             accumulator.addGrantedEffect(grant);
         }

@@ -11,4 +11,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * what they don't have).
  */
 public record MayRevealSubtypeFromHandEffect(CardSubtype subtype, CardEffect thenEffect, String prompt) implements CardEffect {
+
+    @Override
+    public TargetSpec targetSpec() {
+        return thenEffect.targetSpec();
+    }
+
+    @Override
+    public com.github.laxika.magicalvibes.model.filter.PlayerRelation targetPlayerRelation() {
+        return thenEffect.targetPlayerRelation();
+    }
 }

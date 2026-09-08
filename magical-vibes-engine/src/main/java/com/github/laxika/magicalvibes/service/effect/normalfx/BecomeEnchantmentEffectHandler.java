@@ -32,6 +32,10 @@ public class BecomeEnchantmentEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             return;
         }
+        if (((BecomeEnchantmentEffect) effect).onlyIfCreature()
+                && !gameQueryService.isCreature(gameData, source)) {
+            return;
+        }
 
         source.setCard(source.getOriginalCard());
         source.setTimestamp(gameData.nextTimestamp());

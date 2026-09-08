@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "103")
+@CardRegistration(set = "AKR", collectorNumber = "119")
 public class PitilessVizier extends Card {
 
     public PitilessVizier() {

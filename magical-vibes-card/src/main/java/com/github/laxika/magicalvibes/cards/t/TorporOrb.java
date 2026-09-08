@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "162")
+@CardRegistration(set = "BIG", collectorNumber = "27")
 public class TorporOrb extends Card {
 
     public TorporOrb() {

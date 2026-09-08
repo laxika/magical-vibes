@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "56")
+@CardRegistration(set = "AKR", collectorNumber = "63")
 public class HekmaSentinels extends Card {
 
     public HekmaSentinels() {

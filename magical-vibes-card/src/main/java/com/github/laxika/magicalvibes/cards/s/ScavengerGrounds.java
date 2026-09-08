@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "182")
+@CardRegistration(set = "AKR", collectorNumber = "328")
 public class ScavengerGrounds extends Card {
 
     public ScavengerGrounds() {

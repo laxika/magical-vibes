@@ -55,7 +55,7 @@ class WildgrowthArchaicTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castSorcery(player1, 0);
+        harness.castSorcery(player1, 0, 0);
         resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Wildgrowth Archaic")

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandAndCardToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -71,7 +72,8 @@ public class SearchLibraryForCardToHandAndCardToGraveyardEffectHandler implement
 
         String prompt = filter == null
                 ? "Search your library for a card to put into your hand."
-                : "Search your library for a creature card to put into your hand.";
+                : "Search your library for a " + CardPredicateUtils.describeFilter(filter)
+                        + " to put into your hand.";
         CardToGraveyardPick graveyardPick = new CardToGraveyardPick(filter, effect.canFailToFind(), effect.reveals());
 
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,

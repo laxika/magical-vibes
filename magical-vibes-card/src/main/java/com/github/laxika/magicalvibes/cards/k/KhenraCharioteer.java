@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "201")
+@CardRegistration(set = "AKR", collectorNumber = "241")
 public class KhenraCharioteer extends Card {
 
     public KhenraCharioteer() {

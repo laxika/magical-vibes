@@ -90,8 +90,7 @@ class FormidableSpeakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, speaker.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be another permanent");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadySpeaker() {

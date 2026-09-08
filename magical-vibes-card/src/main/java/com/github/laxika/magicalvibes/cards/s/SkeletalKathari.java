@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALA", collectorNumber = "88")
 public class SkeletalKathari extends Card {
@@ -18,8 +17,7 @@ public class SkeletalKathari extends Card {
                 false,
                 "{B}",
                 List.of(new SacrificeCreatureCost(), new RegenerateEffect()),
-                "{B}, Sacrifice a creature: Regenerate Skeletal Kathari.",
-                TargetFilters.creatureYouControl()
+                "{B}, Sacrifice a creature: Regenerate Skeletal Kathari."
         ));
     }
 }

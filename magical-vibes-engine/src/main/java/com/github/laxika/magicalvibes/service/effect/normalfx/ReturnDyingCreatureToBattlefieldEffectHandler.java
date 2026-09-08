@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,6 +28,7 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final EquipSupport equipSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,13 +49,23 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
             log.info("Game {} - Return+attach fizzles, card not in {}'s graveyard", gameData.id, playerName);
             return;
         }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCard.getId());
 
         // Remove from graveyard
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCard.getId());
 
         // Put onto the battlefield
         Permanent creature = new Permanent(dyingCard);
+        CounterType enterWithCounter = e.enterWithCounter();
+        if (enterWithCounter != null && e.enterWithCounterCount() > 0) {
+            creature.setCounterCount(enterWithCounter,
+                    creature.getCounterCount(enterWithCounter) + e.enterWithCounterCount());
+        }
+        creature.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, creature);
+        if (graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
+            graveyardReturnSupport.trackStolenCreature(gameData, creature.getId(), controllerId, graveyardOwnerId);
+        }
 
         
         gameLogService.append(gameData, GameLog.builder().card(dyingCard).text(" returns to the battlefield under " + playerName + "'s control.").build());
@@ -65,10 +77,17 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
                 ? gameQueryService.findPermanentById(gameData, equipmentId)
                 : null;
         if (equipment != null) {
+            UUID oldAttachedTo = equipment.getAttachedTo();
             gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
             equipment.setAttachedTo(creature.getId());
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
             equipment.setTimestamp(gameData.nextTimestamp());
+            equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, creature.getId());
+            equipSupport.expireAttachedCopyEffects(gameData, equipment);
+            equipment.setAttachedTo(creature.getId());
+            // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+            equipment.setTimestamp(gameData.nextTimestamp());
+            equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
             
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " is now attached to ", dyingCard, "."));
             log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), dyingCard.getName());

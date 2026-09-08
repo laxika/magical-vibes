@@ -13,6 +13,7 @@ import java.util.List;
 public class Aladdin extends Card {
 
     public Aladdin() {
+        // {1}{R}{R}, {T}: Gain control of target artifact for as long as you control this creature.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{R}{R}",

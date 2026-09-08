@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -17,22 +19,28 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -42,10 +50,17 @@ import java.util.UUID;
  * handlers reuse these helpers; behavior is identical to the original monolith privates.
  */
 @Component
-@RequiredArgsConstructor
 public class StaticEffectSupport {
 
     private final GameQueryService gameQueryService;
+
+    private final AmountEvaluationService amountEvaluationService;
+
+    @Autowired
+    public StaticEffectSupport(GameQueryService gameQueryService, AmountEvaluationService amountEvaluationService) {
+        this.gameQueryService = gameQueryService;
+        this.amountEvaluationService = amountEvaluationService;
+    }
 
     /**
      * Evaluates the filter predicates the handlers pass in. Injected lazily because the
@@ -74,11 +89,20 @@ public class StaticEffectSupport {
             CardSubtype.BOLAS
     );
 
+    static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.landTypes());
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
+    }
+
     /**
      * Returns true if the target matches the given creature-centric scope.
-     * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_UNTAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES.
+     * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_UNTAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, and OWN_PERMANENTS.
      */
     public boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
+        if (scope == GrantScope.OWN_PERMANENTS) {
+            return context.targetOnSameBattlefield()
+                    && matchesStaticFilter(context, context.target(), filter);
+        }
         if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.ENCHANTED_PERMANENT || scope == GrantScope.EQUIPPED_CREATURE) {
             return context.source().isAttached()
                     && context.source().getAttachedTo().equals(context.target().getId())
@@ -109,6 +133,10 @@ public class StaticEffectSupport {
         if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+            if ((scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_CREATURES)
+                    && context.target().getId().equals(context.source().getId())) {
+                return false;
+            }
             boolean ownCheck = scope == GrantScope.ALL_CREATURES
                     || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
                     || (scope == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield())
@@ -145,30 +173,76 @@ public class StaticEffectSupport {
     }
 
     public boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
-        if (permanent.getCard().hasType(CardType.CREATURE)) return true;
+        if (permanent.isFaceDown()) return true;
+        CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
+        if (activeState != null && activeState.hasCardType(CardType.CREATURE)) return true;
+        if (activeState == null && permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
+        if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
-        if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
-        if (gameData != null && permanent.getCard().hasType(CardType.LAND)
+        boolean artifact = activeState != null
+                ? activeState.hasCardType(CardType.ARTIFACT)
+                : permanent.getCard().hasType(CardType.ARTIFACT);
+        if (hasAnimateArtifacts && artifact) return true;
+        boolean land = activeState != null
+                ? activeState.hasCardType(CardType.LAND)
+                : permanent.getCard().hasType(CardType.LAND);
+        if (gameData != null && land
                 && matchesAnimateLand(gameData, permanent)) return true;
         if (gameData != null && gameQueryService.isAnimatedByStarfield(gameData, permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
         return false;
     }
 
+    /**
+     * Returns a permanent's current effective color count, including layer-5 color changes while
+     * the layered pass is active.
+     */
+    public int effectiveColorCount(Permanent permanent) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null) {
+            return layered.getColors().size();
+        }
+        Set<CardColor> colors = new HashSet<>();
+        if (permanent.isColorOverridden()) {
+            colors.addAll(permanent.getTransientColors());
+        } else {
+            colors.addAll(permanent.getEffectiveColors());
+            colors.addAll(permanent.getTransientColors());
+        }
+        return colors.size();
+    }
+
     public void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
         if (wrapped instanceof StaticBoostEffect boost) {
             if (selfInScope(context, boost.scope(), boost.filter())) {
-                accumulator.addPower(boost.powerBoost());
-                accumulator.addToughness(boost.toughnessBoost());
+                int multiplier = boost.scalingCounter() == null
+                        ? 1
+                        : (boost.scalingCounterOnTarget()
+                                ? context.target().getCounterCount(boost.scalingCounter())
+                                : context.source().getCounterCount(boost.scalingCounter()));
+                accumulator.addPower(boost.powerBoost() * multiplier);
+                accumulator.addToughness(boost.toughnessBoost() * multiplier);
                 accumulator.addKeywords(boost.grantedKeywords());
             }
+        } else if (wrapped instanceof BoostSelfEffect boost) {
+            AmountContext amountContext =
+                    AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
+            accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), boost.powerBoost(), amountContext));
+            accumulator.addToughness(amountEvaluationService.evaluate(context.gameData(), boost.toughnessBoost(), amountContext));
         } else if (wrapped instanceof GrantKeywordEffect grant) {
             if (grant.scope() == GrantScope.SELF_AND_PAIRED
                     || selfInScope(context, grant.scope(), grant.filter())) {
                 accumulator.addKeywords(grant.keywords());
+            }
+        } else if (wrapped instanceof GrantSubtypeEffect grant) {
+            if (selfInScope(context, grant.scope(), grant.filter())) {
+                accumulator.addGrantedSubtype(grant.subtype());
+                if (grant.overriding()) {
+                    accumulator.setSubtypeOverriding(true);
+                }
             }
         } else if (wrapped instanceof GrantActivatedAbilityEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
@@ -178,7 +252,7 @@ public class StaticEffectSupport {
             }
         } else if (wrapped instanceof GrantColorEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                    || selfInScope(context, grant.scope(), null)) {
+                    || selfInScope(context, grant.scope(), grant.filter())) {
                 accumulator.addGrantedColor(grant.color());
                 if (grant.overriding()) {
                     accumulator.setColorOverriding(true);
@@ -191,6 +265,10 @@ public class StaticEffectSupport {
             }
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
+        } else if (wrapped instanceof SetBasePowerToughnessEffect setPT
+                && setPT.scope() == GrantScope.SELF
+                && matchesStaticFilter(context, context.target(), setPT.filter())) {
+            accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
         } else if (wrapped instanceof GrantEffectEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
                     || matchesStaticFilter(context, context.target(), grant.filter())) {
@@ -244,6 +322,10 @@ public class StaticEffectSupport {
         return predicateEvaluationService.matchesStaticLeaf(target, leaf);
     }
 
+    public boolean sharesCreatureType(Permanent first, Permanent second) {
+        return predicateEvaluationService.sharesCreatureType(first, second);
+    }
+
     /**
      * The board shape and source identity the four board-reading filter predicates need. The
      * source is identified by its current card id, which is what a clone's filter must match on.
@@ -279,6 +361,11 @@ public class StaticEffectSupport {
             for (Permanent source : bf) {
                 for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (e instanceof AllLandsAreCreaturesEffect animateLands
+                            && (animateLands.scope() == GrantScope.ALL_LANDS
+                                    || (animateLands.scope() == GrantScope.OWN_LANDS
+                                            && bf.contains(permanent))
+                                    || (animateLands.scope() == GrantScope.OPPONENT_LANDS
+                                            && !bf.contains(permanent)))
                             && (animateLands.requiredSubtype() == null
                                     || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))) {
                         return true;

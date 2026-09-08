@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "139")
+@CardRegistration(set = "BRB", collectorNumber = "70")
 public class SewerRats extends Card {
 
     public SewerRats() {

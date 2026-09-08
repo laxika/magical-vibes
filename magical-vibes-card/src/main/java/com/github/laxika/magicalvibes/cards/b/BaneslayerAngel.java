@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "4")
 @CardRegistration(set = "M11", collectorNumber = "7")
+@CardRegistration(set = "M21", collectorNumber = "6")
 public class BaneslayerAngel extends Card {
 
     public BaneslayerAngel() {

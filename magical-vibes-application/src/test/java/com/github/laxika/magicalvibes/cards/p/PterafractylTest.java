@@ -23,6 +23,7 @@ class PterafractylTest extends BaseCardTest {
 
         gs.playCard(gd, player1, 0, 3, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent pterafractyl = findPermanent(player1, "Pterafractyl");
         assertThat(pterafractyl.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

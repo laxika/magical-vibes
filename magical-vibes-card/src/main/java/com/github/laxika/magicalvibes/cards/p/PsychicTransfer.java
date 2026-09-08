@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "90")
 @CardRegistration(set = "MIR", collectorNumber = "85")
+@CardRegistration(set = "S99", collectorNumber = "46")
 public class PsychicTransfer extends Card {
 
     public PsychicTransfer() {

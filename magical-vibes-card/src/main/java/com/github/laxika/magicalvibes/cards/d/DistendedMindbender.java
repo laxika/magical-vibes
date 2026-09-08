@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "3")
+@CardRegistration(set = "EMN", collectorNumber = "3")
 public class DistendedMindbender extends Card {
 
     public DistendedMindbender() {

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "18")
 @CardRegistration(set = "INV", collectorNumber = "37")
+@CardRegistration(set = "TPR", collectorNumber = "26")
 public class Shackles extends Card {
 
     public Shackles() {

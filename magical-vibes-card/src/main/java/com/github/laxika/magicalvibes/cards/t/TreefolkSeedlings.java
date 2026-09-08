@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "277")
+@CardRegistration(set = "USG", collectorNumber = "278")
 public class TreefolkSeedlings extends Card {
 
     public TreefolkSeedlings() {

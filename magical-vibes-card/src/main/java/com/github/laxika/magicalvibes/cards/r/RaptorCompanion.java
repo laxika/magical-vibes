@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "XLN", collectorNumber = "31")
+@CardRegistration(set = "RIX", collectorNumber = "19")
 public class RaptorCompanion extends Card {
 }

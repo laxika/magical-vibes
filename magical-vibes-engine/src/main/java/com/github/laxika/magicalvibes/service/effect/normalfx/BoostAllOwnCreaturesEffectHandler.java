@@ -5,7 +5,11 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -17,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -43,28 +48,47 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
 
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(source);
         int count = 0;
         for (Permanent permanent : battlefield) {
+            if (boost.excludeTargets()
+                    && (permanent.getId().equals(entry.getTargetId())
+                        || entry.getDeclaredTargetIds().contains(permanent.getId()))) {
+                continue;
+            }
             if (gameQueryService.isCreature(gameData, permanent)
                     && (boost.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
-                permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
-                permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
+                if (boost.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN) {
+                    gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                            entry.getCard().getName(), null, entry.getControllerId(),
+                            new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),
+                            permanent.getId(), null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                } else {
+                    permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
+                    permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
+                }
                 count++;
             }
         }
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(String.format(" gives %+d/%+d to %d creature(s) until end of turn.",
-                        powerBoost, toughnessBoost, count))
+                .text(String.format(" gives %+d/%+d to %d creature(s) %s.",
+                        powerBoost, toughnessBoost, count,
+                        boost.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                                ? "until your next turn" : "until end of turn"))
                 .build());
 
         log.info("Game {} - {} boosts {} creatures {}/{}", gameData.id, entry.getCard().getName(), count, powerBoost, toughnessBoost);

@@ -14,12 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 public class Metamorphosis extends Card {
 
     public Metamorphosis() {
-        // As an additional cost to cast this spell, sacrifice a creature; its mana value is used below.
+        // As an additional cost to cast this spell, sacrifice a creature.
         addEffect(EffectSlot.SPELL, new SacrificeCreatureCost(true));
-        // Add one plus the sacrificed creature's mana value as any one color, restricted to creature spells.
+        // Add X mana of any one color, where X is 1 plus the sacrificed creature's mana value.
         addEffect(EffectSlot.SPELL, new AwardAnyColorManaEffect(
-                new Sum(new Fixed(1), new XValue()),
-                ManaSpendRestriction.CREATURE_SPELL_ONLY,
-                null));
+                new Sum(new XValue(), new Fixed(1)), ManaSpendRestriction.CREATURE_SPELL_ONLY, null, false));
     }
 }

@@ -3,18 +3,18 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(GoblinBalloonBrigade.class)
 class GoblinBalloonBrigadeTest extends BaseCardTest {
 
     // ===== Flying ability =====
@@ -22,7 +22,7 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating flying ability puts it on the stack")
     void activatingFlyingPutsOnStack() {
-        Permanent brigade = addBrigadeReady(player1);
+        Permanent brigade = addCreatureReady(player1, new GoblinBalloonBrigade());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -37,7 +37,7 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving flying ability grants flying until end of turn")
     void resolvingFlyingAbilityGrantsFlying() {
-        Permanent brigade = addBrigadeReady(player1);
+        Permanent brigade = addCreatureReady(player1, new GoblinBalloonBrigade());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -48,9 +48,23 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flying ability affects only its source creature")
+    void flyingAbilityAffectsOnlySource() {
+        Permanent brigade = addCreatureReady(player1, new GoblinBalloonBrigade());
+        Permanent otherBrigade = addCreatureReady(player1, new GoblinBalloonBrigade());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, brigade, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherBrigade, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Flying granted by ability resets at end of turn cleanup")
     void flyingResetsAtEndOfTurn() {
-        Permanent brigade = addBrigadeReady(player1);
+        Permanent brigade = addCreatureReady(player1, new GoblinBalloonBrigade());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -70,7 +84,7 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability does NOT tap Goblin Balloon Brigade")
     void activatingAbilityDoesNotTap() {
-        Permanent brigade = addBrigadeReady(player1);
+        Permanent brigade = addCreatureReady(player1, new GoblinBalloonBrigade());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -81,7 +95,7 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without red mana")
     void cannotActivateWithoutRedMana() {
-        addBrigadeReady(player1);
+        addCreatureReady(player1, new GoblinBalloonBrigade());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -91,7 +105,7 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability when tapped")
     void canActivateWhenTapped() {
-        Permanent brigade = addBrigadeReady(player1);
+        Permanent brigade = addCreatureReady(player1, new GoblinBalloonBrigade());
         brigade.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -119,7 +133,7 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if Goblin Balloon Brigade is removed before resolution")
     void abilityFizzlesIfSourceRemoved() {
-        addBrigadeReady(player1);
+        addCreatureReady(player1, new GoblinBalloonBrigade());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -131,12 +145,4 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
-
-    private Permanent addBrigadeReady(Player player) {
-        Permanent perm = new Permanent(new GoblinBalloonBrigade());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PaleBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,22 +16,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Melee.class, PaleBears.class})
 class MeleeTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new PaleBears());
         attacker.setAttacking(true);
         attacker.tap();
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     private Permanent addDefenderCreature() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-        return blocker;
+        return addCreatureReady(player2, new PaleBears());
     }
 
     /** Puts player1 in their own declare-attackers step with priority. */
@@ -110,6 +107,25 @@ class MeleeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each unblocked attacker is untapped and removed from combat")
+    void eachUnblockedAttackerIsUntappedAndRemovedFromCombat() {
+        enterDeclareAttackers();
+        Permanent firstAttacker = addAttacker();
+        Permanent secondAttacker = addAttacker();
+        addDefenderCreature();
+        castMelee();
+
+        advanceToBlockerDeclaration();
+        gs.declareBlockers(gd, player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(firstAttacker.isTapped()).isFalse();
+        assertThat(firstAttacker.isAttacking()).isFalse();
+        assertThat(secondAttacker.isTapped()).isFalse();
+        assertThat(secondAttacker.isAttacking()).isFalse();
+    }
+
+    @Test
     @DisplayName("A blocked attacker is neither untapped nor removed from combat")
     void blockedAttackerIsUnaffected() {
         enterDeclareAttackers();
@@ -177,6 +193,36 @@ class MeleeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Melee can't be cast before combat begins")
+    void cannotBeCastBeforeCombatBegins() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Melee()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Melee can be cast during the beginning of combat step")
+    void canBeCastDuringBeginningOfCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Melee()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Melee");
     }
 
     @Test

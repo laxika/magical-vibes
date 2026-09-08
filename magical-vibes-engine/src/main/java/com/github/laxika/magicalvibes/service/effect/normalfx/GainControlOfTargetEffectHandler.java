@@ -39,8 +39,11 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         switch (e.duration()) {
             case PERMANENT -> resolvePermanent(gameData, entry, e);
             case END_OF_TURN -> resolveEndOfTurn(gameData, entry, e);
-            case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_TAPPED -> resolveWhileSource(gameData, entry, e, true);
-            case WHILE_SOURCE_REMAINS -> resolveWhileSource(gameData, entry, e, false);
+            case UNTIL_END_OF_YOUR_NEXT_TURN -> resolveEndOfTurn(gameData, entry, e);
+            case WHILE_SOURCE_ON_BATTLEFIELD -> resolveWhileSource(gameData, entry, e, true, false);
+            case WHILE_SOURCE_TAPPED -> resolveWhileSource(gameData, entry, e, true, true);
+            case WHILE_SOURCE_REMAINS -> resolveWhileSource(gameData, entry, e, false, false);
+            case WHILE_SOURCE_REMAINS_TAPPED -> resolveWhileSource(gameData, entry, e, false, true);
         }
     }
 
@@ -80,13 +83,14 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
             // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
             if (e.tapWhenControlLost()) {
-                gameData.permanentsToTapWhenControlLost.add(target.getId());
+                gameData.registerControlLossTapTrigger(
+                        target.getId(), entry.getControllerId(), entry.getCard());
             }
         }
     }
 
     private void resolveWhileSource(GameData gameData, StackEntry entry, GainControlOfTargetEffect e,
-                                    boolean requireSourceController) {
+                                    boolean requireSourceController, boolean requireSourceTapped) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
@@ -99,13 +103,22 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
                     "'s ability has no effect (source left the battlefield)."));
             return;
         }
+        Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
         if (requireSourceController) {
             UUID sourceController = gameQueryService.findPermanentController(gameData, sourcePermanentId);
-            if (sourceController == null || !sourceController.equals(entry.getControllerId())) {
+            if (sourceController == null || !sourceController.equals(entry.getControllerId())
+                    || sourceSnapshot != null
+                    && source.getControlChangeSequence() != sourceSnapshot.getControlChangeSequence()) {
                 gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                         "'s ability has no effect (controller no longer controls " + source.getCard().getName() + ")."));
                 return;
             }
+        }
+        if (requireSourceTapped && (!source.isTapped() || sourceSnapshot != null
+                && source.getUntapSequence() != sourceSnapshot.getUntapSequence())) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s ability has no effect (" + source.getCard().getName() + " is no longer tapped)."));
+            return;
         }
 
         creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,

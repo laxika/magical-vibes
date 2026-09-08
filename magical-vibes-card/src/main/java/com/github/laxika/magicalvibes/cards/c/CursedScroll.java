@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseNameRevealRandomCardFro
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "281")
+@CardRegistration(set = "TPR", collectorNumber = "220")
 public class CursedScroll extends Card {
 
     public CursedScroll() {

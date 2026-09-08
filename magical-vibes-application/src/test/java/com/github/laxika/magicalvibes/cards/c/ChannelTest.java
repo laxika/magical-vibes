@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Channel.class, GrizzlyBears.class, PlatinumEmperion.class})
 class ChannelTest extends BaseCardTest {
 
     private void castChannel() {
         harness.setHand(player1, List.of(new Channel()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     @Test
@@ -97,10 +100,20 @@ class ChannelTest extends BaseCardTest {
 
         assertThat(gd.mayPayLifeForColorlessManaUntilEndOfTurn).isNotEmpty();
 
-        // Simulate end-of-turn cleanup (TurnCleanupService clears this set)
-        gd.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThatThrownBy(() -> harness.payLifeForColorlessMana(player1))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotPayLifeWhenLifeTotalCannotChange() {
+        castChannel();
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+
+        assertThatThrownBy(() -> harness.payLifeForColorlessMana(player1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }

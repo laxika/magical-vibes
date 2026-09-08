@@ -53,7 +53,8 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
             verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
+                    eq(gd), eq(player2Id), any(), eq(5));
         }
 
         @Test
@@ -132,13 +133,31 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(17);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player1Id, 3);
             verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player1Id, null, false);
-            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player1Id);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
+                    eq(gd), eq(player1Id), any(), eq(3));
         }
     }
 
     @Nested
     @DisplayName("TARGET_PERMANENT_CONTROLLER recipient")
     class TargetPermanentController {
+
+        @Test
+        void usesTheControllerRememberedBeforeAnEarlierEffectDestroyedTheTarget() {
+            UUID removedId = UUID.randomUUID();
+            StackEntry entry = createEntry(createCard("Destruction and damage"), player1Id, removedId);
+            entry.getRemovedPermanentControllers().put(removedId, player2Id);
+            stubNoDamageMultiplier();
+            stubDamageFromSourceNotPrevented();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(2,
+                    DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
+            assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
+        }
 
         @Test
         @DisplayName("Deals to the targeted creature's controller as the victim, without remapping the damage source")

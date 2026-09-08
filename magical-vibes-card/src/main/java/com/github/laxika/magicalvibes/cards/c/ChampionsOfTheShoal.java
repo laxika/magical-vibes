@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ECL", collectorNumber = "46")
+@CardRegistration(set = "ECL", collectorNumber = "356")
 public class ChampionsOfTheShoal extends Card {
 
     public ChampionsOfTheShoal() {

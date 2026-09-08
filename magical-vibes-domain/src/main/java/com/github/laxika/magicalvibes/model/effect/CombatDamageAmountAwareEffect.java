@@ -12,4 +12,13 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public interface CombatDamageAmountAwareEffect extends CardEffect {
 
     DynamicAmount combatDamageAmount();
+
+    /**
+     * Materializes any combat-damage-dependent restriction that must be fixed when the trigger is
+     * created. Effects that only consume the event amount when they resolve keep their original
+     * form.
+     */
+    default CardEffect snapshotCombatDamage(int damageDealt) {
+        return this;
+    }
 }

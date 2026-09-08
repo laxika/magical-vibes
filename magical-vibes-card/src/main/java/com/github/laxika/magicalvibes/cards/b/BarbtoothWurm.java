@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
  * Vanilla creature, no special abilities.
  */
 @CardRegistration(set = "P02", collectorNumber = "122")
+@CardRegistration(set = "S99", collectorNumber = "125")
 public class BarbtoothWurm extends Card {
 }

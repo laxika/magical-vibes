@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.condition;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 
-/** The source permanent has at least {@code threshold} counters of the given type. */
+/** The source permanent has at least {@code threshold} counters of the given type. {@link CounterType#ANY} counts all counters. */
 public record SourceCounterThreshold(int threshold, CounterType counterType) implements Condition {
 
     @Override

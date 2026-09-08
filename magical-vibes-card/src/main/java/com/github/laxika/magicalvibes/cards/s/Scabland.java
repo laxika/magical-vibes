@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "325")
+@CardRegistration(set = "TPR", collectorNumber = "243")
 public class Scabland extends Card {
 
     public Scabland() {

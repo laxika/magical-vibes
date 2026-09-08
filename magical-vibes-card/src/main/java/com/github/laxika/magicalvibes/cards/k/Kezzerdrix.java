@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "139")
+@CardRegistration(set = "TPR", collectorNumber = "107")
 public class Kezzerdrix extends Card {
 
     public Kezzerdrix() {

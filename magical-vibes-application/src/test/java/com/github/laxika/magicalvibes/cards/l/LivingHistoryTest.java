@@ -24,6 +24,7 @@ class LivingHistoryTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
         Permanent spirit = findPermanent(player1, "Spirit");

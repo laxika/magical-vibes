@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.b.BogWraith;
+import com.github.laxika.magicalvibes.cards.d.Deathlace;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.v.VampireAristocrat;
+import com.github.laxika.magicalvibes.cards.p.Purelace;
+import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,16 +20,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Abomination.class, BogWraith.class, Deathlace.class, GiantSpider.class, Purelace.class,
+        SavannahLions.class, ScatheZombies.class})
 class AbominationTest extends BaseCardTest {
-
-    // ===== Abomination becomes blocked =====
 
     @Test
     @DisplayName("When Abomination becomes blocked by a green creature, that creature is scheduled for end-of-combat destruction")
     void becomesBlockedByGreenSchedulesDestruction() {
-        Permanent abomination = addReadyAbomination(player1);
+        Permanent abomination = addCreatureReady(player1, new Abomination());
         abomination.setAttacking(true);
-        Permanent spider = addReadySpider(player2); // green, 2/4
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -43,16 +47,16 @@ class AbominationTest extends BaseCardTest {
     @Test
     @DisplayName("When Abomination becomes blocked by a white creature, that creature is scheduled for end-of-combat destruction")
     void becomesBlockedByWhiteSchedulesDestruction() {
-        Permanent abomination = addReadyAbomination(player1);
+        Permanent abomination = addCreatureReady(player1, new Abomination());
         abomination.setAttacking(true);
-        Permanent vanguard = addReadyVanguard(player2); // white
+        Permanent lions = addCreatureReady(player2, new SavannahLions());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(vanguard.getId()));
+                .anyMatch(a -> a.permanentId().equals(lions.getId()));
     }
 
     @Test
@@ -61,9 +65,9 @@ class AbominationTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent abomination = addReadyAbomination(player1);
+        Permanent abomination = addCreatureReady(player1, new Abomination());
         abomination.setAttacking(true);
-        addReadySpider(player2); // 2/4 survives Abomination's 2 damage
+        addCreatureReady(player2, new GiantSpider());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -78,9 +82,9 @@ class AbominationTest extends BaseCardTest {
     @Test
     @DisplayName("When Abomination becomes blocked by a black creature, nothing is scheduled for destruction")
     void becomesBlockedByBlackSchedulesNothing() {
-        Permanent abomination = addReadyAbomination(player1);
+        Permanent abomination = addCreatureReady(player1, new Abomination());
         abomination.setAttacking(true);
-        addReadyVampire(player2); // black
+        addCreatureReady(player2, new ScatheZombies());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -89,14 +93,12 @@ class AbominationTest extends BaseCardTest {
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
     }
 
-    // ===== Abomination blocks =====
-
     @Test
     @DisplayName("When Abomination blocks a green creature, that attacker is scheduled for end-of-combat destruction")
     void blocksGreenSchedulesDestruction() {
-        Permanent attacker = addReadySpider(player1); // green, 2/4
+        Permanent attacker = addCreatureReady(player1, new GiantSpider());
         attacker.setAttacking(true);
-        addReadyAbomination(player2);
+        addCreatureReady(player2, new Abomination());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -114,9 +116,9 @@ class AbominationTest extends BaseCardTest {
     @Test
     @DisplayName("When Abomination blocks a black creature, nothing is scheduled for destruction")
     void blocksBlackSchedulesNothing() {
-        Permanent attacker = addReadyVampire(player1); // black
+        Permanent attacker = addCreatureReady(player1, new ScatheZombies());
         attacker.setAttacking(true);
-        addReadyAbomination(player2);
+        addCreatureReady(player2, new Abomination());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -125,33 +127,47 @@ class AbominationTest extends BaseCardTest {
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A green creature that changes color after blocking is still destroyed at end of combat")
+    void greenCreatureChangingColorAfterBlockingIsStillDestroyed() {
+        Permanent abomination = addCreatureReady(player1, new Abomination());
+        abomination.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
 
-    private Permanent addReadyAbomination(Player player) {
-        Permanent perm = new Permanent(new Abomination());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.setHand(player2, List.of(new Deathlace()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, spider.getId());
+        resolveAllTriggers();
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 
-    private Permanent addReadySpider(Player player) {
-        Permanent perm = new Permanent(new GiantSpider());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    @DisplayName("A black creature that changes color after blocking does not become eligible for destruction")
+    void blackCreatureChangingColorAfterBlockingIsNotDestroyed() {
+        Permanent abomination = addCreatureReady(player1, new Abomination());
+        abomination.setAttacking(true);
+        Permanent wraith = addCreatureReady(player2, new BogWraith());
 
-    private Permanent addReadyVanguard(Player player) {
-        Permanent perm = new Permanent(new EliteVanguard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+        harness.setHand(player2, List.of(new Purelace()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
-    private Permanent addReadyVampire(Player player) {
-        Permanent perm = new Permanent(new VampireAristocrat());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, wraith.getId());
+        resolveAllTriggers();
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Bog Wraith");
+        harness.assertNotInGraveyard(player2, "Bog Wraith");
     }
 }

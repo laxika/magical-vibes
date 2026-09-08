@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "115")
+@CardRegistration(set = "AKR", collectorNumber = "133")
 public class WanderInDeath extends Card {
 
     public WanderInDeath() {

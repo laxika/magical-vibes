@@ -23,9 +23,9 @@ class RiddlemasterSphinxTest extends BaseCardTest {
         castRiddlemasterSphinx();
 
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bearsId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -38,6 +38,7 @@ class RiddlemasterSphinxTest extends BaseCardTest {
         castRiddlemasterSphinx();
 
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

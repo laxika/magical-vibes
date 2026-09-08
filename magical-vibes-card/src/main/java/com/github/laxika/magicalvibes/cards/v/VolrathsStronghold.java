@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "143")
+@CardRegistration(set = "TPR", collectorNumber = "248")
 public class VolrathsStronghold extends Card {
 
     public VolrathsStronghold() {

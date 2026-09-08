@@ -50,6 +50,7 @@ private void resolveCombatAndTrigger() {
 Minimal test class — assert **behavior through the engine**, never a card's effect wiring:
 
 ```java
+@CardUsed({ExampleCard.class, GrizzlyBears.class})
 class ExampleCardTest extends BaseCardTest {
 
     @Test
@@ -68,6 +69,10 @@ class ExampleCardTest extends BaseCardTest {
     }
 }
 ```
+
+`@CardUsed` preloads oracle data before test setup. List every concrete card class constructed by
+the annotated scope, including support cards. Put cards shared by the suite on the class and cards
+used by only one scenario on that test method.
 
 **Do NOT test Scryfall metadata** (name, type, mana cost, color, power, toughness, subtypes, keywords) — it is auto-loaded from Scryfall.
 

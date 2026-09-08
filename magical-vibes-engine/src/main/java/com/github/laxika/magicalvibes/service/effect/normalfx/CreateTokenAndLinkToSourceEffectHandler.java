@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,26 +9,25 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenAndLinkToSourceEff
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Creates a token and links the first token created to the source permanent. Additional tokens from
- * a token-doubling replacement effect are not linked, matching the singular token reference in the
- * card text.
+ * Creates a token using the normal token pipeline and records the source/token relationship needed
+ * by Stangg-style paired leaves-the-battlefield abilities.
  */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenAndLinkToSourceEffectHandler implements NormalEffectHandlerBean {
 
-    private final PermanentControlSupport permanentControlSupport;
+    private final CreateTokenEffectHandler createTokenEffectHandler;
     private final GameQueryService gameQueryService;
-    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,38 +36,37 @@ public class CreateTokenAndLinkToSourceEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (CreateTokenAndLinkToSourceEffect) effect;
-        Permanent liveSource = entry.getSourcePermanentId() == null
+        var linked = (CreateTokenAndLinkToSourceEffect) effect;
+        Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent amountSource = liveSource != null ? liveSource : entry.getSourcePermanentSnapshot();
-        AmountContext context = AmountContext.forStackEntry(entry, amountSource);
-        int amount = amountEvaluationService.evaluate(gameData, e.token().amount(), context);
-        if (amount <= 0) {
+
+        CreateTokenEffect token = linked.token();
+        if (source != null && linked.linkTokenToSource()) {
+            var tokenEffects = new EnumMap<EffectSlot, CardEffect>(EffectSlot.class);
+            if (token.tokenEffects() != null) {
+                tokenEffects.putAll(token.tokenEffects());
+            }
+            tokenEffects.put(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                    new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE));
+            token = token.withTokenEffects(tokenEffects);
+        }
+
+        int firstCreatedIndex = entry.getCreatedPermanentIds().size();
+        createTokenEffectHandler.resolve(gameData, entry, token);
+        if (source == null || entry.getCreatedPermanentIds().size() == firstCreatedIndex) {
             return;
         }
 
-        int power = amountEvaluationService.evaluate(gameData, e.token().power(), context);
-        int toughness = amountEvaluationService.evaluate(gameData, e.token().toughness(), context);
-        List<UUID> created = permanentControlSupport.applyCreateToken(
-                gameData, entry.getControllerId(), e.token(), amount, entry.getCard().getSetCode(), power, toughness);
-        entry.getCreatedPermanentIds().addAll(created);
-
-        if (liveSource == null || created.isEmpty()) {
-            return;
+        List<UUID> createdIds = new ArrayList<>(entry.getCreatedPermanentIds()
+                .subList(firstCreatedIndex, entry.getCreatedPermanentIds().size()));
+        gameData.sourceCreatedTokens
+                .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .addAll(createdIds);
+        for (UUID createdId : createdIds) {
+            Permanent tokenPermanent = gameQueryService.findPermanentById(gameData, createdId);
+            if (tokenPermanent != null) {
+                tokenPermanent.setChosenPermanentId(source.getId());
+            }
         }
-
-        Permanent token = gameQueryService.findPermanentById(gameData, created.getFirst());
-        if (token == null) {
-            return;
-        }
-
-        Card tokenCard = token.getCard().createRuntimeCopy();
-        tokenCard.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE));
-        tokenCard.freeze();
-        token.setCard(tokenCard);
-
-        liveSource.setChosenPermanentId(token.getId());
-        token.setChosenPermanentId(liveSource.getId());
     }
 }

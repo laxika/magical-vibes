@@ -1,0 +1,35 @@
+package com.github.laxika.magicalvibes.cards.s;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+
+import java.util.List;
+import java.util.Set;
+
+@CardRegistration(set = "DFT", collectorNumber = "180")
+public class SilkenStrength extends Card {
+
+    public SilkenStrength() {
+        PermanentPredicate creatureOrVehicle = new PermanentAnyOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
+
+        target(new PermanentPredicateTargetFilter(creatureOrVehicle, "Target must be a creature or Vehicle"))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED))
+                .addEffect(EffectSlot.STATIC,
+                        new StaticBoostEffect(1, 2, Set.of(Keyword.REACH), GrantScope.ENCHANTED_PERMANENT));
+    }
+}

@@ -23,6 +23,7 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
+    private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,7 +55,13 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
                 List<UUID> validCreatureIds = new ArrayList<>();
                 if (defenderBattlefield != null) {
                     for (Permanent perm : defenderBattlefield) {
-                        if (gameQueryService.isCreature(gameData, perm)) {
+                        if (gameQueryService.isCreature(gameData, perm)
+                                && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                                        gameData, perm, entry.getCard(), controllerId).isEmpty()
+                                && (((SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect) effect)
+                                        .eligibleTargetIds().isEmpty()
+                                || ((SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect) effect)
+                                        .eligibleTargetIds().contains(perm.getId()))) {
                             validCreatureIds.add(perm.getId());
                         }
                     }

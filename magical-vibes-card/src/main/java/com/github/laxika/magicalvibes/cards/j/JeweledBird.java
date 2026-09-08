@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.JeweledBirdAnteEffect;
-
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "102")

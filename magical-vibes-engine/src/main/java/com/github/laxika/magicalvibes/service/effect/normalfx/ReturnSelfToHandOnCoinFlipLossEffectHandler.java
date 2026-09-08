@@ -8,18 +8,27 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLos
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class ReturnSelfToHandOnCoinFlipLossEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final BounceSupport bounceSupport;
     private final CoinFlipService coinFlipService;
     private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    public ReturnSelfToHandOnCoinFlipLossEffectHandler(GameLogService gameLogService,
+                                                       BounceSupport bounceSupport,
+                                                       CoinFlipService coinFlipService,
+                                                       TriggerCollectionService triggerCollectionService) {
+        this.gameLogService = gameLogService;
+        this.bounceSupport = bounceSupport;
+        this.coinFlipService = coinFlipService;
+        this.triggerCollectionService = triggerCollectionService;
+    }
 
     public ReturnSelfToHandOnCoinFlipLossEffectHandler(GameLogService gameLogService,
                                                        BounceSupport bounceSupport) {
@@ -53,6 +62,8 @@ public class ReturnSelfToHandOnCoinFlipLossEffectHandler implements NormalEffect
 
         if (wonFlip && triggerCollectionService != null) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        } else if (!wonFlip && triggerCollectionService != null) {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
         }
 
         if (wonFlip) {

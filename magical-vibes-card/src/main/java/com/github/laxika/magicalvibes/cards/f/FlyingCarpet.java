@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "297")
 @CardRegistration(set = "6ED", collectorNumber = "285")
 @CardRegistration(set = "4ED", collectorNumber = "320")
+@CardRegistration(set = "SUM", collectorNumber = "248")
 public class FlyingCarpet extends Card {
 
     public FlyingCarpet() {

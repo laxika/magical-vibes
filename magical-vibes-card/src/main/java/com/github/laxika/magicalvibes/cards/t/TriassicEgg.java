@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "110")
+@CardRegistration(set = "LEG", collectorNumber = "297")
 public class TriassicEgg extends Card {
 
     public TriassicEgg() {
@@ -27,25 +27,31 @@ public class TriassicEgg extends Card {
                 "{3}, {T}: Put a hatchling counter on this artifact."
         ));
 
-        CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new ChooseOneEffect(List.of(
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "You may put a creature card from your hand onto the battlefield.",
-                                        new MayEffect(
-                                                new PutCardToBattlefieldEffect(creature, "creature"),
-                                                "Put a creature card from your hand onto the battlefield?")),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Return target creature card from your graveyard to the battlefield.",
-                                        ReturnCardFromGraveyardEffect.builder()
-                                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                                .filter(creature)
-                                                .build())))),
-                "Sacrifice this artifact: Choose one. Activate only if there are two or more hatchling counters on this artifact."
+                        new MayEffect(
+                                new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"),
+                                "Put a creature card from your hand onto the battlefield?"
+                        )
+                ),
+                "Sacrifice this artifact: You may put a creature card from your hand onto the battlefield."
+        ).withRequiredSourceCounters(CounterType.HATCHLING, 2));
+
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                null,
+                List.of(
+                        new SacrificeSelfCost(),
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                .targetGraveyard(true)
+                                .build()
+                ),
+                "Sacrifice this artifact: Return target creature card from your graveyard to the battlefield."
         ).withRequiredSourceCounters(CounterType.HATCHLING, 2));
     }
 }

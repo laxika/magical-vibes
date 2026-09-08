@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "32")
+@CardRegistration(set = "ECL", collectorNumber = "354")
 public class RhysTheEvermore extends Card {
 
     public RhysTheEvermore() {

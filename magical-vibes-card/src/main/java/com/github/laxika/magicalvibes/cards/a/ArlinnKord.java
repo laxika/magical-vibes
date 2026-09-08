@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "230")
 @CardRegistration(set = "INR", collectorNumber = "324")
+@CardRegistration(set = "SOI", collectorNumber = "243")
 public class ArlinnKord extends Card {
 
     public ArlinnKord() {

@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "M10", collectorNumber = "110")
 @CardRegistration(set = "M11", collectorNumber = "116")
 @CardRegistration(set = "M12", collectorNumber = "105")
+@CardRegistration(set = "SUM", collectorNumber = "125")
 public class RoyalAssassin extends Card {
 
     public RoyalAssassin() {

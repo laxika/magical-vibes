@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "258")
+@CardRegistration(set = "ECL", collectorNumber = "381")
 public class MirrormindCrown extends Card {
 
     public MirrormindCrown() {

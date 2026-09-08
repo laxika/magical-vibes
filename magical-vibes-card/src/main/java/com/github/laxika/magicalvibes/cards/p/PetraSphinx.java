@@ -8,13 +8,13 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerNameCardRevealTop
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "10")
+@CardRegistration(set = "LEG", collectorNumber = "30")
 public class PetraSphinx extends Card {
 
     public PetraSphinx() {
-        addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new TargetPlayerNameCardRevealTopEffect(0)),
+        addActivatedAbility(new ActivatedAbility(true, null, List.of(new TargetPlayerNameCardRevealTopEffect(0)),
                 "{T}: Target player chooses a card name, then reveals the top card of their library. "
-                        + "If that card has the chosen name, that player puts it into their hand. If it doesn't, "
-                        + "the player puts it into their graveyard."));
+                        + "If that card has the chosen name, that player puts it into their hand. "
+                        + "If it doesn't, the player puts it into their graveyard."));
     }
 }

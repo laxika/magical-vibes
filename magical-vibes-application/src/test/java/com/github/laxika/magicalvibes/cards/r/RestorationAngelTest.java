@@ -27,10 +27,10 @@ class RestorationAngelTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -50,9 +50,9 @@ class RestorationAngelTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bearsId);
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.isSummoningSick()).isTrue();
@@ -67,6 +67,7 @@ class RestorationAngelTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -126,9 +127,9 @@ class RestorationAngelTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");

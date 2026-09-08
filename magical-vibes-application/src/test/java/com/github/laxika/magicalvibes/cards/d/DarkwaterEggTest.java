@@ -21,6 +21,10 @@ class DarkwaterEggTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Darkwater Egg");
         harness.assertInGraveyard(player1, "Darkwater Egg");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);

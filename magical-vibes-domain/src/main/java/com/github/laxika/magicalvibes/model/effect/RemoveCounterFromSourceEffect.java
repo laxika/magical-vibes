@@ -1,17 +1,34 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
  * Remove up to {@code amount} counters of the given type from the source permanent, clamped at zero
- * (no-op if it has none). Self-targeting, so trigger collectors carry the source permanent id onto
- * the stack entry. Used by Shrewd Hatchling ("Whenever you cast a blue/red spell, remove a -1/-1
- * counter from this creature").
+ * (no-op if it has none). A dynamic amount is evaluated on resolution. The player-targeting form
+ * uses the stack entry's target player for that amount while still removing counters from the source
+ * permanent. Used by Shrewd Hatchling and Descendant of Masumaro.
  */
-public record RemoveCounterFromSourceEffect(CounterType counterType, int amount) implements CardEffect {
+public record RemoveCounterFromSourceEffect(CounterType counterType, int amount, DynamicAmount dynamicAmount,
+                                            boolean targetsPlayer) implements CardEffect {
+
+    public RemoveCounterFromSourceEffect(CounterType counterType, int amount) {
+        this(counterType, amount, null, false);
+    }
+
+    public RemoveCounterFromSourceEffect(CounterType counterType, DynamicAmount dynamicAmount) {
+        this(counterType, 0, dynamicAmount, false);
+    }
+
+    public RemoveCounterFromSourceEffect(CounterType counterType, DynamicAmount dynamicAmount,
+                                         boolean targetsPlayer) {
+        this(counterType, 0, dynamicAmount, targetsPlayer);
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return new TargetSpec(null, false, null, true, 1);
+        return targetsPlayer
+                ? TargetSpec.benign(TargetPredicates.player())
+                : new TargetSpec(null, false, null, true, 1);
     }
 }

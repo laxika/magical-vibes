@@ -47,7 +47,10 @@ class GrimReminderTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
         assertThat(gd.playerDecks.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(searched.getId()));
+                .filteredOn(card -> card.getId().equals(searched.getId()))
+                .hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(searched.getId()));
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(searched.getId()));
     }

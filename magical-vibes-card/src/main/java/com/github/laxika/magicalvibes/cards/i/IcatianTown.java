@@ -12,6 +12,8 @@ import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "25")
 @CardRegistration(set = "5ED", collectorNumber = "38")
+@CardRegistration(set = "FEM", collectorNumber = "15")
+@CardRegistration(set = "FEM", collectorNumber = "162")
 public class IcatianTown extends Card {
 
     public IcatianTown() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "42")
+@CardRegistration(set = "S99", collectorNumber = "45")
 public class Piracy extends Card {
 
     public Piracy() {

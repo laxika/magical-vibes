@@ -71,6 +71,6 @@ class SocialSnubTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0);
+        harness.castSorcery(player1, 0, 0);
     }
 }

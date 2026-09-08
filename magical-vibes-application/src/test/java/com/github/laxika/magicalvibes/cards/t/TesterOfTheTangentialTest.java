@@ -16,12 +16,14 @@ class TesterOfTheTangentialTest extends BaseCardTest {
 
     @Test
     void paysXThenMovesCountersToAnotherCreature() {
-        harness.addMana(player1, ManaColor.BLUE, 3);
+
         Permanent tester = harness.addToBattlefieldAndReturn(player1, new TesterOfTheTangential());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         tester.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, 2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
@@ -35,12 +37,14 @@ class TesterOfTheTangentialTest extends BaseCardTest {
 
     @Test
     void choosingZeroDoesNotPayOrMoveCounters() {
-        harness.addMana(player1, ManaColor.BLUE, 2);
+
         Permanent tester = harness.addToBattlefieldAndReturn(player1, new TesterOfTheTangential());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         tester.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
 
         assertThat(tester.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -51,11 +55,13 @@ class TesterOfTheTangentialTest extends BaseCardTest {
 
     @Test
     void cannotChooseTheSourceAsAnotherCreature() {
-        harness.addMana(player1, ManaColor.BLUE, 1);
+
         Permanent tester = harness.addToBattlefieldAndReturn(player1, new TesterOfTheTangential());
         tester.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.passBothPriorities();
         harness.handleXValueChosen(player1, 1);
 
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

@@ -1,0 +1,27 @@
+package com.github.laxika.magicalvibes.cards.n;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+
+import java.util.List;
+
+@CardRegistration(set = "SOK", collectorNumber = "139")
+public class NightsoilKami extends Card {
+
+    public NightsoilKami() {
+        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.HAND)
+                .filter(new CardAllOfPredicate(List.of(
+                        new CardSubtypePredicate(CardSubtype.SPIRIT),
+                        new CardMaxManaValuePredicate(5))))
+                .targetGraveyard(true)
+                .build());
+    }
+}

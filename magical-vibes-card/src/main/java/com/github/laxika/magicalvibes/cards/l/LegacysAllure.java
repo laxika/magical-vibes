@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "71")
+@CardRegistration(set = "TPR", collectorNumber = "56")
 public class LegacysAllure extends Card {
 
     public LegacysAllure() {

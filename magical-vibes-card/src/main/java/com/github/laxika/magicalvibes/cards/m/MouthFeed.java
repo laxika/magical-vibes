@@ -17,6 +17,7 @@ import java.util.Set;
  * Back half (Feed) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "214")
+@CardRegistration(set = "AKR", collectorNumber = "202")
 public class MouthFeed extends Card {
 
     public MouthFeed() {

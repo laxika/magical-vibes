@@ -48,7 +48,8 @@ public class ExileFromHandToImprintEffectHandler implements NormalEffectHandlerB
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
-            if (predicateEvaluationService.matchesCardPredicate(hand.get(i), e.filter(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(hand.get(i), e.filter(), null)
+                    && (!e.manaValueEqualsX() || hand.get(i).getManaValue() == entry.getXValue())) {
                 validIndices.add(i);
             }
         }
@@ -61,6 +62,6 @@ public class ExileFromHandToImprintEffectHandler implements NormalEffectHandlerB
 
         playerInputService.beginImprintFromHandChoice(gameData, controllerId, validIndices,
                 "Choose " + e.description() + " from your hand to exile and imprint.", sourcePermanent.getId(),
-                e.grantCastPermission());
+                e.grantCastPermission(), e.faceDown());
     }
 }

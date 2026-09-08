@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GracefulReprieve.class, GoForTheThroat.class, GrizzlyBears.class, Spellbook.class})
 class GracefulReprieveTest extends BaseCardTest {
 
     private void resolveStack() {
@@ -24,8 +26,6 @@ class GracefulReprieveTest extends BaseCardTest {
             harness.passBothPriorities();
         }
     }
-
-    // ===== Return when the targeted creature dies this turn =====
 
     @Test
     @DisplayName("Returns the targeted creature to the battlefield under its owner's control when it dies this turn")
@@ -67,8 +67,6 @@ class GracefulReprieveTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Registration only happens if the spell resolves =====
-
     @Test
     @DisplayName("Fizzles and registers nothing when the target is removed before resolution")
     void fizzlesWhenTargetRemoved() {
@@ -85,8 +83,6 @@ class GracefulReprieveTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.creaturesReturnedToBattlefieldOnDeathThisTurn).isEmpty();
     }
-
-    // ===== Targeting restrictions =====
 
     @Test
     @DisplayName("Cannot target a non-creature permanent")

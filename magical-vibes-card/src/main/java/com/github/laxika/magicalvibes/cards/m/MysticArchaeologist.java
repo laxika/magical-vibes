@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "63")
+@CardRegistration(set = "FDN", collectorNumber = "511")
 public class MysticArchaeologist extends Card {
 
     public MysticArchaeologist() {

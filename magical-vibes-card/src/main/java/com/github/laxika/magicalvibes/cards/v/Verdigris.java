@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMP", collectorNumber = "264")
+@CardRegistration(set = "TPR", collectorNumber = "204")
 public class Verdigris extends Card {
 
     public Verdigris() {

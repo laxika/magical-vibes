@@ -1,0 +1,42 @@
+package com.github.laxika.magicalvibes.cards.s;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+
+import java.util.List;
+
+@CardRegistration(set = "LCI", collectorNumber = "77")
+public class SongOfStupefaction extends Card {
+
+    public SongOfStupefaction() {
+        var permanentCardsInGraveyard = new CardsInGraveyard(
+                new CardIsPermanentPredicate(), CountScope.CONTROLLER);
+        target(new PermanentPredicateTargetFilter(
+                new PermanentAnyOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
+                "Target must be a creature or Vehicle"))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?"))
+                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                        new Scaled(permanentCardsInGraveyard, -1),
+                        new Fixed(0),
+                        GrantScope.ENCHANTED_PERMANENT));
+    }
+}

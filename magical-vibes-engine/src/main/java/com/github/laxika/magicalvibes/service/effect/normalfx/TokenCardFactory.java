@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.EnumSet;
 import java.util.Locale;
@@ -55,12 +59,19 @@ final class TokenCardFactory {
         tokenCard.setColor(token.color());
         if (token.colors() != null && !token.colors().isEmpty()) {
             tokenCard.setColors(token.colors().stream().toList());
+        } else if (token.color() != null) {
+            tokenCard.setColors(java.util.List.of(token.color()));
         }
-        if (isCreature) {
+        if (isCreature || power != 0 || toughness != 0) {
             tokenCard.setPower(power);
             tokenCard.setToughness(toughness);
         }
         tokenCard.setSubtypes(token.subtypes());
+        if (token.subtypes() != null
+                && token.subtypes().contains(CardSubtype.AURA)
+                && token.subtypes().contains(CardSubtype.ROLE)) {
+            tokenCard.target(TargetFilters.creature());
+        }
         if (token.keywords() != null && !token.keywords().isEmpty()) {
             tokenCard.setKeywords(token.keywords());
             tokenCard.setCardText(keywordText(token.keywords()));
@@ -68,18 +79,56 @@ final class TokenCardFactory {
         if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
             tokenCard.setAdditionalTypes(token.additionalTypes());
         }
-        if (token.legendary()) {
-            tokenCard.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        if (token.legendary() || (token.supertypes() != null && !token.supertypes().isEmpty())) {
+            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            if (token.supertypes() != null) {
+                supertypes.addAll(token.supertypes());
+            }
+            if (token.legendary()) {
+                supertypes.add(CardSupertype.LEGENDARY);
+            }
+            tokenCard.setSupertypes(supertypes);
         }
         if (token.tokenEffects() != null) {
             for (Map.Entry<EffectSlot, CardEffect> tokenEffect : token.tokenEffects().entrySet()) {
-                tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
+                if (tokenEffect.getKey() == EffectSlot.STATIC
+                        && tokenEffect.getValue() instanceof SequenceEffect sequence) {
+                    // Token blueprints use a sequence to carry multiple static abilities through
+                    // the one-effect-per-slot blueprint map; live token cards keep each ability
+                    // as an ordinary static effect for the layered and combat queries.
+                    for (CardEffect step : sequence.steps()) {
+                        tokenCard.addEffect(EffectSlot.STATIC, step);
+                    }
+                } else {
+                    tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
+                }
             }
+        }
+        if (token.tokenEffects() != null) {
+            token.tokenEffects().values().stream()
+                    .filter(BandsWithOtherEffect.class::isInstance)
+                    .map(BandsWithOtherEffect.class::cast)
+                    .findFirst()
+                    .ifPresent(effect -> tokenCard.setCardText(
+                            "Bands with other creatures named " + effect.creatureName() + "."));
         }
         if (token.tokenAbilities() != null) {
             for (ActivatedAbility ability : token.tokenAbilities()) {
                 tokenCard.addActivatedAbility(ability);
             }
+        }
+
+        if ("Incubator".equals(token.tokenName())) {
+            Card backFace = new Card();
+            backFace.setName("Phyrexian");
+            backFace.setType(CardType.CREATURE);
+            backFace.setAdditionalTypes(Set.of(CardType.ARTIFACT));
+            backFace.setManaCost("");
+            backFace.setToken(true);
+            backFace.setPower(0);
+            backFace.setToughness(0);
+            backFace.setSubtypes(java.util.List.of(CardSubtype.PHYREXIAN));
+            tokenCard.setBackFaceCard(backFace);
         }
 
         CardPrintingRegistry.TokenImageData imageData = isCreature

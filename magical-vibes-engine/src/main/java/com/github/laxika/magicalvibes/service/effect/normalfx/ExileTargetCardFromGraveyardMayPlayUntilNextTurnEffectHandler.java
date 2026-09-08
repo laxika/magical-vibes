@@ -47,7 +47,7 @@ public class ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffectHandler imple
         }
 
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
 
         UUID controllerId = entry.getControllerId();
         UUID ownerId = graveyardOwnerId != null ? graveyardOwnerId : controllerId;

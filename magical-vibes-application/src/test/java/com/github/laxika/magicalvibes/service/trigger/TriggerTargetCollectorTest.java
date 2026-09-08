@@ -10,12 +10,17 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +55,9 @@ class TriggerTargetCollectorTest {
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
 
+    @Mock
+    private TargetLegalityService targetLegalityService;
+
     private TriggerTargetCollector collector;
 
     private GameData gd;
@@ -58,7 +67,7 @@ class TriggerTargetCollectorTest {
 
     @BeforeEach
     void setUp() {
-        collector = new TriggerTargetCollector(gameQueryService, predicateEvaluationService);
+        collector = new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -152,6 +161,44 @@ class TriggerTargetCollectorTest {
     }
 
     @Test
+    @DisplayName("MayEffect applies the wrapped effect's permanent target restriction")
+    void mayEffectAppliesWrappedPermanentTargetRestriction() {
+        Permanent ownCreature = new Permanent(new Card());
+        Permanent opponentCreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(ownCreature);
+        gd.playerBattlefields.get(player2Id).add(opponentCreature);
+
+        List<CardEffect> effects = List.of(new MayEffect(
+                new ExileTargetPermanentUntilSourceLeavesEffect(false,
+                        new PermanentIsSpecificPermanentPredicate(opponentCreature.getId())),
+                "Exile target permanent?"));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
+
+        assertThat(result.validTargets()).containsExactly(opponentCreature.getId());
+    }
+
+    @Test
+    @DisplayName("MayPayManaEffect applies a targeted else effect when the paid branch is empty")
+    void mayPayManaEffectAppliesElseEffectTargetRestriction() {
+        Permanent ownCreature = new Permanent(new Card());
+        Permanent opponentCreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(ownCreature);
+        gd.playerBattlefields.get(player2Id).add(opponentCreature);
+
+        List<CardEffect> effects = List.of(new MayPayManaEffect(
+                "{U}", null, "Pay {U}?",
+                new DestroyTargetPermanentEffect(
+                        new PermanentIsSpecificPermanentPredicate(opponentCreature.getId()))));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
+
+        assertThat(result.validTargets()).containsExactly(opponentCreature.getId());
+    }
+
+    @Test
     @DisplayName("DEATH option skips non-creature permanents")
     void deathCreaturesOnly() {
         Permanent creature = new Permanent(new Card());
@@ -185,6 +232,27 @@ class TriggerTargetCollectorTest {
         // Fire Snake's "destroy target land": the filter's predicate governs, not creaturesOnly.
         TargetFilter filter = new PermanentPredicateTargetFilter(
                 new PermanentTruePredicate(), "Target can be any permanent");
+        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, filter, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
+
+        assertThat(result.validTargets()).contains(noncreature.getId());
+    }
+
+    @Test
+    @DisplayName("DEATH option with a controlled land filter allows non-creature targets")
+    void deathControlledLandFilterAllowsNonCreatures() {
+        Permanent noncreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(noncreature);
+        lenient().when(gameQueryService.isCreature(gd, noncreature)).thenReturn(false);
+        lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                        any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenReturn(true);
+
+        lenient().when(predicateEvaluationService.matchesFilters(
+                eq(noncreature), anySet(), any(FilterContext.class))).thenReturn(true);
+        TargetFilter filter = TargetFilters.landYouControl();
         List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
 
         TriggerTargetCollector.Result result = collector.collect(
@@ -258,5 +326,25 @@ class TriggerTargetCollectorTest {
                 TriggerTargetCollector.Options.UPKEEP);
 
         assertThat(result.validTargets()).contains(ownCreature.getId()).doesNotContain(opponentCreature.getId());
+    }
+
+    @Test
+    void castXRestrictsEnterTriggerTargets() {
+        Card cheapCard = new Card();
+        cheapCard.setName("Cheap creature");
+        cheapCard.setManaCost("{2}");
+        Card expensiveCard = new Card();
+        expensiveCard.setName("Expensive creature");
+        expensiveCard.setManaCost("{4}");
+        Permanent cheap = new Permanent(cheapCard);
+        Permanent expensive = new Permanent(expensiveCard);
+        gd.playerBattlefields.get(player2Id).addAll(List.of(cheap, expensive));
+        TargetFilter filter = new PermanentPredicateTargetFilter(
+                new com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate(),
+                "Mana value must not exceed X");
+        var result = collector.collect(gd, List.of(new DestroyTargetPermanentEffect()), filter,
+                player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK, null, null, 3);
+
+        assertThat(result.validTargets()).containsExactly(cheap.getId());
     }
 }

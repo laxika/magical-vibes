@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffec
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "42")
+@CardRegistration(set = "AKR", collectorNumber = "49")
 public class AsForetold extends Card {
 
     public AsForetold() {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.cast;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,15 +13,25 @@ import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +59,10 @@ import java.util.UUID;
 @Component
 public class PotentialManaService {
 
+    @Autowired
+    @Lazy
+    private AmountEvaluationService amountEvaluationService;
+
     /**
      * The pool {@link #canTapForManaNow} measures affordability against. Shared and never mutated:
      * activation legality only reads a pool, and allocating one per ability would land on the MCTS
@@ -65,10 +80,24 @@ public class PotentialManaService {
      */
     private final AbilityActivationService abilityActivationService;
 
+    /**
+     * Deferred because the handler graph includes logging services that reach view projection and
+     * therefore this service again. The registry is only consulted while answering a mana query.
+     */
+    private final ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry;
+
     public PotentialManaService(GameQueryService gameQueryService,
                                 @Lazy AbilityActivationService abilityActivationService) {
+        this(gameQueryService, abilityActivationService, null);
+    }
+
+    @Autowired
+    public PotentialManaService(GameQueryService gameQueryService,
+                                @Lazy AbilityActivationService abilityActivationService,
+                                @Lazy ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry) {
         this.gameQueryService = gameQueryService;
         this.abilityActivationService = abilityActivationService;
+        this.manaAbilityEffectHandlerRegistry = manaAbilityEffectHandlerRegistry;
     }
 
     public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId) {
@@ -87,7 +116,11 @@ public class PotentialManaService {
         if (current != null) {
             for (ManaColor color : ManaColor.values()) {
                 virtual.add(color, current.get(color));
+                virtual.addSnowManaTag(color, current.getSnowMana(color));
+                virtual.addBasicLandManaTag(color, current.getBasicLandMana(color));
                 virtual.addCreatureMana(color, current.getCreatureMana(color));
+                virtual.addAbilityOnlyMana(color, current.getAbilityOnlyMana(color));
+                virtual.addLandAbilityOnlyMana(color, current.getLandAbilityOnlyMana(color));
             }
         }
 
@@ -121,7 +154,7 @@ public class PotentialManaService {
                             : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
                     int amount = estimateLandManaAmount(perm, gameData, amountKey);
                     if (amount > 0) {
-                        virtual.add(fixedLandColor, amount);
+                        addManaToVirtualPool(virtual, gameData, perm, fixedLandColor, amount);
                         if (isCreature) {
                             virtual.addCreatureMana(fixedLandColor, amount);
                         }
@@ -131,14 +164,17 @@ public class PotentialManaService {
                             : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
                     int amount = estimateLandManaAmount(perm, gameData, amountKey);
                     if (amount > 0) {
-                        addAnyColorManaToVirtualPool(virtual, amount, isCreature);
+                        addAnyColorManaToVirtualPool(virtual, amount, isCreature,
+                                isBasicLandSource(gameData, perm));
                     }
                 } else if (!twisted.isEmpty()) {
-                    addTwistedManaToVirtualPool(virtual, twisted, 1, isCreature);
+                    addTwistedManaToVirtualPool(virtual, twisted, 1, isCreature,
+                            isBasicLandSource(gameData, perm));
                 } else if (overriddenColors.size() > 1) {
-                    addTwistedManaToVirtualPool(virtual, new LinkedHashSet<>(overriddenColors), 1, isCreature);
+                    addTwistedManaToVirtualPool(virtual, new LinkedHashSet<>(overriddenColors), 1, isCreature,
+                            isBasicLandSource(gameData, perm));
                 } else if (overriddenColor != null) {
-                    virtual.add(overriddenColor, 1);
+                    addManaToVirtualPool(virtual, gameData, perm, overriddenColor, 1);
                     if (isCreature) {
                         virtual.addCreatureMana(overriddenColor, 1);
                     }
@@ -147,7 +183,7 @@ public class PotentialManaService {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
                             int amount = estimateManaAmount(manaEffect.amount(), perm, gameData);
-                            virtual.add(manaEffect.color(), amount);
+                            addManaToVirtualPool(virtual, gameData, perm, manaEffect.color(), amount);
                             if (isCreature) {
                                 virtual.addCreatureMana(manaEffect.color(), amount);
                             }
@@ -180,6 +216,8 @@ public class PotentialManaService {
         if (current != null) {
             for (ManaColor color : ManaColor.values()) {
                 virtual.add(color, current.get(color));
+                virtual.addSnowManaTag(color, current.getSnowMana(color));
+                virtual.addBasicLandManaTag(color, current.getBasicLandMana(color));
             }
         }
 
@@ -213,25 +251,29 @@ public class PotentialManaService {
                             : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
                     int amount = estimateLandManaAmount(perm, gameData, amountKey);
                     if (amount > 0) {
-                        virtual.add(fixedLandColor, amount);
+                        addManaToVirtualPool(virtual, gameData, perm, fixedLandColor, amount);
                     }
                 } else if (anyColorReplacement) {
                     ManaColor amountKey = overriddenColor != null ? overriddenColor
                             : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
                     int amount = estimateLandManaAmount(perm, gameData, amountKey);
                     if (amount > 0) {
-                        addAnyColorManaToVirtualPool(virtual, amount, false);
+                        addAnyColorManaToVirtualPool(virtual, amount, false,
+                                isBasicLandSource(gameData, perm));
                     }
                 } else if (!twisted.isEmpty()) {
-                    addTwistedManaToVirtualPool(virtual, twisted, 1, false);
+                    addTwistedManaToVirtualPool(virtual, twisted, 1, false,
+                            isBasicLandSource(gameData, perm));
                 } else if (overriddenColors.size() > 1) {
-                    addTwistedManaToVirtualPool(virtual, new LinkedHashSet<>(overriddenColors), 1, false);
+                    addTwistedManaToVirtualPool(virtual, new LinkedHashSet<>(overriddenColors), 1, false,
+                            isBasicLandSource(gameData, perm));
                 } else if (overriddenColor != null) {
-                    virtual.add(overriddenColor, 1);
+                    addManaToVirtualPool(virtual, gameData, perm, overriddenColor, 1);
                 } else if (hasLivePrintedTapMana(gameData, perm)) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
-                            virtual.add(manaEffect.color(), estimateManaAmount(manaEffect.amount(), perm, gameData));
+                            addManaToVirtualPool(virtual, gameData, perm, manaEffect.color(),
+                                    estimateManaAmount(manaEffect.amount(), perm, gameData));
                         } else if (effect instanceof AwardAnyColorManaEffect anyColor
                                 && anyColor.restriction() == ManaSpendRestriction.NONE) {
                             addAnyColorManaToVirtualPool(virtual, estimateManaAmount(anyColor.amount(), perm, gameData), false);
@@ -247,10 +289,67 @@ public class PotentialManaService {
     }
 
     /**
-     * Builds a virtual mana pool excluding mana sources whose activated abilities
-     * would trigger an interactive choice (e.g. AwardAnyColorManaEffect on Birds of Paradise).
-     * Used when computing affordable attackers for attack tax, to avoid activating
-     * choice-triggering abilities during ATTACKER_DECLARATION.
+     * Returns whether tapping this source for mana would open a choice interaction. Combat-cost
+     * payment must remain inside its existing declaration prompt, so the AI excludes these sources
+     * rather than replacing that prompt before the declaration is submitted.
+     */
+    public boolean wouldTapForManaOpenChoice(GameData gameData, Permanent permanent) {
+        if (hasAttachedManaChoiceTrigger(gameData, permanent)) {
+            return true;
+        }
+
+        List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
+        ManaColor fixedLandColor = permanent.getCard().hasType(CardType.LAND)
+                ? gameQueryService.fixedLandManaColor(gameData, permanent)
+                : null;
+        if (fixedLandColor == null && permanent.getCard().hasType(CardType.LAND)) {
+            if (gameQueryService.basicLandManaProducesAnyColor(gameData, permanent)) {
+                return true;
+            }
+            Set<ManaColor> twisted = gameQueryService.twistedLandManaColors(gameData, permanent);
+            if (twisted.size() > 1 || (twisted.isEmpty() && overriddenColors.size() > 1)) {
+                return true;
+            }
+        }
+        if (fixedLandColor != null || overriddenColors.size() == 1) {
+            return false;
+        }
+
+        Card card = permanent.getCard();
+        if (hasLivePrintedTapMana(gameData, permanent)) {
+            return card.getEffects(EffectSlot.ON_TAP).stream()
+                    .anyMatch(PotentialManaService::manaEffectOpensChoice);
+        }
+        return wouldManaAbilityTriggerChoice(activatedAbilitiesFor(gameData, permanent, card));
+    }
+
+    private static boolean hasAttachedManaChoiceTrigger(GameData gameData, Permanent manaSource) {
+        boolean[] found = {false};
+        gameData.forEachPermanent((controllerId, attachment) -> {
+            if (found[0] || !attachment.isAttached()
+                    || !manaSource.getId().equals(attachment.getAttachedTo())) {
+                return;
+            }
+            found[0] = attachment.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).stream()
+                    .filter(AddManaOnEnchantedLandTapEffect.class::isInstance)
+                    .map(AddManaOnEnchantedLandTapEffect.class::cast)
+                    .map(AddManaOnEnchantedLandTapEffect::mana)
+                    .anyMatch(PotentialManaService::manaEffectOpensChoice);
+        });
+        return found[0];
+    }
+
+    private static boolean manaEffectOpensChoice(CardEffect effect) {
+        return effect instanceof AwardAnyColorManaEffect
+                || (effect instanceof AwardManaOfColorsEffect ofColors && ofColors.colors().size() > 1)
+                || effect instanceof AwardManaOfColorsLandsCouldProduceEffect;
+    }
+
+    /**
+     * Builds a virtual mana pool excluding sources whose mana tap would open an interactive
+     * choice, whether from the source itself, a replacement, or an attached mana trigger.
+     * Used when computing affordable attackers for attack tax, to keep the declaration prompt
+     * active while mana abilities are activated.
      */
     public VirtualManaPool buildSafeVirtualManaPool(GameData gameData, UUID playerId) {
         VirtualManaPool virtual = new VirtualManaPool();
@@ -259,6 +358,8 @@ public class PotentialManaService {
         if (current != null) {
             for (ManaColor color : ManaColor.values()) {
                 virtual.add(color, current.get(color));
+                virtual.addSnowManaTag(color, current.getSnowMana(color));
+                virtual.addBasicLandManaTag(color, current.getBasicLandMana(color));
                 virtual.addCreatureMana(color, current.getCreatureMana(color));
             }
         }
@@ -267,6 +368,9 @@ public class PotentialManaService {
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
                 if (perm.isTapped()) {
+                    continue;
+                }
+                if (wouldTapForManaOpenChoice(gameData, perm)) {
                     continue;
                 }
                 boolean isCreature = gameQueryService.isCreature(gameData, perm);
@@ -292,7 +396,7 @@ public class PotentialManaService {
                             : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
                     int amount = estimateLandManaAmount(perm, gameData, amountKey);
                     if (amount > 0) {
-                        virtual.add(fixedLandColor, amount);
+                        addManaToVirtualPool(virtual, gameData, perm, fixedLandColor, amount);
                         if (isCreature) {
                             virtual.addCreatureMana(fixedLandColor, amount);
                         }
@@ -303,10 +407,11 @@ public class PotentialManaService {
                 } else if (!twisted.isEmpty()) {
                     // Multi-color Reality Twist prompts; treat like a choice source in the safe pool.
                     if (twisted.size() == 1) {
-                        addTwistedManaToVirtualPool(virtual, twisted, 1, isCreature);
+                        addTwistedManaToVirtualPool(virtual, twisted, 1, isCreature,
+                                isBasicLandSource(gameData, perm));
                     }
                 } else if (overriddenColor != null) {
-                    virtual.add(overriddenColor, 1);
+                    addManaToVirtualPool(virtual, gameData, perm, overriddenColor, 1);
                     if (isCreature) {
                         virtual.addCreatureMana(overriddenColor, 1);
                     }
@@ -316,7 +421,7 @@ public class PotentialManaService {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
                             int amount = estimateManaAmount(manaEffect.amount(), perm, gameData);
-                            virtual.add(manaEffect.color(), amount);
+                            addManaToVirtualPool(virtual, gameData, perm, manaEffect.color(), amount);
                             if (isCreature) {
                                 virtual.addCreatureMana(manaEffect.color(), amount);
                             }
@@ -362,12 +467,12 @@ public class PotentialManaService {
                 continue;
             }
 
-            for (EnumMap<ManaColor, Integer> abilityByColor : manaOptionsFor(ability, permanent, gameData)) {
+            for (EnumMap<ManaColor, Integer> abilityByColor : manaOptionsFor(ability, permanent, gameData, playerId)) {
                 int abilityTotal = 0;
                 for (Map.Entry<ManaColor, Integer> e : abilityByColor.entrySet()) {
                     ManaColor color = e.getKey();
                     int amount = e.getValue();
-                    virtual.add(color, amount);
+                    addManaToVirtualPool(virtual, gameData, permanent, color, amount);
                     if (isCreature) {
                         virtual.addCreatureMana(color, amount);
                     }
@@ -415,30 +520,69 @@ public class PotentialManaService {
      * bookkeeping collapses the five outcomes back to the single mana it really produces.
      */
     private List<EnumMap<ManaColor, Integer>> manaOptionsFor(ActivatedAbility ability, Permanent permanent,
-                                                             GameData gameData) {
+                                                             GameData gameData, UUID playerId) {
         EnumMap<ManaColor, Integer> fixed = new EnumMap<>(ManaColor.class);
         int anyColorAmount = 0;
+        List<EnumMap<ManaColor, Integer>> conditionalOptions = new ArrayList<>();
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof AwardManaEffect manaEffect) {
                 int amount = estimateManaAmount(manaEffect.amount(), permanent, gameData);
                 if (amount > 0) {
-                    fixed.merge(manaEffect.color(), amount, Integer::sum);
+                    fixed.merge(ManaProductionSupport.effectiveColor(gameData, null, permanent,
+                            manaEffect.color()), amount, Integer::sum);
+                }
+            } else if (effect instanceof ManaProducingEffect mana
+                    && !mana.estimatedMutuallyExclusiveManaColors().isEmpty()) {
+                DynamicAmount amountDefinition = mana.estimatedManaAmount();
+                if (amountDefinition != null) {
+                    int amount = estimateManaAmount(amountDefinition, permanent, gameData);
+                    if (amount > 0) {
+                        List<ManaColor> availableColors = mana.estimatedMutuallyExclusiveManaColors();
+                        ManaAbilityEffectHandler handler = manaAbilityEffectHandlerRegistry == null
+                                ? null
+                                : manaAbilityEffectHandlerRegistry.getHandler(effect);
+                        if (handler != null) {
+                            List<ManaColor> currentColors = handler.availableManaColors(
+                                    gameData, playerId, permanent, effect);
+                            if (!currentColors.isEmpty()) {
+                                availableColors = currentColors;
+                            }
+                        }
+                        for (ManaColor color : availableColors) {
+                            EnumMap<ManaColor, Integer> option = new EnumMap<>(ManaColor.class);
+                            option.put(color, amount);
+                            conditionalOptions.add(option);
+                        }
+                    }
                 }
             } else if (effect instanceof ManaProducingEffect mana && mana.estimatedCountsAllColors()) {
                 anyColorAmount += Math.max(1, mana.estimatedWildcardMana());
-            } else if (effect instanceof AwardChosenColorManaEffect
+            } else if (effect instanceof AwardChosenColorManaEffect chosen
+                    && chosen.restriction() == null
                     && permanent != null && permanent.getChosenColor() != null) {
                 fixed.merge(ManaColor.valueOf(permanent.getChosenColor().name()), 1, Integer::sum);
             }
         }
+        List<EnumMap<ManaColor, Integer>> baseOptions;
+        if (conditionalOptions.isEmpty()) {
+            baseOptions = List.of(fixed);
+        } else {
+            baseOptions = conditionalOptions.stream().map(option -> {
+                EnumMap<ManaColor, Integer> merged = new EnumMap<>(fixed);
+                option.forEach((color, amount) -> merged.merge(color, amount, Integer::sum));
+                return merged;
+            }).toList();
+        }
         if (anyColorAmount == 0) {
-            return List.of(fixed);
+            return baseOptions;
         }
         List<EnumMap<ManaColor, Integer>> options = new ArrayList<>();
-        for (ManaColor color : ManaColor.COLORS) {
-            EnumMap<ManaColor, Integer> option = new EnumMap<>(fixed);
-            option.merge(color, anyColorAmount, Integer::sum);
-            options.add(option);
+        for (EnumMap<ManaColor, Integer> baseOption : baseOptions) {
+            for (ManaColor color : ManaColor.COLORS) {
+                EnumMap<ManaColor, Integer> option = new EnumMap<>(baseOption);
+                option.merge(color, anyColorAmount, Integer::sum);
+                options.add(option);
+            }
         }
         return options;
     }
@@ -451,11 +595,19 @@ public class PotentialManaService {
      * land evaluation.
      */
     public static void addAnyColorManaToVirtualPool(ManaPool virtual, int amount, boolean isCreature) {
+        addAnyColorManaToVirtualPool(virtual, amount, isCreature, false);
+    }
+
+    public static void addAnyColorManaToVirtualPool(ManaPool virtual, int amount, boolean isCreature,
+                                                    boolean basicLandSource) {
         if (amount <= 0) {
             return;
         }
         for (ManaColor color : ManaColor.COLORS) {
             virtual.add(color, amount);
+            if (basicLandSource) {
+                virtual.addBasicLandManaTag(color, amount);
+            }
             if (isCreature) {
                 virtual.addCreatureMana(color, amount);
             }
@@ -466,6 +618,19 @@ public class PotentialManaService {
             if (isCreature) {
                 vmp.addCreatureManaOvercount(overcount);
             }
+        }
+    }
+
+    private void addManaToVirtualPool(ManaPool virtual, GameData gameData, Permanent source,
+                                      ManaColor color, int amount) {
+        color = ManaProductionSupport.effectiveColor(gameData, null, source, color);
+        if (source != null && gameQueryService.hasEffectiveSupertype(gameData, source, CardSupertype.SNOW)) {
+            virtual.addSnowMana(color, amount);
+        } else {
+            virtual.add(color, amount);
+        }
+        if (source != null && gameQueryService.hasEffectiveSupertype(gameData, source, CardSupertype.BASIC)) {
+            virtual.addBasicLandManaTag(color, amount);
         }
     }
 
@@ -547,21 +712,27 @@ public class PotentialManaService {
     public static boolean isFreeTapManaAbility(ActivatedAbility ability) {
         return ability.isRequiresTap()
                 && ability.getManaCost() == null
-                && ability.getEffects().stream().anyMatch(e -> e instanceof ManaProducingEffect);
+                && AbilityActivationService.isManaAbility(ability);
     }
 
     /**
      * Returns true if the card's activated mana abilities would trigger an interactive
-     * color choice prompt (e.g. AwardAnyColorManaEffect on Birds of Paradise).
+     * color choice prompt (e.g. AwardAnyColorManaEffect on Birds of Paradise,
+     * AwardManaOfColorsEffect with multiple colors, or AwardManaOfColorsLandsCouldProduceEffect on
+     * Fellwar Stone).
      * Cards with ON_TAP effects are always safe — they produce mana without choices.
      */
     public static boolean wouldManaAbilityTriggerChoice(Card card) {
-        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+        return wouldManaAbilityTriggerChoice(card.getActivatedAbilities());
+    }
+
+    private static boolean wouldManaAbilityTriggerChoice(List<ActivatedAbility> abilities) {
+        for (ActivatedAbility ability : abilities) {
             if (!isFreeTapManaAbility(ability)) {
                 continue;
             }
             for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof AwardAnyColorManaEffect) {
+                if (manaEffectOpensChoice(effect)) {
                     return true;
                 }
             }
@@ -611,7 +782,8 @@ public class PotentialManaService {
      * Estimates the integer mana quantity an {@link AwardManaEffect} would produce for a
      * virtual mana pool. A flat {@link Fixed} amount is exact; source-relative amounts that can
      * be resolved from the permanent alone — charge counters ({@link CountersOnSource}) and source power
-     * ({@link SourcePower}) — are computed directly. Other dynamic amounts (e.g. per-permanent
+     * ({@link SourcePower}) — are computed directly. Conditional fixed amounts use the shared
+     * amount evaluator against the live board. Other dynamic amounts (e.g. per-permanent
      * counts) aren't estimated here (they contribute 0); {@code null} permanent/game data
      * (hypothetical card evaluation) yields the fixed value or 0.
      */
@@ -628,6 +800,11 @@ public class PotentialManaService {
         if (amount instanceof SourcePower) {
             return Math.max(0, gameQueryService.getEffectivePower(gameData, permanent));
         }
+        if (amount instanceof FixedIfCondition) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            return amountEvaluationService.evaluate(gameData, amount,
+                    AmountContext.forStaticEffect(permanent, controllerId));
+        }
         return 0;
     }
 
@@ -637,9 +814,18 @@ public class PotentialManaService {
      */
     private static void addTwistedManaToVirtualPool(ManaPool virtual, Set<ManaColor> twisted,
                                                     int amount, boolean isCreature) {
+        addTwistedManaToVirtualPool(virtual, twisted, amount, isCreature, false);
+    }
+
+    private static void addTwistedManaToVirtualPool(ManaPool virtual, Set<ManaColor> twisted,
+                                                    int amount, boolean isCreature,
+                                                    boolean basicLandSource) {
         if (twisted.size() == 1) {
             ManaColor color = twisted.iterator().next();
             virtual.add(color, amount);
+            if (basicLandSource) {
+                virtual.addBasicLandManaTag(color, amount);
+            }
             if (isCreature) {
                 virtual.addCreatureMana(color, amount);
             }
@@ -647,6 +833,9 @@ public class PotentialManaService {
         }
         for (ManaColor color : twisted) {
             virtual.add(color, amount);
+            if (basicLandSource) {
+                virtual.addBasicLandManaTag(color, amount);
+            }
             if (isCreature) {
                 virtual.addCreatureMana(color, amount);
             }
@@ -661,6 +850,11 @@ public class PotentialManaService {
                 vmp.addCreatureManaOvercount(amount * (twisted.size() - 1));
             }
         }
+    }
+
+    private boolean isBasicLandSource(GameData gameData, Permanent permanent) {
+        return permanent != null
+                && gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
     }
 
     /**

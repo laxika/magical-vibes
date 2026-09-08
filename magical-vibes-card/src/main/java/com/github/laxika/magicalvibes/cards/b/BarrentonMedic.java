@@ -15,7 +15,7 @@ public class BarrentonMedic extends Card {
 
     public BarrentonMedic() {
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(PreventDamageEffect.nextToAny(1)),
+                List.of(PreventDamageEffect.nextToTarget(1)),
                 "{T}: Prevent the next 1 damage that would be dealt to any target this turn."));
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new PutCounterOnSourceCost(), new UntapPermanentsEffect(TapUntapScope.SELF)),

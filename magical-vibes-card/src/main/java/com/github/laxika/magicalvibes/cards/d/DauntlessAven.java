@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "7")
+@CardRegistration(set = "AKR", collectorNumber = "12")
 public class DauntlessAven extends Card {
 
     public DauntlessAven() {

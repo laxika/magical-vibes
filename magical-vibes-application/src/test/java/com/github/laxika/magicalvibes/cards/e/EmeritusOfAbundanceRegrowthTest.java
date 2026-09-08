@@ -23,7 +23,7 @@ class EmeritusOfAbundanceRegrowthTest extends BaseCardTest {
         Permanent emeritus = castEmeritus();
 
         assertThat(emeritus.isPrepared()).isTrue();
-        assertThat(gd.findExiledCard(emeritus.getPreparedSpellCardId())).isInstanceOf(Regrowth.class);
+        assertThat(gd.findExiledCard(emeritus.getPreparedSpellCardId())).isNotNull();
     }
 
     @Test

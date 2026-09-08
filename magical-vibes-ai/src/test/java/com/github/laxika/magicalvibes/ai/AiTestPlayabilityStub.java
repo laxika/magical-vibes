@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -82,6 +83,9 @@ final class AiTestPlayabilityStub {
                     }
                     return indices;
                 });
+        Mockito.lenient().when(castingCostService.applyColoredManaCostReductions(
+                        any(GameData.class), any(UUID.class), any(Card.class), any(ManaCost.class)))
+                .thenAnswer(inv -> inv.getArgument(3));
         Mockito.lenient().when(actionAvailabilityService.isCardPlayable(
                         any(GameData.class), any(UUID.class), any(Card.class), any(ManaPool.class), anyInt()))
                 .thenAnswer(inv -> {
@@ -90,7 +94,8 @@ final class AiTestPlayabilityStub {
                     Card card = inv.getArgument(2);
                     ManaPool pool = inv.getArgument(3);
                     int additionalGenericCost = inv.getArgument(4);
-                    ManaCost cost = new ManaCost(card.getManaCost());
+                    ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                            gameData, playerId, card, new ManaCost(card.getManaCost()));
                     int modifier = castingCostService.getCastCostModifier(gameData, playerId, card)
                             + additionalGenericCost;
                     if (!cost.canPay(pool, modifier)) {
@@ -141,6 +146,9 @@ final class AiTestPlayabilityStub {
                 case SacrificeCreatureOrPayManaCost ignored -> {
                     // Mana option always keeps this cost satisfiable for stub suites.
                 }
+                case SacrificePermanentOrPayManaCost ignored -> {
+                    // Mana option always keeps this cost satisfiable for stub suites.
+                }
                 case DiscardCardOrPayManaCost ignored -> {
                     // Mana option always keeps this cost satisfiable for stub suites.
                 }
@@ -159,8 +167,9 @@ final class AiTestPlayabilityStub {
                             (cost.requiredType() == null || c.hasType(cost.requiredType()))
                                     && (cost.requiredSubtype() == null || c.getSubtypes().contains(cost.requiredSubtype())))) return false;
                 }
-                case ExileXCardsFromGraveyardCost ignored -> {
-                    if (graveyard.isEmpty()) return false;
+                case ExileXCardsFromGraveyardCost cost -> {
+                    if (graveyard.stream().noneMatch(c ->
+                            cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
                 }
                 case DiscardCardTypeCost ignored -> {
                     // Predicate treated as satisfiable (like permanent-predicate sacrifice costs);

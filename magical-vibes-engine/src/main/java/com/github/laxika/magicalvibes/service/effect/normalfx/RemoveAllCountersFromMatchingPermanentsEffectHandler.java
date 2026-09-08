@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromMatchingPermanentsEffect;
@@ -48,7 +49,11 @@ public class RemoveAllCountersFromMatchingPermanentsEffectHandler implements Nor
                 if (permanent.getCounterCount(e.counterType()) <= 0) {
                     continue;
                 }
+                int removed = permanent.getCounterCount(e.counterType());
                 permanent.setCounterCount(e.counterType(), 0);
+                if (e.counterType() == CounterType.OIL) {
+                    gameData.recordOilCounterRemoved(permanent, removed);
+                }
                 affected++;
             }
         }

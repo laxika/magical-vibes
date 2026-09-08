@@ -22,12 +22,11 @@ class KorOutfitterTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castKorOutfitter();
-        harness.handleMayAbilityChosen(player1, true);
-
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, equipment.getId());
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
     }
@@ -39,6 +38,9 @@ class KorOutfitterTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castKorOutfitter();
+        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(equipment.getAttachedTo()).isNull();
@@ -63,7 +65,6 @@ class KorOutfitterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KorOutfitter()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

@@ -1,76 +1,124 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DovinGrandArbiter;
+import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WitchHunter.class, Squire.class, DovinGrandArbiter.class})
 class WitchHunterTest extends BaseCardTest {
 
     @Test
-    @DisplayName("First ability deals 1 damage to a target player")
-    void firstAbilityDealsDamageToPlayer() {
+    @DisplayName("Deals 1 damage to target player")
+    void dealsDamageToPlayer() {
         harness.setLife(player2, 20);
-        Permanent witchHunter = addReadyWitchHunter(player1);
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack).isEmpty();
+        assertThat(hunter.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(witchHunter.isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("First ability cannot target a creature")
-    void firstAbilityCannotTargetCreature() {
-        addReadyWitchHunter(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+    @DisplayName("Deals 1 damage to its controller")
+    void dealsDamageToController() {
+        harness.setLife(player1, 20);
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    @DisplayName("Second ability returns an opposing creature to its owner's hand")
-    void secondAbilityReturnsOpposingCreatureToHand() {
-        addReadyWitchHunter(player1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-
-        harness.activateAbility(player1, 0, 1, null, bearsId);
+        harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(hunter.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
     @Test
-    @DisplayName("Second ability cannot target a player")
-    void secondAbilityCannotTargetPlayer() {
-        addReadyWitchHunter(player1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+    @DisplayName("Deals 1 damage to a target planeswalker")
+    void dealsDamageToPlaneswalker() {
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new DovinGrandArbiter());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(hunter.isTapped()).isTrue();
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Returns target creature an opponent controls to its owner's hand")
+    void returnsOpponentsCreatureToHand() {
+        Permanent hunter = addCreatureReady(player1, new WitchHunter());
+        Permanent target = addCreatureReady(player2, new Squire());
+        addBounceMana(player1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(hunter.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Squire");
+        harness.assertInHand(player2, "Squire");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the bounce ability without enough mana")
+    void cannotActivateBounceAbilityWithoutEnoughMana() {
+        addCreatureReady(player1, new WitchHunter());
+        Permanent target = addCreatureReady(player2, new Squire());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyWitchHunter(Player player) {
-        Permanent perm = new Permanent(new WitchHunter());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Cannot return a creature controlled by its controller")
+    void cannotTargetOwnCreature() {
+        addCreatureReady(player1, new WitchHunter());
+        Permanent target = addCreatureReady(player1, new Squire());
+        addBounceMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature an opponent controls");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature with the damage ability")
+    void damageAbilityCannotTargetCreature() {
+        addCreatureReady(player1, new WitchHunter());
+        Permanent target = addCreatureReady(player2, new Squire());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot return a planeswalker with the bounce ability")
+    void bounceAbilityCannotTargetPlaneswalker() {
+        addCreatureReady(player1, new WitchHunter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DovinGrandArbiter());
+        target.setCounterCount(CounterType.LOYALTY, 3);
+        addBounceMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature an opponent controls");
+    }
+
+    private void addBounceMana(Player player) {
+        harness.addMana(player, ManaColor.WHITE, 2);
+        harness.addMana(player, ManaColor.COLORLESS, 1);
     }
 }

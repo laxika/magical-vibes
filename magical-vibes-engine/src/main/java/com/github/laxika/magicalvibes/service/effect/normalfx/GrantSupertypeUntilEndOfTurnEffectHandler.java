@@ -56,8 +56,11 @@ public class GrantSupertypeUntilEndOfTurnEffectHandler implements NormalEffectHa
                     target.getId(), null, null,
                     EffectDuration.UNTIL_END_OF_TURN, 0));
             String supertypeName = grant.supertype().getDisplayName().toLowerCase();
+            String text = grant.gained()
+                    ? " gains " + supertypeName + " until end of turn."
+                    : " is no longer " + supertypeName + " until end of turn.";
             gameLogService.append(gameData, GameLog.builder().card(target.getCard())
-                    .text(" gains " + supertypeName + " until end of turn.").build());
+                    .text(text).build());
         }
     }
 }

@@ -12,6 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "208")
+@CardRegistration(set = "FEM", collectorNumber = "61a")
+@CardRegistration(set = "FEM", collectorNumber = "61b")
+@CardRegistration(set = "FEM", collectorNumber = "61c")
+@CardRegistration(set = "FEM", collectorNumber = "126")
+@CardRegistration(set = "FEM", collectorNumber = "129")
 public class OrcishSpy extends Card {
 
     public OrcishSpy() {

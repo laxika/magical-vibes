@@ -37,7 +37,8 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
         List<Permanent> toExile = new ArrayList<>();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withXValue(entry.getXValue());
 
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : battlefield) {
@@ -47,12 +48,19 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
             }
         });
 
-        for (Permanent perm : toExile) {
-            permanentRemovalService.removePermanentToExile(gameData, perm);
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));
-            log.info("Game {} - {} is exiled by {}",
-                    gameData.id, perm.getCard().getName(), entry.getCard().getName());
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent perm : toExile) {
+                permanentRemovalService.removePermanentToExile(gameData, perm);
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));
+                log.info("Game {} - {} is exiled by {}",
+                        gameData.id, perm.getCard().getName(), entry.getCard().getName());
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
+
+        entry.setEventValue(toExile.size());
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

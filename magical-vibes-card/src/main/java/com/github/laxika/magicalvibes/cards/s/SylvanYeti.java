@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "147")
+@CardRegistration(set = "S99", collectorNumber = "146")
 public class SylvanYeti extends Card {
 
     public SylvanYeti() {

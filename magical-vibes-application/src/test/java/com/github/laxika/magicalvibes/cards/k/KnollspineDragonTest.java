@@ -27,8 +27,9 @@ class KnollspineDragonTest extends BaseCardTest {
         setDeck(player1, List.of(new Island(), new Island(), new Island(), new Island(), new Island()));
 
         castDragon(List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.handleMayAbilityChosen(player1, true);   // accept -> target choice
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Discarded 2 cards, then drew 4 (the damage total).
         assertThat(gd.playerHands.get(player1.getId()))
@@ -46,7 +47,6 @@ class KnollspineDragonTest extends BaseCardTest {
         setDeck(player1, List.of(new Island()));
 
         castDragon(List.of(new GrizzlyBears()));
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -61,6 +61,8 @@ class KnollspineDragonTest extends BaseCardTest {
         setDeck(player1, List.of(new Island(), new Island()));
 
         castDragon(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -76,8 +78,9 @@ class KnollspineDragonTest extends BaseCardTest {
         setDeck(player1, List.of(new Island(), new Island()));
 
         castDragon(List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -93,8 +96,7 @@ class KnollspineDragonTest extends BaseCardTest {
         addManaForCast(player1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
     }
 
     private void shockPlayer(UUID targetPlayerId) {

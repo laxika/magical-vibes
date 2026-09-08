@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
  * Back half (Dust) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "155")
+@CardRegistration(set = "AKR", collectorNumber = "237")
 public class GrindDust extends Card {
 
     public GrindDust() {

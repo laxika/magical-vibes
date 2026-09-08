@@ -29,6 +29,6 @@ public class RevealHandChooseCardFromItAndExileAllCopiesEffectHandler implements
         playerInputService.beginRevealHandChooseCardFromItAndExileAllCopiesChoice(
                 gameData, entry.getControllerId(), entry.getTargetId(),
                 card -> predicateEvaluationService.matchesCardPredicate(card, e.choosableFilter(), null),
-                CardPredicateUtils.describeFilter(e.choosableFilter()), entry.getCard());
+                CardPredicateUtils.describeFilter(e.choosableFilter()), entry.getCard(), e.chooseAnyNumber());
     }
 }

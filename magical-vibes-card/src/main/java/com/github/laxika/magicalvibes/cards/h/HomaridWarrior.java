@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "92")
+@CardRegistration(set = "FEM", collectorNumber = "22a")
+@CardRegistration(set = "FEM", collectorNumber = "22b")
+@CardRegistration(set = "FEM", collectorNumber = "22c")
 public class HomaridWarrior extends Card {
 
     public HomaridWarrior() {

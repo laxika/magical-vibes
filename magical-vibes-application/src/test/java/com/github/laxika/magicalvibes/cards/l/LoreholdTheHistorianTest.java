@@ -23,6 +23,8 @@ class LoreholdTheHistorianTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
 
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         PendingInteraction.MayAbilityChoice choice =
                 (PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction();
@@ -42,7 +44,6 @@ class LoreholdTheHistorianTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(lorehold);
 
         harness.passBothPriorities();
-
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         PendingInteraction.MayAbilityChoice choice =
                 (PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction();

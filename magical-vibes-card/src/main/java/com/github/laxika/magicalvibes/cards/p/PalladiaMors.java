@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "82")
+@CardRegistration(set = "LEG", collectorNumber = "247")
 public class PalladiaMors extends Card {
 
     public PalladiaMors() {
-        // At the beginning of your upkeep, sacrifice Palladia-Mors unless you pay {R}{G}{W}.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ForcedCostOrElseEffect(
                         new PayManaCost("{R}{G}{W}"),

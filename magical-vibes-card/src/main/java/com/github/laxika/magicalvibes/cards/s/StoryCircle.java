@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "49")
 @CardRegistration(set = "9ED", collectorNumber = "48")
 @CardRegistration(set = "8ED", collectorNumber = "50")
+@CardRegistration(set = "MMQ", collectorNumber = "51")
 public class StoryCircle extends Card {
 
     public StoryCircle() {

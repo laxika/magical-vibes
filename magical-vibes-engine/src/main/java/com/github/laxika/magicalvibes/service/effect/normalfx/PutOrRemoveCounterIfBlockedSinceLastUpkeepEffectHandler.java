@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -53,6 +54,9 @@ public class PutOrRemoveCounterIfBlockedSinceLastUpkeepEffectHandler implements 
             return;
         }
         self.setCounterCount(e.counterType(), current - 1);
+        if (e.counterType() == CounterType.OIL) {
+            gameData.recordOilCounterRemoved(self, 1);
+        }
         gameLogService.append(gameData, GameLog.builder().card(self.getCard())
                 .text(" removes a " + counterName + " counter.").build());
     }

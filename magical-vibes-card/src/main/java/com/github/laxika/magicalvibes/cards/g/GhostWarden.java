@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "16")
+@CardRegistration(set = "GPT", collectorNumber = "5")
 public class GhostWarden extends Card {
 
     public GhostWarden() {

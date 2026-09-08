@@ -23,9 +23,8 @@ class SmolderingButcherTest extends BaseCardTest {
 
         resolveCombat();
 
-        // Lethal (the blocker's 2 toughness) is dealt as -1/-1 counters rather than marked damage;
-        // the 2/2 becomes 0/0 and dies.
-        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        // All 4 combat damage is dealt to the sole blocker as -1/-1 counters rather than marked damage.
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
         assertThat(blocker.getMarkedDamage()).isEqualTo(0);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }

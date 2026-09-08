@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "26")
+@CardRegistration(set = "EMN", collectorNumber = "30")
 public class GuardianOfPilgrims extends Card {
 
     public GuardianOfPilgrims() {

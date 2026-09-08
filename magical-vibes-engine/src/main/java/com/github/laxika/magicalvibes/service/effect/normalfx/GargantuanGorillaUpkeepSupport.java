@@ -87,11 +87,12 @@ public class GargantuanGorillaUpkeepSupport {
     /** "If you don't sacrifice a Forest, sacrifice this creature and it deals 7 damage to you." */
     public void applyPenalty(GameData gameData, UUID controllerId, UUID sourcePermanentId, Card sourceCard) {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source != null) {
+        if (source != null && controllerId.equals(
+                gameQueryService.findPermanentController(gameData, sourcePermanentId))) {
             destructionSupport.sacrificeAndLog(gameData, source, controllerId);
         }
         destructionSupport.dealNoncombatDamageToPlayer(gameData, controllerId, 7,
-                sourceCard.getName(), sourceCard.getColor());
+                sourceCard.getName(), sourceCard);
         gameOutcomeService.checkWinCondition(gameData);
     }
 }

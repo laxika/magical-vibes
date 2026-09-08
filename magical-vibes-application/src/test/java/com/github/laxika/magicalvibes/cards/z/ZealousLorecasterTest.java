@@ -37,15 +37,16 @@ class ZealousLorecasterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining the optional return leaves the card in the graveyard")
-    void decliningReturnsNothing() {
+    @DisplayName("Cannot decline the required graveyard target")
+    void cannotDeclineRequiredTarget() {
         harness.setGraveyard(player1, List.of(new Shock()));
         harness.setHand(player1, List.of(new ZealousLorecaster()));
 
         castZealousLorecaster();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
-        harness.passBothPriorities();
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Shock");

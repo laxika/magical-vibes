@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "268")
+@CardRegistration(set = "RQS", collectorNumber = "41")
 @CardRegistration(set = "6ED", collectorNumber = "236")
 @CardRegistration(set = "8ED", collectorNumber = "256")
 @CardRegistration(set = "9ED", collectorNumber = "246")
@@ -11,5 +12,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "POR", collectorNumber = "169")
 @CardRegistration(set = "5ED", collectorNumber = "301")
 @CardRegistration(set = "4ED", collectorNumber = "250")
+@CardRegistration(set = "ITP", collectorNumber = "42")
+@CardRegistration(set = "S99", collectorNumber = "129")
+@CardRegistration(set = "SUM", collectorNumber = "201")
 public class GrizzlyBears extends Card {
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,28 +19,31 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AladdinTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Activated ability gains control of target artifact")
+    @DisplayName("Gains control of target artifact for as long as Aladdin remains under your control")
     void gainsControlOfTargetArtifact() {
-        Permanent aladdin = addReadyAladdin();
+        Permanent aladdin = addReadyAladdin(player1);
         Permanent artifact = addArtifact(player2);
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.activateAbility(player1, battlefieldIndex(player1, aladdin), null, artifact.getId());
         harness.passBothPriorities();
 
-        assertThat(aladdin.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(artifact.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(artifact.getId()));
     }
 
     @Test
-    @DisplayName("Stolen artifact returns when Aladdin leaves the battlefield")
-    void stolenArtifactReturnsWhenAladdinLeaves() {
-        Permanent aladdin = addReadyAladdin();
+    @DisplayName("The artifact returns when Aladdin leaves the battlefield")
+    void artifactReturnsWhenAladdinLeavesBattlefield() {
+        Permanent aladdin = addReadyAladdin(player1);
         Permanent artifact = addArtifact(player2);
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.activateAbility(player1, battlefieldIndex(player1, aladdin), null, artifact.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -51,30 +54,37 @@ class AladdinTest extends BaseCardTest {
         harness.castInstant(player2, 0, aladdin.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
-        assertThat(gd.controlEffectsFor(artifact.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(artifact.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(artifact.getId()));
     }
 
     @Test
     @DisplayName("Cannot target a non-artifact permanent")
     void cannotTargetNonArtifact() {
+        Permanent aladdin = addReadyAladdin(player1);
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        addReadyAladdin();
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, aladdin), null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an artifact");
     }
 
-    private Permanent addReadyAladdin() {
-        return addCreatureReady(player1, new Aladdin());
+    private Permanent addReadyAladdin(Player player) {
+        Permanent aladdin = harness.addToBattlefieldAndReturn(player, new Aladdin());
+        aladdin.setSummoningSick(false);
+        return aladdin;
     }
 
     private Permanent addArtifact(Player player) {
-        Permanent artifact = new Permanent(new MindStone());
-        artifact.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(artifact);
-        return artifact;
+        return harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
+    }
+
+    private int battlefieldIndex(Player player, Permanent permanent) {
+        return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
 }

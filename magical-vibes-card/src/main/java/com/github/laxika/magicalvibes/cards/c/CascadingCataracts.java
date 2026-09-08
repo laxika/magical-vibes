@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "240")
+@CardRegistration(set = "AKR", collectorNumber = "285")
 public class CascadingCataracts extends Card {
 
     public CascadingCataracts() {

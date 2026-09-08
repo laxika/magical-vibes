@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "165")
+@CardRegistration(set = "USG", collectorNumber = "142")
 public class NoRestForTheWicked extends Card {
 
     public NoRestForTheWicked() {

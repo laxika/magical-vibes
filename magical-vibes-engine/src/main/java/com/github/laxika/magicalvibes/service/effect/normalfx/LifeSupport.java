@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -59,6 +60,17 @@ public class LifeSupport {
      */
     public void applyGainLife(GameData gameData, UUID controllerId, int amount, String source,
                               Card sourceCard, StackEntryType sourceEntryType) {
+        applyGainLife(gameData, controllerId, amount, source, sourceCard, sourceEntryType,
+                resolveSpellOrAbilityControllerId(gameData));
+    }
+
+    /**
+     * Applies life gain while preserving the controller of the spell or ability that caused it.
+     * The explicit source controller is used by abilities resolved outside the normal stack loop.
+     */
+    public void applyGainLife(GameData gameData, UUID controllerId, int amount, String source,
+                              Card sourceCard, StackEntryType sourceEntryType,
+                              UUID sourceControllerId) {
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
@@ -75,9 +87,10 @@ public class LifeSupport {
             }
             return;
         }
-        // Tainted Remedy turns the whole gain event into an equal life loss. Per CR 119.10 a gain of
-        // 0 is not a life-gain event, so there is nothing to replace.
-        if (amount > 0 && gameQueryService.lifeGainBecomesLifeLoss(gameData, controllerId)) {
+        // Tainted Remedy and Rain of Gore turn the whole gain event into an equal life loss.
+        if (amount > 0 && (gameQueryService.lifeGainBecomesLifeLoss(gameData, controllerId)
+                || gameQueryService.lifeGainFromSpellOrAbilityBecomesLifeLoss(
+                        gameData, controllerId, sourceControllerId))) {
             applyLifeLoss(gameData, controllerId, amount, source != null ? source : "replaced life gain");
             return;
         }
@@ -131,7 +144,9 @@ public class LifeSupport {
                 }
                 return true;
             }
-            if (gameQueryService.lifeGainBecomesLifeLoss(gameData, playerId)) {
+            if (gameQueryService.lifeGainBecomesLifeLoss(gameData, playerId)
+                    || gameQueryService.lifeGainFromSpellOrAbilityBecomesLifeLoss(
+                            gameData, playerId, resolveSpellOrAbilityControllerId(gameData))) {
                 applyLifeLoss(gameData, playerId, newLife - currentLife, "replaced life gain");
                 return true;
             }
@@ -142,8 +157,10 @@ public class LifeSupport {
             gameData.lifeGainedThisTurn.merge(playerId, gained, Integer::sum);
             triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gained);
         } else {
-            gameData.playerLifeTotals.put(playerId, newLife);
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, currentLife - newLife);
+            int lifeLoss = (currentLife - newLife)
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         }
         return true;
     }
@@ -154,6 +171,7 @@ public class LifeSupport {
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;
         }
+        amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - amount);
 
@@ -165,8 +183,51 @@ public class LifeSupport {
         triggerCollectionService.checkLifeLossTriggers(gameData, playerId, amount);
     }
 
+    /** Applies a life payment and fires both life-loss and life-payment triggers. */
+    public void applyLifePayment(GameData gameData, UUID playerId, int amount, String sourceName) {
+        if (amount <= 0) return;
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (gameQueryService.hasLifePaymentReplacement(gameData, playerId)
+                && gameData.getLife(playerId) >= amount
+                && deck != null && deck.size() >= amount) {
+            for (int i = 0; i < amount; i++) {
+                gameData.addToExile(playerId, deck.removeFirst());
+            }
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " exiles " + amount + " card(s) instead of paying life (" + sourceName + ")."));
+            return;
+        }
+
+        int currentLife = gameData.getLife(playerId);
+        gameData.playerLifeTotals.put(playerId, currentLife - amount);
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameLogService.append(gameData, GameLog.text(
+                playerName + " loses " + amount + " life (" + sourceName + ")."));
+        log.info("Game {} - {} loses {} life from paying for {}", gameData.id, playerName, amount, sourceName);
+
+        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, amount);
+        triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, amount);
+    }
+
     public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName) {
-        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) return;
+        applyPoisonCounters(gameData, playerId, amount, sourceName, gameData.currentlyResolvingControllerId);
+    }
+
+    public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName,
+                                    UUID placingPlayerId) {
+        amount = gameQueryService.applyPoisonCounterReplacement(gameData, playerId, amount);
+        if (amount <= 0) return;
+
+        amount = gameQueryService.replacePoisonCounters(gameData, playerId, amount, placingPlayerId);
+        if (amount <= 0) return;
 
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
         gameData.playerPoisonCounters.put(playerId, currentPoison + amount);
@@ -177,12 +238,21 @@ public class LifeSupport {
         gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, amount, sourceName);
+        triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
     }
 
     private boolean hasNefariousLichLifeGainReplacement(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         return battlefield != null && battlefield.stream().anyMatch(permanent ->
                 permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(NefariousLichLifeGainReplacementEffect.class::isInstance));
+                .anyMatch(NefariousLichLifeGainReplacementEffect.class::isInstance));
+    }
+
+    private UUID resolveSpellOrAbilityControllerId(GameData gameData) {
+        if (gameData.currentlyResolvingControllerId != null) {
+            return gameData.currentlyResolvingControllerId;
+        }
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        return pendingEntry != null ? pendingEntry.getControllerId() : null;
     }
 }

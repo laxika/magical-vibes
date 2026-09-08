@@ -80,6 +80,6 @@ class DiscipleOfPhenaxTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a player");
+                .hasMessage("This spell can only target players");
     }
 }

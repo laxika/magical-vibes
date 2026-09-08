@@ -54,7 +54,7 @@ public class GraveyardTopExileSupport {
             return false;
         }
         gameData.playerGraveyards.get(playerId).remove(card);
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, card);
         exileService.exileCard(gameData, playerId, card);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(
@@ -92,12 +92,30 @@ public class GraveyardTopExileSupport {
             return false;
         }
         Card card = gameData.playerGraveyards.get(playerId).remove((int) matchingIndices.getFirst());
-        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, card);
         exileService.exileCard(gameData, playerId, card);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(
                 playerName + " exiles ", card, " from their graveyard."));
         log.info("Game {} - {} exiles {} from their graveyard", gameData.id, playerName, card.getName());
+        return true;
+    }
+
+    /** Exiles the supplied matching graveyard cards together; returns false if any has moved. */
+    public boolean exileCards(GameData gameData, UUID playerId, List<Card> cards) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null || !graveyard.containsAll(cards)) {
+            return false;
+        }
+        graveyard.removeAll(cards);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, cards);
+        for (Card card : cards) {
+            exileService.exileCard(gameData, playerId, card);
+        }
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameLogService.append(gameData, GameLog.text(
+                playerName + " exiles " + cards.size() + " cards from their graveyard."));
+        log.info("Game {} - {} exiles {} cards from their graveyard", gameData.id, playerName, cards.size());
         return true;
     }
 }

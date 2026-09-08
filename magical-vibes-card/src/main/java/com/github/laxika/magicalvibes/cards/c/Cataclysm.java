@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseKeptPermanentOfEachType
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "3")
+@CardRegistration(set = "TPR", collectorNumber = "8")
 public class Cataclysm extends Card {
 
     public Cataclysm() {

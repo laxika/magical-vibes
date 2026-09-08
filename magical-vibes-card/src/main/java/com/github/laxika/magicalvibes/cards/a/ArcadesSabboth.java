@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "71")
+@CardRegistration(set = "LEG", collectorNumber = "218")
 public class ArcadesSabboth extends Card {
 
     public ArcadesSabboth() {
@@ -27,19 +28,19 @@ public class ArcadesSabboth extends Card {
                         List.of(new SacrificeSelfEffect()),
                         true));
 
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(
-                        0,
-                        2,
-                        GrantScope.ALL_OWN_CREATURES,
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentNotPredicate(new PermanentIsTappedPredicate()),
-                                new PermanentNotPredicate(new PermanentIsAttackingPredicate())))));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                0,
+                2,
+                GrantScope.ALL_OWN_CREATURES,
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentNotPredicate(new PermanentIsTappedPredicate()),
+                        new PermanentNotPredicate(new PermanentIsAttackingPredicate())
+                ))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",
                 List.of(new BoostSelfEffect(0, 1)),
-                "{W}: Arcades Sabboth gets +0/+1 until end of turn."));
+                "{W}: This creature gets +0/+1 until end of turn."));
     }
 }

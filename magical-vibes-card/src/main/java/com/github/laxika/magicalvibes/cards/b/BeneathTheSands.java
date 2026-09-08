@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 
 @CardRegistration(set = "HOU", collectorNumber = "111")
+@CardRegistration(set = "AKR", collectorNumber = "182")
 public class BeneathTheSands extends Card {
 
     public BeneathTheSands() {

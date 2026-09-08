@@ -16,8 +16,7 @@ public record RealityTwistManaEffect() implements TwistBasicLandManaColorsEffect
             CardSubtype.PLAINS, ManaColor.RED,
             CardSubtype.SWAMP, ManaColor.GREEN,
             CardSubtype.MOUNTAIN, ManaColor.WHITE,
-            CardSubtype.FOREST, ManaColor.BLACK,
-            CardSubtype.ISLAND, ManaColor.BLUE);
+            CardSubtype.FOREST, ManaColor.BLACK);
 
     @Override
     public Map<CardSubtype, ManaColor> landColorMapping() {

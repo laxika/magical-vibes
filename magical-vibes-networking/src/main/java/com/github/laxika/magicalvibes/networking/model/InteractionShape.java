@@ -30,5 +30,7 @@ public enum InteractionShape {
     /** Produce a full ordering of the presented cards. */
     CARD_ORDER,
     /** Pick one presented card for the hand and one for the top of the library. */
-    HAND_TOP_BOTTOM
+    HAND_TOP_BOTTOM,
+    /** Pick one presented card for the hand and one for the bottom; any remainder is exiled. */
+    HAND_BOTTOM_EXILE
 }

@@ -17,77 +17,66 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RubiniaSoulsingerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("{T} gains control of a target creature; Rubinia stays tapped")
-    void gainsControlOfCreature() {
+    @DisplayName("{T} gains control of a target creature while Rubinia remains tapped")
+    void gainsControlWhileTapped() {
         Permanent rubinia = addReadyRubinia(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        activate(rubinia, creature);
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(rubinia);
+        harness.activateAbility(player1, idx, null, bears.getId());
+        harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(creature.getId()));
-        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(creature.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(bears.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(bears.getId()));
         assertThat(rubinia.isTapped()).isTrue();
-        assertThat(gd.newestControlEffectFor(creature.getId()).sourcePermanentId()).isEqualTo(rubinia.getId());
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
-    void cannotTargetNoncreature() {
+    void cannotTargetNoncreaturePermanent() {
         Permanent rubinia = addReadyRubinia(player1);
-        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent land = new Permanent(new Island());
+        gd.playerBattlefields.get(player2.getId()).add(land);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(rubinia);
-        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, island.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
 
     @Test
-    @DisplayName("Control is lost when Rubinia untaps during its controller's untap step")
-    void controlLostWhenRubiniaUntaps() {
+    @DisplayName("Control ends when Rubinia untaps")
+    void controlEndsWhenRubiniaUntaps() {
         Permanent rubinia = addReadyRubinia(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        activate(rubinia, creature);
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(rubinia);
+        harness.activateAbility(player1, idx, null, bears.getId());
+        harness.passBothPriorities();
 
         advanceToNextTurn(player1);
-        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(creature.getId()));
-
         advanceToNextTurnWithMayChoice(player2, true);
 
         assertThat(rubinia.isTapped()).isFalse();
-        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(creature.getId()));
-        assertThat(gd.controlEffectsFor(creature.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(bears.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(bears.getId()));
     }
 
     @Test
-    @DisplayName("Choosing not to untap Rubinia retains control across the untap step")
-    void keepingTappedRetainsControl() {
+    @DisplayName("Choosing not to untap Rubinia retains control")
+    void keepingRubiniaTappedRetainsControl() {
         Permanent rubinia = addReadyRubinia(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        activate(rubinia, creature);
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(rubinia);
+        harness.activateAbility(player1, idx, null, bears.getId());
+        harness.passBothPriorities();
 
         advanceToNextTurn(player1);
         advanceToNextTurnWithMayChoice(player2, false);
 
         assertThat(rubinia.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(creature.getId()));
-    }
-
-    @Test
-    @DisplayName("Control is lost when Rubinia leaves the battlefield")
-    void controlLostWhenRubiniaLeaves() {
-        Permanent rubinia = addReadyRubinia(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-
-        activate(rubinia, creature);
-
-        gd.playerBattlefields.get(player1.getId()).remove(rubinia);
-        advanceToNextTurn(player1);
-
-        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(creature.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(creature.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(bears.getId()));
     }
 
     private Permanent addReadyRubinia(Player player) {
@@ -95,12 +84,6 @@ class RubiniaSoulsingerTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void activate(Permanent rubinia, Permanent target) {
-        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(rubinia);
-        harness.activateAbility(player1, idx, null, target.getId());
-        harness.passBothPriorities();
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {

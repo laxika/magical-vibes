@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "198")
+@CardRegistration(set = "DKM", collectorNumber = "16")
 public class LavaBurst extends Card {
 
     public LavaBurst() {
@@ -16,6 +17,6 @@ public class LavaBurst extends Card {
         // can't be prevented — the unpreventable gate is the target-dependent
         // TargetPermanentMatches(creature), so damage to a player stays preventable.
         addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(
-                new XValue(), new TargetPermanentMatches(new PermanentIsCreaturePredicate())));
+                new XValue(), new TargetPermanentMatches(new PermanentIsCreaturePredicate()), true));
     }
 }

@@ -53,8 +53,8 @@ public class DiscardCardsAndPutCountersOnSourceEffectHandler implements NormalEf
             gameData.discardCausedByOpponent = false;
             playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
                     cardName + " — Choose " + e.cardDescription() + " to discard.", chosenCount,
-                    DiscardFollowUp.plusOnePlusOneCounters(entry.getSourcePermanentId(),
-                            chosenCount * e.countersPerCard()));
+                    DiscardFollowUp.plusOnePlusOneCountersAndDraw(entry.getSourcePermanentId(),
+                            chosenCount * e.countersPerCard(), chosenCount * e.drawCardsPerCard()));
             return;
         }
 

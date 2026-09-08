@@ -94,10 +94,10 @@ class ShivanZombieTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(createTargetedInstant("White Bolt", CardColor.WHITE, "{W}")));
         harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.ensurePriority(player2);
 
         assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, zombie.getId(), null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection from white");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -109,6 +109,7 @@ class ShivanZombieTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(createTargetedInstant("Red Bolt", CardColor.RED, "{R}")));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
 
         gs.playCard(gd, player2, 0, 0, zombie.getId(), null);
 

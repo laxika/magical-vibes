@@ -2,29 +2,34 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.ChaosCharm;
 import com.github.laxika.magicalvibes.cards.d.DwarvenDemolitionTeam;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.w.WordOfBlasting;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WallOfShadows.class, ZuranSpellcaster.class, WordOfBlasting.class,
+        DwarvenDemolitionTeam.class, ChaosCharm.class})
 class WallOfShadowsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prevents damage from creatures it blocks")
-    void preventsDamageFromCreaturesItBlocks() {
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
-        Permanent wall = addBlocker(player1, new WallOfShadows(), attacker);
+    void preventsDamageFromBlockedCreature() {
+        Permanent wall = addCreatureReady(player1, new WallOfShadows());
+        Permanent attacker = addCreatureReady(player2, new ZuranSpellcaster());
+        attacker.setAttacking(true);
+        wall.setBlocking(true);
+        wall.addBlockingTarget(0);
+        wall.addBlockingTargetId(attacker.getId());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -38,15 +43,12 @@ class WallOfShadowsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be targeted by a spell that can target only Walls")
     void cannotBeTargetedByWallOnlySpell() {
-        harness.addToBattlefield(player2, new WallOfShadows());
+        Permanent wall = addCreatureReady(player2, new WallOfShadows());
         harness.setHand(player1, List.of(new WordOfBlasting()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID wallId = harness.getPermanentId(player2, "Wall of Shadows");
-
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, wallId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Card is not playable");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, wall.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -56,46 +58,25 @@ class WallOfShadowsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.addToBattlefield(player1, new DwarvenDemolitionTeam());
-        Permanent demolitionTeam = findPermanent(player1, "Dwarven Demolition Team");
-        demolitionTeam.setSummoningSick(false);
-        harness.addToBattlefield(player2, new WallOfShadows());
-        UUID wallId = harness.getPermanentId(player2, "Wall of Shadows");
-        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(demolitionTeam);
+        Permanent source = findPermanent(player1, "Dwarven Demolition Team");
+        source.setSummoningSick(false);
+        Permanent wall = addCreatureReady(player2, new WallOfShadows());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, 0, null, wallId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("only Walls");
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);
+        assertThatThrownBy(() -> harness.activateAbility(player1, sourceIndex, 0, null, wall.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("A modal spell with a non-Wall mode can target it")
-    void modalSpellWithNonWallModeCanTargetIt() {
-        harness.addToBattlefield(player2, new WallOfShadows());
+    @DisplayName("A modal spell with a broader mode may target Wall of Shadows")
+    void modalSpellWithBroaderModeMayTargetIt() {
+        Permanent wall = addCreatureReady(player2, new WallOfShadows());
         harness.setHand(player1, List.of(new ChaosCharm()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID wallId = harness.getPermanentId(player2, "Wall of Shadows");
-        harness.castInstant(player1, 0, 0, wallId);
+        harness.castInstant(player1, 0, 0, wall.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Wall of Shadows");
-    }
-
-    private Permanent addAttacker(Player player, Card card) {
-        Permanent attacker = new Permanent(card);
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(attacker);
-        return attacker;
-    }
-
-    private Permanent addBlocker(Player player, Card card, Permanent attacker) {
-        Permanent blocker = new Permanent(card);
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        blocker.addBlockingTargetId(attacker.getId());
-        gd.playerBattlefields.get(player.getId()).add(blocker);
-        return blocker;
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
     }
 }

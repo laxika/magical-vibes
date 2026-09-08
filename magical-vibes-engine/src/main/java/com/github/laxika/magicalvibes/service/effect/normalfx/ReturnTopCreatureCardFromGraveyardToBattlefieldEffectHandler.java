@@ -64,7 +64,7 @@ public class ReturnTopCreatureCardFromGraveyardToBattlefieldEffectHandler implem
                 continue;
             }
             graveyard.remove(index);
-            graveyardService.notifyCardsLeftGraveyard(gameData, graveyardOwnerId);
+            graveyardService.notifyCardsLeftGraveyard(gameData, graveyardOwnerId, card);
             graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, card);
             if (returnEffect.assignNoCombatDamageIfReturned()) {
                 assignNoCombatDamage(gameData, entry);

@@ -67,6 +67,7 @@ class AjanisChosenTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve the trigger
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         Permanent token = catToken();
         assertThat(token).isNotNull();

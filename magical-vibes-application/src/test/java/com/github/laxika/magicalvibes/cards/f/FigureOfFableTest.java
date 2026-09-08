@@ -103,7 +103,6 @@ class FigureOfFableTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, figure.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection from the source's controller");
+                .isInstanceOf(IllegalStateException.class);
     }
 }

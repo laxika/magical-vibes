@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "244")
+@CardRegistration(set = "ECL", collectorNumber = "342")
 public class SyggsCommand extends Card {
 
     public SyggsCommand() {

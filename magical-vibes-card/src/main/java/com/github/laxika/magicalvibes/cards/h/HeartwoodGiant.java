@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "232")
+@CardRegistration(set = "TPR", collectorNumber = "174")
 public class HeartwoodGiant extends Card {
 
     public HeartwoodGiant() {

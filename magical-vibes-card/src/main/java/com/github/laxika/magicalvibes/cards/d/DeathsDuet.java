@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "EXO", collectorNumber = "60")
+@CardRegistration(set = "TPR", collectorNumber = "101")
 public class DeathsDuet extends Card {
 
     public DeathsDuet() {

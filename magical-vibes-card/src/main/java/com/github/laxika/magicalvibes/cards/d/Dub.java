@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DOM", collectorNumber = "15")
+@CardRegistration(set = "M21", collectorNumber = "16")
 public class Dub extends Card {
 
     public Dub() {

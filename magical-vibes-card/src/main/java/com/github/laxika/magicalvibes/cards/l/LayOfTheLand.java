@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "M14", collectorNumber = "183")
+@CardRegistration(set = "APC", collectorNumber = "81")
 public class LayOfTheLand extends Card {
 
     public LayOfTheLand() {

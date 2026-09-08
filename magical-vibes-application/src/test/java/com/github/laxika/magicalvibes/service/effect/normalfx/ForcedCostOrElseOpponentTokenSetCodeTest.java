@@ -63,7 +63,8 @@ class ForcedCostOrElseOpponentTokenSetCodeTest {
         gd.playerBattlefields.put(opponentId, Collections.synchronizedList(new ArrayList<>()));
         handler = new ForcedCostOrElseEffectHandler(
                 destructionSupport, gameQueryService, predicateEvaluationService,
-                playerInputService, libraryExileSupport, null, null, null, drawService, amountEvaluationService);
+                playerInputService, libraryExileSupport, null, null, null, drawService, amountEvaluationService,
+                null);
     }
 
     @Test

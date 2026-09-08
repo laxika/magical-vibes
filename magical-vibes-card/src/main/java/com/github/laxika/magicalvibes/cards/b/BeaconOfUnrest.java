@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "129")
+@CardRegistration(set = "5DN", collectorNumber = "41")
 public class BeaconOfUnrest extends Card {
 
     public BeaconOfUnrest() {

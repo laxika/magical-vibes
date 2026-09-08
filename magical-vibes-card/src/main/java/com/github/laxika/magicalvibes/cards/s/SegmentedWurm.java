@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "269")
+@CardRegistration(set = "BTD", collectorNumber = "68")
 public class SegmentedWurm extends Card {
 
     public SegmentedWurm() {

@@ -2,13 +2,17 @@ package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CastingOption;
+import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
@@ -18,6 +22,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -26,7 +32,10 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.ModalOptionView;
@@ -37,9 +46,15 @@ import com.github.laxika.magicalvibes.model.CardType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class CardViewFactory {
+
+    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = Set.of(
+            CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND, CardSubtype.PLAINS,
+            CardSubtype.SWAMP, CardSubtype.AURA, CardSubtype.EQUIPMENT, CardSubtype.AJANI,
+            CardSubtype.KOTH, CardSubtype.BOLAS);
 
     /**
      * Creates a CardView with additional granted subtypes merged in.
@@ -57,24 +72,51 @@ public class CardViewFactory {
 
     /**
      * Creates a CardView with granted subtypes merged in and additional graveyard-activated abilities
-     * appended (e.g. unearth granted by Sedris, the Traitor King). Granted graveyard abilities are only
-     * merged for creature cards and are appended after the card's own so indices stay aligned with the
-     * server-side graveyard ability list.
+     * appended (e.g. unearth granted by Sedris, the Traitor King or Mishra, Tamer of Mak Fawa).
+     * They are appended after the card's own so indices stay aligned with the server-side graveyard
+     * ability list.
      */
     public CardView create(Card card, List<CardSubtype> grantedSubtypes, List<ActivatedAbility> grantedGraveyardAbilities) {
+        return create(card, grantedSubtypes, grantedGraveyardAbilities, List.of());
+    }
+
+    /**
+     * Creates a CardView with granted subtypes and additional zone-specific activated abilities.
+     * Granted hand abilities are appended after the card's own abilities so their indices match
+     * the effective server-side hand ability list.
+     */
+    public CardView create(Card card, List<CardSubtype> grantedSubtypes,
+                           List<ActivatedAbility> grantedGraveyardAbilities,
+                           List<ActivatedAbility> grantedHandAbilities) {
         CardView base = create(card, grantedSubtypes);
-        if (grantedGraveyardAbilities.isEmpty() || !card.hasType(CardType.CREATURE)) return base;
-        List<ActivatedAbilityView> mergedGraveyard = new ArrayList<>(base.graveyardActivatedAbilities());
-        for (ActivatedAbility ability : grantedGraveyardAbilities) {
-            mergedGraveyard.add(createAbilityView(ability));
+        CardView result = base;
+        if (!grantedGraveyardAbilities.isEmpty()) {
+            List<ActivatedAbilityView> mergedGraveyard = new ArrayList<>(base.graveyardActivatedAbilities());
+            for (ActivatedAbility ability : grantedGraveyardAbilities) {
+                mergedGraveyard.add(createAbilityView(ability));
+            }
+            result = result.toBuilder().graveyardActivatedAbilities(mergedGraveyard).build();
         }
-        return base.toBuilder().graveyardActivatedAbilities(mergedGraveyard).build();
+        if (!grantedHandAbilities.isEmpty()) {
+            List<ActivatedAbilityView> mergedHand = new ArrayList<>(result.handActivatedAbilities());
+            for (ActivatedAbility ability : grantedHandAbilities) {
+                mergedHand.add(createAbilityView(ability));
+            }
+            result = result.toBuilder().handActivatedAbilities(mergedHand).build();
+        }
+        return result;
     }
 
     public CardView create(Card card) {
         boolean hasTapAbility = !card.getEffects(EffectSlot.ON_TAP).isEmpty();
 
         List<ActivatedAbilityView> abilityViews = card.getActivatedAbilities().stream()
+                .filter(ability -> !ability.isExileOnly())
+                .map(this::createAbilityView)
+                .toList();
+
+        List<ActivatedAbilityView> exileAbilityViews = card.getActivatedAbilities().stream()
+                .filter(ActivatedAbility::isExileOnly)
                 .map(this::createAbilityView)
                 .toList();
 
@@ -103,6 +145,19 @@ public class CardViewFactory {
                 .map(ChooseXValueCost.class::cast)
                 .findFirst()
                 .orElse(null);
+        boolean chooseCreatureTypeCost = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(ChooseCreatureTypeCost.class::isInstance);
+        List<String> creatureTypeChoices = chooseCreatureTypeCost
+                ? java.util.Arrays.stream(CardSubtype.values())
+                .filter(subtype -> !NON_CREATURE_SUBTYPES.contains(subtype))
+                .map(CardSubtype::getDisplayName)
+                .toList()
+                : List.of();
+        PayLifeOrPayManaCost additionalCost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(PayLifeOrPayManaCost.class::isInstance)
+                .map(PayLifeOrPayManaCost.class::cast)
+                .findFirst()
+                .orElse(null);
 
         // Prepare cards keep their front face on the battlefield and print the prepare spell inset,
         // so the spell is projected as a nested view rather than as a face the client flips to.
@@ -112,20 +167,44 @@ public class CardViewFactory {
                 : null;
 
         var altCastOpt = card.getCastingOption(AlternateHandCast.class).map(a -> (CastingOption) a)
+                .or(() -> card.getCastingOption(AdventureCast.class).map(a -> (CastingOption) a))
                 .or(() -> card.getCastingOption(BestowCast.class).map(b -> (CastingOption) b));
         boolean hasAlternateCastingCost = altCastOpt.isPresent();
+        CollectEvidenceCost collectEvidenceAlternativeCost = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(AlternativeCostForSpellsEffect.class::isInstance)
+                .map(AlternativeCostForSpellsEffect.class::cast)
+                .map(AlternativeCostForSpellsEffect::nonManaCost)
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        hasAlternateCastingCost = hasAlternateCastingCost || collectEvidenceAlternativeCost != null;
         int alternateCostLifePayment = altCastOpt.flatMap(a -> a.getCost(LifeCastingCost.class)).map(LifeCastingCost::amount).orElse(0);
         int alternateCostSacrificeCount = altCastOpt.flatMap(a -> a.getCost(SacrificePermanentsCost.class)).map(SacrificePermanentsCost::count).orElse(0);
         int alternateCostTapCount = altCastOpt.flatMap(a -> a.getCost(TapUntappedPermanentsCost.class)).map(TapUntappedPermanentsCost::count).orElse(0);
         int alternateCostReturnCount = altCastOpt.flatMap(a -> a.getCost(ReturnPermanentsCost.class)).map(ReturnPermanentsCost::count).orElse(0);
         String alternateCostManaCost = altCastOpt.flatMap(a -> a.getCost(ManaCastingCost.class)).map(ManaCastingCost::manaCost).orElse(null);
         var exileHandCost = altCastOpt.flatMap(a -> a.getCost(ExileCardsFromHandCastingCost.class));
+        List<DiscardCardCastingCost> discardHandCosts = altCastOpt
+                .map(a -> a.getCosts(DiscardCardCastingCost.class)).orElse(List.of());
         var revealHandCost = altCastOpt.flatMap(a -> a.getCost(RevealCardsFromHandCastingCost.class));
         int alternateCostExileHandCount = exileHandCost.map(ExileCardsFromHandCastingCost::count)
-                .orElse(revealHandCost.isPresent() ? 1 : 0);
+                .orElse(!discardHandCosts.isEmpty() ? discardHandCosts.size()
+                        : revealHandCost.isPresent() ? 1 : 0);
         String alternateCostExileHandLabel = exileHandCost.map(ExileCardsFromHandCastingCost::label)
-                .orElseGet(() -> revealHandCost.map(RevealCardsFromHandCastingCost::label).orElse(null));
+                .orElseGet(() -> !discardHandCosts.isEmpty()
+                        ? String.join(" and ", discardHandCosts.stream()
+                                .map(cost -> cost.label() != null ? cost.label() : "a card").toList())
+                        : revealHandCost.map(RevealCardsFromHandCastingCost::label).orElse(null));
+        boolean alternateCostDiscardsHandCard = !discardHandCosts.isEmpty();
         boolean alternateCostRevealsHandCard = revealHandCost.isPresent();
+        boolean graveyardCastRequiresDiscard = card.getCastingOption(GraveyardCast.class)
+                .flatMap(castingOption -> castingOption.getCost(DiscardCardCastingCost.class))
+                .isPresent();
+        var graveyardCastExileCost = card.getCastingOption(GraveyardCast.class)
+                .flatMap(castingOption -> castingOption.getCost(ExileNCardsFromGraveyardCastingCost.class));
+        int graveyardCastExileCount = graveyardCastExileCost.map(ExileNCardsFromGraveyardCastingCost::count).orElse(0);
+        String graveyardCastExileLabel = graveyardCastExileCost.map(ExileNCardsFromGraveyardCastingCost::label).orElse(null);
 
         BuybackEffect buybackEffect = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof BuybackEffect)
@@ -145,8 +224,10 @@ public class CardViewFactory {
                 : kickerEffect.hasManaCost() ? kickerEffect.cost()
                 : kickerEffect.hasSacrificeCost() ? "Sacrifice " + kickerEffect.sacrificeDescription()
                 : kickerEffect.hasTapCost() ? "Tap " + kickerEffect.tapDescription()
+                : kickerEffect.hasReturnCost() ? "Return " + kickerEffect.returnDescription()
                 : null;
         boolean kickerRequiresTap = kickerEffect != null && kickerEffect.hasTapCost();
+        boolean kickerRequiresReturn = kickerEffect != null && kickerEffect.hasReturnCost();
 
         return new CardView(
                 card.getId(),
@@ -173,7 +254,9 @@ public class CardViewFactory {
                 xValueCost != null ? xValueCost.maxValue() : 0,
                 abilityViews,
                 card.getLoyalty(),
-                card.getKeywords().contains(Keyword.CONVOKE),
+                card.getKeywords().contains(Keyword.CONVOKE)
+                        || card.getKeywords().contains(Keyword.IMPROVISE),
+                card.getKeywords().contains(Keyword.HARMONIZE),
                 hasPhyrexianMana,
                 phyrexianManaCount,
                 card.isToken(),
@@ -187,22 +270,34 @@ public class CardViewFactory {
                 alternateCostManaCost,
                 alternateCostExileHandCount,
                 alternateCostExileHandLabel,
-                false,
+                alternateCostDiscardsHandCard,
                 alternateCostRevealsHandCard,
+                graveyardCastRequiresDiscard,
+                graveyardCastExileCount,
+                graveyardCastExileLabel,
                 graveyardAbilityViews,
                 handAbilityViews,
+                exileAbilityViews,
                 card.getBackFaceCard() != null,
                 kickerCost,
                 kickerRequiresTap,
+                kickerRequiresReturn,
                 buybackCost,
                 buybackEffect != null && buybackEffect.hasSacrificeCost(),
+                buybackEffect != null ? buybackEffect.sacrificeCount() : 0,
                 buybackEffect != null ? buybackEffect.discardCount() : 0,
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,
                 modalEffect != null && modalEffect.optional(),
-                modalEffect != null && modalEffect.allowRepeatedModes(),
+                modalEffect != null && modalEffect.modesMayRepeat(),
                 modalOptions,
                 0,
+                chooseCreatureTypeCost,
+                creatureTypeChoices,
+                additionalCost != null ? additionalCost.lifeAmount() : 0,
+                additionalCost != null ? additionalCost.manaCost() : null,
+                collectEvidenceAlternativeCost != null,
+                collectEvidenceAlternativeCost != null ? collectEvidenceAlternativeCost.minimumManaValue() : 0,
                 prepareSpellView);
     }
 
@@ -212,11 +307,59 @@ public class CardViewFactory {
      */
     public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
                                        List<ActivatedAbility> grantedGraveyardAbilities) {
+        return createForGraveyard(card, grantedSubtypes, grantedGraveyardAbilities, false);
+    }
+
+    public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
+                                       List<ActivatedAbility> grantedGraveyardAbilities,
+                                       boolean graveyardAbilitiesSuppressed) {
         CardView base = create(card, grantedSubtypes, grantedGraveyardAbilities);
+        if (graveyardAbilitiesSuppressed) {
+            return base.toBuilder()
+                    .keywords(Set.of())
+                    .hasTapAbility(false)
+                    .hasConvoke(false)
+                    .hasHarmonize(false)
+                    .activatedAbilities(List.of())
+                    .graveyardActivatedAbilities(List.of())
+                    .handActivatedAbilities(List.of())
+                    .exileActivatedAbilities(List.of())
+                    .graveyardCastRequiresDiscard(false)
+                    .build();
+        }
         if (base.needsTarget() || !disturbBackFaceNeedsTarget(card)) {
             return base;
         }
         return base.toBuilder().needsTarget(true).build();
+    }
+
+    public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
+                                       List<ActivatedAbility> grantedGraveyardAbilities,
+                                       int additionalGraveyardExileCount,
+                                       String additionalGraveyardExileLabel) {
+        return createForGraveyard(card, grantedSubtypes, grantedGraveyardAbilities, false,
+                additionalGraveyardExileCount, additionalGraveyardExileLabel);
+    }
+
+    public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
+                                       List<ActivatedAbility> grantedGraveyardAbilities,
+                                       boolean graveyardAbilitiesSuppressed,
+                                       int additionalGraveyardExileCount,
+                                       String additionalGraveyardExileLabel) {
+        CardView base = createForGraveyard(
+                card, grantedSubtypes, grantedGraveyardAbilities, graveyardAbilitiesSuppressed);
+        if (additionalGraveyardExileCount <= 0) {
+            return base;
+        }
+        String label = base.graveyardCastExileCount() == 0
+                ? additionalGraveyardExileLabel
+                : base.graveyardCastExileLabel() == null
+                ? additionalGraveyardExileLabel
+                : base.graveyardCastExileLabel() + " and " + additionalGraveyardExileLabel;
+        return base.toBuilder()
+                .graveyardCastExileCount(base.graveyardCastExileCount() + additionalGraveyardExileCount)
+                .graveyardCastExileLabel(label)
+                .build();
     }
 
     private static boolean disturbBackFaceNeedsTarget(Card card) {
@@ -257,6 +400,9 @@ public class CardViewFactory {
                 && ability.getEffects().stream()
                         .filter(e -> !(e instanceof CostEffect))
                         .anyMatch(e -> e instanceof ManaProducingEffect);
+        ChooseOneEffect modalEffect = ability.modalEffectAtActivation();
+        List<ModalOptionView> modalOptions = modalEffect == null ? null
+                : modalEffect.options().stream().map(this::createModalOptionView).toList();
         return new ActivatedAbilityView(
                 ability.getDescription(),
                 ability.isRequiresTap(),
@@ -275,6 +421,15 @@ public class CardViewFactory {
                         .findFirst()
                         .orElse(null),
                 ability.isRequiresXValue(),
-                ability.isXValueFromControlledCreatureCounters());
+                ability.isXValueFromControlledCreatureCounters(),
+                ability.getXValueFromCardsInHandColor(),
+                ability.getEffects().stream()
+                        .filter(WaterbendCost.class::isInstance)
+                        .map(WaterbendCost.class::cast)
+                        .anyMatch(WaterbendCost::scalesWithX),
+                ability.getMinimumXValue(),
+                modalEffect != null ? modalEffect.choicesRequired() : 0,
+                modalEffect != null ? modalEffect.choicesMax() : 0,
+                modalOptions);
     }
 }

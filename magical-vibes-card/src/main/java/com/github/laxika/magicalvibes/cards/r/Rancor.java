@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "185")
+@CardRegistration(set = "ULG", collectorNumber = "110")
 public class Rancor extends Card {
 
     public Rancor() {

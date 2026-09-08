@@ -20,6 +20,12 @@ import java.util.Set;
 @CardRegistration(set = "5ED", collectorNumber = "196")
 @CardRegistration(set = "4ED", collectorNumber = "164")
 @CardRegistration(set = "MRD", collectorNumber = "79")
+@CardRegistration(set = "ITP", collectorNumber = "25")
+@CardRegistration(set = "RQS", collectorNumber = "24")
+@CardRegistration(set = "ATH", collectorNumber = "27")
+@CardRegistration(set = "BRB", collectorNumber = "87")
+@CardRegistration(set = "BTD", collectorNumber = "33")
+@CardRegistration(set = "SUM", collectorNumber = "132")
 public class Terror extends Card {
 
     public Terror() {

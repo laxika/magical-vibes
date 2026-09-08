@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "48")
+@CardRegistration(set = "TPR", collectorNumber = "71")
 public class ThalakosScout extends Card {
 
     public ThalakosScout() {

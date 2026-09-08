@@ -11,7 +11,11 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
  * <p>Each original is exiled, a copy of it is created in exile, and the copies are cast for free as
  * copies — so they cease to exist on resolution rather than being put into a graveyard.</p>
  */
-public record ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect() implements CardEffect {
+public record ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect(boolean mayCastCopies) implements CardEffect {
+
+    public ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect() {
+        this(false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

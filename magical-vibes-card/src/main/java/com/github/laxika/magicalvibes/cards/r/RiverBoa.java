@@ -9,6 +9,8 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "249")
 @CardRegistration(set = "VIS", collectorNumber = "118")
+@CardRegistration(set = "ZEN", collectorNumber = "180")
+@CardRegistration(set = "BRB", collectorNumber = "59")
 public class RiverBoa extends Card {
 
     public RiverBoa() {

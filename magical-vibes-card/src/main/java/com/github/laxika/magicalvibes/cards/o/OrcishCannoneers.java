@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "205")
+@CardRegistration(set = "DKM", collectorNumber = "17")
 public class OrcishCannoneers extends Card {
 
     public OrcishCannoneers() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "85")
+@CardRegistration(set = "TPR", collectorNumber = "133")
 public class FlowstoneMauler extends Card {
 
     public FlowstoneMauler() {

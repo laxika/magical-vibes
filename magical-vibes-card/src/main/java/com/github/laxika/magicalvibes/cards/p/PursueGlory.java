@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 
 
 @CardRegistration(set = "AKH", collectorNumber = "147")
+@CardRegistration(set = "AKR", collectorNumber = "172")
 public class PursueGlory extends Card {
 
     public PursueGlory() {

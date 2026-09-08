@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "10E", collectorNumber = "14")
 @CardRegistration(set = "M12", collectorNumber = "13")
 @CardRegistration(set = "XLN", collectorNumber = "8")
+@CardRegistration(set = "ROE", collectorNumber = "18")
+@CardRegistration(set = "ONS", collectorNumber = "24")
 public class Demystify extends Card {
 
     public Demystify() {

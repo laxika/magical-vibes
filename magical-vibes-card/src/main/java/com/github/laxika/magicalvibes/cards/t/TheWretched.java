@@ -3,16 +3,21 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.TriggerMode;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfCombatOpponentAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "197")
+@CardRegistration(set = "CHR", collectorNumber = "39")
+@CardRegistration(set = "LEG", collectorNumber = "121")
 public class TheWretched extends Card {
 
     public TheWretched() {
-        // At end of combat, gain control of all creatures blocking this creature for as long as you
-        // control this creature. One trigger per blocker; control lasts while The Wretched stays.
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED,
-                new GainControlOfCombatOpponentAtEndOfCombatEffect(), TriggerMode.PER_BLOCKER);
+        addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
+                new ConditionalEffect(new SourceIsAttacking(),
+                        new GainControlOfAllPermanentsMatchingEffect(new PermanentBlockingSourcePredicate(),
+                                ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD), false));
     }
 }

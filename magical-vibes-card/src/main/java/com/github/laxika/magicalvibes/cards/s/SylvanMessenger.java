@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "199")
+@CardRegistration(set = "APC", collectorNumber = "87")
 public class SylvanMessenger extends Card {
 
     public SylvanMessenger() {

@@ -3,10 +3,15 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 
 /**
- * Grants a supertype to a permanent until the end of the turn.
+ * Gives or removes a supertype on a permanent until the end of the turn.
  */
-public record GrantSupertypeUntilEndOfTurnEffect(CardSupertype supertype, GrantScope scope)
+public record GrantSupertypeUntilEndOfTurnEffect(CardSupertype supertype, GrantScope scope,
+                                                 boolean gained)
         implements CardEffect {
+
+    public GrantSupertypeUntilEndOfTurnEffect(CardSupertype supertype, GrantScope scope) {
+        this(supertype, scope, true);
+    }
 
     @Override
     public TargetSpec targetSpec() {

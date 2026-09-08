@@ -5,16 +5,23 @@ import com.github.laxika.magicalvibes.model.Zone;
 import java.util.Set;
 
 /**
- * Static effect: no player can cast spells from any zone listed in {@code zones}.
+ * Static effect: players can't cast spells from any zone listed in {@code zones}.
  * Prevents flashback, graveyard cast, casting from the top of a library, and any other mechanism
  * that casts spells from the listed zones. Does not prevent playing lands from those zones
  * (lands are not spells).
  * <p>
- * Only {@link Zone#GRAVEYARD} and {@link Zone#LIBRARY} are currently enforced (those are the only
- * cast-from-zone gating sites wired up).
+ * Only {@link Zone#GRAVEYARD}, {@link Zone#LIBRARY}, and {@link Zone#EXILE} are currently enforced
+ * (those are the cast-from-zone gating sites wired up).
  * <p>
- * Used by Ashes of the Abhorrent (XLN), which supplies {@code Set.of(GRAVEYARD)}, and Grafdigger's
- * Cage (DKA), which supplies {@code Set.of(GRAVEYARD, LIBRARY)}.
+ * When {@code appliesToAllPlayers} is false, only opponents of the source permanent's controller
+ * are restricted. Used by Ashes of the Abhorrent (XLN), which supplies {@code Set.of(GRAVEYARD)},
+ * Grafdigger's Cage (DKA), which supplies {@code Set.of(GRAVEYARD, LIBRARY)}, and Drannith
+ * Magistrate (IKO), which supplies all zones except {@code HAND} with {@code false}.
  */
-public record PlayersCantCastSpellsFromZonesEffect(Set<Zone> zones) implements CardEffect {
+public record PlayersCantCastSpellsFromZonesEffect(Set<Zone> zones, boolean appliesToAllPlayers)
+        implements CardEffect {
+
+    public PlayersCantCastSpellsFromZonesEffect(Set<Zone> zones) {
+        this(zones, true);
+    }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,8 +18,7 @@ public class DrossHopper extends Card {
                 false,
                 null,
                 List.of(new SacrificeCreatureCost(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
-                "Sacrifice a creature: Dross Hopper gains flying until end of turn.",
-                TargetFilters.creatureYouControl()
+                "Sacrifice a creature: Dross Hopper gains flying until end of turn."
         ));
     }
 }

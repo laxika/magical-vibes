@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ECL", collectorNumber = "59")
+@CardRegistration(set = "ECL", collectorNumber = "308")
 public class Mirrorform extends Card {
 
     public Mirrorform() {

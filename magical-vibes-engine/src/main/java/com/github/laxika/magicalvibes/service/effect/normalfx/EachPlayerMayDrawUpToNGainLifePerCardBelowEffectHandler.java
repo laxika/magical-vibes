@@ -40,13 +40,26 @@ public class EachPlayerMayDrawUpToNGainLifePerCardBelowEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerMayDrawUpToNGainLifePerCardBelowEffect) effect;
 
+        if (gameData.pendingEachPlayerDrawUpToInitialCount != null) {
+            finishCurrentPlayer(gameData, entry, e);
+            return;
+        }
+
         if (gameData.chosenXValue != null) {
             // Re-entry: the head player just chose how many cards to draw.
             int chosen = gameData.chosenXValue;
             gameData.chosenXValue = null;
-            UUID playerId = gameData.pendingEachPlayerDrawUpToQueue.remove(0);
-            applyDrawAndLife(gameData, entry, e, playerId, chosen);
-            promptNextOrFinish(gameData, entry, e);
+            UUID playerId = gameData.pendingEachPlayerDrawUpToQueue.getFirst();
+            gameData.pendingEachPlayerDrawUpToInitialCount =
+                    gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
+            if (chosen > 0) {
+                playerInteractionSupport.applyDrawCards(gameData, playerId, chosen);
+            }
+            if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                return;
+            }
+            finishCurrentPlayer(gameData, entry, e);
             return;
         }
 
@@ -75,19 +88,19 @@ public class EachPlayerMayDrawUpToNGainLifePerCardBelowEffectHandler implements 
                 new PendingInteraction.XValueChoice(playerId, e.maxDraw(), prompt, cardName));
     }
 
-    private void applyDrawAndLife(GameData gameData, StackEntry entry,
-                                  EachPlayerMayDrawUpToNGainLifePerCardBelowEffect e,
-                                  UUID playerId, int chosen) {
+    private void finishCurrentPlayer(GameData gameData, StackEntry entry,
+                                     EachPlayerMayDrawUpToNGainLifePerCardBelowEffect e) {
+        UUID playerId = gameData.pendingEachPlayerDrawUpToQueue.removeFirst();
+        int drawn = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0)
+                - gameData.pendingEachPlayerDrawUpToInitialCount;
+        gameData.pendingEachPlayerDrawUpToInitialCount = null;
         String playerName = gameData.playerIdToName.get(playerId);
-        if (chosen > 0) {
-            playerInteractionSupport.applyDrawCards(gameData, playerId, chosen);
-            gameLogService.append(gameData, GameLog.text(playerName + " draws " + chosen + " card" + (chosen != 1 ? "s" : "") + "."));
-        }
-        int lifeGained = e.lifePerCardBelow() * (e.maxDraw() - chosen);
+        int lifeGained = e.lifePerCardBelow() * Math.max(0, e.maxDraw() - drawn);
         if (lifeGained > 0) {
             lifeSupport.applyGainLife(gameData, playerId, lifeGained, null,
                     entry.getCard(), entry.getEntryType());
             gameLogService.append(gameData, GameLog.text(playerName + " gains " + lifeGained + " life."));
         }
+        promptNextOrFinish(gameData, entry, e);
     }
 }

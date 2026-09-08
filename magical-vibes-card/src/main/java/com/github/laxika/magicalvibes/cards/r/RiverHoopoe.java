@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "143")
+@CardRegistration(set = "AKR", collectorNumber = "256")
 public class RiverHoopoe extends Card {
 
     public RiverHoopoe() {

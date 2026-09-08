@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
  * Back half (Ribbons) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "223")
+@CardRegistration(set = "AKR", collectorNumber = "231")
 public class CutRibbons extends Card {
 
     public CutRibbons() {

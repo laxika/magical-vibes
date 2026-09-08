@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 
 @CardRegistration(set = "HOU", collectorNumber = "48")
+@CardRegistration(set = "AKR", collectorNumber = "82")
 public class StripedRiverwinder extends Card {
 
     public StripedRiverwinder() {

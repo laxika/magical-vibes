@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "174")
+@CardRegistration(set = "USG", collectorNumber = "175")
 public class Bedlam extends Card {
 
     public Bedlam() {

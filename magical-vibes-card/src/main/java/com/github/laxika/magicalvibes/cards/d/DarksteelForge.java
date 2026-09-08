@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "206")
+@CardRegistration(set = "DST", collectorNumber = "110")
 public class DarksteelForge extends Card {
 
     public DarksteelForge() {

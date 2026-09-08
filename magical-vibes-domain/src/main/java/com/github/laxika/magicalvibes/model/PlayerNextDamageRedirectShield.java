@@ -5,7 +5,8 @@ import java.util.UUID;
 /**
  * An amount-limited, any-source redirect shield protecting a <em>player</em>: the next
  * {@code remainingAmount} damage that would be dealt to {@code protectedPlayerId} this turn is dealt
- * to {@code redirectTargetPermanentId} instead, then the shield is consumed. Used by Martyrdom.
+ * to {@code redirectTargetPermanentId} instead, then the shield is consumed. The destination may be
+ * another player or a permanent.
  *
  * <p>Unlike {@link SourceDamageRedirectShield} (Harm's Way) this protects only the player, not the
  * permanents they control, and it matches any source rather than one chosen source. Unlike
@@ -15,7 +16,7 @@ import java.util.UUID;
  *
  * @param protectedPlayerId         the player whose incoming damage is redirected
  * @param remainingAmount           how much damage remains to redirect
- * @param redirectTargetPermanentId the permanent the redirected damage is dealt to instead
+ * @param redirectTargetPermanentId the player or permanent the redirected damage is dealt to instead
  */
 public record PlayerNextDamageRedirectShield(
         UUID protectedPlayerId,

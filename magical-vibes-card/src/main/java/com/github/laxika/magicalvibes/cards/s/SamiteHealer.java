@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "41")
 @CardRegistration(set = "7ED", collectorNumber = "38")
 @CardRegistration(set = "6ED", collectorNumber = "40")
+@CardRegistration(set = "ATH", collectorNumber = "14")
+@CardRegistration(set = "SUM", collectorNumber = "38")
 public class SamiteHealer extends Card {
 
     public SamiteHealer() {

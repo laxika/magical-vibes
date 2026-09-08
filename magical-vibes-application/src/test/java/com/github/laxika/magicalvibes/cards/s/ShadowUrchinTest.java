@@ -36,8 +36,7 @@ class ShadowUrchinTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new ShadowUrchin());
         Permanent dying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        dying.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        dying.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        dying.setCounterCount(CounterType.CHARGE, 2);
 
         Card first = new Island();
         Card second = new Island();
@@ -47,6 +46,7 @@ class ShadowUrchinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, dying.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);

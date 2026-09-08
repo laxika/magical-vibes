@@ -529,6 +529,7 @@ class GameEventProjectionSubscriberTest {
                 List.of(7, 7),
                 List.of(20, 20),
                 List.of(0, 0),
+                List.of(0, 0),
                 List.of(),
                 List.of(),
                 0,

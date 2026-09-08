@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "219")
+@CardRegistration(set = "ECL", collectorNumber = "337")
 public class EclipsedFlamekin extends Card {
 
     public EclipsedFlamekin() {

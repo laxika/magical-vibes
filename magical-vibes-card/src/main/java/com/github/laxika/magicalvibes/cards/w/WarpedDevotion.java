@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "172")
+@CardRegistration(set = "PLS", collectorNumber = "57")
 public class WarpedDevotion extends Card {
 
     public WarpedDevotion() {

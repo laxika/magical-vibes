@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ApproachOfTheSecondSunEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "4")
+@CardRegistration(set = "AKR", collectorNumber = "4")
 public class ApproachOfTheSecondSun extends Card {
 
     public ApproachOfTheSecondSun() {

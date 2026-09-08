@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "178")
+@CardRegistration(set = "USG", collectorNumber = "159")
 public class SleeperAgent extends Card {
 
     public SleeperAgent() {

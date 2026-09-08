@@ -83,7 +83,7 @@ public class ExileUntilNonlandToHandRepeatIfHighMVEffectHandler implements Norma
         // Deal damage to controller for each card put into hand (all at once per ruling)
         if (cardsToHand > 0) {
             int totalDamage = cardsToHand * e.damagePerCard();
-            if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
                 gameLogService.append(gameData, GameLog.text(sourceName + "'s damage to " + playerName + " is prevented."));
             } else {
                 int rawDamage = gameQueryService.applyDamageMultiplier(gameData, totalDamage, entry);

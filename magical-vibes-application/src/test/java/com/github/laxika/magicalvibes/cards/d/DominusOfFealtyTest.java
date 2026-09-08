@@ -22,9 +22,9 @@ class DominusOfFealtyTest extends BaseCardTest {
         target.tap();
 
         triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
@@ -41,6 +41,7 @@ class DominusOfFealtyTest extends BaseCardTest {
         target.tap();
 
         triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
@@ -56,9 +57,9 @@ class DominusOfFealtyTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -78,9 +79,9 @@ class DominusOfFealtyTest extends BaseCardTest {
         artifact.tap();
 
         triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(artifact.getId()));
         assertThat(artifact.isTapped()).isFalse();

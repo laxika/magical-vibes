@@ -15,9 +15,9 @@ public class PoisonersApprentice extends Card {
     public PoisonersApprentice() {
         // Infusion — When this creature enters, target creature an opponent controls gets -4/-4
         // until end of turn if you gained life this turn. The -4/-4 only applies at resolution
-        // when the intervening life-gain condition is met.
+        // when the life-gain condition is met.
         target(TargetFilters.creatureAnOpponentControls()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new GainedLifeThisTurn(),
-                new BoostTargetCreatureEffect(-4, -4)));
+                new BoostTargetCreatureEffect(-4, -4), false));
     }
 }

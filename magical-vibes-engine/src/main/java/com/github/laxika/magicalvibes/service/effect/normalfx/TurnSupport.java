@@ -71,6 +71,7 @@ public class TurnSupport {
     }
 
     public void clearCombatState(GameData gameData) {
+        gameData.expireEndOfCombatFloatingEffects();
         combatService.clearCombatState(gameData);
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
         gameData.clearDelayedActions(DelayedPermanentAction.class,
@@ -81,6 +82,7 @@ public class TurnSupport {
         gameData.currentStep = TurnStep.CLEANUP;
         turnCleanupService.resetEndOfTurnModifiers(gameData);
         creatureControlService.reconcileControl(gameData);
+        gameData.controlLossUnattachTriggers.clear();
         gameData.priorityPassedBy.clear();
     }
 

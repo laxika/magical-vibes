@@ -9,26 +9,23 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import java.util.List;
 import java.util.Set;
 
-/** Creates a single creature token and puts the evaluated counter amount on it. */
+/** Creates one token from a template and puts a dynamic number of counters on it. */
 public record CreateXTokenWithXCountersEffect(
-        String tokenName,
-        int power,
-        int toughness,
-        CardColor color,
-        Set<CardColor> colors,
-        List<CardSubtype> subtypes,
-        CounterType counterType,
-        DynamicAmount counterAmount
-) implements CardEffect {
+        CreateTokenEffect tokenTemplate,
+        DynamicAmount counterAmount,
+        CounterType counterType
+) implements TriggeringSpellManaValueEffect {
 
-    public CreateXTokenWithXCountersEffect(
-            String tokenName,
-            int power,
-            int toughness,
-            CardColor color,
-            Set<CardColor> colors,
-            List<CardSubtype> subtypes,
-            CounterType counterType) {
-        this(tokenName, power, toughness, color, colors, subtypes, counterType, new XValue());
+    public CreateXTokenWithXCountersEffect(String tokenName, int power, int toughness,
+                                           CardColor color, Set<CardColor> colors,
+                                           List<CardSubtype> subtypes, CounterType counterType, DynamicAmount counterAmount) {
+        this(new CreateTokenEffect(tokenName, power, toughness, color, colors, subtypes), counterAmount, counterType);
+    }
+
+    public CreateXTokenWithXCountersEffect(String tokenName, int power, int toughness,
+                                           CardColor color, Set<CardColor> colors,
+                                           List<CardSubtype> subtypes, CounterType counterType) {
+        this(new CreateTokenEffect(tokenName, power, toughness, color, colors, subtypes),
+                new XValue(), counterType);
     }
 }

@@ -44,7 +44,6 @@ class FlowStateTest extends BaseCardTest {
 
         castFlowState();
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
-        finishBottomOrder(List.of(0));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);

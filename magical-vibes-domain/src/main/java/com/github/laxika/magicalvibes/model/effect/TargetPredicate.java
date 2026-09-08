@@ -225,4 +225,18 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
     default Optional<GraveyardSearchScope> graveyardScope() {
         return leaf(Kind.GRAVEYARD_CARD).map(leaf -> ((GraveyardCards) leaf).scope());
     }
+
+    /**
+     * The card predicate applied within a graveyard-card target, or empty when this predicate
+     * admits no graveyard card target.
+     */
+    default Optional<CardPredicate> graveyardCardPredicate() {
+        return leaf(Kind.GRAVEYARD_CARD).map(leaf -> ((GraveyardCards) leaf).inner());
+    }
+
+    /** The card predicate applied within an exiled-card target, or empty when this predicate
+     * admits no exiled card target. */
+    default Optional<CardPredicate> exiledCardPredicate() {
+        return leaf(Kind.EXILED_CARD).map(leaf -> ((ExiledCards) leaf).inner());
+    }
 }

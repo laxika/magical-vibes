@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "191")
+@CardRegistration(set = "ATH", collectorNumber = "46")
 public class MoggRaider extends Card {
 
     public MoggRaider() {

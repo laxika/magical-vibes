@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Component;
 public class PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,20 +35,22 @@ public class PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         UUID targetId = entry.getTargetId();
-        int xValue = entry.getXValue();
+        var redirectEffect = (PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect) effect;
+        int amount = amountEvaluationService.evaluate(gameData, redirectEffect.amount(),
+                AmountContext.forStackEntry(entry, null));
 
-        if (xValue <= 0 || targetId == null) return;
+        if (amount <= 0 || targetId == null) return;
 
         gameData.damageRedirectShields.add(new DamageRedirectShield(
-                controllerId, xValue, entry.getSourcePermanentId(), entry.getCard(), targetId, true));
+                controllerId, amount, entry.getSourcePermanentId(), entry.getCard(), targetId, true));
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(" — the next " + xValue + " damage that would be dealt to " + controllerName
+                .text(" — the next " + amount + " damage that would be dealt to " + controllerName
                         + " and/or the permanents they control this turn is prevented.")
                 .build());
         log.info("Game {} - Divine Deflection shield {} added: protecting {} and their permanents",
-                gameData.id, xValue, controllerName);
+                gameData.id, amount, controllerName);
     }
 }

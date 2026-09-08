@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "103")
+@CardRegistration(set = "DRK", collectorNumber = "104")
 public class LivingArmor extends Card {
 
     public LivingArmor() {
@@ -22,14 +22,10 @@ public class LivingArmor extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new PutCounterOnTargetPermanentEffect(
-                                CounterType.PLUS_ZERO_PLUS_ONE,
-                                new TargetManaValue())
+                                CounterType.PLUS_ZERO_PLUS_ONE, new TargetManaValue())
                 ),
                 "{T}, Sacrifice this artifact: Put X +0/+1 counters on target creature, where X is that creature's mana value.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                )
+                TargetFilters.creature()
         ));
     }
 }

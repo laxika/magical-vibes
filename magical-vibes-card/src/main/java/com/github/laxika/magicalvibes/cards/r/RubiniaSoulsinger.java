@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "83")
+@CardRegistration(set = "LEG", collectorNumber = "256")
 public class RubiniaSoulsinger extends Card {
 
     public RubiniaSoulsinger() {
@@ -25,7 +25,6 @@ public class RubiniaSoulsinger extends Card {
                 true, null,
                 List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_TAPPED)),
                 "{T}: Gain control of target creature for as long as you control Rubinia Soulsinger and Rubinia Soulsinger remains tapped.",
-                new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
     }
 }

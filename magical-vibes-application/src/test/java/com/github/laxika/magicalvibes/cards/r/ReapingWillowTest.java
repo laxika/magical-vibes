@@ -23,7 +23,7 @@ class ReapingWillowTest extends BaseCardTest {
     @Test
     @DisplayName("Enters with two -1/-1 counters")
     void entersWithMinusOneMinusOneCounters() {
-        Permanent willow = harness.addToBattlefieldAndReturn(player1, new ReapingWillow());
+        Permanent willow = castWillow();
 
         assertThat(willow.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
@@ -31,7 +31,7 @@ class ReapingWillowTest extends BaseCardTest {
     @Test
     @DisplayName("Removes two counters and returns a creature with mana value 3 or less")
     void removesCountersAndReanimatesCreature() {
-        Permanent willow = harness.addToBattlefieldAndReturn(player1, new ReapingWillow());
+        Permanent willow = castWillow();
         Card target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -48,7 +48,7 @@ class ReapingWillowTest extends BaseCardTest {
     @Test
     @DisplayName("Can remove any counters, not only -1/-1 counters")
     void removesGenericCounters() {
-        Permanent willow = harness.addToBattlefieldAndReturn(player1, new ReapingWillow());
+        Permanent willow = castWillow();
         willow.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
         willow.setCounterCount(CounterType.CHARGE, 2);
         Card target = new GrizzlyBears();
@@ -66,7 +66,7 @@ class ReapingWillowTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects a creature card with mana value greater than 3")
     void rejectsHighManaValueCreature() {
-        Permanent willow = harness.addToBattlefieldAndReturn(player1, new ReapingWillow());
+        Permanent willow = castWillow();
         Card target = new AngelOfMercy();
         harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -81,5 +81,17 @@ class ReapingWillowTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    private Permanent castWillow() {
+        harness.setHand(player1, List.of(new ReapingWillow()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof ReapingWillow)
+                .findFirst()
+                .orElseThrow();
     }
 }

@@ -33,8 +33,9 @@ class HeartPiercerManticoreTest extends BaseCardTest {
 
         castManticoreToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());                       // any-target = opponent
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears")); // sacrifice
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         // 2 damage (the sacrificed Grizzly Bears' power), not 4 (the Manticore's power).
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
@@ -49,8 +50,9 @@ class HeartPiercerManticoreTest extends BaseCardTest {
 
         castManticoreToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Hill Giant"));       // target
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));    // sacrifice
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Hill Giant"));
+        harness.passBothPriorities();
 
         // The 3/3 survives 2 damage; it would have died to the Manticore's own power (4).
         harness.assertOnBattlefield(player2, "Hill Giant");
@@ -64,8 +66,9 @@ class HeartPiercerManticoreTest extends BaseCardTest {
 
         castManticoreToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears")); // target
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Hill Giant"));    // sacrifice
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Hill Giant"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Hill Giant");
@@ -91,7 +94,6 @@ class HeartPiercerManticoreTest extends BaseCardTest {
 
         castManticoreToMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId()); // any-target chosen, but nothing to sacrifice
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
     }

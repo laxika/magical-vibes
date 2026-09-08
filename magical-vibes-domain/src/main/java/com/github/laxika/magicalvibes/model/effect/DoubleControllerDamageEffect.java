@@ -18,5 +18,11 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  *   <li>Fire Servant: {@code new DoubleControllerDamageEffect(redInstantOrSorceryFilter, false)} — doubles only red instant/sorcery damage</li>
  * </ul>
  */
-public record DoubleControllerDamageEffect(StackEntryPredicate stackFilter, boolean appliesToCombatDamage) implements CardEffect {
+public record DoubleControllerDamageEffect(StackEntryPredicate stackFilter, boolean appliesToCombatDamage)
+        implements ControllerDamageMultiplyingEffect {
+
+    @Override
+    public int damageMultiplier() {
+        return 2;
+    }
 }

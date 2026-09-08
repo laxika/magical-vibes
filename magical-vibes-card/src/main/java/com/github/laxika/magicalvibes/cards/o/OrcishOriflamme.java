@@ -11,11 +11,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 @CardRegistration(set = "6ED", collectorNumber = "197")
 @CardRegistration(set = "5ED", collectorNumber = "257")
 @CardRegistration(set = "4ED", collectorNumber = "215")
+@CardRegistration(set = "ITP", collectorNumber = "37")
+@CardRegistration(set = "RQS", collectorNumber = "36")
+@CardRegistration(set = "SUM", collectorNumber = "169")
 public class OrcishOriflamme extends Card {
 
     public OrcishOriflamme() {
         // Attacking creatures you control get +1/+0.
         addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, new PermanentIsAttackingPredicate()));
+                new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES, new PermanentIsAttackingPredicate()));
     }
 }

@@ -89,12 +89,7 @@ class WoundReflectionTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        for (int i = 0; i < 6; i++) {
-            harness.passBothPriorities();
-            if (gd.currentStep == TurnStep.END_STEP && gd.stack.isEmpty()
-                    && !gd.interaction.isAwaitingInput()) {
-                break;
-            }
-        }
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }

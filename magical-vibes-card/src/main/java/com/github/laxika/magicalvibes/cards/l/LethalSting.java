@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "HOU", collectorNumber = "67")
+@CardRegistration(set = "AKR", collectorNumber = "110")
 public class LethalSting extends Card {
 
     public LethalSting() {

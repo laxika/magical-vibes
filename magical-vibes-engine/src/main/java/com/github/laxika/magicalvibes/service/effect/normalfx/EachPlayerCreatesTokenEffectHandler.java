@@ -34,6 +34,9 @@ public class EachPlayerCreatesTokenEffectHandler implements NormalEffectHandlerB
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
+        if (e.recordAsCreatedWithSource() && source == null) {
+            return;
+        }
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }

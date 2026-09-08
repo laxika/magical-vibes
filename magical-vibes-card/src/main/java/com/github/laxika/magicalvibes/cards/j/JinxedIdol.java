@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "208")
 @CardRegistration(set = "TMP", collectorNumber = "293")
+@CardRegistration(set = "TPR", collectorNumber = "224")
 public class JinxedIdol extends Card {
 
     public JinxedIdol() {

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.carddata;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.cards.CardSet;
+import com.github.laxika.magicalvibes.cards.c.CurseclothWrappings;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RavagerOfTheFells;
 import com.github.laxika.magicalvibes.model.Card;
@@ -71,6 +73,52 @@ class CardRegistryOnDemandTest {
     }
 
     @Test
+    void explicitModeLoadsOnlyCardsRequestedThroughTheRegistry() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.EXPLICIT);
+        registry.load();
+
+        assertThat(loader.loadedSetCodes).isEmpty();
+        assertThat(new Pacifism().getName()).isNull();
+
+        registry.ensureCardDataLoaded(Pacifism.class);
+
+        assertThat(loader.loadedSetCodes).hasSize(1);
+        assertThat(new Pacifism().getName()).isEqualTo("Pacifism");
+    }
+
+    @Test
+    void groupedCardLoadChoosesSetsCoveringTheMostCards() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.EXPLICIT);
+        registry.load();
+
+        registry.ensureCardDataLoaded(List.of(Pacifism.class, GrizzlyBears.class,
+                CurseclothWrappings.class));
+
+        assertThat(loader.loadedSetCodes).hasSize(2);
+        String sharedSet = loader.loadedSetCodes.getFirst();
+        assertThat(CardScanner.collectorNumberOf(Pacifism.class, sharedSet)).isPresent();
+        assertThat(CardScanner.collectorNumberOf(GrizzlyBears.class, sharedSet)).isPresent();
+        assertThat(loader.loadedSetCodes.getLast()).isEqualTo("DFT");
+        assertThat(new Pacifism().getName()).isEqualTo("Pacifism");
+        assertThat(new GrizzlyBears().getName()).isEqualTo("GrizzlyBears");
+        assertThat(new CurseclothWrappings().getName()).isEqualTo("CurseclothWrappings");
+    }
+
+    @Test
+    void explicitCardLoadRejectsClassesWithoutRegisteredPrintings() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.EXPLICIT);
+        registry.load();
+
+        assertThatThrownBy(() -> registry.ensureCardDataLoaded(UnregisteredCard.class))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining(UnregisteredCard.class.getName());
+        assertThat(loader.loadedSetCodes).isEmpty();
+    }
+
+    @Test
     void failedLoadsRemainRetryableAndBackFaceOnlyClassesResolveThroughTheirFrontPrinting() {
         RecordingLoader loader = new RecordingLoader();
         loader.failNextLoadOf("DKA");
@@ -128,5 +176,8 @@ class CardRegistryOnDemandTest {
             return new OracleData(name, CardType.ENCHANTMENT, Set.of(), "{1}{W}", null, List.of(),
                     List.of(), Set.of(), List.of(), cardText, null, null, Set.of(), null, null, null);
         }
+    }
+
+    private static final class UnregisteredCard extends Card {
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenera
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "84")
+@CardRegistration(set = "TPR", collectorNumber = "135")
 public class FurnaceBrood extends Card {
 
     public FurnaceBrood() {

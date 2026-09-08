@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "319")
+@CardRegistration(set = "TPR", collectorNumber = "238")
 public class MazeOfShadows extends Card {
 
     public MazeOfShadows() {

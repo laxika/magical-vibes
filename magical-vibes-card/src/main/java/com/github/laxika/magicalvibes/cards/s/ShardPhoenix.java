@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "217")
 @CardRegistration(set = "STH", collectorNumber = "97")
+@CardRegistration(set = "TPR", collectorNumber = "158")
 public class ShardPhoenix extends Card {
 
     public ShardPhoenix() {

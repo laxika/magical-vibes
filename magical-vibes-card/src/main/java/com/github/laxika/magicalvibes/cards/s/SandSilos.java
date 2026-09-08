@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "423")
+@CardRegistration(set = "FEM", collectorNumber = "101")
+@CardRegistration(set = "FEM", collectorNumber = "186")
 public class SandSilos extends Card {
 
     public SandSilos() {

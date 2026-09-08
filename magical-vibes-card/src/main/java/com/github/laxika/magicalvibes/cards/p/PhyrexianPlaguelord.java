@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "153")
+@CardRegistration(set = "ULG", collectorNumber = "62")
 public class PhyrexianPlaguelord extends Card {
 
     public PhyrexianPlaguelord() {

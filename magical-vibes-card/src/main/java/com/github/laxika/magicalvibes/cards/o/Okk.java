@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 
 @CardRegistration(set = "8ED", collectorNumber = "206")
 @CardRegistration(set = "7ED", collectorNumber = "204")
+@CardRegistration(set = "USG", collectorNumber = "204")
 public class Okk extends Card {
 
     public Okk() {

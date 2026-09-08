@@ -22,14 +22,17 @@ class RevelationTest extends BaseCardTest {
 
         harness.passPriority(player1);
 
-        assertThat(harness.getConn1().getSentMessages())
-                .anyMatch(message -> message.contains("\"opponentHand\"") && message.contains("Grizzly Bears"));
-        assertThat(harness.getConn2().getSentMessages())
-                .anyMatch(message -> message.contains("\"opponentHand\"") && message.contains("Air Elemental"));
+        List<String> player1Messages = harness.getConn1().getSentMessages();
+        assertThat(player1Messages).anyMatch(message ->
+                message.contains("\"opponentHand\"") && message.contains("Grizzly Bears"));
+
+        List<String> player2Messages = harness.getConn2().getSentMessages();
+        assertThat(player2Messages).anyMatch(message ->
+                message.contains("\"opponentHand\"") && message.contains("Air Elemental"));
     }
 
     @Test
-    @DisplayName("Hands are no longer revealed after Revelation leaves the battlefield")
+    @DisplayName("Hands are hidden after Revelation leaves the battlefield")
     void handsHiddenAfterRemoval() {
         harness.addToBattlefield(player1, new Revelation());
         harness.setHand(player1, List.of(new AirElemental()));
@@ -40,8 +43,9 @@ class RevelationTest extends BaseCardTest {
 
         harness.passPriority(player1);
 
-        assertThat(harness.getConn2().getSentMessages()).anyMatch(message -> message.contains("\"opponentHand\":[]"));
-        assertThat(harness.getConn2().getSentMessages())
-                .noneMatch(message -> message.contains("\"opponentHand\"") && message.contains("Air Elemental"));
+        List<String> player2Messages = harness.getConn2().getSentMessages();
+        assertThat(player2Messages).anyMatch(message -> message.contains("\"opponentHand\":[]"));
+        assertThat(player2Messages).noneMatch(message ->
+                message.contains("\"opponentHand\"") && message.contains("Air Elemental"));
     }
 }

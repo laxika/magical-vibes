@@ -62,7 +62,7 @@ class EmeritusOfConflictLightningBoltTest extends BaseCardTest {
 
         assertThat(emeritus.isPrepared()).isFalse();
         assertThat(emeritus.getPreparedSpellCardId()).isNull();
-        harness.assertLife(player2, 17);
+        harness.assertLife(player2, 8);
     }
 
     private Permanent addEmeritus() {
@@ -85,5 +85,6 @@ class EmeritusOfConflictLightningBoltTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "ORI", collectorNumber = "122")
+@CardRegistration(set = "JOU", collectorNumber = "86")
 public class TormentedThoughts extends Card {
 
     public TormentedThoughts() {

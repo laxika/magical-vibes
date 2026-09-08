@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "86")
+@CardRegistration(set = "AKR", collectorNumber = "100")
 public class Dispossess extends Card {
 
     public Dispossess() {

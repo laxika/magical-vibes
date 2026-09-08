@@ -45,7 +45,7 @@ public class MaySacrificePermanentForCounterOrTapSourceHandler implements MayEff
 
         if (accepted) {
             List<UUID> matchingIds = maySacrificeForCounterSupport.matchingPermanentIds(
-                    gameData, controllerId, effect.filter());
+                    gameData, controllerId, sourcePermanentId, effect.filter());
             if (matchingIds.size() == 1) {
                 maySacrificeForCounterSupport.sacrificeThenAddCounter(
                         gameData, controllerId, matchingIds.getFirst(), sourcePermanentId);

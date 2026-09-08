@@ -9,6 +9,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "28")
+@CardRegistration(set = "CSP", collectorNumber = "14")
 public class Luminesce extends Card {
 
     public Luminesce() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "284")
+@CardRegistration(set = "TPR", collectorNumber = "221")
 public class EmmessiTome extends Card {
 
     public EmmessiTome() {

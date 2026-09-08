@@ -68,6 +68,7 @@ class MirrorGolemTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, accept);
 

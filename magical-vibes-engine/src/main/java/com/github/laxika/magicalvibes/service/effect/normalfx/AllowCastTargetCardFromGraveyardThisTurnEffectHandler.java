@@ -64,6 +64,9 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
             // until turn cleanup drops them, so the controller may cast it whenever timing allows.
             gameData.graveyardPlayPermissions.put(targetCard.getId(), controllerId);
             gameData.graveyardPlayPermissionsExpireEndOfTurn.add(targetCard.getId());
+            if (permission.entersTapped()) {
+                gameData.graveyardCardsEnterTapped.add(targetCard.getId());
+            }
             if (permission.exileInsteadOfGraveyard()) {
                 gameData.exileInsteadOfGraveyard.add(targetCard.getId());
             }

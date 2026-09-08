@@ -42,8 +42,8 @@ class HonorboundPageForumsFavorTest extends BaseCardTest {
 
         assertThat(page.isPrepared()).isFalse();
         assertThat(page.getPreparedSpellCardId()).isNull();
-        assertThat(target.getPower()).isEqualTo(3);
-        assertThat(target.getToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
         assertThat(gd.findExiledCard(copyId)).isNull();
         assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);

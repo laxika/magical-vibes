@@ -52,7 +52,7 @@ public class GreatHallOfTheBiblioplex extends Card {
                                 new AnimatePermanentsEffect(2, 4, List.of(CardSubtype.WIZARD), Set.of()),
                                 new RegisterDelayedControllerSpellCastTriggerEffect(
                                         INSTANT_OR_SORCERY,
-                                        List.of(new BoostSelfEffect(1, 0))))),
+                                        List.of(new BoostSelfEffect(1, 0)))))),
                 "{5}: If this land isn't a creature, it becomes a 2/4 Wizard creature with \"Whenever you cast an instant or sorcery spell, this creature gets +1/+0 until end of turn.\" It's still a land."
         ));
     }

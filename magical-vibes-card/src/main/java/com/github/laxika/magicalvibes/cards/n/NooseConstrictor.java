@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "210")
 @CardRegistration(set = "INR", collectorNumber = "415")
+@CardRegistration(set = "EMN", collectorNumber = "164")
 public class NooseConstrictor extends Card {
 
     public NooseConstrictor() {

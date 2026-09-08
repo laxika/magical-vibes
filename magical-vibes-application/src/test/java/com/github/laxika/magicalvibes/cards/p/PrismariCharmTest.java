@@ -29,7 +29,7 @@ class PrismariCharmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PrismariCharm()));
         addMana();
 
-        harness.castInstant(player1, 0, 0);
+        harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
@@ -75,7 +75,7 @@ class PrismariCharmTest extends BaseCardTest {
         addMana();
 
         harness.castModalInstant(player1, 0, 2,
-                harness.getPermanentId(player2, "Spellbook"));
+                List.of(harness.getPermanentId(player2, "Spellbook")));
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Spellbook");
@@ -90,7 +90,7 @@ class PrismariCharmTest extends BaseCardTest {
         addMana();
 
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 2,
-                harness.getPermanentId(player2, "Island")))
+                List.of(harness.getPermanentId(player2, "Island"))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonland");
     }

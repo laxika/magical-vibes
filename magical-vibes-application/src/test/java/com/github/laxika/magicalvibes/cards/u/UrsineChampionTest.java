@@ -42,7 +42,7 @@ class UrsineChampionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no more than 1 times each turn");
+                .hasMessageContaining("only once each turn");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

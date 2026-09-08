@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TinderWall.class, BalduvianBears.class})
 class TinderWallTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Defender prevents Tinder Wall from attacking")
+    void defenderPreventsAttacking() {
+        addCreatureReady(player1, new TinderWall());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
 
     @Test
     @DisplayName("Sacrificing Tinder Wall adds two red mana")
@@ -29,7 +41,7 @@ class TinderWallTest extends BaseCardTest {
     @Test
     @DisplayName("{R}, Sacrifice: deals 2 damage to the creature Tinder Wall is blocking")
     void damagesBlockedCreature() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         addCreatureReady(player2, new TinderWall());
 
         blockWithWall();
@@ -44,8 +56,8 @@ class TinderWallTest extends BaseCardTest {
     @Test
     @DisplayName("Damage ability cannot target a creature Tinder Wall isn't blocking")
     void cannotTargetUnblockedCreature() {
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BalduvianBears());
+        Permanent otherAttacker = addCreatureReady(player1, new BalduvianBears());
         addCreatureReady(player2, new TinderWall());
         otherAttacker.setAttacking(true);
 

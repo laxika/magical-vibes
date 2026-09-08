@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "98")
+@CardRegistration(set = "ECL", collectorNumber = "311")
 public class DawnhandDissident extends Card {
 
     public DawnhandDissident() {

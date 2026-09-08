@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.carddata;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -20,6 +22,8 @@ import java.util.logging.Logger;
 public final class SetJsonCache {
 
     private static final Logger LOG = Logger.getLogger(SetJsonCache.class.getName());
+    private static final int DEFAULT_FETCH_ATTEMPTS = 3;
+    private static final Duration DEFAULT_RETRY_DELAY = Duration.ofSeconds(1);
 
     /** Retrieves a set's JSON from the upstream service. Owns its own rate limiting, if any. */
     @FunctionalInterface
@@ -31,6 +35,8 @@ public final class SetJsonCache {
     private final String filePrefix;
     private final String sourceName;
     private final Fetcher fetcher;
+    private final int fetchAttempts;
+    private final Duration retryDelay;
 
     /**
      * @param filePrefix distinguishes one provider's cache files from another's in the shared cache
@@ -39,10 +45,24 @@ public final class SetJsonCache {
      * @param sourceName the provider's name, for log messages only
      */
     public SetJsonCache(String cacheDir, String filePrefix, String sourceName, Fetcher fetcher) {
+        this(cacheDir, filePrefix, sourceName, fetcher,
+                DEFAULT_FETCH_ATTEMPTS, DEFAULT_RETRY_DELAY);
+    }
+
+    SetJsonCache(String cacheDir, String filePrefix, String sourceName, Fetcher fetcher,
+                 int fetchAttempts, Duration retryDelay) {
+        if (fetchAttempts < 1) {
+            throw new IllegalArgumentException("fetchAttempts must be at least 1");
+        }
         this.cacheDir = Path.of(cacheDir);
         this.filePrefix = filePrefix;
         this.sourceName = sourceName;
         this.fetcher = fetcher;
+        this.fetchAttempts = fetchAttempts;
+        this.retryDelay = Objects.requireNonNull(retryDelay);
+        if (retryDelay.isNegative()) {
+            throw new IllegalArgumentException("retryDelay must not be negative");
+        }
     }
 
     public String get(String setCode) throws IOException, InterruptedException {
@@ -55,10 +75,26 @@ public final class SetJsonCache {
         }
 
         LOG.info("Fetching " + setCode + " from " + sourceName + "...");
-        String json = fetcher.fetch(setCode);
+        String json = fetch(setCode);
         CardDataSupport.writeCacheFile(cacheFile, json);
         LOG.info("Cached " + setCode + " to: " + cacheFile);
         return json;
+    }
+
+    private String fetch(String setCode) throws IOException, InterruptedException {
+        for (int attempt = 1; attempt <= fetchAttempts; attempt++) {
+            try {
+                return fetcher.fetch(setCode);
+            } catch (IOException e) {
+                if (attempt == fetchAttempts) {
+                    throw e;
+                }
+                LOG.warning("Failed to fetch " + setCode + " from " + sourceName
+                        + " (attempt " + attempt + " of " + fetchAttempts + "): " + e.getMessage());
+                Thread.sleep(retryDelay.multipliedBy(attempt));
+            }
+        }
+        throw new IllegalStateException("Fetch attempts exhausted without a result or failure");
     }
 
     /** Where this set's JSON is cached, whether or not it has been written yet. */

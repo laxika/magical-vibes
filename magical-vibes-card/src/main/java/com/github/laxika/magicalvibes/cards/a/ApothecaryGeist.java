@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "10")
+@CardRegistration(set = "SOI", collectorNumber = "4")
 public class ApothecaryGeist extends Card {
 
     public ApothecaryGeist() {

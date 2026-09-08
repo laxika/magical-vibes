@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -34,7 +36,8 @@ public class PutTargetOnTopOfLibraryEffectHandler implements NormalEffectHandler
         boolean bothAndShuffle = e.scope() == PutOnTopOfLibraryScope.SELF_AND_TARGET;
 
         if (e.scope() != PutOnTopOfLibraryScope.SELF) {
-            tuck(gameData, gameQueryService.findPermanentById(gameData, entry.getTargetId()), bothAndShuffle);
+            UUID targetId = entry.targetsForEffect(e).stream().findFirst().orElse(entry.getTargetId());
+            tuck(gameData, gameQueryService.findPermanentById(gameData, targetId), bothAndShuffle);
         }
         if (e.scope() != PutOnTopOfLibraryScope.TARGET) {
             tuck(gameData, gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()), bothAndShuffle);

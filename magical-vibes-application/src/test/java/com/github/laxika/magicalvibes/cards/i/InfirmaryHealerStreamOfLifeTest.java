@@ -32,6 +32,7 @@ class InfirmaryHealerStreamOfLifeTest extends BaseCardTest {
         UUID copyId = healer.getPreparedSpellCardId();
 
         harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castFromExile(player1, copyId, player2.getId());
         harness.passBothPriorities();
 

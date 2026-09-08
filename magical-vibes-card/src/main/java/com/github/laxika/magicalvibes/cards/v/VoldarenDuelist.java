@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "181")
+@CardRegistration(set = "SOI", collectorNumber = "191")
 public class VoldarenDuelist extends Card {
 
     public VoldarenDuelist() {

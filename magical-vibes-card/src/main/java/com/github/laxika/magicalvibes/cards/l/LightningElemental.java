@@ -10,5 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "147")
 @CardRegistration(set = "M12", collectorNumber = "149")
 @CardRegistration(set = "TMP", collectorNumber = "186")
+@CardRegistration(set = "BRB", collectorNumber = "37")
 public class LightningElemental extends Card {
 }

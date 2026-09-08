@@ -27,7 +27,7 @@ class TamObservantSequencerDeepSightTest extends BaseCardTest {
         assertThat(tam.isPrepared()).isTrue();
         UUID copyId = tam.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
-        assertThat(gd.findExiledCard(copyId).getCard().getName()).isEqualTo("Deep Sight");
+        assertThat(gd.findExiledCard(copyId).card().getName()).isEqualTo("Deep Sight");
         assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
     }
 
@@ -36,6 +36,8 @@ class TamObservantSequencerDeepSightTest extends BaseCardTest {
     void opponentLandDoesNotPrepareTam() {
         Permanent tam = harness.addToBattlefieldAndReturn(player1, new TamObservantSequencerDeepSight());
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Forest()));
         harness.playLand(player2, 0);
 

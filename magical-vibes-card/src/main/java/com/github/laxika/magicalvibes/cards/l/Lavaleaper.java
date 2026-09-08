@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "150")
+@CardRegistration(set = "ECL", collectorNumber = "318")
 public class Lavaleaper extends Card {
 
     public Lavaleaper() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInstea
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M20", collectorNumber = "155")
+@CardRegistration(set = "SOI", collectorNumber = "176")
 public class ReduceToAshes extends Card {
 
     public ReduceToAshes() {

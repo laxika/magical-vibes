@@ -47,6 +47,23 @@ class WearTearTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Wear cannot be cast with white mana alone")
+    void wearCannotBeCastWithWhiteManaAlone() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+
+        harness.setHand(player1, List.of(new WearTear()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, WEAR, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
     @DisplayName("Tear destroys the targeted enchantment")
     void tearDestroysEnchantment() {
         harness.addToBattlefield(player2, new AngelicChorus());

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "83")
+@CardRegistration(set = "TPR", collectorNumber = "132")
 public class FlowstoneBlade extends Card {
 
     public FlowstoneBlade() {

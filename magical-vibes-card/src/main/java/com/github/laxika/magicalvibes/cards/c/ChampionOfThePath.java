@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "130")
+@CardRegistration(set = "ECL", collectorNumber = "362")
 public class ChampionOfThePath extends Card {
 
     public ChampionOfThePath() {

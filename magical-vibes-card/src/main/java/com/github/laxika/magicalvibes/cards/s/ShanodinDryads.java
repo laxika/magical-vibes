@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "5ED", collectorNumber = "325")
 @CardRegistration(set = "6ED", collectorNumber = "252")
 @CardRegistration(set = "7ED", collectorNumber = "269")
+@CardRegistration(set = "SUM", collectorNumber = "216")
 public class ShanodinDryads extends Card {
 
     public ShanodinDryads() {

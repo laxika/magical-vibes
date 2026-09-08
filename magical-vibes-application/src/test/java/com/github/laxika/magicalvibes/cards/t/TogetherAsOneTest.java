@@ -43,7 +43,7 @@ class TogetherAsOneTest extends BaseCardTest {
         Permanent damageTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLibrary(player2, List.of(new Shock(), new Shock()));
         harness.setHand(player1, List.of(new TogetherAsOne()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.addMana(player1, ManaColor.GREEN, 6);
 
         harness.castSorcery(player1, 0, List.of(player2.getId(), damageTarget.getId()));
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);

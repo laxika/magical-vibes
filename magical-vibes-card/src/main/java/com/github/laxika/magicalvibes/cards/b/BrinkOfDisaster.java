@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "84")
+@CardRegistration(set = "WWK", collectorNumber = "52")
 public class BrinkOfDisaster extends Card {
 
     public BrinkOfDisaster() {

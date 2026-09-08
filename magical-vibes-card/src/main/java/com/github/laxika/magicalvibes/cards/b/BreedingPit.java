@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "148")
+@CardRegistration(set = "FEM", collectorNumber = "35")
 public class BreedingPit extends Card {
 
     public BreedingPit() {

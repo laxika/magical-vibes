@@ -17,38 +17,28 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MountainYetiTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Mountain Yeti has protection from white")
-    void hasProtectionFromWhite() {
-        Permanent yeti = harness.addToBattlefieldAndReturn(player1, new MountainYeti());
-
-        assertThat(gqs.hasProtectionFrom(gd, yeti, CardColor.WHITE)).isTrue();
-        assertThat(gqs.hasProtectionFrom(gd, yeti, CardColor.BLUE)).isFalse();
-    }
-
-    @Test
     @DisplayName("Mountain Yeti cannot be blocked when defending player controls a Mountain")
     void cannotBeBlockedWhenDefenderControlsMountain() {
         harness.addToBattlefield(player2, new Mountain());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        blockerPerm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        Permanent yeti = new Permanent(new MountainYeti());
-        yeti.setSummoningSick(false);
-        yeti.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(yeti);
+        Permanent atkPerm = new Permanent(new MountainYeti());
+        atkPerm.setSummoningSick(false);
+        atkPerm.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.beginBlockerDeclarationInput();
 
-        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
-        int yetiIndex = gd.playerBattlefields.get(player1.getId()).indexOf(yeti);
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(blockerIndex, yetiIndex))))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
     }
@@ -56,23 +46,34 @@ class MountainYetiTest extends BaseCardTest {
     @Test
     @DisplayName("Mountain Yeti can be blocked when defending player does not control a Mountain")
     void canBeBlockedWhenDefenderDoesNotControlMountain() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        blockerPerm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        Permanent yeti = new Permanent(new MountainYeti());
-        yeti.setSummoningSick(false);
-        yeti.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(yeti);
+        Permanent atkPerm = new Permanent(new MountainYeti());
+        atkPerm.setSummoningSick(false);
+        atkPerm.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.beginBlockerDeclarationInput();
 
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
 
-        assertThat(blocker.isBlocking()).isTrue();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Mountain Yeti has protection from white but not red")
+    void hasProtectionFromWhiteOnly() {
+        Permanent yeti = harness.addToBattlefieldAndReturn(player1, new MountainYeti());
+
+        assertThat(gqs.hasProtectionFrom(gd, yeti, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, yeti, CardColor.RED)).isFalse();
+    }
 }

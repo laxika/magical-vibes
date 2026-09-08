@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BlessedBreath;
+import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,8 +20,8 @@ class SireOfTheStormTest extends BaseCardTest {
     @DisplayName("Casting an Arcane spell lets the controller draw a card")
     void arcaneSpellDrawsCard() {
         harness.addToBattlefield(player1, new SireOfTheStorm());
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, (UUID) null);
 
@@ -53,8 +53,8 @@ class SireOfTheStormTest extends BaseCardTest {
     @DisplayName("Declining the trigger draws nothing")
     void decliningDrawsNothing() {
         harness.addToBattlefield(player1, new SireOfTheStorm());
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.handleMayAbilityChosen(player1, false);

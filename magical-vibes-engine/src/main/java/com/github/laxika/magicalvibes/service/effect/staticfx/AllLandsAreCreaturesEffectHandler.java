@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -33,8 +34,14 @@ public class AllLandsAreCreaturesEffectHandler implements StaticEffectHandlerBea
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var e = (AllLandsAreCreaturesEffect) effect;
         if (context.target().getCard().hasType(CardType.LAND)
+                && (e.scope() == GrantScope.ALL_LANDS
+                        || (e.scope() == GrantScope.OWN_LANDS
+                                && context.targetOnSameBattlefield())
+                        || (e.scope() == GrantScope.OPPONENT_LANDS
+                                && !context.targetOnSameBattlefield()))
                 && (e.requiredSubtype() == null
-                        || context.target().getCard().getSubtypes().contains(e.requiredSubtype()))
+                        || context.target().getCard().getSubtypes().contains(e.requiredSubtype())
+                        || accumulator.getGrantedSubtypes().contains(e.requiredSubtype()))
                 && !gameQueryService.hasSelfBecomeCreatureEffect(context.gameData(), context.target())) {
             accumulator.setAnimatedCreature(true);
             accumulator.setBasePTOverride(e.power(), e.toughness());

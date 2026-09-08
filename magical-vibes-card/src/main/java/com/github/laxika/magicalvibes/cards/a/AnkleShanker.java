@@ -14,6 +14,6 @@ public class AnkleShanker extends Card {
 
     public AnkleShanker() {
         addEffect(EffectSlot.ON_ATTACK,
-                new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.DEATHTOUCH), GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.DEATHTOUCH), GrantScope.ALL_OWN_CREATURES));
     }
 }

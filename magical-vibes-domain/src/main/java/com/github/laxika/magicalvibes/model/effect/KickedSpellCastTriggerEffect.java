@@ -7,7 +7,9 @@ import java.util.List;
  * <p>
  * Works in the {@code ON_ANY_PLAYER_CASTS_SPELL} and {@code ON_CONTROLLER_CASTS_SPELL} slots.
  * The trigger collector checks the stack to verify the cast spell was kicked before firing the
- * resolved effects.
+ * resolved effects. Multikicker payments are counted individually when the spell declares its
+ * repeatable cost as multikicker; the count is available to resolved effects through the trigger
+ * entry's event-value channel.
  *
  * @param resolvedEffects effects to put on the stack when a kicked spell is cast
  */

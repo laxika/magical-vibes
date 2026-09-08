@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "43")
+@CardRegistration(set = "SUM", collectorNumber = "32")
 public class Purelace extends Card {
 
     public Purelace() {

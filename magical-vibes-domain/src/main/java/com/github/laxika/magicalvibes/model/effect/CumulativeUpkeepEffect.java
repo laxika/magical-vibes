@@ -18,6 +18,8 @@ import java.util.List;
  * War-Riders), or {@link #drawCardsPerAge}: draw one card per age counter (Psychic Vortex), or
  * {@link #counterTypePerAge}: put one counter of that type on the permanent itself per age counter
  * (Aboroth — "Put a -1/-1 counter on this creature").
+ * {@link #opponentCreatureCounterTypePerAge}: put one counter of that type on a creature an
+ * opponent controls per age counter (Sheltering Ancient).
  *
  * <p>{@link #unpaidEffects} models a companion "when a player doesn't pay this permanent's
  * cumulative upkeep …" triggered ability (Thought Lash): those effects resolve alongside the
@@ -26,6 +28,8 @@ import java.util.List;
  * @param costPerAge mana cost string paid once per age counter (e.g. {@code "{U}"}), empty for a
  *     life-only cost, or null when the cost is a sacrifice or a library exile
  * @param sacrificeFilter permanent filter for a sacrifice-per-age-counter cost, or null for mana
+ * @param gainControlFilter permanent filter for a gain-control-per-age-counter cost, or null for
+ *     other costs
  * @param lifePerAge life paid once per age counter (0 when the cost is mana-only or sacrifice)
  * @param exileTopCardsPerAge when true the cost is "exile the top card of your library" per age
  *     counter; mutually exclusive with the mana and sacrifice costs
@@ -35,42 +39,106 @@ import java.util.List;
  *     with every other cost
  * @param counterTypePerAge counter put on the permanent itself once per age counter, or null;
  *     mutually exclusive with every other cost
+ * @param discardCardsPerAge when true, discard one card per age counter; mutually exclusive with
+ *     every other cost
+ * @param putCardsFromSingleGraveyardPerAge cards chosen from one graveyard for each age-counter
+ *     payment, or 0 when unused; mutually exclusive with every other cost
+ * @param opponentLifeGainPerAge life gained by an opponent once per age counter, or 0 when unused;
+ *     mutually exclusive with every other cost
  * @param unpaidEffects extra effects resolved when the cost isn't paid, on top of the sacrifice
+ * @param paidEffects extra effects resolved when the mana cost is paid
+ * @param flipCoinPerAge when true, flip one coin per age counter instead of paying a mana or
+ *     permanent-based cost
+ * @param opponentCreatureCounterTypePerAge counter put on an opponent's creature once per age
+ *     counter, or null for other costs
  */
 public record CumulativeUpkeepEffect(
         String costPerAge,
         PermanentPredicate sacrificeFilter,
+        PermanentPredicate gainControlFilter,
         int lifePerAge,
         boolean exileTopCardsPerAge,
         CreateTokenEffect opponentTokenPerAge,
         boolean drawCardsPerAge,
         CounterType counterTypePerAge,
-        List<CardEffect> unpaidEffects)
+        boolean discardCardsPerAge,
+        int putCardsFromSingleGraveyardPerAge,
+        int opponentLifeGainPerAge,
+        List<CardEffect> unpaidEffects,
+        List<CardEffect> paidEffects,
+        boolean flipCoinPerAge,
+        CounterType opponentCreatureCounterTypePerAge)
         implements CardEffect {
 
     public CumulativeUpkeepEffect {
         unpaidEffects = unpaidEffects == null ? List.of() : List.copyOf(unpaidEffects);
-        if (counterTypePerAge != null) {
+        paidEffects = paidEffects == null ? List.of() : List.copyOf(paidEffects);
+        if (flipCoinPerAge) {
+            if (costPerAge != null || sacrificeFilter != null || gainControlFilter != null || lifePerAge != 0
+                    || exileTopCardsPerAge || opponentTokenPerAge != null || drawCardsPerAge
+                    || counterTypePerAge != null || discardCardsPerAge || putCardsFromSingleGraveyardPerAge > 0
+                    || opponentLifeGainPerAge > 0 || opponentCreatureCounterTypePerAge != null
+                    || !paidEffects.isEmpty()) {
+                throw new IllegalArgumentException("A coin-flip cumulative upkeep takes no other cost");
+            }
+        } else if (opponentCreatureCounterTypePerAge != null) {
+            if (costPerAge != null || sacrificeFilter != null || gainControlFilter != null || lifePerAge != 0
+                    || exileTopCardsPerAge || opponentTokenPerAge != null || drawCardsPerAge
+                    || counterTypePerAge != null || discardCardsPerAge || putCardsFromSingleGraveyardPerAge > 0
+                    || opponentLifeGainPerAge > 0 || !paidEffects.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "An opponent-creature-counter cumulative upkeep takes no other cost");
+            }
+        } else if (opponentLifeGainPerAge > 0) {
             if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge
-                    || opponentTokenPerAge != null || drawCardsPerAge) {
+                    || opponentTokenPerAge != null || drawCardsPerAge || counterTypePerAge != null
+                    || discardCardsPerAge || putCardsFromSingleGraveyardPerAge > 0
+                    || gainControlFilter != null) {
+                throw new IllegalArgumentException(
+                        "An opponent-life-gain cumulative upkeep takes no other cost");
+            }
+        } else if (putCardsFromSingleGraveyardPerAge > 0) {
+            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge
+                    || opponentTokenPerAge != null || drawCardsPerAge || counterTypePerAge != null
+                    || discardCardsPerAge || gainControlFilter != null) {
+                throw new IllegalArgumentException(
+                        "A put-cards-from-a-graveyard cumulative upkeep takes no other cost");
+            }
+        } else if (discardCardsPerAge) {
+            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge
+                    || opponentTokenPerAge != null || drawCardsPerAge || counterTypePerAge != null
+                    || gainControlFilter != null) {
+                throw new IllegalArgumentException(
+                        "A discard-card cumulative upkeep takes no other cost");
+            }
+        } else if (counterTypePerAge != null) {
+            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge
+                    || opponentTokenPerAge != null || drawCardsPerAge || gainControlFilter != null) {
                 throw new IllegalArgumentException(
                         "A put-a-counter cumulative upkeep takes no other cost");
             }
         } else if (drawCardsPerAge) {
             if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge
-                    || opponentTokenPerAge != null) {
+                    || opponentTokenPerAge != null || gainControlFilter != null) {
                 throw new IllegalArgumentException(
                         "A draw-a-card cumulative upkeep takes no other cost");
             }
         } else if (opponentTokenPerAge != null) {
-            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge) {
+            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge
+                    || gainControlFilter != null) {
                 throw new IllegalArgumentException(
                         "An opponent-token cumulative upkeep takes no other cost");
             }
         } else if (exileTopCardsPerAge) {
-            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0) {
+            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || gainControlFilter != null) {
                 throw new IllegalArgumentException(
                         "An exile-top-card cumulative upkeep takes no mana, life or sacrifice cost");
+            }
+        } else if (gainControlFilter != null) {
+            if (costPerAge != null || sacrificeFilter != null || lifePerAge != 0 || exileTopCardsPerAge
+                    || opponentTokenPerAge != null || drawCardsPerAge || counterTypePerAge != null
+                    || discardCardsPerAge || putCardsFromSingleGraveyardPerAge > 0) {
+                throw new IllegalArgumentException("A gain-control cumulative upkeep takes no other cost");
             }
         } else if ((costPerAge == null) == (sacrificeFilter == null)) {
             throw new IllegalArgumentException(
@@ -78,6 +146,12 @@ public record CumulativeUpkeepEffect(
         }
         if (lifePerAge < 0) {
             throw new IllegalArgumentException("lifePerAge must be >= 0");
+        }
+        if (putCardsFromSingleGraveyardPerAge < 0) {
+            throw new IllegalArgumentException("putCardsFromSingleGraveyardPerAge must be >= 0");
+        }
+        if (opponentLifeGainPerAge < 0) {
+            throw new IllegalArgumentException("opponentLifeGainPerAge must be >= 0");
         }
         if (sacrificeFilter != null && lifePerAge > 0) {
             throw new IllegalArgumentException("lifePerAge is only valid with a mana costPerAge");
@@ -89,17 +163,39 @@ public record CumulativeUpkeepEffect(
 
     /** Cumulative upkeep — Pay N life (Glacial Chasm); no mana component. */
     public static CumulativeUpkeepEffect life(int lifePerAge) {
-        return new CumulativeUpkeepEffect("", null, lifePerAge, false, null, false, null, List.of());
+        return new CumulativeUpkeepEffect("", null, lifePerAge, false, null, false, null, false, 0, 0,
+                List.of(), List.of());
     }
 
     /** Cumulative upkeep {mana} — e.g. {@code new CumulativeUpkeepEffect("{1}")}. */
     public CumulativeUpkeepEffect(String costPerAge) {
-        this(costPerAge, null, 0, false, null, false, null, List.of());
+        this(costPerAge, null, 0, false, null, false, null, false, 0, 0, List.of(), List.of());
     }
 
     /** Cumulative upkeep — Pay {mana} and N life (Infernal Darkness). */
     public CumulativeUpkeepEffect(String costPerAge, int lifePerAge) {
-        this(costPerAge, null, lifePerAge, false, null, false, null, List.of());
+        this(costPerAge, null, lifePerAge, false, null, false, null, false, 0, 0, List.of(), List.of());
+    }
+
+    /** Compatibility constructor for the pre-gain-control cumulative-upkeep shape. */
+    public CumulativeUpkeepEffect(String costPerAge, PermanentPredicate sacrificeFilter, int lifePerAge,
+            boolean exileTopCardsPerAge, CreateTokenEffect opponentTokenPerAge, boolean drawCardsPerAge,
+            CounterType counterTypePerAge, boolean discardCardsPerAge, int putCardsFromSingleGraveyardPerAge,
+            int opponentLifeGainPerAge, List<CardEffect> unpaidEffects, List<CardEffect> paidEffects) {
+        this(costPerAge, sacrificeFilter, null, lifePerAge, exileTopCardsPerAge, opponentTokenPerAge,
+                drawCardsPerAge, counterTypePerAge, discardCardsPerAge, putCardsFromSingleGraveyardPerAge,
+                opponentLifeGainPerAge, unpaidEffects, paidEffects, false, null);
+    }
+
+    /** Compatibility constructor for the current full cumulative-upkeep shape. */
+    public CumulativeUpkeepEffect(String costPerAge, PermanentPredicate sacrificeFilter,
+            PermanentPredicate gainControlFilter, int lifePerAge, boolean exileTopCardsPerAge,
+            CreateTokenEffect opponentTokenPerAge, boolean drawCardsPerAge, CounterType counterTypePerAge,
+            boolean discardCardsPerAge, int putCardsFromSingleGraveyardPerAge, int opponentLifeGainPerAge,
+            List<CardEffect> unpaidEffects, List<CardEffect> paidEffects) {
+        this(costPerAge, sacrificeFilter, gainControlFilter, lifePerAge, exileTopCardsPerAge,
+                opponentTokenPerAge, drawCardsPerAge, counterTypePerAge, discardCardsPerAge,
+                putCardsFromSingleGraveyardPerAge, opponentLifeGainPerAge, unpaidEffects, paidEffects, false, null);
     }
 
     /**
@@ -108,17 +204,32 @@ public record CumulativeUpkeepEffect(
      * (Heart of Bogardan).
      */
     public static CumulativeUpkeepEffect withUnpaidEffects(String costPerAge, List<CardEffect> unpaidEffects) {
-        return new CumulativeUpkeepEffect(costPerAge, null, 0, false, null, false, null, unpaidEffects);
+        return new CumulativeUpkeepEffect(costPerAge, null, 0, false, null, false, null, false, 0, 0,
+                unpaidEffects, List.of());
+    }
+
+    /** Cumulative upkeep with effects that trigger after the mana cost is paid. */
+    public static CumulativeUpkeepEffect withPaidEffects(String costPerAge, List<CardEffect> paidEffects) {
+        return new CumulativeUpkeepEffect(costPerAge, null, 0, false, null, false, null, false, 0, 0,
+                List.of(), paidEffects);
     }
 
     /** Cumulative upkeep — sacrifice a permanent matching {@code filter} per age counter. */
     public static CumulativeUpkeepEffect sacrifice(PermanentPredicate filter) {
-        return new CumulativeUpkeepEffect(null, filter, 0, false, null, false, null, List.of());
+        return new CumulativeUpkeepEffect(null, filter, 0, false, null, false, null, false, 0, 0,
+                List.of(), List.of());
+    }
+
+    /** Cumulative upkeep — gain control of a matching permanent per age counter. */
+    public static CumulativeUpkeepEffect gainControlOf(PermanentPredicate filter) {
+        return new CumulativeUpkeepEffect(null, null, filter, 0, false, null, false, null, false,
+                0, 0, List.of(), List.of());
     }
 
     /** Cumulative upkeep — Draw a card (Psychic Vortex); one card per age counter. */
     public static CumulativeUpkeepEffect drawCard() {
-        return new CumulativeUpkeepEffect(null, null, 0, false, null, true, null, List.of());
+        return new CumulativeUpkeepEffect(null, null, 0, false, null, true, null, false, 0, 0,
+                List.of(), List.of());
     }
 
     /**
@@ -126,7 +237,8 @@ public record CumulativeUpkeepEffect(
      * the cost isn't paid (Thought Lash).
      */
     public static CumulativeUpkeepEffect exileTopCard(List<CardEffect> unpaidEffects) {
-        return new CumulativeUpkeepEffect(null, null, 0, true, null, false, null, unpaidEffects);
+        return new CumulativeUpkeepEffect(null, null, 0, true, null, false, null, false, 0, 0,
+                unpaidEffects, List.of());
     }
 
     /**
@@ -134,7 +246,8 @@ public record CumulativeUpkeepEffect(
      * War-Riders).
      */
     public static CumulativeUpkeepEffect opponentToken(CreateTokenEffect token) {
-        return new CumulativeUpkeepEffect(null, null, 0, false, token, false, null, List.of());
+        return new CumulativeUpkeepEffect(null, null, 0, false, token, false, null, false, 0, 0,
+                List.of(), List.of());
     }
 
     /**
@@ -142,7 +255,44 @@ public record CumulativeUpkeepEffect(
      * (Aboroth — "Put a -1/-1 counter on this creature").
      */
     public static CumulativeUpkeepEffect putCounterOnSelf(CounterType counterType) {
-        return new CumulativeUpkeepEffect(null, null, 0, false, null, false, counterType, List.of());
+        return new CumulativeUpkeepEffect(null, null, 0, false, null, false, counterType, false, 0, 0,
+                List.of(), List.of());
+    }
+
+    /** Cumulative upkeep — discard a card per age counter (Vexing Sphinx). */
+    public static CumulativeUpkeepEffect discardCard() {
+        return new CumulativeUpkeepEffect(null, null, 0, false, null, false, null, true, 0, 0,
+                List.of(), List.of());
+    }
+
+    /** Cumulative upkeep — put cards from a single graveyard on library bottoms per age counter. */
+    public static CumulativeUpkeepEffect putCardsFromSingleGraveyard(int cardsPerAge) {
+        if (cardsPerAge <= 0) {
+            throw new IllegalArgumentException("cardsPerAge must be positive");
+        }
+        return new CumulativeUpkeepEffect(null, null, 0, false, null, false, null, false,
+                cardsPerAge, 0, List.of(), List.of());
+    }
+
+    /** Cumulative upkeep — have an opponent gain life once per age counter (Wall of Shards). */
+    public static CumulativeUpkeepEffect opponentGainsLife(int lifePerAge) {
+        if (lifePerAge <= 0) {
+            throw new IllegalArgumentException("lifePerAge must be positive");
+        }
+        return new CumulativeUpkeepEffect(null, null, 0, false, null, false, null, false, 0,
+                lifePerAge, List.of(), List.of());
+    }
+
+    /** Cumulative upkeep — flip a coin once per age counter (Karplusan Minotaur). */
+    public static CumulativeUpkeepEffect flipCoin() {
+        return new CumulativeUpkeepEffect(null, null, null, 0, false, null, false, null,
+                false, 0, 0, List.of(), List.of(), true, null);
+    }
+
+    /** Cumulative upkeep — put a counter on a creature an opponent controls per age counter. */
+    public static CumulativeUpkeepEffect putCounterOnOpponentCreature(CounterType counterType) {
+        return new CumulativeUpkeepEffect(null, null, null, 0, false, null, false, null,
+                false, 0, 0, List.of(), List.of(), false, counterType);
     }
 
     public boolean isSacrificeCost() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "74")
+@CardRegistration(set = "BRB", collectorNumber = "43")
 public class MantaRiders extends Card {
 
     public MantaRiders() {

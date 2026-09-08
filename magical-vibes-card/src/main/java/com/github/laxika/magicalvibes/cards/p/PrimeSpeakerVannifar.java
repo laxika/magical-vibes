@@ -1,0 +1,37 @@
+package com.github.laxika.magicalvibes.cards.p;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
+import java.util.List;
+
+@CardRegistration(set = "RNA", collectorNumber = "195")
+public class PrimeSpeakerVannifar extends Card {
+
+    public PrimeSpeakerVannifar() {
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
+                List.of(
+                        new SacrificeCreatureCost(true, false, false, true),
+                        new SearchLibraryEffect(
+                                new CardTypePredicate(CardType.CREATURE),
+                                LibrarySearchDestination.BATTLEFIELD,
+                                new ManaValueBound(true, 1))
+                ),
+                "{T}, Sacrifice another creature: Search your library for a creature card with mana value equal to 1 plus the sacrificed creature's mana value, put that card onto the battlefield, then shuffle.",
+                null,
+                null,
+                null,
+                ActivationTimingRestriction.SORCERY_SPEED
+        ));
+    }
+}

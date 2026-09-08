@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "91")
+@CardRegistration(set = "LEG", collectorNumber = "273")
 public class ArenaOfTheAncients extends Card {
 
     public ArenaOfTheAncients() {

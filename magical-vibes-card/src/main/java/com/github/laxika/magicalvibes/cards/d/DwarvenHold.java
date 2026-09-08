@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "414")
+@CardRegistration(set = "FEM", collectorNumber = "93")
 public class DwarvenHold extends Card {
 
     public DwarvenHold() {

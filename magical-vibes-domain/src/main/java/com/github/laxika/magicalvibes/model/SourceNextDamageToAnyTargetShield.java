@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+
 import java.util.UUID;
 
 /**
@@ -25,6 +27,15 @@ import java.util.UUID;
  * @param lifeGainPlayerId           player who gains life equal to the prevented damage; null when
  *                                   the shield has no life-gain rider
  * @param combatOnly                 whether this shield only applies to combat damage
+ * @param playersOnly                whether this shield only applies to damage dealt to players
+ * @param combatPhase                combat number during which this shield applies; null for the
+ *                                   normal turn-scoped shield
+ * @param token                       token blueprint created for each prevented damage; null when
+ *                                   there is no token rider
+ * @param tokenControllerId           player who creates the rider's tokens; null when there is no
+ *                                   token rider
+ * @param tokenSourceSetCode           set code used to create the rider's token cards; null when
+ *                                   there is no token rider
  */
 public record SourceNextDamageToAnyTargetShield(
         UUID sourceId,
@@ -34,13 +45,25 @@ public record SourceNextDamageToAnyTargetShield(
         UUID recipientId,
         int damageMultiplier,
         UUID lifeGainPlayerId,
-        boolean combatOnly) {
+        boolean combatOnly,
+        boolean playersOnly,
+        Integer combatPhase,
+        CreateTokenEffect token,
+        UUID tokenControllerId,
+        String tokenSourceSetCode) {
 
     public SourceNextDamageToAnyTargetShield(UUID sourceId, boolean damageRedSourceController, Card passageCard,
                                              UUID passageControllerId, UUID recipientId, int damageMultiplier,
                                              UUID lifeGainPlayerId) {
         this(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId,
-                damageMultiplier, lifeGainPlayerId, false);
+                damageMultiplier, lifeGainPlayerId, false, false, null, null, null, null);
+    }
+
+    public SourceNextDamageToAnyTargetShield(UUID sourceId, boolean damageRedSourceController, Card passageCard,
+                                             UUID passageControllerId, UUID recipientId, int damageMultiplier,
+                                             UUID lifeGainPlayerId, boolean combatOnly) {
+        this(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId,
+                damageMultiplier, lifeGainPlayerId, combatOnly, false, null, null, null, null);
     }
 
     /** Sanctum Guardian / Circle of Despair: prevention only, no rider. */
@@ -77,5 +100,13 @@ public record SourceNextDamageToAnyTargetShield(
     /** Impulsive Maneuvers's lost flip: the next combat damage event from this source is prevented. */
     public static SourceNextDamageToAnyTargetShield combatPrevention(UUID sourceId) {
         return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 0, null, true);
+    }
+
+    /** Ria Ivor: prevent the chosen creature's next combat damage to players in this combat. */
+    public static SourceNextDamageToAnyTargetShield combatPlayerPreventionWithTokens(
+            UUID sourceId, CreateTokenEffect token, UUID tokenControllerId, String tokenSourceSetCode,
+            int combatPhase) {
+        return new SourceNextDamageToAnyTargetShield(sourceId, false, null, null, null, 0, null,
+                true, true, combatPhase, token, tokenControllerId, tokenSourceSetCode);
     }
 }

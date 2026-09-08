@@ -27,13 +27,13 @@ class DireUndercurrentsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities(); // resolve creature — Dire Undercurrents triggers
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         harness.assertInHand(player2, "Grizzly Bears");
@@ -50,6 +50,7 @@ class DireUndercurrentsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -72,13 +73,13 @@ class DireUndercurrentsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities(); // resolve creature — Dire Undercurrents triggers
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
 
         // Target opponent chooses the card to discard.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);

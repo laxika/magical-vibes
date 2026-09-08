@@ -50,10 +50,12 @@ public class DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffectHandler impl
             hand.clear();
             gameData.discardCausedByOpponent = false;
 
+            triggerCollectionService.beginDiscardEvent(gameData, controllerId);
             for (Card discardedCard : discarded) {
                 graveyardService.discardCard(gameData, controllerId, discardedCard);
                 triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discardedCard);
             }
+            triggerCollectionService.finishDiscardEvent(gameData);
 
             String discardLog = playerName + " discards their hand (" + discardCount
                     + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";

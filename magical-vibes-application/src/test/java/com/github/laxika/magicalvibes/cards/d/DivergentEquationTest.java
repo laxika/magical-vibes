@@ -26,7 +26,7 @@ class DivergentEquationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DivergentEquation()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castInstant(player1, 0, 2);
+        gs.playCard(gd, player1, 0, 2, null, null);
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -50,7 +50,7 @@ class DivergentEquationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DivergentEquation()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, 0);
+        gs.playCard(gd, player1, 0, 0, null, null);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Opt");

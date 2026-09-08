@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "6ED", collectorNumber = "275")
 @CardRegistration(set = "5ED", collectorNumber = "354")
 @CardRegistration(set = "4ED", collectorNumber = "301")
+@CardRegistration(set = "SUM", collectorNumber = "237")
 public class BottleOfSuleiman extends Card {
 
     public BottleOfSuleiman() {

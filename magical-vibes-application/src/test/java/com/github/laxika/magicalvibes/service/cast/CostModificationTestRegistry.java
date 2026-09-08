@@ -2,17 +2,26 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.costmod.ConditionalCostModificationHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ConditionalBattlefieldCostModificationHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ForetellCostReductionEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseEachPlayerCastCostPerSpellThisTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseCastCostForChosenNameSpellsEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseOwnCastCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostExceptOnControllersTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ModifyFlashbackCostEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.MinimumSpellCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForChosenNameSpellsEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForChosenSubtypeSpellsEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceCastCostForMatchingSpellsEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ReduceColoredCastCostForMatchingSpellsEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceBuybackCostEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ReduceDashCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostByManaCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ReduceRoomUnlockCostEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -36,17 +45,26 @@ public final class CostModificationTestRegistry {
 
         CostModificationHandlerRegistry registry = new CostModificationHandlerRegistry();
         registry.register(new ReduceBuybackCostEffectHandler());
+        registry.register(new ReduceDashCostEffectHandler());
+        registry.register(new ForetellCostReductionEffectHandler());
+        registry.register(new MinimumSpellCostEffectHandler());
         registry.register(new IncreaseEachPlayerCastCostPerSpellThisTurnEffectHandler());
+        registry.register(new IncreaseCastCostForChosenNameSpellsEffectHandler());
+        registry.register(new IncreaseOwnCastCostEffectHandler(amountEvaluationService));
         registry.register(new IncreaseSpellCostEffectHandler(predicateEvaluationService, amountEvaluationService));
         registry.register(new IncreaseSpellCostExceptOnControllersTurnEffectHandler());
         registry.register(new ModifyFlashbackCostEffectHandler());
         registry.register(new IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler(gameQueryService));
         registry.register(new ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler(support, amountEvaluationService));
         registry.register(new ReduceCastCostForMatchingSpellsEffectHandler(predicateEvaluationService, amountEvaluationService));
+        registry.register(new ReduceColoredCastCostForMatchingSpellsEffectHandler(predicateEvaluationService));
         registry.register(new ReduceCastCostForChosenNameSpellsEffectHandler());
         registry.register(new ReduceCastCostForChosenSubtypeSpellsEffectHandler(gameQueryService));
         registry.register(new ReduceOwnCastCostEffectHandler(amountEvaluationService));
+        registry.register(new ReduceOwnCastCostByManaCostEffectHandler());
+        registry.register(new ReduceRoomUnlockCostEffectHandler());
         registry.register(new ConditionalCostModificationHandler(conditionEvaluationService, registry));
+        registry.register(new ConditionalBattlefieldCostModificationHandler(conditionEvaluationService, registry));
         return registry;
     }
 }

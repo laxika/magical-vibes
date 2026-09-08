@@ -101,7 +101,7 @@ public class ExileOwnGraveyardCardThenEachOpponentLosesLifeEffectHandler impleme
 
     private void exileAndApplyLifeLoss(GameData gameData, StackEntry entry, Card card, int lifeLoss) {
         UUID controllerId = entry.getControllerId();
-        permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
         exileService.exileCard(gameData, controllerId, card);
         gameLogService.append(gameData, GameLog.textCardText(
                 entry.getCard().getName() + " exiles ", card, " from its controller's graveyard."));

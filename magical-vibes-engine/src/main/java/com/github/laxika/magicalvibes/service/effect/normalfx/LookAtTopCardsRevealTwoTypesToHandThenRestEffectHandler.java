@@ -15,7 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsRevealTwoTypesToHandThenRestEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +45,8 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
     private final GraveyardService graveyardService;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final AmountEvaluationService amountEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,10 +57,23 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LookAtTopCardsRevealTwoTypesToHandThenRestEffect e =
                 (LookAtTopCardsRevealTwoTypesToHandThenRestEffect) effect;
+        if (e.scope() == com.github.laxika.magicalvibes.model.effect.LibraryScope.EACH_PLAYER
+                && e.playerId() == null) {
+            int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+            List<CardEffect> perPlayerEffects = gameData.orderedPlayerIds.stream()
+                    .map(e::forPlayer)
+                    .map(CardEffect.class::cast)
+                    .toList();
+            entry.getEffectsToResolve().addAll(effectIndex + 1, perPlayerEffects);
+            return;
+        }
         boolean toGraveyard = e.restDestination() == LookDestination.GRAVEYARD;
+        int count = Math.max(0, amountEvaluationService.evaluate(gameData, e.count(),
+                AmountContext.forStackEntry(entry, null)));
 
         LibraryRevealSupport.TopCardsResult result =
-                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, e.count(), false);
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry,
+                        e.playerId() != null ? e.playerId() : entry.getControllerId(), count, false);
         if (result == null) return;
 
         UUID controllerId = result.controllerId();
@@ -79,37 +97,68 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
             return;
         }
 
-        List<Card> firstEligible = topCards.stream().filter(c -> c.hasType(e.firstType())).toList();
-        List<Card> secondEligible = topCards.stream().filter(c -> c.hasType(e.secondType())).toList();
+        List<Card> firstEligible = topCards.stream()
+                .filter(c -> matches(c, e.firstType(), e.firstPredicate(), gameData, controllerId)).toList();
+        List<Card> secondEligible = topCards.stream()
+                .filter(c -> matches(c, e.secondType(), e.secondPredicate(), gameData, controllerId)).toList();
 
         // Nothing eligible — dispose everything.
         if (firstEligible.isEmpty() && secondEligible.isEmpty()) {
-            disposeRest(gameData, controllerId, playerName, topCards, toGraveyard);
+            disposeRest(gameData, controllerId, playerName, topCards, toGraveyard,
+                    e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM);
             return;
         }
 
+        boolean randomBottom = e.randomRest()
+                || e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
         if (!firstEligible.isEmpty()) {
             // First pick: the first type. The second pick runs (and disposes the rest) afterwards.
-            beginPick(gameData, controllerId, firstEligible, topCards, promptFor(e.firstType()),
-                    LibrarySearchFollowUp.forSecondBoundedPick(e.secondType(), toGraveyard), toGraveyard);
+            beginPick(gameData, controllerId, firstEligible, topCards,
+                    e.firstPrompt() != null ? promptFor(e.firstPrompt(), e.chosenDestination())
+                            : promptFor(e.firstType(), e.chosenDestination()),
+                    e.secondPredicate() != null
+                            ? LibrarySearchFollowUp.forSecondBoundedPick(
+                                    e.secondPredicate(), e.secondPrompt(), randomBottom, e.chosenDestination())
+                            : LibrarySearchFollowUp.forSecondBoundedPick(e.secondType(), toGraveyard,
+                                    randomBottom, e.chosenDestination()),
+                    toGraveyard, e.chosenDestination());
             return;
         }
 
         // No first-type card among the looked-at cards — go straight to the second pick.
-        beginPick(gameData, controllerId, secondEligible, topCards, promptFor(e.secondType()),
-                LibrarySearchFollowUp.NONE, toGraveyard);
+        LibrarySearchFollowUp secondFollowUp = randomBottom
+                ? LibrarySearchFollowUp.forBoundedPick(
+                        LibrarySearchFollowUp.SecondBoundedPick.terminal(true, e.chosenDestination()))
+                : LibrarySearchFollowUp.NONE;
+        beginPick(gameData, controllerId, secondEligible, topCards,
+                e.secondPrompt() != null ? promptFor(e.secondPrompt(), e.chosenDestination())
+                        : promptFor(e.secondType(), e.chosenDestination()),
+                secondFollowUp, toGraveyard, e.chosenDestination());
+    }
+
+    private boolean matches(Card card, CardType type,
+                            com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
+                            GameData gameData, UUID controllerId) {
+        if (predicate != null) {
+            return predicateEvaluationService.matchesCardPredicate(
+                    card, predicate, null, gameData, controllerId);
+        }
+        return type != null && card.hasType(type);
     }
 
     private void beginPick(GameData gameData, UUID controllerId, List<Card> eligible,
-            List<Card> lookedAtCards, String prompt, LibrarySearchFollowUp followUp, boolean toGraveyard) {
+            List<Card> lookedAtCards, String prompt, LibrarySearchFollowUp followUp, boolean toGraveyard,
+            LibrarySearchDestination destination) {
+        boolean toBattlefield = destination == LibrarySearchDestination.BATTLEFIELD;
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))
                 .reveals(true)
                 .canFailToFind(true)
-                .destination(LibrarySearchDestination.HAND)
+                .destination(destination)
                 .sourceCards(new ArrayList<>(lookedAtCards))
                 .reorderRemainingToBottom(!toGraveyard)
                 .restToGraveyard(toGraveyard)
                 .shuffleAfterSelection(false)
+                .placeBattlefieldCardsSimultaneously(toBattlefield)
                 .followUp(followUp)
                 .prompt(prompt)
                 .build();
@@ -127,7 +176,7 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
                 beginPick(gameData, controllerId, eligible, lookedAtCards,
                         promptFor(subtype),
                         LibrarySearchFollowUp.forSubtypeBoundedPick(subtypes.subList(i + 1, subtypes.size()), true),
-                        false);
+                        false, LibrarySearchDestination.HAND);
                 return true;
             }
         }
@@ -161,8 +210,18 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
         gameLogService.append(gameData, builder.build());
     }
 
-    private static String promptFor(CardType type) {
-        return "You may reveal a " + type.getDisplayName().toLowerCase() + " card from among them and put it into your hand.";
+    private static String promptFor(CardType type, LibrarySearchDestination destination) {
+        String destinationPhrase = destination == LibrarySearchDestination.BATTLEFIELD
+                ? "onto the battlefield" : "into your hand";
+        return "You may reveal a " + type.getDisplayName().toLowerCase()
+                + " card from among them and put it " + destinationPhrase + ".";
+    }
+
+    private static String promptFor(String description, LibrarySearchDestination destination) {
+        String destinationPhrase = destination == LibrarySearchDestination.BATTLEFIELD
+                ? "onto the battlefield" : "into your hand";
+        return "You may reveal " + description + " from among them and put it "
+                + destinationPhrase + ".";
     }
 
     private static String promptFor(CardSubtype subtype) {

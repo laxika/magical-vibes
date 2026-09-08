@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "73")
+@CardRegistration(set = "AKR", collectorNumber = "120")
 public class RazakethTheFoulblooded extends Card {
 
     public RazakethTheFoulblooded() {

@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "5ED", collectorNumber = "305")
 @CardRegistration(set = "4ED", collectorNumber = "253")
+@CardRegistration(set = "SUM", collectorNumber = "204")
 public class IronrootTreefolk extends Card {
 }

@@ -3,6 +3,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -21,6 +23,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -78,6 +82,12 @@ class PermanentRemovalServiceTest {
 
     @Mock
     private AuraCopyService auraCopyService;
+
+    @Mock
+    private CreatureControlService creatureControlService;
+
+    @Mock
+    private UnattachTriggerSupport unattachTriggerSupport;
 
     @InjectMocks
     private PermanentRemovalService prs;
@@ -165,7 +175,8 @@ class PermanentRemovalServiceTest {
     private void stubGraveyardForCreature(Permanent target, UUID ownerId) {
         when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         when(gameQueryService.isArtifact(target)).thenReturn(false);
-        when(graveyardService.addCardToGraveyard(eq(gd), eq(ownerId), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+        when(graveyardService.addCardToGraveyard(eq(gd), eq(ownerId), any(Card.class), eq(Zone.BATTLEFIELD),
+                any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
     }
 
     // =========================================================================
@@ -208,7 +219,8 @@ class PermanentRemovalServiceTest {
             prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(token);
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(token.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(token.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(token), eq(false), eq(false));
             verify(gameLogService).append(eq(gd),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Spark Token is sacrificed.")));
         }
@@ -249,13 +261,32 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Top-of-library kind moves the permanent to its owner's library")
+        void topOfLibraryKindMovesToLibrary() {
+            Permanent perm = addPermanent(player1Id, createCreature("Library Bound Creature"));
+            gd.playerDecks.put(player1Id, new ArrayList<>());
+            gd.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                    DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT));
+            when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
+
+            prs.processDelayedPermanentActions(gd,
+                    DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(perm);
+            assertThat(gd.playerDecks.get(player1Id)).containsExactly(perm.getOriginalCard());
+            verify(gameLogService).append(eq(gd),
+                    argThat((GameLogEntry logEntry) -> logEntry.plainText()
+                            .equals("Library Bound Creature is put on top of its owner's library.")));
+        }
+
+        @Test
         @DisplayName("Destroy kind goes through regeneration and logs nothing when the permanent survives")
         void destroyKindRespectsRegeneration() {
             Permanent perm = addPermanent(player1Id, createCreature("Doomed Creature"));
             gd.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
                     DelayedPermanentActionKind.DESTROY_AT_END_STEP));
             when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
-            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(true);
+            when(graveyardService.tryReplaceDestruction(gd, perm, true)).thenReturn(true);
 
             prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.DESTROY_AT_END_STEP);
 
@@ -276,7 +307,7 @@ class PermanentRemovalServiceTest {
             prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(perm);
-            verify(graveyardService, never()).tryRegenerate(any(), any());
+            verify(graveyardService).tryReplaceDestruction(gd, perm, false);
             verify(gameLogService).append(eq(gd),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Doomed Creature is destroyed.")));
         }
@@ -303,6 +334,19 @@ class PermanentRemovalServiceTest {
     class RemovePermanentToGraveyard {
 
         @Test
+        void explicitDestinationKeepsTheBattlefieldControllerForDeathProcessing() {
+            Permanent creature = addPermanent(player1Id, createCreature("Exchanged creature"));
+            stubGraveyardForCreature(creature, player2Id);
+
+            boolean result = prs.removePermanentToPlayerGraveyard(gd, creature, player2Id);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(creature.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false), eq(false));
+        }
+
+        @Test
         @DisplayName("Removes permanent from battlefield and puts card in graveyard")
         void removesFromBattlefieldAndAddsToGraveyard() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
@@ -312,7 +356,28 @@ class PermanentRemovalServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(bears.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(bears.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(bears), eq(false), eq(false));
+        }
+
+        @Test
+        @DisplayName("Returns an enchanted creature to hand through a static replacement")
+        void returnsEnchantedCreatureToHandInsteadOfGraveyard() {
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            Card magemark = createEnchantment("Necromancer's Magemark");
+            magemark.addEffect(EffectSlot.STATIC,
+                    new ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect());
+            addPermanent(player1Id, magemark);
+            when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
+            when(gameQueryService.isEnchanted(gd, bears)).thenReturn(true);
+            when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player1Id);
+
+            boolean result = prs.removePermanentToGraveyard(gd, bears);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
+            assertThat(gd.playerHands.get(player1Id)).contains(bears.getOriginalCard());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test
@@ -339,7 +404,7 @@ class PermanentRemovalServiceTest {
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
             assertThat(result).isFalse();
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test
@@ -353,8 +418,22 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("exiled instead of going to the graveyard")));
+        }
+
+        @Test
+        @DisplayName("Permanent with exileIfDying is exiled instead of going to graveyard")
+        void exileReplacementExileIfDying() {
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            bears.setExileIfDying(true);
+
+            boolean result = prs.removePermanentToGraveyard(gd, bears);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
+            verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test
@@ -368,7 +447,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test
@@ -380,8 +459,10 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, stolen);
 
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(stolen.getOriginalCard()), eq(Zone.BATTLEFIELD));
-            verify(graveyardService, never()).addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class), any());
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(stolen.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(stolen), eq(false), eq(false));
+            verify(graveyardService, never()).addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
+                    any(), any(), any(UUID.class));
         }
 
         @Test
@@ -415,7 +496,8 @@ class PermanentRemovalServiceTest {
             Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
             when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
             when(gameQueryService.isArtifact(artifact)).thenReturn(true);
-            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
             int deathsBefore = gd.creatureDeathCountThisTurn.getOrDefault(player1Id, 0);
 
             prs.removePermanentToGraveyard(gd, artifact);
@@ -432,23 +514,29 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, bears);
 
-            verify(triggerCollectionService).collectDeathTrigger(eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears));
-            verify(triggerCollectionService).checkAllyCreatureDeathTriggers(gd, player1Id, bears);
-            verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id, bears);
-            verify(triggerCollectionService).checkEquippedCreatureDeathTriggers(gd, bears.getId(), player1Id, bears.getCard());
+            verify(triggerCollectionService).collectDeathTrigger(
+                    eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears), eq(List.of()), eq(0));
+            verify(triggerCollectionService).checkAllyCreatureDeathTriggers(gd, player1Id, bears, 0);
+            verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id, bears, 0, 0);
+            verify(triggerCollectionService).checkEquippedCreatureDeathTriggers(
+                    gd, bears.getId(), player1Id, bears.getCard(), 0);
         }
 
         @Test
         @DisplayName("Fires artifact graveyard trigger for artifacts sent to graveyard")
         void firesArtifactGraveyardTrigger() {
             Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
+            artifact.setCounterCount(CounterType.CHARGE, 2);
             when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
             when(gameQueryService.isArtifact(artifact)).thenReturn(true);
-            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
 
             prs.removePermanentToGraveyard(gd, artifact);
 
-            verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
+            verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
+                    gd, player1Id, player1Id, artifact.getCard().getManaValue(),
+                    Map.of(CounterType.CHARGE, 2));
         }
 
         @Test
@@ -458,7 +546,8 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.isCreature(gd, enchantment)).thenReturn(false);
             when(gameQueryService.isArtifact(enchantment)).thenReturn(false);
             when(gameQueryService.isEnchantment(gd, enchantment)).thenReturn(true);
-            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
 
             prs.removePermanentToGraveyard(gd, enchantment);
 
@@ -555,15 +644,18 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.isArtifact(equipment)).thenReturn(true);
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.isArtifact(creature)).thenReturn(false);
-            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
 
             prs.removePermanentToGraveyard(gd, equipment);
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(equipment);
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(equipment.getOriginalCard()), eq(Zone.BATTLEFIELD));
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(creature.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(equipment.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(equipment), eq(false), eq(false));
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(creature.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false), eq(false));
         }
     }
 
@@ -586,6 +678,16 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             assertThat(gd.playerHands.get(player1Id))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        }
+
+        @Test
+        @DisplayName("Records the permanent's controller when it leaves the battlefield")
+        void recordsControllerWhenPermanentLeaves() {
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
+
+            prs.removePermanentToHand(gd, bears);
+
+            assertThat(gd.playersWhosePermanentsLeftBattlefieldThisTurn).containsExactly(player1Id);
         }
 
         @Test
@@ -644,6 +746,21 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Uses the card owner when no stolen-permanent record exists")
+        void usesCardOwnerWhenOwnershipRecordIsAbsent() {
+            Card card = createCreature("Grizzly Bears");
+            card.setOwnerId(player2Id);
+            Permanent permanent = addPermanent(player1Id, card);
+
+            prs.removePermanentToHand(gd, permanent);
+
+            assertThat(gd.playerHands.get(player2Id))
+                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.playerHands.get(player1Id))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        }
+
+        @Test
         @DisplayName("Exiled card returns to battlefield when source permanent is bounced")
         void exileReturnOnLeave() {
             Permanent source = addPermanent(player1Id, createCreature("Serra Angel"));
@@ -680,10 +797,12 @@ class PermanentRemovalServiceTest {
             Card tokenCard = createCreature("Saproling");
             tokenCard.setToken(true);
             Permanent token = addPermanent(player1Id, tokenCard);
+            when(gameQueryService.findPermanentController(gd, token.getId())).thenReturn(player1Id);
 
             prs.removePermanentToHand(gd, token);
 
             verify(triggerCollectionService).checkSelfLeavesTriggered(gd, token, player1Id);
+            verify(triggerCollectionService).checkControllerPermanentReturnedToHandTriggers(gd, player1Id);
             verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id);
         }
     }
@@ -706,6 +825,20 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
+        }
+
+        @Test
+        @DisplayName("Ends source-controlled exile play permissions when source leaves")
+        void endsSourceControlledExilePlayPermissionsWhenSourceLeaves() {
+            Permanent source = addPermanent(player1Id, createCreature("Source"));
+            UUID exiledCardId = UUID.randomUUID();
+            gd.exilePlayPermissions.put(exiledCardId, player1Id);
+            gd.exilePlayPermissionSourcePermanents.put(exiledCardId, source.getId());
+
+            prs.removePermanentToExile(gd, source);
+
+            assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCardId);
+            assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(exiledCardId);
         }
 
         @Test
@@ -742,13 +875,15 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.isArtifact(creature)).thenReturn(false);
-            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
 
             prs.removePermanentToExile(gd, equipment);
 
             verify(exileService).exileCard(gd, player1Id, equipment.getOriginalCard());
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(creature.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(creature.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false), eq(false));
         }
 
         @Test
@@ -782,14 +917,14 @@ class PermanentRemovalServiceTest {
         void destroysNormalPermanent() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
             stubGraveyardForCreature(bears, player1Id);
 
             boolean result = prs.tryDestroyPermanent(gd, bears);
 
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(bears.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(bears.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(bears), eq(false), eq(false));
             verify(auraAttachmentService).removeOrphanedAuras(gd);
         }
 
@@ -803,7 +938,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.playerBattlefields.get(player1Id)).contains(golem);
-            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test
@@ -823,7 +958,7 @@ class PermanentRemovalServiceTest {
         void regenerationPreventsDestruction() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(true);
+            when(graveyardService.tryReplaceDestruction(gd, bears, true)).thenReturn(true);
 
             boolean result = prs.tryDestroyPermanent(gd, bears);
 
@@ -842,7 +977,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
-            verify(graveyardService, never()).tryRegenerate(any(), any());
+            verify(graveyardService).tryReplaceDestruction(gd, bears, false);
         }
 
         @Test
@@ -947,6 +1082,8 @@ class PermanentRemovalServiceTest {
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 3, "Lightning Bolt");
 
             assertThat(result).isEqualTo(0);
+            assertThat(creature.getMarkedDamage()).isEqualTo(3);
+            assertThat(gd.permanentsDealtDamageThisTurn).contains(creature.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Serra Angel") && logEntry.plainText().contains("absorbs") && logEntry.plainText().contains("redirected")));
         }
@@ -961,7 +1098,6 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(4);
             // tryDestroyPermanent stubs
             when(gameQueryService.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, creature)).thenReturn(false);
             stubGraveyardForCreature(creature, player1Id);
 
             prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 4, "Fireball");
@@ -992,11 +1128,11 @@ class PermanentRemovalServiceTest {
         @Test
         @DisplayName("Redirects damage to a self-redirecting permanent when no aura is present")
         void redirectsDamageToSelfRedirectingPermanent() {
-            Permanent creature = addPermanent(player1Id, createCreature("Empyrial Archangel"));
+            Card card = createCreature("Empyrial Archangel");
+            card.addEffect(EffectSlot.STATIC, new RedirectPlayerDamageToSelfEffect());
+            Permanent creature = addPermanent(player1Id, card);
             when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1Id), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
                     .thenReturn(null);
-            when(gameQueryService.findControlledPermanentWithStaticEffect(eq(gd), eq(player1Id), eq(RedirectPlayerDamageToSelfEffect.class)))
-                    .thenReturn(creature);
             when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 3, false)).thenReturn(3);
             when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(8);
 

@@ -16,6 +16,10 @@ public record BeholdCost(CardSubtype subtype, int count, boolean optional, boole
         this(subtype, count, false, false);
     }
 
+    public static BeholdCost optional(CardSubtype subtype) {
+        return new BeholdCost(subtype, 1, true, false);
+    }
+
     public static BeholdCost optionalChosenCreatureType(int count) {
         return new BeholdCost(null, count, true, true);
     }

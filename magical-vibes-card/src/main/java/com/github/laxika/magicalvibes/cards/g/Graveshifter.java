@@ -16,6 +16,7 @@ public class Graveshifter extends Card {
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

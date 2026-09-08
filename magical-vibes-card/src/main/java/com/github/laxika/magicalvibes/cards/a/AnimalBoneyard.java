@@ -27,8 +27,7 @@ public class AnimalBoneyard extends Card {
                                 new SacrificeCreatureCost(false, false, true),
                                 new GainLifeEffect(new XValue())
                         ),
-                        "{T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.",
-                        TargetFilters.creatureYouControl()
+                        "{T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness."
                 ),
                 GrantScope.ENCHANTED_PERMANENT
         ));

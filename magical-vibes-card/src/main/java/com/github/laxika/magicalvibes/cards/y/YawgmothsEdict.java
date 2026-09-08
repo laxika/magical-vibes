@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "171")
+@CardRegistration(set = "USG", collectorNumber = "170")
 public class YawgmothsEdict extends Card {
 
     public YawgmothsEdict() {

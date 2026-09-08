@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,11 +15,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GrubsCommand.class, GoblinSappers.class, BalduvianBears.class, Forest.class, Island.class})
 class GrubsCommandTest extends BaseCardTest {
 
     @Test
     void copyAndDestroyModesResolveAgainstTheSameGoblin() {
-        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinSappers());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinSappers());
         harness.setHand(player1, List.of(new GrubsCommand()));
         addMana();
 
@@ -27,21 +30,22 @@ class GrubsCommandTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken());
-        assertThat(gd.playerBattlefields.get(player2.getId()))
+        assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(goblin.getId()));
-        harness.assertInGraveyard(player2, "Goblin Sappers");
+        harness.assertInGraveyard(player1, "Goblin Sappers");
     }
 
     @Test
     void boostAndMillModesAffectOnlyTheTargetPlayerAndReturnMilledGoblins() {
-        Permanent targetCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent targetCreature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
         GoblinSappers firstGoblin = new GoblinSappers();
         GoblinSappers secondGoblin = new GoblinSappers();
         Forest forest = new Forest();
         Island island = new Island();
-        GrizzlyBears nonGoblin = new GrizzlyBears();
+        BalduvianBears nonGoblin = new BalduvianBears();
         harness.setLibrary(player2, List.of(firstGoblin, forest, secondGoblin, island, nonGoblin));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new GrubsCommand()));
         addMana();
 

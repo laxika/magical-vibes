@@ -31,7 +31,8 @@ public class MaySacrificePermanentForCounterOrTapSourceEffectHandler implements 
         var e = (MaySacrificePermanentForCounterOrTapSourceEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        List<UUID> matchingIds = maySacrificeForCounterSupport.matchingPermanentIds(gameData, controllerId, e.filter());
+        List<UUID> matchingIds = maySacrificeForCounterSupport.matchingPermanentIds(
+                gameData, controllerId, entry.getSourcePermanentId(), e.filter());
         if (matchingIds.isEmpty()) {
             maySacrificeForCounterSupport.tapSource(gameData, entry.getSourcePermanentId());
             return;

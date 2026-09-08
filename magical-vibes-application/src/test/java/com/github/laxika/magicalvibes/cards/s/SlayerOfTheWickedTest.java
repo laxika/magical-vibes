@@ -44,10 +44,10 @@ class SlayerOfTheWickedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice prompt
-        harness.handlePermanentChosen(player1, targetId); // choose target -> ETB on stack
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     // ===== Casting =====
@@ -87,15 +87,16 @@ class SlayerOfTheWickedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Scathe Zombies"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
-    @DisplayName("Accepting may ability prompts for target selection")
-    void acceptingMayPromptsForTarget() {
+    @DisplayName("Putting the ETB ability on the stack prompts for target selection")
+    void puttingEtbAbilityOnStackPromptsForTarget() {
         harness.addToBattlefield(player2, new ScatheZombies());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -103,9 +104,7 @@ class SlayerOfTheWickedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
@@ -165,9 +164,10 @@ class SlayerOfTheWickedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Scathe Zombies"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Slayer of the Wicked");

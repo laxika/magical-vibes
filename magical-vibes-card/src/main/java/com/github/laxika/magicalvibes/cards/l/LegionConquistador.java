@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "20")
+@CardRegistration(set = "RIX", collectorNumber = "11")
 public class LegionConquistador extends Card {
 
     public LegionConquistador() {

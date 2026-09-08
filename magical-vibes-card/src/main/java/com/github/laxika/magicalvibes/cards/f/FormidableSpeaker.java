@@ -11,13 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "176")
+@CardRegistration(set = "ECL", collectorNumber = "366")
 public class FormidableSpeaker extends Card {
 
     public FormidableSpeaker() {
@@ -28,7 +29,7 @@ public class FormidableSpeaker extends Card {
                         "a card"),
                 "Discard a card to search your library for a creature card?"));
 
-        var anotherPermanent = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
+        var anotherPermanent = new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",

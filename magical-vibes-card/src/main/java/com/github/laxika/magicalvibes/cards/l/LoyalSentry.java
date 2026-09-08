@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelf
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "27")
+@CardRegistration(set = "S99", collectorNumber = "20")
 public class LoyalSentry extends Card {
 
     public LoyalSentry() {

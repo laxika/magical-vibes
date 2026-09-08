@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("scryfall")
 class AuraEnchantTargetInvariantTest {
 
-    private static final String CACHE_DIR = "./card-data-cache";
+    private static final String CACHE_DIR = System.getProperty("card-data.cache-dir", "./card-data-cache");
     private static final Pattern ENCHANT_LINE = Pattern.compile("^Enchant (.+)$", Pattern.MULTILINE);
 
     @Test

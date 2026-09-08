@@ -11,6 +11,14 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "37")
+@CardRegistration(set = "FEM", collectorNumber = "13a")
+@CardRegistration(set = "FEM", collectorNumber = "13b")
+@CardRegistration(set = "FEM", collectorNumber = "13c")
+@CardRegistration(set = "FEM", collectorNumber = "13d")
+@CardRegistration(set = "FEM", collectorNumber = "157")
+@CardRegistration(set = "FEM", collectorNumber = "158")
+@CardRegistration(set = "FEM", collectorNumber = "159")
+@CardRegistration(set = "FEM", collectorNumber = "160")
 public class IcatianScout extends Card {
 
     public IcatianScout() {

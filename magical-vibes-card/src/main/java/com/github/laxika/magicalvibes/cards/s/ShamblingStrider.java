@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "263")
+@CardRegistration(set = "BTD", collectorNumber = "63")
 public class ShamblingStrider extends Card {
 
     public ShamblingStrider() {

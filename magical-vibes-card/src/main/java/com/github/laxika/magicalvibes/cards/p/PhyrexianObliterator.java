@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "68")
+@CardRegistration(set = "ONE", collectorNumber = "105")
 public class PhyrexianObliterator extends Card {
 
     public PhyrexianObliterator() {

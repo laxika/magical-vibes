@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.Triskelion;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,43 +18,43 @@ class BronzeHorseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prevents damage from a spell that targets it while you control another creature")
-    void preventsDamageFromTargetingSpellWithAnotherCreature() {
-        Permanent horse = harness.addToBattlefieldAndReturn(player1, new BronzeHorse());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+    void preventsTargetingSpellDamageWithAnotherCreature() {
+        Permanent horse = addCreatureReady(player2, new BronzeHorse());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, horse.getId());
+        harness.castInstant(player1, 0, horse.getId());
         harness.passBothPriorities();
 
         assertThat(horse.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Bronze Horse");
     }
 
     @Test
-    @DisplayName("Does not prevent targeted spell damage when you control no other creature")
-    void doesNotPreventDamageWithoutAnotherCreature() {
-        Permanent horse = harness.addToBattlefieldAndReturn(player1, new BronzeHorse());
+    @DisplayName("Does not prevent targeted spell damage without another creature")
+    void doesNotPreventTargetingSpellDamageWithoutAnotherCreature() {
+        Permanent horse = addCreatureReady(player2, new BronzeHorse());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, horse.getId());
+        harness.castInstant(player1, 0, horse.getId());
         harness.passBothPriorities();
 
         assertThat(horse.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Does not prevent damage from a spell that does not target it")
-    void doesNotPreventDamageFromNontargetingSpell() {
-        Permanent horse = harness.addToBattlefieldAndReturn(player1, new BronzeHorse());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+    @DisplayName("Does not prevent damage from an ability")
+    void doesNotPreventAbilityDamage() {
+        Permanent horse = addCreatureReady(player2, new BronzeHorse());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent triskelion = addCreatureReady(player1, new Triskelion());
+        triskelion.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        harness.setHand(player2, List.of(new Pyroclasm()));
-        harness.addMana(player2, ManaColor.RED, 2);
-        harness.forceActivePlayer(player2);
-        harness.castSorcery(player2, 0, 0);
+        harness.activateAbility(player1, 0, null, horse.getId());
         harness.passBothPriorities();
 
-        assertThat(horse.getMarkedDamage()).isEqualTo(2);
+        assertThat(horse.getMarkedDamage()).isEqualTo(1);
     }
 }

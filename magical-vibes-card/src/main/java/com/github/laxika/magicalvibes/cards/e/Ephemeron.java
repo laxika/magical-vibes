@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "31")
+@CardRegistration(set = "TPR", collectorNumber = "48")
 public class Ephemeron extends Card {
 
     public Ephemeron() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -24,6 +25,9 @@ public class DwarvenArmory extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_TWO_PLUS_TWO, 1)
                 ),
                 "{2}, Sacrifice a land: Put a +2/+2 counter on target creature. Activate only during any upkeep step.",
+                TargetFilters.creature(),
+                null,
+                null,
                 ActivationTimingRestriction.ONLY_DURING_ANY_UPKEEP
         ));
     }

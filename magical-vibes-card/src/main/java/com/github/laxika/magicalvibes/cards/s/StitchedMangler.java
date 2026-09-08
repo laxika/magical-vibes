@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "INR", collectorNumber = "87")
+@CardRegistration(set = "SOI", collectorNumber = "89")
 public class StitchedMangler extends Card {
 
     public StitchedMangler() {

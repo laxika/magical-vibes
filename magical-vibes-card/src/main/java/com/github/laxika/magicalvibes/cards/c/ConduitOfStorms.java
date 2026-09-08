@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "150")
+@CardRegistration(set = "EMN", collectorNumber = "124")
 public class ConduitOfStorms extends Card {
 
     public ConduitOfStorms() {

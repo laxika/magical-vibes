@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "118")
+@CardRegistration(set = "BRO", collectorNumber = "144")
 public class MonasterySwiftspear extends Card {
 
     public MonasterySwiftspear() {

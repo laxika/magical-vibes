@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "58")
+@CardRegistration(set = "TPR", collectorNumber = "95")
 public class DauthiJackal extends Card {
 
     public DauthiJackal() {

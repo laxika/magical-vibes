@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "138")
+@CardRegistration(set = "TPR", collectorNumber = "228")
 public class MoxDiamond extends Card {
 
     public MoxDiamond() {

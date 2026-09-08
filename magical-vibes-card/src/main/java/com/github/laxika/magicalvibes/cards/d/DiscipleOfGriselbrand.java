@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,8 +18,7 @@ public class DiscipleOfGriselbrand extends Card {
                 false,
                 "{1}",
                 List.of(new SacrificeCreatureCost(false, false, true), new GainLifeEffect(new XValue())),
-                "{1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.",
-                TargetFilters.creatureYouControl()
+                "{1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness."
         ));
     }
 }

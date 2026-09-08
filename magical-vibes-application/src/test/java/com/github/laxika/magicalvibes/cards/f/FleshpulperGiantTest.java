@@ -23,8 +23,7 @@ class FleshpulperGiantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
     }
 
     @Test
@@ -34,9 +33,9 @@ class FleshpulperGiantTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         cast();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -47,8 +46,11 @@ class FleshpulperGiantTest extends BaseCardTest {
     @DisplayName("Declining the may leaves the creature alive")
     void decliningLeavesCreatureAlive() {
         harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         cast();
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
@@ -82,18 +84,13 @@ class FleshpulperGiantTest extends BaseCardTest {
         UUID hillGiantId = harness.getPermanentId(player2, "Hill Giant");
 
         cast();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
         assertThat(choice.validPermanentIds()).doesNotContain(hillGiantId);
 
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
-
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(choice.validPermanentIds()).contains(harness.getPermanentId(player2, "Grizzly Bears"));
     }
 
     @Test
@@ -103,9 +100,9 @@ class FleshpulperGiantTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         cast();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }

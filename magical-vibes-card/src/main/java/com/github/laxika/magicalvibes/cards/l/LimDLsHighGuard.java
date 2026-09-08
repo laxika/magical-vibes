@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "55a")
 @CardRegistration(set = "ALL", collectorNumber = "55b")
+@CardRegistration(set = "DKM", collectorNumber = "6")
 public class LimDLsHighGuard extends Card {
 
     public LimDLsHighGuard() {

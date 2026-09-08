@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "TMP", collectorNumber = "170")
+@CardRegistration(set = "TPR", collectorNumber = "129")
 public class Deadshot extends Card {
 
     public Deadshot() {

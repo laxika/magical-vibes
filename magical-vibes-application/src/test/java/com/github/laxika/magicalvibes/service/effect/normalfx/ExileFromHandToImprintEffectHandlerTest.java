@@ -180,7 +180,33 @@ class ExileFromHandToImprintEffectHandlerTest {
                 verify(playerInputService).beginImprintFromHandChoice(
                         eq(gd), eq(player1Id), eq(List.of(0)),
                         eq("Choose a nonland card from your hand to exile and imprint."),
-                        eq(anvilPerm.getId()), eq(false));
+                        eq(anvilPerm.getId()), eq(false), eq(false));
+            }
+
+            @Test
+            @DisplayName("Passes the face-down flag to the hand choice")
+            void passesFaceDownFlag() {
+                Card anvilCard = createCard("Summoner's Egg");
+                Permanent anvilPerm = new Permanent(anvilCard);
+
+                Card handCard = createCreatureCard("Grizzly Bears");
+                gd.playerHands.get(player1Id).add(handCard);
+
+                ExileFromHandToImprintEffect effect = ExileFromHandToImprintEffect.faceDown(null, "a card");
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, anvilCard, player1Id, "Summoner's Egg trigger",
+                        List.of(effect), anvilPerm.getId(), (UUID) null
+                );
+
+                when(gameQueryService.findPermanentById(gd, anvilPerm.getId())).thenReturn(anvilPerm);
+                when(predicateEvaluationService.matchesCardPredicate(eq(handCard), any(), any())).thenReturn(true);
+
+                exileFromHandToImprintHandler.resolve(gd, entry, effect);
+
+                verify(playerInputService).beginImprintFromHandChoice(
+                        eq(gd), eq(player1Id), eq(List.of(0)),
+                        eq("Choose a card from your hand to exile and imprint."),
+                        eq(anvilPerm.getId()), eq(false), eq(true));
             }
 
             @Test
@@ -201,7 +227,7 @@ class ExileFromHandToImprintEffectHandlerTest {
 
                 exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any(), anyBoolean());
+                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
             }
 
             @Test
@@ -225,7 +251,7 @@ class ExileFromHandToImprintEffectHandlerTest {
 
                 exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any(), anyBoolean());
+                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
             }
 
             @Test
@@ -244,6 +270,6 @@ class ExileFromHandToImprintEffectHandlerTest {
 
                 exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any(), anyBoolean());
+                verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
             }
 }

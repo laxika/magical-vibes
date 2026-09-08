@@ -17,6 +17,7 @@ import java.util.Set;
  */
 @CardRegistration(set = "9ED", collectorNumber = "256")
 @CardRegistration(set = "8ED", collectorNumber = "269")
+@CardRegistration(set = "MMQ", collectorNumber = "260")
 public class NaturalAffinity extends Card {
 
     public NaturalAffinity() {

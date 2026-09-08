@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "82")
+@CardRegistration(set = "TPR", collectorNumber = "63")
 public class RootwaterHunter extends Card {
 
     public RootwaterHunter() {

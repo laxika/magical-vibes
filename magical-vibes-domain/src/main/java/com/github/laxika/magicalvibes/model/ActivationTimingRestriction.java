@@ -19,6 +19,8 @@ public enum ActivationTimingRestriction {
      * a turn has multiple combats ({@code combatPhasesThisTurn <= 1}). Acidic Dagger.
      */
     BEFORE_BLOCKERS_DECLARED,
+    /** Activate only before the combat damage step. */
+    BEFORE_COMBAT_DAMAGE,
     ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED,
     /** Activate only during the declare blockers step (any player). General Jarkeld. */
     ONLY_DURING_DECLARE_BLOCKERS,
@@ -28,6 +30,8 @@ public enum ActivationTimingRestriction {
      */
     ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED,
     ONLY_DURING_COMBAT,
+    /** Activate only during the end of combat step (any player's turn). */
+    ONLY_DURING_END_OF_COMBAT,
     /**
      * Activate only during a step that precedes the end of combat step (any player's turn).
      * Dwarven Sea Clan's "Activate only before the end of combat step."

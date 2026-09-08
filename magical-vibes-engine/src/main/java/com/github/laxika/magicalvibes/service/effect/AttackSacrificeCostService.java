@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -11,7 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import java.util.ArrayList;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,35 +36,33 @@ public class AttackSacrificeCostService {
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
+    private final PlayerInputService playerInputService;
 
     /**
      * For each declared attacker carrying a {@link CantAttackUnlessSacrificeEffect}, sacrifices the
-     * required matching permanents the controller controls. Called after all index-based combat
-     * bookkeeping so removing the sacrificed permanents from the battlefield cannot shift indices.
+     * required matching permanents the controller controls. The attacker objects are captured before
+     * payment begins, so removing permanents from the battlefield cannot invalidate the declaration.
      */
-    public void paySacrificeAttackCosts(GameData gameData, UUID playerId, List<Integer> attackerIndices) {
+    public void paySacrificeAttackCosts(GameData gameData, UUID playerId, List<Permanent> attackers) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
             return;
         }
 
-        // Collect the costs first (by index, before any battlefield mutation), then pay them.
-        List<CantAttackUnlessSacrificeEffect> costs = new ArrayList<>();
-        for (int idx : attackerIndices) {
-            Permanent attacker = battlefield.get(idx);
+        // Collect the costs from the attacker snapshot before any battlefield mutation, then pay them.
+        Map<PermanentPredicate, Integer> costs = new LinkedHashMap<>();
+        for (Permanent attacker : attackers) {
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CantAttackUnlessSacrificeEffect sac) {
-                    costs.add(sac);
+                    costs.merge(sac.filter(), sac.count(), Integer::sum);
                 }
             }
         }
 
-        for (CantAttackUnlessSacrificeEffect cost : costs) {
-            sacrificeMatching(gameData, playerId, cost.count(), cost.filter());
-        }
-
-        collectGlobalCosts(gameData, playerId, attackerIndices)
-                .forEach((filter, count) -> sacrificeMatching(gameData, playerId, count, filter));
+        collectGlobalCosts(gameData, playerId, attackers)
+                .forEach((filter, count) -> costs.merge(filter, count, Integer::sum));
+        costs.forEach((filter, count) -> sacrificeMatching(gameData, playerId, count, filter));
     }
 
     /**
@@ -72,7 +72,20 @@ public class AttackSacrificeCostService {
      * a single matching attacker is payable.
      */
     public void validateGlobalSacrificeAttackCosts(GameData gameData, UUID playerId, List<Integer> attackerIndices) {
-        collectGlobalCosts(gameData, playerId, attackerIndices).forEach((filter, required) -> {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return;
+        }
+        List<Permanent> attackers = attackerIndices.stream().map(battlefield::get).toList();
+        Map<PermanentPredicate, Integer> costs = collectGlobalCosts(gameData, playerId, attackers);
+        for (Permanent attacker : attackers) {
+            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CantAttackUnlessSacrificeEffect sacrifice) {
+                    costs.merge(sacrifice.filter(), sacrifice.count(), Integer::sum);
+                }
+            }
+        }
+        costs.forEach((filter, required) -> {
             if (countMatching(gameData, playerId, filter) < required) {
                 throw new IllegalStateException(
                         "Not enough permanents to sacrifice to attack (" + required + " required)");
@@ -86,10 +99,10 @@ public class AttackSacrificeCostService {
      * effect applies from any permanent to every matching creature.
      */
     private Map<PermanentPredicate, Integer> collectGlobalCosts(GameData gameData, UUID playerId,
-                                                                List<Integer> attackerIndices) {
+                                                                List<Permanent> attackers) {
         Map<PermanentPredicate, Integer> totals = new LinkedHashMap<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null || attackerIndices.isEmpty()) {
+        if (battlefield == null || attackers.isEmpty()) {
             return totals;
         }
         gameData.forEachPermanent((ownerId, permanent) -> {
@@ -98,9 +111,9 @@ public class AttackSacrificeCostService {
                     continue;
                 }
                 int matching = 0;
-                for (int idx : attackerIndices) {
+                for (Permanent attacker : attackers) {
                     if (predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, battlefield.get(idx), restriction.attackerPredicate())) {
+                            gameData, attacker, restriction.attackerPredicate())) {
                         matching++;
                     }
                 }
@@ -128,6 +141,19 @@ public class AttackSacrificeCostService {
     }
 
     private void sacrificeMatching(GameData gameData, UUID playerId, int count, PermanentPredicate filter) {
+        List<Permanent> candidates = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, filter))
+                .toList();
+        if (candidates.size() > count) {
+            playerInputService.beginMultiPermanentChoice(gameData, playerId,
+                    candidates.stream().map(Permanent::getId).toList(), count,
+                    new MultiPermanentChoiceContext.SacrificeAttackCost(count),
+                    "Choose " + count + " permanent" + (count == 1 ? "" : "s")
+                            + " to sacrifice as an attack cost.");
+            return;
+        }
+
         String playerName = gameData.playerIdToName.get(playerId);
         int sacrificed = 0;
         while (sacrificed < count) {
@@ -145,6 +171,8 @@ public class AttackSacrificeCostService {
                 break;
             }
             permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                    gameData, playerId, toSacrifice.getCard());
             gameLogService.append(gameData,
                     GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
             log.info("Game {} - {} sacrifices {} to attack", gameData.id, playerName,

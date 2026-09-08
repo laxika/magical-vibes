@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "P02", collectorNumber = "21")
+@CardRegistration(set = "S99", collectorNumber = "23")
 public class RighteousFury extends Card {
 
     public RighteousFury() {

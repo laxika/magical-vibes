@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerTestFixtures;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -18,6 +19,7 @@ import java.util.UUID;
 abstract class AbstractStaticEffectHandlerTest {
 
     @Mock protected GameQueryService gameQueryService;
+    @Mock protected AmountEvaluationService amountEvaluationService;
     @Mock protected PredicateEvaluationService predicateEvaluationService;
 
     protected StaticEffectHandlerRegistry registry;
@@ -27,7 +29,7 @@ abstract class AbstractStaticEffectHandlerTest {
 
     @BeforeEach
     void setUpStaticEffectHandlerBase() {
-        StaticEffectSupport support = new StaticEffectSupport(gameQueryService);
+        StaticEffectSupport support = new StaticEffectSupport(gameQueryService, amountEvaluationService);
         registry = new StaticEffectHandlerRegistry();
         StaticEffectHandlerBean handler = instantiateHandlerUnderTest(support, gameQueryService);
         if (handler.selfOnly()) {

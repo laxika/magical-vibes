@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "TMP", collectorNumber = "86")
+@CardRegistration(set = "TPR", collectorNumber = "66")
 public class ShadowRift extends Card {
 
     public ShadowRift() {

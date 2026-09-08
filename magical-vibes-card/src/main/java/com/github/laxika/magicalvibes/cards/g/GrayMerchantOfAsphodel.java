@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "THS", collectorNumber = "89")
+@CardRegistration(set = "THB", collectorNumber = "99")
 public class GrayMerchantOfAsphodel extends Card {
 
     public GrayMerchantOfAsphodel() {

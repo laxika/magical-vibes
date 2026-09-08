@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "119")
+@CardRegistration(set = "IKO", collectorNumber = "107")
 public class BlazingVolley extends Card {
 
     public BlazingVolley() {

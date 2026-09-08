@@ -44,7 +44,9 @@ final class PlayerInteractionHandlerTestSupport {
                                                  PermanentRemovalService permanentRemovalService,
                                                  GraveyardService graveyardService,
                                                  InteractionHandlerRegistry interactionHandlerRegistry,
-                                                 CoinFlipService coinFlipService) {
+                                                 CoinFlipService coinFlipService,
+                                                 PermanentCounterSupport permanentCounterSupport,
+                                                 LifeSupport lifeSupport) {
         try {
             Class<?> handlerClass = Class.forName(
                     PlayerInteractionHandlerTestSupport.class.getPackageName() + "." + handlerSimpleName);
@@ -65,6 +67,8 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(GraveyardService.class, graveyardService);
             deps.put(InteractionHandlerRegistry.class, interactionHandlerRegistry);
             deps.put(CoinFlipService.class, coinFlipService);
+            deps.put(PermanentCounterSupport.class, permanentCounterSupport);
+            deps.put(LifeSupport.class, lifeSupport);
             // Real amount evaluator on top of the mocked collaborators — Fixed amounts
             // evaluate without touching any mock.
             deps.put(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class,

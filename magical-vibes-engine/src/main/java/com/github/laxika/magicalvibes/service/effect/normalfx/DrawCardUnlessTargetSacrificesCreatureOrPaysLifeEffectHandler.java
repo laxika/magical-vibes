@@ -110,7 +110,7 @@ public class DrawCardUnlessTargetSacrificesCreatureOrPaysLifeEffectHandler
 
         if (ChoiceContext.IndulgentTormentorChoice.payLife(effect.lifeCost()).equals(chosenMode)) {
             if (canPayLife(gameData, targetPlayerId, effect.lifeCost())) {
-                lifeSupport.applyLifeLoss(gameData, targetPlayerId, effect.lifeCost(), entry.getCard().getName());
+                lifeSupport.applyLifePayment(gameData, targetPlayerId, effect.lifeCost(), entry.getCard().getName());
                 finish(gameData, gameData.indulgentTormentor);
             } else {
                 draw(gameData, entry);

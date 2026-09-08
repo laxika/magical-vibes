@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedControllerMayPayToPr
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "92")
+@CardRegistration(set = "SUM", collectorNumber = "73")
 public class PowerLeak extends Card {
 
     public PowerLeak() {

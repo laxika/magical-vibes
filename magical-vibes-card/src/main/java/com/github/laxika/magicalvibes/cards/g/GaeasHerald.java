@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCountered
 
 @CardRegistration(set = "10E", collectorNumber = "265")
 @CardRegistration(set = "8ED", collectorNumber = "252")
+@CardRegistration(set = "PLS", collectorNumber = "80")
 public class GaeasHerald extends Card {
 
     public GaeasHerald() {

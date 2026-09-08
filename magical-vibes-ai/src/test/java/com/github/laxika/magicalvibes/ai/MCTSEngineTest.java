@@ -112,8 +112,8 @@ class MCTSEngineTest {
         // Guards against a search that never terminates, not against slowness: a 100-iteration
         // budget measures ~33s on a developer machine, and the other searches in this class are
         // the same order, so a bound tight enough to catch a regression here would just track
-        // hardware. 60s is comfortably above the observed spread and still fails on a hang.
-        assertThat(elapsed).isLessThan(60000);
+        // hardware. 120s remains a hang guard without failing under heavily contended CI workers.
+        assertThat(elapsed).isLessThan(120000);
     }
 
     @Test

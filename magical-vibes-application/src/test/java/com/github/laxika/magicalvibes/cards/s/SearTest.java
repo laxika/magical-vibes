@@ -55,6 +55,6 @@ class SearTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Card is not playable");
+                .hasMessage("Target must be a creature or planeswalker");
     }
 }

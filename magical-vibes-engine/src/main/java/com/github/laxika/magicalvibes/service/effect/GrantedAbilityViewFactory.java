@@ -101,6 +101,9 @@ public class GrantedAbilityViewFactory {
         if (!remainingProtection.isEmpty()) {
             result.add(new GrantedAbilityView(formatProtectionColors(remainingProtection), null));
         }
+        if (permanent.isProtectionFromColorlessUntilEndOfTurn()) {
+            result.add(new GrantedAbilityView("Protection from colorless", null));
+        }
         if (permanent.isCantBeBlocked()) {
             result.add(new GrantedAbilityView("Can't be blocked", null));
         }
@@ -108,6 +111,11 @@ public class GrantedAbilityViewFactory {
                 .stream().sorted(Comparator.comparingInt(CardSubtype::ordinal)).toList()) {
             result.add(new GrantedAbilityView(
                     "Protection from non-" + formatSubtype(subtype) + " creatures", null));
+        }
+        if (permanent.isProtectionFromOpponentCreaturesUntilEndOfTurn()
+                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && !bonus.losesAllAbilities()) {
+            result.add(new GrantedAbilityView("Protection from creatures your opponents control", null));
         }
         if (permanent.isProtectionFromOpponentsPermanently()
                 && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
@@ -169,6 +177,9 @@ public class GrantedAbilityViewFactory {
         if (protection.protectionFromMulticolored()) {
             return "Protection from multicolored";
         }
+        if (protection.protectionFromMonocolored()) {
+            return "Protection from monocolored";
+        }
         if (!protection.protectionFromColors().isEmpty()) {
             return formatProtectionColors(protection.protectionFromColors());
         }
@@ -180,6 +191,9 @@ public class GrantedAbilityViewFactory {
             return protection.subtypeProtectionRequiresCreatureSource()
                     ? "Protection from " + subtypes + " creatures"
                     : "Protection from " + subtypes;
+        }
+        if (protection.protectionFromManaValueParity()) {
+            return "Protection from mana values of the chosen quality";
         }
         if (protection.protectionFromManaValueAtLeast().isPresent()) {
             return "Protection from mana value "
@@ -196,9 +210,14 @@ public class GrantedAbilityViewFactory {
     }
 
     private String formatTargetingRestriction(TargetingRestrictionEffect restriction) {
+        if (!restriction.sourceCardTypes().isEmpty()) {
+            String types = enumPhrase(restriction.sourceCardTypes());
+            return (restriction.opponentOnly() ? "Hexproof from " : "Can't be the target of ")
+                    + types + (restriction.opponentOnly() ? "s" : " spells");
+        }
         if (restriction.mode() == TargetColorMode.ANY) {
             if (restriction.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
-                    && restriction.opponentOnly()) {
+                    && restriction.opponentOnly() && restriction.hexproofLike()) {
                 return "Hexproof";
             }
             if (restriction.kind() == TargetingSourceKind.SPELLS) {
@@ -208,6 +227,11 @@ public class GrantedAbilityViewFactory {
                 return "Abilities your opponents control can't target this permanent";
             }
             return "Can't be targeted by spells or abilities";
+        }
+        if (restriction.mode() == TargetColorMode.MONOCOLORED) {
+            return restriction.opponentOnly() && restriction.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
+                    ? "Hexproof from monocolored"
+                    : "Can't be the target of monocolored spells or abilities";
         }
         String colors = enumPhrase(restriction.colors());
         if (restriction.mode() == TargetColorMode.BLOCKED_COLORS) {

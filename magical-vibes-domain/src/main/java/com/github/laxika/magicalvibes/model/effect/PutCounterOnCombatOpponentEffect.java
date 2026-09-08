@@ -15,11 +15,19 @@ import com.github.laxika.magicalvibes.model.CounterType;
  *
  * @param counterType the type of counter to place on the combat opponent
  * @param amount      how many counters to place
+ * @param grantedStaticEffect static ability the counters grant to the affected creature, if any
+ * @param grantedUpkeepEffect upkeep ability the counters grant to the affected creature, if any
  */
 public record PutCounterOnCombatOpponentEffect(
         CounterType counterType,
-        int amount
+        int amount,
+        CardEffect grantedStaticEffect,
+        CardEffect grantedUpkeepEffect
 ) implements CombatOpponentReferencingEffect {
+
+    public PutCounterOnCombatOpponentEffect(CounterType counterType, int amount) {
+        this(counterType, amount, null, null);
+    }
 
     @Override
     public TargetSpec targetSpec() {

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.List;
+
 import com.github.laxika.magicalvibes.model.CardSubtype;
 
 /**
@@ -15,21 +17,33 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * {@link EffectDuration#UNTIL_CONTROLLERS_NEXT_UNTAP_STEP} (Orcish Farmer).
  *
  * <p>If {@code fixedSubtype} is {@code null}, the controller is prompted to choose a basic
- * land type; otherwise that specific type is applied without a prompt.
+ * land type from {@code allowedTypes}; an empty list offers all five basic land types. Otherwise
+ * that specific type is applied without a prompt.
  *
  * @param duration     how long the granted/overriding type lasts
  * @param fixedSubtype the specific basic land type, or {@code null} to prompt for a choice
  * @param replacing    {@code true} to replace the land's types (Tideshaper Mystic),
  *                     {@code false} to add "in addition to its other types"
+ * @param allowedTypes the basic land types offered when {@code fixedSubtype} is {@code null};
+ *                     an empty list offers all five
  */
-public record GrantBasicLandTypeToTargetEffect(EffectDuration duration, CardSubtype fixedSubtype, boolean replacing) implements CardEffect {
+public record GrantBasicLandTypeToTargetEffect(EffectDuration duration, CardSubtype fixedSubtype,
+                                               boolean replacing, List<CardSubtype> allowedTypes) implements CardEffect {
+
+    public GrantBasicLandTypeToTargetEffect {
+        allowedTypes = allowedTypes == null ? List.of() : List.copyOf(allowedTypes);
+    }
 
     public GrantBasicLandTypeToTargetEffect(EffectDuration duration) {
-        this(duration, null, false);
+        this(duration, null, false, List.of());
     }
 
     public GrantBasicLandTypeToTargetEffect(EffectDuration duration, CardSubtype fixedSubtype) {
-        this(duration, fixedSubtype, false);
+        this(duration, fixedSubtype, false, List.of());
+    }
+
+    public GrantBasicLandTypeToTargetEffect(EffectDuration duration, CardSubtype fixedSubtype, boolean replacing) {
+        this(duration, fixedSubtype, replacing, List.of());
     }
 
     @Override

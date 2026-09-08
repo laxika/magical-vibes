@@ -3,6 +3,15 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+
+import java.util.List;
 
 /**
  * Deals damage to any target (creature, planeswalker, or player). The amount is a
@@ -25,12 +34,42 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  *                           entry), this damage can't be prevented — e.g. Banefire's "If X is
  *                           5 or more, … the damage can't be prevented" uses
  *                           {@code new SpellXAtLeast(5)}. {@code null} = normal prevention.
+ * @param onlyIfSacrificed   whether an on-death use triggers only when its source was sacrificed
+ * @param cantBeRedirectedWhenUnpreventable when true, an event made unpreventable by
+ *                           {@code unpreventableWhen} also can't be redirected
+ * @param preventRegenerationWithoutDamage when true, the targeted creature cannot regenerate
+ *                           even if no damage is dealt (Disintegrate)
  */
 public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                           boolean exileInsteadOfDie, int targetGroup,
                                           Condition unpreventableWhen,
-                                          boolean onlyIfSacrificed)
+                                          boolean onlyIfSacrificed,
+                                          boolean cantBeRedirectedWhenUnpreventable,
+                                          boolean preventRegenerationWithoutDamage)
         implements DamageDealingEffect {
+
+    private static final int ANY_OTHER_TARGET = -2;
+
+    public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
+                                       boolean exileInsteadOfDie, int targetGroup,
+                                       Condition unpreventableWhen, boolean onlyIfSacrificed,
+                                       boolean cantBeRedirectedWhenUnpreventable) {
+        this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen,
+                onlyIfSacrificed, cantBeRedirectedWhenUnpreventable, false);
+    }
+
+    /** Applies the no-regeneration rider to the targeted creature regardless of damage dealt. */
+    public DealDamageToAnyTargetEffect withUnconditionalRegenerationPrevention() {
+        return new DealDamageToAnyTargetEffect(damage, true, exileInsteadOfDie, targetGroup,
+                unpreventableWhen, onlyIfSacrificed, cantBeRedirectedWhenUnpreventable, true);
+    }
+
+    public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
+                                       boolean exileInsteadOfDie, int targetGroup,
+                                       Condition unpreventableWhen, boolean onlyIfSacrificed) {
+        this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen,
+                onlyIfSacrificed, false);
+    }
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
@@ -67,14 +106,44 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
         this(damage, false, false, -1, unpreventableWhen);
     }
 
+    /** Damage that also can't be redirected while {@code unpreventableWhen} holds. */
+    public DealDamageToAnyTargetEffect(DynamicAmount damage, Condition unpreventableWhen,
+                                       boolean cantBeRedirectedWhenUnpreventable) {
+        this(damage, false, false, -1, unpreventableWhen, false,
+                cantBeRedirectedWhenUnpreventable);
+    }
+
     /** Damage aimed at the given target group's chosen target instead of the entry's single target. */
     public static DealDamageToAnyTargetEffect forTargetGroup(int damage, int targetGroup) {
         return new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, targetGroup, null);
     }
 
+    /** Damage to any target other than the effect's source permanent. */
+    public static DealDamageToAnyTargetEffect toAnyOtherTarget(DynamicAmount damage) {
+        return new DealDamageToAnyTargetEffect(damage, false, false, ANY_OTHER_TARGET, null);
+    }
+
+    /** Target filter for an any-target effect that excludes its source permanent. */
+    public static TargetFilter anyOtherTargetFilter() {
+        return new AnyTargetPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be another target");
+    }
+
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.anyTarget());
+        return targetGroup == ANY_OTHER_TARGET
+                ? TargetSpec.harmful(TargetPredicates.anyTarget(),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))
+                : TargetSpec.harmful(TargetPredicates.anyTarget());
+    }
+
+    @Override
+    public TargetFilter triggeredTargetFilter() {
+        return targetGroup == ANY_OTHER_TARGET ? anyOtherTargetFilter() : null;
     }
 
     @Override

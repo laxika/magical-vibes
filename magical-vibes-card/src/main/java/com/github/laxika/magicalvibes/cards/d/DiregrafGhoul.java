@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "97")
 @CardRegistration(set = "M19", collectorNumber = "92")
+@CardRegistration(set = "FDN", collectorNumber = "171")
 public class DiregrafGhoul extends Card {
 
     public DiregrafGhoul() {

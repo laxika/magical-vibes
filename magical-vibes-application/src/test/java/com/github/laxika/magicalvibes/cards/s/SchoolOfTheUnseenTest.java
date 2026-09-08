@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(SchoolOfTheUnseen.class)
 class SchoolOfTheUnseenTest extends BaseCardTest {
 
     @Test
@@ -30,18 +32,23 @@ class SchoolOfTheUnseenTest extends BaseCardTest {
     @Test
     @DisplayName("Second ability prompts for a color choice and adds that mana")
     void secondAbilityAddsChosenColor() {
-        addReadySchool(player1);
+        Permanent school = addReadySchool(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder(
+                ManaColor.WHITE.name(), ManaColor.BLUE.name(), ManaColor.BLACK.name(),
+                ManaColor.RED.name(), ManaColor.GREEN.name());
         assertThat(gd.stack).isEmpty();
 
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(school.isTapped()).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -60,11 +67,13 @@ class SchoolOfTheUnseenTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the second ability with only one mana available")
     void cannotActivateSecondAbilityWithoutEnoughMana() {
-        addReadySchool(player1);
+        Permanent school = addReadySchool(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(school.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 
     @Test
@@ -79,9 +88,8 @@ class SchoolOfTheUnseenTest extends BaseCardTest {
     }
 
     private Permanent addReadySchool(Player player) {
-        Permanent perm = new Permanent(new SchoolOfTheUnseen());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SchoolOfTheUnseen());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

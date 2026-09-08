@@ -4,19 +4,29 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExiledWithSourceTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +45,26 @@ import org.springframework.stereotype.Service;
 public class PlayedCardNameTriggerCollectorService {
 
     private final GameLogService gameLogService;
+    private final ConditionEvaluationService conditionEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
+
+    @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleControllerCastsExiledCard(TriggerMatchContext match,
+            PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        return sc.castZone() == Zone.EXILE
+                && collectTransform(match, sc.exiledSourcePermanentId(), sc.spellCard());
+    }
+
+    @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    private boolean handleControllerPlaysExiledCardLand(TriggerMatchContext match,
+            PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
+        return lp.fromExile()
+                && collectTransform(match, lp.exiledSourcePermanentId(), lp.landCard());
+    }
 
     @CollectsTrigger(value = PlayedCardNameMatchesCardExiledWithSourceTriggerEffect.class,
             slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
@@ -50,6 +80,28 @@ public class PlayedCardNameTriggerCollectorService {
             PlayedCardNameMatchesCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return collect(match, lp.landCard());
+    }
+
+    @CollectsTrigger(value = LandPlayFromExileTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    private boolean handleControllerPlaysLandFromExile(TriggerMatchContext match,
+            LandPlayFromExileTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
+        if (!lp.fromExile()) {
+            return false;
+        }
+        return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId());
+    }
+
+    @CollectsTrigger(value = LandPlayFromExileTriggerEffect.class,
+            slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    private boolean handleOpponentPlaysLandFromExile(TriggerMatchContext match,
+            LandPlayFromExileTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
+        if (!lp.fromExile()) {
+            return false;
+        }
+        return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId());
     }
 
     @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
@@ -73,6 +125,31 @@ public class PlayedCardNameTriggerCollectorService {
         return true;
     }
 
+    @CollectsTriggers({
+            @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND),
+            @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+                    slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    })
+    private boolean handleConditionalLandPlay(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.LandPlayed landPlayed = (TriggerContext.LandPlayed) ctx;
+        if (!predicateEvaluationService.matchesCardPredicate(landPlayed.landCard(), conditional.predicate(),
+                match.permanent().getOriginalCard().getId(),
+                match.gameData(), match.controllerId())) {
+            return false;
+        }
+
+        CardEffect resolved = conditional.wrapped();
+        if (resolved instanceof ConditionalEffect gate && gate.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), gate.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        return enqueueLandPlayTrigger(match, resolved, landPlayed.playingPlayerId());
+    }
+
     /**
      * Default for {@link EffectSlot#ON_CONTROLLER_PLAYS_LAND}: put bare effects on the stack
      * (e.g. Juju Bubble's {@code SacrificeSelfEffect}). Name-match triggers above take precedence
@@ -81,19 +158,10 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
     private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        Card sourceCard = match.permanent().getCard();
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on controller playing a land",
-                match.gameData().id, sourceCard.getName());
-        return true;
+        if (effect instanceof TriggeringCardConditionalEffect) {
+            return false;
+        }
+        return enqueueLandPlayTrigger(match, effect, ((TriggerContext.LandPlayed) ctx).playingPlayerId());
     }
 
     /**
@@ -103,18 +171,75 @@ public class PlayedCardNameTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
+        if (effect instanceof TriggeringCardConditionalEffect) {
+            return false;
+        }
+        return enqueueLandPlayTrigger(match, effect, ((TriggerContext.LandPlayed) ctx).playingPlayerId());
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match, CardEffect effect,
+            UUID playingPlayerId) {
+        return enqueueLandPlayTrigger(match, List.of(effect), playingPlayerId);
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match,
+                                           LandPlayFromExileTriggerEffect trigger, UUID playingPlayerId) {
+        boolean needsPlayerTarget = trigger.resolvedEffects().stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean needsPermanentTarget = trigger.resolvedEffects().stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        if (needsPlayerTarget || needsPermanentTarget) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    match.permanent().getCard(), match.controllerId(),
+                    new ArrayList<>(trigger.resolvedEffects()),
+                    needsPlayerTarget && !needsPermanentTarget,
+                    trigger.targetFilter(), 0, match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                    "'s triggered ability triggers — choose a target."));
+            return true;
+        }
+        return enqueueLandPlayTrigger(match, trigger.resolvedEffects(), playingPlayerId);
+    }
+
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects, UUID playingPlayerId) {
         Card sourceCard = match.permanent().getCard();
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                new ArrayList<>(effects),
                 null,
-                match.permanent().getId()));
+                match.permanent().getId());
+        entry.setTargetId(playingPlayerId);
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on an opponent playing a land",
+        log.info("Game {} - {} triggers on playing a land",
                 match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    private boolean collectTransform(TriggerMatchContext match, UUID exiledSourcePermanentId,
+                                     Card playedCard) {
+        if (!match.permanent().getId().equals(exiledSourcePermanentId)) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(new TransformSelfEffect())),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers when {} is played from exile",
+                match.gameData().id, sourceCard.getName(), playedCard.getName());
         return true;
     }
 

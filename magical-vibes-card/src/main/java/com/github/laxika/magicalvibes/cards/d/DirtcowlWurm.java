@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "221")
+@CardRegistration(set = "BRB", collectorNumber = "19")
 public class DirtcowlWurm extends Card {
 
     public DirtcowlWurm() {

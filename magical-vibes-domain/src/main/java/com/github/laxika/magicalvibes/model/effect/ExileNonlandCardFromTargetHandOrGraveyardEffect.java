@@ -2,9 +2,21 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Reveals the target player's hand, then lets the controller choose a nonland card from that
- * hand or that player's graveyard and exile it with a lasting permission to cast it.
+ * hand or that player's graveyard and exile it.
+ *
+ * @param grantPlayPermission whether the controller may cast the exiled card for as long as it
+ *                            remains exiled
  */
-public record ExileNonlandCardFromTargetHandOrGraveyardEffect() implements CardEffect {
+public record ExileNonlandCardFromTargetHandOrGraveyardEffect(boolean grantPlayPermission, boolean handOnly)
+        implements CardEffect {
+
+    public ExileNonlandCardFromTargetHandOrGraveyardEffect() {
+        this(true, false);
+    }
+
+    public ExileNonlandCardFromTargetHandOrGraveyardEffect(boolean grantPlayPermission) {
+        this(grantPlayPermission, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

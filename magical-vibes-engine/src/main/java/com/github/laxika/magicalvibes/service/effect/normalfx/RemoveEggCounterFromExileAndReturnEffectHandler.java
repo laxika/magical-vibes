@@ -67,6 +67,7 @@ public class RemoveEggCounterFromExileAndReturnEffectHandler implements NormalEf
             // Return to the battlefield under its owner's control
             UUID returnControllerId = ownerId != null ? ownerId : controllerId;
             Permanent perm = new Permanent(exiledCard);
+            perm.setEnteredFromExile(true);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, perm);
 
             gameLogService.append(gameData, GameLog.cardThen(exiledCard, " has its last egg counter removed and returns to the battlefield."));

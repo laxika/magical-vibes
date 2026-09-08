@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "226")
+@CardRegistration(set = "AKR", collectorNumber = "270")
 public class EdificeOfAuthority extends Card {
 
     public EdificeOfAuthority() {

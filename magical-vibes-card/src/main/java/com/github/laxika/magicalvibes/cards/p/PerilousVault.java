@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "224")
+@CardRegistration(set = "AKR", collectorNumber = "278")
 public class PerilousVault extends Card {
 
     public PerilousVault() {

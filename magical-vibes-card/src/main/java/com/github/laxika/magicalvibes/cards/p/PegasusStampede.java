@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "EXO", collectorNumber = "14")
+@CardRegistration(set = "TPR", collectorNumber = "24")
+@CardRegistration(set = "ATH", collectorNumber = "12")
 public class PegasusStampede extends Card {
 
     public PegasusStampede() {

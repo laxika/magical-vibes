@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "177")
+@CardRegistration(set = "AKR", collectorNumber = "204")
 public class OashraCultivator extends Card {
 
     public OashraCultivator() {

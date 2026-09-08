@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "1")
+@CardRegistration(set = "BRB", collectorNumber = "2")
 public class AdvanceScout extends Card {
 
     public AdvanceScout() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "217")
+@CardRegistration(set = "ECL", collectorNumber = "335")
 public class EclipsedBoggart extends Card {
 
     public EclipsedBoggart() {

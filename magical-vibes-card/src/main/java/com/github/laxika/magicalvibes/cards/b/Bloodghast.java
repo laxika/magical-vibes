@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "83")
+@CardRegistration(set = "DFT", collectorNumber = "77")
 public class Bloodghast extends Card {
 
     public Bloodghast() {

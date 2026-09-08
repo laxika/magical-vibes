@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "167")
+@CardRegistration(set = "USG", collectorNumber = "161")
 public class TaintedAether extends Card {
 
     public TaintedAether() {

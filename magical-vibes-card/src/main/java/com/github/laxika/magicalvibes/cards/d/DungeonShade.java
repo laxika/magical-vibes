@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "58")
+@CardRegistration(set = "TPR", collectorNumber = "103")
 public class DungeonShade extends Card {
 
     public DungeonShade() {

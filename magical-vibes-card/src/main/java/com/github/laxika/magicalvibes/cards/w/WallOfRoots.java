@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "253")
+@CardRegistration(set = "TSB", collectorNumber = "89")
 public class WallOfRoots extends Card {
 
     public WallOfRoots() {

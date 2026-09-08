@@ -21,6 +21,7 @@ import java.util.List;
  * cost ({@code {0}}, any zone) and a flash timing grant.
  */
 @CardRegistration(set = "TMP", collectorNumber = "213")
+@CardRegistration(set = "TPR", collectorNumber = "165")
 public class Aluren extends Card {
 
     public Aluren() {

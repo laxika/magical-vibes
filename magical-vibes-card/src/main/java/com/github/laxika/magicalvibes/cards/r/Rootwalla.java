@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "10E", collectorNumber = "293")
 @CardRegistration(set = "9ED", collectorNumber = "268")
 @CardRegistration(set = "TMP", collectorNumber = "252")
+@CardRegistration(set = "TPR", collectorNumber = "191")
 public class Rootwalla extends Card {
 
     public Rootwalla() {

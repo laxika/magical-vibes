@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "69")
+@CardRegistration(set = "S99", collectorNumber = "72")
 public class DakmorPlague extends Card {
 
     public DakmorPlague() {

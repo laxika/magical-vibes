@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "188")
+@CardRegistration(set = "BRO", collectorNumber = "187")
 public class ObstinateBaloth extends Card {
 
     public ObstinateBaloth() {

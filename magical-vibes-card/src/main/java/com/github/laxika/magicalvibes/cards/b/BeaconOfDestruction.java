@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "189")
+@CardRegistration(set = "5DN", collectorNumber = "61")
 public class BeaconOfDestruction extends Card {
 
     public BeaconOfDestruction() {

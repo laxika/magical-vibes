@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "66")
+@CardRegistration(set = "SUM", collectorNumber = "55")
 public class CreatureBond extends Card {
 
     public CreatureBond() {

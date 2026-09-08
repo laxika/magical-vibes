@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,7 +15,10 @@ import org.springframework.stereotype.Component;
  * when the effect uses {@link GrantScope#SELF} (Adaptive Automaton).
  */
 @Component
+@RequiredArgsConstructor
 public class GrantChosenSubtypeToSelfEffectHandler implements StaticEffectHandlerBean {
+
+    private final StaticEffectSupport support;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +36,7 @@ public class GrantChosenSubtypeToSelfEffectHandler implements StaticEffectHandle
         if (grant.scope() != GrantScope.SELF) return;
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
+        if (!support.matchesStaticFilter(context, context.source(), grant.filter())) return;
         accumulator.addGrantedSubtype(chosenSubtype);
     }
 }

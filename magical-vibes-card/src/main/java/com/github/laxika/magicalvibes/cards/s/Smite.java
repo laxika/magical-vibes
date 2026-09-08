@@ -13,6 +13,8 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "25")
 @CardRegistration(set = "STH", collectorNumber = "17")
+@CardRegistration(set = "TPR", collectorNumber = "28")
+@CardRegistration(set = "ROE", collectorNumber = "43")
 public class Smite extends Card {
 
     public Smite() {

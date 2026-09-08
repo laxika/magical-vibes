@@ -18,6 +18,7 @@ public class SharuumTheHegemon extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.ARTIFACT))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

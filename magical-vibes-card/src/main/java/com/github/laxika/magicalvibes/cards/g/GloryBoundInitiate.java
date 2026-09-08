@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "16")
+@CardRegistration(set = "AKR", collectorNumber = "21")
 public class GloryBoundInitiate extends Card {
 
     public GloryBoundInitiate() {

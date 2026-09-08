@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.ArcTrail;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Mistfolk.class, ArcTrail.class, GrizzlyBears.class, Shock.class})
 class MistfolkTest extends BaseCardTest {
 
     @Test
@@ -38,6 +41,31 @@ class MistfolkTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mistfolk");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counters a multi-target spell that targets Mistfolk")
+    void countersMultiTargetSpellTargetingSelf() {
+        Mistfolk mistfolk = new Mistfolk();
+        harness.addToBattlefield(player1, mistfolk);
+
+        ArcTrail arcTrail = new ArcTrail();
+        harness.setHand(player2, List.of(arcTrail));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0,
+                List.of(harness.getPermanentId(player1, "Mistfolk"), player2.getId()));
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, arcTrail.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Arc Trail");
+        harness.assertOnBattlefield(player1, "Mistfolk");
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 
     @Test
@@ -96,5 +124,30 @@ class MistfolkTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, shock.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly without tapping Mistfolk")
+    void canActivateRepeatedlyWithoutTapping() {
+        Mistfolk mistfolk = new Mistfolk();
+        harness.addToBattlefield(player1, mistfolk);
+
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Mistfolk"));
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player1, "Mistfolk");
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }

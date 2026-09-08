@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class SmolderingTar extends Card {
                 null,
                 List.of(new SacrificeSelfCost(), new DealDamageToTargetCreatureEffect(4)),
                 "Sacrifice Smoldering Tar: It deals 4 damage to target creature. Activate only as a sorcery.",
-                null,
+                TargetFilters.creature(),
                 null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED

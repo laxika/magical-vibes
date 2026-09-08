@@ -30,10 +30,13 @@ public class AnimatePermanentsEffectHandler implements NormalEffectHandlerBean {
         switch (e.duration()) {
             case PERMANENT -> animationSupport.animatePermanentTarget(gameData, entry, e);
             case WHILE_SOURCE_ON_BATTLEFIELD -> animationSupport.animateWhileSource(gameData, entry, e);
+            case WHILE_SOURCE_REMAINS_TAPPED ->
+                    animationSupport.animateWhileSourceRemainsTapped(gameData, entry, e);
             default -> {
                 switch (e.scope()) {
                     case OWN_LANDS -> animationSupport.animateOwnLands(gameData, entry, e);
                     case ALL_LANDS -> animationSupport.animateAllLands(gameData, entry, e);
+                    case TARGET_PLAYERS_LANDS -> animationSupport.animateTargetPlayersLands(gameData, entry, e);
                     case OWN_PERMANENTS -> animationSupport.animateControlledPermanents(gameData, entry, e);
                     default -> animationSupport.animateSingle(gameData, entry, e);
                 }

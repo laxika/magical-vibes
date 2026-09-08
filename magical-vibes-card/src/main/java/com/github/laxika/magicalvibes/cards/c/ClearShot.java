@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "188")
+@CardRegistration(set = "EMN", collectorNumber = "152")
+@CardRegistration(set = "MID", collectorNumber = "176")
 public class ClearShot extends Card {
 
     public ClearShot() {

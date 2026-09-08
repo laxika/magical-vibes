@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "46")
+@CardRegistration(set = "AKR", collectorNumber = "52")
 public class Censor extends Card {
 
     public Censor() {

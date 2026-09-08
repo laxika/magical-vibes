@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "193")
+@CardRegistration(set = "AKR", collectorNumber = "225")
 public class WatchfulNaga extends Card {
 
     public WatchfulNaga() {

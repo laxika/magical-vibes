@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "162")
+@CardRegistration(set = "AKR", collectorNumber = "187")
 public class CrocodileOfTheCrossing extends Card {
 
     public CrocodileOfTheCrossing() {

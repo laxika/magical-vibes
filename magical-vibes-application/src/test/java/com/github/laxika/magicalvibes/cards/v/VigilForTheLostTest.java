@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.RosheenMeanderer;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -170,6 +172,37 @@ class VigilForTheLostTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 5);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("X-cost-only mana pays a pay-X trigger")
+    void xCostOnlyManaPaysPayXTrigger() {
+        harness.addToBattlefield(player1, new RosheenMeanderer());
+        harness.addToBattlefield(player1, new VigilForTheLost());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        GameData gd = harness.getGameData();
+        Permanent rosheen = gd.playerBattlefields.get(player1.getId()).getFirst();
+        rosheen.setSummoningSick(false);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castSorcery(player2, 0, player1.getId());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Grizzly Bears").getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        assertThat(((PendingInteraction.XValueChoice) gd.interaction.activeInteraction()).maxValue()).isEqualTo(4);
+
+        harness.handleXValueChosen(player1, 4);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 4);
+        assertThat(gd.playerManaPools.get(player1.getId()).getXCostOnlyColorless()).isZero();
     }
 
     // ===== Resolving with no mana =====

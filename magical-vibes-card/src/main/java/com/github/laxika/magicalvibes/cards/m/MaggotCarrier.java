@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "8ED", collectorNumber = "142")
+@CardRegistration(set = "PLS", collectorNumber = "45")
 public class MaggotCarrier extends Card {
 
     public MaggotCarrier() {

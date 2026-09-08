@@ -12,9 +12,12 @@ import java.util.UUID;
  *   <li><b>Amount-limited, any source</b> (positive {@code remainingAmount}, null {@code damageSourceId}):
  *       only the next {@code remainingAmount} damage from any source is redirected, then the shield is
  *       consumed. Used by Zealous Inquisitor.</li>
- *   <li><b>Next-event, chosen source</b> ({@link #NEXT_EVENT} amount, non-null {@code damageSourceId}):
- *       the next single damage event the chosen source would deal to the protected creature this turn is
- *       redirected in full, then the shield is consumed. Used by Jade Monolith.</li>
+ *   <li><b>Next-event</b> ({@link #NEXT_EVENT} amount): the next single damage event matching the
+ *       source filter would deal to the protected creature this turn is redirected in full, then the
+ *       shield is consumed. A non-null {@code damageSourceId} is used by Jade Monolith; a null source
+ *       matches any source and is used by Mirrorwood Treefolk.</li>
+ *   <li><b>Combat-only</b> ({@code combatOnly} set): the shield is checked only for combat damage.
+ *       Used by Shield Dancer.</li>
  * </ul>
  * Unlike {@link SourceDamageRedirectShield} (Harm's Way) this protects a single creature (not a player
  * and their permanents).
@@ -24,18 +27,25 @@ import java.util.UUID;
  *                             to match any source
  * @param remainingAmount      how much damage remains to redirect, or {@link #UNLIMITED} for no limit
  * @param redirectTargetId     where the redirected damage goes (typically the shield's own creature)
+ * @param combatOnly           whether this shield matches combat damage only
  */
 public record CreatureDamageRedirectShield(
         UUID protectedPermanentId,
         UUID damageSourceId,
         int remainingAmount,
-        UUID redirectTargetId
+        UUID redirectTargetId,
+        boolean combatOnly
 ) {
     /** Sentinel {@code remainingAmount} meaning the shield has no amount limit. */
     public static final int UNLIMITED = -1;
 
     /** Sentinel {@code remainingAmount} meaning the shield redirects only the next single damage event, in full. */
     public static final int NEXT_EVENT = -2;
+
+    public CreatureDamageRedirectShield(UUID protectedPermanentId, UUID damageSourceId,
+                                        int remainingAmount, UUID redirectTargetId) {
+        this(protectedPermanentId, damageSourceId, remainingAmount, redirectTargetId, false);
+    }
 
     public boolean isUnlimited() {
         return remainingAmount == UNLIMITED;
@@ -50,6 +60,7 @@ public record CreatureDamageRedirectShield(
      * Only meaningful for amount-limited shields.
      */
     public CreatureDamageRedirectShield withReducedAmount(int consumed) {
-        return new CreatureDamageRedirectShield(protectedPermanentId, damageSourceId, remainingAmount - consumed, redirectTargetId);
+        return new CreatureDamageRedirectShield(
+                protectedPermanentId, damageSourceId, remainingAmount - consumed, redirectTargetId, combatOnly);
     }
 }

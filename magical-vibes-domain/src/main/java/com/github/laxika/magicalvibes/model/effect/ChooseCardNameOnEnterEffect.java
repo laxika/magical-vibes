@@ -41,6 +41,10 @@ public record ChooseCardNameOnEnterEffect(List<CardType> excludedTypes, HandAcce
         this(excludedTypes, handAccess, false, null);
     }
 
+    public ChooseCardNameOnEnterEffect(List<CardType> excludedTypes, HandAccess handAccess, boolean nonbasicLandOnly) {
+        this(excludedTypes, handAccess, nonbasicLandOnly, null);
+    }
+
     public ChooseCardNameOnEnterEffect(CardType requiredType) {
         this(List.of(), HandAccess.NONE, false, requiredType);
     }

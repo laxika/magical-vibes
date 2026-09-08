@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VIS", collectorNumber = "108")
+@CardRegistration(set = "MMQ", collectorNumber = "249")
 public class GiantCaterpillar extends Card {
 
     public GiantCaterpillar() {

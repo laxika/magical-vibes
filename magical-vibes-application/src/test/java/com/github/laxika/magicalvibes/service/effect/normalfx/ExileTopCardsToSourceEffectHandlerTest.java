@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
@@ -34,9 +37,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Covers the merged exile-top-cards-to-source effect across all three {@link LibraryScope} values:
- * the controller's own library (Colfenor's Plans / Duplicity / Search the City), a single
- * opponent's (Grimoire Thief / Nightveil Specter), and every player's (Knowledge Pool).
+ * Covers the merged exile-top-cards-to-source effect across all {@link LibraryScope} values: the
+ * controller's own library (Colfenor's Plans / Duplicity / Search the City), a chosen player's
+ * (Mindreaver), a single opponent's (Grimoire Thief / Nightveil Specter), and every player's
+ * (Knowledge Pool).
  */
 @ExtendWith(MockitoExtension.class)
 class ExileTopCardsToSourceEffectHandlerTest {
@@ -138,7 +142,8 @@ class ExileTopCardsToSourceEffectHandlerTest {
 
         handler.resolve(gd, entry(sourceCard, effect, null, source.getId()), effect);
 
-        assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).containsEntry(source.getId(), player1Id);
+        assertThat(gd.exiledCardsToGraveyardOnControlLossWatch)
+                .containsEntry(source.getId(), new ExiledCardsControlLossWatch(player1Id, sourceCard));
     }
 
     @Test
@@ -175,6 +180,25 @@ class ExileTopCardsToSourceEffectHandlerTest {
         assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
         assertThat(gd.playerDecks.get(player2Id)).hasSize(1);
         verify(exileService).exileCard(any(), eq(player2Id), any(), any());
+    }
+
+    @Test
+    @DisplayName("TARGET_PLAYER scope exiles from the chosen player, including the controller")
+    void targetPlayerScopeUsesChosenPlayer() {
+        Card sourceCard = card("Mindreaver");
+        Permanent source = addPermanent(player1Id, sourceCard);
+        gd.playerDecks.get(player1Id).addAll(List.of(card("Mine1"), card("Mine2")));
+        gd.playerDecks.get(player2Id).addAll(List.of(card("Theirs1"), card("Theirs2")));
+
+        var effect = new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER);
+        when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+        stubExileFaceUp();
+
+        handler.resolve(gd, entry(sourceCard, effect, player1Id, source.getId()), effect);
+
+        assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
+        assertThat(gd.playerDecks.get(player2Id)).hasSize(2);
+        verify(exileService).exileCard(any(), eq(player1Id), any(), any());
     }
 
     @Test
@@ -249,6 +273,29 @@ class ExileTopCardsToSourceEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("Uses the active Adventure face for persistent exile permissions")
+    void usesAdventureFaceForPersistentPermission() {
+        Card sourceCard = card("Decadent Dragon");
+        Card adventureFace = card("Expensive Taste");
+        adventureFace.addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+                false, null, false, false, 0, null, false, false, false, true));
+        sourceCard.setBackFaceCard(adventureFace);
+        gd.playerDecks.get(player2Id).add(card("Exiled card"));
+
+        var effect = new ExileTopCardsToSourceEffect(1, true, false,
+                LibraryScope.TARGET_OPPONENT, true);
+        StackEntry adventureEntry = entry(sourceCard, effect, player2Id, null);
+        adventureEntry.setCastWithAdventure(true);
+        stubExileFaceDown();
+
+        handler.resolve(gd, adventureEntry, effect);
+
+        Card exiledCard = gd.getPlayerExiledCards(player2Id).getFirst();
+        assertThat(gd.exilePlayPermissions).containsEntry(exiledCard.getId(), player1Id);
+        assertThat(gd.playerDecks.get(player2Id)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Falls back to finding the source permanent by card id when the id is stale")
     void findsSourceByCardIdFallback() {
         Card sourceCard = card("Colfenor's Plans");
@@ -272,6 +319,8 @@ class ExileTopCardsToSourceEffectHandlerTest {
                 .isEqualTo(CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER);
         assertThat(new ExileTopCardsToSourceEffect(7).combatDamageTriggerContext()).isNull();
         assertThat(new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER)
+                .combatDamageTriggerContext()).isNull();
+        assertThat(new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.TARGET_PLAYER)
                 .combatDamageTriggerContext()).isNull();
     }
 }

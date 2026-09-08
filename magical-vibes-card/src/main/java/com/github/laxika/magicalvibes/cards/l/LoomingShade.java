@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "142")
 @CardRegistration(set = "10E", collectorNumber = "153")
 @CardRegistration(set = "M10", collectorNumber = "103")
+@CardRegistration(set = "USG", collectorNumber = "139")
 public class LoomingShade extends Card {
 
     public LoomingShade() {

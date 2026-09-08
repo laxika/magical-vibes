@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "134")
+@CardRegistration(set = "TPR", collectorNumber = "104")
 public class EvincarsJustice extends Card {
 
     public EvincarsJustice() {

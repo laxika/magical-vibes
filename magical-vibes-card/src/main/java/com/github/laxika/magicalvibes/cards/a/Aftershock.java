@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "160")
+@CardRegistration(set = "TPR", collectorNumber = "124")
 public class Aftershock extends Card {
 
     public Aftershock() {

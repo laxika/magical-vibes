@@ -51,7 +51,7 @@ public class DealDamageToCombatOpponentControllerEffectHandler implements Normal
         }
 
         String cardName = entry.getCard().getName();
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.text(
                     cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
         } else {

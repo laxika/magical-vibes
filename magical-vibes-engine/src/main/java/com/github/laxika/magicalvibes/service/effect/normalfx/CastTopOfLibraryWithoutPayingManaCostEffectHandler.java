@@ -8,11 +8,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import java.util.*;
-import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -47,7 +48,7 @@ public class CastTopOfLibraryWithoutPayingManaCostEffectHandler implements Norma
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} looks at top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
-        boolean matches = e.castableTypes().contains(topCard.getType());
+        boolean matches = e.matches(topCard);
         if (!matches) {
             String noMatch = "The top card is not a castable type.";
             gameLogService.append(gameData, GameLog.text(noMatch));
@@ -55,13 +56,14 @@ public class CastTopOfLibraryWithoutPayingManaCostEffectHandler implements Norma
             return;
         }
 
-        // Card matches — queue may ability to cast the spell without paying mana cost
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 topCard,
                 controllerId,
                 List.of(e),
-                sourceName + " — Cast " + topCard.getName() + " without paying its mana cost?"
+                sourceName + " — Cast " + topCard.getName() + " without paying its mana cost?",
+                null,
+                null,
+                entry.getSourcePermanentId()
         ));
-    
     }
 }

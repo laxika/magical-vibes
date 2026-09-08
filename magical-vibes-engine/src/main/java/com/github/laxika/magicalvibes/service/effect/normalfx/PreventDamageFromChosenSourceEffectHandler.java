@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -86,22 +87,34 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
         }
 
         String label = sourceLabel == null ? "" : sourceLabel + " ";
+        Set<CardColor> requiredDamageColors = sourceFilter instanceof PermanentColorInPredicate colors
+                ? colors.colors() : null;
         PermanentChoiceContext context;
         String prompt;
         switch (e.scope()) {
             case NEXT_DAMAGE_TO_CONTROLLER -> {
                 context = new PermanentChoiceContext.PreventNextDamageFromSourceChoice(
                         controllerId, e.gainLife(), e.exileFromLibrary(),
-                        e.damageSourceController() ? entry.getCard() : null);
-                String rider = e.damageSourceController()
-                        ? " If damage is prevented this way, this spell deals that much damage to that source's controller."
-                        : e.gainLife()
-                        ? " and gain that much life."
-                        : e.exileFromLibrary()
-                                ? " and exile that many cards from the top of your library."
-                                : ".";
+                        e.damageSourceController() ? entry.getCard() : null,
+                        e.preventHalfDamage(), e.drawCards(), requiredDamageColors);
+                String prevention = e.preventHalfDamage()
+                        ? "prevent half that damage, rounded down"
+                        : "prevent that damage";
+                String rider;
+                if (e.damageSourceController() && e.drawCards()) {
+                    rider = " If damage is prevented this way, this spell deals that much damage to that source's controller"
+                            + " and you draw that many cards.";
+                } else if (e.damageSourceController()) {
+                    rider = " If damage is prevented this way, this spell deals that much damage to that source's controller.";
+                } else if (e.gainLife()) {
+                    rider = " and gain that much life.";
+                } else if (e.exileFromLibrary()) {
+                    rider = " and exile that many cards from the top of your library.";
+                } else {
+                    rider = ".";
+                }
                 prompt = "Choose a " + label
-                        + "source. The next time it would deal damage to you this turn, prevent that damage"
+                        + "source. The next time it would deal damage to you this turn, " + prevention
                         + rider;
             }
             case NEXT_DAMAGE_TO_ANY_TARGET -> {
@@ -177,15 +190,27 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
     }
 
     private List<UUID> collectValidSourceIds(GameData gameData, PermanentPredicate sourceFilter) {
-        if (sourceFilter == null) {
-            return preventionSupport.collectAllBattlefieldPermanentIds(gameData);
-        }
         List<UUID> validIds = new ArrayList<>();
         gameData.forEachPermanent((playerId, perm) -> {
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, perm, sourceFilter)) {
+            if (sourceFilter == null
+                    || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, sourceFilter)) {
                 validIds.add(perm.getId());
             }
         });
+        for (StackEntry stackEntry : gameData.stack) {
+            if (!isSpell(stackEntry.getEntryType())) {
+                continue;
+            }
+            Permanent source = new Permanent(stackEntry.getCard());
+            if (sourceFilter == null
+                    || predicateEvaluationService.matchesPermanentPredicate(gameData, source, sourceFilter)) {
+                validIds.add(stackEntry.getCard().getId());
+            }
+        }
         return validIds;
+    }
+
+    private static boolean isSpell(StackEntryType type) {
+        return type != StackEntryType.ACTIVATED_ABILITY && type != StackEntryType.TRIGGERED_ABILITY;
     }
 }

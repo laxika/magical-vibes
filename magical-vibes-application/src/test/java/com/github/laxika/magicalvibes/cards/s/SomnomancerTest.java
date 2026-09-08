@@ -31,10 +31,10 @@ class SomnomancerTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
 
         castSomnomancer();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -46,9 +46,10 @@ class SomnomancerTest extends BaseCardTest {
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
 
         castSomnomancer();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         assertThat(target.isTapped()).isFalse();
@@ -59,8 +60,9 @@ class SomnomancerTest extends BaseCardTest {
     void resolvingTriggersMayPrompt() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         castSomnomancer();
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);

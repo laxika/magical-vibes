@@ -66,7 +66,7 @@ public class ExileTargetCreatureAndSameNameFromBattlefieldHandAndGraveyardEffect
         List<Card> exiledFromGraveyard = exileMatching(gameData, controllerId,
                 gameData.playerGraveyards.get(controllerId), targetName);
         if (!exiledFromGraveyard.isEmpty()) {
-            graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, exiledFromGraveyard);
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, exiledFromGraveyard);
         }
 
         int total = 1 + sameNameCreatures.size() + exiledFromHand.size() + exiledFromGraveyard.size();

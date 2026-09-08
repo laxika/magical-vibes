@@ -4,10 +4,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Additional cast cost: "sacrifice a creature or pay {manaCost}" (e.g. Eaten Alive's
- * "{3}{B}"). Exactly one option is paid — either a controlled creature via
- * {@code PlayCardRequest.sacrificePermanentId}, or the listed mana on top of the spell's
- * normal mana cost. Satisfiable with a creature or with enough mana for the combined cost.
+ * Backward-compatible creature-specific form of {@link SacrificePermanentOrPayManaCost}.
+ * New cards with a filtered permanent sacrifice should use the generic form.
  */
 public record SacrificeCreatureOrPayManaCost(String manaCost) implements CostEffect {
 
@@ -20,7 +18,6 @@ public record SacrificeCreatureOrPayManaCost(String manaCost) implements CostEff
 
     @Override
     public boolean sacrificesChosenCreature() {
-        // AI prefers sacrificing when a creature is available; mana path is used when none is.
         return true;
     }
 }

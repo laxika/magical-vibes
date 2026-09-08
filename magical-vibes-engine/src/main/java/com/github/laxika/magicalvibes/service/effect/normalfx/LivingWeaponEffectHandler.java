@@ -22,6 +22,7 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final EquipSupport equipSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,9 +45,11 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipSupport.expireAttachedCopyEffects(gameData, equipment);
+        UUID oldAttachedTo = equipment.getAttachedTo();
         equipment.setAttachedTo(token.getId());
         equipment.setTimestamp(gameData.nextTimestamp());
+        equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
         gameLogService.append(gameData,
                 GameLog.cardThen(entry.getCard(), " is now attached to " + token.getCard().getName() + "."));
         log.info("Game {} - {} attached to {} token via living weapon", gameData.id,

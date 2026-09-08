@@ -25,7 +25,7 @@ class UrborgJusticeTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent sacrifices one creature per creature that died under the caster's control")
     void sacrificesOnePerControllerDeath() {
-        gd.creatureDeathCountThisTurn.merge(player1.getId(), 2, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 2, Integer::sum);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GiantSpider());
 
@@ -39,7 +39,7 @@ class UrborgJusticeTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent chooses which creatures to sacrifice when they control more than died")
     void opponentChoosesWhenMoreCreaturesThanDeaths() {
-        gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 1, Integer::sum);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GiantSpider());
 
@@ -65,7 +65,7 @@ class UrborgJusticeTest extends BaseCardTest {
     @Test
     @DisplayName("Nothing is sacrificed when no creature died under the caster's control")
     void noSacrificeWithoutDeaths() {
-        gd.creatureDeathCountThisTurn.merge(player2.getId(), 3, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player2.getId(), 3, Integer::sum);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         castUrborgJustice();

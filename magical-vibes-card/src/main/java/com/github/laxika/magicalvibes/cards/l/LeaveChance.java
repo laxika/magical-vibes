@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
  * Back half (Chance) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "153")
+@CardRegistration(set = "AKR", collectorNumber = "242")
 public class LeaveChance extends Card {
 
     public LeaveChance() {

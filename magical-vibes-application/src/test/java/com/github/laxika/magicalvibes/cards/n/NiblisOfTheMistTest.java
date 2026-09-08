@@ -26,8 +26,9 @@ class NiblisOfTheMistTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         castNiblis();
-        harness.passBothPriorities(); // resolve creature spell -> ETB trigger
-        harness.passBothPriorities(); // resolve ETB trigger -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -61,8 +62,9 @@ class NiblisOfTheMistTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
 
         castNiblis();
-        harness.passBothPriorities(); // resolve creature spell -> ETB trigger
-        harness.passBothPriorities(); // resolve ETB trigger -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(bears.isTapped()).isFalse();
@@ -76,9 +78,7 @@ class NiblisOfTheMistTest extends BaseCardTest {
         UUID telepathyId = harness.getPermanentId(player2, "Telepathy");
 
         castNiblis();
-        harness.passBothPriorities(); // resolve creature spell -> ETB trigger
-        harness.passBothPriorities(); // resolve ETB trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, telepathyId))
@@ -89,10 +89,10 @@ class NiblisOfTheMistTest extends BaseCardTest {
 
     private void castNiblisAndAcceptTarget(UUID targetId) {
         castNiblis();
-        harness.passBothPriorities(); // resolve creature spell -> ETB trigger
-        harness.passBothPriorities(); // resolve ETB trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     private void castNiblis() {

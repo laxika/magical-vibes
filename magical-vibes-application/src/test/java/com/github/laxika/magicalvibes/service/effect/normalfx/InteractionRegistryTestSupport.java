@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.interaction.HandTopBottomChoiceInt
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.LibraryReorderInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.ScryInteractionHandler;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import static org.mockito.Mockito.mock;
 
@@ -37,7 +38,7 @@ final class InteractionRegistryTestSupport {
         registry.register(new HandTopBottomChoiceInteractionHandler(
                 gameLogService, mock(InputCompletionService.class)));
         registry.register(new ScryInteractionHandler(
-                gameLogService, mock(InputCompletionService.class)));
+                gameLogService, mock(InputCompletionService.class), mock(TriggerCollectionService.class)));
         registry.register(new ColorChoiceInteractionHandler(mock(ChoiceHandlerService.class)));
         registry.register(new LibraryRevealChoiceInteractionHandler(
                 mock(LibraryChoiceHandlerService.class)));

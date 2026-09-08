@@ -55,13 +55,13 @@ public class ReturnTriggeringCardToOwnerHandEffectHandler implements NormalEffec
         if (deadCard == null) {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
-            log.info("Game {} - {} death trigger fizzles (card {} not in graveyard)",
+            log.info("Game {} - {} graveyard return trigger fizzles (card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), dyingCardId);
             return;
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
-        gameData.playerHands.get(recipientId).add(deadCard);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, recipientId, recipientId, deadCard);
 
         String recipientName = gameData.playerIdToName.get(recipientId);
         gameLogService.append(gameData, GameLog.builder()

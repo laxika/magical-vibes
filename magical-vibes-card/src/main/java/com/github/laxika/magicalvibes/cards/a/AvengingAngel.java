@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "7")
+@CardRegistration(set = "TPR", collectorNumber = "6")
 public class AvengingAngel extends Card {
 
     public AvengingAngel() {

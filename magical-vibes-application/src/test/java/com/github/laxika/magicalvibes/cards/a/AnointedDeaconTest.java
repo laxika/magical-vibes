@@ -33,15 +33,12 @@ class AnointedDeaconTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        // MayEffect is on the stack — resolve it to get the may prompt
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, vampireId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-
-        // Should be prompted for target selection
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, vampireId);
 
         Permanent vampire = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getId().equals(vampireId))
@@ -59,9 +56,9 @@ class AnointedDeaconTest extends BaseCardTest {
         UUID deaconId = harness.getPermanentId(player1, "Anointed Deacon");
 
         advanceToCombat(player1);
-        harness.passBothPriorities(); // resolve stack entry → may prompt
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, deaconId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent deacon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getId().equals(deaconId))
@@ -80,7 +77,8 @@ class AnointedDeaconTest extends BaseCardTest {
         UUID vampireId = harness.getPermanentId(player1, "Child of Night");
 
         advanceToCombat(player1);
-        harness.passBothPriorities(); // resolve stack entry → may prompt
+        harness.handlePermanentChosen(player1, vampireId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent vampire = gd.playerBattlefields.get(player1.getId()).stream()
@@ -115,9 +113,9 @@ class AnointedDeaconTest extends BaseCardTest {
         UUID vampireId = harness.getPermanentId(player2, "Child of Night");
 
         advanceToCombat(player1);
-        harness.passBothPriorities(); // resolve stack entry → may prompt
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, vampireId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent vampire = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(vampireId))
@@ -136,9 +134,9 @@ class AnointedDeaconTest extends BaseCardTest {
         UUID vampireId = harness.getPermanentId(player1, "Child of Night");
 
         advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, vampireId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, vampireId);
 
         Permanent vampire = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getId().equals(vampireId))

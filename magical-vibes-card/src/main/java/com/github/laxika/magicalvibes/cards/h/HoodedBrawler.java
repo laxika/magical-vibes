@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "173")
+@CardRegistration(set = "AKR", collectorNumber = "194")
 public class HoodedBrawler extends Card {
 
     public HoodedBrawler() {

@@ -56,6 +56,6 @@ class DeathsDuetTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("need 2, have 1");
+                .hasMessageContaining("requires 2 matching cards in your graveyard");
     }
 }

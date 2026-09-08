@@ -40,7 +40,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (UntapPermanentsEffect) effect;
         switch (e.scope()) {
-            case TARGET -> resolveTarget(gameData, entry);
+            case TARGET -> resolveTarget(gameData, entry, e);
             case ALL_TARGETS -> resolveAllTargets(gameData, entry);
             case SELF -> resolveSelf(gameData, entry);
             case SOURCE_PERMANENT -> resolveSourcePermanent(gameData, entry);
@@ -55,17 +55,20 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private void resolveTarget(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
-            return;
+    private void resolveTarget(GameData gameData, StackEntry entry, UntapPermanentsEffect effect) {
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
         }
-
-        tapUntapSupport.untapPermanent(gameData, target);
-
-        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", target.getCard(), "."));
-
-        log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
+            tapUntapSupport.untapPermanent(gameData, target);
+            gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", target.getCard(), "."));
+            log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+        }
     }
 
     private void resolveAllTargets(GameData gameData, StackEntry entry) {

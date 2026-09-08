@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "23")
+@CardRegistration(set = "AKR", collectorNumber = "36")
 public class SolitaryCamel extends Card {
 
     public SolitaryCamel() {

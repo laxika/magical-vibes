@@ -5,19 +5,33 @@ package com.github.laxika.magicalvibes.model.effect;
  * on what the mana can be spent on, an additional effect on whatever it is spent on, or a delayed
  * triggered ability that fires when it is spent. None of these change the mana's type.
  *
- * <p>The constant also fixes <em>how</em> the colour is chosen. {@link #FLASHBACK_ONLY} and
- * {@link #SUBTYPE_SPELL_OR_ABILITY} are the "add N mana in any combination of colors" wordings, where
- * the controller picks a colour per mana; every other constant is "add N mana of any one color",
- * where a single pick colours the whole batch. That is why the axis is derived here rather than
- * carried as a separate component on the effect.
+ * <p>The constant usually fixes <em>how</em> the colour is chosen. {@link #FLASHBACK_ONLY},
+ * {@link #EXILED_SPELL_ONLY}, and {@link #SUBTYPE_SPELL_OR_ABILITY} are the "add N mana in any
+ * combination of colors" wordings, where the controller picks a colour per mana. A
+ * {@link #SUBTYPE_SPELL} effect may also explicitly carry that wording, so the axis is carried
+ * separately on the effect when needed.
  */
 public enum ManaSpendRestriction {
 
     /** No rider — "Add N mana of any one color" lands in the ordinary pool (Birds of Paradise). */
     NONE,
 
+    /** Spendable only to cast spells, not to pay activated ability costs (Leyline Immersion). */
+    SPELL_ONLY,
+
+    /** Spendable only to cast spells with devoid (Corrupted Crossroads). */
+    DEVOID_SPELL,
+
+    /** Spendable only to pay activated ability costs (Thran Turbine). */
+    ABILITIES,
+
     /** Choose from the colors of the source permanent's imprinted card (Chrome Mox). */
     IMPRINTED_CARD_COLORS,
+
+    /** Choose from the colors of cards exiled with the source permanent (Pit of Offerings). */
+    EXILED_CARD_COLORS,
+    /** Choose from the current colors of the source permanent (Katilda, Dawnhart Prime). */
+    SOURCE_PERMANENT_COLORS,
 
     /**
      * Unrestricted mana that also registers the delayed trigger copying the instant or sorcery it
@@ -34,14 +48,45 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast spells with flashback from a graveyard (Altar of the Lost). */
     FLASHBACK_ONLY,
 
+    /** Spendable only to cast spells from exile (Interdimensional Web Watch). */
+    EXILED_SPELL_ONLY,
+    /** Spendable only to cast spells from a graveyard (Rootcoil Creeper). */
+    GRAVEYARD_SPELL_ONLY,
+
     /** Spendable only to cast creature spells of any type (Ancient Ziggurat, Somberwald Sage). */
     CREATURE_SPELL_ONLY,
+    CREATURE_OR_ENCHANTMENT_SPELL_ONLY,
+
+    /** Spendable only to cast multicolored spells (Pillar of the Paruns). */
+    MULTICOLORED_SPELLS,
+
+    /** Spendable only to cast creature spells of the effect's printed subtype (The Seedcore). */
+    SUBTYPE_CREATURE_SPELL,
+
+    /** Spendable only to cast planeswalker spells (Interplanar Beacon). */
+    PLANESWALKER_SPELLS,
+
+    /** Spendable only to cast creature spells or activate abilities of creature sources (Gwenna, Eyes of Gaea). */
+    CREATURE_SPELLS_OR_ABILITIES,
+
+    /** Spendable only to activate abilities of creatures, with colors chosen from the source creature. */
+    CREATURE_COLORS_ABILITIES,
 
     /**
      * Spendable only to cast creature spells of the type chosen as the source entered
      * (Pillar of Origins, Unclaimed Territory).
      */
     CHOSEN_SUBTYPE_CREATURE,
+
+    /**
+     * Spendable only to cast spells of the source permanent's chosen creature subtype or activate
+     * abilities of permanents of that subtype.
+     */
+    CHOSEN_SUBTYPE_SPELL_OR_ABILITY,
+
+    /** Spendable only to cast creature spells of the source's chosen subtype or activate abilities
+     * of creature sources of that subtype (Secluded Courtyard). */
+    CHOSEN_SUBTYPE_CREATURE_SOURCE_SPELL_OR_ABILITY,
 
     /**
      * As {@link #CHOSEN_SUBTYPE_CREATURE}, and the spell it pays for can't be countered
@@ -63,6 +108,17 @@ public enum ManaSpendRestriction {
      */
     SUBTYPE_SPELL_OR_ABILITY,
 
+    /** Spendable only to cast Mount or Vehicle spells (Intrepid Stablemaster). */
+    MOUNT_OR_VEHICLE_SPELL,
+
     /** Spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
-    MANA_VALUE_AT_LEAST_FOUR
+    MANA_VALUE_AT_LEAST_FOUR,
+
+    CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
+
+    /**
+     * Spendable only to cast Cleric, Rogue, Warrior, or Wizard spells or activate abilities of those
+     * subtypes (Base Camp).
+     */
+    PARTY_SPELL_OR_ABILITY
 }

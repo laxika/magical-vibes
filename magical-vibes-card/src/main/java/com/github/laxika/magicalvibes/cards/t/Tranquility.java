@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "4ED", collectorNumber = "277")
 @CardRegistration(set = "TMP", collectorNumber = "261")
 @CardRegistration(set = "INV", collectorNumber = "217")
+@CardRegistration(set = "TPR", collectorNumber = "201")
+@CardRegistration(set = "MMQ", collectorNumber = "280")
+@CardRegistration(set = "BRB", collectorNumber = "89")
+@CardRegistration(set = "SUM", collectorNumber = "221")
 public class Tranquility extends Card {
 
     public Tranquility() {

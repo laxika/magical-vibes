@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -68,6 +71,12 @@ class FuzzInvariantsTest {
     private static Card legendaryCreature(String name) {
         Card c = creature(name, 2, 2);
         c.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        return c;
+    }
+
+    private static Card brothersYamazaki() {
+        Card c = legendaryCreature("Brothers Yamazaki");
+        c.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleWhenExactlyTwoSameNameEffect());
         return c;
     }
 
@@ -195,6 +204,33 @@ class FuzzInvariantsTest {
     void duplicateNonLegendariesAreLegal() {
         harness.addToBattlefield(player1, creature("Grizzly Bears", 2, 2));
         harness.addToBattlefield(player1, creature("Grizzly Bears", 2, 2));
+        assertThat(checkTwice()).isNull();
+    }
+
+    @Test
+    void exactlyTwoBrothersYamazakiAreLegal() {
+        harness.addToBattlefield(player1, brothersYamazaki());
+        harness.addToBattlefield(player1, brothersYamazaki());
+        assertThat(checkTwice()).isNull();
+    }
+
+    @Test
+    void thirdBrothersYamazakiRestoresLegendRuleViolation() {
+        harness.addToBattlefield(player1, brothersYamazaki());
+        harness.addToBattlefield(player1, brothersYamazaki());
+        harness.addToBattlefield(player2, brothersYamazaki());
+        assertThat(invariants.check(gd)).isNull();
+        assertThat(invariants.check(gd)).contains("Brothers Yamazaki");
+    }
+
+    @Test
+    void globalLegendRuleExemptionMakesDuplicateLegendariesLegal() {
+        Card mirrorGallery = creature("Mirror Gallery", 0, 0);
+        mirrorGallery.setType(CardType.ARTIFACT);
+        mirrorGallery.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleEffect());
+        harness.addToBattlefield(player2, mirrorGallery);
+        harness.addToBattlefield(player1, legendaryCreature("Test Legend"));
+        harness.addToBattlefield(player1, legendaryCreature("Test Legend"));
         assertThat(checkTwice()).isNull();
     }
 

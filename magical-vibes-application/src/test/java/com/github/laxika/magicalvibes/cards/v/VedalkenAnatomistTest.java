@@ -177,7 +177,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     // ===== Kills creature with -1/-1 counter =====
 
     @Test
-    @DisplayName("Kills a 1/1 creature with -1/-1 counter (SBA before may choice)")
+    @DisplayName("Kills a 1/1 creature after the may choice finishes resolving")
     void killsOneOneCreature() {
         addReadyAnatomist(player1);
         harness.addToBattlefield(player2, new LlanowarElves());
@@ -186,8 +186,9 @@ class VedalkenAnatomistTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
-        // Llanowar Elves (1/1) should die from 0 toughness
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
     }

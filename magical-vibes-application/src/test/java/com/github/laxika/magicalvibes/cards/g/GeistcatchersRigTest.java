@@ -22,10 +22,10 @@ class GeistcatchersRigTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → ETB trigger, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → target selection
-        harness.handlePermanentChosen(player1, targetId); // choose target → deal 4 damage
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     // ===== ETB deals 4 damage to creature with flying =====
@@ -56,9 +56,10 @@ class GeistcatchersRigTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Stormfront Pegasus"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         // Stormfront Pegasus still on battlefield
         harness.assertOnBattlefield(player2, "Stormfront Pegasus");

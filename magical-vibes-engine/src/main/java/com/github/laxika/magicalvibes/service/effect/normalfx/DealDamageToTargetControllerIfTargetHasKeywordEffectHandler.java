@@ -41,7 +41,7 @@ public class DealDamageToTargetControllerIfTargetHasKeywordEffectHandler impleme
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         String cardName = entry.getCard().getName();
 
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
         } else {
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "105")
+@CardRegistration(set = "AKR", collectorNumber = "121")
 public class RuthlessSniper extends Card {
 
     public RuthlessSniper() {

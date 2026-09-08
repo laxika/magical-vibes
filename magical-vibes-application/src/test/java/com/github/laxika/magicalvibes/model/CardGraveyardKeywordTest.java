@@ -40,6 +40,7 @@ class CardGraveyardKeywordTest {
                 .grantHaste(true)
                 .exileAtEndStep(true)
                 .exileIfLeavesBattlefield(true)
+                .unearth(true)
                 .build());
         // unearth returns the card itself, it does not make a token copy
         assertThat(ability.isEmbalmOrEternalize()).isFalse();

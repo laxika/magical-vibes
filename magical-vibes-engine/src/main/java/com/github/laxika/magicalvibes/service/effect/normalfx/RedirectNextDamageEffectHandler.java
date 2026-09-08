@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
@@ -36,6 +37,10 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RedirectNextDamageEffect e = (RedirectNextDamageEffect) effect;
+        if (e.protectedRole() == RedirectRole.SOURCE_PERMANENT_AND_CONTROLLER) {
+            resolveSourcePermanentAndController(gameData, entry, e);
+            return;
+        }
         UUID protectedId = resolveRole(gameData, entry, e.protectedRole());
         UUID destinationId = resolveRole(gameData, entry, e.destinationRole());
         // Without both ends of the redirection there is nothing to install.
@@ -44,9 +49,9 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
         }
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
+        int amount = e.nextEvent() ? 1 : amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
-        if (amount <= 0) {
+        if (!e.nextEvent() && amount <= 0) {
             return;
         }
 
@@ -66,18 +71,55 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
                     new PlayerNextDamageRedirectShield(protectedId, amount, destinationId));
         } else {
             gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
-                    protectedId, null, amount, destinationId));
+                    protectedId, null, e.nextEvent() ? CreatureDamageRedirectShield.NEXT_EVENT : amount,
+                    destinationId));
         }
 
-        GameLog.Builder logEntry = GameLog.builder()
-                .text("The next " + amount + " damage that would be dealt to ");
+        GameLog.Builder logEntry = GameLog.builder();
+        if (e.nextEvent()) {
+            logEntry.text("The next time damage would be dealt to ");
+        } else {
+            logEntry.text("The next " + amount + " damage that would be dealt to ");
+        }
         appendActor(logEntry, gameData, protectedId, protectedPermanent);
-        logEntry.text(" this turn is dealt to ");
+        logEntry.text(e.nextEvent() ? " this turn, that damage is dealt to " : " this turn is dealt to ");
         appendActor(logEntry, gameData, destinationId, destinationPermanent);
         gameLogService.append(gameData, logEntry.text(" instead.").build());
-        log.info("Game {} - registered next-{}-damage redirect from {} to {}", gameData.id, amount,
+        log.info("Game {} - registered next-{} redirect from {} to {}", gameData.id,
+                e.nextEvent() ? "damage-event" : amount + "-damage",
                 describe(gameData, protectedId, protectedPermanent),
                 describe(gameData, destinationId, destinationPermanent));
+    }
+
+    private void resolveSourcePermanentAndController(GameData gameData, StackEntry entry,
+                                                     RedirectNextDamageEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        UUID destinationId = resolveRole(gameData, entry, RedirectRole.TARGET);
+        if (controllerId == null || destinationId == null || !gameData.playerIds.contains(controllerId)) {
+            return;
+        }
+
+        Permanent destinationPermanent = resolvePermanent(gameData, destinationId);
+        if (destinationPermanent == null && !gameData.playerIds.contains(destinationId)) {
+            return;
+        }
+
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent sourcePermanent = resolvePermanent(gameData, sourcePermanentId);
+        if (sourcePermanent == null) {
+            sourcePermanentId = null;
+        }
+
+        gameData.sourcePermanentAndControllerNextDamageRedirectShields.add(
+                new SourcePermanentAndControllerNextDamageRedirectShield(
+                        sourcePermanentId, controllerId, destinationId));
+        gameLogService.append(gameData, GameLog.text(
+                "The next time damage would be dealt to "
+                        + (sourcePermanent == null ? "this creature" : sourcePermanent.getCard().getName())
+                        + " and/or " + gameData.playerIdToName.get(controllerId)
+                        + " this turn, that damage is dealt to "
+                        + (destinationPermanent == null ? gameData.playerIdToName.get(destinationId)
+                        : destinationPermanent.getCard().getName()) + " instead."));
     }
 
     private UUID resolveRole(GameData gameData, StackEntry entry, RedirectRole role) {
@@ -85,6 +127,7 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
             case SOURCE_PERMANENT -> entry.getSourcePermanentId();
             case TARGET -> entry.getTargetId();
             case CONTROLLER -> entry.getControllerId();
+            case SOURCE_PERMANENT_AND_CONTROLLER -> entry.getSourcePermanentId();
             case ENCHANTED_PERMANENT -> enchantedPermanentId(gameData, entry);
         };
     }

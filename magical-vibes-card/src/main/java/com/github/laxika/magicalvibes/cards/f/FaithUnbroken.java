@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "21")
+@CardRegistration(set = "EMN", collectorNumber = "24")
 public class FaithUnbroken extends Card {
 
     public FaithUnbroken() {

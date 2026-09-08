@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "313")
+@CardRegistration(set = "DRK", collectorNumber = "109")
 public class SkullOfOrm extends Card {
 
     public SkullOfOrm() {

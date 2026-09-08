@@ -63,7 +63,7 @@ public class BoardEvaluator {
      * Returns a score where higher is better for the AI.
      */
     public double evaluate(GameData gameData, UUID aiPlayerId) {
-        return evaluate(gameData, aiPlayerId, true);
+        return evaluateInQueryScope(gameData, aiPlayerId, true);
     }
 
     /**
@@ -71,10 +71,16 @@ public class BoardEvaluator {
      * fully represented because the destroyed creature is absent from the battlefield.
      */
     public double evaluateMctsHorizon(GameData gameData, UUID aiPlayerId) {
-        return evaluate(gameData, aiPlayerId, false);
+        return evaluateInQueryScope(gameData, aiPlayerId, false);
     }
 
-    private double evaluate(GameData gameData, UUID aiPlayerId, boolean countMarkedDamage) {
+    private double evaluateInQueryScope(GameData gameData, UUID aiPlayerId, boolean countMarkedDamage) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> evaluateWithinQueryScope(gameData, aiPlayerId, countMarkedDamage));
+    }
+
+    private double evaluateWithinQueryScope(
+            GameData gameData, UUID aiPlayerId, boolean countMarkedDamage) {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
 
         int aiLife = gameData.getLife(aiPlayerId);

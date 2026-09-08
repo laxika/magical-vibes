@@ -28,7 +28,7 @@ public class SorayaTheFalconer extends Card {
 
     public SorayaTheFalconer() {
         // Bird creatures get +1/+1. (All players' Birds, not just yours.)
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.BIRD))));
 
         // {1}{W}: Target Bird creature gains banding until end of turn.

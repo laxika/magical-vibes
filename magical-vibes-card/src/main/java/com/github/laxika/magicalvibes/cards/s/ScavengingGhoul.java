@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "159")
+@CardRegistration(set = "SUM", collectorNumber = "128")
 public class ScavengingGhoul extends Card {
 
     public ScavengingGhoul() {

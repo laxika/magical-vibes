@@ -18,11 +18,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "64")
+@CardRegistration(set = "ATH", collectorNumber = "54")
+@CardRegistration(set = "BTD", collectorNumber = "54")
+@CardRegistration(set = "JUD", collectorNumber = "113")
 public class ErhnamDjinn extends Card {
 
     public ErhnamDjinn() {
-        // At the beginning of your upkeep, target non-Wall creature an opponent controls gains
-        // forestwalk until your next upkeep.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

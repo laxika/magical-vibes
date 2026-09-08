@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "46")
+@CardRegistration(set = "AKR", collectorNumber = "80")
 public class SpellweaverEternal extends Card {
 
     public SpellweaverEternal() {

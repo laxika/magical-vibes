@@ -7,21 +7,21 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EnergyFlux.class, FountainOfYouth.class, GrizzlyBears.class})
 class EnergyFluxTest extends BaseCardTest {
 
     private void addEnergyFlux(Player controller) {
-        gd.playerBattlefields.get(controller.getId()).add(new Permanent(new EnergyFlux()));
+        harness.addToBattlefield(controller, new EnergyFlux());
     }
 
     private Permanent addFountain(Player controller) {
-        Permanent artifact = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(controller.getId()).add(artifact);
-        return artifact;
+        return harness.addToBattlefieldAndReturn(controller, new FountainOfYouth());
     }
 
     @Test
@@ -56,6 +56,21 @@ class EnergyFluxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting without enough mana still sacrifices the artifact")
+    void acceptingWithoutEnoughManaSacrificesArtifact() {
+        addEnergyFlux(player1);
+        addFountain(player1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve trigger -> may-pay prompt
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+    }
+
+    @Test
     @DisplayName("Grant is global: an opponent's Energy Flux still taxes your artifact")
     void opponentsEnergyFluxTaxesYourArtifact() {
         addEnergyFlux(player2);
@@ -79,21 +94,65 @@ class EnergyFluxTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(opponentArtifact.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("Non-artifact permanents are unaffected")
     void nonArtifactUnaffected() {
         addEnergyFlux(player1);
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(bears.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An artifact triggers during its controller's upkeep")
+    void artifactTriggersDuringItsControllersUpkeep() {
+        addEnergyFlux(player1);
+        addFountain(player2);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Each artifact receives its own upkeep trigger")
+    void eachArtifactReceivesItsOwnUpkeepTrigger() {
+        addEnergyFlux(player1);
+        Permanent firstArtifact = addFountain(player1);
+        Permanent secondArtifact = addFountain(player1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstArtifact, secondArtifact);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Fountain of Youth"))
+                .hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

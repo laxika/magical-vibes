@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "231")
+@CardRegistration(set = "TSB", collectorNumber = "74")
 public class CallOfTheHerd extends Card {
 
     public CallOfTheHerd() {

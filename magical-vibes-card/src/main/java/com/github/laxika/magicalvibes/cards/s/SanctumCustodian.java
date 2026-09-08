@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "42")
+@CardRegistration(set = "BRB", collectorNumber = "62")
 public class SanctumCustodian extends Card {
 
     public SanctumCustodian() {

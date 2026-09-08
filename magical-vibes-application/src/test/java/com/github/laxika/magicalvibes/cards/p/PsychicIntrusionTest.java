@@ -65,7 +65,7 @@ class PsychicIntrusionTest extends BaseCardTest {
         gs.playCardFromExile(gd, player1, exiledCard.getId(), null, null);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Divination");
+        harness.assertInGraveyard(player2, "Divination");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(card -> card.getId().equals(exiledCard.getId()));
     }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "24")
+@CardRegistration(set = "TPR", collectorNumber = "16")
 public class Humility extends Card {
 
     public Humility() {

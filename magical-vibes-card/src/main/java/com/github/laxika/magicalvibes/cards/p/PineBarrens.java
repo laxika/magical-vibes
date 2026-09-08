@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "321")
+@CardRegistration(set = "TPR", collectorNumber = "240")
 public class PineBarrens extends Card {
 
     public PineBarrens() {

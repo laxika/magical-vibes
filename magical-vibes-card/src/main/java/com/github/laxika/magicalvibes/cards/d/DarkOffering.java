@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "P02", collectorNumber = "72")
+@CardRegistration(set = "S99", collectorNumber = "75")
 public class DarkOffering extends Card {
 
     public DarkOffering() {

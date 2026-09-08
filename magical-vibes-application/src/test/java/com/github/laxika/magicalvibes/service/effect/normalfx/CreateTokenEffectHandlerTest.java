@@ -4,11 +4,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.cards.m.MoonlitMeditation;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +41,10 @@ class CreateTokenEffectHandlerTest {
     private AmountEvaluationService amountEvaluationService;
     @Mock
     private CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler;
+    @Mock
+    private CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
 
     private CreateTokenEffectHandler handler;
     private GameData gd;
@@ -50,7 +58,9 @@ class CreateTokenEffectHandlerTest {
         gd.playerIds.add(playerId);
         gd.playerBattlefields.put(playerId, Collections.synchronizedList(new ArrayList<>()));
         handler = new CreateTokenEffectHandler(
-                permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler);
+                permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler,
+                enchantedPermanentTokenCopyHandler,
+                triggerCollectionService);
     }
 
     @Test
@@ -72,5 +82,54 @@ class CreateTokenEffectHandlerTest {
         handler.resolve(gd, entry, effect);
 
         verify(permanentControlSupport).applyCreateToken(gd, playerId, effect, 1, "M10", 1, 1);
+    }
+
+    @Test
+    @DisplayName("Checks investigate triggers when creating Clue tokens")
+    void checksInvestigateTriggersForClues() {
+        CreateTokenEffect effect = CreateTokenEffect.ofClueToken(1);
+        Card source = new Card();
+        source.setName("Investigate");
+        source.setSetCode("SOI");
+        StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, source, playerId, "Investigate",
+                List.of(effect), 0);
+
+        when(amountEvaluationService.evaluate(eq(gd), eq(effect.amount()),
+                org.mockito.ArgumentMatchers.any())).thenReturn(1);
+        when(amountEvaluationService.evaluate(eq(gd), eq(effect.power()),
+                org.mockito.ArgumentMatchers.any())).thenReturn(0);
+        when(permanentControlSupport.applyCreateToken(eq(gd), eq(playerId), eq(effect), eq(1), eq("SOI"), eq(0), eq(0)))
+                .thenReturn(List.of());
+
+        handler.resolve(gd, entry, effect);
+
+        verify(triggerCollectionService).checkInvestigateTriggers(gd, playerId);
+    }
+
+    @Test
+    @DisplayName("Offers Moonlit Meditation's replacement and resolves enchanted copies when accepted")
+    void offersAndResolvesMoonlitMeditationReplacement() {
+        Permanent enchanted = new Permanent(new Card());
+        Permanent moonlit = new Permanent(new MoonlitMeditation());
+        moonlit.setAttachedTo(enchanted.getId());
+        gd.playerBattlefields.get(playerId).add(enchanted);
+        gd.playerBattlefields.get(playerId).add(moonlit);
+
+        CreateTokenEffect effect = new CreateTokenEffect("Soldier", 1, 1, CardColor.WHITE,
+                List.of(CardSubtype.SOLDIER), Set.of(), Set.of());
+        Card source = new Card();
+        source.setName("Raise the Alarm");
+        source.setSetCode("M10");
+        StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, source, playerId, "Raise the Alarm",
+                List.of(effect), 0);
+
+        when(amountEvaluationService.evaluate(eq(gd), any(), any())).thenReturn(1);
+        when(gameQueryService.findPermanentById(gd, enchanted.getId())).thenReturn(enchanted);
+
+        handler.resolve(gd, entry, effect);
+        gd.resolvedMayAccepted = true;
+        handler.resolve(gd, entry, effect);
+
+        verify(enchantedPermanentTokenCopyHandler).resolve(eq(gd), eq(entry), any());
     }
 }

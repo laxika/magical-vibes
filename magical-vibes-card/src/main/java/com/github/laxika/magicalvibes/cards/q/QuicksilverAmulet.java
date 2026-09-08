@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "214")
+@CardRegistration(set = "ULG", collectorNumber = "130")
 public class QuicksilverAmulet extends Card {
 
     public QuicksilverAmulet() {

@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "4ED", collectorNumber = "257")
 @CardRegistration(set = "5ED", collectorNumber = "310")
+@CardRegistration(set = "SUM", collectorNumber = "207")
 public class Lifeforce extends Card {
 
     public Lifeforce() {

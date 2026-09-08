@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEff
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "248")
+@CardRegistration(set = "ECL", collectorNumber = "345")
 public class TwinflameTravelers extends Card {
 
     public TwinflameTravelers() {

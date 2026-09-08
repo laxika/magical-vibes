@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "111")
+@CardRegistration(set = "FDN", collectorNumber = "183")
+@CardRegistration(set = "FDN", collectorNumber = "323")
+@CardRegistration(set = "FDN", collectorNumber = "387")
 public class RiseOfTheDarkRealms extends Card {
 
     public RiseOfTheDarkRealms() {

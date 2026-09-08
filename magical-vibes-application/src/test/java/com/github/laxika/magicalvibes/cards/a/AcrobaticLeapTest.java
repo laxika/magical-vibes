@@ -1,0 +1,80 @@
+package com.github.laxika.magicalvibes.cards.a;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({AcrobaticLeap.class, GrizzlyBears.class, Pacifism.class})
+class AcrobaticLeapTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Untaps, boosts, and grants flying to target creature")
+    void untapsBoostsAndGrantsFlying() {
+        Permanent target = addTappedCreature(player2);
+
+        castAcrobaticLeap(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boost and flying expire at end of turn")
+    void effectsExpireAtEndOfTurn() {
+        Permanent target = addTappedCreature(player2);
+        castAcrobaticLeap(target);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target a non-creature permanent")
+    void cannotTargetNonCreature() {
+        addTappedCreature(player1);
+        Permanent enchantment = new Permanent(new Pacifism());
+        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        harness.setHand(player1, List.of(new AcrobaticLeap()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    private void castAcrobaticLeap(Permanent target) {
+        harness.setHand(player1, List.of(new AcrobaticLeap()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+    }
+
+    private Permanent addTappedCreature(Player player) {
+        Permanent perm = new Permanent(new GrizzlyBears());
+        perm.setSummoningSick(false);
+        perm.tap();
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+}

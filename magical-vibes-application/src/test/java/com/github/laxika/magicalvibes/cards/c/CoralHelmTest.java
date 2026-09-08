@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CoralHelm.class, Forest.class, GrizzlyBears.class})
 class CoralHelmTest extends BaseCardTest {
 
     @Test
@@ -38,6 +40,25 @@ class CoralHelmTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
+    }
+    @Test
+    @DisplayName("Pays one random discard immediately when the ability is activated")
+    void paysRandomDiscardAsActivationCost() {
+        harness.addToBattlefield(player1, new CoralHelm());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.activateAbility(player1, battlefieldIndex(player1, "Coral Helm"), null, bearId);
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
+        assertThat(findPermanent(player1, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
+        harness.passBothPriorities();
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
     }
 
     @Test
@@ -86,6 +107,18 @@ class CoralHelmTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can target an opponent creature")
+    void pumpsOpponentsCreature() {
+        harness.addToBattlefield(player1, new CoralHelm());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, battlefieldIndex(player1, "Coral Helm"), null, bear.getId());
+        harness.passBothPriorities();
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+    }
     private int battlefieldIndex(com.github.laxika.magicalvibes.model.Player player, String cardName) {
         List<Permanent> battlefield = harness.getGameData().playerBattlefields.get(player.getId());
         for (int i = 0; i < battlefield.size(); i++) {

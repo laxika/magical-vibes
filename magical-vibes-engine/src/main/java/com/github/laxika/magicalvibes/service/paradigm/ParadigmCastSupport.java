@@ -64,6 +64,11 @@ public class ParadigmCastSupport {
         }
 
         Card card = exiledEntry.card();
+        if (card.isCastOnlyFromGraveyard()) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast from exile."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         gameData.removeFromExile(exileCardId);
 
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);

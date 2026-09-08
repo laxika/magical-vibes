@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "238")
 @CardRegistration(set = "INR", collectorNumber = "431")
+@CardRegistration(set = "SOI", collectorNumber = "245")
 public class TheGitrogMonster extends Card {
 
     public TheGitrogMonster() {

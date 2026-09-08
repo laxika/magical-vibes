@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "AKH", collectorNumber = "71")
+@CardRegistration(set = "AKR", collectorNumber = "79")
 public class SlitherBlade extends Card {
 
     public SlitherBlade() {

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "236")
+@CardRegistration(set = "ECL", collectorNumber = "341")
 public class MorcantsLoyalist extends Card {
 
     public MorcantsLoyalist() {

@@ -70,4 +70,13 @@ public record PermanentView(
                 animatedCreature, counters, attackTargetId, markedDamage, transformed, prepared,
                 modifierLines, exiledWithCards, remainingHiddenCount, cards);
     }
+
+    /** A permitted player's copy of a face-down permanent with its underlying card face visible. */
+    public PermanentView withCard(CardView card) {
+        return new PermanentView(id, card, tapped, attacking, blocking, blockingTargets, summoningSick,
+                powerModifier, toughnessModifier, grantedKeywords, grantedAbilities, removedKeywords, effectivePower,
+                effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield, cantBeBlocked,
+                animatedCreature, counters, attackTargetId, markedDamage, transformed, prepared,
+                modifierLines, exiledWithCards, faceDownExiledCount, faceDownExiledCards);
+    }
 }

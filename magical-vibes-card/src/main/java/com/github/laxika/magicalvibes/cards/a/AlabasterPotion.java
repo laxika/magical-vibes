@@ -12,6 +12,9 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "3")
 @CardRegistration(set = "4ED", collectorNumber = "1")
+@CardRegistration(set = "ITP", collectorNumber = "1")
+@CardRegistration(set = "RQS", collectorNumber = "1")
+@CardRegistration(set = "LEG", collectorNumber = "2")
 public class AlabasterPotion extends Card {
 
     public AlabasterPotion() {

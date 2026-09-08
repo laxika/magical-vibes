@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentsOfTarge
  * were blocked by it this turn."
  */
 @CardRegistration(set = "ICE", collectorNumber = "273")
+@CardRegistration(set = "MMQ", collectorNumber = "281")
 public class VenomousBreath extends Card {
 
     public VenomousBreath() {

@@ -46,10 +46,12 @@ class PontiffOfBlightTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        while (!gd.stack.isEmpty()) {
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        for (int i = 0; i < 3 && !gd.stack.isEmpty(); i++) {
             harness.passBothPriorities();
         }
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }

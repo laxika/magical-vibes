@@ -1,9 +1,14 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
 import com.github.laxika.magicalvibes.ai.AiGameActions;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +24,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ColorChoiceAiStrategyTest {
@@ -29,6 +35,12 @@ class ColorChoiceAiStrategyTest {
     private GameQueryService gameQueryService;
     @Mock
     private AiGameActions gameActions;
+    @Mock
+    private Permanent opponentPermanent;
+    @Mock
+    private Card opponentCard;
+    @Mock
+    private ActivatedAbility opponentAbility;
 
     private GameData gameData;
     private UUID aiPlayerId;
@@ -59,6 +71,25 @@ class ColorChoiceAiStrategyTest {
     }
 
     @Test
+    @DisplayName("Restricted subtype choice answers with an offered creature type")
+    void answersRestrictedSubtypeChoiceWithOfferedSubtype() throws Exception {
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.SubtypeChoice(UUID.randomUUID()),
+                List.of("ELEMENTAL", "ELF"),
+                "Choose a creature type.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("ELEMENTAL"));
+    }
+
+    @Test
     @DisplayName("Hullbreaker Horror mode choice answers with an offered mode")
     void answersHullbreakerHorrorModeChoiceWithOfferedMode() throws Exception {
         UUID opponentId = UUID.randomUUID();
@@ -83,5 +114,76 @@ class ColorChoiceAiStrategyTest {
         verify(gameActions).answerInteraction(captor.capture());
         assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade(
                 ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT));
+    }
+
+    @Test
+    @DisplayName("Free-cast modal choice answers with an offered mode")
+    void answersFreeCastModalChoiceWithOfferedMode() throws Exception {
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.LibraryCastModeChoice(null, aiPlayerId,
+                        new ChooseOneEffect(List.of()), StackEntryType.SORCERY_SPELL, List.of()),
+                List.of("first mode"),
+                "Choose one.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("first mode"));
+    }
+
+    @Test
+    @DisplayName("Exile free-cast modal choice stops after the required mode")
+    void answersExileFreeCastModalChoiceWithDoneAfterRequiredMode() throws Exception {
+        ChooseOneEffect effect = ChooseOneEffect.oneOrMore(List.of(
+                new ChooseOneEffect.ChooseOneOption("first mode", List.of()),
+                new ChooseOneEffect.ChooseOneOption("second mode", List.of())));
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.ExileFreeCastModeChoice(null, aiPlayerId, effect,
+                        StackEntryType.SORCERY_SPELL, List.of(0), List.of(1), 2, false),
+                List.of("second mode", ChooseOneEffect.FINISH_MODE_SELECTION),
+                "Choose modes, or Done.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(
+                new InteractionAnswer.ListChoiceMade(ChooseOneEffect.FINISH_MODE_SELECTION));
+    }
+
+    @Test
+    @DisplayName("Card name choice answers with an offered name")
+    void answersCardNameChoiceWithOfferedName() throws Exception {
+        UUID opponentId = UUID.randomUUID();
+        gameData.orderedPlayerIds.add(aiPlayerId);
+        gameData.orderedPlayerIds.add(opponentId);
+        gameData.playerBattlefields.put(opponentId, List.of(opponentPermanent));
+        when(opponentPermanent.getCard()).thenReturn(opponentCard);
+        when(opponentCard.getActivatedAbilities()).thenReturn(List.of(opponentAbility));
+        when(opponentCard.getName()).thenReturn("Plains");
+
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.CardNameChoice(null, aiPlayerId, List.of()),
+                List.of("Glimmerpost"),
+                "Choose a card name.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("Glimmerpost"));
     }
 }

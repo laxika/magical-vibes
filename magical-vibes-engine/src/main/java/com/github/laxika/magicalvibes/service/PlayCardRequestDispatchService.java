@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
@@ -30,31 +32,60 @@ public class PlayCardRequestDispatchService {
     private final GameService gameService;
 
     public void dispatch(GameData gameData, Player player, PlayCardRequest request) {
+        if (Boolean.TRUE.equals(request.foretell())) {
+            gameService.foretellCard(gameData, player, request.cardIndex());
+            return;
+        }
+        if (Boolean.TRUE.equals(request.adventure())) {
+            gameService.playCardWithAdventure(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()));
+            return;
+        }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
-            gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
+            List<UUID> counterCostPermanentIds = listOrEmpty(request.exileCounterCostPermanentIds());
+            if (counterCostPermanentIds.isEmpty()) {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
+            } else {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
+                        counterCostPermanentIds);
+            }
+            return;
+        }
+        if (Boolean.TRUE.equals(request.adventure()) && Boolean.TRUE.equals(request.fromGraveyard())) {
+            gameService.playAdventureCardFromGraveyard(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), listOrEmpty(request.targetIds()), request.damageAssignments());
             return;
         }
         if (Boolean.TRUE.equals(request.flashback())) {
             CardType chosenGraveyardType = request.chosenGraveyardType() != null
                     ? CardType.valueOf(request.chosenGraveyardType()) : null;
-            if (!listOrEmpty(request.beholdPermanentIds()).isEmpty()
-                    || !listOrEmpty(request.beholdHandCardIndices()).isEmpty()) {
-                gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                        listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
-                        listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
-                        request.sacrificePermanentId(), listOrEmpty(request.beholdPermanentIds()),
-                        listOrEmpty(request.beholdHandCardIndices()));
-                return;
-            }
             gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                     listOrEmpty(request.targetIds()), request.exileGraveyardCardIndices(), chosenGraveyardType,
                     listOrEmpty(request.alternateCostSacrificePermanentIds()), request.discardHandCardIndex(),
-                    request.sacrificePermanentId(), request.damageAssignments());
+                    request.sacrificePermanentId(), listOrEmpty(request.additionalCostSacrificePermanentIds()),
+                    request.damageAssignments(), listOrEmpty(request.beholdPermanentIds()),
+                    listOrEmpty(request.beholdHandCardIndices()),
+                    nullIfEmpty(request.discardHandCardIndices()));
             return;
         }
         if (request.fromExileCardId() != null) {
-            gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
-                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()));
+            if (request.waterbendPaid() != null
+                    || request.additionalCostSacrificePermanentIds() != null
+                    && !request.additionalCostSacrificePermanentIds().isEmpty()) {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                        request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.convokeCreatureIds()),
+                        listOrEmpty(request.additionalCostSacrificePermanentIds()), waterbendPaid(request));
+            } else {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                        request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.convokeCreatureIds()));
+            }
+            return;
+        }
+        if (Boolean.TRUE.equals(request.alternateCost())) {
+            gameService.playCardWithAlternateCost(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()));
             return;
         }
         if (Boolean.TRUE.equals(request.morph())) {
@@ -62,8 +93,21 @@ public class PlayCardRequestDispatchService {
                     request.damageAssignments(), listOrEmpty(request.targetIds()), request.discardHandCardIndex());
             return;
         }
+        if (Boolean.TRUE.equals(request.adventure())) {
+            gameService.playAdventureCard(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), listOrEmpty(request.targetIds()), request.damageAssignments());
+            return;
+        }
+        if (isPlotAlternateCast(gameData, player, request)
+                || isWarpAlternateCast(gameData, player, request)) {
+            gameService.playCardWithAlternateCost(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()));
+            return;
+        }
         CardSubtype chosenBeholdType = request.beholdCreatureType() != null
                 ? CardSubtype.valueOf(request.beholdCreatureType()) : null;
+        CardSubtype chosenCreatureType = request.chosenCreatureType() != null
+                ? CardSubtype.valueOf(request.chosenCreatureType()) : null;
         List<UUID> casualtyCreatureIds = listOrEmpty(request.casualtyCreatureIds());
         if (!casualtyCreatureIds.isEmpty()) {
             gameService.playCardWithCasualty(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
@@ -80,6 +124,11 @@ public class PlayCardRequestDispatchService {
                     request.beholdPermanentId(), request.beholdHandCardIndex(),
                     listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
                     chosenBeholdType, casualtyCreatureIds);
+            return;
+        }
+        if (Boolean.TRUE.equals(request.giftPromised())) {
+            gameService.playCardWithGift(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()), true);
             return;
         }
         // The empty-to-null normalization on the two list costs mirrors the presence checks the
@@ -99,21 +148,38 @@ public class PlayCardRequestDispatchService {
                     Boolean.TRUE.equals(request.buyback()), request.sharedColorDiscardHandCardIndex());
             return;
         }
+        if (chosenCreatureType == null) {
+            gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                    request.damageAssignments(),
+                    listOrEmpty(request.targetIds()), listOrEmpty(request.convokeCreatureIds()),
+                    Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(),
+                    request.phyrexianLifeCount(), nullIfEmpty(request.alternateCostSacrificePermanentIds()),
+                    request.exileGraveyardCardIndex(), nullIfEmpty(request.exileGraveyardCardIndices()),
+                    Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex(),
+                    nullIfEmpty(request.discardHandCardIndices()),
+                    nullIfEmpty(request.imposedSacrificePermanentIds()),
+                    nullIfEmpty(request.additionalCostSacrificePermanentIds()),
+                    request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of(),
+                    Boolean.TRUE.equals(request.buyback()),
+                    request.beholdPermanentId(), request.beholdHandCardIndex(),
+                    listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
+                    chosenBeholdType, null, waterbendPaid(request), request.payLifeForAdditionalCost(),
+                    request.chosenAdditionalCostObjectId());
+            return;
+        }
         gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                request.damageAssignments(),
-                listOrEmpty(request.targetIds()), listOrEmpty(request.convokeCreatureIds()),
+                request.damageAssignments(), listOrEmpty(request.targetIds()), listOrEmpty(request.convokeCreatureIds()),
                 Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(),
                 request.phyrexianLifeCount(), nullIfEmpty(request.alternateCostSacrificePermanentIds()),
                 request.exileGraveyardCardIndex(), nullIfEmpty(request.exileGraveyardCardIndices()),
                 Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex(),
-                nullIfEmpty(request.discardHandCardIndices()),
-                nullIfEmpty(request.imposedSacrificePermanentIds()),
+                nullIfEmpty(request.discardHandCardIndices()), nullIfEmpty(request.imposedSacrificePermanentIds()),
                 nullIfEmpty(request.additionalCostSacrificePermanentIds()),
                 request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of(),
-                Boolean.TRUE.equals(request.buyback()),
-                request.beholdPermanentId(), request.beholdHandCardIndex(),
+                Boolean.TRUE.equals(request.buyback()), request.beholdPermanentId(), request.beholdHandCardIndex(),
                 listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
-                chosenBeholdType);
+                chosenBeholdType, chosenCreatureType, waterbendPaid(request),
+                request.payLifeForAdditionalCost(), request.chosenAdditionalCostObjectId());
     }
 
     private static <T> List<T> listOrEmpty(List<T> list) {
@@ -122,5 +188,34 @@ public class PlayCardRequestDispatchService {
 
     private static <T> List<T> nullIfEmpty(List<T> list) {
         return list == null || list.isEmpty() ? null : list;
+    }
+
+    private static boolean waterbendPaid(PlayCardRequest request) {
+        return Boolean.TRUE.equals(request.waterbendPaid())
+                || (request.waterbendPaid() == null
+                && request.additionalCostSacrificePermanentIds() != null
+                && !request.additionalCostSacrificePermanentIds().isEmpty());
+    }
+
+    private static boolean isPlotAlternateCast(GameData gameData, Player player, PlayCardRequest request) {
+        List<UUID> alternateCostIds = request.alternateCostSacrificePermanentIds();
+        if (alternateCostIds == null || !alternateCostIds.isEmpty() || Boolean.TRUE.equals(request.fromGraveyard())
+                || request.cardIndex() < 0) {
+            return false;
+        }
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        return hand != null && request.cardIndex() < hand.size()
+                && hand.get(request.cardIndex()).getKeywords().contains(Keyword.PLOT);
+    }
+
+    private static boolean isWarpAlternateCast(GameData gameData, Player player, PlayCardRequest request) {
+        List<UUID> alternateCostIds = request.alternateCostSacrificePermanentIds();
+        if (alternateCostIds == null || !alternateCostIds.isEmpty() || Boolean.TRUE.equals(request.fromGraveyard())
+                || request.cardIndex() < 0) {
+            return false;
+        }
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        return hand != null && request.cardIndex() < hand.size()
+                && hand.get(request.cardIndex()).getKeywords().contains(Keyword.WARP);
     }
 }

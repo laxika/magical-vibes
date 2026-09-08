@@ -12,6 +12,14 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "251")
+@CardRegistration(set = "KTK", collectorNumber = "242")
+@CardRegistration(set = "FDN", collectorNumber = "266")
+@CardRegistration(set = "M21", collectorNumber = "250")
+@CardRegistration(set = "DFT", collectorNumber = "263")
+@CardRegistration(set = "TDM", collectorNumber = "267")
+@CardRegistration(set = "MOM", collectorNumber = "272")
+@CardRegistration(set = "IKO", collectorNumber = "254")
+@CardRegistration(set = "FRF", collectorNumber = "171")
 public class ScouredBarrens extends Card {
 
     public ScouredBarrens() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "20")
+@CardRegistration(set = "EMN", collectorNumber = "22")
 public class DrogskolShieldmate extends Card {
 
     public DrogskolShieldmate() {

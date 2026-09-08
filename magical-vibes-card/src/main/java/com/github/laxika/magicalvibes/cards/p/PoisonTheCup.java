@@ -1,0 +1,23 @@
+package com.github.laxika.magicalvibes.cards.p;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ForetellCast;
+import com.github.laxika.magicalvibes.model.condition.CastForForetellCost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+
+@CardRegistration(set = "KHM", collectorNumber = "103")
+public class PoisonTheCup extends Card {
+
+    public PoisonTheCup() {
+        target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastForForetellCost(), new ScryEffect(2)));
+        addCastingOption(new ForetellCast("{1}{B}"));
+    }
+}

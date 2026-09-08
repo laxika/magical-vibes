@@ -12,25 +12,20 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BurningSunsAvatarTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
     @Test
-    @DisplayName("Has correct target configuration — mandatory opponent/planeswalker + optional creature")
-    void hasCorrectTargetConfig() {
-        BurningSunsAvatar card = new BurningSunsAvatar();
+    @DisplayName("ETB cannot target its controller with opponent damage")
+    void etbCannotDamageController() {
+        harness.setHand(player1, List.of(new BurningSunsAvatar()));
+        harness.addMana(player1, ManaColor.RED, 6);
 
-        assertThat(card.getSpellTargets()).hasSize(2);
-        // First target: mandatory (1-1) opponent or planeswalker
-        assertThat(card.getSpellTargets().get(0).getMinTargets()).isEqualTo(1);
-        assertThat(card.getSpellTargets().get(0).getMaxTargets()).isEqualTo(1);
-        // Second target: optional (0-1) creature
-        assertThat(card.getSpellTargets().get(1).getMinTargets()).isEqualTo(0);
-        assertThat(card.getSpellTargets().get(1).getMaxTargets()).isEqualTo(1);
+        assertThatThrownBy(() -> gs.playCard(
+                gd, player1, 0, 0, null, null, List.of(player1.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an opponent or planeswalker");
     }
 
     // ===== ETB deals damage to opponent and creature =====

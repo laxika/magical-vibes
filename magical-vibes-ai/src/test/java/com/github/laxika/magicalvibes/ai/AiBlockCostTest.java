@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
 import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GorillaBerserkers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GuardianOfTheGateless;
 import com.github.laxika.magicalvibes.cards.h.HeatWave;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
@@ -158,6 +160,27 @@ class AiBlockCostTest {
                 assignment(0, firstAttacker), assignment(1, secondAttacker)));
 
         assertThat(affordable).hasSize(1);
+    }
+
+    @ParameterizedTest(name = "{0} AI")
+    @ValueSource(strings = {"easy", "medium", "hard"})
+    @DisplayName("A blocker pays a global tax once when blocking multiple attackers")
+    void chargesGlobalBlockTaxOncePerBlocker(String difficulty) {
+        land();
+        Permanent archangel = attacking(new ArchangelOfTithes());
+        Permanent firstAttacker = attacking(new GrizzlyBears());
+        Permanent secondAttacker = attacking(new ScatheZombies());
+        Permanent blocker = blocker(new GuardianOfTheGateless());
+        enterDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(blocker);
+        List<BlockerAssignment> assignments = List.of(
+                assignment(blockerIndex, archangel),
+                assignment(blockerIndex, firstAttacker),
+                assignment(blockerIndex, secondAttacker));
+
+        assertThat(engineFor(difficulty).prepareBlockersForTax(gd, assignments))
+                .containsExactlyElementsOf(assignments);
     }
 
     @ParameterizedTest(name = "{0} AI")

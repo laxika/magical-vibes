@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "163")
+@CardRegistration(set = "GRN", collectorNumber = "174")
 public class GoblinElectromancer extends Card {
 
     public GoblinElectromancer() {

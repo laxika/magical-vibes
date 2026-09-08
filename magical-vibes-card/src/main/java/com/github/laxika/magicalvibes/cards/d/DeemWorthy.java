@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "127")
+@CardRegistration(set = "AKR", collectorNumber = "150")
 public class DeemWorthy extends Card {
 
     public DeemWorthy() {

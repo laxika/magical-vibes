@@ -23,8 +23,8 @@ public class GrantCardTypeEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantCardTypeEffect) effect;
         boolean matches = grant.scope() == GrantScope.ALL_PERMANENTS
-                ? support.matchesStaticFilter(context, context.target(), null)
-                : support.matchesCreatureScope(context, grant.scope(), null);
+                ? support.matchesStaticFilter(context, context.target(), grant.filter())
+                : support.matchesCreatureScope(context, grant.scope(), grant.filter());
         if (matches) {
             accumulator.addGrantedCardType(grant.cardType());
         }

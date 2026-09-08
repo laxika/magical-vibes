@@ -28,23 +28,30 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        PutAllCardsExiledWithSourceIntoOwnersHandsEffect returnEffect =
+                (PutAllCardsExiledWithSourceIntoOwnersHandsEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null && entry.getSourcePermanentSnapshot() != null) {
             sourcePermanentId = entry.getSourcePermanentSnapshot().getId();
         }
         if (sourcePermanentId == null) {
+            entry.setEventValue(0);
             return;
         }
 
         UUID sourceId = sourcePermanentId;
         List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
-                .filter(exiled -> sourceId.equals(exiled.sourcePermanentId()))
+                .filter(exiled -> sourceId.equals(exiled.sourcePermanentId())
+                        && (!returnEffect.onlyControllerOwned()
+                        || entry.getControllerId().equals(exiled.ownerId())))
                 .toList();
 
+        int returnedCount = 0;
         for (ExiledCardEntry exiled : toReturn) {
             if (!gameData.removeFromExile(exiled.card().getId())) {
                 continue;
             }
+            returnedCount++;
             UUID ownerId = exiled.ownerId();
             gameData.addCardToHand(ownerId, exiled.card());
             gameLogService.append(gameData, GameLog.textCardText(
@@ -52,5 +59,6 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
             log.info("Game {} - {} returns {} from exile to its owner's hand via {}",
                     gameData.id, gameData.playerIdToName.get(ownerId), exiled.card().getName(), entry.getCard().getName());
         }
+        entry.setEventValue(returnedCount);
     }
 }

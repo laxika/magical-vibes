@@ -48,6 +48,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
                 // CR 608.2b: filters that ask about the source (e.g. "creatures blocking it") still
                 // need it after a sacrifice cost removed it from the battlefield.
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
@@ -98,14 +99,12 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
         List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
                 gameData, toDestroy, entry.getCard().getName(), e.cannotBeRegenerated());
+        entry.setEventCardIds(destroyed.stream().map(perm -> perm.getCard().getId()).toList());
 
         if (e.thenEffect() == null) {
             return;
         }
 
-        StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
-                entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
-        thenEntry.setEventValue(destroyed.size());
         // Controllers and mana values stay positionally aligned so per-permanent riders can pair them.
         List<UUID> destroyedControllerIds = new ArrayList<>();
         List<Integer> destroyedManaValues = new ArrayList<>();
@@ -117,6 +116,16 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
             destroyedControllerIds.add(controllerId);
             destroyedManaValues.add(manaValueByPermanentId.getOrDefault(perm.getId(), 0));
         }
+
+        int destroyedCount = switch (e.destroyedCountScope()) {
+            case ALL -> destroyed.size();
+            case CONTROLLER -> (int) destroyedControllerIds.stream()
+                    .filter(entry.getControllerId()::equals)
+                    .count();
+        };
+        StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+                entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
+        thenEntry.setEventValue(destroyedCount);
         thenEntry.setEventPlayerIds(destroyedControllerIds);
         thenEntry.setEventManaValues(destroyedManaValues);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

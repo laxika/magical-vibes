@@ -1,13 +1,21 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * "Creature spells you control with power {@code minimumPower} or greater can't be countered."
- * Static ability on the source permanent — read directly by {@code GameQueryService.isUncounterable}.
- * Registered in {@code EffectSlot.STATIC}.
+ * "Creature spells you control can't be countered", optionally restricted to a minimum power.
+ * Static ability on the source permanent.
  *
- * <p>Unlike {@link CreatureSpellsCantBeCounteredEffect} (which protects every creature spell,
- * regardless of controller or power), this protects only creature spells controlled by the source
- * permanent's controller whose power is at least {@code minimumPower} (Spellbreaker Behemoth: 5).
+ * <p>With a non-null threshold, this protects only creature spells controlled by the source
+ * permanent's controller whose power is at least that threshold (Spellbreaker Behemoth: 5).
+ * With no threshold, it protects every creature spell controlled by that player (Rhythm of the
+ * Wild).
  */
-public record ControllerCreatureSpellsCantBeCounteredEffect(int minimumPower) implements CardEffect {
+public record ControllerCreatureSpellsCantBeCounteredEffect(Integer minimumPower) implements CardEffect {
+
+    public ControllerCreatureSpellsCantBeCounteredEffect() {
+        this(null);
+    }
+
+    public ControllerCreatureSpellsCantBeCounteredEffect(int minimumPower) {
+        this(Integer.valueOf(minimumPower));
+    }
 }

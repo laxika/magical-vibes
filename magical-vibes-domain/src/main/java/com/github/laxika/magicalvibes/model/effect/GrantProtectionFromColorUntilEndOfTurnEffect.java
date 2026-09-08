@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Scope {@link GrantScope#TARGET} is "target creature gains protection from [color]" (Willow
  * Priestess). Scope {@link GrantScope#SELF} is "this creature gains protection from [color]"
  * (Keeper of Kookus) — no player target choice; resolves against the ability's source permanent.
+ * Scope {@link GrantScope#OWN_CREATURES} is the untargeted mass form: each creature the ability's
+ * controller controls gains protection from the color (Dominaria's Judgment).
  *
  * <p>Unlike {@link GrantProtectionChoiceUntilEndOfTurnEffect} the colour is known at build time, so
  * no player choice is prompted; the grant is stored in
@@ -17,7 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param color     the colour the permanent gains protection from
  * @param predicate an optional narrowing predicate on the legal target (TARGET scope only;
  *                  e.g. "green creature"); {@code null} means any creature is legal
- * @param scope     {@link GrantScope#TARGET} or {@link GrantScope#SELF}
+ * @param scope     {@link GrantScope#TARGET}, {@link GrantScope#SELF}, or
+ *                  {@link GrantScope#OWN_CREATURES}
  */
 public record GrantProtectionFromColorUntilEndOfTurnEffect(
         CardColor color, PermanentPredicate predicate, GrantScope scope, TargetPredicate declaredTarget)

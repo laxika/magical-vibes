@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "49")
+@CardRegistration(set = "EMN", collectorNumber = "78")
 public class TurnAside extends Card {
 
     public TurnAside() {

@@ -12,9 +12,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TorWaukiTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Ability deals 2 damage to an attacking creature")
-    void abilityDamagesAttacker() {
-        addTorWaukiReady(player1);
+    @DisplayName("Deals 2 damage to a target attacking creature")
+    void damagesAttacker() {
+        addReadyTorWauki(player1);
         Permanent attacker = addCombatCreature(player2, true, false);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -25,9 +25,9 @@ class TorWaukiTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability can target a blocking creature")
-    void abilityDamagesBlocker() {
-        addTorWaukiReady(player1);
+    @DisplayName("Deals 2 damage to a target blocking creature")
+    void damagesBlocker() {
+        addReadyTorWauki(player1);
         Permanent blocker = addCombatCreature(player2, false, true);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
@@ -40,7 +40,7 @@ class TorWaukiTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is neither attacking nor blocking")
     void cannotTargetIdleCreature() {
-        addTorWaukiReady(player1);
+        addReadyTorWauki(player1);
         Permanent idle = addCombatCreature(player2, false, false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, idle.getId()))
@@ -51,8 +51,7 @@ class TorWaukiTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while Tor Wauki has summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent torWauki = new Permanent(new TorWauki());
-        gd.playerBattlefields.get(player1.getId()).add(torWauki);
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new TorWauki()));
         Permanent attacker = addCombatCreature(player2, true, false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
@@ -60,7 +59,7 @@ class TorWaukiTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
-    private Permanent addTorWaukiReady(Player player) {
+    private Permanent addReadyTorWauki(Player player) {
         Permanent torWauki = new Permanent(new TorWauki());
         torWauki.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(torWauki);

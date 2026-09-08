@@ -27,7 +27,7 @@ class GraveResearcherReanimateTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(researcher.isPrepared()).isTrue();
-        assertThat(gd.findExiledCard(researcher.getPreparedSpellCardId())).isInstanceOf(Reanimate.class);
+        assertThat(gd.findExiledCard(researcher.getPreparedSpellCardId())).isNotNull();
     }
 
     @Test

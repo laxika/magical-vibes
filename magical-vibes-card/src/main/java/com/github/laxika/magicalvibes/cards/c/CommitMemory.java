@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentInto
  * Back half (Memory) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "211")
+@CardRegistration(set = "AKR", collectorNumber = "54")
 public class CommitMemory extends Card {
 
     public CommitMemory() {

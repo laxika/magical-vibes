@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  * Back half (Authority) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "152")
+@CardRegistration(set = "AKR", collectorNumber = "227")
 public class AppealAuthority extends Card {
 
     public AppealAuthority() {

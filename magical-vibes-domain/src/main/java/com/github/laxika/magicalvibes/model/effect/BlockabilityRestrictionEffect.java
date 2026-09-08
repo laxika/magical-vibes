@@ -18,7 +18,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Scope note: this covers the printed attacker-side evasion shapes ({@code CantBeBlockedEffect},
  * {@code CanBeBlockedOnlyByFilterEffect}, {@code CantBeBlockedByCreaturesMatchingPredicateEffect},
  * {@code CantBeBlockedByCreaturesWithLessPowerEffect},
+ * {@code CantBeBlockedByCreaturesWithPowerLessThanIslandCountEffect},
  * {@code CantBeBlockedIfDefenderControlsMatchingPermanentEffect},
+ * {@code CantBeBlockedUnlessDefenderControlsCreaturesSharingCreatureTypeEffect},
  * {@code CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect}, and
  * {@code CantBeBlockedIfAttackingAloneEffect}).
  */
@@ -34,6 +36,11 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
      * a permanent matching this predicate.
      */
     default PermanentPredicate unblockableIfDefenderControls() {
+        return null;
+    }
+
+    /** Minimum number of shared-type creatures the defending player must control, when applicable. */
+    default Integer defenderControlsCreaturesSharingTypeMinimum() {
         return null;
     }
 
@@ -86,6 +93,19 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
      * (Shrill Howler / Howling Chorus). Compared against effective powers at declaration.
      */
     default boolean cantBeBlockedByCreaturesWithLessPower() {
+        return false;
+    }
+
+    /**
+     * Whether creatures with power strictly less than the number of Islands controlled by this
+     * creature's controller can't block it.
+     */
+    default boolean cantBeBlockedByCreaturesWithPowerLessThanIslandCount() {
+        return false;
+    }
+
+    /** Whether this creature can be blocked only if every defending creature blocks it. */
+    default boolean requiresAllDefendingCreaturesToBlock() {
         return false;
     }
 

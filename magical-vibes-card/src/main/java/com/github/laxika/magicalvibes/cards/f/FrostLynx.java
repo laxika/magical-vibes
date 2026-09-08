@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M15", collectorNumber = "55")
 @CardRegistration(set = "M20", collectorNumber = "62")
+@CardRegistration(set = "IKO", collectorNumber = "51")
 public class FrostLynx extends Card {
 
     public FrostLynx() {

@@ -22,10 +22,10 @@ class PhyrexianIngesterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → ETB trigger, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → target selection (inner effect inline)
-        harness.handlePermanentChosen(player1, targetId); // choose target → exile + imprint inline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     // ===== ETB exile =====
@@ -81,6 +81,7 @@ class PhyrexianIngesterTest extends BaseCardTest {
     @DisplayName("No P/T boost when may ability is declined")
     void noBoostWhenDeclined() {
         harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -88,9 +89,10 @@ class PhyrexianIngesterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         Permanent ingester = findPermanent(player1, "Phyrexian Ingester");
 

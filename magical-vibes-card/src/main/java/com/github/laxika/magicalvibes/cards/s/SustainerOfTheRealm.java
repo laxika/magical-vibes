@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "52")
+@CardRegistration(set = "ULG", collectorNumber = "23")
 public class SustainerOfTheRealm extends Card {
 
     public SustainerOfTheRealm() {

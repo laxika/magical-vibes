@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "DRB", collectorNumber = "14")
+@CardRegistration(set = "S99", collectorNumber = "119")
 public class ThunderDragon extends Card {
 
     public ThunderDragon() {

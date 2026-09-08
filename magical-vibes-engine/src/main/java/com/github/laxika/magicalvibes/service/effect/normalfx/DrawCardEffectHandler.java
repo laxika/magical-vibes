@@ -1,23 +1,40 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 @Component
-@RequiredArgsConstructor
 public class DrawCardEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final DrawService drawService;
+
+    public DrawCardEffectHandler(PlayerInteractionSupport playerInteractionSupport,
+                                 GameQueryService gameQueryService,
+                                 AmountEvaluationService amountEvaluationService,
+                                 @Lazy DrawService drawService) {
+        this.playerInteractionSupport = playerInteractionSupport;
+        this.gameQueryService = gameQueryService;
+        this.amountEvaluationService = amountEvaluationService;
+        this.drawService = drawService;
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +56,23 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
-        playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), amount);
+        List<Card> hand = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of());
+        Set<UUID> cardsInHandBeforeDraw = new HashSet<>();
+        hand.forEach(card -> cardsInHandBeforeDraw.add(card.getId()));
+
+        if (entry.isCyclingAbility()) {
+            for (int i = 0; i < amount; i++) {
+                drawService.resolveCyclingDrawCard(gameData, entry.getControllerId(), entry.getCard());
+                if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+                    break;
+                }
+            }
+        } else {
+            playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), amount);
+        }
+
+        gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
+                .filter(card -> !cardsInHandBeforeDraw.contains(card.getId()))
+                .forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
     }
 }

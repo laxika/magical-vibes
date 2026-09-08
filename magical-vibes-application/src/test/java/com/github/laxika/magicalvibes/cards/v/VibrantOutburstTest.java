@@ -65,6 +65,19 @@ class VibrantOutburstTest extends BaseCardTest {
         assertThat(elemental.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Can deal 3 damage to its controller")
+    void damagesController() {
+        harness.setHand(player1, List.of(new VibrantOutburst()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
     // ===== Optional tap omitted =====
 
     @Test

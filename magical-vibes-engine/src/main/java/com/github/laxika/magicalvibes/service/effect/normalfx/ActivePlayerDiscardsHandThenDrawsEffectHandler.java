@@ -47,10 +47,12 @@ public class ActivePlayerDiscardsHandThenDrawsEffectHandler implements NormalEff
         }
         gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
 
+        triggerCollectionService.beginDiscardEvent(gameData, playerId);
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, playerId, card);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
 
         if (discarded.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no cards to discard (" + cardName + ")."));

@@ -14,6 +14,7 @@ public class InteractionState {
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
     private Card pendingAuraCard;
+    private Card pendingAuraOriginalCard;
     private UUID pendingAuraOwnerId;
     private StackEntry pendingAuraResolutionEntry;
     private UUID pendingEquipmentAttachEquipmentId;
@@ -28,6 +29,7 @@ public class InteractionState {
         copy.activeDecisionId = this.activeDecisionId;
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
+        copy.pendingAuraOriginalCard = this.pendingAuraOriginalCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
         copy.pendingAuraResolutionEntry = this.pendingAuraResolutionEntry == null
                 ? null : new StackEntry(this.pendingAuraResolutionEntry);
@@ -125,6 +127,16 @@ public class InteractionState {
         Card auraCard = this.pendingAuraCard;
         this.pendingAuraCard = null;
         return auraCard;
+    }
+
+    public void setPendingAuraOriginalCard(Card originalCard) {
+        this.pendingAuraOriginalCard = originalCard;
+    }
+
+    public Card consumePendingAuraOriginalCard() {
+        Card originalCard = this.pendingAuraOriginalCard;
+        this.pendingAuraOriginalCard = null;
+        return originalCard;
     }
 
     public void setPendingAuraOwnerId(UUID ownerId) {

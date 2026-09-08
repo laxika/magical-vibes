@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WortTheRaidmotherTest extends BaseCardTest {
 
@@ -80,8 +81,10 @@ class WortTheRaidmotherTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castWithConspire(player1, 0, targetBears.getId(),
-                List.of(conspireA.getId(), conspireB.getId()));
+        assertThatThrownBy(() -> harness.castWithConspire(player1, 0, targetBears.getId(),
+                List.of(conspireA.getId(), conspireB.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("doesn't have conspire");
 
         assertThat(conspireA.isTapped()).isFalse();
         assertThat(conspireB.isTapped()).isFalse();

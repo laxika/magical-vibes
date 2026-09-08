@@ -25,12 +25,11 @@ import org.springframework.stereotype.Component;
  * exile a nonland card that costs less. You may cast it without paying its mana cost. Put the exiled
  * cards on the bottom of your library in a random order."
  *
- * <p>Digs the caster's library one card at a time until it exiles a nonland card whose mana value is
- * strictly less than the cascade spell's mana value ({@code entry.getCard().getManaValue()}), then
- * reuses the {@link LibrarySearchDestination#CAST_WITHOUT_PAYING} flow (shared with Sunbird's
- * Invocation) to let the caster cast that single card without paying its mana cost and put the rest
- * on the bottom in a random order. If no such card is found, all exiled cards go to the bottom in a
- * random order.</p>
+ * <p>Digs the caster's library one card at a time until it exiles a qualifying card whose mana value
+ * is strictly less than the cascade spell's mana value, then reuses the
+ * {@link LibrarySearchDestination#CAST_WITHOUT_PAYING} flow (shared with Sunbird's Invocation) to
+ * let the caster cast that single card without paying its mana cost and put the rest on the bottom in
+ * a random order. If no such card is found, all exiled cards go to the bottom in a random order.</p>
  */
 @Slf4j
 @Component
@@ -47,11 +46,14 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        CascadeEffect cascade = (CascadeEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
-        int threshold = entry.getCard().getManaValue();
+        int threshold = entry.getTriggeringCardId() != null
+                ? entry.getEventValue()
+                : entry.getCard().getManaValue();
 
         if (deck.isEmpty()) {
             gameLogService.append(gameData,
@@ -59,13 +61,16 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        // Exile from the top until a nonland card with mana value < the cascade spell's mana value.
+        // Exile from the top until a qualifying card with mana value < the cascade spell's mana value.
         List<Card> exiled = new ArrayList<>();
         Card hit = null;
         while (!deck.isEmpty()) {
             Card top = deck.removeFirst();
             exiled.add(top);
-            if (!top.hasType(CardType.LAND) && top.getManaValue() < threshold) {
+            boolean qualifyingType = cascade.instantOrSorceryOnly()
+                    ? top.hasType(CardType.INSTANT) || top.hasType(CardType.SORCERY)
+                    : !top.hasType(CardType.LAND);
+            if (qualifyingType && top.getManaValue() < threshold) {
                 hit = top;
                 break;
             }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * Flash (auto-loaded from Scryfall). No card-specific engine logic.
  */
 @CardRegistration(set = "AKH", collectorNumber = "179")
+@CardRegistration(set = "AKR", collectorNumber = "207")
 public class PouncingCheetah extends Card {
 
     public PouncingCheetah() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "4")
+@CardRegistration(set = "TPR", collectorNumber = "4")
 public class ArmorSliver extends Card {
 
     public ArmorSliver() {

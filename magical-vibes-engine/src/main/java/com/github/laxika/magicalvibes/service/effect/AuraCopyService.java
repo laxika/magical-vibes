@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.AttachedCreatureIsCopyOfExiledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EquippedCreatureBecomesCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureIsCopyOfChosenCreatureEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -95,22 +98,67 @@ public class AuraCopyService {
             return;
         }
 
-        String originalName = enchanted.getCard().getName();
-        if (!enchanted.isCopyWhileAttached()) {
-            enchanted.setWhileAttachedPreCopyCard(enchanted.getCard());
+        applyWhileAttachedCopy(gameData, aura, enchanted, chosen,
+                new EnchantedCreatureIsCopyOfChosenCreatureEffect());
+    }
+
+    /** Applies Blade of Shared Souls' copy effect to the creature that triggered it. */
+    public void applyEquippedCreatureCopy(GameData gameData, Permanent equipment,
+                                          Permanent equipped, Permanent chosen) {
+        if (equipment == null || equipped == null || chosen == null
+                || !equipment.isAttached() || !equipped.getId().equals(equipment.getAttachedTo())
+                || !gameQueryService.isCreature(gameData, equipped)
+                || equipped.getId().equals(chosen.getId())) {
+            return;
         }
-        permanentCopierService.applyCloneCopy(enchanted, chosen, null, null);
-        enchanted.setCopyWhileAttached(true);
+
+        applyWhileAttachedCopy(gameData, equipment, equipped, chosen,
+                new EquippedCreatureBecomesCopyOfTargetCreatureEffect());
+    }
+
+    /** Expires and reverts copy effects that were tied to an attachment that just ended. */
+    public void expireAttachedCopyEffects(GameData gameData, UUID sourcePermanentId) {
+        revertExpiredCopies(gameData,
+                gameData.expireFloatingEffectsForUnattachedSource(sourcePermanentId));
+    }
+
+    private void applyWhileAttachedCopy(GameData gameData, Permanent source, Permanent affected,
+                                        Permanent chosen, CardEffect floatingEffect) {
+        String originalName = affected.getCard().getName();
+        if (!affected.isCopyWhileAttached()) {
+            affected.setWhileAttachedPreCopyCard(affected.getCard());
+        }
+        permanentCopierService.applyCloneCopy(affected, chosen, null, null);
+        affected.setCopyWhileAttached(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), aura.getCard().getName(), aura.getId(),
-                gameQueryService.findPermanentController(gameData, aura.getId()),
-                new EnchantedCreatureIsCopyOfChosenCreatureEffect(), enchanted.getId(), null, null,
+                UUID.randomUUID(), source.getCard().getName(), source.getId(),
+                gameQueryService.findPermanentController(gameData, source.getId()),
+                floatingEffect, affected.getId(), null, null,
                 EffectDuration.WHILE_ATTACHED, 0));
 
         gameLogService.append(gameData, GameLog.text(
                 originalName + " becomes a copy of " + chosen.getCard().getName() + "."));
         log.info("Game {} - {} becomes a copy of {} ({})", gameData.id, originalName,
-                chosen.getCard().getName(), aura.getCard().getName());
+                chosen.getCard().getName(), source.getCard().getName());
+    }
+
+    public void applyExiledCreatureCopy(GameData gameData, Permanent equipment, Permanent attached,
+                                         Card exiledCreature) {
+        String originalName = attached.getCard().getName();
+        if (!attached.isCopyWhileAttached()) {
+            attached.setWhileAttachedPreCopyCard(attached.getCard());
+        }
+        permanentCopierService.applyCloneCopy(attached, exiledCreature, null, null, java.util.Set.of());
+        attached.setCopyWhileAttached(true);
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), equipment.getCard().getName(), equipment.getId(),
+                gameQueryService.findPermanentController(gameData, equipment.getId()),
+                new AttachedCreatureIsCopyOfExiledCreatureEffect(), attached.getId(), null, null,
+                EffectDuration.WHILE_ATTACHED, 0));
+        gameLogService.append(gameData, GameLog.text(
+                originalName + " becomes a copy of " + exiledCreature.getName() + "."));
+        log.info("Game {} - {} becomes a copy of {} ({})", gameData.id, originalName,
+                exiledCreature.getName(), equipment.getCard().getName());
     }
 
     /**
@@ -119,7 +167,9 @@ public class AuraCopyService {
      */
     public void revertExpiredCopies(GameData gameData, List<FloatingContinuousEffect> expired) {
         for (FloatingContinuousEffect floating : expired) {
-            if (!(floating.effect() instanceof EnchantedCreatureIsCopyOfChosenCreatureEffect)) {
+            if (!(floating.effect() instanceof EnchantedCreatureIsCopyOfChosenCreatureEffect
+                    || floating.effect() instanceof EquippedCreatureBecomesCopyOfTargetCreatureEffect
+                    || floating.effect() instanceof AttachedCreatureIsCopyOfExiledCreatureEffect)) {
                 continue;
             }
             Permanent enchanted = gameQueryService.findPermanentById(gameData, floating.affectedPermanentId());

@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "279")
+@CardRegistration(set = "ATH", collectorNumber = "64")
+@CardRegistration(set = "BTD", collectorNumber = "65")
+@CardRegistration(set = "DKM", collectorNumber = "30")
 public class WoollySpider extends Card {
 
     public WoollySpider() {

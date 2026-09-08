@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "152")
+@CardRegistration(set = "SOI", collectorNumber = "155")
 public class FalkenrathGorger extends Card {
 
     public FalkenrathGorger() {

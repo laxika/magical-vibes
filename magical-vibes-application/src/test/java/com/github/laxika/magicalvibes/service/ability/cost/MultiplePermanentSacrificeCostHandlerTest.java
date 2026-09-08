@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -94,7 +98,25 @@ class MultiplePermanentSacrificeCostHandlerTest {
                 singleCost, predicateEvaluationService, sacrificeAction, sourceId);
         gameData.playerBattlefields.get(playerId).add(source);
 
-        when(predicateEvaluationService.matchesPermanentPredicate(gameData, source, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                eq(source), eq(filter), any(FilterContext.class))).thenReturn(true);
+
+        assertThat(singleHandler.getValidChoiceIds(gameData, playerId)).containsExactly(sourceId);
+    }
+
+    @Test
+    @DisplayName("source-dependent filters receive context when source sacrifice is allowed")
+    void sourceDependentFilterReceivesContextWhenSourceSacrificeIsAllowed() {
+        Permanent source = createPermanent("Source Creature");
+        UUID sourceId = source.getId();
+        SacrificePermanentCost singleCost = new SacrificePermanentCost(
+                new PermanentIsSourcePermanentPredicate(), "this permanent", false);
+        MultiplePermanentSacrificeCostHandler singleHandler = new MultiplePermanentSacrificeCostHandler(
+                singleCost, predicateEvaluationService, sacrificeAction, sourceId);
+        gameData.playerBattlefields.get(playerId).add(source);
+
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                eq(source), eq(singleCost.filter()), any(FilterContext.class))).thenReturn(true);
 
         assertThat(singleHandler.getValidChoiceIds(gameData, playerId)).containsExactly(sourceId);
     }
@@ -228,6 +250,26 @@ class MultiplePermanentSacrificeCostHandlerTest {
         handler.validateAndPay(gameData, player, artifact);
 
         verify(sacrificeAction).sacrifice(gameData, player, artifact);
+    }
+
+    @Test
+    @DisplayName("source-dependent filters receive the activating permanent context")
+    void sourceDependentFiltersReceiveSourceContext() {
+        Permanent host = createPermanent("Enchanted Creature");
+        Permanent aura = createPermanent("Aura");
+        gameData.playerBattlefields.get(playerId).add(host);
+        UUID auraId = aura.getId();
+        SacrificePermanentCost hostCost = new SacrificePermanentCost(
+                new PermanentIsHostOfSourceAuraPredicate(), "the enchanted creature");
+        MultiplePermanentSacrificeCostHandler hostHandler = new MultiplePermanentSacrificeCostHandler(
+                hostCost, predicateEvaluationService, sacrificeAction, auraId);
+
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                eq(host), eq(hostCost.filter()), any(FilterContext.class))).thenReturn(true);
+
+        assertThat(hostHandler.getValidChoiceIds(gameData, playerId)).containsExactly(host.getId());
+        verify(predicateEvaluationService).matchesPermanentPredicate(
+                eq(host), eq(hostCost.filter()), any(FilterContext.class));
     }
 
     // =========================================================================

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "298")
+@CardRegistration(set = "CHR", collectorNumber = "65")
 public class GhazbNOgre extends Card {
 
     public GhazbNOgre() {

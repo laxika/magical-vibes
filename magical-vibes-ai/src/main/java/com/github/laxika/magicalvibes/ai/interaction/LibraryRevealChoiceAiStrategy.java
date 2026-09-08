@@ -10,8 +10,8 @@ import java.util.UUID;
 
 /**
  * Answers library reveal choices (Lead the Stampede, Commune with Nature, Sword-Point
- * Diplomacy, …): the AI chooses all valid cards, except for punisher reveals (a life cost per
- * selection), where it denies nothing to avoid paying life. Ported verbatim from the legacy
+ * Diplomacy, …): the AI chooses all allowed valid cards, except for punisher reveals (a life cost
+ * per selection), where it denies nothing to avoid paying life. Ported verbatim from the legacy
  * {@code AiChoiceHandler} block.
  */
 @Slf4j
@@ -37,9 +37,12 @@ class LibraryRevealChoiceAiStrategy implements AiInteractionStrategy<PendingInte
                     interaction.lifeCostPerSelection(), ctx.gameId());
         } else {
             chosen = new ArrayList<>(interaction.validCardIds());
-            // Respect the choice limit (e.g. Karn Scion +1: the opponent picks exactly one card)
-            if (interaction.maxCount() > 0 && chosen.size() > interaction.maxCount()) {
-                chosen = chosen.subList(0, interaction.maxCount());
+            // Respect the choice limit, including a zero maximum (e.g. Kayla's Reconstruction
+            // cast with X=0). A zero maximum means that no valid card may be selected; it does
+            // not mean that the choice is unlimited.
+            int maxCount = Math.max(0, interaction.maxCount());
+            if (chosen.size() > maxCount) {
+                chosen = chosen.subList(0, maxCount);
             }
             log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), ctx.gameId());
         }

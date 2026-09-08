@@ -21,8 +21,13 @@ import java.util.UUID;
  * {@code BATTLEFIELD} (Boneyard Parley) puts the chosen pile onto the battlefield and returns the
  * rest to owners' graveyards; {@code PLAY_FROM_EXILE} (Brilliant Ultimatum) offers the chosen pile
  * to be played/cast for free from exile with everything else staying exiled; {@code HAND} (Unesh)
- * puts the chosen pile into the controller's hand and the other into their graveyard. It is ignored
- * for permanent-pile mode.
+ * puts the chosen pile into the controller's hand and the other into their graveyard;
+ * {@code HAND_AND_THOPTER} does the same and then creates Intrude on the Mind's Thopter using
+ * the number of cards put into that graveyard;
+ * {@code HAND_WITH_FACE_DOWN_PILE} puts the chosen pile into the controller's hand and the other
+ * into their graveyard. Curator of Destinies uses a face-up Pile 1 and a face-down Pile 2;
+ * Fortune's Favor reverses those pile identities. The other dispositions are ignored for
+ * permanent-pile mode.
  *
  * <p>{@code controllerChoosesPile} is true for the usual Fact-or-Fiction-style flow, where the
  * opponent separates and the controller chooses. It is false for Steam Augury, where the

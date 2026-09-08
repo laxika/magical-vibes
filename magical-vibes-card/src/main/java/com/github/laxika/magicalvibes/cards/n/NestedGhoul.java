@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -15,9 +16,9 @@ public class NestedGhoul extends Card {
 
     public NestedGhoul() {
         // Whenever a source deals damage to this creature, create a 2/2 black Zombie creature token.
-        addEffect(EffectSlot.ON_DEALT_DAMAGE, new CreateTokenEffect(
+        addEffect(EffectSlot.ON_DEALT_DAMAGE, new PerDamageSourceTriggerEffect(new CreateTokenEffect(
                 "Zombie", 2, 2, CardColor.BLACK,
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.ZOMBIE),
-                Set.of(), Set.of()));
+                Set.of(), Set.of())));
     }
 }

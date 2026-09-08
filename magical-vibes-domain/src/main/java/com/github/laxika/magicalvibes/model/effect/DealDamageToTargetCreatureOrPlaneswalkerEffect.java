@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record DealDamageToTargetCreatureOrPlaneswalkerEffect(
         DynamicAmount damage, PermanentPredicate targetRestriction,
-        boolean exileInsteadOfDie) implements DamageDealingEffect {
+        boolean exileInsteadOfDie) implements DamageDealingEffect, CombatDamageAmountAwareEffect {
 
     public DealDamageToTargetCreatureOrPlaneswalkerEffect(DynamicAmount damage,
                                                            PermanentPredicate targetRestriction) {
@@ -51,6 +51,17 @@ public record DealDamageToTargetCreatureOrPlaneswalkerEffect(
     @Override
     public DynamicAmount damageAmount() {
         return damage;
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return damage;
+    }
+
+    @Override
+    public CardEffect snapshotCombatDamage(int damageDealt) {
+        return new DealDamageToTargetCreatureOrPlaneswalkerEffect(
+                new Fixed(damageDealt), targetRestriction, exileInsteadOfDie);
     }
 
     @Override

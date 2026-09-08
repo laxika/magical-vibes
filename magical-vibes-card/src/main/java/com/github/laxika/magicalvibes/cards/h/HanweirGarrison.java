@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "157")
+@CardRegistration(set = "EMN", collectorNumber = "130")
 public class HanweirGarrison extends Card {
 
     public HanweirGarrison() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReduceMinusOneMinusOneCountersEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "38")
+@CardRegistration(set = "AKR", collectorNumber = "45")
 public class VizierOfRemedies extends Card {
 
     public VizierOfRemedies() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "247")
+@CardRegistration(set = "ULG", collectorNumber = "102")
 public class GangOfElk extends Card {
 
     public GangOfElk() {

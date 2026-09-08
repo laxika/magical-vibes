@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "126")
+@CardRegistration(set = "DKM", collectorNumber = "5")
 public class FoulFamiliar extends Card {
 
     public FoulFamiliar() {

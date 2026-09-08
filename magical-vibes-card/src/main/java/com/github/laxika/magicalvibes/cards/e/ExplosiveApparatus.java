@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "233")
+@CardRegistration(set = "SOI", collectorNumber = "255")
 public class ExplosiveApparatus extends Card {
 
     public ExplosiveApparatus() {

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "328")
+@CardRegistration(set = "TPR", collectorNumber = "246")
+@CardRegistration(set = "BRB", collectorNumber = "88")
 public class ThalakosLowlands extends Card {
 
     public ThalakosLowlands() {

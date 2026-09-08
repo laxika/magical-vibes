@@ -19,6 +19,7 @@ public record GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope s
         return switch (scope) {
             case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
             case OWN_CREATURES -> TargetSpec.NONE;
+            case SELF -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.benign(TargetPredicates.creature());
         };
     }

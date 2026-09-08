@@ -10,6 +10,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "104")
+@CardRegistration(set = "5DN", collectorNumber = "38")
 public class ThoughtCourier extends Card {
 
     public ThoughtCourier() {

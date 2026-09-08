@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "118")
+@CardRegistration(set = "AKR", collectorNumber = "139")
 public class BattlefieldScavenger extends Card {
 
     public BattlefieldScavenger() {

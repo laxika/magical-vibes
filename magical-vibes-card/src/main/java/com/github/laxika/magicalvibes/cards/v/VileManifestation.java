@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "80")
+@CardRegistration(set = "AKR", collectorNumber = "132")
 public class VileManifestation extends Card {
 
     public VileManifestation() {

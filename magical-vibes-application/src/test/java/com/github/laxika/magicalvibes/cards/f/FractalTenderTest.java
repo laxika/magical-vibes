@@ -27,6 +27,7 @@ class FractalTenderTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(tender.getPlusOnePlusOneCounters()).isEqualTo(1);
 

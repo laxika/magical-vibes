@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "352")
+@CardRegistration(set = "ULG", collectorNumber = "140")
 public class ForbiddingWatchtower extends Card {
 
     public ForbiddingWatchtower() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageThisTur
  * Back half (Injury) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "213")
+@CardRegistration(set = "AKR", collectorNumber = "162")
 public class InsultInjury extends Card {
 
     public InsultInjury() {

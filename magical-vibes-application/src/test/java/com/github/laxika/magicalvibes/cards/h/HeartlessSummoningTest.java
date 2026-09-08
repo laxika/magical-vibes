@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -103,6 +104,20 @@ class HeartlessSummoningTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Colored creature spells apply the reduction during payment")
+    void coloredCreatureSpellsApplyReductionDuringPayment() {
+        harness.addToBattlefield(player1, new HeartlessSummoning());
+        harness.setHand(player1, List.of(new SoldeviAdnate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Soldevi Adnate");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

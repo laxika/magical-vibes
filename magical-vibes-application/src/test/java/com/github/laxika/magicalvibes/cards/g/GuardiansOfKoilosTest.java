@@ -33,8 +33,9 @@ class GuardiansOfKoilosTest extends BaseCardTest {
         void etbTriggersMayPrompt() {
             harness.addToBattlefield(player1, new GildedLotus());
             castGuardians();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect from stack
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Gilded Lotus"));
+            harness.passBothPriorities();
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         }
@@ -45,10 +46,10 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GildedLotus());
             UUID lotusId = harness.getPermanentId(player1, "Gilded Lotus");
             castGuardians();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-            harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
+            harness.passBothPriorities();
             harness.handlePermanentChosen(player1, lotusId);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
 
             harness.assertNotOnBattlefield(player1, "Gilded Lotus");
             harness.assertInHand(player1, "Gilded Lotus");
@@ -60,10 +61,10 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             harness.addToBattlefield(player1, new ArvadTheCursed());
             UUID arvadId = harness.getPermanentId(player1, "Arvad the Cursed");
             castGuardians();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-            harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
+            harness.passBothPriorities();
             harness.handlePermanentChosen(player1, arvadId);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
 
             harness.assertNotOnBattlefield(player1, "Arvad the Cursed");
             harness.assertInHand(player1, "Arvad the Cursed");
@@ -74,9 +75,10 @@ class GuardiansOfKoilosTest extends BaseCardTest {
         void decliningMayDoesNotBounce() {
             harness.addToBattlefield(player1, new GildedLotus());
             castGuardians();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-            harness.handleMayAbilityChosen(player1, false); // decline
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Gilded Lotus"));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.stack).isEmpty();
             harness.assertOnBattlefield(player1, "Gilded Lotus");
@@ -89,10 +91,10 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GildedLotus());
             UUID lotusId = harness.getPermanentId(player1, "Gilded Lotus");
             castGuardians();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
             harness.handlePermanentChosen(player1, lotusId);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
 
             harness.assertOnBattlefield(player1, "Guardians of Koilos");
         }
@@ -139,10 +141,10 @@ class GuardiansOfKoilosTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GuardiansOfKoilos());
             UUID otherGuardiansId = harness.getPermanentId(player1, "Guardians of Koilos");
             castGuardians();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-            harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
+            harness.passBothPriorities();
             harness.handlePermanentChosen(player1, otherGuardiansId);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
 
             // The first Guardians should be bounced, the newly cast one remains
             harness.assertInHand(player1, "Guardians of Koilos");

@@ -30,6 +30,8 @@ public class ExileNonlandCardFromTargetHandOrGraveyardEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ExileNonlandCardFromTargetHandOrGraveyardEffect exileEffect =
+                (ExileNonlandCardFromTargetHandOrGraveyardEffect) effect;
         if (entry.getTargetId() == null) {
             return;
         }
@@ -47,7 +49,8 @@ public class ExileNonlandCardFromTargetHandOrGraveyardEffectHandler
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice(
                         entry.getControllerId(), targetPlayerId,
-                        candidates.stream().map(Card::getId).toList()));
+                        candidates.stream().map(Card::getId).toList(),
+                        exileEffect.grantPlayPermission()));
     }
 
     private static void addNonlands(List<Card> candidates, List<Card> cards) {

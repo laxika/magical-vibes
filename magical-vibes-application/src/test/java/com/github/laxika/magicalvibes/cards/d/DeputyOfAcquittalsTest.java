@@ -30,14 +30,13 @@ class DeputyOfAcquittalsTest extends BaseCardTest {
     class EtbMayBounce {
 
         @Test
-        @DisplayName("ETB prompts the may choice when another creature you control exists")
-        void etbTriggersMayPrompt() {
+        @DisplayName("ETB prompts for a target when another creature you control exists")
+        void etbPromptsForTarget() {
             harness.addToBattlefield(player1, new GrizzlyBears());
             castDeputy();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect from stack
+            harness.passBothPriorities();
 
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         }
 
         @Test
@@ -47,9 +46,9 @@ class DeputyOfAcquittalsTest extends BaseCardTest {
             UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
             castDeputy();
             harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, bearsId);
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, bearsId);
 
             harness.assertNotOnBattlefield(player1, "Grizzly Bears");
             harness.assertInHand(player1, "Grizzly Bears");
@@ -60,8 +59,10 @@ class DeputyOfAcquittalsTest extends BaseCardTest {
         @DisplayName("Declining does not bounce anything")
         void decliningMayDoesNotBounce() {
             harness.addToBattlefield(player1, new GrizzlyBears());
+            UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
             castDeputy();
             harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, bearsId);
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);
 

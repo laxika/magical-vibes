@@ -65,11 +65,13 @@ public class ExileNonlandCardFromTargetHandOrGraveyardChoiceInteractionHandler
         if (fromHand) {
             hand.remove(chosenCard);
         } else {
-            permanentRemovalService.removeCardFromGraveyardById(gameData, chosenCardId);
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, chosenCardId);
         }
         exileService.exileCard(gameData, targetPlayerId, chosenCard);
-        gameData.exilePlayPermissions.put(chosenCardId, interaction.playerId());
-        gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCardId);
+        if (interaction.grantPlayPermission()) {
+            gameData.exilePlayPermissions.put(chosenCardId, interaction.playerId());
+            gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCardId);
+        }
 
         String chooserName = gameData.playerIdToName.get(interaction.playerId());
         String zone = fromHand ? "hand" : "graveyard";

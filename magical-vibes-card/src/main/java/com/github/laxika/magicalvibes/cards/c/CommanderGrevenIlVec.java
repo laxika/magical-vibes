@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "115")
+@CardRegistration(set = "TPR", collectorNumber = "88")
 public class CommanderGrevenIlVec extends Card {
 
     public CommanderGrevenIlVec() {

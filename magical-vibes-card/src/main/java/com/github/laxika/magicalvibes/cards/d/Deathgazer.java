@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "9ED", collectorNumber = "124")
 @CardRegistration(set = "8ED", collectorNumber = "126")
+@CardRegistration(set = "MMQ", collectorNumber = "130")
 public class Deathgazer extends Card {
 
     public Deathgazer() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -40,6 +41,25 @@ public final class AiUtils {
         }
         return predicate instanceof PermanentAllOfPredicate allOf
                 && allOf.predicates().stream().anyMatch(AiUtils::containsManaValueEqualsXPredicate);
+    }
+
+    /**
+     * Whether the card's target filter contains a {@link PermanentManaValueAtMostXPredicate}, so
+     * the announced X must be at least the chosen target's mana value rather than being free to
+     * pick.
+     */
+    public static boolean hasManaValueAtMostXTarget(Card card) {
+        TargetFilter filter = card.getTargetFilter();
+        return filter instanceof PermanentPredicateTargetFilter pf
+                && containsManaValueAtMostXPredicate(pf.predicate());
+    }
+
+    private static boolean containsManaValueAtMostXPredicate(PermanentPredicate predicate) {
+        if (predicate instanceof PermanentManaValueAtMostXPredicate) {
+            return true;
+        }
+        return predicate instanceof PermanentAllOfPredicate allOf
+                && allOf.predicates().stream().anyMatch(AiUtils::containsManaValueAtMostXPredicate);
     }
 
     /**

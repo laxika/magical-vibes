@@ -38,11 +38,12 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
             return;
         }
 
+        int lifeLoss = e.amount() * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
         int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - e.amount());
+        gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
 
         String playerName = gameData.playerIdToName.get(playerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + e.amount() + " life (" , entry.getCard(), ")."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + lifeLoss + " life (" , entry.getCard(), ")."));
 
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.amount(), entry.getCard().getName());
     }

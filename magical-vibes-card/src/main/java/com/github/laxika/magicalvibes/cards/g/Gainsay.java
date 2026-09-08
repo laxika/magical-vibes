@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "49")
+@CardRegistration(set = "PLS", collectorNumber = "26")
 public class Gainsay extends Card {
 
     public Gainsay() {

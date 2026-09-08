@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "73")
+@CardRegistration(set = "JOU", collectorNumber = "52")
 public class SigiledStarfish extends Card {
 
     public SigiledStarfish() {

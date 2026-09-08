@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "143")
+@CardRegistration(set = "M21", collectorNumber = "145")
 public class FurorOfTheBitten extends Card {
 
     public FurorOfTheBitten() {

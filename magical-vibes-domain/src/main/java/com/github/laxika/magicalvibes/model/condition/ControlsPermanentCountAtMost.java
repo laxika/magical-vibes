@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record ControlsPermanentCountAtMost(int maxCount, PermanentPredicate filter) implements Condition {
 
     @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
+
+    @Override
     public String conditionName() {
         return "controls " + maxCount + " or fewer matching permanents";
     }

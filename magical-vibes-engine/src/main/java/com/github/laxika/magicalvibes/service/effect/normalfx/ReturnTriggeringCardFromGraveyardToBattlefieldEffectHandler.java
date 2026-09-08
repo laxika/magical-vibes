@@ -15,8 +15,9 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Returns the triggering card (Graceful Reprieve) from its owner's graveyard to the battlefield under
- * its owner's control. Fizzles silently if the card is no longer in a graveyard.
+ * Returns the triggering card from its owner's graveyard to the battlefield under its owner's
+ * control, or under the triggered ability controller's control for Adarkar Valkyrie. Fizzles
+ * silently if the card is no longer in a graveyard.
  */
 @Component
 @RequiredArgsConstructor
@@ -34,15 +35,30 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Card card = entry.getCard();
-        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        UUID triggeringCardId = entry.getTriggeringCardId();
+        Card card = triggeringCardId == null
+                ? null
+                : gameQueryService.findCardInGraveyardById(gameData, triggeringCardId);
+        UUID ownerId = triggeringCardId == null
+                ? null
+                : gameQueryService.findGraveyardOwnerById(gameData, triggeringCardId);
         if (ownerId == null) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card is no longer in a graveyard)."));
             return;
         }
 
-        boolean enterTapped = ((ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect).enterTapped();
-        permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-        graveyardReturnSupport.putCardOntoBattlefield(gameData, ownerId, card, null, null, enterTapped);
+        long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
+        if (expectedEntryVersion != 0
+                && gameData.graveyardEntryVersion(triggeringCardId) != expectedEntryVersion) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card is no longer in the expected graveyard entry)."));
+            return;
+        }
+
+        var returnEffect = (ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect;
+        permanentRemovalService.removeCardFromGraveyardById(gameData, triggeringCardId);
+        UUID battlefieldControllerId = returnEffect.returnUnderController() ? entry.getControllerId() : ownerId;
+        graveyardReturnSupport.putCardOntoBattlefield(
+                gameData, battlefieldControllerId, card, null, null, returnEffect.enterTapped(), false,
+                returnEffect.counterType(), false, false, returnEffect.counterAmount());
     }
 }

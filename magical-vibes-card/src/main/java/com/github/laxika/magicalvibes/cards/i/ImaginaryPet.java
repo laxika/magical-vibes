@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "82")
+@CardRegistration(set = "USG", collectorNumber = "81")
 public class ImaginaryPet extends Card {
 
     public ImaginaryPet() {

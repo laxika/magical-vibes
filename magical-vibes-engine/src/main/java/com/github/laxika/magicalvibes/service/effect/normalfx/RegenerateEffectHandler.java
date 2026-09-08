@@ -29,10 +29,14 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         
-                UUID regenerationTargetId = entry.getTargetId();
-                if (regenerationTargetId == null && entry.getSourcePermanentId() != null) {
+                UUID regenerationTargetId = effect.targetSpec().selfTargeting()
+                        && entry.getTriggeringCardId() != null
+                        && entry.getSourcePermanentId() != null
+                        ? entry.getSourcePermanentId()
+                        : entry.getTargetId();
+                if (entry.getSourcePermanentId() != null) {
                     Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                    if (source != null) {
+                    if (source != null && source.getAttachedTo() != null) {
                         regenerationTargetId = source.getAttachedTo();
                     }
                 }
@@ -45,6 +49,10 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                 if (effect instanceof RegenerateEffect regenerate) {
                     if (regenerate.opponentMayDrawOnRegenerate()) {
                         perm.setOpponentDrawRegenerationShield(perm.getOpponentDrawRegenerationShield() + 1);
+                        UUID opponentId = gameQueryService.getOpponentId(gameData, entry.getControllerId());
+                        if (opponentId != null) {
+                            perm.getOpponentDrawRegenerationShieldRecipients().add(opponentId);
+                        }
                     }
                     if (regenerate.putMinusOneCounterOnRegenerate()) {
                         perm.setMinusOneCounterRegenerationShield(perm.getMinusOneCounterRegenerationShield() + 1);

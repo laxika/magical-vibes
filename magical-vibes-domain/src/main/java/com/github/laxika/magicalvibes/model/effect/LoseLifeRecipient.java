@@ -6,8 +6,12 @@ package com.github.laxika.magicalvibes.model.effect;
  * <ul>
  *   <li>{@link #CONTROLLER} — the effect's controller loses life (a cost/drawback, e.g. Phyrexian
  *       Rager).</li>
+ *   <li>{@link #OWNER} — the owner of the effect's source card loses life, even after a control
+ *       change.</li>
  *   <li>{@link #TARGET_PLAYER} — the targeted player (stack entry's {@code targetId}) loses life;
  *       the effect targets a player.</li>
+ *   <li>{@link #TRIGGERING_PLAYER} — the player whose spell or event caused the trigger
+ *       (stack entry's {@code targetId}) loses life; the effect does not target that player.</li>
  *   <li>{@link #TARGET_PERMANENT_CONTROLLER} — the controller of the targeted permanent (stack
  *       entry's {@code targetId} is a permanent, not a player) loses life; the effect does not add
  *       its own target. Used by "destroy target creature; ... its controller loses N life"
@@ -28,7 +32,9 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public enum LoseLifeRecipient {
     CONTROLLER,
+    OWNER,
     TARGET_PLAYER,
+    TRIGGERING_PLAYER,
     TARGET_PERMANENT_CONTROLLER,
     DYING_CREATURE_CONTROLLER,
     DEFENDING_PLAYER,

@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "56")
+@CardRegistration(set = "LEG", collectorNumber = "171")
 public class WallOfOpposition extends Card {
 
     public WallOfOpposition() {
-        addActivatedAbility(new ActivatedAbility(false, "{1}", List.of(new BoostSelfEffect(1, 0)),
-                "{1}: This creature gets +1/+0 until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{1}", List.of(new BoostSelfEffect(1, 0)), "{1}: This creature gets +1/+0 until end of turn."));
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WinterOrb.class, Forest.class, GrizzlyBears.class, Mountain.class})
 class WinterOrbTest extends BaseCardTest {
 
     @Test
@@ -63,6 +65,22 @@ class WinterOrbTest extends BaseCardTest {
         advanceToNextTurn(player2);
 
         assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The controller may choose not to untap any land")
+    void mayChooseNoLandToUntap() {
+        addCreatureReady(player1, new WinterOrb());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent mountain = addCreatureReady(player1, new Mountain());
+        forest.tap();
+        mountain.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(mountain.isTapped()).isTrue();
     }
 
     @Test

@@ -86,6 +86,12 @@ final class RecordingCharacteristicState extends CharacteristicState {
     }
 
     @Override
+    public void removeSupertype(CardSupertype supertype) {
+        log("removeSupertype:" + supertype);
+        super.removeSupertype(supertype);
+    }
+
+    @Override
     public void addSubtype(CardSubtype subtype) {
         log("addSubtype:" + subtype);
         super.addSubtype(subtype);
@@ -133,6 +139,12 @@ final class RecordingCharacteristicState extends CharacteristicState {
     public void removeKeyword(Keyword keyword) {
         log("removeKeyword:" + keyword);
         super.removeKeyword(keyword);
+    }
+
+    @Override
+    public void blockKeyword(Keyword keyword) {
+        log("blockKeyword:" + keyword);
+        super.blockKeyword(keyword);
     }
 
     @Override

@@ -18,6 +18,7 @@ import java.util.List;
  * Back half (Market) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "148")
+@CardRegistration(set = "AKR", collectorNumber = "236")
 public class FarmMarket extends Card {
 
     public FarmMarket() {

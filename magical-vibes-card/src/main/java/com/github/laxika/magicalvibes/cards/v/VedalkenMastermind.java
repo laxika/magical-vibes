@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "123")
+@CardRegistration(set = "5DN", collectorNumber = "40")
 public class VedalkenMastermind extends Card {
 
     public VedalkenMastermind() {

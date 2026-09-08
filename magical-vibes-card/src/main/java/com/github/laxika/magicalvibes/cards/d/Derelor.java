@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "6ED", collectorNumber = "120")
 @CardRegistration(set = "5ED", collectorNumber = "155")
+@CardRegistration(set = "FEM", collectorNumber = "36")
 public class Derelor extends Card {
 
     public Derelor() {
-        // Black spells you cast cost {B} more to cast (modeled as +1 generic).
         addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
-                new CardColorPredicate(CardColor.BLACK), 1, CostModificationScope.SELF));
+                new CardColorPredicate(CardColor.BLACK), "{B}", CostModificationScope.SELF));
     }
 }

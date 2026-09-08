@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "229")
+@CardRegistration(set = "ECL", collectorNumber = "373")
 public class HighPerfectMorcant extends Card {
 
     public HighPerfectMorcant() {

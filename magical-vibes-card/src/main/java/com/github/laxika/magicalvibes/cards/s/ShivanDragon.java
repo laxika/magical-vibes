@@ -11,12 +11,16 @@ import java.util.List;
 @CardRegistration(set = "M14", collectorNumber = "154")
 @CardRegistration(set = "M10", collectorNumber = "156")
 @CardRegistration(set = "M19", collectorNumber = "300")
+@CardRegistration(set = "M20", collectorNumber = "335")
 @CardRegistration(set = "9ED", collectorNumber = "219")
 @CardRegistration(set = "8ED", collectorNumber = "221")
 @CardRegistration(set = "7ED", collectorNumber = "218")
 @CardRegistration(set = "DRB", collectorNumber = "13")
 @CardRegistration(set = "5ED", collectorNumber = "267")
 @CardRegistration(set = "4ED", collectorNumber = "220")
+@CardRegistration(set = "FDN", collectorNumber = "206")
+@CardRegistration(set = "BTD", collectorNumber = "44")
+@CardRegistration(set = "SUM", collectorNumber = "177")
 public class ShivanDragon extends Card {
 
     public ShivanDragon() {

@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "274")
 @CardRegistration(set = "5ED", collectorNumber = "349")
+@CardRegistration(set = "CHR", collectorNumber = "92")
 public class AshnodsAltar extends Card {
 
     public AshnodsAltar() {
@@ -20,8 +20,7 @@ public class AshnodsAltar extends Card {
                 false,
                 null,
                 List.of(new SacrificeCreatureCost(), new AwardManaEffect(ManaColor.COLORLESS, 2)),
-                "Sacrifice a creature: Add {C}{C}.",
-                TargetFilters.creatureYouControl()
+                "Sacrifice a creature: Add {C}{C}."
         ));
     }
 }

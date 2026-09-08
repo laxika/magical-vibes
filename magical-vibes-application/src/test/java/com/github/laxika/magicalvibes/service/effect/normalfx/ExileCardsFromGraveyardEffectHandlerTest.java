@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +59,8 @@ class ExileCardsFromGraveyardEffectHandlerTest {
     private ExileService exileService;
     @Mock
     private GraveyardService graveyardService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @InjectMocks
     private GraveyardReturnSupport support;
     private GameData gd;
@@ -84,7 +89,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         exileCardsFromGraveyardHandler = new ExileCardsFromGraveyardEffectHandler(
-                gameQueryService, gameLogService, lifeSupport, support);
+                gameQueryService, gameLogService, lifeSupport, support, predicateEvaluationService);
 
     }
 
@@ -140,6 +145,34 @@ class ExileCardsFromGraveyardEffectHandlerTest {
 
                 verify(exileService).exileCard(gd, player1Id, creature);
                 verify(lifeSupport).applyGainLife(gd, player1Id, 3);
+            }
+
+            @Test
+            @DisplayName("Conditional creature rider makes each opponent lose life and controller gain life")
+            void conditionalCreatureRiderAppliesAfterExile() {
+                Card creature = createCard("Grizzly Bears");
+                creature.setType(CardType.CREATURE);
+                Card noncreature = createCard("Forest");
+                noncreature.setType(CardType.LAND);
+                gd.playerGraveyards.get(player2Id).add(creature);
+                gd.playerGraveyards.get(player2Id).add(noncreature);
+
+                ExileCardsFromGraveyardEffect effect = new ExileCardsFromGraveyardEffect(
+                        2, new CardTypePredicate(CardType.CREATURE), 2, 2, true);
+                Card source = createCard("Soul-Shackled Zombie");
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source,
+                        player1Id, source.getName(), List.of(effect),
+                        List.of(creature.getId(), noncreature.getId()));
+
+                when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+                when(gameQueryService.findCardInGraveyardById(gd, noncreature.getId())).thenReturn(noncreature);
+                when(predicateEvaluationService.matchesCardPredicate(
+                        eq(creature), eq(effect.conditionalFilter()), eq(source.getId()))).thenReturn(true);
+
+                exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
+
+                verify(lifeSupport).applyGainLife(gd, player1Id, 2);
+                verify(lifeSupport).applyLifeLoss(gd, player2Id, 2, source.getName());
             }
 
             @Test

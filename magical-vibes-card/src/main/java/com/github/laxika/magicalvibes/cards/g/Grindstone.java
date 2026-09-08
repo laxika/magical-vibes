@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MillTwoRepeatIfSharedColorEff
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "290")
+@CardRegistration(set = "TPR", collectorNumber = "223")
 public class Grindstone extends Card {
 
     public Grindstone() {

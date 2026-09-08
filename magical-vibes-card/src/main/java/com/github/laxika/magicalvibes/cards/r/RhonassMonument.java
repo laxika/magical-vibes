@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "236")
+@CardRegistration(set = "AKR", collectorNumber = "279")
 public class RhonassMonument extends Card {
 
     public RhonassMonument() {

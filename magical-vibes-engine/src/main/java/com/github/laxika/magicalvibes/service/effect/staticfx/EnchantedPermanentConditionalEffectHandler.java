@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ public class EnchantedPermanentConditionalEffectHandler implements StaticEffectH
 
     private final StaticEffectSupport support;
     private final StaticEffectHandlerRegistry staticEffectHandlerRegistry;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -24,11 +26,15 @@ public class EnchantedPermanentConditionalEffectHandler implements StaticEffectH
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var conditional = (EnchantedPermanentConditionalEffect) effect;
-        if (!context.source().isAttached()
-                || !context.source().getAttachedTo().equals(context.target().getId())) {
+        if (!context.source().isAttached()) {
             return;
         }
-        CardEffect activeEffect = support.matchesStaticFilter(context, context.target(), conditional.filter())
+        var enchanted = gameQueryService.findPermanentById(
+                context.gameData(), context.source().getAttachedTo());
+        if (enchanted == null) {
+            return;
+        }
+        CardEffect activeEffect = support.matchesStaticFilter(context, enchanted, conditional.filter())
                 ? conditional.ifMatch()
                 : conditional.ifNotMatch();
         if (activeEffect == null) {

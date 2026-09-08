@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,60 +13,54 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GiantSlugTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Pays five mana and grants the chosen landwalk at the controller's next upkeep")
-    void grantsChosenLandwalkAtNextUpkeep() {
-        Permanent slug = addSlug();
+    private Permanent activateSlug() {
+        Permanent slug = harness.addToBattlefieldAndReturn(player1, new GiantSlug());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, slug, Keyword.FORESTWALK)).isFalse();
-
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, Keyword.FORESTWALK.name());
-
-        assertThat(gqs.hasKeyword(gd, slug, Keyword.FORESTWALK)).isTrue();
+        return slug;
     }
 
     @Test
-    @DisplayName("The delayed landwalk waits for the controller's upkeep")
-    void waitsForControllerUpkeep() {
-        addSlug();
+    @DisplayName("The ability waits for the activator's next upkeep and uses a basic land type choice")
+    void waitsForNextUpkeep() {
+        Permanent slug = activateSlug();
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.ISLANDWALK)).isFalse();
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpkeep.class))
-                .hasSize(1);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+
+        harness.handleListChoice(player1, "ISLAND");
+
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.ISLANDWALK)).isTrue();
     }
 
     @Test
-    @DisplayName("Chosen landwalk wears off at end of turn")
+    @DisplayName("The chosen landwalk wears off at the end of the upkeep's turn")
     void landwalkWearsOffAtEndOfTurn() {
-        Permanent slug = addSlug();
+        Permanent slug = activateSlug();
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, Keyword.ISLANDWALK.name());
+        harness.handleListChoice(player1, "FOREST");
 
-        assertThat(gqs.hasKeyword(gd, slug, Keyword.ISLANDWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.FORESTWALK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, slug, Keyword.ISLANDWALK)).isFalse();
-    }
-
-    private Permanent addSlug() {
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        return harness.addToBattlefieldAndReturn(player1, new GiantSlug());
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.FORESTWALK)).isFalse();
     }
 }

@@ -21,4 +21,9 @@ public record GrantGraveyardAbilityToCreatureCardsEffect(ActivatedAbility abilit
     public ActivatedAbility grantedGraveyardAbilityFor(Card card) {
         return ability;
     }
+
+    @Override
+    public boolean appliesTo(Card card) {
+        return card != null && card.hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE);
+    }
 }

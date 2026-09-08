@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "70")
+@CardRegistration(set = "AKR", collectorNumber = "78")
 public class ShimmerscaleDrake extends Card {
 
     public ShimmerscaleDrake() {

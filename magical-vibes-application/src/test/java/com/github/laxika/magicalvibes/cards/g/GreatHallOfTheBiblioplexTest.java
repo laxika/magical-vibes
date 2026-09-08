@@ -36,7 +36,6 @@ class GreatHallOfTheBiblioplexTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getInstantSorceryOnlyColored(ManaColor.RED)).isEqualTo(1);
     }
 

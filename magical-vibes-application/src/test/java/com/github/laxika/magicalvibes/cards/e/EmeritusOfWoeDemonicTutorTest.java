@@ -78,7 +78,7 @@ class EmeritusOfWoeDemonicTutorTest extends BaseCardTest {
     private void castPreparedTutor(Permanent emeritus) {
         UUID copyId = emeritus.getPreparedSpellCardId();
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castFromExile(player1, copyId);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);

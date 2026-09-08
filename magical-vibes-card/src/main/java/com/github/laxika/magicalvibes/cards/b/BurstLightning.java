@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "119")
+@CardRegistration(set = "FDN", collectorNumber = "192")
 public class BurstLightning extends Card {
 
     public BurstLightning() {

@@ -7,10 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,30 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DiscipleOfGriselbrandTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has activated ability with {1} mana cost, sacrifice creature cost, and gain life effect")
-    void hasCorrectAbilityStructure() {
-        DiscipleOfGriselbrand card = new DiscipleOfGriselbrand();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isEqualTo(new GainLifeEffect(new XValue()));
-
-        SacrificeCreatureCost sacCost = (SacrificeCreatureCost) ability.getEffects().get(0);
-        assertThat(sacCost.trackSacrificedToughness()).isTrue();
-        assertThat(sacCost.trackSacrificedPower()).isFalse();
-        assertThat(sacCost.trackSacrificedManaValue()).isFalse();
-    }
 
     // ===== Sacrifice and gain life =====
 
@@ -59,6 +31,7 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInstea
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOU", collectorNumber = "106")
+@CardRegistration(set = "AKR", collectorNumber = "171")
 public class PuncturingBlow extends Card {
 
     public PuncturingBlow() {

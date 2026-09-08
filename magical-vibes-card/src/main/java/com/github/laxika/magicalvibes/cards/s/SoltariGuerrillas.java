@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectNextCombatDamageToOpp
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "272")
+@CardRegistration(set = "TPR", collectorNumber = "212")
 public class SoltariGuerrillas extends Card {
 
     public SoltariGuerrillas() {

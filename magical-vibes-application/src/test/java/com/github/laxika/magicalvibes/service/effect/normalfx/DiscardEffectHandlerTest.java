@@ -104,6 +104,40 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
     }
 
     @Nested
+    @DisplayName("TRIGGERING_PLAYER (chosen)")
+    class TriggeringPlayer {
+
+        @Test
+        @DisplayName("Triggering player discards without a target and tracks opponent cause")
+        void triggeringPlayerDiscards() {
+            Card card = createCard("Putrefaction");
+            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER);
+            StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+            gd.playerHands.get(player2Id).add(createCard("A"));
+
+            resolveEffect(gd, entry, effect);
+
+            assertThat(effect.targetSpec()).isEqualTo(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE);
+            assertThat(gd.discardCausedByOpponent).isTrue();
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), eq(1),
+                    any(DiscardFollowUp.class));
+        }
+
+        @Test
+        @DisplayName("Controller casting their own spell is not opponent-caused")
+        void controllerIsNotOpponentCause() {
+            Card card = createCard("Putrefaction");
+            DiscardEffect effect = new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER);
+            StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player1Id);
+            gd.playerHands.get(player1Id).add(createCard("A"));
+
+            resolveEffect(gd, entry, effect);
+
+            assertThat(gd.discardCausedByOpponent).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("EACH_PLAYER (chosen)")
     class EachPlayer {
 

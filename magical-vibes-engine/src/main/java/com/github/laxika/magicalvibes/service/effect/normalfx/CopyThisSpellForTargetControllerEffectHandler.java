@@ -36,7 +36,9 @@ public class CopyThisSpellForTargetControllerEffectHandler implements NormalEffe
         if (targetId == null) {
             return;
         }
-        UUID copyControllerId = gameQueryService.findPermanentController(gameData, targetId);
+        UUID copyControllerId = gameData.playerIds.contains(targetId)
+                ? targetId
+                : gameQueryService.findPermanentController(gameData, targetId);
         if (copyControllerId == null) {
             return;
         }
@@ -51,7 +53,7 @@ public class CopyThisSpellForTargetControllerEffectHandler implements NormalEffe
 
         Card copyCard = copySupport.createCopyCard(spellCard);
         StackEntry copyEntry = copySupport.createCopyStackEntry(entry, copyCard, copyControllerId, targetId);
-        gameData.stack.add(copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created for target's controller", gameData.id, spellCard.getName());

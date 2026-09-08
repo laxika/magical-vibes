@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "192")
 @CardRegistration(set = "WTH", collectorNumber = "90")
+@CardRegistration(set = "BTD", collectorNumber = "36")
 public class BloodrockCyclops extends Card {
 
     public BloodrockCyclops() {

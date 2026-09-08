@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 /**
  * Marker for a trigger that expands into an effect applied to the creature just dealt damage by the
  * source creature.
@@ -7,6 +9,14 @@ package com.github.laxika.magicalvibes.model.effect;
 public interface DamagedCreatureTriggerEffect extends CardEffect {
 
     CardEffect triggeredEffect();
+
+    default PermanentPredicate damagedCreatureFilter() {
+        return null;
+    }
+
+    default boolean combatDamageOnly() {
+        return false;
+    }
 
     default boolean equipmentScoped() {
         return false;

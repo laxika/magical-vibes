@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayersLibraryForCardToTopEffect;
 import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,9 @@ public class SearchTargetPlayersLibraryForCardToTopEffectHandler implements Norm
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var targetPlayers = entry.targetsForEffect(effect);
+        if (targetPlayers.isEmpty() && entry.getTargetId() != null) {
+            targetPlayers = List.of(entry.getTargetId());
+        }
         if (targetPlayers.isEmpty()) {
             return;
         }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "245")
+@CardRegistration(set = "M21", collectorNumber = "248")
 public class RadiantFountain extends Card {
 
     public RadiantFountain() {

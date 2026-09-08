@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "70")
 @CardRegistration(set = "8ED", collectorNumber = "71")
+@CardRegistration(set = "MMQ", collectorNumber = "70")
 public class Cowardice extends Card {
 
     public Cowardice() {

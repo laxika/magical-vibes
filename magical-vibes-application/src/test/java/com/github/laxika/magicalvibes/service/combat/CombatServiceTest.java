@@ -332,6 +332,17 @@ class CombatServiceTest {
         }
 
         @Test
+        @DisplayName("Clears combat-scoped attack requirements")
+        void clearsCombatScopedAttackRequirements() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            attacker.setMustAttackThisCombat(true);
+
+            combatService.clearCombatState(gd);
+
+            assertThat(attacker.isMustAttackThisCombat()).isFalse();
+        }
+
+        @Test
         @DisplayName("Clears blocking flag and blocking targets on all permanents")
         void clearsBlockingFlagAndTargets() {
             Permanent blocker = addPermanent(player2Id, createCreature("Grizzly Bears"));
@@ -451,6 +462,20 @@ class CombatServiceTest {
     @Nested
     @DisplayName("processEndOfCombatSacrifices")
     class ProcessEndOfCombatSacrificesTest {
+
+        @Test
+        void damageRiderQueuesAnAbilityEvenAfterItsSourceLeaves() {
+            Card source = createCreature("Delayed damage source");
+            UUID sourceId = UUID.randomUUID();
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(sourceId, player1Id, source, 5));
+
+            combatService.processEndOfCombatSacrifices(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourceId);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+        }
 
         @Test
         @DisplayName("Sacrifices permanent marked for end-of-combat sacrifice")

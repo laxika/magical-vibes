@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "HOU", collectorNumber = "104")
+@CardRegistration(set = "AKR", collectorNumber = "167")
 public class NehebTheEternal extends Card {
 
     public NehebTheEternal() {

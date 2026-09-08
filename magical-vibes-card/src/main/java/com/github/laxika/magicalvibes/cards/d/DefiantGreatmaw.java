@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "163")
+@CardRegistration(set = "AKR", collectorNumber = "188")
 public class DefiantGreatmaw extends Card {
 
     public DefiantGreatmaw() {

@@ -1,0 +1,22 @@
+package com.github.laxika.magicalvibes.cards.m;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+
+@CardRegistration(set = "EMN", collectorNumber = "95")
+public class MarkovCrusader extends Card {
+
+    public MarkovCrusader() {
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+    }
+}

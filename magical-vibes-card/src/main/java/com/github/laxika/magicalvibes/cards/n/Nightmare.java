@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M14", collectorNumber = "108")
+@CardRegistration(set = "SUM", collectorNumber = "120")
 @CardRegistration(set = "10E", collectorNumber = "164")
 @CardRegistration(set = "M10", collectorNumber = "107")
 @CardRegistration(set = "9ED", collectorNumber = "150")

@@ -29,8 +29,8 @@ class SkarrgGuildmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.TRAMPLE);
-        assertThat(guildmage.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, guildmage, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class SkarrgGuildmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(opponentBears.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

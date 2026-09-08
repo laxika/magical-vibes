@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WTH", collectorNumber = "164")
+@CardRegistration(set = "TSB", collectorNumber = "119")
 public class GemstoneMine extends Card {
 
     public GemstoneMine() {

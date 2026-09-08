@@ -23,7 +23,7 @@ public class GraveResearcherReanimate extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(1));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new GraveyardCardThreshold(3, new CardTypePredicate(CardType.CREATURE)),
-                new BecomePreparedEffect()));
+                new BecomePreparedEffect(), false));
     }
 
     @Override

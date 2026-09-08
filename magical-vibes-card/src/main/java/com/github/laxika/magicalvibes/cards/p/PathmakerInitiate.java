@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "146")
+@CardRegistration(set = "AKR", collectorNumber = "170")
 public class PathmakerInitiate extends Card {
 
     public PathmakerInitiate() {

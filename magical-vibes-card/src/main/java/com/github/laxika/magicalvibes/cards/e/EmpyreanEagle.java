@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "208")
+@CardRegistration(set = "FDN", collectorNumber = "239")
 public class EmpyreanEagle extends Card {
 
     public EmpyreanEagle() {

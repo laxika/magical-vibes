@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedCoinFlipSacrificeTargetPermanentAtEndStep;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -34,9 +37,20 @@ public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEff
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        SacrificeTargetPermanentAtEndStepEffect e = (SacrificeTargetPermanentAtEndStepEffect) effect;
+        if (e.flipBeforeSacrificing()) {
+            gameData.queueDelayedAction(new DelayedCoinFlipSacrificeTargetPermanentAtEndStep(
+                    target.getId(), entry.getControllerId(), entry.getCard()));
+        } else {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        }
 
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be sacrificed at the beginning of the next end step."));
-        log.info("Game {} - {} scheduled for sacrifice at end step", gameData.id, target.getCard().getName());
+        String timingText = e.flipBeforeSacrificing()
+                ? " will be subject to a coin flip at the beginning of the next end step."
+                : " will be sacrificed at the beginning of the next end step.";
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), timingText));
+        log.info("Game {} - {} scheduled for {} at end step", gameData.id, target.getCard().getName(),
+                e.flipBeforeSacrificing() ? "coin flip and possible sacrifice" : "sacrifice");
     }
 }

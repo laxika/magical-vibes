@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "ALL", collectorNumber = "13b")
 @CardRegistration(set = "7ED", collectorNumber = "33")
 @CardRegistration(set = "6ED", collectorNumber = "37")
+@CardRegistration(set = "JOU", collectorNumber = "23")
 public class Reprisal extends Card {
 
     public Reprisal() {

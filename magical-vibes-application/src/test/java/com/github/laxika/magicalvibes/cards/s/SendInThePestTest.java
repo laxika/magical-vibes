@@ -38,6 +38,7 @@ class SendInThePestTest extends BaseCardTest {
     @DisplayName("The Pest trigger gains 1 life when it attacks")
     void pestGainsLifeWhenAttacking() {
         harness.setLife(player1, 20);
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new SendInThePest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

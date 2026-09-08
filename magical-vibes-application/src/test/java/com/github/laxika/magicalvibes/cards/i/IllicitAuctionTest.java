@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IllicitAuction.class, GrizzlyBears.class, Forest.class})
 class IllicitAuctionTest extends BaseCardTest {
 
     private void cast(Player caster, Permanent target) {
@@ -69,6 +72,21 @@ class IllicitAuctionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A player can bid more than 999 life")
+    void allowsBidsAboveNineHundredNinetyNine() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 2000);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        cast(player1, creature);
+        harness.handleXValueChosen(player2, 1000);
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(controls(player2, creature)).isTrue();
+        harness.assertLife(player2, 1000);
+    }
+
+    @Test
     @DisplayName("A non-caster can win the auction; control transfers to them and only the winner loses life")
     void opponentWinsControlTransfersAway() {
         harness.setLife(player1, 20);
@@ -106,7 +124,7 @@ class IllicitAuctionTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player1, new GrizzlyBears()); // a legal creature target exists so the spell is castable
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new com.github.laxika.magicalvibes.cards.f.Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new IllicitAuction()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Component;
 public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
 
@@ -44,9 +47,12 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
             if (accepted) {
                 List<Card> hand = gameData.playerHands.get(ability.controllerId());
                 Card revealed = hand == null ? null : hand.stream()
-                        .filter(c -> c.getSubtypes().contains(revealOrTapped.subtype()))
+                        .filter(c -> c.getSubtypes().stream().anyMatch(revealOrTapped.subtypes()::contains))
                         .findFirst().orElse(null);
-                String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtype().getDisplayName();
+                String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtypes().stream()
+                        .map(subtype -> subtype.getDisplayName())
+                        .findFirst()
+                        .orElse("matching");
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals " + revealedName + " — ", ability.sourceCard(), " enters untapped."));
                 log.info("Game {} - {} reveals {} to keep {} untapped", gameData.id,
                         player.getUsername(), revealedName, ability.sourceCard().getName());
@@ -59,6 +65,9 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines — ", ability.sourceCard(), " enters tapped."));
                 log.info("Game {} - {} declines to reveal; {} enters tapped", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
+            }
+            if (ability.sourceCard().hasType(CardType.LAND)) {
+                battlefieldEntryService.processLandETBEffects(gameData, ability.controllerId(), ability.sourceCard());
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }

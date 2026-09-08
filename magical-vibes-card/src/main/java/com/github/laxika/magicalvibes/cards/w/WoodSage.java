@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCreatureNameRevealTopCa
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "275")
+@CardRegistration(set = "TPR", collectorNumber = "216")
 public class WoodSage extends Card {
 
     public WoodSage() {

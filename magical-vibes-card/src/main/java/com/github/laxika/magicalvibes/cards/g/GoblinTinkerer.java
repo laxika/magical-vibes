@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "180")
+@CardRegistration(set = "ATH", collectorNumber = "40")
 public class GoblinTinkerer extends Card {
 
     public GoblinTinkerer() {

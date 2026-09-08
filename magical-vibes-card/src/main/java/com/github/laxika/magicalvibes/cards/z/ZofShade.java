@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "125")
+@CardRegistration(set = "ROE", collectorNumber = "132")
 public class ZofShade extends Card {
 
     public ZofShade() {

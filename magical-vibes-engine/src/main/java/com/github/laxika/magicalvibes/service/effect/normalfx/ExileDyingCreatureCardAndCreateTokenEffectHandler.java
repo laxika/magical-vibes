@@ -55,7 +55,7 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
             return;
         }
 
-        permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, dyingCardId);
         exileService.exileCard(gameData, ownerId, card);
         permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), e.token(),
                 entry.getCard().getSetCode());

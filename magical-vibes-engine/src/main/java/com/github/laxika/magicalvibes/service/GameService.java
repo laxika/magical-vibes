@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -16,12 +17,17 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -29,13 +35,19 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -44,6 +56,7 @@ import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -70,9 +83,14 @@ public class GameService {
     private final ManaChoiceNarrowingService manaChoiceNarrowingService;
     private final CardRevealService cardRevealService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final TriggerCollectionService triggerCollectionService;
+    private final CastingCostService castingCostService;
+    private final PotentialManaService potentialManaService;
+    private final GraveyardTargetingService graveyardTargetingService;
+    private final TurnFaceUpCopyService turnFaceUpCopyService;
 
     @Autowired
     public GameService(GameQueryService gameQueryService, GameLogService gameLogService,
@@ -83,9 +101,14 @@ public class GameService {
                        GameOutcomeService gameOutcomeService, GameMutationCoordinator mutationCoordinator,
                        ManaChoiceNarrowingService manaChoiceNarrowingService,
                        CardRevealService cardRevealService, PredicateEvaluationService predicateEvaluationService,
+                       AmountEvaluationService amountEvaluationService,
                        ConditionEvaluationService conditionEvaluationService,
                        PermanentCounterSupport permanentCounterSupport,
-                       TriggerCollectionService triggerCollectionService) {
+                       TriggerCollectionService triggerCollectionService,
+                       CastingCostService castingCostService,
+                       PotentialManaService potentialManaService,
+                       @Lazy GraveyardTargetingService graveyardTargetingService,
+                       TurnFaceUpCopyService turnFaceUpCopyService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.combatService = combatService;
@@ -100,9 +123,14 @@ public class GameService {
         this.manaChoiceNarrowingService = manaChoiceNarrowingService;
         this.cardRevealService = cardRevealService;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.amountEvaluationService = amountEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.permanentCounterSupport = permanentCounterSupport;
         this.triggerCollectionService = triggerCollectionService;
+        this.castingCostService = castingCostService;
+        this.potentialManaService = potentialManaService;
+        this.graveyardTargetingService = graveyardTargetingService;
+        this.turnFaceUpCopyService = turnFaceUpCopyService;
     }
 
     /** Compatibility constructor for focused service tests that do not exercise morph reveals. */
@@ -116,7 +144,7 @@ public class GameService {
         this(gameQueryService, gameLogService, combatService, turnProgressionService,
                 interactionHandlerRegistry, spellCastingService, stackResolutionService,
                 abilityActivationService, mulliganService, gameOutcomeService, mutationCoordinator,
-                manaChoiceNarrowingService, null, null, null, null, null);
+                manaChoiceNarrowingService, null, null, null, null, null, null, null, null, null, null);
     }
 
     private boolean runAsActionIfNeeded(GameData gameData, Runnable action) {
@@ -226,6 +254,8 @@ public class GameService {
                     xc.playerId().equals(player.getId()) && xc.manaPayment();
             case PendingInteraction.AlternateCastXValueChoice ax ->
                     ax.playerId().equals(player.getId());
+            case PendingInteraction.TurnFaceUpXValueChoice tfu ->
+                    tfu.playerId().equals(player.getId());
             case null, default -> false;
         };
     }
@@ -248,6 +278,7 @@ public class GameService {
             if (controlledId.equals(activeDecider)) {
                 return new Player(controlledId, gameData.playerIdToName.get(controlledId));
             }
+            return player;
         }
 
         // Check if the controlled player currently holds priority
@@ -342,6 +373,133 @@ public class GameService {
         }
     }
 
+    /** Exiles a foretell card from the active player's hand as a special action. */
+    public void foretellCard(GameData gameData, Player player, int cardIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData, () -> foretellCard(gameData, actionPlayer, cardIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            boolean activePlayerTurn = player.getId().equals(gameData.activePlayerId);
+            boolean canForetellDuringAnyTurn = castingCostService != null
+                    && castingCostService.canForetellDuringAnyTurn(gameData, player.getId());
+            if (!activePlayerTurn && !canForetellDuringAnyTurn) {
+                throw new IllegalStateException("Foretell can only be used during your turn");
+            }
+
+            List<Card> hand = gameData.playerHands.get(player.getId());
+            if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
+                throw new IllegalArgumentException("Invalid card index");
+            }
+            Card card = hand.get(cardIndex);
+            ManaCost foretellCost = castingCostService == null
+                    ? card.getCastingOption(ForetellCast.class)
+                    .map(ForetellCast::manaCostString)
+                    .filter(java.util.Objects::nonNull)
+                    .map(ManaCost::new)
+                    .orElse(null)
+                    : castingCostService.getForetellCost(gameData, player.getId(), card);
+            if (foretellCost == null) {
+                throw new IllegalStateException("Card does not have foretell");
+            }
+
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            ManaCost cost = castingCostService == null
+                    ? new ManaCost("{2}")
+                    : castingCostService.getForetellActionCost(gameData, player.getId());
+            if (pool == null || !cost.canPayForForetell(pool)) {
+                throw new IllegalStateException("Not enough mana to foretell");
+            }
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+            } else {
+                cost.payForForetell(pool);
+            }
+            hand.remove(cardIndex);
+            gameData.addForetoldCardToExile(player.getId(), card, foretellCost);
+            triggerCollectionService.checkControllerForetellTriggers(gameData, player.getId(), card);
+            gameData.priorityPassedBy.clear();
+            gameLogService.append(gameData,
+                    GameLog.textCardText(player.getUsername() + " foretells ", card, "."));
+            log.info("Game {} - {} foretells {}", gameData.id, player.getUsername(), card.getName());
+            invalidateForAllPlayers(gameData);
+        }
+    }
+
+    /** Unlocks one door of a Room as a special action during the controller's main phase. */
+    public void unlockRoomDoor(GameData gameData, Player player, int permanentIndex, int doorIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> unlockRoomDoor(gameData, actionPlayer, permanentIndex, doorIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            if (!player.getId().equals(gameData.activePlayerId)
+                    || (gameData.currentStep != TurnStep.PRECOMBAT_MAIN
+                    && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN)) {
+                throw new IllegalStateException("Room doors can only be unlocked during your main phase");
+            }
+            if (!gameData.stack.isEmpty()) {
+                throw new IllegalStateException("Room doors can only be unlocked with an empty stack");
+            }
+
+            List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+            if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                throw new IllegalArgumentException("Invalid permanent index");
+            }
+            Permanent room = battlefield.get(permanentIndex);
+            if (!room.getCard().hasType(CardType.ENCHANTMENT)
+                    || !room.getCard().getSubtypes().contains(CardSubtype.ROOM)
+                    || room.getCard().getRoomDoorManaCosts().size() != 2) {
+                throw new IllegalStateException("Permanent is not a Room");
+            }
+            if (doorIndex < 0 || doorIndex > 1) {
+                throw new IllegalArgumentException("Invalid Room door index");
+            }
+            if (room.isRoomDoorUnlocked(doorIndex)) {
+                throw new IllegalStateException("Room door is already unlocked");
+            }
+
+            ManaCost cost = castingCostService == null
+                    ? new ManaCost(room.getCard().getRoomDoorManaCosts().get(doorIndex))
+                    : castingCostService.getRoomUnlockCost(
+                    gameData, player.getId(), room.getCard(), doorIndex);
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            ManaPool.EnchantmentOrRoomUnlockOrTurnFaceUpManaState restrictedMana = pool != null
+                    ? pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana() : null;
+            ManaPool.RoomSpellsOrUnlocksManaState roomMana = pool != null
+                    ? pool.promoteRoomSpellsOrUnlocksMana() : null;
+            try {
+                if (pool == null || !cost.canPay(pool)) {
+                    throw new IllegalStateException("Not enough mana to unlock that Room door");
+                }
+                cost.pay(pool);
+            } finally {
+                if (roomMana != null) {
+                    pool.restorePromotedRoomSpellsOrUnlocksMana(roomMana);
+                }
+                if (restrictedMana != null) {
+                    pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(restrictedMana);
+                }
+            }
+
+            boolean wasFullyUnlocked = room.isRoomFullyUnlocked();
+            room.unlockRoomDoor(doorIndex);
+            triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
+                    gameData, player.getId(), room, doorIndex);
+            if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {
+                triggerCollectionService.checkAllyRoomFullyUnlockedTriggers(
+                        gameData, player.getId(), room);
+            }
+            gameData.priorityPassedBy.clear();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " unlocks a door of ", room.getCard(), "."));
+            log.info("Game {} - {} unlocks door {} of {}", gameData.id, player.getUsername(),
+                    doorIndex, room.getCard().getName());
+            invalidateForAllPlayers(gameData);
+        }
+    }
+
     public void surrender(GameData gameData, Player player) {
         if (runAsActionIfNeeded(gameData, () -> surrender(gameData, player))) return;
         synchronized (gameData) {
@@ -398,6 +556,31 @@ public class GameService {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, List.of(), List.of(), false, null);
+        }
+    }
+
+    public void playCardWithGift(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                 UUID targetId, Map<UUID, Integer> damageAssignments,
+                                 List<UUID> targetIds, boolean giftPromised) {
+        playCardWithGift(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                targetIds, null, giftPromised);
+    }
+
+    public void playCardWithGift(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                 UUID targetId, Map<UUID, Integer> damageAssignments,
+                                 List<UUID> targetIds, Integer discardHandCardIndex,
+                                 boolean giftPromised) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithGift(gameData, actionPlayer, cardIndex, xValue, targetId,
+                        damageAssignments, targetIds, discardHandCardIndex, giftPromised))) {
+            return;
+        }
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardWithGift(gameData, player, cardIndex, xValue, targetId,
+                    damageAssignments, targetIds, discardHandCardIndex, giftPromised);
         }
     }
 
@@ -628,6 +811,98 @@ public class GameService {
                          UUID beholdPermanentId, Integer beholdHandCardIndex,
                          List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
                          CardSubtype beholdChosenSubtype) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                kicked, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds,
+                additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
+                beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
+                beholdChosenSubtype, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                         Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                         List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                         Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds,
+                         Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
+                         boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                         List<UUID> imposedSacrificePermanentIds,
+                         List<UUID> additionalCostSacrificePermanentIds,
+                         List<String> repeatedAdditionalCosts, boolean buyback,
+                         UUID beholdPermanentId, Integer beholdHandCardIndex,
+                         List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                         CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                kicked, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds,
+                additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
+                beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
+                beholdChosenSubtype, chosenCreatureType,
+                additionalCostSacrificePermanentIds != null && !additionalCostSacrificePermanentIds.isEmpty(),
+                null, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                         Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                         List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                         Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds,
+                         Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
+                         boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                         List<UUID> imposedSacrificePermanentIds,
+                         List<UUID> additionalCostSacrificePermanentIds,
+                         List<String> repeatedAdditionalCosts, boolean buyback,
+                         UUID beholdPermanentId, Integer beholdHandCardIndex,
+                         List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                         CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType,
+                         UUID chosenAdditionalCostObjectId) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                kicked, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds,
+                additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
+                beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
+                beholdChosenSubtype, chosenCreatureType,
+                additionalCostSacrificePermanentIds != null && !additionalCostSacrificePermanentIds.isEmpty(),
+                null, chosenAdditionalCostObjectId);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                         Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                         List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                         Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds,
+                         Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
+                         boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                         List<UUID> imposedSacrificePermanentIds,
+                         List<UUID> additionalCostSacrificePermanentIds,
+                         List<String> repeatedAdditionalCosts, boolean buyback,
+                         UUID beholdPermanentId, Integer beholdHandCardIndex,
+                         List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                         CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType,
+                         boolean waterbendPaid) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                kicked, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds,
+                additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
+                beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
+                beholdChosenSubtype, chosenCreatureType, waterbendPaid, null, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                         Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                         List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                         Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds,
+                         Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
+                         boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                         List<UUID> imposedSacrificePermanentIds,
+                         List<UUID> additionalCostSacrificePermanentIds,
+                         List<String> repeatedAdditionalCosts, boolean buyback,
+                         UUID beholdPermanentId, Integer beholdHandCardIndex,
+                         List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                         CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType,
+                         boolean waterbendPaid, Boolean payLifeForAdditionalCost,
+                         UUID chosenAdditionalCostObjectId) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
@@ -637,7 +912,8 @@ public class GameService {
                         discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds,
                         additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
                         beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
-                        beholdHandCardIndices, beholdChosenSubtype))) return;
+                        beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType, waterbendPaid,
+                        payLifeForAdditionalCost, chosenAdditionalCostObjectId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -647,7 +923,8 @@ public class GameService {
                     exileGraveyardCardIndices, kicked, discardHandCardIndex, discardHandCardIndices,
                     null, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                     repeatedAdditionalCosts, buyback, beholdPermanentId, beholdHandCardIndex,
-                    beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype);
+                    beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType,
+                    waterbendPaid, payLifeForAdditionalCost, chosenAdditionalCostObjectId);
         }
     }
 
@@ -743,17 +1020,29 @@ public class GameService {
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
                                     List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
                                     UUID sacrificePermanentId, Map<UUID, Integer> damageAssignments) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
+                retraceDiscardHandCardIndex, sacrificePermanentId, List.of(), damageAssignments);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                    UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
+                                    Map<UUID, Integer> damageAssignments) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playFlashbackSpell(gameData, actionPlayer, graveyardCardIndex, xValue, targetId,
                         targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
-                        retraceDiscardHandCardIndex, sacrificePermanentId, damageAssignments))) return;
+                        retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
+                        damageAssignments))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
                     exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, retraceDiscardHandCardIndex,
-                    sacrificePermanentId, damageAssignments);
+                    sacrificePermanentId, additionalCostSacrificePermanentIds, damageAssignments);
         }
     }
 
@@ -763,19 +1052,58 @@ public class GameService {
                                     List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
                                     UUID sacrificePermanentId, List<UUID> beholdPermanentIds,
                                     List<Integer> beholdHandCardIndices) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
+                retraceDiscardHandCardIndex, sacrificePermanentId, List.of(), beholdPermanentIds,
+                beholdHandCardIndices);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                    UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
+                                    List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playFlashbackSpell(gameData, actionPlayer, graveyardCardIndex, xValue, targetId,
                         targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
-                        retraceDiscardHandCardIndex, sacrificePermanentId, beholdPermanentIds,
+                        retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
+                        beholdPermanentIds,
                         beholdHandCardIndices))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId,
                     targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
-                    retraceDiscardHandCardIndex, sacrificePermanentId, beholdPermanentIds,
+                    retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
+                    beholdPermanentIds,
                     beholdHandCardIndices);
+        }
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                    UUID sacrificePermanentId, List<UUID> additionalCostSacrificePermanentIds,
+                                    Map<UUID, Integer> damageAssignments,
+                                    List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                                    List<Integer> discardHandCardIndices) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playFlashbackSpell(gameData, actionPlayer, graveyardCardIndex, xValue, targetId,
+                        targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
+                        retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
+                        damageAssignments, beholdPermanentIds, beholdHandCardIndices,
+                        discardHandCardIndices))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId,
+                    targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
+                    retraceDiscardHandCardIndex, sacrificePermanentId, additionalCostSacrificePermanentIds,
+                    damageAssignments, beholdPermanentIds, beholdHandCardIndices, discardHandCardIndices);
         }
     }
 
@@ -790,6 +1118,17 @@ public class GameService {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playFlashbackSpell(gameData, player, graveyardCardId, xValue, targetId, targetIds, exileGraveyardCardIndices, chosenGraveyardType);
+        }
+    }
+
+    public void playGraveyardLand(GameData gameData, Player player, UUID graveyardCardId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playGraveyardLand(gameData, actionPlayer, graveyardCardId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playGraveyardLand(gameData, player, graveyardCardId, 0);
         }
     }
 
@@ -839,6 +1178,56 @@ public class GameService {
         }
     }
 
+    public void playCardWithAdventure(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                      UUID targetId, Map<UUID, Integer> damageAssignments,
+                                      List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithAdventure(gameData, actionPlayer, cardIndex, xValue, targetId,
+                        damageAssignments, targetIds))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardWithAdventure(gameData, player, cardIndex, xValue, targetId,
+                    damageAssignments, targetIds != null ? targetIds : List.of());
+        }
+    }
+
+    public void playAdventureCard(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                  UUID targetId, List<UUID> targetIds) {
+        playAdventureCard(gameData, player, cardIndex, xValue, targetId, targetIds, null);
+    }
+
+    public void playAdventureCard(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                  UUID targetId, List<UUID> targetIds,
+                                  Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playAdventureCard(gameData, actionPlayer, cardIndex, xValue, targetId, targetIds,
+                        damageAssignments))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playAdventureCard(gameData, player, cardIndex, xValue, targetId,
+                    targetIds != null ? targetIds : List.of(), damageAssignments);
+        }
+    }
+
+    public void playAdventureCardFromGraveyard(GameData gameData, Player player, int cardIndex,
+                                                Integer xValue, UUID targetId, List<UUID> targetIds,
+                                                Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playAdventureCardFromGraveyard(gameData, actionPlayer, cardIndex, xValue,
+                        targetId, targetIds, damageAssignments))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playAdventureCardFromGraveyard(gameData, player, cardIndex, xValue,
+                    targetId, targetIds != null ? targetIds : List.of(), damageAssignments);
+        }
+    }
+
     public void playCardWithMorph(GameData gameData, Player player, int cardIndex, Integer xValue,
                                   UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
         playCardWithMorph(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, null);
@@ -860,18 +1249,51 @@ public class GameService {
     }
 
     public void turnFaceUp(GameData gameData, Player player, int permanentIndex) {
-        Player actionPlayer = player;
-        if (runAsActionIfNeeded(gameData, () -> turnFaceUp(gameData, actionPlayer, permanentIndex, null))) return;
         turnFaceUp(gameData, player, permanentIndex, null);
     }
 
     public void turnFaceUp(GameData gameData, Player player, int permanentIndex, Integer revealedHandCardIndex) {
+        turnFaceUp(gameData, player, permanentIndex, revealedHandCardIndex, List.of());
+    }
+
+    public void turnFaceUp(GameData gameData, Player player, int permanentIndex, Integer revealedHandCardIndex,
+                           List<UUID> morphAdditionalCostPermanentIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
-                () -> turnFaceUp(gameData, actionPlayer, permanentIndex, revealedHandCardIndex))) return;
+                () -> turnFaceUp(gameData, actionPlayer, permanentIndex, revealedHandCardIndex,
+                        morphAdditionalCostPermanentIds))) return;
+        turnFaceUpInternal(gameData, player, permanentIndex, revealedHandCardIndex,
+                morphAdditionalCostPermanentIds, null, false);
+    }
+
+    /** Completes a face-up payment after the player has chosen X for a disguise cost. */
+    public void completeTurnFaceUpXChoice(GameData gameData, Player player, UUID permanentId, int xValue) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> completeTurnFaceUpXChoice(gameData, actionPlayer, permanentId, xValue))) return;
         synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            requirePriority(gameData, player);
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent == null) {
+                throw new IllegalStateException("Permanent is no longer on the battlefield");
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+            if (battlefield == null || !battlefield.contains(permanent)) {
+                throw new IllegalStateException("Permanent is no longer controlled by the player");
+            }
+            turnFaceUpInternal(gameData, player, battlefield.indexOf(permanent), null,
+                    List.of(), xValue, true);
+        }
+    }
+
+    private void turnFaceUpInternal(GameData gameData, Player player, int permanentIndex,
+                                     Integer revealedHandCardIndex, List<UUID> morphAdditionalCostPermanentIds,
+                                     Integer xValue,
+                                     boolean completingXChoice) {
+        synchronized (gameData) {
+            if (!completingXChoice) {
+                player = resolveActingPlayer(gameData, player);
+                requirePriority(gameData, player);
+            }
             List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
             if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
                 throw new IllegalArgumentException("Invalid permanent index");
@@ -880,13 +1302,35 @@ public class GameService {
             if (!permanent.isFaceDown()) {
                 throw new IllegalStateException("Permanent is not face down");
             }
+            if (gameQueryService.isTurnFaceUpPrevented(gameData, permanent)) {
+                throw new IllegalStateException("Permanent can't be turned face up during this turn");
+            }
+            boolean cloaked = permanent.isCloaked();
+            boolean manifestedOrCloaked = permanent.isManifested() || cloaked;
             String morphCost = permanent.getCard().getMorphCost();
-            if (morphCost == null || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+            String faceUpCost = manifestedOrCloaked ? permanent.getCard().getManaCost() : morphCost;
+            if (manifestedOrCloaked && !permanent.getCard().hasType(CardType.CREATURE)) {
+                throw new IllegalStateException("Face-down permanent is not a creature card");
+            }
+            if ((!manifestedOrCloaked && morphCost == null) || (manifestedOrCloaked && faceUpCost == null)
+                    || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                     || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
-                throw new IllegalStateException("Permanent does not have morph");
+                throw new IllegalStateException("Permanent cannot be turned face up");
+            }
+            List<UUID> additionalCostPermanentIds = morphAdditionalCostPermanentIds != null
+                    ? morphAdditionalCostPermanentIds : List.of();
+            ReturnPermanentsCost morphAdditionalCost = permanent.getCard().getMorphAdditionalCost();
+            if (morphAdditionalCost != null) {
+                spellCastingService.validateMorphAdditionalCost(
+                        gameData, player, morphAdditionalCost, additionalCostPermanentIds);
+            }
+            DiscardCardTypeCost morphDiscardCost = permanent.getCard().getMorphDiscardCost();
+            if (morphDiscardCost != null) {
+                spellCastingService.validateMorphDiscardCost(
+                        gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
             }
             RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
-            if (morphRevealCost != null) {
+            if (!manifestedOrCloaked && morphRevealCost != null) {
                 List<Card> hand = gameData.playerHands.get(player.getId());
                 if (revealedHandCardIndex == null || hand == null
                         || revealedHandCardIndex < 0 || revealedHandCardIndex >= hand.size()) {
@@ -903,65 +1347,213 @@ public class GameService {
                         GameEventFact.RevealZone.HAND, List.of(toReveal));
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
-            } else {
-                ManaCost cost = new ManaCost(morphCost);
+            } else if (morphDiscardCost == null) {
+                ManaCost cost = new ManaCost(faceUpCost);
+                DynamicAmount morphCostReduction = permanent.getCard().getMorphCostReduction();
+                if (!manifestedOrCloaked && morphCostReduction != null && amountEvaluationService != null) {
+                    int reduction = amountEvaluationService.evaluate(gameData, morphCostReduction,
+                            AmountContext.forCasting(player.getId()));
+                    cost = cost.reducedBy(new ManaCost("{" + reduction + "}"));
+                }
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
-                if (pool == null || !cost.canPay(pool)) {
-                    throw new IllegalStateException("Not enough mana to turn the permanent face up");
+                if (pool == null) {
+                    pool = new ManaPool();
                 }
-                cost.pay(pool);
-            }
-            permanent.turnFaceUp();
-            List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
-                    .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
-                    .filter(TurnFaceUpReplacementEffect.class::isInstance)
-                    .map(TurnFaceUpReplacementEffect.class::cast)
-                    .toList();
-            for (TurnFaceUpReplacementEffect replacement : replacements) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(
-                        gameData, null, permanent, replacement.counterCount());
-            }
-            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is turned face up."));
-
-            if (triggerCollectionService != null) {
-                triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(
-                        gameData, player.getId(), permanent);
-            }
-
-            UUID controllerId = player.getId();
-            List<CardEffect> effects = permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
-                    .filter(effect -> !(effect instanceof TurnFaceUpReplacementEffect))
-                    .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
-                    .toList();
-            if (!effects.isEmpty()) {
-                boolean targetsSpell = effects.stream()
-                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
-                boolean targetsPlayer = effects.stream()
-                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                boolean targetsPermanent = effects.stream()
-                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-                if (targetsSpell) {
-                    StackEntryPredicate spellFilter = null;
-                    boolean includeAbilities = false;
-                    if (permanent.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {
-                        spellFilter = filter.predicate();
+                ManaPool.FaceDownSpellsOrTurnFaceUpManaState restrictedMana =
+                        pool.promoteFaceDownSpellsOrTurnFaceUpMana();
+                ManaPool.EnchantmentOrRoomUnlockOrTurnFaceUpManaState enchantmentOrRoomUnlockOrTurnFaceUpMana =
+                        pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
+                ManaPool.TurnPermanentsFaceUpManaState turnPermanentsFaceUpMana =
+                        pool.promoteTurnPermanentsFaceUpMana();
+                try {
+                    if (cost.hasX() && xValue == null) {
+                        ManaPool potentialPool = potentialManaService != null
+                                ? potentialManaService.buildVirtualManaPool(gameData, player.getId()) : pool;
+                        int maxX = cost.calculateMaxX(potentialPool);
+                        if (maxX <= 0 && !cost.canPay(pool, 0)) {
+                            throw new IllegalStateException("Not enough mana to turn the permanent face up");
+                        }
+                        beginTurnFaceUpXChoice(gameData, player, permanent, faceUpCost, maxX);
+                        return;
                     }
-                    gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                            permanent.getCard(), player.getId(), effects, spellFilter, includeAbilities,
-                            permanent.getId()));
-                } else if (targetsPlayer || targetsPermanent) {
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            permanent.getCard(), player.getId(), effects,
-                            !targetsPermanent, permanent.getCard().getTargetFilter(), 0, permanent.getId()));
-                } else {
-                    gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
-                            com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                            permanent.getCard(), player.getId(), permanent.getCard().getName() + "'s ability",
-                            effects, permanent.getId(), List.of()));
+                    int effectiveXValue = xValue != null ? xValue : 0;
+                    if (effectiveXValue < 0 || !cost.canPay(pool, effectiveXValue)) {
+                        ManaPool potentialPool = potentialManaService != null
+                                ? potentialManaService.buildVirtualManaPool(gameData, player.getId()) : pool;
+                        if (cost.canPay(potentialPool, effectiveXValue)) {
+                            beginTurnFaceUpXChoice(gameData, player, permanent, faceUpCost,
+                                    cost.calculateMaxX(potentialPool));
+                            return;
+                        }
+                        throw new IllegalStateException("Not enough mana to turn the permanent face up");
+                    }
+                    cost.pay(pool, effectiveXValue);
+                } finally {
+                    pool.restorePromotedTurnPermanentsFaceUpMana(turnPermanentsFaceUpMana);
+                    pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(
+                            enchantmentOrRoomUnlockOrTurnFaceUpMana);
+                    pool.restorePromotedFaceDownSpellsOrTurnFaceUpMana(restrictedMana);
                 }
             }
+            if (morphAdditionalCost != null) {
+                spellCastingService.payMorphAdditionalCost(
+                        gameData, player, permanent.getCard(), morphAdditionalCost, additionalCostPermanentIds);
+            }
+            if (morphDiscardCost != null) {
+                spellCastingService.payMorphDiscardCost(
+                        gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
+            }
+            finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true);
+        }
+    }
+
+    /** Turns a targeted face-down creature face up without using its morph or disguise action. */
+    public void turnPermanentFaceUpWithoutPayingManaCost(GameData gameData, Permanent permanent) {
+        if (runAsActionIfNeeded(gameData,
+                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, true))) return;
+        turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, true);
+    }
+
+    /** Turns a face-down permanent face up when its printed card is a creature. */
+    public void turnPermanentFaceUpIfCreatureCardWithoutPayingManaCost(GameData gameData, Permanent permanent) {
+        if (runAsActionIfNeeded(gameData,
+                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, false))) return;
+        turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, false);
+    }
+
+    private void turnPermanentFaceUpWithoutPayingManaCost(GameData gameData, Permanent permanent,
+                                                           boolean requireEffectiveCreature) {
+        synchronized (gameData) {
+            if (permanent == null || !permanent.isFaceDown()
+                    || (requireEffectiveCreature && !gameQueryService.isCreature(gameData, permanent))
+                    || (!requireEffectiveCreature && !permanent.getOriginalCard().hasType(CardType.CREATURE))
+                    || gameQueryService.isTurnFaceUpPrevented(gameData, permanent)) {
+                return;
+            }
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (controllerId == null) {
+                return;
+            }
+            finishTurningFaceUp(gameData, permanent, controllerId, null, false);
+        }
+    }
+
+    private void finishTurningFaceUp(GameData gameData, Permanent permanent, UUID controllerId,
+                                     Integer xValue, boolean autoPass) {
+        permanent.turnFaceUp();
+        gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(controllerId);
+        List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
+                .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                .filter(TurnFaceUpReplacementEffect.class::isInstance)
+                .map(TurnFaceUpReplacementEffect.class::cast)
+                .toList();
+        for (TurnFaceUpReplacementEffect replacement : replacements) {
+            int counterCount = amountEvaluationService.evaluate(gameData, replacement.counterAmount(),
+                    AmountContext.forEnteringPermanent(controllerId, permanent, xValue != null ? xValue : 0));
+            permanentCounterSupport.applyPlusOnePlusOneCounters(
+                    gameData, null, permanent, counterCount);
+        }
+        if (turnFaceUpCopyService != null
+                && turnFaceUpCopyService.prepareChoice(gameData, permanent, controllerId)) {
+            return;
+        }
+        gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is turned face up."));
+
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkSelfOrAnyPermanentTurnsFaceUpTriggers(
+                    gameData, controllerId, permanent);
+            triggerCollectionService.checkSelfOrAllyPermanentTurnsFaceUpTriggers(
+                    gameData, controllerId, permanent);
+            triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(
+                    gameData, controllerId, permanent);
+            triggerCollectionService.checkGraveyardAllyPermanentTurnsFaceUpTriggers(
+                    gameData, controllerId, permanent);
+        }
+
+        List<CardEffect> effects = permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                .filter(effect -> !(effect instanceof TurnFaceUpReplacementEffect))
+                .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
+                .toList();
+        if (!effects.isEmpty()) {
+            if (effects.size() == 1 && effects.getFirst() instanceof ChooseOneEffect modal) {
+                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        permanent.getCard(), controllerId, modal, permanent.getId()));
+                if (autoPass) {
+                    turnProgressionService.resolveAutoPass(gameData);
+                }
+                return;
+            }
+            BattlefieldAndGraveyardCardChoosingEffect mixedZoneChoice = effects.stream()
+                    .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
+                    .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (mixedZoneChoice != null && graveyardTargetingService != null) {
+                graveyardTargetingService.handleBattlefieldAndGraveyardExileETBTargeting(
+                        gameData, controllerId, permanent.getCard(), effects, permanent.getId(),
+                        mixedZoneChoice, xValue != null ? xValue : 0);
+                if (autoPass) {
+                    turnProgressionService.resolveAutoPass(gameData);
+                }
+                return;
+            }
+            boolean targetsSpell = effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
+            boolean targetsGraveyard = effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+            boolean targetsPlayer = effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            boolean targetsPermanent = effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+            if (targetsGraveyard) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        permanent.getCard(), controllerId, effects, null, 1, xValue != null ? xValue : 0));
+                triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+                if (autoPass) {
+                    turnProgressionService.resolveAutoPass(gameData);
+                }
+                return;
+            } else if (targetsSpell) {
+                StackEntryPredicate spellFilter = null;
+                boolean includeAbilities = false;
+                if (permanent.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {
+                    spellFilter = filter.predicate();
+                    includeAbilities = TriggerCollectionService.predicateContainsHasTarget(filter.predicate());
+                }
+                gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                        permanent.getCard(), controllerId, effects, spellFilter, includeAbilities,
+                        permanent.getId()));
+            } else if (targetsPlayer || targetsPermanent) {
+                boolean multiTarget = permanent.getCard().getSpellTargets().size() > 1
+                        || permanent.getCard().getSpellTargets().stream()
+                        .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0
+                                || group.getDynamicMinTargets() != null);
+                if (multiTarget) {
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                            permanent.getCard(), controllerId, effects, permanent.getId(), List.of(), 0, 0));
+                } else {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            permanent.getCard(), controllerId, effects,
+                            !targetsPermanent, permanent.getCard().getTargetFilter(), 0, permanent.getId()));
+                }
+            } else {
+                gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
+                        com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                        permanent.getCard(), controllerId, permanent.getCard().getName() + "'s ability",
+                        effects, permanent.getId(), List.of()));
+            }
+        }
+        if (autoPass) {
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    private void beginTurnFaceUpXChoice(GameData gameData, Player player, Permanent permanent,
+                                        String morphCost, int maxX) {
+        String prompt = "Choose a value for X to turn " + permanent.getCard().getName()
+                + " face up (" + morphCost + ").";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.TurnFaceUpXValueChoice(
+                player.getId(), permanent.getId(), morphCost, maxX, prompt,
+                permanent.getCard().getName()));
     }
 
     private boolean turnedFaceUpTriggerConditionIsMet(GameData gameData, Permanent source, UUID controllerId,
@@ -973,7 +1565,6 @@ public class GameService {
         return conditionEvaluationService.isMet(gameData, conditional.condition(),
                 ConditionContext.forPermanent(source, controllerId));
     }
-
     private String morphRevealLabel(RevealCardsFromHandCastingCost cost) {
         return cost.label() != null ? cost.label() + " card" : "a card";
     }
@@ -1034,26 +1625,51 @@ public class GameService {
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
                                   UUID targetId, List<UUID> exileCounterCostPermanentIds) {
+        playCardFromExile(gameData, player, exileCardId, xValue, targetId,
+                exileCounterCostPermanentIds, List.of());
+    }
+
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                  UUID targetId, List<UUID> exileCounterCostPermanentIds,
+                                  List<UUID> convokeCreatureIds) {
+        playCardFromExile(gameData, player, exileCardId, xValue, targetId,
+                exileCounterCostPermanentIds, convokeCreatureIds, List.of(), false);
+    }
+
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                  UUID targetId, List<UUID> exileCounterCostPermanentIds,
+                                  List<UUID> convokeCreatureIds, List<UUID> waterbendPermanentIds,
+                                  boolean waterbendPaid) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardFromExile(gameData, actionPlayer, exileCardId, xValue, targetId,
-                        exileCounterCostPermanentIds))) return;
+                        exileCounterCostPermanentIds, convokeCreatureIds, waterbendPermanentIds,
+                        waterbendPaid))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardFromExile(gameData, player, exileCardId, xValue, targetId,
-                    exileCounterCostPermanentIds != null ? exileCounterCostPermanentIds : List.of());
+                    exileCounterCostPermanentIds != null ? exileCounterCostPermanentIds : List.of(),
+                    convokeCreatureIds != null ? convokeCreatureIds : List.of(),
+                    waterbendPermanentIds != null ? waterbendPermanentIds : List.of(), waterbendPaid);
         }
     }
 
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, List.of());
+    }
+
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
-                () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId))) return;
+                () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId,
+                        counterCostPermanentIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId);
+            spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId,
+                    counterCostPermanentIds != null ? counterCostPermanentIds : List.of());
         }
     }
 
@@ -1135,6 +1751,29 @@ public class GameService {
         }
     }
 
+    /** Pays for one pending life-loss obligation before the affected player's next draw step. */
+    public void payDrawStepLifeLoss(GameData gameData, Player player, UUID sourceCardId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> payDrawStepLifeLoss(gameData, actionPlayer, sourceCardId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.payDrawStepLifeLoss(gameData, player, sourceCardId);
+        }
+    }
+
+    public void payGuardianAngel(GameData gameData, Player player, UUID targetId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> payGuardianAngel(gameData, actionPlayer, targetId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.payGuardianAngel(gameData, player, targetId);
+        }
+    }
+
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
         activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null);
     }
@@ -1174,6 +1813,33 @@ public class GameService {
             }
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
+        }
+    }
+
+    public void activateStackAbility(GameData gameData, Player player, UUID stackCardId,
+                                     Integer abilityIndex, Integer discardHandCardIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateStackAbility(gameData, actionPlayer, stackCardId, abilityIndex,
+                        discardHandCardIndex))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.activateStackAbility(gameData, player, stackCardId,
+                    abilityIndex, discardHandCardIndex);
+        }
+    }
+
+    public void activateExiledAbility(GameData gameData, Player player, UUID exiledCardId,
+                                      Integer abilityIndex, Integer xValue, UUID targetId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateExiledAbility(gameData, actionPlayer, exiledCardId, abilityIndex, xValue, targetId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
+            abilityActivationService.activateExiledAbility(gameData, player, exiledCardId, abilityIndex, xValue, targetId);
         }
     }
 

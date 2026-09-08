@@ -12,10 +12,13 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.UginNexusReplacementEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -36,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -186,14 +190,14 @@ class TurnProgressionServiceTest {
         }
 
         @Test
-        @DisplayName("Advances to END_OF_COMBAT and clears combat state")
+        @DisplayName("Advances to END_OF_COMBAT while retaining combat state for its triggers")
         void advancesToEndOfCombat() {
             gd.currentStep = TurnStep.COMBAT_DAMAGE;
 
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
-            verify(combatService).clearCombatState(gd);
+            verify(combatService, never()).clearCombatState(gd);
         }
 
         @Test
@@ -274,6 +278,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+            verify(combatService).clearCombatState(gd);
             verify(stepTriggerService).handlePostcombatMainTriggers(gd);
             verify(stepTriggerService).drainAddManaAtNextMainPhase(gd, false);
         }
@@ -308,7 +313,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
-            verify(combatService).clearCombatState(gd);
+            verify(combatService, never()).clearCombatState(gd);
             verify(combatService, never()).handleDeclareBlockersStep(any());
         }
 
@@ -357,6 +362,19 @@ class TurnProgressionServiceTest {
 
             verify(combatService).processEndOfCombatSacrifices(gd);
             verify(combatService).processEndOfCombatExiles(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        }
+
+        @Test
+        @DisplayName("Processes top-of-library moves when leaving END_OF_COMBAT")
+        void processesTopOfLibraryMoves() {
+            gd.currentStep = TurnStep.END_OF_COMBAT;
+            gd.queueDelayedAction(new DelayedPermanentAction(UUID.randomUUID(),
+                    DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT));
+
+            turnProgressionService.advanceStep(gd);
+
+            verify(combatService).processEndOfCombatLibraryTucks(gd);
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
         }
 
@@ -416,6 +434,28 @@ class TurnProgressionServiceTest {
         }
 
         @Test
+        @DisplayName("Returns to the normal next phase after postcombat additional combats")
+        void returnsToNormalPhaseAfterAdditionalCombatsAfterMain() {
+            gd.currentStep = TurnStep.POSTCOMBAT_MAIN;
+            gd.additionalCombatPhasesAfterMain = 2;
+            gd.additionalCombatPhasesAfterMainReturnStep = TurnStep.END_STEP;
+
+            turnProgressionService.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+            assertThat(gd.additionalCombatPhasesAfterMain).isEqualTo(1);
+
+            gd.currentStep = TurnStep.END_OF_COMBAT;
+            turnProgressionService.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+            assertThat(gd.additionalCombatPhasesAfterMain).isZero();
+
+            gd.currentStep = TurnStep.END_OF_COMBAT;
+            turnProgressionService.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+            assertThat(gd.additionalCombatPhasesAfterMainReturnStep).isNull();
+        }
+
+        @Test
         @DisplayName("Advances to END_STEP normally when additionalCombatMainPhasePairs is 0")
         void advancesToEndStepWhenNoExtraPairs() {
             gd.currentStep = TurnStep.POSTCOMBAT_MAIN;
@@ -424,6 +464,25 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        }
+    }
+
+    @Nested
+    @DisplayName("advanceStep — additional end steps")
+    class AdditionalEndSteps {
+
+        @Test
+        @DisplayName("Returns to END_STEP before cleanup when an additional end step is pending")
+        void returnsToEndStepWhenAdditionalEndStepIsPending() {
+            gd.currentStep = TurnStep.END_STEP;
+            gd.endStepsThisTurn = 1;
+            gd.additionalEndStepsPending = 1;
+
+            turnProgressionService.advanceStep(gd);
+
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+            assertThat(gd.endStepsThisTurn).isEqualTo(2);
+            assertThat(gd.additionalEndStepsPending).isZero();
         }
     }
 
@@ -530,6 +589,20 @@ class TurnProgressionServiceTest {
         }
 
         @Test
+        @DisplayName("Clears hand-play restrictions when their controller's next turn begins")
+        void clearsHandPlayRestrictionsAtControllerNextTurn() {
+            gd.activePlayerId = player2Id;
+            gd.playersCantPlayCardsFromHandUntilControllerNextTurn.put(
+                    player1Id, Set.of(player1Id, player2Id));
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player1Id);
+            assertThat(gd.playersCantPlayCardsFromHandUntilControllerNextTurn)
+                    .doesNotContainKey(player1Id);
+        }
+
+        @Test
         @DisplayName("Uses extra turn queue when available")
         void usesExtraTurnQueue() {
             gd.activePlayerId = player1Id;
@@ -539,6 +612,22 @@ class TurnProgressionServiceTest {
 
             assertThat(gd.activePlayerId).isEqualTo(player1Id);
             assertThat(gd.extraTurns).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Skips a queued extra turn while a Nexus replacement remains on the battlefield")
+        void skipsExtraTurnWithNexusReplacement() {
+            Card nexus = new Card();
+            nexus.addEffect(EffectSlot.STATIC, new UginNexusReplacementEffect());
+            gd.playerBattlefields.get(player1Id).add(new Permanent(nexus));
+            gd.extraTurns.addLast(player1Id);
+            int turnBefore = gd.turnNumber;
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.activePlayerId).isEqualTo(player2Id);
+            assertThat(gd.extraTurns).isEmpty();
+            assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
         }
 
         @Test
@@ -648,6 +737,7 @@ class TurnProgressionServiceTest {
             gd.playersSilencedThisTurn.add(player1Id);
             gd.activatedAbilityUsesThisTurn.put(player1Id, new HashMap<>());
             gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(player1Id, new HashSet<>());
+            gd.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.put(player1Id, new HashSet<>());
             gd.creatureDeathCountThisTurn.put(player1Id, 2);
             gd.cardsDrawnThisTurn.put(player1Id, 3);
             gd.lifeGainedThisTurn.put(player1Id, 4);
@@ -670,6 +760,7 @@ class TurnProgressionServiceTest {
             assertThat(gd.playersSilencedThisTurn).isEmpty();
             assertThat(gd.activatedAbilityUsesThisTurn).isEmpty();
             assertThat(gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn).isEmpty();
+            assertThat(gd.creatureCardsPutIntoGraveyardFromAnywhereThisTurn).isEmpty();
             assertThat(gd.creatureDeathCountThisTurn).isEmpty();
             assertThat(gd.cardsDrawnThisTurn).isEmpty();
             assertThat(gd.lifeGainedThisTurn).isEmpty();

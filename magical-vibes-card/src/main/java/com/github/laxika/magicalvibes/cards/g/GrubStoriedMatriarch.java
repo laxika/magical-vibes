@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "105")
+@CardRegistration(set = "ECL", collectorNumber = "289")
 public class GrubStoriedMatriarch extends Card {
 
     public GrubStoriedMatriarch() {

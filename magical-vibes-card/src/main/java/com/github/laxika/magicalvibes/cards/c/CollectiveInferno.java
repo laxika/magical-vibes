@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromChosenSubtypeEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "132")
+@CardRegistration(set = "ECL", collectorNumber = "363")
+@CardRegistration(set = "ECL", collectorNumber = "387")
+@CardRegistration(set = "ECL", collectorNumber = "397")
 public class CollectiveInferno extends Card {
 
     public CollectiveInferno() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MIR", collectorNumber = "1")
+@CardRegistration(set = "MMQ", collectorNumber = "1")
 public class Afterlife extends Card {
 
     public Afterlife() {

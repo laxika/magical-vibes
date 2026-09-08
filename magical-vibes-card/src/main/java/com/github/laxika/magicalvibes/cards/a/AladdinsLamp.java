@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawLookAtTopRepl
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "291")
+@CardRegistration(set = "SUM", collectorNumber = "231")
 public class AladdinsLamp extends Card {
 
     public AladdinsLamp() {
@@ -19,6 +20,7 @@ public class AladdinsLamp extends Card {
                 List.of(new RegisterNextDrawLookAtTopReplacementEffect()),
                 "{X}, {T}: The next time you would draw a card this turn, instead look at the top X cards "
                         + "of your library, put all but one of them on the bottom of your library in a "
-                        + "random order, then draw a card. X can't be 0."));
+                        + "random order, then draw a card. X can't be 0.")
+                .withMinimumXValue(1));
     }
 }

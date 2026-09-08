@@ -15,8 +15,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MarhaultElsdragonTest extends BaseCardTest {
 
     @Test
-    @DisplayName("With one blocker Rampage 1 grants no bonus")
-    void oneBlockerGivesNothing() {
+    @DisplayName("With one blocker Marhault Elsdragon gets no rampage bonus")
+    void oneBlockerGivesNoBonus() {
         Permanent marhault = addReadyMarhault(player1);
         marhault.setAttacking(true);
         addReadyBears(player2);
@@ -30,8 +30,8 @@ class MarhaultElsdragonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With two blockers Rampage 1 grants +1/+1 until end of turn")
-    void twoBlockersGivesPlusOne() {
+    @DisplayName("With two blockers Marhault Elsdragon gets +1/+1 until end of turn")
+    void twoBlockersGivePlusOne() {
         Permanent marhault = addReadyMarhault(player1);
         marhault.setAttacking(true);
         addReadyBears(player2);
@@ -49,15 +49,35 @@ class MarhaultElsdragonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("If unblocked no becomes-blocked trigger is created")
-    void unblockedCreatesNoTrigger() {
+    @DisplayName("With three blockers Marhault Elsdragon gets +2/+2 until end of turn")
+    void threeBlockersGivePlusTwo() {
+        Permanent marhault = addReadyMarhault(player1);
+        marhault.setAttacking(true);
+        addReadyBears(player2);
+        addReadyBears(player2);
+        addReadyBears(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)
+        ));
+        harness.passBothPriorities();
+
+        assertThat(marhault.getPowerModifier()).isEqualTo(2);
+        assertThat(marhault.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("If unblocked Marhault Elsdragon gets no rampage bonus")
+    void unblockedGivesNoBonus() {
         Permanent marhault = addReadyMarhault(player1);
         marhault.setAttacking(true);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(gd.stack).isEmpty();
         assertThat(marhault.getPowerModifier()).isZero();
         assertThat(marhault.getToughnessModifier()).isZero();
     }

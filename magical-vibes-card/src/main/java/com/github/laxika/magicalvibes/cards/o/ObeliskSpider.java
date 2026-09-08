@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "141")
+@CardRegistration(set = "AKR", collectorNumber = "249")
 public class ObeliskSpider extends Card {
 
     public ObeliskSpider() {

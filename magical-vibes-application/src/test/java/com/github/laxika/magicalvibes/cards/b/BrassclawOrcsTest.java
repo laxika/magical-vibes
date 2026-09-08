@@ -1,62 +1,62 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HomaridWarrior;
+import com.github.laxika.magicalvibes.cards.i.IcatianInfantry;
+import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BrassclawOrcs.class, IcatianInfantry.class, IcatianPhalanx.class, HomaridWarrior.class})
 class BrassclawOrcsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Brassclaw Orcs can block a creature with power 1 or less")
-    void canBlockLowPowerCreature() {
-        Permanent orcs = new Permanent(new BrassclawOrcs());
-        orcs.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(orcs);
-
-        Permanent atkPerm = new Permanent(new FugitiveWizard()); // 1/1
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-
-        assertThat(orcs.isBlocking()).isTrue();
+    private Permanent orcs() {
+        return addCreatureReady(player1, new BrassclawOrcs());
     }
 
     @Test
-    @DisplayName("Brassclaw Orcs cannot block a creature with power 2 or greater")
-    void cannotBlockHighPowerCreature() {
-        Permanent orcs = new Permanent(new BrassclawOrcs());
-        orcs.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(orcs);
+    @DisplayName("Can block an attacker with power 1")
+    void canBlockPowerOne() {
+        Permanent orcs = orcs();
+        Permanent infantry = addCreatureReady(player2, new IcatianInfantry());
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears()); // 2/2
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
+        assertThat(bls.canBlockAttacker(gd, orcs, infantry,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+    }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    @DisplayName("Can't block an attacker with power 2")
+    void cantBlockPowerTwo() {
+        Permanent orcs = orcs();
+        Permanent phalanx = addCreatureReady(player2, new IcatianPhalanx());
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can only block creatures with power 1 or less");
+        assertThat(bls.canBlockAttacker(gd, orcs, phalanx,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can't block an attacker with power greater than 2")
+    void cantBlockHigherPower() {
+        Permanent orcs = orcs();
+        Permanent homaridWarrior = addCreatureReady(player2, new HomaridWarrior());
+
+        assertThat(bls.canBlockAttacker(gd, orcs, homaridWarrior,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can't block a power 1 attacker after it reaches effective power 2")
+    void cantBlockEffectivePowerTwo() {
+        Permanent orcs = orcs();
+        Permanent infantry = addCreatureReady(player2, new IcatianInfantry());
+        infantry.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(bls.canBlockAttacker(gd, orcs, infantry,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 }

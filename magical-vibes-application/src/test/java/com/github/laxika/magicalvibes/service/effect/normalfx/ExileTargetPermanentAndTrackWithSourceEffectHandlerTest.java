@@ -81,11 +81,9 @@ class ExileTargetPermanentAndTrackWithSourceEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileTargetPermanentAndTrackWithSourceHandler = new ExileTargetPermanentAndTrackWithSourceEffectHandler(gameQueryService, gameLogService, permanentRemovalService);
+        exileTargetPermanentAndTrackWithSourceHandler = new ExileTargetPermanentAndTrackWithSourceEffectHandler(gameQueryService, exileSupport);
 
     }
-
-    // ===== Helper methods =====
 
         private Card createCard(String name) {
             Card card = new Card();

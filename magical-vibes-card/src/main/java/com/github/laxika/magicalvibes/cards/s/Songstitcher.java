@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "52")
+@CardRegistration(set = "BRB", collectorNumber = "75")
 public class Songstitcher extends Card {
 
     public Songstitcher() {

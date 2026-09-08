@@ -5,14 +5,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
+import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -979,7 +977,7 @@ public class CombatSimulator {
         boolean cantBeBlocked = gameQueryService.hasCantBeBlocked(gameData, perm)
                 || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield)
                 || isCantBeBlockedDueToHistoricCast(gameData, perm, controllerId)
-                || hasLandwalkAgainstDefender(perm, bonus, defenderBattlefield);
+                || hasLandwalkAgainstDefender(gameData, perm, bonus, defenderBattlefield);
 
         // Temporarily stolen creatures (e.g. via Act of Treason) have no permanent value to the
         // controller — they will be returned at end of turn regardless. Treat their combat loss
@@ -1014,9 +1012,12 @@ public class CombatSimulator {
         );
     }
 
-    private boolean hasLandwalkAgainstDefender(Permanent attacker, GameQueryService.StaticBonus bonus,
+    private boolean hasLandwalkAgainstDefender(GameData gameData, Permanent attacker,
+                                                GameQueryService.StaticBonus bonus,
                                                 List<Permanent> defenderBattlefield) {
-        if (defenderBattlefield == null) return false;
+        if (defenderBattlefield == null
+                || CombatHelper.isLandwalkIgnoredForBlocking(gameData)
+                || CombatHelper.isLandwalkIgnoredForBlocking(gameData, attacker.getId())) return false;
         for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
             if (gameQueryService.hasKeyword(attacker, bonus, entry.getKey())
                     && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
@@ -1035,28 +1036,9 @@ public class CombatSimulator {
 
     private boolean isCantBeBlockedDueToDefenderCondition(GameData gameData, Permanent attacker,
                                                            List<Permanent> defenderBattlefield) {
-        if (defenderBattlefield == null) return false;
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof BlockabilityRestrictionEffect restriction) {
-                PermanentPredicate defenderPredicate = restriction.unblockableIfDefenderControls();
-                if (defenderPredicate == null) {
-                    continue;
-                }
-                boolean defenderMatches = defenderBattlefield.stream()
-                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, defenderPredicate));
-                if (defenderMatches) {
-                    return true;
-                }
-            }
-        }
-        // Until-end-of-turn defender-condition grants (Barbarian Guides' snow landwalk).
-        for (PermanentPredicate predicate : attacker.getUnblockableIfDefenderControlsUntilEndOfTurn()) {
-            if (defenderBattlefield.stream()
-                    .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, predicate))) {
-                return true;
-            }
-        }
-        return false;
+        return defenderBattlefield != null
+                && CombatHelper.isCantBeBlockedDueToDefenderCondition(
+                gameQueryService, predicateEvaluationService, gameData, attacker, defenderBattlefield);
     }
 
     // ===== Counter-Attack Estimation =====

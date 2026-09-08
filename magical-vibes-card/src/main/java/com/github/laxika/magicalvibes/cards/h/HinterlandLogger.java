@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "203")
+@CardRegistration(set = "SOI", collectorNumber = "210")
 public class HinterlandLogger extends Card {
 
     public HinterlandLogger() {

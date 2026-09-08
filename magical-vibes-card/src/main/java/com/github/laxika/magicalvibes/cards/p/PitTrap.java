@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "313")
 @CardRegistration(set = "ICE", collectorNumber = "333")
+@CardRegistration(set = "USG", collectorNumber = "307")
 public class PitTrap extends Card {
 
     public PitTrap() {

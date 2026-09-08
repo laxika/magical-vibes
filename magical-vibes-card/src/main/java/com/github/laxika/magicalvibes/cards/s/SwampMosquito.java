@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 
 @CardRegistration(set = "ALL", collectorNumber = "63a")
 @CardRegistration(set = "ALL", collectorNumber = "63b")
+@CardRegistration(set = "TSB", collectorNumber = "49")
 public class SwampMosquito extends Card {
 
     public SwampMosquito() {

@@ -1,65 +1,77 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.b.BogImp;
+import com.github.laxika.magicalvibes.cards.b.BogRats;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RagMan.class, BogImp.class, BogRats.class, DarkRitual.class, Disenchant.class})
 class RagManTest extends BaseCardTest {
 
-    private void readyRagMan() {
-        addCreatureReady(player1, new RagMan());
+    private Permanent readyRagMan() {
+        Permanent ragMan = addCreatureReady(player1, new RagMan());
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        return ragMan;
     }
 
     @Test
     @DisplayName("Discards the only creature card from target opponent's hand")
     void discardsCreatureAtRandom() {
-        harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new GrizzlyBears(), new Peek())));
+        harness.setHand(player2, List.of(new DarkRitual(), new BogRats(), new Disenchant()));
         readyRagMan();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         // Only creature in hand — deterministically discarded, non-creatures untouched.
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Bog Rats");
+        harness.assertNotInHand(player2, "Bog Rats");
+        harness.assertInHand(player2, "Dark Ritual");
+        harness.assertInHand(player2, "Disenchant");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gameLogContains("reveals their hand")).isTrue();
+        assertThat(gameLogContains("Dark Ritual")).isTrue();
+        assertThat(gameLogContains("Disenchant")).isTrue();
     }
 
     @Test
     @DisplayName("Only ever discards a creature card, never a noncreature")
     void onlyDiscardsCreatures() {
-        harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new Peek(), new GrizzlyBears())));
+        harness.setHand(player2, List.of(new DarkRitual(), new BogRats(), new Disenchant(), new BogImp()));
         readyRagMan();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         // Whichever creature is picked, the noncreature cards must all remain in hand.
-        harness.assertInHand(player2, "Forest");
-        harness.assertInHand(player2, "Peek");
+        harness.assertInHand(player2, "Dark Ritual");
+        harness.assertInHand(player2, "Disenchant");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .allMatch(c -> c.getName().equals("Grizzly Bears"));
+                .hasSize(1)
+                .allMatch(c -> c.getName().equals("Bog Rats") || c.getName().equals("Bog Imp"));
     }
 
     @Test
     @DisplayName("Does nothing when the opponent has no creature cards")
     void noCreatureNoDiscard() {
-        harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new Peek())));
+        harness.setHand(player2, List.of(new DarkRitual(), new Disenchant()));
         readyRagMan();
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -70,9 +82,26 @@ class RagManTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(TamiyoCollectorOfTales.class)
+    @DisplayName("Cannot cause a discard through Tamiyo, Collector of Tales")
+    void discardPreventionStopsRagMan() {
+        harness.setHand(player2, List.of(new BogRats()));
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 5);
+        readyRagMan();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gameLogContains("reveals their hand")).isTrue();
+    }
+
+    @Test
     @DisplayName("Handles an empty hand gracefully")
     void emptyHandNoDiscard() {
-        harness.setHand(player2, new ArrayList<>(List.of()));
+        harness.setHand(player2, List.of());
         readyRagMan();
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -85,7 +114,7 @@ class RagManTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be activated during the opponent's turn")
     void cannotActivateOnOpponentTurn() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new BogRats()));
         addCreatureReady(player1, new RagMan());
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.forceActivePlayer(player2);
@@ -94,5 +123,27 @@ class RagManTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target its controller")
+    void cannotTargetController() {
+        readyRagMan();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Pays three black mana and taps Rag Man to activate")
+    void paysActivationCostAndTapsRagMan() {
+        harness.setHand(player2, List.of(new BogRats()));
+        Permanent ragMan = readyRagMan();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(ragMan.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        harness.passBothPriorities();
     }
 }

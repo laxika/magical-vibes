@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredica
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "143")
+@CardRegistration(set = "ECL", collectorNumber = "316")
 public class GoliathDaydreamer extends Card {
 
     public GoliathDaydreamer() {

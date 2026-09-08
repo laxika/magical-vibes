@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesAllUnspentManaEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
@@ -17,13 +19,21 @@ import java.util.List;
 @CardRegistration(set = "ICE", collectorNumber = "91")
 @CardRegistration(set = "MIR", collectorNumber = "83")
 @CardRegistration(set = "TMP", collectorNumber = "78")
+@CardRegistration(set = "ITP", collectorNumber = "12")
+@CardRegistration(set = "RQS", collectorNumber = "11")
+@CardRegistration(set = "USG", collectorNumber = "89")
+@CardRegistration(set = "BTD", collectorNumber = "14")
+@CardRegistration(set = "SUM", collectorNumber = "74")
 public class PowerSink extends Card {
 
     public PowerSink() {
         // Counter target spell unless its controller pays {X}. If that player doesn't, they tap all
         // lands with mana abilities they control and lose all unspent mana.
         List<CardEffect> ifNotPaid = List.of(
-                new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsLandPredicate()),
+                new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsLandPredicate(),
+                                new PermanentHasManaAbilityPredicate()))),
                 new TargetPlayerLosesAllUnspentManaEffect());
         addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(0, true, false, ifNotPaid));
     }

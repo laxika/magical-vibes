@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "110")
+@CardRegistration(set = "ECL", collectorNumber = "313")
+@CardRegistration(set = "ECL", collectorNumber = "386")
+@CardRegistration(set = "ECL", collectorNumber = "396")
 public class Moonshadow extends Card {
 
     public Moonshadow() {

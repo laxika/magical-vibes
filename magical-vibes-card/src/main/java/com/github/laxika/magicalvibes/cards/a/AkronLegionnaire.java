@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "2")
+@CardRegistration(set = "CHR", collectorNumber = "2")
+@CardRegistration(set = "LEG", collectorNumber = "1")
 public class AkronLegionnaire extends Card {
 
     public AkronLegionnaire() {

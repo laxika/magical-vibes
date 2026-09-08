@@ -22,7 +22,7 @@ public class SkarrgGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)),
                 "{R}{G}: Creatures you control gain trample until end of turn."
         ));
 

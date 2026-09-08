@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -70,6 +71,20 @@ class TokenCardFactoryTest {
         assertThat(token.getSetCode()).isEqualTo("ttokpref");
         assertThat(token.getCollectorNumber()).isEqualTo("3");
         assertThat(token.isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Non-creature token with power and toughness preserves them")
+    void nonCreaturePreservesPowerAndToughness() {
+        CreateTokenEffect blueprint = new CreateTokenEffect(
+                CardType.ARTIFACT, 1, "Vehicle", 3, 2, null, null,
+                List.of(CardSubtype.VEHICLE), Set.of(), Set.of(), false, false,
+                Map.of(), List.of(), false, false, false, 0, Set.of());
+
+        Card token = TokenCardFactory.create(blueprint, 3, 2, PREFERRED);
+
+        assertThat(token.getPower()).isEqualTo(3);
+        assertThat(token.getToughness()).isEqualTo(2);
     }
 
     @Test

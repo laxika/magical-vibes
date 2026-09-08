@@ -28,6 +28,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +57,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
             gameData.forEachPermanent((playerId, p) -> {
                 if (targetId.equals(p.getAttachedTo())
                         && p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                    unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                     p.setAttachedTo(null);
                     gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     

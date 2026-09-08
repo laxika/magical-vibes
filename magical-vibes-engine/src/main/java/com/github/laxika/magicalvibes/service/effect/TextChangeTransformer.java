@@ -7,6 +7,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.AllColorWordsBecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,6 +34,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -38,7 +51,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Layer 3 (CR 613.2c / 612): text-changing effects rewrite the WORDS of an object's abilities,
+ * Layer 3 (CR 613.1c / 612): text-changing effects rewrite the WORDS of an object's abilities,
  * and everything downstream (layers 4-7, protection, mana abilities) sees the rewritten text.
  *
  * <p>The engine models an ability's words as the color ({@link CardColor}) and basic-land-type
@@ -52,8 +65,8 @@ import java.util.UUID;
  *
  * <p>The visitor covers the closed set of effect record types with color/basic-land-type
  * parameters that have registered static handlers (plus the wrappers that can carry them);
- * the color/land-type parameters of one-shot spell effects are never re-read from a permanent's
- * text after resolution, so they need no rewriting here. Chosen-as-enters colors are stored on
+ * one-shot spell effects are rewritten on the stack when a text-changing spell resolves.
+ * Chosen-as-enters colors are stored on
  * the {@code Permanent} and updated directly by the text-change resolution
  * ({@code ChoiceHandlerService}), not rewritten per query. The effect types deliberately NOT
  * handled are listed in {@code agent-docs/LAYER_SYSTEM.md} §7.
@@ -76,6 +89,10 @@ public final class TextChangeTransformer {
             "Mountain", CardSubtype.MOUNTAIN,
             "Forest", CardSubtype.FOREST);
 
+    private static final Map<String, CardSubtype> CREATURE_TYPE_WORDS = GameQueryService.TEXT_CHANGE_CREATURE_TYPES.stream()
+            .collect(java.util.stream.Collectors.toUnmodifiableMap(
+                    word -> CardSubtype.valueOf(word).getDisplayName(), CardSubtype::valueOf));
+
     /** Reverse of {@link Keyword#LANDWALK_MAP}: the walk keyword whose text contains a given
      *  land-type word. */
     private static final Map<CardSubtype, Keyword> LANDWALK_BY_LAND_TYPE = Map.of(
@@ -91,7 +108,8 @@ public final class TextChangeTransformer {
     /** One replacement resolved to the domain values whose word it substitutes; exactly one of
      *  the color pair / land-type pair is non-null (a text change never mixes the two classes). */
     private record Substitution(CardColor fromColor, CardColor toColor,
-                                CardSubtype fromLandType, CardSubtype toLandType) {
+                                CardSubtype fromLandType, CardSubtype toLandType,
+                                CardSubtype fromCreatureType, CardSubtype toCreatureType) {
     }
 
     /**
@@ -153,6 +171,17 @@ public final class TextChangeTransformer {
         return result;
     }
 
+    public static Set<Keyword> transformKeywords(Set<Keyword> keywords, List<TextReplacement> replacements) {
+        Set<Keyword> result = keywords;
+        for (TextReplacement replacement : replacements) {
+            Substitution substitution = resolve(replacement);
+            if (substitution != null) {
+                result = replaceLandwalk(result, substitution);
+            }
+        }
+        return result;
+    }
+
     /** The basic land type a text-change word denotes, or {@code null} for color words. */
     public static CardSubtype basicLandTypeForWord(String word) {
         return BASIC_LAND_WORDS.get(word);
@@ -162,12 +191,17 @@ public final class TextChangeTransformer {
         CardColor fromColor = COLOR_WORDS.get(replacement.fromWord());
         CardColor toColor = COLOR_WORDS.get(replacement.toWord());
         if (fromColor != null && toColor != null) {
-            return new Substitution(fromColor, toColor, null, null);
+            return new Substitution(fromColor, toColor, null, null, null, null);
         }
         CardSubtype fromLandType = BASIC_LAND_WORDS.get(replacement.fromWord());
         CardSubtype toLandType = BASIC_LAND_WORDS.get(replacement.toWord());
         if (fromLandType != null && toLandType != null) {
-            return new Substitution(null, null, fromLandType, toLandType);
+            return new Substitution(null, null, fromLandType, toLandType, null, null);
+        }
+        CardSubtype fromCreatureType = CREATURE_TYPE_WORDS.get(replacement.fromWord());
+        CardSubtype toCreatureType = CREATURE_TYPE_WORDS.get(replacement.toWord());
+        if (fromCreatureType != null && toCreatureType != null) {
+            return new Substitution(null, null, null, null, fromCreatureType, toCreatureType);
         }
         return null;
     }
@@ -183,10 +217,26 @@ public final class TextChangeTransformer {
                 yield colors == protection.colors() ? protection
                         : new ProtectionFromColorsEffect(colors, protection.scope());
             }
-            case GrantColorEffect grant ->
-                    substitution.fromColor() != null && grant.color() == substitution.fromColor()
-                            ? new GrantColorEffect(substitution.toColor(), grant.scope(), grant.overriding())
-                            : grant;
+            case PreventDamageFromChosenSourceEffect prevention -> {
+                PermanentPredicate filter = apply(prevention.sourceFilter(), substitution);
+                String label = replaceColorWord(prevention.sourceLabel(), substitution);
+                yield filter == prevention.sourceFilter() && label == prevention.sourceLabel() ? prevention
+                        : new PreventDamageFromChosenSourceEffect(
+                                prevention.scope(), prevention.gainLife(),
+                                prevention.gainLifeForBlackOrRedSource(), prevention.controllerOnly(),
+                                filter, label, prevention.sourceChosenColor(),
+                                prevention.sourceSharesColorWithImprintedCard(),
+                                prevention.sourceActivationManaColor(), prevention.exileFromLibrary(),
+                                prevention.damageRedSourceController(), prevention.damageSourceController(),
+                                prevention.preventHalfDamage(), prevention.drawCards());
+            }
+            case GrantColorEffect grant -> {
+                CardColor color = substitution.fromColor() != null && grant.color() == substitution.fromColor()
+                        ? substitution.toColor() : grant.color();
+                PermanentPredicate filter = apply(grant.filter(), substitution);
+                yield color == grant.color() && filter == grant.filter() ? grant
+                        : new GrantColorEffect(color, grant.scope(), grant.overriding(), filter);
+            }
             case EnchantedPermanentBecomesTypeEffect becomes -> {
                 if (substitution.fromLandType() == null) {
                     yield becomes;
@@ -202,8 +252,7 @@ public final class TextChangeTransformer {
                             ? new NonbasicLandsBecomeTypeEffect(substitution.toLandType())
                             : becomes;
             case GrantSubtypeEffect grant -> {
-                CardSubtype subtype = substitution.fromLandType() != null && grant.subtype() == substitution.fromLandType()
-                        ? substitution.toLandType() : grant.subtype();
+                CardSubtype subtype = replaceSubtype(grant.subtype(), substitution);
                 PermanentPredicate filter = apply(grant.filter(), substitution);
                 yield subtype == grant.subtype() && filter == grant.filter() ? grant
                         : new GrantSubtypeEffect(subtype, grant.scope(), grant.overriding(), filter);
@@ -213,13 +262,13 @@ public final class TextChangeTransformer {
                 PermanentPredicate filter = apply(boost.filter(), substitution);
                 yield keywords == boost.grantedKeywords() && filter == boost.filter() ? boost
                         : new StaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(),
-                        keywords, boost.scope(), filter);
+                        keywords, boost.scope(), filter, boost.scalingCounter(), boost.scalingCounterOnTarget());
             }
             case DynamicStaticBoostEffect boost -> {
                 PermanentPredicate filter = apply(boost.filter(), substitution);
                 yield filter == boost.filter() ? boost
                         : new DynamicStaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(),
-                        boost.scope(), filter);
+                        boost.scope(), filter, boost.amountsFromTarget());
             }
             case GrantKeywordEffect grant -> {
                 Set<Keyword> keywords = replaceLandwalk(grant.keywords(), substitution);
@@ -236,9 +285,10 @@ public final class TextChangeTransformer {
                         : new GrantEffectEffect(wrapped, grant.scope(), filter);
             }
             case ConditionalEffect conditional -> {
+                Condition condition = apply(conditional.condition(), substitution);
                 CardEffect wrapped = apply(conditional.wrapped(), substitution);
-                yield wrapped == conditional.wrapped() ? conditional
-                        : new ConditionalEffect(conditional.condition(), wrapped);
+                yield condition == conditional.condition() && wrapped == conditional.wrapped() ? conditional
+                        : new ConditionalEffect(condition, wrapped);
             }
             case EnchantedPermanentConditionalEffect conditional -> {
                 PermanentPredicate filter = apply(conditional.filter(), substitution);
@@ -252,20 +302,92 @@ public final class TextChangeTransformer {
         };
     }
 
+    private static Condition apply(Condition condition, Substitution substitution) {
+        return switch (condition) {
+            case TargetPermanentMatches matches -> {
+                PermanentPredicate filter = apply(matches.filter(), substitution);
+                yield filter == matches.filter() ? matches : new TargetPermanentMatches(filter);
+            }
+            case TargetSpellMatches matches -> {
+                StackEntryPredicate filter = apply(matches.filter(), substitution);
+                yield filter == matches.filter() ? matches : new TargetSpellMatches(filter);
+            }
+            case AllOf allOf -> {
+                List<Condition> conditions = applyConditions(allOf.conditions(), substitution);
+                yield conditions == allOf.conditions() ? allOf : new AllOf(conditions);
+            }
+            case AnyOf anyOf -> {
+                List<Condition> conditions = applyConditions(anyOf.conditions(), substitution);
+                yield conditions == anyOf.conditions() ? anyOf : new AnyOf(conditions);
+            }
+            case NotCondition not -> {
+                Condition inner = apply(not.inner(), substitution);
+                yield inner == not.inner() ? not : new NotCondition(inner);
+            }
+            default -> condition;
+        };
+    }
+
+    private static List<Condition> applyConditions(List<Condition> conditions, Substitution substitution) {
+        List<Condition> result = new ArrayList<>(conditions.size());
+        boolean changed = false;
+        for (Condition condition : conditions) {
+            Condition transformed = apply(condition, substitution);
+            changed |= transformed != condition;
+            result.add(transformed);
+        }
+        return changed ? result : conditions;
+    }
+
+    private static StackEntryPredicate apply(StackEntryPredicate predicate, Substitution substitution) {
+        return switch (predicate) {
+            case StackEntryColorInPredicate colorIn -> {
+                Set<CardColor> colors = replaceColor(colorIn.colors(), substitution);
+                yield colors == colorIn.colors() ? colorIn : new StackEntryColorInPredicate(colors);
+            }
+            case StackEntryAllOfPredicate allOf -> {
+                List<StackEntryPredicate> children = applyStackPredicates(allOf.predicates(), substitution);
+                yield children == allOf.predicates() ? allOf : new StackEntryAllOfPredicate(children);
+            }
+            case StackEntryAnyOfPredicate anyOf -> {
+                List<StackEntryPredicate> children = applyStackPredicates(anyOf.predicates(), substitution);
+                yield children == anyOf.predicates() ? anyOf : new StackEntryAnyOfPredicate(children);
+            }
+            case StackEntryNotPredicate not -> {
+                StackEntryPredicate inner = apply(not.predicate(), substitution);
+                yield inner == not.predicate() ? not : new StackEntryNotPredicate(inner);
+            }
+            default -> predicate;
+        };
+    }
+
+    private static List<StackEntryPredicate> applyStackPredicates(List<StackEntryPredicate> predicates,
+                                                                   Substitution substitution) {
+        List<StackEntryPredicate> result = new ArrayList<>(predicates.size());
+        boolean changed = false;
+        for (StackEntryPredicate predicate : predicates) {
+            StackEntryPredicate transformed = apply(predicate, substitution);
+            changed |= transformed != predicate;
+            result.add(transformed);
+        }
+        return changed ? result : predicates;
+    }
+
     private static PermanentPredicate apply(PermanentPredicate predicate, Substitution substitution) {
         return switch (predicate) {
             case null -> null;
             case PermanentHasSubtypePredicate has ->
-                    substitution.fromLandType() != null && has.subtype() == substitution.fromLandType()
-                            ? new PermanentHasSubtypePredicate(substitution.toLandType())
-                            : has;
+                    replaceSubtype(has.subtype(), substitution) == has.subtype()
+                            ? has : new PermanentHasSubtypePredicate(replaceSubtype(has.subtype(), substitution));
             case PermanentHasAnySubtypePredicate has -> {
-                if (substitution.fromLandType() == null || !has.subtypes().contains(substitution.fromLandType())) {
+                CardSubtype fromSubtype = fromSubtype(substitution);
+                CardSubtype toSubtype = toSubtype(substitution);
+                if (fromSubtype == null || !has.subtypes().contains(fromSubtype)) {
                     yield has;
                 }
                 Set<CardSubtype> subtypes = EnumSet.copyOf(has.subtypes());
-                subtypes.remove(substitution.fromLandType());
-                subtypes.add(substitution.toLandType());
+                subtypes.remove(fromSubtype);
+                subtypes.add(toSubtype);
                 yield new PermanentHasAnySubtypePredicate(subtypes);
             }
             case PermanentColorInPredicate colorIn -> {
@@ -309,6 +431,14 @@ public final class TextChangeTransformer {
         return result;
     }
 
+    private static String replaceColorWord(String word, Substitution substitution) {
+        if (word == null || substitution.fromColor() == null
+                || !word.equals(substitution.fromColor().name().toLowerCase(Locale.ROOT))) {
+            return word;
+        }
+        return substitution.toColor().name().toLowerCase(Locale.ROOT);
+    }
+
     private static Set<Keyword> replaceLandwalk(Set<Keyword> keywords, Substitution substitution) {
         if (substitution.fromLandType() == null) {
             return keywords;
@@ -322,5 +452,17 @@ public final class TextChangeTransformer {
         result.remove(fromWalk);
         result.add(toWalk);
         return result;
+    }
+
+    private static CardSubtype replaceSubtype(CardSubtype subtype, Substitution substitution) {
+        return subtype == fromSubtype(substitution) ? toSubtype(substitution) : subtype;
+    }
+
+    private static CardSubtype fromSubtype(Substitution substitution) {
+        return substitution.fromLandType() != null ? substitution.fromLandType() : substitution.fromCreatureType();
+    }
+
+    private static CardSubtype toSubtype(Substitution substitution) {
+        return substitution.toLandType() != null ? substitution.toLandType() : substitution.toCreatureType();
     }
 }

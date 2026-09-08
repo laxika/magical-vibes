@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAn
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "158")
+@CardRegistration(set = "MMQ", collectorNumber = "146")
 public class MidnightRitual extends Card {
 
     public MidnightRitual() {

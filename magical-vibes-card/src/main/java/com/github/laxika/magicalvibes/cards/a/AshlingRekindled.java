@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "124")
+@CardRegistration(set = "ECL", collectorNumber = "290")
 public class AshlingRekindled extends Card {
 
     public AshlingRekindled() {

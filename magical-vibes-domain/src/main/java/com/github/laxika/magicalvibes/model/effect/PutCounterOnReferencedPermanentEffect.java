@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -23,7 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record PutCounterOnReferencedPermanentEffect(
         PermanentReference reference,
         CounterType counterType,
-        int count,
+        DynamicAmount count,
         PermanentPredicate condition
 ) implements CardEffect {
 
@@ -35,18 +37,27 @@ public record PutCounterOnReferencedPermanentEffect(
     }
 
     public PutCounterOnReferencedPermanentEffect(PermanentReference reference, CounterType counterType) {
-        this(reference, counterType, 1, null);
+        this(reference, counterType, new Fixed(1), null);
+    }
+
+    public PutCounterOnReferencedPermanentEffect(PermanentReference reference, CounterType counterType,
+                                                  DynamicAmount count) {
+        this(reference, counterType, count, null);
     }
 
     public PutCounterOnReferencedPermanentEffect(CounterType counterType) {
-        this(PermanentReference.ATTACHED, counterType, 1, null);
+        this(PermanentReference.ATTACHED, counterType, new Fixed(1), null);
     }
 
     public PutCounterOnReferencedPermanentEffect(CounterType counterType, int count) {
+        this(PermanentReference.ATTACHED, counterType, new Fixed(count), null);
+    }
+
+    public PutCounterOnReferencedPermanentEffect(CounterType counterType, DynamicAmount count) {
         this(PermanentReference.ATTACHED, counterType, count, null);
     }
 
     public PutCounterOnReferencedPermanentEffect(CounterType counterType, int count, PermanentPredicate condition) {
-        this(PermanentReference.ATTACHED, counterType, count, condition);
+        this(PermanentReference.ATTACHED, counterType, new Fixed(count), condition);
     }
 }

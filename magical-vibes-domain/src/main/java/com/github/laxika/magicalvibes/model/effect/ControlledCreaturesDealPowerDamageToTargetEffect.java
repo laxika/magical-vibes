@@ -9,10 +9,23 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>Used by Moonlight Hunt ({@code PermanentHasAnySubtypePredicate(WOLF, WEREWOLF)}).
  */
-public record ControlledCreaturesDealPowerDamageToTargetEffect(PermanentPredicate filter) implements CardEffect {
+public record ControlledCreaturesDealPowerDamageToTargetEffect(PermanentPredicate filter,
+                                                                boolean targetCreatureOrPlaneswalker)
+        implements CardEffect {
+
+    public ControlledCreaturesDealPowerDamageToTargetEffect(PermanentPredicate filter) {
+        this(filter, false);
+    }
+
+    public static ControlledCreaturesDealPowerDamageToTargetEffect creatureOrPlaneswalker(
+            PermanentPredicate filter) {
+        return new ControlledCreaturesDealPowerDamageToTargetEffect(filter, true);
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.creature());
+        return TargetSpec.harmful(targetCreatureOrPlaneswalker
+                ? TargetPredicates.creatureOrPlaneswalker()
+                : TargetPredicates.creature());
     }
 }

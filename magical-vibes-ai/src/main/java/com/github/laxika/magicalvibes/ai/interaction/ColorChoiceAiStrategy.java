@@ -60,10 +60,22 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.ChooseModeChoice) {
-            // Modal triggered ability (e.g. Etherwrought Page): take the first mode (always a legal label).
+        if (context instanceof ChoiceContext.ChooseModeChoice
+                || context instanceof ChoiceContext.LibraryCastModeChoice) {
+            // Modal abilities and free-cast modal spells take the first offered mode.
             String chosenMode = interaction.options().getFirst();
             log.info("AI: Choosing modal option \"{}\" in game {}", chosenMode, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenMode));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.ExileFreeCastModeChoice modeChoice) {
+            String chosenMode = modeChoice.chosenModeIndices().size() >= modeChoice.effect().choicesRequired()
+                    && interaction.options().contains(
+                    com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION)
+                    ? com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION
+                    : interaction.options().getFirst();
+            log.info("AI: Choosing exile free-cast modal option \"{}\" in game {}", chosenMode, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenMode));
             return;
         }
@@ -74,8 +86,11 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             String chosenName = opponentField.stream()
                     .filter(p -> !p.getCard().getActivatedAbilities().isEmpty())
                     .map(p -> p.getCard().getName())
+                    .filter(interaction.options()::contains)
                     .findFirst()
-                    .orElse(opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName());
+                    .orElse(interaction.options().isEmpty()
+                            ? (opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName())
+                            : interaction.options().getFirst());
             log.info("AI: Choosing card name \"{}\" in game {}", chosenName, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
             return;
@@ -150,7 +165,11 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         if (context instanceof ChoiceContext.SubtypeChoice) {
-            String chosenSubtype = "HUMAN";
+            List<String> options = interaction.options();
+            if (options.isEmpty()) {
+                return;
+            }
+            String chosenSubtype = options.contains("HUMAN") ? "HUMAN" : options.getFirst();
             log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenSubtype));
             return;

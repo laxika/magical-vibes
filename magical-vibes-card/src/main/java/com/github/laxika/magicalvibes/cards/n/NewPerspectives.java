@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingWhileHandSizeEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "63")
+@CardRegistration(set = "AKR", collectorNumber = "70")
 public class NewPerspectives extends Card {
 
     public NewPerspectives() {

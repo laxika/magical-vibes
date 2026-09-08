@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "45")
+@CardRegistration(set = "DKM", collectorNumber = "2")
 public class Contagion extends Card {
 
     public Contagion() {

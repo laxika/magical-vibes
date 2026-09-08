@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "169")
+@CardRegistration(set = "EMN", collectorNumber = "140")
 public class SavageAlliance extends Card {
 
     public SavageAlliance() {

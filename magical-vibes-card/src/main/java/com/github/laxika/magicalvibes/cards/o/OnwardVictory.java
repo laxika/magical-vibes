@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
  * Back half (Victory) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "218")
+@CardRegistration(set = "AKR", collectorNumber = "250")
 public class OnwardVictory extends Card {
 
     public OnwardVictory() {

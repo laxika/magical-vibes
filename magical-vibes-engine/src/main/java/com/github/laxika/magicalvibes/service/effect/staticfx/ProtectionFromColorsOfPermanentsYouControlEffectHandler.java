@@ -42,7 +42,7 @@ public class ProtectionFromColorsOfPermanentsYouControlEffectHandler implements 
 
         Set<CardColor> colors = new HashSet<>();
         for (Permanent permanent : battlefield) {
-            colors.addAll(gameQueryService.getEffectiveColors(context.gameData(), permanent));
+            colors.addAll(gameQueryService.colorsForStaticEvaluation(permanent));
         }
         accumulator.addProtectionColors(colors);
     }

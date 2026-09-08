@@ -27,6 +27,7 @@ class PetrifiedHamletTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PetrifiedHamlet(), new Forest(), new GrizzlyBears()));
 
         harness.playLand(player1, 0);
+        harness.passBothPriorities();
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
@@ -42,11 +43,11 @@ class PetrifiedHamletTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new Forest());
 
-        harness.activateAbility(player1, 1, 1, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
 
         harness.forceActivePlayer(player2);
-        harness.activateAbility(player2, 0, 1, null, null);
+        harness.activateAbility(player2, 0, 0, null, null);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 

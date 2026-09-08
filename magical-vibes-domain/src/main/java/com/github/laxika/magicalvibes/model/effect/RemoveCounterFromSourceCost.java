@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 /**
  * Cost that removes {@code count} counters of {@code counterType} from the source permanent
  * ("Remove three charge counters from this artifact: …", "Remove a -1/-1 counter from this
- * creature: …"). {@link CounterType#ANY} spends -1/-1 counters before +1/+1 ones. Validated and
- * paid in {@code AbilityActivationService}.
+ * creature: …"). {@link CounterType#ANY} spends any counters on the permanent, prioritizing
+ * -1/-1 and then +1/+1 counters before other types. Validated and paid in
+ * {@code AbilityActivationService}.
  */
 public record RemoveCounterFromSourceCost(int count, CounterType counterType) implements CostEffect {
 

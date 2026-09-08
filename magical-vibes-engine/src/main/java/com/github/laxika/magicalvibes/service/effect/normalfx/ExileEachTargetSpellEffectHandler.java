@@ -46,7 +46,7 @@ public class ExileEachTargetSpellEffectHandler implements NormalEffectHandlerBea
             if (target.isCopy()) {
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " (a copy) ceases to exist."));
             } else {
-                exileService.exileCard(gameData, target.getControllerId(), target.getCard());
+                exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
             }
             log.info("Game {} - {} exiled from stack by {}",

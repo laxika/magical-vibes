@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "64")
 @CardRegistration(set = "INR", collectorNumber = "354")
+@CardRegistration(set = "SOI", collectorNumber = "61")
 public class EssenceFlux extends Card {
 
     public EssenceFlux() {

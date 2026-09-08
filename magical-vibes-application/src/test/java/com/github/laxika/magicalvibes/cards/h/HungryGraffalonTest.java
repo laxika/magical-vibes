@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,21 +32,21 @@ class HungryGraffalonTest extends BaseCardTest {
     class IncrementTests {
 
         @Test
-        @DisplayName("Casting a two-mana spell puts a +1/+1 counter on the 1/1")
-        void twoManaSpellAddsCounter() {
+        @DisplayName("Casting a four-mana spell puts a +1/+1 counter on the 3/4")
+        void fourManaSpellAddsCounter() {
             Permanent graffalon = addGraffalon(player1);
             setUpMainPhase(player1);
 
-            harness.addMana(player1, ManaColor.GREEN, 2);
-            harness.setHand(player1, List.of(new GrizzlyBears()));
-            harness.castCreature(player1, 0);
+            harness.addMana(player1, ManaColor.BLUE, 4);
+            harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.c.Concentrate()));
+            harness.castSorcery(player1, 0, 0);
             harness.passBothPriorities();
 
             assertThat(graffalon.getPlusOnePlusOneCounters()).isEqualTo(1);
         }
 
         @Test
-        @DisplayName("Casting a one-mana spell does not put a counter on the 1/1")
+        @DisplayName("Casting a one-mana spell does not put a counter on the 3/4")
         void oneManaSpellAddsNoCounter() {
             Permanent graffalon = addGraffalon(player1);
             setUpMainPhase(player1);

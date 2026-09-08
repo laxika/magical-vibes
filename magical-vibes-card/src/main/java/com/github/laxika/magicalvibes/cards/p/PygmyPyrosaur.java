@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "208")
+@CardRegistration(set = "ULG", collectorNumber = "87")
 public class PygmyPyrosaur extends Card {
 
     public PygmyPyrosaur() {

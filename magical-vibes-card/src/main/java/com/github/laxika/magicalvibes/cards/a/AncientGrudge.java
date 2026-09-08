@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "127")
+@CardRegistration(set = "TSP", collectorNumber = "143")
 public class AncientGrudge extends Card {
 
     public AncientGrudge() {

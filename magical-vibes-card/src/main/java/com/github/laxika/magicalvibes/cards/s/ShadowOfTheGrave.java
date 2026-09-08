@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "107")
+@CardRegistration(set = "AKR", collectorNumber = "123")
 public class ShadowOfTheGrave extends Card {
 
     public ShadowOfTheGrave() {

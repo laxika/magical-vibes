@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnle
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "70")
+@CardRegistration(set = "DRK", collectorNumber = "26")
 public class Erosion extends Card {
 
     public Erosion() {

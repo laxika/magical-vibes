@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMa
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "221")
+@CardRegistration(set = "FEM", collectorNumber = "53")
+@CardRegistration(set = "FEM", collectorNumber = "107")
+@CardRegistration(set = "FEM", collectorNumber = "108")
+@CardRegistration(set = "FEM", collectorNumber = "109")
 public class DwarvenSoldier extends Card {
 
     public DwarvenSoldier() {

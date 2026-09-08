@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "270")
+@CardRegistration(set = "TPR", collectorNumber = "210")
 public class SeleniaDarkAngel extends Card {
 
     public SeleniaDarkAngel() {

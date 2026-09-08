@@ -36,7 +36,8 @@ public class ControlledCreaturesDealPowerDamageToTargetEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ControlledCreaturesDealPowerDamageToTargetEffect) effect;
 
-        UUID targetId = entry.getTargetId();
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        UUID targetId = targetIds.isEmpty() ? entry.getTargetId() : targetIds.getFirst();
         if (targetId == null) {
             return;
         }

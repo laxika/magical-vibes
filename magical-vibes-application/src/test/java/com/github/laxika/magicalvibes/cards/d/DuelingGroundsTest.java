@@ -47,10 +47,10 @@ class DuelingGroundsTest extends BaseCardTest {
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(0, 0),
-                new BlockerAssignment(1, 0))))
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 1))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No more than 1 creature can block");
+                .hasMessageContaining("No more than 1 distinct creature can block each combat");
     }
 
     @Test
@@ -62,7 +62,7 @@ class DuelingGroundsTest extends BaseCardTest {
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(0, 0)))).doesNotThrowAnyException();
+                List.of(new BlockerAssignment(0, 1)))).doesNotThrowAnyException();
     }
 
     private Permanent addReadyPermanent(Player player, Card card) {

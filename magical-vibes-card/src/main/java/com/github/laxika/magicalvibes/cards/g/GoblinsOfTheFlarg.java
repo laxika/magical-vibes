@@ -12,10 +12,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "51")
+@CardRegistration(set = "DRK", collectorNumber = "70")
 public class GoblinsOfTheFlarg extends Card {
 
     public GoblinsOfTheFlarg() {
-        // "When you control a Dwarf, sacrifice this creature." — state-triggered ability.
+        // Mountainwalk is loaded from Scryfall metadata.
+        // When you control a Dwarf, sacrifice this creature.
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
                 new PermanentControllerControlsPermanentPredicate(
                         new PermanentHasSubtypePredicate(CardSubtype.DWARF)),

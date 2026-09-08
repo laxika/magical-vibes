@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(LeadGolem.class)
 class LeadGolemTest extends BaseCardTest {
 
     // ===== Attack trigger pushes onto stack =====
@@ -21,7 +22,7 @@ class LeadGolemTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking with Lead Golem pushes a triggered ability sourced from itself")
     void attackTriggerPushesOntoStack() {
-        Permanent golem = addReadyGolem(player1);
+        Permanent golem = addCreatureReady(player1, new LeadGolem());
 
         declareAttackers(player1, List.of(0));
 
@@ -36,7 +37,7 @@ class LeadGolemTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the attack trigger sets skipUntapCount on Lead Golem itself")
     void resolvingSetsSkipUntapCountOnSelf() {
-        Permanent golem = addReadyGolem(player1);
+        Permanent golem = addCreatureReady(player1, new LeadGolem());
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
@@ -47,7 +48,7 @@ class LeadGolemTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the trigger logs that Lead Golem won't untap")
     void resolvingLogsSkipUntap() {
-        addReadyGolem(player1);
+        addCreatureReady(player1, new LeadGolem());
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
@@ -56,12 +57,24 @@ class LeadGolemTest extends BaseCardTest {
                 log.contains("Lead Golem") && log.contains("untap"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Attacking keeps Lead Golem tapped through its next untap step only")
+    void attackSkipsNextUntapOnly() {
+        Permanent golem = addCreatureReady(player1, new LeadGolem());
+        Permanent otherGolem = addCreatureReady(player1, new LeadGolem());
+        otherGolem.tap();
 
-    private Permanent addReadyGolem(Player player) {
-        Permanent perm = new Permanent(new LeadGolem());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+
+        assertThat(golem.isTapped()).isTrue();
+        assertThat(golem.getSkipUntapCount()).isZero();
+        assertThat(otherGolem.isTapped()).isFalse();
+
+        harness.performUntapStep(player1);
+
+        assertThat(golem.isTapped()).isFalse();
     }
 }

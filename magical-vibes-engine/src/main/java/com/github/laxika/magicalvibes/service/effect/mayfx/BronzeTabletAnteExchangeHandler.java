@@ -11,11 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.BronzeTabletAnteExchangeEffec
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,6 +37,10 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final InputCompletionService inputCompletionService;
+    private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,7 +57,7 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
                 && gameData.getLife(opponentId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - effect.lifeCost());
+            lifeSupport.applyLifePayment(gameData, opponentId, effect.lifeCost(), tabletCard.getName());
             moveTabletFromExileToOwnerGraveyard(gameData, tabletCard);
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. ", tabletCard, " is put into its owner's graveyard."));
             log.info("Game {} - {} pays {} life to keep {}", gameData.id, player.getUsername(),

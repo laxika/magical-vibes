@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "176")
+@CardRegistration(set = "AKR", collectorNumber = "203")
 public class NagaVitalist extends Card {
 
     public NagaVitalist() {

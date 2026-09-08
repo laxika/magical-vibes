@@ -55,7 +55,7 @@ public class PayAnyAmountOfLifeRevealAndExileEffectHandler implements NormalEffe
                 return;
             }
 
-            lifeSupport.applyLifeLoss(gameData, controllerId, paid, cardName);
+            lifeSupport.applyLifePayment(gameData, controllerId, paid, cardName);
             gameLogService.append(gameData, GameLog.text(playerName + " pays " + paid + " life for " + cardName + "."));
             log.info("Game {} - {} pays {} life for {}", gameData.id, playerName, paid, cardName);
             playerInteractionSupport.beginRevealCardsChooseDiscard(gameData, entry, paid, 1,

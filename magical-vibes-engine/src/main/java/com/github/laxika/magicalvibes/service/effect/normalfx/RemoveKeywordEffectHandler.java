@@ -38,10 +38,38 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var remove = (RemoveKeywordEffect) effect;
 
-        // OPPONENT_CREATURES / ALL_CREATURES: mass one-shot removal (floats a per-permanent
-        // layer-6 removal). Invert the Skies = opponents; Hour of Devastation = all creatures;
-        // Wind Shear = ALL_CREATURES filtered to attacking creatures with flying.
-        if (remove.scope() == GrantScope.OPPONENT_CREATURES || remove.scope() == GrantScope.ALL_CREATURES) {
+        if (remove.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
+            UUID targetPlayerId = entry.targetsForEffect(effect).stream()
+                    .filter(gameData.playerIds::contains)
+                    .findFirst()
+                    .orElse(entry.getTargetId());
+            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+                return;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+            if (battlefield == null) {
+                return;
+            }
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                    .withSourceControllerId(entry.getControllerId());
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && (remove.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, remove.filter(), filterContext))) {
+                    removeFrom(gameData, entry, remove, permanent);
+                }
+            }
+            return;
+        }
+
+        // Mass one-shot removal floats a per-permanent layer-6 removal. Invert the Skies =
+        // opponents; Hour of Devastation = all creatures; Spectacular Pileup = all permanents
+        // narrowed to creatures and Vehicles.
+        if (remove.scope() == GrantScope.OPPONENT_CREATURES
+                || remove.scope() == GrantScope.ALL_CREATURES
+                || remove.scope() == GrantScope.ALL_PERMANENTS) {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                     .withSourceControllerId(entry.getControllerId());
@@ -55,7 +83,13 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 for (Permanent p : battlefield) {
-                    if (!gameQueryService.isCreature(gameData, p)) {
+                    if (remove.scope() != GrantScope.ALL_PERMANENTS
+                            && !gameQueryService.isCreature(gameData, p)) {
+                        continue;
+                    }
+                    if (remove.scope() == GrantScope.ALL_PERMANENTS
+                            && entry.getSourcePermanentId() != null
+                            && entry.getSourcePermanentId().equals(p.getId())) {
                         continue;
                     }
                     if (remove.filter() != null

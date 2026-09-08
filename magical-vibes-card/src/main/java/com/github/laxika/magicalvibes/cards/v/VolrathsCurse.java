@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "101")
+@CardRegistration(set = "TPR", collectorNumber = "77")
 public class VolrathsCurse extends Card {
 
     public VolrathsCurse() {

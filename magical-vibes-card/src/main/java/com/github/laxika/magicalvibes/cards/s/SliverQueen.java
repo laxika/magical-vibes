@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STH", collectorNumber = "129")
+@CardRegistration(set = "TPR", collectorNumber = "211")
 public class SliverQueen extends Card {
 
     public SliverQueen() {

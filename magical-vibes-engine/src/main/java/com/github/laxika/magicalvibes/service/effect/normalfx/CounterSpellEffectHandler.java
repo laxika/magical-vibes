@@ -28,6 +28,14 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
+        StackEntry targetOnStack = gameData.stack.stream()
+                .filter(stackEntry -> stackEntry.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+        if (targetOnStack != null) {
+            entry.setCounteredSpellControllerId(targetOnStack.getControllerId());
+        }
+
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
@@ -35,6 +43,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
             case GRAVEYARD -> counterSupport.counterSpell(gameData, entry, targetEntry);
             case EXILE -> counterSupport.counterSpellAndExile(gameData, entry, targetEntry);
             case LIBRARY_TOP -> counterSupport.counterSpellAndPutOnTopOfLibrary(gameData, entry, targetEntry);
+            case HAND -> counterSupport.counterSpellAndPutInHand(gameData, entry, targetEntry);
             case LIBRARY_TOP_OR_BOTTOM -> counterOntoChosenLibraryEnd(gameData, entry, targetEntry);
         }
     }

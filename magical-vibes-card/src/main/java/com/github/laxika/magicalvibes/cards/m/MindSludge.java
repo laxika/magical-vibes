@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "146")
 @CardRegistration(set = "ZEN", collectorNumber = "102")
+@CardRegistration(set = "TOR", collectorNumber = "70")
 public class MindSludge extends Card {
 
     public MindSludge() {

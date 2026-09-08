@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.r.Shock;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +21,8 @@ class TabletOfDiscoveryTest extends BaseCardTest {
         Card shock = new Shock();
         harness.setLibrary(player1, List.of(shock));
         harness.setHand(player1, List.of(new TabletOfDiscovery()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
@@ -51,7 +52,7 @@ class TabletOfDiscoveryTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getInstantSorceryOnlyColored(ManaColor.RED)).isEqualTo(2);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

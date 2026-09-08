@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * Which player's "controller slot" the {@code thenEffect} of a destroy / exile / bounce-then effect
  * ({@link DestroyTargetPermanentThenEffect}, {@link ExileTargetPermanentThenEffect},
- * {@link ReturnTargetPermanentToHandThenEffect}) acts on. The then-effect is resolved with its own
+ * {@link PutTargetPermanentIntoLibraryNFromTopThenEffect}, {@link ReturnTargetPermanentToHandThenEffect}) acts on. The then-effect is resolved with its own
  * {@code CONTROLLER}-style recipient against an entry whose controller is chosen here, so no
  * then-effect needs its own "target permanent's controller" variant.
  */

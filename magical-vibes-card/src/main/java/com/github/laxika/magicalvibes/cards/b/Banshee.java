@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "29")
+@CardRegistration(set = "DRK", collectorNumber = "40")
 public class Banshee extends Card {
 
     public Banshee() {

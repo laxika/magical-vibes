@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "37")
+@CardRegistration(set = "ULG", collectorNumber = "24")
 public class TragicPoet extends Card {
 
     public TragicPoet() {

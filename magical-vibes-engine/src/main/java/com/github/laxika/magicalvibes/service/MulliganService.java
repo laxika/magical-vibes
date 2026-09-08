@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PregameBattlefieldChoiceEffect;
+import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -21,6 +22,8 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,8 +49,10 @@ public class MulliganService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final PlayerInputService playerInputService;
     private final GameMutationCoordinator mutationCoordinator;
+    private final GameOutcomeService gameOutcomeService;
 
     public void keepHand(GameData gameData, Player player) {
+        ensureNoPendingMulliganAction(gameData);
         if (gameData.playerKeptHand.contains(player.getId())) {
             throw new IllegalStateException("You have already kept your hand");
         }
@@ -135,9 +140,91 @@ public class MulliganService {
     }
 
     public void mulligan(GameData gameData, Player player) {
+        ensureNoPendingMulliganAction(gameData);
         if (gameData.playerKeptHand.contains(player.getId())) {
             throw new IllegalStateException("You have already kept your hand");
         }
+
+        if (queueSerumPowderChoice(gameData, player)) {
+            return;
+        }
+
+        performMulligan(gameData, player);
+    }
+
+    public void resolveSerumPowderChoice(GameData gameData, Player player, boolean accepted,
+                                         PendingMayAbility ability) {
+        if (!accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to use ", ability.sourceCard(), "."));
+            performMulligan(gameData, player);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        List<Card> deck = gameData.playerDecks.get(player.getId());
+        int cardsToDraw = hand.size();
+        List<Card> cardsToExile = new ArrayList<>(hand);
+
+        hand.clear();
+        for (Card card : cardsToExile) {
+            gameData.addToExile(player.getId(), card);
+        }
+
+        int drawn = 0;
+        while (drawn < cardsToDraw) {
+            if (deck.isEmpty()) {
+                if (gameOutcomeService.resolveLoss(gameData, player.getId(), LossReason.EMPTY_LIBRARY)
+                        == LossOutcome.LOSES) {
+                    UUID winnerId = gameData.orderedPlayerIds.stream()
+                            .filter(id -> !id.equals(player.getId()))
+                            .findFirst()
+                            .orElse(null);
+                    gameLogService.append(gameData, GameLog.text(
+                            player.getUsername() + " attempted to draw from an empty library and loses the game."));
+                    gameOutcomeService.declareWinner(gameData, winnerId);
+                }
+                break;
+            }
+            hand.add(deck.removeFirst());
+            drawn++;
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles their hand and draws " + drawn + " card"
+                        + (drawn == 1 ? "" : "s") + " with ", ability.sourceCard(), "."));
+        log.info("Game {} - {} used Serum Powder to exile {} card(s) and draw {} card(s)",
+                gameData.id, player.getUsername(), cardsToExile.size(), drawn);
+        if (gameData.status != GameStatus.FINISHED) {
+            invalidateForAllPlayers(gameData);
+            requestMulliganDecision(gameData, player);
+        }
+    }
+
+    private boolean queueSerumPowderChoice(GameData gameData, Player player) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null) {
+            return false;
+        }
+        for (Card card : hand) {
+            List<CardEffect> effects = card.getEffects(EffectSlot.MULLIGAN_ACTION);
+            if (effects.isEmpty()) {
+                continue;
+            }
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    card,
+                    player.getId(),
+                    List.of(effects.getFirst()),
+                    card.getName() + " - Use this card to exile your hand and draw that many cards?"
+            ));
+            invalidateForAllPlayers(gameData);
+            playerInputService.processNextMayAbility(gameData);
+            return true;
+        }
+        return false;
+    }
+
+    private void performMulligan(GameData gameData, Player player) {
         int currentMulliganCount = gameData.mulliganCounts.getOrDefault(player.getId(), 0);
         if (currentMulliganCount >= 7) {
             throw new IllegalStateException("Maximum mulligans reached");
@@ -155,9 +242,6 @@ public class MulliganService {
 
         int newMulliganCount = currentMulliganCount + 1;
         gameData.mulliganCounts.put(player.getId(), newMulliganCount);
-        UUID decisionId = UUID.randomUUID();
-        gameData.playerMulliganDecisionIds.put(player.getId(), decisionId);
-
         mutationCoordinator.emit(gameData,
                 new GameEventFact.MulliganResolved(player.getId(), false, newMulliganCount),
                 GameEventAudience.allPlayers());
@@ -167,12 +251,13 @@ public class MulliganService {
 
         log.info("Game {} - {} mulliganed (count: {})", gameData.id, player.getUsername(), newMulliganCount);
         invalidateForAllPlayers(gameData);
-        mutationCoordinator.emit(gameData,
-                new GameEventFact.DecisionRequested(
-                        decisionId,
-                        player.getId(),
-                        GameEventFact.DecisionKind.MULLIGAN),
-                GameEventAudience.player(player.getId()));
+        requestMulliganDecision(gameData, player);
+    }
+
+    private void ensureNoPendingMulliganAction(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput()) {
+            throw new IllegalStateException("You must answer the pending mulligan action first");
+        }
     }
 
     private void checkStartGame(GameData gameData) {
@@ -181,17 +266,39 @@ public class MulliganService {
         }
     }
 
+    private void requestMulliganDecision(GameData gameData, Player player) {
+        UUID decisionId = UUID.randomUUID();
+        gameData.playerMulliganDecisionIds.put(player.getId(), decisionId);
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.DecisionRequested(
+                        decisionId,
+                        player.getId(),
+                        GameEventFact.DecisionKind.MULLIGAN),
+                GameEventAudience.player(player.getId()));
+    }
+
     private void startGame(GameData gameData) {
         // Leyline mechanic (CR 103.6): if a card with the leyline ability is in a player's
         // opening hand, the player may begin the game with it on the battlefield.
         // Per CR 103.6, the starting player takes all such actions first, then each other player.
+        List<UUID> pregameActionOrder = new ArrayList<>();
+        if (gameData.startingPlayerId != null && gameData.orderedPlayerIds.contains(gameData.startingPlayerId)) {
+            pregameActionOrder.add(gameData.startingPlayerId);
+        }
         for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!pregameActionOrder.contains(playerId)) {
+                pregameActionOrder.add(playerId);
+            }
+        }
+        for (UUID playerId : pregameActionOrder) {
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand == null) continue;
             for (Card card : hand) {
                 for (CardEffect effect : card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)) {
                     if (effect instanceof MayEffect may
-                            && may.wrapped() instanceof LeylineStartOnBattlefieldEffect) {
+                            && may.wrapped() instanceof PregameBattlefieldChoiceEffect pregame
+                            && (!pregame.onlyForNonStartingPlayer()
+                            || !playerId.equals(gameData.startingPlayerId))) {
                         // Leyline is a pregame action (CR 103.6), not a triggered ability —
                         // bypasses the stack, so add directly to pendingMayAbilities.
                         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -210,6 +317,18 @@ public class MulliganService {
         }
 
         continueStartGame(gameData);
+    }
+
+    public void completeGemstoneCavernsExile(GameData gameData, UUID playerId) {
+        PendingGemstoneCavernsChoice pending = gameData.pendingGemstoneCavernsChoice;
+        if (pending == null || !pending.controllerId().equals(playerId)) {
+            return;
+        }
+        gameData.pendingGemstoneCavernsChoice = null;
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            continueStartGame(gameData);
+        }
     }
 
     /**

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "284")
+@CardRegistration(set = "BTD", collectorNumber = "67")
 public class DiabolicVision extends Card {
 
     public DiabolicVision() {

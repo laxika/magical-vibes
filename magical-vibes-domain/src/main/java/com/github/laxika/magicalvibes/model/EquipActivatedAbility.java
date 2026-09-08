@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,7 +16,15 @@ import java.util.List;
 public class EquipActivatedAbility extends ActivatedAbility {
 
     public EquipActivatedAbility(String manaCost) {
-        this(manaCost, null, null);
+        this(manaCost, null, null, null);
+    }
+
+    /**
+     * Standard equip ability with an activation-cost modifier that is evaluated using the chosen
+     * creature target.
+     */
+    public EquipActivatedAbility(String manaCost, ActivationCostModifierEffect activationCostModifier) {
+        this(manaCost, null, null, activationCostModifier);
     }
 
     /**
@@ -24,10 +33,17 @@ public class EquipActivatedAbility extends ActivatedAbility {
      * same requirement is also enforced continuously as a state-based action (CR 704.5n).
      */
     public EquipActivatedAbility(String manaCost, PermanentPredicate restriction, String failureMessage) {
+        this(manaCost, restriction, failureMessage, null);
+    }
+
+    private EquipActivatedAbility(String manaCost, PermanentPredicate restriction, String failureMessage,
+                                  ActivationCostModifierEffect activationCostModifier) {
         super(
                 false,
                 manaCost,
-                List.of(new EquipEffect()),
+                activationCostModifier == null
+                        ? List.of(new EquipEffect())
+                        : List.of(activationCostModifier, new EquipEffect()),
                 "Equip " + manaCost,
                 new ControlledPermanentPredicateTargetFilter(
                         restriction == null

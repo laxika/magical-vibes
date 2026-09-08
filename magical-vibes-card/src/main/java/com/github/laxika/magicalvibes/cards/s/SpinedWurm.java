@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "8ED", collectorNumber = "279")
 @CardRegistration(set = "7ED", collectorNumber = "270")
 @CardRegistration(set = "STH", collectorNumber = "121")
+@CardRegistration(set = "TPR", collectorNumber = "198")
 public class SpinedWurm extends Card {
 }

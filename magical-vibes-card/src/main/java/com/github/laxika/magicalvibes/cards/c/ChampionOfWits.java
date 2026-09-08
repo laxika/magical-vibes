@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 
 @CardRegistration(set = "HOU", collectorNumber = "31")
+@CardRegistration(set = "AKR", collectorNumber = "53")
 public class ChampionOfWits extends Card {
 
     public ChampionOfWits() {

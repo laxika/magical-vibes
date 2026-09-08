@@ -8,17 +8,18 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "86")
+@CardRegistration(set = "LEG", collectorNumber = "260")
 public class Stangg extends Card {
 
     public Stangg() {
-        CreateTokenEffect stanggTwin = new CreateTokenEffect(
+        CreateTokenEffect twin = new CreateTokenEffect(
                 CardType.CREATURE,
                 1,
                 "Stangg Twin",
@@ -39,11 +40,7 @@ public class Stangg extends Card {
                 0,
                 Set.of());
 
-        // "When Stangg enters, create Stangg Twin ..."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenAndLinkToSourceEffect(stanggTwin));
-
-        // "Exile that token when Stangg leaves the battlefield."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenAndLinkToSourceEffect(twin));
+        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ExileTokensCreatedWithSourceEffect());
     }
 }

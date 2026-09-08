@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "225")
+@CardRegistration(set = "KLD", collectorNumber = "200")
 public class ChiefOfTheFoundry extends Card {
 
     public ChiefOfTheFoundry() {

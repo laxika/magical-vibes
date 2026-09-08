@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "123")
+@CardRegistration(set = "EMN", collectorNumber = "96")
 public class MidnightScavengers extends Card {
 
     public MidnightScavengers() {
@@ -27,6 +28,7 @@ public class MidnightScavengers extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 

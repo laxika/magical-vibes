@@ -13,10 +13,13 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "110")
+@CardRegistration(set = "ATH", collectorNumber = "70")
+@CardRegistration(set = "TSB", collectorNumber = "114")
 public class SerratedArrows extends Card {
 
     public SerratedArrows() {
@@ -38,7 +41,8 @@ public class SerratedArrows extends Card {
                         new RemoveCounterFromSourceCost(1, CounterType.ARROWHEAD),
                         new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)
                 ),
-                "{T}, Remove an arrowhead counter from this artifact: Put a -1/-1 counter on target creature."
+                "{T}, Remove an arrowhead counter from this artifact: Put a -1/-1 counter on target creature.",
+                TargetFilters.creature()
         ));
     }
 }

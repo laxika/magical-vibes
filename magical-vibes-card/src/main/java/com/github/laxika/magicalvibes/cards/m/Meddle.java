@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWith
  * intervening condition checked on resolution, not a targeting restriction.
  */
 @CardRegistration(set = "MIR", collectorNumber = "73")
+@CardRegistration(set = "ONS", collectorNumber = "92")
 public class Meddle extends Card {
 
     public Meddle() {

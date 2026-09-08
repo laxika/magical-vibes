@@ -31,7 +31,7 @@ public class CounterSpellIfControllerPoisonedEffectHandler implements NormalEffe
 
         UUID targetControllerId = targetEntry.getControllerId();
         int poisonCounters = gameData.playerPoisonCounters.getOrDefault(targetControllerId, 0);
-        if (poisonCounters > 0) {
+        if (poisonCounters >= ((CounterSpellIfControllerPoisonedEffect) effect).minimumPoisonCounters()) {
             counterSupport.counterSpell(gameData, entry, targetEntry);
         } else {
             log.info("Game {} - {} controller is not poisoned, spell not countered",

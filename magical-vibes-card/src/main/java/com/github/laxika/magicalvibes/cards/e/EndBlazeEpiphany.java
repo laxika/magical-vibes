@@ -11,12 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThi
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ECL", collectorNumber = "134")
+@CardRegistration(set = "ECL", collectorNumber = "364")
 public class EndBlazeEpiphany extends Card {
 
     public EndBlazeEpiphany() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()))
                 .addEffect(EffectSlot.SPELL, new ResolveEffectOnTargetDeathThisTurnEffect(
-                        new ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(new EventValue())));
+                        new ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(new EventValue())))
+                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()));
     }
 }

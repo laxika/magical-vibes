@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseTwoCreaturesByPowerDifferenceEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "195")
+@CardRegistration(set = "ECL", collectorNumber = "329")
 public class SpryAndMighty extends Card {
 
     public SpryAndMighty() {

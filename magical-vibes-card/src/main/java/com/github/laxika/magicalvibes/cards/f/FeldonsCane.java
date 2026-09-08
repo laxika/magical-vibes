@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEf
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "368")
+@CardRegistration(set = "CHR", collectorNumber = "97")
+@CardRegistration(set = "TSB", collectorNumber = "109")
 public class FeldonsCane extends Card {
 
     public FeldonsCane() {

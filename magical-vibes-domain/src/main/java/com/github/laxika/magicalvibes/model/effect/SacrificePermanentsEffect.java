@@ -32,20 +32,60 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                                  reading that player's own permanents instead of the spell's
  *                                  controller — "each player sacrifices … for each white permanent
  *                                  <em>they</em> control" (Omen of Fire)
+ * @param recordSacrificedCount when {@code true}, the actual number sacrificed by a direct
+ *                              single-player resolution is stored on the stack entry for a following
+ *                              {@code EventValue} amount
  */
 public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
-        SacrificeRecipient recipient, boolean countPerSacrificingPlayer)
-        implements CardEffect, CombatDamageTriggerContextEffect {
+        SacrificeRecipient recipient, boolean countPerSacrificingPlayer, boolean recordSacrificedCount,
+        boolean recordSacrificedPower, boolean simultaneousChoices)
+        implements CardEffect, CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect {
+
+    public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
+            SacrificeRecipient recipient, boolean countPerSacrificingPlayer,
+            boolean recordSacrificedCount, boolean recordSacrificedPower) {
+        this(count, filter, recipient, countPerSacrificingPlayer, recordSacrificedCount,
+                recordSacrificedPower, false);
+    }
+
+    public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
+            SacrificeRecipient recipient, boolean countPerSacrificingPlayer,
+            boolean recordSacrificedCount) {
+        this(count, filter, recipient, countPerSacrificingPlayer, recordSacrificedCount, false, false);
+    }
 
     /** Count evaluated once, from the spell's controller's perspective. */
     public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
             SacrificeRecipient recipient) {
-        this(count, filter, recipient, false);
+        this(count, filter, recipient, false, false, false, false);
+    }
+
+    /** Count evaluated separately for each sacrificing player. */
+    public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
+            SacrificeRecipient recipient, boolean countPerSacrificingPlayer) {
+        this(count, filter, recipient, countPerSacrificingPlayer, false, false, false);
     }
 
     /** Fixed count. */
     public SacrificePermanentsEffect(int count, PermanentPredicate filter, SacrificeRecipient recipient) {
-        this(new Fixed(count), filter, recipient, false);
+        this(new Fixed(count), filter, recipient, false, false, false, false);
+    }
+
+    /** Returns a copy that records the actual direct sacrifice count for a following effect. */
+    public SacrificePermanentsEffect withRecordedSacrificeCount() {
+        return new SacrificePermanentsEffect(count, filter, recipient, countPerSacrificingPlayer, true,
+                recordSacrificedPower, simultaneousChoices);
+    }
+
+    /** Returns a copy that records the sacrificed permanent's effective power for a following effect. */
+    public SacrificePermanentsEffect withRecordedSacrificedPower() {
+        return new SacrificePermanentsEffect(count, filter, recipient, countPerSacrificingPlayer,
+                recordSacrificedCount, true, simultaneousChoices);
+    }
+
+    public SacrificePermanentsEffect withSimultaneousChoices() {
+        return new SacrificePermanentsEffect(count, filter, recipient, countPerSacrificingPlayer,
+                recordSacrificedCount, recordSacrificedPower, true);
     }
 
     @Override

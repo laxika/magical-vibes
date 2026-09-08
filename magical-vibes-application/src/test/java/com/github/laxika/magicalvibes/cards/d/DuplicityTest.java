@@ -154,6 +154,7 @@ class DuplicityTest extends BaseCardTest {
         harness.castInstant(player2, 0, permId);
         harness.passBothPriorities();
         harness.runStateBasedActions();
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCards).noneMatch(e -> permId.equals(e.sourcePermanentId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))

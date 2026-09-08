@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "TMP", collectorNumber = "122")
+@CardRegistration(set = "TPR", collectorNumber = "94")
 public class DauthiHorror extends Card {
 
     public DauthiHorror() {

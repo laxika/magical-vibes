@@ -66,7 +66,7 @@ public class PayXManaSearchLibraryEffectHandler implements NormalEffectHandlerBe
                 return;
             }
 
-            new ManaCost("{0}").pay(pool, chosenValue);
+            new ManaCost("{X}").pay(pool, chosenValue);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays {" + chosenValue + "} for " + cardName + "."));
 
@@ -108,6 +108,7 @@ public class PayXManaSearchLibraryEffectHandler implements NormalEffectHandlerBe
     }
 
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
+        return pool.getTotal() + pool.getArtifactOnlyColorless()
+                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
     }
 }

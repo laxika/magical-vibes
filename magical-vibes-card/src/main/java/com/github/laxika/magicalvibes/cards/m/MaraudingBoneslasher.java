@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "70")
+@CardRegistration(set = "AKR", collectorNumber = "115")
 public class MaraudingBoneslasher extends Card {
 
     public MaraudingBoneslasher() {

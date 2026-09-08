@@ -17,7 +17,7 @@ public class AerieMystics extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}{U}",
-                List.of(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_CREATURES)),
+                List.of(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_OWN_CREATURES)),
                 "{1}{G}{U}: Creatures you control gain shroud until end of turn."
         ));
     }

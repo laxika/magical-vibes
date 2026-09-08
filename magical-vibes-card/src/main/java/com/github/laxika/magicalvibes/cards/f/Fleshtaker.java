@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "235")
 @CardRegistration(set = "INR", collectorNumber = "429")
+@CardRegistration(set = "MID", collectorNumber = "222")
 public class Fleshtaker extends Card {
 
     public Fleshtaker() {

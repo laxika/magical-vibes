@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "207")
+@CardRegistration(set = "AKR", collectorNumber = "181")
 public class ZealotOfTheGodPharaoh extends Card {
 
     public ZealotOfTheGodPharaoh() {

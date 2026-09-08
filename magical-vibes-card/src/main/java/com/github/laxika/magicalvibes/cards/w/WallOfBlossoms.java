@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "STH", collectorNumber = "125")
+@CardRegistration(set = "TPR", collectorNumber = "205")
 public class WallOfBlossoms extends Card {
 
     public WallOfBlossoms() {

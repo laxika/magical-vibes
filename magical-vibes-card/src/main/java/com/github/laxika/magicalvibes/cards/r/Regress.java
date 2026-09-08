@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MRD", collectorNumber = "48")
+@CardRegistration(set = "ROE", collectorNumber = "83")
 public class Regress extends Card {
 
     public Regress() {

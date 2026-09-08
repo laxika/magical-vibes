@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "TMP", collectorNumber = "44")
+@CardRegistration(set = "TPR", collectorNumber = "30")
 public class SoltariLancer extends Card {
 
     public SoltariLancer() {

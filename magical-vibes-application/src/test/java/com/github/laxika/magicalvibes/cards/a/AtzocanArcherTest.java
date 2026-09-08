@@ -28,6 +28,7 @@ class AtzocanArcherTest extends BaseCardTest {
         void etbTriggersOnStack() {
             Permanent target = addCreature(player2);
             castArcherAndResolveSpell();
+            harness.handlePermanentChosen(player1, target.getId());
 
             harness.assertOnBattlefield(player1, "Atzocan Archer");
             assertThat(gd.stack).hasSize(1);
@@ -91,9 +92,10 @@ class AtzocanArcherTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.COLORLESS, 2);
 
             harness.castCreature(player1, 0);
-            harness.passBothPriorities(); // resolve creature spell → ETB trigger
-            harness.passBothPriorities(); // resolve MayEffect → may prompt
-            harness.handleMayAbilityChosen(player1, false); // decline
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
 
             // Grizzly Bears still on battlefield
             harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -129,8 +131,8 @@ class AtzocanArcherTest extends BaseCardTest {
 
     private void castArcherAndAcceptMay(UUID targetId) {
         castArcherAndResolveSpell();
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → target selection
-        harness.handlePermanentChosen(player1, targetId); // choose target → fight
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 }

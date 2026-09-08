@@ -1,0 +1,43 @@
+package com.github.laxika.magicalvibes.cards.g;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+@CardRegistration(set = "MOM", collectorNumber = "106")
+public class GiftOfCompleation extends Card {
+
+    public GiftOfCompleation() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, incubatorToken());
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+                new TriggeringCardConditionalEffect(
+                        new CardSubtypePredicate(CardSubtype.PHYREXIAN),
+                        new SurveilEffect(1)));
+    }
+
+    private static CreateTokenEffect incubatorToken() {
+        ActivatedAbility transform = new ActivatedAbility(
+                false,
+                "{2}",
+                List.of(new TransformSelfEffect()),
+                "{2}: Transform this token."
+        );
+        return new CreateTokenEffect(
+                CardType.ARTIFACT, 1, "Incubator", 0, 0, null, null,
+                List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
+                false, false, false, 3, Set.of()
+        );
+    }
+}

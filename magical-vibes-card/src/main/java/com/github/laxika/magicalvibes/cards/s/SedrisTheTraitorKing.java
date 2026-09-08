@@ -29,6 +29,7 @@ public class SedrisTheTraitorKing extends Card {
                         .grantHaste(true)
                         .exileAtEndStep(true)
                         .exileIfLeavesBattlefield(true)
+                        .unearth(true)
                         .build()),
                 "Unearth {2}{B}",
                 ActivationTimingRestriction.SORCERY_SPEED

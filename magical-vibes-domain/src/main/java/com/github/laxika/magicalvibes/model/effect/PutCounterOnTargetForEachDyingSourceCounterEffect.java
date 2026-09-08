@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Death trigger for "When this creature dies, put a {@code counterType} counter on target creature
@@ -20,8 +21,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  *                    is still chosen as the trigger goes on the stack (CR 603.3d), but the controller
  *                    may decline placing the counters at resolution; the collector wraps the
  *                    snapshotted effect in a {@code MayEffect}
+ * @param targetPredicate optional structural restriction for the target; {@code null} means any creature
  */
-public record PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, int count, boolean optional) implements CardEffect {
+public record PutCounterOnTargetForEachDyingSourceCounterEffect(
+        CounterType counterType,
+        int count,
+        boolean optional,
+        PermanentPredicate targetPredicate
+) implements CardEffect {
+
+    public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, int count, boolean optional) {
+        this(counterType, count, optional, null);
+    }
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType) {
         this(counterType, 0, false);
@@ -31,8 +42,17 @@ public record PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType coun
         this(counterType, 0, optional);
     }
 
+    public PutCounterOnTargetForEachDyingSourceCounterEffect(
+            CounterType counterType,
+            boolean optional,
+            PermanentPredicate targetPredicate
+    ) {
+        this(counterType, 0, optional, targetPredicate);
+    }
+
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.permanent(), new PermanentIsCreaturePredicate());
+        return TargetSpec.benign(TargetPredicates.permanent(),
+                targetPredicate != null ? targetPredicate : new PermanentIsCreaturePredicate());
     }
 }

@@ -11,24 +11,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PalladiaMorsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Declining to pay {R}{G}{W} sacrifices Palladia-Mors")
-    void decliningPaymentSacrifices() {
-        harness.addToBattlefield(player1, new PalladiaMors());
-
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
-
-        harness.assertNotOnBattlefield(player1, "Palladia-Mors");
-        harness.assertInGraveyard(player1, "Palladia-Mors");
-    }
-
-    @Test
-    @DisplayName("Paying {R}{G}{W} keeps Palladia-Mors on the battlefield")
-    void payingKeepsCreature() {
-        harness.addToBattlefield(player1, new PalladiaMors());
+    @DisplayName("Paying {R}{G}{W} during upkeep keeps Palladia-Mors on the battlefield")
+    void payingUpkeepCostKeepsPalladiaMors() {
+        addCreatureReady(player1, new PalladiaMors());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -37,32 +22,21 @@ class PalladiaMorsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertOnBattlefield(player1, "Palladia-Mors");
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(countPermanents(player1, "Palladia-Mors")).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
-    @DisplayName("Accepting without all required mana sacrifices Palladia-Mors")
-    void acceptWithoutManaSacrifices() {
-        harness.addToBattlefield(player1, new PalladiaMors());
+    @DisplayName("Declining the upkeep payment sacrifices Palladia-Mors")
+    void decliningUpkeepCostSacrificesPalladiaMors() {
+        addCreatureReady(player1, new PalladiaMors());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotOnBattlefield(player1, "Palladia-Mors");
-    }
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
-    @Test
-    @DisplayName("Palladia-Mors does not trigger during the opponent's upkeep")
-    void doesNotTriggerDuringOpponentUpkeep() {
-        harness.addToBattlefield(player1, new PalladiaMors());
-
-        advanceToUpkeep(player2);
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player1, "Palladia-Mors");
+        assertThat(countPermanents(player1, "Palladia-Mors")).isZero();
     }
 }

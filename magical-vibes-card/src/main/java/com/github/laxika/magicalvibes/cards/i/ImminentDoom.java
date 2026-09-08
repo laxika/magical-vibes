@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSour
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "98")
+@CardRegistration(set = "AKR", collectorNumber = "161")
 public class ImminentDoom extends Card {
 
     public ImminentDoom() {

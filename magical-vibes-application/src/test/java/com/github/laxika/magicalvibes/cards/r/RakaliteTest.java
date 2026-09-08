@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Memnite;
-import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -16,59 +16,54 @@ class RakaliteTest extends BaseCardTest {
 
     @Test
     @DisplayName("Prevents the next damage to a targeted player")
-    void preventsNextDamageToPlayer() {
-        harness.addToBattlefield(player1, new Rakalite());
-        Permanent firstSpellcaster = addCreatureReady(player1, new ZuranSpellcaster());
-        Permanent secondSpellcaster = addCreatureReady(player1, new ZuranSpellcaster());
+    void preventsNextDamageToTargetPlayer() {
+        Permanent rakalite = addReadyRakalite(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        harness.activateAbility(player1, 1, null, player2.getId());
-        harness.passBothPriorities();
-        harness.activateAbility(player1, 2, null, player2.getId());
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(firstSpellcaster.isTapped()).isTrue();
-        assertThat(secondSpellcaster.isTapped()).isTrue();
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(rakalite);
     }
 
     @Test
-    @DisplayName("Prevents the next damage to a targeted creature")
-    void preventsNextDamageToCreature() {
-        harness.addToBattlefield(player1, new Rakalite());
-        addCreatureReady(player1, new ZuranSpellcaster());
-        Permanent memnite = harness.addToBattlefieldAndReturn(player2, new Memnite());
+    @DisplayName("Returns itself at the next end step after resolving the ability")
+    void returnsItselfAtNextEndStep() {
+        Permanent rakalite = addReadyRakalite(player1);
+        Card card = rakalite.getCard();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.activateAbility(player1, 0, null, memnite.getId());
-        harness.passBothPriorities();
-        harness.activateAbility(player1, 1, null, memnite.getId());
-        harness.passBothPriorities();
-
-        harness.assertOnBattlefield(player2, "Memnite");
-    }
-
-    @Test
-    @DisplayName("Returns itself to its owner's hand at the beginning of the next end step")
-    void returnsSelfToHandAtEndStep() {
         harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-
-        harness.addToBattlefield(player1, new Rakalite());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Rakalite");
-        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rakalite);
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+    }
 
-        harness.assertNotOnBattlefield(player1, "Rakalite");
-        harness.assertInHand(player1, "Rakalite");
+    private Permanent addReadyRakalite(Player player) {
+        Permanent rakalite = new Permanent(new Rakalite());
+        rakalite.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(rakalite);
+        return rakalite;
     }
 }

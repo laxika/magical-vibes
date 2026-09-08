@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * Vanilla creature. No card-specific engine logic.
  */
 @CardRegistration(set = "POR", collectorNumber = "9")
+@CardRegistration(set = "S99", collectorNumber = "9")
 public class BorderGuard extends Card {
 
     public BorderGuard() {

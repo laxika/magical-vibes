@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
  * Back half (Lead) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "217")
+@CardRegistration(set = "AKR", collectorNumber = "232")
 public class DestinedLead extends Card {
 
     public DestinedLead() {

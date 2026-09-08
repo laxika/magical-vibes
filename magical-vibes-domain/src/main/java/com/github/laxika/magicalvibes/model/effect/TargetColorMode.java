@@ -12,5 +12,8 @@ public enum TargetColorMode {
     BLOCKED_COLORS,
 
     /** A source is restricted unless it is one of the listed colors (Gaea's Revenge style). */
-    ALLOWED_COLORS_ONLY
+    ALLOWED_COLORS_ONLY,
+
+    /** A source is restricted if its effective color set contains exactly one color. */
+    MONOCOLORED
 }

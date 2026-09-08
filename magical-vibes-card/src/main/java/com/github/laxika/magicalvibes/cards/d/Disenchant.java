@@ -20,6 +20,13 @@ import java.util.List;
 @CardRegistration(set = "TMP", collectorNumber = "16")
 @CardRegistration(set = "USG", collectorNumber = "12")
 @CardRegistration(set = "M20", collectorNumber = "14")
+@CardRegistration(set = "TPR", collectorNumber = "11")
+@CardRegistration(set = "ATH", collectorNumber = "5")
+@CardRegistration(set = "BRO", collectorNumber = "6")
+@CardRegistration(set = "MMQ", collectorNumber = "18")
+@CardRegistration(set = "BRB", collectorNumber = "20")
+@CardRegistration(set = "SUM", collectorNumber = "17")
+@CardRegistration(set = "TSB", collectorNumber = "6")
 public class Disenchant extends Card {
 
     public Disenchant() {

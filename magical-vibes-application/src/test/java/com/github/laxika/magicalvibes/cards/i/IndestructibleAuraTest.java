@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IndestructibleAuraTest extends BaseCardTest {
@@ -22,25 +24,30 @@ class IndestructibleAuraTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castIndestructibleAura(creature);
-        shock(creature);
+        castShock(creature);
 
+        assertThat(creature.getMarkedDamage()).isZero();
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Prevention wears off after turn cleanup")
-    void preventionWearsOff() {
+    @DisplayName("Prevention wears off at end of turn")
+    void preventionWearsOffAtEndOfTurn() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castIndestructibleAura(creature);
-        gd.creaturesWithAllDamagePrevented.clear();
-        shock(creature);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        castShock(creature);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Cannot target a non-creature")
+    @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new IndestructibleAura()));
@@ -58,7 +65,7 @@ class IndestructibleAuraTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void shock(Permanent target) {
+    private void castShock(Permanent target) {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, target.getId());

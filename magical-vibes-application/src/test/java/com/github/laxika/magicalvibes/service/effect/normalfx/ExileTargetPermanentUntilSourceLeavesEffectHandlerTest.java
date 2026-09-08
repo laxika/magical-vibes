@@ -204,8 +204,8 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Still exiles target when source has left battlefield but without return tracking")
-            void exilesWithoutTrackingWhenSourceGone() {
+            @DisplayName("Does nothing when source has left the battlefield")
+            void doesNothingWhenSourceGone() {
                 Card targetCard = createCard("Spellbook");
                 Permanent target = new Permanent(targetCard);
                 Card sourceCard = createCreatureCard("Leonin Relic-Warder");
@@ -213,12 +213,9 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
 
                 StackEntry entry = createEntry(sourceCard, player1Id, target.getId());
 
-                when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-
                 exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
-                verify(permanentRemovalService).removePermanentToExile(gd, target);
+                verify(permanentRemovalService, never()).removePermanentToExile(gd, target);
                 assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
             }
 

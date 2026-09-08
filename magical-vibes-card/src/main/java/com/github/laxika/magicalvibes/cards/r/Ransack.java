@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "STH", collectorNumber = "39")
+@CardRegistration(set = "S99", collectorNumber = "47")
 public class Ransack extends Card {
 
     public Ransack() {

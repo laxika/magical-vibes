@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPerman
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "185")
+@CardRegistration(set = "AKR", collectorNumber = "216")
 public class ShedWeakness extends Card {
 
     public ShedWeakness() {

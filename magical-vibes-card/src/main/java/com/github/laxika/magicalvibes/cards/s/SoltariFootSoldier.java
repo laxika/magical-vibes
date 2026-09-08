@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "TMP", collectorNumber = "43")
+@CardRegistration(set = "BRB", collectorNumber = "74")
 public class SoltariFootSoldier extends Card {
 
     public SoltariFootSoldier() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanen
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsForVividEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "241")
+@CardRegistration(set = "ECL", collectorNumber = "378")
 public class SanarInnovativeFirstYear extends Card {
 
     public SanarInnovativeFirstYear() {

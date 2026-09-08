@@ -12,7 +12,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * this creature's power" via {@code SourcePower}). Implements {@link ManaProducingEffect}
  * so the engine treats the ability as a mana ability (CR 605.1a).
  */
-public record AwardManaEffect(ManaColor color, DynamicAmount amount) implements ManaProducingEffect {
+public record AwardManaEffect(ManaColor color, DynamicAmount amount,
+                              boolean tracksProducingSourceForSpellCastTriggers)
+        implements ManaProducingEffect {
+
+    public AwardManaEffect(ManaColor color, DynamicAmount amount) {
+        this(color, amount, false);
+    }
 
     public AwardManaEffect(ManaColor color) {
         this(color, new Fixed(1));
@@ -20,6 +26,11 @@ public record AwardManaEffect(ManaColor color, DynamicAmount amount) implements 
 
     public AwardManaEffect(ManaColor color, int amount) {
         this(color, new Fixed(amount));
+    }
+
+    /** Marks this mana as carrying a source-specific spell-cast trigger rider. */
+    public AwardManaEffect withProducingSourceForSpellCastTriggers() {
+        return new AwardManaEffect(color, amount, true);
     }
 
     @Override

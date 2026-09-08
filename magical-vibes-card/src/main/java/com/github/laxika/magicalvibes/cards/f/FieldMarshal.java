@@ -12,6 +12,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "15")
+@CardRegistration(set = "CSP", collectorNumber = "5")
 public class FieldMarshal extends Card {
 
     public FieldMarshal() {

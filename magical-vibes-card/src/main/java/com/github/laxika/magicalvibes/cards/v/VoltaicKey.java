@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "219")
+@CardRegistration(set = "USG", collectorNumber = "314")
 public class VoltaicKey extends Card {
 
     public VoltaicKey() {

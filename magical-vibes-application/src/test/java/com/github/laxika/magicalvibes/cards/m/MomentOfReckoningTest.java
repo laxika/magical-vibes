@@ -78,7 +78,7 @@ class MomentOfReckoningTest extends BaseCardTest {
         addMana();
 
         gs.playCard(gd, player1, 0,
-                ChooseOneEffect.encodeRepeatedModeSelection(0, 4, 2), null, null, List.of(), List.of());
+                ChooseOneEffect.encodeRepeatedModeSelectionInRange(0, 4, 2), null, null, List.of(), List.of());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -89,7 +89,7 @@ class MomentOfReckoningTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MomentOfReckoning()));
         addMana();
         gs.playCard(gd, player1, 0,
-                ChooseOneEffect.encodeRepeatedModeSelection(0, 4, 2, modeIndices),
+                ChooseOneEffect.encodeRepeatedModeSelectionInRange(0, 4, 2, modeIndices),
                 null, null, targetIds, List.of());
     }
 

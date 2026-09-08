@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import java.util.UUID;
 
 /**
- * Where a cost-modifying static effect lives: on a battlefield permanent (with that
- * permanent's controller), or on the spell being cast itself ({@link #SPELL_ITSELF},
- * where both fields are null).
+ * Where a cost-modifying static effect lives: on a battlefield permanent or emblem (with its
+ * controller), or on the spell being cast itself ({@link #SPELL_ITSELF}, where both fields are
+ * null). Emblem effects have a null {@code sourcePermanent}.
  */
 public record CostModificationSource(Permanent sourcePermanent, UUID controllerId) {
 

@@ -18,7 +18,8 @@ class StalkingAssassinTest extends BaseCardTest {
     void tapsTargetCreature() {
         addReadyAssassin(player1);
         Permanent target = addUntappedBears(player2);
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -31,9 +32,10 @@ class StalkingAssassinTest extends BaseCardTest {
     void destroysTargetTappedCreature() {
         addReadyAssassin(player1);
         Permanent target = addTappedBears(player2);
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.activateAbility(player1, 1, null, target.getId());
+        harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -45,9 +47,10 @@ class StalkingAssassinTest extends BaseCardTest {
     void cannotDestroyUntappedCreature() {
         addReadyAssassin(player1);
         Permanent target = addUntappedBears(player2);
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("tapped creature");
     }

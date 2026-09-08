@@ -37,6 +37,11 @@ export class LibraryChoiceService {
   handTopBottomHandIndex: number | null = null;
   handTopBottomTopIndex: number | null = null;
 
+  choosingHandBottomExile = false;
+  handBottomExileCards: Card[] = [];
+  handBottomExileHandIndex: number | null = null;
+  handBottomExileBottomIndex: number | null = null;
+
   reset(): void {
     this.scrying = false;
     this.scryCards = [];
@@ -57,6 +62,10 @@ export class LibraryChoiceService {
     this.handTopBottomCards = [];
     this.handTopBottomHandIndex = null;
     this.handTopBottomTopIndex = null;
+    this.choosingHandBottomExile = false;
+    this.handBottomExileCards = [];
+    this.handBottomExileHandIndex = null;
+    this.handBottomExileBottomIndex = null;
   }
 
   // ========== Message handlers ==========
@@ -90,6 +99,13 @@ export class LibraryChoiceService {
     this.handTopBottomCards = msg.cards ?? [];
     this.handTopBottomHandIndex = null;
     this.handTopBottomTopIndex = null;
+  }
+
+  handleChooseHandBottomExile(msg: InteractionPromptNotification): void {
+    this.choosingHandBottomExile = true;
+    this.handBottomExileCards = msg.cards ?? [];
+    this.handBottomExileHandIndex = null;
+    this.handBottomExileBottomIndex = null;
   }
 
   // ========== Scry ==========
@@ -282,5 +298,60 @@ export class LibraryChoiceService {
     this.handTopBottomCards = [];
     this.handTopBottomHandIndex = null;
     this.handTopBottomTopIndex = null;
+  }
+
+  get handBottomExileStep(): number {
+    if (this.handBottomExileHandIndex === null) return 0;
+    if (this.handBottomExileBottomIndex === null) return 1;
+    return 2;
+  }
+
+  get handBottomExilePrompt(): string {
+    if (this.handBottomExileStep === 0) return 'Choose a card to put into your hand:';
+    if (this.handBottomExileStep === 1) return 'Choose a card to put on the bottom of your library:';
+    return 'Confirm your choices:';
+  }
+
+  get handBottomExileAvailableCards(): { card: Card; originalIndex: number }[] {
+    return this.handBottomExileCards
+      .map((card, i) => ({ card, originalIndex: i }))
+      .filter(item => item.originalIndex !== this.handBottomExileHandIndex &&
+        item.originalIndex !== this.handBottomExileBottomIndex);
+  }
+
+  selectHandBottomExileCard(originalIndex: number): void {
+    if (this.handBottomExileHandIndex === null) {
+      this.handBottomExileHandIndex = originalIndex;
+      const remaining = this.handBottomExileCards
+        .map((_, i) => i)
+        .filter(i => i !== this.handBottomExileHandIndex);
+      if (remaining.length === 1) {
+        this.handBottomExileBottomIndex = remaining[0];
+      }
+    } else if (this.handBottomExileBottomIndex === null) {
+      this.handBottomExileBottomIndex = originalIndex;
+    }
+  }
+
+  undoHandBottomExile(): void {
+    if (this.handBottomExileBottomIndex !== null) {
+      this.handBottomExileBottomIndex = null;
+    } else if (this.handBottomExileHandIndex !== null) {
+      this.handBottomExileHandIndex = null;
+    }
+  }
+
+  confirmHandBottomExile(): void {
+    if (this.handBottomExileHandIndex === null || this.handBottomExileBottomIndex === null) return;
+    this.websocketService.send({
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'HAND_BOTTOM_EXILE',
+      index: this.handBottomExileHandIndex,
+      secondIndex: this.handBottomExileBottomIndex
+    });
+    this.choosingHandBottomExile = false;
+    this.handBottomExileCards = [];
+    this.handBottomExileHandIndex = null;
+    this.handBottomExileBottomIndex = null;
   }
 }

@@ -28,10 +28,10 @@ class SerpentAssassinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice prompt
-        harness.handlePermanentChosen(player1, creatureId); // choose target -> ETB on stack
+        harness.passBothPriorities(); // resolve creature spell -> target choice
+        harness.handlePermanentChosen(player1, creatureId);
+        harness.passBothPriorities(); // resolve triggered ability -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     // ===== Casting =====
@@ -71,10 +71,9 @@ class SerpentAssassinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> target choice
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -102,9 +101,10 @@ class SerpentAssassinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities(); // resolve creature spell -> target choice
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities(); // resolve triggered ability -> may prompt
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Serpent Assassin");

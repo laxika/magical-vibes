@@ -25,6 +25,9 @@ public class LookAtTopCardMayPutMatchingOntoBattlefieldHandler implements MayEff
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        mayMiscHandlerService.handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, accepted);
+        LookAtTopCardMayPutMatchingOntoBattlefieldEffect effect =
+                (LookAtTopCardMayPutMatchingOntoBattlefieldEffect) ability.effects().getFirst();
+        mayMiscHandlerService.handleLookAtTopCardPutLandOrCreatureChoice(
+                gameData, player, accepted, effect.enterTapped());
     }
 }

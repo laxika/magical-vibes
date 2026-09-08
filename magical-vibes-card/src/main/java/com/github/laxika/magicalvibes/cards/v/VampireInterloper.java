@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "123")
+@CardRegistration(set = "MID", collectorNumber = "125")
+@CardRegistration(set = "FDN", collectorNumber = "530")
 public class VampireInterloper extends Card {
 
     public VampireInterloper() {

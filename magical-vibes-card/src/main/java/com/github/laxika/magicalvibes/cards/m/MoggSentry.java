@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "204")
 @CardRegistration(set = "8ED", collectorNumber = "203")
+@CardRegistration(set = "PLS", collectorNumber = "69")
 public class MoggSentry extends Card {
 
     public MoggSentry() {

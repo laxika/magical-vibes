@@ -12,13 +12,14 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "245")
+@CardRegistration(set = "ECL", collectorNumber = "380")
 public class TamMindfulFirstYear extends Card {
 
     public TamMindfulFirstYear() {
         addEffect(EffectSlot.STATIC, new GrantHexproofFromOwnColorsEffect());
         addActivatedAbility(new ActivatedAbility(
-                false,
-                "{T}",
+                true,
+                null,
                 List.of(
                         new GrantColorUntilEndOfTurnEffect(CardColor.WHITE, true),
                         new GrantColorUntilEndOfTurnEffect(CardColor.BLUE, true),

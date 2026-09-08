@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "249")
+@CardRegistration(set = "GRN", collectorNumber = "259")
+@CardRegistration(set = "RAV", collectorNumber = "286")
+@CardRegistration(set = "EOE", collectorNumber = "261")
 public class WateryGrave extends Card {
 
     public WateryGrave() {

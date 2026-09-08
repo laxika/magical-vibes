@@ -21,6 +21,9 @@ public enum GraveyardExileScope {
     /** Exiles {@code count} TARGET cards from an OPPONENT's graveyard (opponent-only targeting). */
     TARGET_CARDS_OPPONENT_GRAVEYARD,
 
+    /** Exiles any number of TARGET cards from the controller's graveyard. */
+    TARGET_CARDS_CONTROLLER_GRAVEYARD,
+
     /** Exiles the ENTIRE graveyard of a TARGET player. */
     TARGET_PLAYER_ENTIRE,
 

@@ -31,6 +31,7 @@ public class PutSlimeCounterAndCreateOozeTokenEffectHandler implements NormalEff
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,6 +58,7 @@ public class PutSlimeCounterAndCreateOozeTokenEffectHandler implements NormalEff
 
         // Put a slime counter on the source
         source.setCounterCount(CounterType.SLIME, source.getCounterCount(CounterType.SLIME) + 1);
+        permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, 1);
         int slimeCount = source.getCounterCount(CounterType.SLIME);
 
         gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets a slime counter (" + slimeCount + " total).").build());

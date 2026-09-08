@@ -18,8 +18,15 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M13", collectorNumber = "24")
 @CardRegistration(set = "M14", collectorNumber = "25")
 @CardRegistration(set = "M20", collectorNumber = "32")
+@CardRegistration(set = "IKO", collectorNumber = "25")
+@CardRegistration(set = "TPR", collectorNumber = "22")
 @CardRegistration(set = "TMP", collectorNumber = "34")
 @CardRegistration(set = "USG", collectorNumber = "27")
+@CardRegistration(set = "ATH", collectorNumber = "10")
+@CardRegistration(set = "BRB", collectorNumber = "48")
+@CardRegistration(set = "DTK", collectorNumber = "29")
+@CardRegistration(set = "ONS", collectorNumber = "47")
+@CardRegistration(set = "FDN", collectorNumber = "501")
 public class Pacifism extends Card {
 
     public Pacifism() {

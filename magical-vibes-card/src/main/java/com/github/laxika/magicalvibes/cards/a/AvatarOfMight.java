@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "251")
+@CardRegistration(set = "PCY", collectorNumber = "109")
 public class AvatarOfMight extends Card {
 
     public AvatarOfMight() {

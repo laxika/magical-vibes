@@ -13,8 +13,10 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -46,19 +48,22 @@ public class GameSetupService {
     private final GameLogService gameLogService;
     private final CardCatalog cardCatalog;
     private final RandomDeckGenerator randomDeckGenerator;
+    private final TriggerCollectionService triggerCollectionService;
 
     public GameSetupService(GameRegistry gameRegistry,
                             ObjectProvider<CustomDeckSource> customDeckSourceProvider,
                             GameMutationCoordinator mutationCoordinator,
                             GameLogService gameLogService,
                             CardCatalog cardCatalog,
-                            RandomDeckGenerator randomDeckGenerator) {
+                            RandomDeckGenerator randomDeckGenerator,
+                            @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameRegistry = gameRegistry;
         this.customDeckSourceProvider = customDeckSourceProvider;
         this.mutationCoordinator = mutationCoordinator;
         this.gameLogService = gameLogService;
         this.cardCatalog = cardCatalog;
         this.randomDeckGenerator = randomDeckGenerator;
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     /**
@@ -88,6 +93,7 @@ public class GameSetupService {
         }
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
+        gameData.setCardsExiledListener(triggerCollectionService::checkControllerCardsExiledDuringTurnTriggers);
         String selectedDeckId = deckId;
         mutationCoordinator.mutate(gameData, () -> {
             gameData.allRandom = allRandom;

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "59")
+@CardRegistration(set = "AKR", collectorNumber = "66")
 public class KefnetTheMindful extends Card {
 
     public KefnetTheMindful() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "60")
+@CardRegistration(set = "SUM", collectorNumber = "48")
 public class AnimateArtifact extends Card {
 
     public AnimateArtifact() {

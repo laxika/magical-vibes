@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
 
 @CardRegistration(set = "POR", collectorNumber = "14")
+@CardRegistration(set = "S99", collectorNumber = "16")
 public class FalsePeace extends Card {
 
     public FalsePeace() {

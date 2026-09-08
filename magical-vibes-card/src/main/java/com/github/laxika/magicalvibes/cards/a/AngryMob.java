@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "4")
 @CardRegistration(set = "4ED", collectorNumber = "3")
+@CardRegistration(set = "DRK", collectorNumber = "1")
 public class AngryMob extends Card {
 
     public AngryMob() {

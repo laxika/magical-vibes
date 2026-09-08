@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "171")
+@CardRegistration(set = "AKR", collectorNumber = "193")
 public class HazeOfPollen extends Card {
 
     public HazeOfPollen() {

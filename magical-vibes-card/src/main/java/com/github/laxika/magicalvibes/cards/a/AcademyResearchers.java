@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "63")
+@CardRegistration(set = "USG", collectorNumber = "58")
 public class AcademyResearchers extends Card {
 
     public AcademyResearchers() {

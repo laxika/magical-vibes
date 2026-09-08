@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,7 @@ public class DealDamageToDefendingPlayerCreaturesEffectHandler implements Normal
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +38,9 @@ public class DealDamageToDefendingPlayerCreaturesEffectHandler implements Normal
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToDefendingPlayerCreaturesEffect) effect;
-        UUID attackedTargetId = entry.getAttackedTargetId();
+        UUID attackedTargetId = entry.getAttackedTargetId() != null
+                ? entry.getAttackedTargetId()
+                : entry.getTargetId();
         if (attackedTargetId == null) {
             return;
         }
@@ -50,7 +55,15 @@ public class DealDamageToDefendingPlayerCreaturesEffectHandler implements Normal
             return;
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int evaluatedDamage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, source));
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
         String cardName = entry.getCard().getName();
         FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         List<Permanent> battlefield = gameData.playerBattlefields.get(defendingPlayerId);

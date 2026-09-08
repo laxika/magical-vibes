@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "23")
+@CardRegistration(set = "AKR", collectorNumber = "31")
 public class ProtectionOfTheHekma extends Card {
 
     public ProtectionOfTheHekma() {

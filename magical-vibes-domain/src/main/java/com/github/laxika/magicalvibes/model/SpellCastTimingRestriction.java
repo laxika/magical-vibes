@@ -7,6 +7,23 @@ package com.github.laxika.magicalvibes.model;
  */
 public enum SpellCastTimingRestriction {
     /**
+     * "Cast this spell only during the declare attackers step." Teleport.
+     */
+    DECLARE_ATTACKERS,
+
+    /**
+     * "Cast this spell only before attackers are declared," limited to the first combat phase of
+     * the turn. Master Warcraft.
+     */
+    BEFORE_ATTACKERS_DECLARED,
+
+    /**
+     * "Cast this spell only before blockers are declared," limited to the first combat phase of
+     * the turn. Rapid Fire.
+     */
+    BEFORE_BLOCKERS_DECLARED,
+
+    /**
      * "Cast this spell only during the declare attackers step and only if you've been attacked
      * this step." Defiant Stand.
      */
@@ -28,6 +45,11 @@ public enum SpellCastTimingRestriction {
      * "Cast this spell only during combat."
      */
     COMBAT,
+
+    /**
+     * "Cast this spell only during combat on your turn."
+     */
+    YOUR_COMBAT,
 
     /**
      * "Cast this spell only during combat on your turn before blockers are declared." Melee. As
@@ -64,6 +86,17 @@ public enum SpellCastTimingRestriction {
      * which the caster is not the active player.
      */
     OPPONENTS_TURN,
+
+    /**
+     * "Cast this spell only during an opponent's turn after their upkeep step." Reset. Legal in
+     * any step after the active opponent's upkeep.
+     */
+    OPPONENTS_TURN_AFTER_UPKEEP,
+
+    /**
+     * "Cast this spell only during an opponent's upkeep." Festival.
+     */
+    OPPONENTS_UPKEEP,
 
     /**
      * "Cast this spell only before the combat damage step." Blood Frenzy. Legal for any player in

@@ -25,13 +25,11 @@ class SuspensionFieldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castEnchantment(player1, 0, targetId);
+        harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, exileTarget);
-        if (exileTarget) {
-            harness.handlePermanentChosen(player1, targetId);
-        }
     }
 
     @Test

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -19,7 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -40,13 +44,17 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetId = entry.getTargetId();
+        List<UUID> targets = entry.targetsForEffect(effect);
+        UUID targetId = targets.isEmpty() ? entry.getTargetId() : targets.getFirst();
         if (targetId == null) {
             return;
         }
 
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
-        if (targetPermanent == null) {
+        Card targetCard = targetPermanent != null
+                ? targetPermanent.getCard()
+                : entry.lastKnownPermanentCard(targetId);
+        if (targetPermanent == null && targetCard == null) {
             log.info("Game {} - temporary permanent copy target no longer exists", gameData.id);
             return;
         }
@@ -55,7 +63,7 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId());
-        if (!predicateEvaluationService.matchesPermanentPredicate(
+        if (targetPermanent != null && !predicateEvaluationService.matchesPermanentPredicate(
                 targetPermanent, copyEffect.targetPredicate(), filterContext)) {
             log.info("Game {} - temporary permanent copy target is no longer legal", gameData.id);
             return;
@@ -70,23 +78,30 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
             }
         });
 
-        String targetName = targetPermanent.getCard().getName();
+        String targetName = targetCard.getName();
         for (Permanent permanent : permanentsToCopy) {
             if (!permanent.isCopyUntilEndOfTurn()) {
                 permanent.setPreCopyCard(permanent.getCard());
             }
-            permanentCopierService.applyCloneCopy(permanent, targetPermanent, null, null);
+            permanentCopierService.applyCloneCopy(permanent, targetCard, null, null, Set.of());
+            if (copyEffect.removeLegendary()) {
+                var supertypes = EnumSet.noneOf(CardSupertype.class);
+                supertypes.addAll(permanent.getCard().getSupertypes());
+                supertypes.remove(CardSupertype.LEGENDARY);
+                permanent.getCard().setSupertypes(supertypes);
+            }
             permanent.setCopyUntilEndOfTurn(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(),
                     entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                    permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    permanent.getId(), null, null, copyEffect.duration(), 0));
         }
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" makes " + permanentsToCopy.size() + " other permanent(s) a copy of "
-                        + targetName + " until end of turn.")
+                        + targetName + (copyEffect.duration() == EffectDuration.UNTIL_NEXT_END_STEP
+                        ? " until the next end step." : " until end of turn."))
                 .build());
         log.info("Game {} - {} copies onto {} permanents", gameData.id, targetName, permanentsToCopy.size());
     }

@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Thoughtleech.class, Island.class, Forest.class})
 class ThoughtleechTest extends BaseCardTest {
 
     // "Whenever an Island an opponent controls becomes tapped, you may gain 1 life."
@@ -24,6 +26,23 @@ class ThoughtleechTest extends BaseCardTest {
         tap(island);
 
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Tapping an opponent's Island for mana also triggers Thoughtleech")
+    void opponentIslandManaTapAcceptGainsLife() {
+        harness.addToBattlefield(player1, new Thoughtleech());
+        harness.addToBattlefield(player2, new Island());
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.tapPermanent(player2, 0);
+        for (int i = 0; i < 8 && !gd.interaction.isAwaitingInput(); i++) {
+            harness.passBothPriorities();
+        }
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);

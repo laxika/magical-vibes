@@ -1,14 +1,21 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+
 /**
- * The controller names a card, then the target player reveals up to X cards chosen at random from
- * their hand. Every revealed card with the chosen name is discarded. The X value comes from the
- * resolving stack entry.
+ * The controller chooses a card name, then the target player reveals that many cards at random
+ * from their hand. The target player discards every revealed card with the chosen name.
  */
-public record ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect() implements CardEffect {
+public record ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect(DynamicAmount count)
+        implements CardEffect {
+
+    public ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect(int count) {
+        this(new Fixed(count));
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.player());
+        return TargetSpec.benign(TargetPredicates.player());
     }
 }

@@ -30,10 +30,10 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice prompt
-        harness.handlePermanentChosen(player1, enchantmentId); // choose target -> ETB on stack
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, enchantmentId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     // ===== ETB may ability =====
@@ -46,14 +46,15 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Angelic Chorus"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
-    @DisplayName("Accepting may ability prompts for enchantment target selection")
+    @DisplayName("Resolving War Priest prompts for enchantment target selection")
     void acceptingMayPromptsForTarget() {
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.forceActivePlayer(player1);
@@ -62,9 +63,7 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
@@ -89,9 +88,6 @@ class WarPriestOfThuneTest extends BaseCardTest {
         UUID enchantmentId = harness.getPermanentId(player2, "Angelic Chorus");
         castAndAcceptMay(enchantmentId);
 
-        // Resolve ETB triggered ability
-        harness.passBothPriorities();
-
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         harness.assertInGraveyard(player2, "Angelic Chorus");
@@ -107,9 +103,10 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Angelic Chorus"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "War Priest of Thune");
@@ -148,16 +145,16 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> MayEffect on stack
+        harness.passBothPriorities();
+        UUID enchantmentId = harness.getPermanentId(player2, "Angelic Chorus");
+        harness.handlePermanentChosen(player1, enchantmentId);
 
-        // Remove enchantment before MayEffect resolves
+        // Remove the enchantment before the triggered ability resolves
         gd.playerBattlefields.get(player2.getId()).clear();
-
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> no valid targets
+        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
     // ===== Can target own enchantment =====
@@ -182,8 +179,6 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AngelicChorus());
         UUID enchantmentId = harness.getPermanentId(player2, "Angelic Chorus");
         castAndAcceptMay(enchantmentId);
-
-        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "War Priest of Thune");
     }

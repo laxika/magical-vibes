@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "7ED", collectorNumber = "152")
+@CardRegistration(set = "USG", collectorNumber = "143")
 public class Oppression extends Card {
 
     public Oppression() {

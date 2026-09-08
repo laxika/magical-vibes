@@ -45,6 +45,7 @@ class TragicLessonTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         harness.assertInHand(player1, "Plains");
         harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Tragic Lesson");
     }
 
     @Test

@@ -1,7 +1,7 @@
 # Rules Info MCP server
 
-This local MCP server returns the verbatim text of a *Magic: The Gathering* Comprehensive Rules
-rule, looked up by rule number. It exists so that a rule number written into the code — `// CR
+This local MCP server returns verbatim text from the *Magic* Comprehensive Rules,
+looked up by rule number. It exists so that a rule number written into the code — `// CR
 120.1a`, a Javadoc reference, a commit message — can be checked against the current rules instead
 of trusted from memory. **Rule numbers drift:** rules get merged, split, and renumbered every
 release, so a number that was right a year ago may now point at a different rule or at nothing.

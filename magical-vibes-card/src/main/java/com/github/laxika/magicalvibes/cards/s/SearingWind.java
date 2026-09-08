@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "218")
+@CardRegistration(set = "PCY", collectorNumber = "103")
 public class SearingWind extends Card {
 
     public SearingWind() {

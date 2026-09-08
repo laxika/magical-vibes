@@ -51,6 +51,9 @@ public class RemoveCounterAndGainLifeEffectHandler implements NormalEffectHandle
         }
 
         subject.setCounterCount(e.counterType(), subject.getCounterCount(e.counterType()) - 1);
+        if (e.counterType() == com.github.laxika.magicalvibes.model.CounterType.OIL) {
+            gameData.recordOilCounterRemoved(subject, 1);
+        }
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         gameLogService.append(gameData, GameLog.textCardText("A " + counterName + " counter removed from ", subject.getCard(), "."));
         log.info("Game {} - {} counter removed from {}", gameData.id, e.counterType(), subject.getCard().getName());

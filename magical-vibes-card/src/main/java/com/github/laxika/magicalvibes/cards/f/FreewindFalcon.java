@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "VIS", collectorNumber = "5")
+@CardRegistration(set = "ATH", collectorNumber = "6")
 public class FreewindFalcon extends Card {
 
     public FreewindFalcon() {

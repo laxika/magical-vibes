@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "AKH", collectorNumber = "100")
+@CardRegistration(set = "AKR", collectorNumber = "116")
 public class MiasmicMummy extends Card {
 
     public MiasmicMummy() {

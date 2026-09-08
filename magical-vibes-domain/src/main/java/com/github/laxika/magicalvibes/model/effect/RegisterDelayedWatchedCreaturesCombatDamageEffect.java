@@ -14,8 +14,25 @@ import java.util.List;
  *
  * @param effects the effects the delayed ability resolves each time a watched creature deals
  *                combat damage
+ * @param combatDamageToPlayerOnly whether the delayed ability only triggers when the watched
+ *                                 creature deals combat damage to a player
+ * @param untilEndOfTurn whether the delayed ability expires during this turn's cleanup step;
+ *                       otherwise it expires at the controller's next turn
  */
-public record RegisterDelayedWatchedCreaturesCombatDamageEffect(List<CardEffect> effects) implements CardEffect {
+public record RegisterDelayedWatchedCreaturesCombatDamageEffect(
+        List<CardEffect> effects,
+        boolean combatDamageToPlayerOnly,
+        boolean untilEndOfTurn
+) implements CardEffect {
+
+    public RegisterDelayedWatchedCreaturesCombatDamageEffect(List<CardEffect> effects) {
+        this(effects, false, false);
+    }
+
+    public RegisterDelayedWatchedCreaturesCombatDamageEffect(List<CardEffect> effects,
+                                                              boolean combatDamageToPlayerOnly) {
+        this(effects, combatDamageToPlayerOnly, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

@@ -44,6 +44,7 @@ public class MoseoVeinsNewDean extends Card {
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
+                        .upTo(true)
                         .maxManaValueEqualsLifeGainedThisTurn(true)
                         .build()));
     }

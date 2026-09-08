@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "170")
+@CardRegistration(set = "MMQ", collectorNumber = "155")
 @CardRegistration(set = "POR", collectorNumber = "106")
 @CardRegistration(set = "TMP", collectorNumber = "149")
 public class RainOfTears extends Card {

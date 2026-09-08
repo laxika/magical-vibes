@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "53")
+@CardRegistration(set = "AKR", collectorNumber = "86")
 public class UnquenchableThirst extends Card {
 
     public UnquenchableThirst() {

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "28")
+@CardRegistration(set = "ECL", collectorNumber = "402")
 public class Personify extends Card {
 
     public Personify() {

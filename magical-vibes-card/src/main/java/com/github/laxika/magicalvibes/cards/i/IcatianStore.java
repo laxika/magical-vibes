@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "419")
+@CardRegistration(set = "FEM", collectorNumber = "98")
+@CardRegistration(set = "FEM", collectorNumber = "183")
 public class IcatianStore extends Card {
 
     public IcatianStore() {

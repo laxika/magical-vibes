@@ -128,7 +128,8 @@ public class VoidEffectHandler implements NormalEffectHandlerBean {
 
             if (discardCausedByOpponent && hasEnterBattlefieldOnDiscardEffect(card)) {
                 Permanent permanent = new Permanent(card);
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
+                battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
+                        gameData, targetPlayerId, permanent);
                 gameLogService.append(gameData, GameLog.textCardText(
                         gameData.playerIdToName.get(targetPlayerId) + " discards ", card,
                         " — it enters the battlefield instead."));

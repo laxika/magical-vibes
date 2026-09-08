@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +32,8 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final AuraAttachmentService auraAttachmentService;
+    private final TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +45,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
         var e = (ReturnSourceAuraToOpponentCreatureOnDeathEffect) effect;
 
         UUID auraCardId = entry.getCard().getId();
-        UUID auraOwnerId = entry.getControllerId();
+        UUID auraControllerId = entry.getControllerId();
         UUID enchantedCreatureControllerId = e.enchantedCreatureControllerId();
 
         if (enchantedCreatureControllerId == null) {
@@ -67,7 +71,10 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (gameQueryService.isCreature(gameData, p)) {
+                if (gameQueryService.isCreature(gameData, p)
+                        && auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, p)
+                        && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                                gameData, p, entry.getCard(), auraControllerId).isEmpty()) {
                     validTargetIds.add(p.getId());
                 }
             }
@@ -88,17 +95,17 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
             Permanent target = gameQueryService.findPermanentById(gameData, validTargetIds.getFirst());
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(target.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraOwnerId, auraPerm);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm);
 
-            String ownerName = gameData.playerIdToName.get(auraOwnerId);
+            String controllerName = gameData.playerIdToName.get(auraControllerId);
             
-            gameLogService.append(gameData, GameLog.builder().card(auraCard).text(" returns to the battlefield attached to ").card(target.getCard()).text(" under " + ownerName + "'s control.").build());
+            gameLogService.append(gameData, GameLog.builder().card(auraCard).text(" returns to the battlefield attached to ").card(target.getCard()).text(" under " + controllerName + "'s control.").build());
             log.info("Game {} - {} returns attached to {} (auto-selected)",
                     gameData.id, auraCard.getName(), target.getCard().getName());
         } else {
             // Multiple valid targets — let the dying creature's controller choose
             gameData.interaction.setPendingAuraCard(auraCard);
-            gameData.interaction.setPendingAuraOwnerId(auraOwnerId);
+            gameData.interaction.setPendingAuraOwnerId(auraControllerId);
 
             playerInputService.beginPermanentChoice(gameData, enchantedCreatureControllerId, validTargetIds,
                     "Choose a creature to attach " + auraCard.getName() + " to.");

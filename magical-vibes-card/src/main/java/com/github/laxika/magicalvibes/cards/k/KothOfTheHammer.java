@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,7 +33,8 @@ public class KothOfTheHammer extends Card {
                 +1,
                 List.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.ELEMENTAL), Set.of(), CardColor.RED)
+                        new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.ELEMENTAL), Set.of(),
+                                CardColor.RED, Set.of(), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN)
                 ),
                 "+1: Untap target Mountain. It becomes a 4/4 red Elemental creature until end of turn. It's still a land.",
                 new PermanentPredicateTargetFilter(

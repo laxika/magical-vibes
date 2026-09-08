@@ -36,7 +36,7 @@ public class KrovikanSorcerer extends Card {
                 List.of(
                         new DiscardCardTypeCost(new CardColorPredicate(CardColor.BLACK), "black"),
                         new DrawCardEffect(2),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)
+                        DiscardEffect.cardsDrawnThisResolution(1, DiscardRecipient.CONTROLLER)
                 ),
                 "{T}, Discard a black card: Draw two cards, then discard one of them."
         ));

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "145")
+@CardRegistration(set = "TOR", collectorNumber = "100")
 public class GrimLavamancer extends Card {
 
     public GrimLavamancer() {

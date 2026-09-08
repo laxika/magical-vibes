@@ -20,7 +20,7 @@ public class AnaxAndCymede extends Card {
                 null,
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)
                 ),
                 new StackEntryTargetsSourcePredicate()
         ));

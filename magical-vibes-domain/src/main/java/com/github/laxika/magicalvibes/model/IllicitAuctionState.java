@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Progress state for life-bid auctions such as Illicit Auction and Mages' Contest. The flow is
+ * Progress state for life-bid auctions such as Illicit Auction, Mages' Contest, and Pain's Reward. The flow is
  * driven one bidder at a time by the corresponding effect handler, which re-runs on each bid answer (via
  * {@link GameData#rerunCurrentEffectAfterInteraction}).
  *

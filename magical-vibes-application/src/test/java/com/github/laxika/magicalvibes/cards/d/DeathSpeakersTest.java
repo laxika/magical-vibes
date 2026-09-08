@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.a.AysenBureaucrats;
+import com.github.laxika.magicalvibes.cards.b.BrokenVisage;
+import com.github.laxika.magicalvibes.cards.c.Carapace;
+import com.github.laxika.magicalvibes.cards.g.GrandmotherSengir;
+import com.github.laxika.magicalvibes.cards.s.Shrink;
+import com.github.laxika.magicalvibes.cards.t.Torture;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,45 +19,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeathSpeakers.class, AysenBureaucrats.class, BrokenVisage.class, Carapace.class,
+        DrySpell.class, DwarvenTrader.class, GrandmotherSengir.class, Shrink.class, Torture.class})
 class DeathSpeakersTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 
     @Test
     @DisplayName("Black creature cannot block Death Speakers")
     void blackCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new DeathSpeakers());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new DeathSpeakers());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        addCreatureReady(player2, new GrandmotherSengir());
 
-        Permanent blocker = new Permanent(createCreature("Black Beast", 2, 2, CardColor.BLACK));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -64,21 +38,13 @@ class DeathSpeakersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Green creature can block Death Speakers")
-    void greenCreatureCanBlock() {
-        Permanent attacker = new Permanent(new DeathSpeakers());
-        attacker.setSummoningSick(false);
+    @DisplayName("Nonblack creature can block Death Speakers")
+    void nonBlackCreatureCanBlock() {
+        Permanent attacker = addCreatureReady(player1, new DeathSpeakers());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        Permanent blocker = addCreatureReady(player2, new DwarvenTrader());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -88,60 +54,118 @@ class DeathSpeakersTest extends BaseCardTest {
     @Test
     @DisplayName("Takes no combat damage from black creature")
     void takesNoDamageFromBlackCreature() {
-        Permanent attacker = new Permanent(createCreature("Black Beast", 3, 3, CardColor.BLACK));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrandmotherSengir());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        Permanent blocker = new Permanent(new DeathSpeakers());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new DeathSpeakers());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Black Beast's damage to Death Speakers is prevented (protection from black)
-        harness.assertOnBattlefield(player2, "Death Speakers");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 
     @Test
-    @DisplayName("Cannot be targeted by black instant")
-    void cannotBeTargetedByBlackInstant() {
-        Permanent speakers = new Permanent(new DeathSpeakers());
-        speakers.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(speakers);
+    @DisplayName("Cannot be targeted by a black spell")
+    void cannotBeTargetedByBlackSpell() {
+        Permanent speakers = addCreatureReady(player2, new DeathSpeakers());
+        speakers.setAttacking(true);
 
-        // Add valid target so spell is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        harness.setHand(player1, List.of(new BrokenVisage()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.setHand(player1, List.of(createTargetedInstant("Black Removal", CardColor.BLACK, "{B}")));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 1);
-
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, speakers.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, speakers.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
 
     @Test
-    @DisplayName("Can be targeted by white instant")
-    void canBeTargetedByWhiteInstant() {
-        Permanent speakers = new Permanent(new DeathSpeakers());
-        speakers.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(speakers);
+    @DisplayName("Can be targeted by a nonblack spell")
+    void canBeTargetedByNonBlackSpell() {
+        Permanent speakers = addCreatureReady(player1, new DeathSpeakers());
 
-        harness.setHand(player1, List.of(createTargetedInstant("White Blast", CardColor.WHITE, "{W}")));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new Shrink()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
-        gs.playCard(gd, player1, 0, 0, speakers.getId(), null);
+        harness.castInstant(player1, 0, speakers.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("White Blast");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(speakers.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot be targeted by a black ability")
+    void cannotBeTargetedByBlackAbility() {
+        addCreatureReady(player1, new GrandmotherSengir());
+        Permanent speakers = addCreatureReady(player2, new DeathSpeakers());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, speakers.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
+    }
+
+    @Test
+    @DisplayName("Can be targeted by a nonblack ability")
+    void canBeTargetedByNonBlackAbility() {
+        addCreatureReady(player1, new AysenBureaucrats());
+        Permanent speakers = addCreatureReady(player2, new DeathSpeakers());
+
+        harness.activateAbility(player1, 0, null, speakers.getId());
+        harness.passBothPriorities();
+
+        assertThat(speakers.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot be enchanted by a black Aura")
+    void cannotBeEnchantedByBlackAura() {
+        Permanent speakers = addCreatureReady(player2, new DeathSpeakers());
+
+        harness.setHand(player1, List.of(new Torture()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, speakers.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
+    }
+
+    @Test
+    @DisplayName("Can be enchanted by a nonblack Aura")
+    void canBeEnchantedByNonBlackAura() {
+        Permanent speakers = addCreatureReady(player1, new DeathSpeakers());
+
+        harness.setHand(player1, List.of(new Carapace()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, speakers.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isAttached()
+                        && permanent.getAttachedTo().equals(speakers.getId()));
+    }
+
+    @Test
+    @DisplayName("Takes no noncombat damage from a black spell")
+    void takesNoNoncombatDamageFromBlackSpell() {
+        Permanent speakers = addCreatureReady(player2, new DeathSpeakers());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.setHand(player1, List.of(new DrySpell()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(speakers.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Death Speakers");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 }

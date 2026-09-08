@@ -8,10 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CHR", collectorNumber = "26")
+@CardRegistration(set = "LEG", collectorNumber = "80")
 public class Teleport extends Card {
 
     public Teleport() {
-        // Cast this spell only during the declare attackers step.
+        // Cast only during the declare attackers step.
         setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS);
 
         // Target creature can't be blocked this turn.

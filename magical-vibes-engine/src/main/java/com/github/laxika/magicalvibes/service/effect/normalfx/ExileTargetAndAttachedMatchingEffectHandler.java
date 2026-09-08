@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -39,8 +40,19 @@ public class ExileTargetAndAttachedMatchingEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var exile = (ExileTargetAndAttachedMatchingEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+
+        List<Permanent> targets = new ArrayList<>();
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null) {
+                targets.add(target);
+            }
+        }
+        if (targets.isEmpty()) {
             return;
         }
 
@@ -49,12 +61,14 @@ public class ExileTargetAndAttachedMatchingEffectHandler implements NormalEffect
                 .withSourceControllerId(entry.getControllerId());
 
         List<Permanent> matchingAttached = new ArrayList<>();
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent permanent : battlefield) {
-                if (target.getId().equals(permanent.getAttachedTo())
-                        && predicateEvaluationService.matchesPermanentPredicate(
-                                permanent, exile.attachedFilter(), filterContext)) {
-                    matchingAttached.add(permanent);
+        for (Permanent target : targets) {
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (target.getId().equals(permanent.getAttachedTo())
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                                    permanent, exile.attachedFilter(), filterContext)) {
+                        matchingAttached.add(permanent);
+                    }
                 }
             }
         }
@@ -62,7 +76,9 @@ public class ExileTargetAndAttachedMatchingEffectHandler implements NormalEffect
         for (Permanent attached : matchingAttached) {
             exileToExile(gameData, entry, attached);
         }
-        exileToExile(gameData, entry, target);
+        for (Permanent target : targets) {
+            exileToExile(gameData, entry, target);
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 

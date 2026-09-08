@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +28,9 @@ public class MayPayLifeOrEntersTappedHandler implements MayEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final LifeSupport lifeSupport;
     private final InputCompletionService inputCompletionService;
+    private final BattlefieldEntryService battlefieldEntryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,10 +49,7 @@ public class MayPayLifeOrEntersTappedHandler implements MayEffectHandlerBean {
         boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameData.getLife(playerId) >= effect.lifeCost();
         if (accepted && canPay) {
-            gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - effect.lifeCost());
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, effect.lifeCost());
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life for ", ability.sourceCard(), "."));
+            lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
             log.info("Game {} - {} pays {} life for {}", gameData.id, player.getUsername(),
                     effect.lifeCost(), ability.sourceCard().getName());
         } else {
@@ -64,6 +64,9 @@ public class MayPayLifeOrEntersTappedHandler implements MayEffectHandlerBean {
                     player.getUsername(), ability.sourceCard().getName());
         }
 
+        if (ability.sourceCard().hasType(CardType.LAND)) {
+            battlefieldEntryService.processLandETBEffects(gameData, playerId, ability.sourceCard());
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

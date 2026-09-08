@@ -1,0 +1,26 @@
+package com.github.laxika.magicalvibes.cards.a;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
+import java.util.List;
+
+@CardRegistration(set = "MKM", collectorNumber = "3")
+@CardRegistration(set = "MKM", collectorNumber = "287")
+public class AssembleThePlayers extends Card {
+
+    public AssembleThePlayers() {
+        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
+        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(
+                new CardAllOfPredicate(List.of(
+                        new CardTypePredicate(CardType.CREATURE),
+                        new CardPowerAtMostPredicate(2))), true));
+    }
+}

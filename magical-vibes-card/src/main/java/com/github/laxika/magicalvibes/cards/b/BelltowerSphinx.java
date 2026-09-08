@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerMillsEf
  * "Whenever a source deals damage to this creature, that source's controller mills that many cards."
  */
 @CardRegistration(set = "M12", collectorNumber = "46")
+@CardRegistration(set = "RAV", collectorNumber = "38")
 public class BelltowerSphinx extends Card {
 
     public BelltowerSphinx() {

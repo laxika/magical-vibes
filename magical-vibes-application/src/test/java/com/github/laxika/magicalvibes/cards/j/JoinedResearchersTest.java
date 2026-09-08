@@ -49,7 +49,7 @@ class JoinedResearchersTest extends BaseCardTest {
     void castingPreparedSpellDrawsForBothPlayers() {
         Permanent researchers = harness.addToBattlefieldAndReturn(player1, new JoinedResearchers());
         harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         setDeck(player1, List.of(new Island(), new Island(), new Island()));
         setDeck(player2, List.of(new Island(), new Island(), new Island()));
 
@@ -57,6 +57,8 @@ class JoinedResearchersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         UUID spellId = researchers.getPreparedSpellCardId();
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

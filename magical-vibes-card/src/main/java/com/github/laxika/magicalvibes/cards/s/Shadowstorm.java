@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "202")
+@CardRegistration(set = "TPR", collectorNumber = "157")
 public class Shadowstorm extends Card {
 
     public Shadowstorm() {

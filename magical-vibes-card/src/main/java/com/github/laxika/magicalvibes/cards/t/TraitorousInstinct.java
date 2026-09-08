@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "109")
+@CardRegistration(set = "ROE", collectorNumber = "168")
 public class TraitorousInstinct extends Card {
 
     public TraitorousInstinct() {

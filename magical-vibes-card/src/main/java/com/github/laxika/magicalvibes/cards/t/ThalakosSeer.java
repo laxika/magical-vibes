@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "94")
+@CardRegistration(set = "TPR", collectorNumber = "72")
 public class ThalakosSeer extends Card {
 
     public ThalakosSeer() {

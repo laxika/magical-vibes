@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "P02", collectorNumber = "60")
+@CardRegistration(set = "S99", collectorNumber = "62")
 public class WindSail extends Card {
 
     public WindSail() {

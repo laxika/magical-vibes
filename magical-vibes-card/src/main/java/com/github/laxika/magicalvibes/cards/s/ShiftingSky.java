@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AllNonlandPermanentsAreChosen
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "100")
+@CardRegistration(set = "PLS", collectorNumber = "32")
 public class ShiftingSky extends Card {
 
     public ShiftingSky() {

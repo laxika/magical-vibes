@@ -28,8 +28,9 @@ class PredatoryNightstalkerTest extends BaseCardTest {
     void resolvingPromptsMayAbility() {
         castNightstalker();
 
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -40,8 +41,6 @@ class PredatoryNightstalkerTest extends BaseCardTest {
         castNightstalker();
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true); // accept -> target choice
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -60,9 +59,9 @@ class PredatoryNightstalkerTest extends BaseCardTest {
         castNightstalker();
 
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true); // accept -> target choice
-        harness.handlePermanentChosen(player1, player2.getId()); // target opponent -> sacrifice choice
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
@@ -86,8 +85,9 @@ class PredatoryNightstalkerTest extends BaseCardTest {
         castNightstalker();
 
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -104,9 +104,9 @@ class PredatoryNightstalkerTest extends BaseCardTest {
         castNightstalker();
 
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");

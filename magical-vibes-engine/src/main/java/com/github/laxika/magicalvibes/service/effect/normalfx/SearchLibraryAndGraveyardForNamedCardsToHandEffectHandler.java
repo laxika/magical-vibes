@@ -58,7 +58,7 @@ public class SearchLibraryAndGraveyardForNamedCardsToHandEffectHandler implement
                 Card found = graveyardMatch.get();
                 graveyard.remove(found);
                 graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, found);
-                gameData.playerHands.get(controllerId).add(found);
+                graveyardService.addCardToHandFromGraveyard(gameData, controllerId, controllerId, found);
                 gameLogService.append(gameData, GameLog.textCardText(
                         playerName + " searches their graveyard, reveals ", found,
                         ", and puts it into their hand."));

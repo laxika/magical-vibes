@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "UDS", collectorNumber = "109")
+@CardRegistration(set = "TSB", collectorNumber = "80")
 public class HuntingMoa extends Card {
 
     public HuntingMoa() {

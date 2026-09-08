@@ -27,8 +27,8 @@ class WaterspoutWeaversTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(weavers.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, weavers, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -46,8 +46,8 @@ class WaterspoutWeaversTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(weavers.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, weavers, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -60,7 +60,7 @@ class WaterspoutWeaversTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(weavers.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, weavers, Keyword.FLYING)).isFalse();
     }
 
     @Test

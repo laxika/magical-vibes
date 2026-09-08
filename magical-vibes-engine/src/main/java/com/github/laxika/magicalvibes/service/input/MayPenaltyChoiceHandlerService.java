@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
+import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -17,19 +20,27 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidenceEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessExilesGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerTakesDamageUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
@@ -38,24 +49,36 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUnlessReturnLandToHand
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DrawCardUnlessPaysEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
+import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -96,6 +119,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTargetCreatureUnlessControllerPaysEffectHandler returnTargetCreatureUnlessControllerPaysEffectHandler;
     private final CounterSupport counterSupport;
+    private final WaterbendPaymentService waterbendPaymentService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerTakesDamageUnlessPaysEffectHandler eachPlayerTakesDamageUnlessPaysEffectHandler;
@@ -106,6 +130,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MustAttackUnlessControllerPaysManaValueEffectHandler mustAttackUnlessControllerPaysManaValueEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler returnMatchingPermanentsUnlessOwnerPaysEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
+    private final LifeSupport lifeSupport;
 
     /**
      * Arcum's Whistle: the active player may pay {X} (X = the target creature's mana value).
@@ -152,10 +177,12 @@ public class MayPenaltyChoiceHandlerService {
         int lifeCost = effect.lifeCost();
         boolean exileIfCountered = effect.exileIfCountered();
         List<CardEffect> onNotPaidEffects = effect.onNotPaidEffects();
+        List<CardEffect> onPaidEffects = effect.onPaidEffects();
         UUID targetCardId = ability.targetCardId();
-        String costText = amount == 0 && lifeCost > 0
+        String manaCost = effect.manaCost() != null ? effect.manaCost() : "{" + amount + "}";
+        String costText = manaCost.equals("{0}") && lifeCost > 0
                 ? lifeCost + " life"
-                : "{" + amount + "}" + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
+                : manaCost + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
 
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
@@ -171,22 +198,8 @@ public class MayPenaltyChoiceHandlerService {
             return;
         }
 
-        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
-            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        if (gameQueryService.isProtectedFromCounterBySourceCard(gameData, targetEntry.getControllerId(), ability.sourceCard())) {
-            log.info("Game {} - {} cannot be countered by {} spells",
-                    gameData.id, targetEntry.getCard().getName(),
-                    ability.sourceCard().getColor().name().toLowerCase());
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         if (accepted) {
-            ManaCost cost = new ManaCost("{" + amount + "}");
+            ManaCost cost = new ManaCost(manaCost);
             ManaPool pool = gameData.playerManaPools.get(player.getId());
             boolean canPayLife = lifeCost <= 0
                     || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
@@ -194,11 +207,14 @@ public class MayPenaltyChoiceHandlerService {
             if (cost.canPay(pool) && canPayLife) {
                 cost.pay(pool);
                 if (lifeCost > 0) {
-                    gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - lifeCost);
+                    lifeSupport.applyLifePayment(gameData, player.getId(), lifeCost,
+                            ability.sourceCard().getName());
                 }
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), costText);
+                counterSupport.resolvePaidRider(gameData, ability.sourceCard(), ability.sourceControllerId(),
+                        onPaidEffects);
             } else {
                 counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, exileIfCountered, onNotPaidEffects);
             }
@@ -209,9 +225,64 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleCounterUnlessWaterbendsChoice(GameData gameData, Player player, boolean accepted,
+                                                    PendingMayAbility ability) {
+        CounterUnlessEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof CounterUnlessEffect ce
+                        && ce.ransomKind() == CounterUnlessEffect.RansomKind.PAY_WATERBEND)
+                .map(CounterUnlessEffect.class::cast)
+                .findFirst().orElseThrow();
+        int amount = effect.ransomMagnitude();
+        UUID targetCardId = ability.targetCardId();
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter-unless-waterbend target no longer on stack", gameData.id);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        String costText = "{" + amount + "} using waterbend";
+        if (accepted && waterbendPaymentService.canPay(gameData, player.getId(), amount)) {
+            waterbendPaymentService.pay(gameData, player.getId(), amount, ability.sourceCard());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
+        } else {
+            counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, false, List.of());
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void counterSpell(GameData gameData, Player player, Card sourceCard, StackEntry targetEntry,
                               String costText, boolean exileIfCountered, List<CardEffect> onNotPaidEffects) {
         UUID counteredControllerId = targetEntry.getControllerId();
+        boolean counterable = !gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                && !gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), sourceCard);
+        if (!counterable) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to pay " + costText + ". ", targetEntry.getCard(),
+                    " cannot be countered."));
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
+            counterSupport.resolveNotPaidRider(gameData, sourceCard, counteredControllerId, onNotPaidEffects);
+            return;
+        }
+
         gameData.stack.remove(targetEntry);
 
         // CR 603.8 — clean up state-trigger tracking when countered
@@ -222,9 +293,10 @@ public class MayPenaltyChoiceHandlerService {
                 || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
         if (!targetEntry.isCopy() && !isAbility) {
             if (exileIfCountered) {
-                exileService.exileCard(gameData, counteredControllerId, targetEntry.getCard());
+                exileService.exileCard(gameData, counteredControllerId, targetEntry.getPhysicalCard());
             } else {
-                graveyardService.addCardToGraveyard(gameData, counteredControllerId, targetEntry.getCard());
+                graveyardService.addCardToGraveyardFromSpell(gameData, targetEntry.getOwnerId(),
+                        targetEntry.getPhysicalCard(), targetEntry.getControllerId());
             }
         }
 
@@ -238,9 +310,9 @@ public class MayPenaltyChoiceHandlerService {
     }
 
     public void handleCounterUnlessDiscardsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        // Presence check — the effect is a marker; wording differs from counter-unless-pays.
-        ability.effects().stream()
-                .filter(e -> e instanceof CounterUnlessEffect ce && ce.ransomKind() == CounterUnlessEffect.RansomKind.DISCARD_CARD)
+        CounterUnlessDiscardsEffect effect = ability.effects().stream()
+                .filter(CounterUnlessDiscardsEffect.class::isInstance)
+                .map(CounterUnlessDiscardsEffect.class::cast)
                 .findFirst().orElseThrow();
 
         UUID targetCardId = ability.targetCardId();
@@ -286,8 +358,19 @@ public class MayPenaltyChoiceHandlerService {
             if (!validIndices.isEmpty()) {
                 // Paying the Ward cost is the controller's own choice — not an opponent-caused discard.
                 gameData.discardCausedByOpponent = false;
+                if (effect.random()) {
+                    playerInteractionSupport.resolveRandomDiscardCards(
+                            gameData, controllerId, ability.sourceCard().getName(), effect.ransomMagnitude());
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " discards a card at random. ",
+                            targetEntry.getCard(), " is not countered."));
+                    log.info("Game {} - {} accepts counter-unless-discard for {} (random)",
+                            gameData.id, player.getUsername(), ability.sourceCard().getName());
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a card to discard.", 1);
+                        "Choose a card to discard.", effect.ransomMagnitude());
 
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " discards a card. ", targetEntry.getCard(), " is not countered."));
@@ -299,18 +382,206 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // Declined or no cards — counter the spell/ability
-        counterUnlessDiscardCounter(gameData, ability.sourceCard(), targetEntry);
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void counterUnlessDiscardCounter(GameData gameData, Card sourceCard, StackEntry targetEntry) {
+    public void handleCounterUnlessCollectsEvidenceChoice(GameData gameData, Player player,
+                                                           boolean accepted, PendingMayAbility ability) {
+        CounterUnlessCollectsEvidenceEffect effect = ability.effects().stream()
+                .filter(CounterUnlessCollectsEvidenceEffect.class::isInstance)
+                .map(CounterUnlessCollectsEvidenceEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+            int totalManaValue = graveyard == null
+                    ? 0
+                    : graveyard.stream().mapToInt(Card::getManaValue).sum();
+            if (totalManaValue >= effect.minimumManaValue()) {
+                gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume = true;
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                playerInputService.beginMultiGraveyardChoiceWithMinimumManaValue(
+                        gameData, controllerId, new ArrayList<>(graveyard), graveyard.size(),
+                        effect.minimumManaValue(),
+                        "Choose cards from your graveyard to collect evidence "
+                                + effect.minimumManaValue() + ".");
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " accepts — choosing cards to collect evidence. ",
+                        ability.sourceCard(), ""));
+                return;
+            }
+        }
+
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+
+
+    public void handleCounterUnlessExilesGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                                         PendingMayAbility ability) {
+        ability.effects().stream()
+                .filter(CounterUnlessExilesGraveyardEffect.class::isInstance)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null
+                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                        gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            UUID controllerId = targetEntry.getControllerId();
+            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+            if (graveyard != null && !graveyard.isEmpty()) {
+                List<Card> toExile = new ArrayList<>(graveyard);
+                graveyard.clear();
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, toExile);
+                for (Card card : toExile) {
+                    exileService.exileCard(gameData, controllerId, card);
+                }
+            }
+
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles all cards from their graveyard. ",
+                    targetEntry.getCard(), " is not countered."));
+        } else {
+            counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessDiscardsHandChoice(GameData gameData, Player player, boolean accepted,
+                                                       PendingMayAbility ability) {
+        ability.effects().stream()
+                .filter(CounterUnlessEffect.class::isInstance)
+                .map(CounterUnlessEffect.class::cast)
+                .filter(e -> e.ransomKind() == CounterUnlessEffect.RansomKind.DISCARD_HAND)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null
+                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                        gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " discards their hand. ", targetEntry.getCard(), " is not countered."));
+            discardHandUnlessPaysLifeEffectHandler.discardTargetHand(
+                    gameData, controllerId, controllerId, ability.sourceCard());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessSacrificesChoice(GameData gameData, Player player, boolean accepted,
+                                                    PendingMayAbility ability) {
+        CounterUnlessSacrificesEffect sacrificeEffect = ability.effects().stream()
+                .filter(CounterUnlessSacrificesEffect.class::isInstance)
+                .map(CounterUnlessSacrificesEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId();
+        StackEntry targetEntry = gameData.stack.stream()
+                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+
+        if (targetEntry == null || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            List<UUID> validIds = battlefield == null
+                    ? List.of()
+                    : battlefield.stream()
+                            .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, permanent, sacrificeEffect.filter()))
+                            .map(Permanent::getId)
+                            .toList();
+            if (!validIds.isEmpty()) {
+                if (sacrificeEffect.requiredCount() > 1) {
+                    playerInputService.beginMultiPermanentChoice(
+                            gameData, controllerId, validIds, sacrificeEffect.requiredCount(),
+                            new MultiPermanentChoiceContext.SacrificePermanentsOrElse(
+                                    sacrificeEffect.requiredCount(), null, new CounterSpellEffect()),
+                            "Choose " + sacrificeEffect.requiredCount() + " "
+                                    + sacrificeEffect.sacrificeDescription()
+                                    + " to sacrifice (choose none to decline).");
+                    log.info("Game {} - {} accepts counter-unless-sacrifice for {}",
+                            gameData.id, player.getUsername(), ability.sourceCard().getName());
+                    return;
+                }
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.SacrificePermanentThen(controllerId, ability.sourceCard(), null));
+                playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                        "Choose a permanent to sacrifice.");
+                log.info("Game {} - {} accepts counter-unless-sacrifice for {}", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+                return;
+            }
+        }
+
+        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void counterUnlessCounter(GameData gameData, Card sourceCard, StackEntry targetEntry) {
         gameData.stack.remove(targetEntry);
         stateTriggerService.cleanupResolvedStateTrigger(gameData, targetEntry);
 
         boolean isAbility = targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
         if (!targetEntry.isCopy() && !isAbility) {
-            graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+            graveyardService.addCardToGraveyardFromSpell(gameData, targetEntry.getOwnerId(),
+                    targetEntry.getPhysicalCard(), targetEntry.getControllerId());
         }
 
         GameLog.Builder counterLog = GameLog.builder().card(targetEntry.getCard())
@@ -349,28 +620,35 @@ public class MayPenaltyChoiceHandlerService {
             List<Integer> validIndices = new ArrayList<>();
             if (hand != null) {
                 for (int i = 0; i < hand.size(); i++) {
-                    if (effect.requiredType() == null || hand.get(i).getType() == effect.requiredType()) {
+                    if (predicateEvaluationService.matchesCardPredicate(hand.get(i), effect.discardPredicate(),
+                            sourceCard.getId(), gameData, controllerId)) {
                         validIndices.add(i);
                     }
                 }
             }
 
-            if (!validIndices.isEmpty()) {
-                String typeName = effect.requiredType() == null ? "card" : effect.requiredType().name().toLowerCase() + " card";
+            if (validIndices.size() >= effect.discardCount()) {
+                String typeName = effect.discardDescription();
                 gameData.discardCausedByOpponent = false;
 
                 if (effect.random()) {
                     // Pillaging Horde: the discard is at random, so no player choice is needed.
-                    playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), 1);
+                    playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), effect.discardCount());
                     log.info("Game {} - {} accepts sacrifice-unless-discard (random) for {}", gameData.id, player.getUsername(), sourceCard.getName());
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
 
+                DiscardFollowUp followUp = effect.thenEffect() == null
+                        ? DiscardFollowUp.NONE
+                        : DiscardFollowUp.thenEffectWithDiscardedManaValue(sourceCard, effect.thenEffect());
+                String discardDescription = effect.discardCount() == 1
+                        ? "a " + typeName
+                        : effect.discardCount() + " " + typeName + "s";
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a " + typeName + " to discard.", 1);
+                        "Choose " + discardDescription + " to discard.", effect.discardCount(), followUp);
 
-                String logEntry = player.getUsername() + " chooses to discard a " + typeName + ".";
+                String logEntry = player.getUsername() + " chooses to discard " + discardDescription + ".";
                 gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} accepts sacrifice-unless-discard for {}", gameData.id, player.getUsername(), sourceCard.getName());
                 return;
@@ -478,12 +756,14 @@ public class MayPenaltyChoiceHandlerService {
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
             gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
         } else {
+            int lifeLoss = effect.lifeLoss()
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
             int currentLife = gameData.getLife(targetPlayerId);
-            gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+            gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
 
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " loses " + effect.lifeLoss() + " life. (", ability.sourceCard(), ")"));
-            log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
+                    player.getUsername() + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));
+            log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), lifeLoss, ability.sourceCard().getName());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -496,6 +776,7 @@ public class MayPenaltyChoiceHandlerService {
                 .findFirst().orElseThrow();
 
         UUID targetPlayerId = ability.controllerId();
+        boolean penaltyApplied = false;
 
         if (accepted) {
             ManaCost cost = new ManaCost("{" + effect.payAmount() + "}");
@@ -507,15 +788,18 @@ public class MayPenaltyChoiceHandlerService {
                 log.info("Game {} - {} pays {} to avoid life loss ({})", gameData.id, player.getUsername(), effect.payAmount(), ability.sourceCard().getName());
             } else {
                 // Can't pay — apply life loss
+                penaltyApplied = true;
                 if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                     gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                 } else {
+                    int lifeLoss = effect.lifeLoss()
+                            * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
                     int currentLife = gameData.getLife(targetPlayerId);
-                    gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+                    gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " can't pay {" + effect.payAmount() + "}. " + player.getUsername()
-                                    + " loses " + effect.lifeLoss() + " life. (", ability.sourceCard(), ")"));
-                    log.info("Game {} - {} can't pay {} — loses {} life ({})", gameData.id, player.getUsername(), effect.payAmount(), effect.lifeLoss(), ability.sourceCard().getName());
+                                    + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));
+                    log.info("Game {} - {} can't pay {} — loses {} life ({})", gameData.id, player.getUsername(), effect.payAmount(), lifeLoss, ability.sourceCard().getName());
                 }
             }
         } else {
@@ -523,12 +807,19 @@ public class MayPenaltyChoiceHandlerService {
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
             } else {
+                int lifeLoss = effect.lifeLoss()
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
                 int currentLife = gameData.getLife(targetPlayerId);
-                gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
+                gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
                 gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " loses " + effect.lifeLoss() + " life. (", ability.sourceCard(), ")"));
-                log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
+                        player.getUsername() + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), lifeLoss, ability.sourceCard().getName());
             }
+            penaltyApplied = true;
+        }
+
+        if (penaltyApplied && effect.controllerGainsLifeLost() && ability.sourceControllerId() != null) {
+            lifeSupport.applyGainLife(gameData, ability.sourceControllerId(), effect.lifeLoss());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -557,9 +848,8 @@ public class MayPenaltyChoiceHandlerService {
             boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, payerId)
                     && gameData.getLife(payerId) >= effect.lifeCost();
             if (canPayLife) {
-                gameData.playerLifeTotals.put(payerId, gameData.getLife(payerId) - effect.lifeCost());
-                gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+                lifeSupport.applyLifePayment(gameData, payerId, effect.lifeCost(),
+                        ability.sourceCard().getName());
                 log.info("Game {} - {} pays {} life to save the enchanted permanent ({})",
                         gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -760,10 +1050,8 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(targetPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            int currentLife = gameData.getLife(targetPlayerId);
-            gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeCost());
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+            lifeSupport.applyLifePayment(gameData, targetPlayerId, effect.lifeCost(),
+                    ability.sourceCard().getName());
             log.info("Game {} - {} pays {} life to keep their hand ({})", gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {
             // Declined (or can no longer pay) — discard the whole hand.
@@ -787,9 +1075,8 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(targetPlayerId) >= effect.lifeCost();
         boolean paid = accepted && canPay;
         if (paid) {
-            gameData.playerLifeTotals.put(targetPlayerId, gameData.getLife(targetPlayerId) - effect.lifeCost());
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+            lifeSupport.applyLifePayment(gameData, targetPlayerId, effect.lifeCost(),
+                    ability.sourceCard().getName());
         }
 
         revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler.afterCardDecision(
@@ -810,9 +1097,8 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
         boolean paid = accepted && canPay;
         if (paid) {
-            gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - effect.lifeCost());
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+            lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
+                    ability.sourceCard().getName());
             log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
                     player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         }
@@ -866,10 +1152,8 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            int currentLife = gameData.getLife(payingPlayerId);
-            gameData.playerLifeTotals.put(payingPlayerId, currentLife - effect.lifeCost());
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+            lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
+                    ability.sourceCard().getName());
             log.info("Game {} - {} pays {} life to keep their permanent ({})", gameData.id,
                     player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {
@@ -894,9 +1178,8 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - effect.lifeCost());
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+            lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
+                    ability.sourceCard().getName());
             log.info("Game {} - {} pays {} life to avoid the tap ({})", gameData.id,
                     player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {
@@ -930,7 +1213,8 @@ public class MayPenaltyChoiceHandlerService {
 
         if (accepted && canPay) {
             if (lifeCost > 0) {
-                gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - lifeCost);
+                lifeSupport.applyLifePayment(gameData, payingPlayerId, lifeCost,
+                        ability.sourceCard().getName());
             }
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + lifeCost + " life. (", ability.sourceCard(), ")"));
@@ -1114,8 +1398,10 @@ public class MayPenaltyChoiceHandlerService {
         log.info("Game {} - {} chooses {} for {} (Misfortune)", gameData.id, opponentName,
                 accepted ? "counters-and-life" : "shrink-and-burn", controllerName);
 
-        gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
-                controllerId, ability.sourceCard().getName(), new ArrayList<>(effects), 0));
+        StackEntry continuation = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
+                controllerId, ability.sourceCard().getName(), new ArrayList<>(effects), 0);
+        continuation.setSpellDamageContinuation(true);
+        gameData.stack.add(continuation);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -1219,6 +1505,56 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Combustible Gearhulk: the targeted opponent chooses whether the controller draws three cards
+     * or mills three cards and the source deals damage to that opponent equal to the mana values of
+     * the cards that were actually milled.
+     */
+    public void handleCombustibleGearhulkChoice(GameData gameData, Player player, boolean accepted,
+            PendingMayAbility ability) {
+        ability.effects().stream()
+                .filter(CombustibleGearhulkEffect.class::isInstance)
+                .findFirst()
+                .orElseThrow();
+
+        UUID targetPlayerId = ability.targetCardId();
+        UUID controllerId = ability.sourceControllerId();
+        if (controllerId == null) {
+            controllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        }
+        if (controllerId == null || targetPlayerId == null) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String opponentName = gameData.playerIdToName.get(targetPlayerId);
+        if (accepted) {
+            for (int i = 0; i < 3 && gameData.status != GameStatus.FINISHED; i++) {
+                drawService.resolveDrawCard(gameData, controllerId);
+            }
+            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
+                    + " draws three cards (Combustible Gearhulk)."));
+        } else {
+            List<Card> milled = graveyardService.resolveMillPlayer(gameData, controllerId, 3);
+            int damageAmount = milled.stream().mapToInt(Card::getManaValue).sum();
+            if (damageAmount > 0) {
+                DealDamageToPlayersEffect damage =
+                        new DealDamageToPlayersEffect(damageAmount, DamageRecipient.TARGET_PLAYER);
+                StackEntry damageEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), controllerId,
+                        ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
+                        targetPlayerId, ability.sourcePermanentId());
+                dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
+            }
+            gameLogService.append(gameData, GameLog.text(opponentName + " declines: " + controllerName
+                    + " mills " + milled.size() + " cards and " + ability.sourceCard().getName()
+                    + " deals " + damageAmount + " damage to them."));
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleSacrificeUnlessReturnOwnPermanentChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect = ability.effects().stream()
                 .filter(e -> e instanceof SacrificeUnlessReturnOwnPermanentTypeToHandEffect)
@@ -1280,6 +1616,54 @@ public class MayPenaltyChoiceHandlerService {
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleSacrificeUnlessReturnPermanentChoice(GameData gameData, Player player, boolean accepted,
+                                                            PendingMayAbility ability) {
+        SacrificeUnlessReturnPermanentTypeToHandEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof SacrificeUnlessReturnPermanentTypeToHandEffect)
+                .map(SacrificeUnlessReturnPermanentTypeToHandEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        Card sourceCard = ability.sourceCard();
+        UUID controllerId = ability.controllerId();
+        Permanent sourcePermanent = null;
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+        if (controllerBattlefield != null) {
+            sourcePermanent = controllerBattlefield.stream()
+                    .filter(permanent -> permanent.getCard().getId().equals(sourceCard.getId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (accepted) {
+            List<Permanent> validPermanents = new ArrayList<>();
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent.getCard().hasType(effect.permanentType())) {
+                        validPermanents.add(permanent);
+                    }
+                }
+            }
+            if (!validPermanents.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.BouncePermanentOrSacrificeSelf(controllerId, sourceCard.getId()));
+                playerInputService.beginPermanentChoice(gameData, controllerId,
+                        validPermanents.stream().map(Permanent::getId).toList(),
+                        "Choose an " + effect.permanentType().name().toLowerCase()
+                                + " to return to its owner's hand.");
+                gameLogService.append(gameData, GameLog.text(player.getUsername()
+                        + " chooses to return an " + effect.permanentType().name().toLowerCase() + " to hand."));
+                return;
+            }
+        }
+
+        if (sourcePermanent != null) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to return a permanent. ", sourceCard, " is sacrificed."));
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1357,11 +1741,68 @@ public class MayPenaltyChoiceHandlerService {
         // anyPlayerMayPay / payerIsEnchantedController, ability.controllerId is the payer being
         // asked and forcedCostOrElseSourceControllerId holds the real source controller.
         UUID decidingPlayerId = ability.controllerId();
-        UUID sourceControllerId = (effect.anyPlayerMayPay() || effect.payerIsEnchantedController()
+        UUID sourceControllerId = ability.sourceControllerId() != null
+                ? ability.sourceControllerId()
+                : (effect.anyPlayerMayPay() || effect.payerIsEnchantedController()
                 || effect.payerIsDefendingPlayer())
                 && gameData.forcedCostOrElseSourceControllerId != null
                 ? gameData.forcedCostOrElseSourceControllerId
                 : decidingPlayerId;
+
+        if (accepted && effect.forcedCost() instanceof PayLifeCost payLifeCost) {
+            int lifeAmount = effectiveLifeAmount(gameData, decidingPlayerId, ability, payLifeCost);
+            boolean canPay = lifeAmount <= 0
+                    || (gameQueryService.canPlayerLifeChange(gameData, decidingPlayerId)
+                            && gameData.getLife(decidingPlayerId) >= lifeAmount);
+            if (canPay) {
+                lifeSupport.applyLifePayment(gameData, decidingPlayerId, lifeAmount,
+                        ability.sourceCard().getName());
+                log.info("Game {} - {} pays {} life to avoid penalty ({})", gameData.id,
+                        player.getUsername(), lifeAmount, ability.sourceCard().getName());
+                forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, 0);
+                clearAnyPlayerPayState(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            if (effect.anyPlayerMayPay() && offerNextAnyPlayerPay(gameData, ability, effect)) {
+                return;
+            }
+        }
+
+        if (accepted && effect.forcedCost() instanceof PayEnergyCost energyCost) {
+            int energy = gameData.playerEnergyCounters.getOrDefault(decidingPlayerId, 0);
+            if (energy >= energyCost.amount()) {
+                gameData.playerEnergyCounters.put(decidingPlayerId, energy - energyCost.amount());
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + energyCost.amount()
+                                + " energy counter(s). (", ability.sourceCard(), ")"));
+                clearAnyPlayerPayState(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            if (effect.anyPlayerMayPay() && offerNextAnyPlayerPay(gameData, ability, effect)) {
+                return;
+            }
+        }
+
+        if (accepted && effect.forcedCost() instanceof DiscardCardTypeCost discardCost) {
+            List<Integer> validIndices = matchingHandIndices(gameData, decidingPlayerId, discardCost);
+            if (validIndices.size() >= discardCost.count()) {
+                gameData.discardCausedByOpponent = false;
+                playerInputService.beginDiscardChoice(gameData, decidingPlayerId, validIndices,
+                        "Choose a card to discard for cumulative upkeep.", discardCost.count());
+                return;
+            }
+            // The hand changed since the may prompt; fall through to the unpaid branch.
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinsCost flipCost) {
+            forcedCostOrElseEffectHandler.payFlipCoins(
+                    gameData, decidingPlayerId, ability.sourceCard(), flipCost.count());
+            clearAnyPlayerPayState(gameData);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
             // Use the cost stored on the pending ability — it already reflects any dynamic
@@ -1370,14 +1811,27 @@ public class MayPenaltyChoiceHandlerService {
             ManaCost cost = new ManaCost(costString, payCost.forCumulativeUpkeep());
             ManaPool pool = gameData.playerManaPools.get(decidingPlayerId);
             int lifeAmount = payCost.lifeAmount();
-            boolean canPayLife = lifeAmount <= 0
+            ManaPool simulatedPool = new ManaPool(pool);
+            int phyrexianLifeAmount = cost.hasPhyrexianMana()
+                    ? cost.payPhyrexianManaAuto(simulatedPool, 0)
+                    : 0;
+            int totalLifeAmount = lifeAmount + phyrexianLifeAmount;
+            boolean canPayLife = totalLifeAmount <= 0
                     || (gameQueryService.canPlayerLifeChange(gameData, decidingPlayerId)
-                            && gameData.getLife(decidingPlayerId) >= lifeAmount);
-            if (cost.canPay(pool) && canPayLife) {
+                            && gameData.getLife(decidingPlayerId) >= totalLifeAmount);
+            if (cost.canPay(simulatedPool) && canPayLife) {
+                var manaBefore = pool.getAllManaTotals();
+                if (cost.hasPhyrexianMana()) {
+                    cost.payPhyrexianManaAuto(pool, 0);
+                }
                 cost.pay(pool);
+                var manaSpent = ManaPool.coloredManaSpent(manaBefore, pool.getAllManaTotals(), null);
+                int blackOrRedSpent = manaSpent.getOrDefault(ManaColor.BLACK, 0)
+                        + manaSpent.getOrDefault(ManaColor.RED, 0);
+                forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, blackOrRedSpent);
                 if (lifeAmount > 0) {
-                    gameData.playerLifeTotals.put(
-                            decidingPlayerId, gameData.getLife(decidingPlayerId) - lifeAmount);
+                    lifeSupport.applyLifePayment(gameData, decidingPlayerId, lifeAmount,
+                            ability.sourceCard().getName());
                     // A blank mana cost means the payment is life-only (Glacial Chasm).
                     String paidText = costString == null || costString.isEmpty()
                             ? lifeAmount + " life"
@@ -1393,6 +1847,10 @@ public class MayPenaltyChoiceHandlerService {
                     log.info("Game {} - {} pays {} to avoid penalty ({})", gameData.id, player.getUsername(),
                             costString, ability.sourceCard().getName());
                 }
+                if (phyrexianLifeAmount > 0) {
+                    lifeSupport.applyLifePayment(gameData, decidingPlayerId, phyrexianLifeAmount,
+                            "Phyrexian mana");
+                }
                 clearAnyPlayerPayState(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -1404,6 +1862,24 @@ public class MayPenaltyChoiceHandlerService {
             }
         }
 
+        if (accepted && effect.forcedCost() instanceof OpponentGainsLifeCost lifeCost
+                && forcedCostOrElseEffectHandler.payOpponentGainsLifeCost(
+                gameData, sourceControllerId, lifeCost, ability.sourceCard(), StackEntryType.TRIGGERED_ABILITY)) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted && forcedCostOrElseEffectHandler.beginCumulativeUpkeepGraveyardPayment(
+                gameData, ability, sourceControllerId)) {
+            return;
+        }
+
+        if (accepted && effect.forcedCost() instanceof PutCardsFromGraveyardOnBottomOfLibraryCost
+                && forcedCostOrElseEffectHandler.beginControllerGraveyardPayment(
+                gameData, ability, sourceControllerId)) {
+            return;
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost exileCost) {
             if (libraryExileSupport.hasAtLeast(gameData, sourceControllerId, exileCost.count())) {
                 libraryExileSupport.exileTopCards(gameData, sourceControllerId, exileCost.count());
@@ -1411,6 +1887,15 @@ public class MayPenaltyChoiceHandlerService {
                 return;
             }
             // Accepted but the library ran short — fall through to the penalty.
+        }
+
+        if (accepted) {
+            var millPayment = forcedCostOrElseEffectHandler.tryPayMillControllerCost(
+                    gameData, effect, sourceControllerId);
+            if (millPayment.orElse(false)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost graveyardCost) {
@@ -1485,6 +1970,74 @@ public class MayPenaltyChoiceHandlerService {
             // Accepted but the source or required counters are gone — fall through to the penalty.
         }
 
+        if (accepted && effect.forcedCost() instanceof PutCounterOnControlledCreatureCost counterCost) {
+            List<UUID> candidates = destructionSupport.collectCreatureIds(gameData, decidingPlayerId,
+                    permanent -> !gameQueryService.cantHaveCounters(gameData, permanent)
+                            && (counterCost.counterType() != CounterType.MINUS_ONE_MINUS_ONE
+                            || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                            && (counterCost.counterType() != CounterType.PLUS_ONE_PLUS_ONE
+                            || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)));
+            if (!candidates.isEmpty()) {
+                StackEntry counterEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+                        ability.sourceCard().getName() + "'s ability", List.of(effect),
+                        ability.targetCardId(), ability.sourcePermanentId());
+                counterEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                if (forcedCostOrElseEffectHandler.putCounterOnChosenPermanent(
+                        gameData, decidingPlayerId, candidates, counterEntry, counterCost)) {
+                    if (candidates.size() == 1) {
+                        clearAnyPlayerPayState(gameData);
+                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    }
+                    return;
+                }
+            }
+            // Accepted but no eligible creature remains — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof PutCounterOnOpponentCreatureCost counterCost) {
+            UUID opponentId = gameQueryService.getOpponentId(gameData, decidingPlayerId);
+            List<UUID> candidates = destructionSupport.collectCreatureIds(gameData, opponentId,
+                    permanent -> !gameQueryService.cantHaveCounters(gameData, permanent)
+                            && (counterCost.counterType() != CounterType.MINUS_ONE_MINUS_ONE
+                            || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                            && (counterCost.counterType() != CounterType.PLUS_ONE_PLUS_ONE
+                            || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)));
+            if (!candidates.isEmpty()) {
+                StackEntry counterEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+                        ability.sourceCard().getName() + "'s ability", List.of(effect),
+                        ability.targetCardId(), ability.sourcePermanentId());
+                counterEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                if (forcedCostOrElseEffectHandler.putCounterOnChosenPermanent(
+                        gameData, decidingPlayerId, candidates, counterEntry, counterCost)) {
+                    if (candidates.size() == 1) {
+                        clearAnyPlayerPayState(gameData);
+                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    }
+                    return;
+                }
+            }
+        }
+
+        if (accepted && effect.forcedCost() instanceof GainControlOfPermanentsCost gainCost) {
+            UUID payerId = effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer()
+                    ? decidingPlayerId : sourceControllerId;
+            List<UUID> candidates = destructionSupport.collectPermanentIdsNotControlledBy(
+                    gameData, payerId, gainCost.filter());
+            if (candidates.size() >= gainCost.count()
+                    && forcedCostOrElseEffectHandler.beginGainControlPayment(
+                    gameData, payerId, candidates, ability.sourceCard(), ability.sourcePermanentId(),
+                    effect, gainCost.count())) {
+                if (candidates.size() == 1) {
+                    clearAnyPlayerPayState(gameData);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+            // Accepted but no eligible permanent remains — fall through to the penalty.
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost) {
             List<UUID> candidates =
                     destructionSupport.collectPermanentIdsWithAnyCounter(gameData, sourceControllerId);
@@ -1545,15 +2098,33 @@ public class MayPenaltyChoiceHandlerService {
             // Accepted but the graveyard no longer holds a matching card — fall through to the penalty.
         }
 
+        if (accepted && effect.forcedCost() instanceof PutCardFromGraveyardOnBottomOfLibraryCost) {
+            List<Card> graveyard = gameData.playerGraveyards.get(sourceControllerId);
+            if (graveyard != null && !graveyard.isEmpty()) {
+                gameData.pendingEffectResolutionEntry = null;
+                gameData.pendingEffectResolutionIndex = 0;
+                clearAnyPlayerPayState(gameData);
+                forcedCostOrElseEffectHandler.beginGraveyardBottomChoice(gameData, sourceControllerId);
+                return;
+            }
+            // Accepted but the graveyard is empty — fall through to the penalty.
+        }
+
         if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
             // payerIsEnchantedController: deciding player is the stack-target payer, not the source
             // controller (Pillar Tombs of Aku / Mind Whip-shaped each-upkeep sacrifice).
             UUID sacrificingPlayerId = effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer()
                     ? decidingPlayerId : sourceControllerId;
             UUID sourcePermanentId = ability.sourcePermanentId();
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(ability.sourceCard().getId())
+                    .withSourceControllerId(sourceControllerId)
+                    .withSourcePermanentSnapshot(ability.sourcePermanentSnapshot())
+                    .withSourcePermanentId(sourcePermanentId);
             List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, sacrificingPlayerId,
                     p -> (!sacrificeCost.excludeSource() || !p.getId().equals(sourcePermanentId))
-                            && predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeCost.filter()));
+                            && predicateEvaluationService.matchesPermanentPredicate(p, sacrificeCost.filter(),
+                            filterContext));
 
             if (matchingIds.size() == 1) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());
@@ -1587,8 +2158,32 @@ public class MayPenaltyChoiceHandlerService {
                 StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", List.of(effect),
                 ability.targetCardId(), ability.sourcePermanentId());
+        syntheticEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private int effectiveLifeAmount(GameData gameData, UUID payerId, PendingMayAbility ability,
+            PayLifeCost cost) {
+        Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+        int sourceCounterCount = cost.perSourceCounter() == null || source == null
+                ? 0
+                : source.getCounterCount(cost.perSourceCounter());
+        return cost.effectiveAmount(gameData.getLife(payerId), sourceCounterCount);
+    }
+
+    private List<Integer> matchingHandIndices(GameData gameData, UUID playerId,
+            DiscardCardTypeCost cost) {
+        List<Integer> matchingIndices = new ArrayList<>();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        for (int i = 0; hand != null && i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (cost.predicate() == null
+                    || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null)) {
+                matchingIndices.add(i);
+            }
+        }
+        return matchingIndices;
     }
 
     /** Queues the next APNAP player for an anyPlayerMayPay ForcedCostOrElse, or returns false if none remain. */
@@ -1693,13 +2288,6 @@ public class MayPenaltyChoiceHandlerService {
             }
 
             if (!landIds.isEmpty()) {
-                // The BounceCreature completion (handleBounceCreature) calls resolveAutoPass rather
-                // than sbaProcessMayAbilitiesThenAutoPass, so clear any paused effect-resolution
-                // state — the discard-unless effect is the last on the stack entry, so nothing
-                // remains to resume.
-                gameData.pendingEffectResolutionEntry = null;
-                gameData.pendingEffectResolutionIndex = 0;
-
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(controllerId));
                 playerInputService.beginPermanentChoice(gameData, controllerId, landIds,
                         "Choose a land to return to its owner's hand.");

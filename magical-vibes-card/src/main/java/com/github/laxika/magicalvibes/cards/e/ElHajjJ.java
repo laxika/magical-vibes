@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "134")
+@CardRegistration(set = "SUM", collectorNumber = "108")
 public class ElHajjJ extends Card {
 
     public ElHajjJ() {

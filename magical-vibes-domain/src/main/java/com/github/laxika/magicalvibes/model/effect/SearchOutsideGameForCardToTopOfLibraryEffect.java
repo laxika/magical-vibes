@@ -1,0 +1,5 @@
+package com.github.laxika.magicalvibes.model.effect;
+
+/** Searches the controller's outside-the-game card pool for a card to put on top of their library. */
+public record SearchOutsideGameForCardToTopOfLibraryEffect() implements CardEffect {
+}

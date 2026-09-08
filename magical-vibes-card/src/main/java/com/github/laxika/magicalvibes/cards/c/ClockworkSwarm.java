@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCappedCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndOfCombatEffect;
@@ -31,11 +33,10 @@ public class ClockworkSwarm extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.WALL)));
 
         // At end of combat, if this creature attacked or blocked this combat, remove a +1/+0 counter
-        // from it. Scheduling only from ON_ATTACK/ON_BLOCK encodes the "attacked or blocked" condition.
-        addEffect(EffectSlot.ON_ATTACK,
-                new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ZERO));
-        addEffect(EffectSlot.ON_BLOCK,
-                new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ZERO));
+        // from it.
+        addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
+                new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),
+                        new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ZERO)));
 
         // {X}, {T}: Put up to X +1/+0 counters on this creature. This ability can't cause the total
         // number of +1/+0 counters on this creature to be greater than four. Activate only during

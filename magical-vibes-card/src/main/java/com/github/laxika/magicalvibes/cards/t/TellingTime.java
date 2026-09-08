@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEf
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "114")
+@CardRegistration(set = "RAV", collectorNumber = "69")
 public class TellingTime extends Card {
 
     public TellingTime() {

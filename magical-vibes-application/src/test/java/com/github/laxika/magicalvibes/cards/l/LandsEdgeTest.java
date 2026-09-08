@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,13 +16,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LandsEdgeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Discarding a land deals 2 damage to the target player")
-    void landDiscardDealsDamage() {
-        setUpLandsEdge();
-        harness.setHand(player1, List.of(new Mountain()));
+    @DisplayName("Deals 2 damage when a land card is discarded")
+    void dealsDamageWhenLandIsDiscarded() {
+        addLandsEdge();
         harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Mountain()));
 
-        harness.activateAbility(player1, 0, 0, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -30,13 +31,13 @@ class LandsEdgeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Discarding a nonland card does not deal damage")
-    void nonlandDiscardDoesNotDealDamage() {
-        setUpLandsEdge();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+    @DisplayName("Discards a nonland card but deals no damage")
+    void nonlandDiscardDealsNoDamage() {
+        addLandsEdge();
         harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
 
-        harness.activateAbility(player1, 0, 0, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -45,13 +46,14 @@ class LandsEdgeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Any player may activate Lands' Edge")
-    void anyPlayerMayActivate() {
-        setUpLandsEdge();
-        harness.setHand(player2, List.of(new Mountain()));
+    @DisplayName("An opponent may activate the ability using their own hand")
+    void opponentMayActivate() {
+        addLandsEdge();
         harness.setLife(player1, 20);
+        harness.setHand(player1, new ArrayList<>());
+        harness.setHand(player2, List.of(new Mountain()));
 
-        harness.activateAbility(player2, 0, 0, player1.getId());
+        harness.activateAbility(player2, 0, null, player1.getId());
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
 
@@ -60,20 +62,30 @@ class LandsEdgeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Lands' Edge cannot target a creature")
-    void cannotTargetCreature() {
-        setUpLandsEdge();
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Mountain()));
+    @DisplayName("Cannot activate without a card to discard")
+    void cannotActivateWithoutCard() {
+        addLandsEdge();
+        harness.setHand(player1, new ArrayList<>());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, creature.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a player or planeswalker");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
-    private void setUpLandsEdge() {
-        harness.addToBattlefield(player1, new LandsEdge());
-        harness.forceActivePlayer(player1);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Rejects a creature as a target before paying the discard cost")
+    void rejectsCreatureTargetBeforePayingCost() {
+        addLandsEdge();
+        harness.setHand(player1, List.of(new Mountain()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    private Permanent addLandsEdge() {
+        return harness.addToBattlefieldAndReturn(player1, new LandsEdge());
     }
 }

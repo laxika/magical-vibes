@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "148")
+@CardRegistration(set = "KLD", collectorNumber = "118")
 public class Hijack extends Card {
 
     public Hijack() {

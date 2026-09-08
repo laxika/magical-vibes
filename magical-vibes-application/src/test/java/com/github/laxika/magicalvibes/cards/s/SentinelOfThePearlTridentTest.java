@@ -30,10 +30,10 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         UUID ornithopterId = harness.getPermanentId(player1, "Ornithopter");
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept
-        harness.handlePermanentChosen(player1, ornithopterId); // choose Ornithopter
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, ornithopterId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Ornithopter should be exiled
         harness.assertNotOnBattlefield(player1, "Ornithopter");
@@ -53,10 +53,10 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         UUID kembaId = harness.getPermanentId(player1, "Kemba, Kha Regent");
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, kembaId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player1, "Kemba, Kha Regent");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -73,8 +73,9 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ornithopter"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -87,9 +88,10 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ornithopter"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Sentinel of the Pearl Trident");
@@ -108,10 +110,10 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         UUID ornithopterId = harness.getPermanentId(player1, "Ornithopter");
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, ornithopterId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Ornithopter is exiled
         harness.assertNotOnBattlefield(player1, "Ornithopter");
@@ -136,9 +138,9 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, kembaId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, kembaId);
 
         advanceToEndStep();
 

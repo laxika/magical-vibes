@@ -24,7 +24,6 @@ class ThoughtPrisonTest extends BaseCardTest {
         CardChoiceSetup setup = castAndResolveEtb(List.of(new Peek(), new Forest()));
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(setup.chosenCard());

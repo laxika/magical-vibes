@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ECL", collectorNumber = "3")
+@CardRegistration(set = "ECL", collectorNumber = "297")
 public class AdeptWatershaper extends Card {
 
     public AdeptWatershaper() {

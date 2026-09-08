@@ -10,6 +10,9 @@ import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "66")
 @CardRegistration(set = "ECL", collectorNumber = "166")
+@CardRegistration(set = "ECL", collectorNumber = "324")
+@CardRegistration(set = "ECL", collectorNumber = "390")
+@CardRegistration(set = "ECL", collectorNumber = "400")
 public class BloomTender extends Card {
 
     public BloomTender() {

@@ -18,6 +18,7 @@ import java.util.List;
  * Back half (Return) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "212")
+@CardRegistration(set = "AKR", collectorNumber = "118")
 public class NeverReturn extends Card {
 
     public NeverReturn() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "2")
+@CardRegistration(set = "TPR", collectorNumber = "2")
 public class AngelicProtector extends Card {
 
     public AngelicProtector() {

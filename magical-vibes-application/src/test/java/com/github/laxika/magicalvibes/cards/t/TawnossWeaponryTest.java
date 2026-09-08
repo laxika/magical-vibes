@@ -1,20 +1,21 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.a.AmuletOfKroog;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TawnossWeaponry.class, GrizzlyBears.class, AmuletOfKroog.class})
 class TawnossWeaponryTest extends BaseCardTest {
 
     @Test
@@ -116,10 +117,39 @@ class TawnossWeaponryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The boost is not created if the artifact leaves before the ability resolves")
+    void boostDoesNotApplyIfArtifactLeavesBeforeResolution() {
+        Permanent weaponry = addReadyWeaponry(player1);
+        Permanent bear = addReadyBear(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, weaponry));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The ability can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        addReadyWeaponry(player1);
+        Permanent bear = addReadyBear(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addReadyWeaponry(player1);
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AngelsFeather());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AmuletOfKroog());
         artifact.setSummoningSick(false);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -128,7 +158,18 @@ class TawnossWeaponryTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Cannot target a creature with protection from artifacts")
+    void cannotTargetCreatureWithProtectionFromArtifacts() {
+        addReadyWeaponry(player1);
+        Permanent bear = addReadyBear(player2);
+        bear.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
 
     private Permanent addReadyWeaponry(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new TawnossWeaponry());
@@ -144,13 +185,10 @@ class TawnossWeaponryTest extends BaseCardTest {
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
         harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP -> advanceTurn -> may ability prompt
-
-        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

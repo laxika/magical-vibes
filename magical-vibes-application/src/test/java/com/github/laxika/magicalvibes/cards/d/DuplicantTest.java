@@ -25,9 +25,9 @@ class DuplicantTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, targetId);
     }
 
     @Test
@@ -57,6 +57,7 @@ class DuplicantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -69,8 +70,8 @@ class DuplicantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The imprint ability does not trigger when no nontoken creature is available")
-    void noLegalTargetMeansNoTrigger() {
+    @DisplayName("Duplicant itself is a legal target when no other nontoken creature is available")
+    void canTargetItselfWhenNoOtherNontokenCreatureExists() {
         harness.addToBattlefield(player2, new FountainOfYouth());
 
         harness.forceActivePlayer(player1);
@@ -80,8 +81,10 @@ class DuplicantTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        Permanent duplicant = findPermanent(player1, "Duplicant");
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice.class,
+                        choice -> assertThat(choice.validPermanentIds()).containsExactly(duplicant.getId()));
         harness.assertOnBattlefield(player2, "Fountain of Youth");
     }
 
@@ -97,8 +100,14 @@ class DuplicantTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        Permanent duplicant = findPermanent(player1, "Duplicant");
+        UUID tokenId = harness.getPermanentId(player2, "Bear Token");
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice.class,
+                        choice -> {
+                            assertThat(choice.validPermanentIds()).containsExactly(duplicant.getId());
+                            assertThat(choice.validPermanentIds()).doesNotContain(tokenId);
+                        });
         harness.assertOnBattlefield(player2, "Bear Token");
     }
 

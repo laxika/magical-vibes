@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "72")
+@CardRegistration(set = "TPR", collectorNumber = "57")
 public class Legerdemain extends Card {
 
     public Legerdemain() {

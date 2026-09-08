@@ -12,12 +12,22 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>{@code exileInsteadOfGraveyard} adds the companion replacement effect "if that spell would be
  * put into your graveyard, exile it instead", registered on the card for the rest of the turn.</p>
+ *
+ * <p>{@code entersTapped} applies when the granted permission is used for a permanent card: the
+ * permanent enters tapped, including when the card is played as a land.</p>
  */
 public record AllowCastTargetCardFromGraveyardThisTurnEffect(
         CardPredicate filter,
         GraveyardSearchScope scope,
-        boolean exileInsteadOfGraveyard
+        boolean exileInsteadOfGraveyard,
+        boolean entersTapped
 ) implements CardEffect {
+
+    public AllowCastTargetCardFromGraveyardThisTurnEffect(CardPredicate filter,
+                                                          GraveyardSearchScope scope,
+                                                          boolean exileInsteadOfGraveyard) {
+        this(filter, scope, exileInsteadOfGraveyard, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

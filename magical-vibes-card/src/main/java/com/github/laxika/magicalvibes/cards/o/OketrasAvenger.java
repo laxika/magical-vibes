@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "HOU", collectorNumber = "17")
+@CardRegistration(set = "AKR", collectorNumber = "29")
 public class OketrasAvenger extends Card {
 
     public OketrasAvenger() {

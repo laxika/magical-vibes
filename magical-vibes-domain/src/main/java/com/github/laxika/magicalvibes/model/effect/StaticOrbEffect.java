@@ -16,12 +16,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param requiresUntappedSource {@code true} if the lock only applies while its source is untapped
  *                              (Static Orb: "As long as Static Orb is untapped…"); {@code false} if it
  *                              applies whenever the source is on the battlefield (Stoic Angel).
+ * @param opponentsOnly         {@code true} if the lock applies only during the source controller's
+ *                              opponents' untap steps
  */
-public record StaticOrbEffect(int maxUntap, PermanentPredicate filter, boolean requiresUntappedSource)
+public record StaticOrbEffect(int maxUntap, PermanentPredicate filter, boolean requiresUntappedSource,
+                              boolean opponentsOnly)
         implements CardEffect {
+
+    public StaticOrbEffect(int maxUntap, PermanentPredicate filter, boolean requiresUntappedSource) {
+        this(maxUntap, filter, requiresUntappedSource, false);
+    }
 
     /** Static Orb: cap of two on all permanents, active only while the source is untapped. */
     public StaticOrbEffect() {
-        this(2, null, true);
+        this(2, null, true, false);
     }
 }

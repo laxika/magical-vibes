@@ -26,6 +26,6 @@ public class DiluvianPrimordial extends Card {
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, GraveyardSearchScope.OPPONENT_GRAVEYARD), 0, 99)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new CastTargetInstantOrSorceryFromGraveyardEffect(
-                                GraveyardSearchScope.OPPONENT_GRAVEYARD, true));
+                                GraveyardSearchScope.OPPONENT_GRAVEYARD, true, true));
     }
 }

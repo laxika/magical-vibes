@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "133")
+@CardRegistration(set = "AKR", collectorNumber = "214")
 public class RhonassStalwart extends Card {
 
     public RhonassStalwart() {

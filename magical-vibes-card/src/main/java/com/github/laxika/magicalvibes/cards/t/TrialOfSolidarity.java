@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "34")
+@CardRegistration(set = "AKR", collectorNumber = "42")
 public class TrialOfSolidarity extends Card {
 
     public TrialOfSolidarity() {

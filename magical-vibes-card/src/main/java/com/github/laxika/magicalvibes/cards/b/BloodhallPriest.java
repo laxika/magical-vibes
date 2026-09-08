@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "232")
+@CardRegistration(set = "EMN", collectorNumber = "181")
 public class BloodhallPriest extends Card {
 
     public BloodhallPriest() {

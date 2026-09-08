@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "103")
+@CardRegistration(set = "TPR", collectorNumber = "167")
 public class Carnassid extends Card {
 
     public Carnassid() {

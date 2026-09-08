@@ -5,11 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-
-import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "57")
 public class ArgothianPixies extends Card {
@@ -17,9 +13,7 @@ public class ArgothianPixies extends Card {
     public ArgothianPixies() {
         addEffect(EffectSlot.STATIC,
                 new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentIsArtifactPredicate()));
-        addEffect(EffectSlot.STATIC, new PreventDamageToSelfFromCreaturesEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsCreaturePredicate()))));
+        addEffect(EffectSlot.STATIC,
+                new PreventDamageToSelfFromCreaturesEffect(new PermanentIsArtifactPredicate()));
     }
 }

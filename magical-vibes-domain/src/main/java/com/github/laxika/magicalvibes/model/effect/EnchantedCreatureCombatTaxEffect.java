@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+
 /**
  * Static Aura effect: the enchanted creature can't take the combat action named by {@code kind}
  * unless {@code amount} generic mana is paid as an additional cost to declare it. The declaration
@@ -16,5 +19,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * taxes every attacker rather than one enchanted creature, and the self-scoped
  * {@code CantAttackUnlessPaysPerCounterEffect}.
  */
-public record EnchantedCreatureCombatTaxEffect(int amount, CombatTaxKind kind) implements CardEffect {
+public record EnchantedCreatureCombatTaxEffect(DynamicAmount amount, CombatTaxKind kind) implements CardEffect {
+
+    public EnchantedCreatureCombatTaxEffect(int amount, CombatTaxKind kind) {
+        this(new Fixed(amount), kind);
+    }
 }

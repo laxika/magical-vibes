@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TimmerianFiendsAnteExchangeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,7 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -91,8 +94,8 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
 
         // The artifact went to its owner's graveyard; the ownership swap makes "your graveyard" the
         // ability controller's, so relocate the physical card. Ownership itself is never mutated.
-        moveGraveyardCard(gameData, artifactCard, controllerId);
-        moveGraveyardCard(gameData, fiendsCard, ownerId);
+        moveCardToGraveyard(gameData, artifactCard, controllerId);
+        moveCardToGraveyard(gameData, fiendsCard, ownerId);
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(ownerId) + " doesn't ante — ")
@@ -106,16 +109,49 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
     }
 
     /**
-     * Moves {@code card} out of whichever graveyard currently holds it into {@code targetPlayerId}'s
-     * graveyard. The card stays in the graveyard zone throughout, so no zone-change triggers fire —
-     * only the holder changes. No-op if the card is in no graveyard.
+     * Moves {@code card} from wherever it currently is into {@code targetPlayerId}'s graveyard.
+     * Moving between graveyards only changes the holder; moving from another zone uses the shared
+     * graveyard path so replacement effects and zone-change triggers still apply.
      */
-    private void moveGraveyardCard(GameData gameData, Card card, UUID targetPlayerId) {
+    private void moveCardToGraveyard(GameData gameData, Card card, UUID targetPlayerId) {
         for (List<Card> graveyard : gameData.playerGraveyards.values()) {
             if (graveyard.removeIf(c -> c.getId().equals(card.getId()))) {
                 gameData.playerGraveyards.get(targetPlayerId).add(card);
                 return;
             }
+        }
+
+        var exiled = gameData.findExiledCard(card.getId());
+        if (exiled != null && gameData.removeFromExile(card.getId())) {
+            graveyardService.addCardToGraveyard(gameData, targetPlayerId, exiled.card(), Zone.EXILE);
+            return;
+        }
+
+        for (List<Card> hand : gameData.playerHands.values()) {
+            if (hand.removeIf(c -> c.getId().equals(card.getId()))) {
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.HAND);
+                return;
+            }
+        }
+
+        for (List<Card> library : gameData.playerDecks.values()) {
+            if (library.removeIf(c -> c.getId().equals(card.getId()))) {
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY);
+                return;
+            }
+        }
+
+        Permanent battlefieldCard = gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId())
+                        || (permanent.getOriginalCard() != null
+                        && permanent.getOriginalCard().getId().equals(card.getId())))
+                .findFirst()
+                .orElse(null);
+        if (battlefieldCard != null) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, battlefieldCard);
+            moveCardToGraveyard(gameData, card, targetPlayerId);
         }
     }
 

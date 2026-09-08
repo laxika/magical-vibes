@@ -38,6 +38,7 @@ class AvenMimeomancerTest extends BaseCardTest {
         Permanent bears = castAvenWithBears();
 
         triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
@@ -88,9 +89,9 @@ class AvenMimeomancerTest extends BaseCardTest {
 
     private void placeFeatherCounter(Permanent target) {
         triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
     }
 
     private Permanent findAven() {

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,27 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Backfire.class, GrizzlyBears.class, HowlingMine.class, ProdigalSorcerer.class})
 class BackfireTest extends BaseCardTest {
+
+    @Test
+    void reflectedDamageUsesTheCreaturesCurrentController() {
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        harness.setHand(player1, List.of(new Backfire()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, sorcerer.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(sorcerer);
+        gd.playerBattlefields.get(player1.getId()).add(sorcerer);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 
     /** Enchants the opponent's creature with Backfire (controlled by player1). */
     private Permanent enchantOpponentCreature() {
@@ -36,15 +57,8 @@ class BackfireTest extends BaseCardTest {
         int creatureControllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         // player2 attacks player1 (the aura's controller) with the enchanted 2/2.
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
-
-        while (gd.stack.stream().anyMatch(e -> e.getCard().getName().equals("Backfire"))) {
-            harness.passBothPriorities();
-        }
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
 
         // 2 combat damage dealt to player1 → Backfire deals 2 to player2 (the creature's controller).
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(creatureControllerLifeBefore - 2);
@@ -57,19 +71,39 @@ class BackfireTest extends BaseCardTest {
 
         int creatureControllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Backfire"));
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(creatureControllerLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Reflects noncombat damage and uses Backfire as the reflected damage source")
+    void reflectsNoncombatDamageFromTheAura() {
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+
+        harness.setHand(player1, List.of(new Backfire()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, sorcerer.getId());
+        harness.passBothPriorities();
+
+        int auraControllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int creatureControllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(auraControllerLifeBefore - 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(creatureControllerLifeBefore - 1);
+        assertThat(gameLogContains("damage from Backfire")).isTrue();
     }
 
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotEnchantNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears()); // a legal creature target must exist
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
         harness.setHand(player1, List.of(new Backfire()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "76")
+@CardRegistration(set = "TPR", collectorNumber = "60")
 public class Meditate extends Card {
 
     public Meditate() {

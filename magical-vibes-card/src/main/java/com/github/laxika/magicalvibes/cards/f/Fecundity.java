@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "247")
+@CardRegistration(set = "USG", collectorNumber = "251")
+@CardRegistration(set = "BRB", collectorNumber = "25")
 public class Fecundity extends Card {
 
     public Fecundity() {

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "14")
+@CardRegistration(set = "AKR", collectorNumber = "19")
 public class GideonOfTheTrials extends Card {
 
     public GideonOfTheTrials() {

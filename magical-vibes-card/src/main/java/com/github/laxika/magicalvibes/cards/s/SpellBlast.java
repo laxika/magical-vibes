@@ -9,10 +9,12 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "TMP", collectorNumber = "89")
+@CardRegistration(set = "TPR", collectorNumber = "69")
 @CardRegistration(set = "M14", collectorNumber = "72")
 @CardRegistration(set = "6ED", collectorNumber = "100")
 @CardRegistration(set = "5ED", collectorNumber = "126")
 @CardRegistration(set = "4ED", collectorNumber = "103")
+@CardRegistration(set = "SUM", collectorNumber = "82")
 public class SpellBlast extends Card {
 
     public SpellBlast() {

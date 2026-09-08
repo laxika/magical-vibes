@@ -20,8 +20,6 @@ class EmeraldDragonflyTest extends BaseCardTest {
         Permanent dragonfly = addDragonflyReady(player1);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        assertThat(gqs.hasKeyword(gd, dragonfly, Keyword.FIRST_STRIKE)).isFalse();
-
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
@@ -29,7 +27,7 @@ class EmeraldDragonflyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Granted first strike wears off at end of turn")
+    @DisplayName("First strike wears off at end of turn")
     void firstStrikeWearsOff() {
         Permanent dragonfly = addDragonflyReady(player1);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -45,7 +43,7 @@ class EmeraldDragonflyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability requires two green mana")
+    @DisplayName("Ability requires {G}{G}")
     void requiresTwoGreenMana() {
         addDragonflyReady(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -53,6 +51,17 @@ class EmeraldDragonflyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Ability does not tap Emerald Dragonfly")
+    void abilityDoesNotTapDragonfly() {
+        Permanent dragonfly = addDragonflyReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(dragonfly.isTapped()).isFalse();
     }
 
     private Permanent addDragonflyReady(Player player) {

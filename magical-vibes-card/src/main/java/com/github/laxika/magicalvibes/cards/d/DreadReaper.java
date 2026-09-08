@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "89")
+@CardRegistration(set = "S99", collectorNumber = "76")
 public class DreadReaper extends Card {
 
     public DreadReaper() {

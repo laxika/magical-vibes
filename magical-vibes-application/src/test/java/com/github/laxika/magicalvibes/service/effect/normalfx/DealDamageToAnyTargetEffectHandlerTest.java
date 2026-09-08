@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -23,6 +21,22 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
     @Override
     protected void setUpHandler() {
         dealDamageToAnyTargetHandler = new DealDamageToAnyTargetEffectHandler(damageSupport, gameQueryService, gameOutcomeService, amountEvaluationService, conditionEvaluationService);
+    }
+
+    @Test
+    void unconditionalRegenerationPreventionAppliesWhenNoDamageIsDealt() {
+        Permanent creature = addPermanent(player2Id, createCreature("Creature", 2, 2));
+        StackEntry entry = createEntry(createCard("Damage spell"), player1Id, creature.getId());
+        when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+        when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(0, true);
+
+        dealDamageToAnyTargetHandler.resolve(gd, entry, damage);
+        assertThat(creature.isCantRegenerateThisTurn()).isFalse();
+
+        dealDamageToAnyTargetHandler.resolve(gd, entry, damage.withUnconditionalRegenerationPrevention());
+        assertThat(creature.isCantRegenerateThisTurn()).isTrue();
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -44,7 +58,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(2);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 2, player1Id, shockCard, null);
             }
 
             @Test
@@ -66,7 +81,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 assertThat(angel.getMarkedDamage()).isEqualTo(2);
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, angel, 2, player1Id, shockCard, null);
             }
 
             @Test
@@ -87,7 +103,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 2);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
+                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
+                        eq(gd), eq(player2Id), any(), eq(2));
             }
 
             @Test
@@ -122,7 +139,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(3);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 3, player1Id, blazeCard, null);
             }
 
             @Test
@@ -143,7 +161,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
+                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
+                        eq(gd), eq(player2Id), any(), eq(5));
             }
 
             @Test

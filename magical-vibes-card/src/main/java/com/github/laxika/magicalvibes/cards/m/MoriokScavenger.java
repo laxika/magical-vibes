@@ -22,6 +22,7 @@ public class MoriokScavenger extends Card {
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.CREATURE))))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

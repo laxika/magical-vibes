@@ -31,13 +31,18 @@ public class ShuffleHandIntoLibraryAndDrawEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
+        ShuffleHandIntoLibraryAndDrawEffect wheelEffect = (ShuffleHandIntoLibraryAndDrawEffect) effect;
         String cardName = entry.getCard().getName();
+        List<UUID> playerIds = wheelEffect.eachPlayer()
+                ? gameData.orderedPlayerIds
+                : List.of(entry.getControllerId());
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : playerIds) {
             List<Card> hand = gameData.playerHands.get(playerId);
             String playerName = gameData.playerIdToName.get(playerId);
 
             if (hand == null || hand.isEmpty()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
                 gameLogService.append(gameData, GameLog.text(playerName + " has no cards in hand to shuffle."));
                 log.info("Game {} - {} has no cards in hand for {}", gameData.id, playerName, cardName);
                 continue;

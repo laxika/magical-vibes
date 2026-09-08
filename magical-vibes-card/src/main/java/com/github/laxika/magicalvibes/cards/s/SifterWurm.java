@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardGainLifeEqualToM
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "135")
+@CardRegistration(set = "AKR", collectorNumber = "219")
 public class SifterWurm extends Card {
 
     public SifterWurm() {

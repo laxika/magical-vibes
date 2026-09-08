@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "19")
+@CardRegistration(set = "AKR", collectorNumber = "25")
 public class InOketrasName extends Card {
 
     public InOketrasName() {

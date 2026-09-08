@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -18,39 +17,55 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TeleportTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Target creature can't be blocked this turn")
-    void makesTargetCreatureUnblockable() {
-        Permanent target = addCreature(player1, player2, new GrizzlyBears());
-        harness.setHand(player2, List.of(new Teleport()));
-        harness.addMana(player2, ManaColor.BLUE, 3);
+    @DisplayName("During the declare attackers step, Teleport makes a target creature unblockable")
+    void makesTargetUnblockableDuringDeclareAttackers() {
         harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Teleport()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player2, 0, target.getId());
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(target.isCantBeBlocked()).isTrue();
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bears.isCantBeBlocked()).isTrue();
     }
 
     @Test
-    @DisplayName("Cannot cast outside the declare attackers step")
+    @DisplayName("Teleport cannot be cast outside the declare attackers step")
     void cannotCastOutsideDeclareAttackers() {
-        Permanent target = addCreature(player1, player2, new GrizzlyBears());
-        harness.setHand(player2, List.of(new Teleport()));
-        harness.addMana(player2, ManaColor.BLUE, 3);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Teleport()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, target.getId()))
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
 
-    private Permanent addCreature(Player controller, Player defender, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(true);
-        permanent.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(controller.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Teleport's unblockable effect wears off at end of turn")
+    void unblockableWearsOffAtEndOfTurn() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Teleport()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bears.isCantBeBlocked()).isFalse();
     }
 }

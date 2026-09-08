@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -44,36 +43,18 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
             return;
         }
 
-        CreateTokenEffect tokenEffect = new CreateTokenEffect(
-                e.tokenName(), e.power(), e.toughness(),
-                e.color(), e.colors(), e.subtypes());
-        permanentControlSupport.applyCreateToken(
-                gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
-
-        if (counterAmount == 0) {
+        List<UUID> createdIds = permanentControlSupport.applyCreateToken(
+                gameData, entry.getControllerId(), e.tokenTemplate(), entry.getCard().getSetCode());
+        if (counterAmount == 0 || createdIds.isEmpty()) {
             return;
         }
 
-        Permanent token = findLastMatchingToken(gameData, entry.getControllerId(), e.tokenName());
+        Permanent token = gameQueryService.findPermanentById(gameData, createdIds.getLast());
         if (token == null || gameQueryService.cantHaveCounters(gameData, token)) {
             return;
         }
 
         permanentCounterSupport.placeCounterOnPermanent(
                 gameData, entry, token, e.counterType(), counterAmount);
-    }
-
-    private Permanent findLastMatchingToken(GameData gameData, UUID controllerId, String tokenName) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return null;
-        }
-        Permanent lastMatch = null;
-        for (Permanent permanent : battlefield) {
-            if (permanent.getCard().isToken() && tokenName.equals(permanent.getCard().getName())) {
-                lastMatch = permanent;
-            }
-        }
-        return lastMatch;
     }
 }

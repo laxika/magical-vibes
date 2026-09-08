@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "4ED", collectorNumber = "172")
+@CardRegistration(set = "DRK", collectorNumber = "55")
 public class WordOfBinding extends Card {
 
     public WordOfBinding() {
         // Tap X target creatures.
         // Single X-scaled creature target group: each targeted creature is tapped.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 100)

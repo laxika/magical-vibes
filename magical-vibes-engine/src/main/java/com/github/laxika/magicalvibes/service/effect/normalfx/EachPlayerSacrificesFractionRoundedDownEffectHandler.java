@@ -17,10 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Resolves the per-player rounded-down sacrifice fraction in APNAP order. Matching permanents
- * are chosen by their controllers and are sacrificed together after all choices are complete.
- */
+/** Resolves each player's rounded-down fraction sacrifice choice. */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -38,30 +35,28 @@ public class EachPlayerSacrificesFractionRoundedDownEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerSacrificesFractionRoundedDownEffect) effect;
-        UUID activePlayerId = gameData.activePlayerId;
-
         List<UUID> autoSacrificeIds = new ArrayList<>();
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
-        for (UUID playerId : orderedApnap(gameData, activePlayerId)) {
+        for (UUID playerId : orderedApnap(gameData)) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null || battlefield.isEmpty()) {
                 continue;
             }
 
             List<Permanent> matching = battlefield.stream()
-                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
+                    .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, e.filter()))
                     .toList();
             int count = matching.size() / e.divisor();
-            if (count == 0) {
+            if (count <= 0) {
                 continue;
             }
-
             if (matching.size() <= count) {
                 matching.stream().map(Permanent::getId).forEach(autoSacrificeIds::add);
             } else {
-                List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
-                choosers.add(new PendingForcedSacrifice(playerId, count, matchingIds));
+                choosers.add(new PendingForcedSacrifice(playerId, count,
+                        matching.stream().map(Permanent::getId).toList()));
             }
         }
 
@@ -70,21 +65,22 @@ public class EachPlayerSacrificesFractionRoundedDownEffectHandler implements Nor
                     GameLog.textCardText("No permanents to sacrifice for ", entry.getCard(), "."));
             return;
         }
-
         if (choosers.isEmpty()) {
             destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
         } else {
             destructionSupport.beginNextForcedSacrificeFromQueue(gameData, choosers, autoSacrificeIds);
         }
+        log.info("Game {} - {} sacrifices a rounded-down fraction of matching permanents",
+                gameData.id, entry.getCard().getName());
     }
 
-    private List<UUID> orderedApnap(GameData gameData, UUID activePlayerId) {
+    private List<UUID> orderedApnap(GameData gameData) {
         List<UUID> ordered = new ArrayList<>();
-        if (gameData.orderedPlayerIds.contains(activePlayerId)) {
-            ordered.add(activePlayerId);
+        if (gameData.orderedPlayerIds.contains(gameData.activePlayerId)) {
+            ordered.add(gameData.activePlayerId);
         }
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(activePlayerId)) {
+            if (!playerId.equals(gameData.activePlayerId)) {
                 ordered.add(playerId);
             }
         }

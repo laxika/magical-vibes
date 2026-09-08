@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SetChosenColorUntilEndOfTurnE
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "299")
+@CardRegistration(set = "MMQ", collectorNumber = "293")
 public class DistortingLens extends Card {
 
     public DistortingLens() {

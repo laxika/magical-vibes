@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTu
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "111")
+@CardRegistration(set = "AKR", collectorNumber = "126")
 public class SupernaturalStamina extends Card {
 
     public SupernaturalStamina() {

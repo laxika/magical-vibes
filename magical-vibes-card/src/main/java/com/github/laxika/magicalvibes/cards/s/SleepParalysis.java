@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M20", collectorNumber = "75")
+@CardRegistration(set = "SOI", collectorNumber = "87")
 public class SleepParalysis extends Card {
 
     public SleepParalysis() {

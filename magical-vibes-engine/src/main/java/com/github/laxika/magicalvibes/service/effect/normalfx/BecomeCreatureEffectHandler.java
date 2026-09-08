@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -9,6 +10,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +20,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Resolves {@link BecomeCreatureEffect} by replacing the source permanent's frozen card with a
- * mutable runtime copy whose only card type is creature.
+ * mutable runtime copy whose creature card type and supplied additional card types are the only
+ * card types remaining.
  */
 @Component
 @RequiredArgsConstructor
@@ -27,6 +33,7 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,13 +46,17 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null || !gameQueryService.isEnchantment(gameData, source)) {
+        if (source == null) {
             return;
         }
 
+        UUID oldAttachedTo = source.getAttachedTo();
+        boolean losesAttachmentSubtype = oldAttachedTo != null
+                && source.getCard().getSubtypes().stream()
+                .anyMatch(subtype -> subtype == CardSubtype.EQUIPMENT || subtype == CardSubtype.AURA);
         Card copy = source.getCard().createRuntimeCopy();
         copy.setType(CardType.CREATURE);
-        copy.setAdditionalTypes(Set.of());
+        copy.setAdditionalTypes(becomeCreature.additionalTypes());
         copy.setSubtypes(becomeCreature.subtypes());
         copy.setPower(becomeCreature.power());
         copy.setToughness(becomeCreature.toughness());
@@ -55,6 +66,19 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
         copy.setKeywords(keywords);
         copy.freeze();
         source.setCard(copy);
+
+        if (losesAttachmentSubtype) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, source, oldAttachedTo);
+            source.setAttachedTo(null);
+            gameData.expireFloatingEffectsForUnattachedSource(source.getId());
+            gameLogService.append(gameData, GameLog.cardThen(copy, " becomes unattached."));
+        }
+        if (!becomeCreature.protectionFromColors().isEmpty()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), source.getId(), entry.getControllerId(),
+                    new ProtectionFromColorsEffect(becomeCreature.protectionFromColors()), source.getId(), null,
+                    null, EffectDuration.PERMANENT, 0));
+        }
 
         gameLogService.append(gameData, GameLog.cardThen(copy,
                 " becomes a " + becomeCreature.power() + "/" + becomeCreature.toughness() + " creature."));

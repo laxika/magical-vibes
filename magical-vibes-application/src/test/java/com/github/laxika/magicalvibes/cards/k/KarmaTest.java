@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@CardUsed({Karma.class, Swamp.class})
 class KarmaTest extends BaseCardTest {
 
     @Test
@@ -37,6 +39,20 @@ class KarmaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not count Swamps controlled by Karma's controller")
+    void doesNotCountControllerSwampsForOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new Karma());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities(); // resolve trigger
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Deals no damage when the active player controls no Swamps")
     void noDamageWithoutSwamps() {
         harness.addToBattlefield(player1, new Karma());
@@ -45,5 +61,18 @@ class KarmaTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Counts Swamps when the upkeep trigger resolves")
+    void countsSwampsAtResolution() {
+        harness.addToBattlefield(player1, new Karma());
+        harness.addToBattlefield(player1, new Swamp());
+
+        advanceToUpkeep(player1);
+        harness.addToBattlefield(player1, new Swamp());
+        harness.passBothPriorities(); // resolve trigger
+
+        harness.assertLife(player1, 18);
     }
 }

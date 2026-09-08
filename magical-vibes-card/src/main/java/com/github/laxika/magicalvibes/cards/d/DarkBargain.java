@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "83")
+@CardRegistration(set = "IKO", collectorNumber = "82")
 public class DarkBargain extends Card {
 
     public DarkBargain() {

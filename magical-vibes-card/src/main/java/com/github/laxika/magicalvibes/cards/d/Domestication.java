@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M14", collectorNumber = "53")
+@CardRegistration(set = "ROE", collectorNumber = "61")
 public class Domestication extends Card {
 
     public Domestication() {

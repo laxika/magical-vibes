@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "145")
+@CardRegistration(set = "AKR", collectorNumber = "259")
 public class TheScarabGod extends Card {
 
     public TheScarabGod() {

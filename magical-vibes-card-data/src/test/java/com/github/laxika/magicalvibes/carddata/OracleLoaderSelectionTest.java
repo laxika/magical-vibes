@@ -46,7 +46,7 @@ class OracleLoaderSelectionTest {
         assertThat(loaderBeansSelectedBy("SCRYFALL")).containsExactly(SCRYFALL_BEAN);
     }
 
-    /** CI passes -Doracle.data-provider=MTGJSON; it must deselect Scryfall, not merely add MTGJSON. */
+    /** The test task selects MTGJSON; it must deselect Scryfall, not merely add MTGJSON. */
     @Test
     void mtgjsonSelectsOnlyTheMtgjsonLoader() {
         assertThat(loaderBeansSelectedBy("MTGJSON")).containsExactly(MTGJSON_BEAN);
@@ -95,9 +95,10 @@ class OracleLoaderSelectionTest {
     /**
      * Points the context at exactly the given provider value, or at none for {@code null}.
      *
-     * <p>The ambient property sources have to go first. Gradle forwards {@code -Doracle.data-provider}
-     * into the test JVM and CI passes {@code MTGJSON}, so a {@code StandardEnvironment} sees that
-     * value as a system property. Absence cannot be simulated by adding a property source — a source
+     * <p>The ambient property sources have to go first. Gradle defaults
+     * {@code oracle.data-provider} to {@code MTGJSON} in the test JVM, so a
+     * {@code StandardEnvironment} sees that value as a system property. Absence cannot be simulated
+     * by adding a property source — a source
      * that resolves the key to nothing is simply skipped, and the system properties underneath answer
      * instead — so the only way to test the missing case is to take those sources away.
      */

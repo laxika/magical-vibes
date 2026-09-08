@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardAndBoostSelfEffect
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "155")
+@CardRegistration(set = "EMN", collectorNumber = "128")
 public class FurybladeVampire extends Card {
 
     public FurybladeVampire() {

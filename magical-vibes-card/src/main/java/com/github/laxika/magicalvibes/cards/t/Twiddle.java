@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -16,6 +17,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "130")
 @CardRegistration(set = "8ED", collectorNumber = "111")
 @CardRegistration(set = "7ED", collectorNumber = "107")
+@CardRegistration(set = "ITP", collectorNumber = "13")
+@CardRegistration(set = "RQS", collectorNumber = "12")
 public class Twiddle extends Card {
 
     public Twiddle() {
@@ -26,6 +29,7 @@ public class Twiddle extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, creature, or land"
-        )).addEffect(EffectSlot.SPELL, new TapOrUntapTargetPermanentEffect());
+        )).addEffect(EffectSlot.SPELL, new MayEffect(
+                new TapOrUntapTargetPermanentEffect(), "Tap or untap the target permanent?"));
     }
 }

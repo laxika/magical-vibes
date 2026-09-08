@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "HOU", collectorNumber = "112")
+@CardRegistration(set = "AKR", collectorNumber = "183")
 public class BitterbowSharpshooters extends Card {
 
     public BitterbowSharpshooters() {

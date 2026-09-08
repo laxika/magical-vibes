@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "134")
+@CardRegistration(set = "AKR", collectorNumber = "218")
 public class SidewinderNaga extends Card {
 
     public SidewinderNaga() {

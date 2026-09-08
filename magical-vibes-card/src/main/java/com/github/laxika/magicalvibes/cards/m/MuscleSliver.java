@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "238")
+@CardRegistration(set = "TPR", collectorNumber = "182")
 public class MuscleSliver extends Card {
 
     public MuscleSliver() {

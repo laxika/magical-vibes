@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ARB", collectorNumber = "91")
+@CardRegistration(set = "AKR", collectorNumber = "244")
 public class LordOfExtinction extends Card {
 
     public LordOfExtinction() {

@@ -11,9 +11,15 @@ import java.util.UUID;
  * @param dyingCardId the card ID of the dying creature (null in the card definition,
  *                    filled at trigger time by the death-trigger collector)
  */
-public record ExileTriggeringCreatureAndTrackWithSourceEffect(UUID dyingCardId) implements CardEffect {
+public record ExileTriggeringCreatureAndTrackWithSourceEffect(UUID dyingCardId)
+        implements CardEffect, DyingCreatureCardAwareEffect {
 
     public ExileTriggeringCreatureAndTrackWithSourceEffect() {
         this(null);
+    }
+
+    @Override
+    public CardEffect boundToDyingCard(UUID dyingCardId) {
+        return new ExileTriggeringCreatureAndTrackWithSourceEffect(dyingCardId);
     }
 }

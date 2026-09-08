@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOn
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "65")
+@CardRegistration(set = "DTK", collectorNumber = "104")
 public class Gravepurge extends Card {
 
     public Gravepurge() {

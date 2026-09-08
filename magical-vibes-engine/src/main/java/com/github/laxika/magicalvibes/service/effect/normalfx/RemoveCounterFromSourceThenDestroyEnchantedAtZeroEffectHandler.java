@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -41,14 +42,16 @@ public class RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffectHandler impl
             return;
         }
         int current = aura.getCounterCount(e.counterType());
-        if (current <= 0) {
-            return;
+        if (current > 0) {
+            aura.setCounterCount(e.counterType(), current - 1);
+            if (e.counterType() == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(aura, 1);
+            }
+            gameLogService.append(gameData, GameLog.cardThen(aura.getCard(),
+                    " loses a " + permanentCounterSupport.counterTypeName(e.counterType()) + " counter."));
         }
-        aura.setCounterCount(e.counterType(), current - 1);
-        gameLogService.append(gameData, GameLog.cardThen(aura.getCard(),
-                " loses a " + permanentCounterSupport.counterTypeName(e.counterType()) + " counter."));
 
-        if (current - 1 > 0 || !aura.isAttached()) {
+        if (aura.getCounterCount(e.counterType()) > 0 || !aura.isAttached()) {
             return;
         }
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());

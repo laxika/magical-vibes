@@ -6,14 +6,15 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
-/** Resolves Nebuchadnezzar's name-choice, random-reveal, and matching-discard ability. */
+/** Resolves Nebuchadnezzar's name choice and random hand reveal. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public class ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffectHandl
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LibraryRevealSupport libraryRevealSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,12 +32,16 @@ public class ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect) effect;
         if (entry.getTargetId() == null) {
             return;
         }
 
-        var choiceContext = new ChoiceContext.ChooseNameRevealRandomCardsDiscardMatchingChoice(
-                entry.getControllerId(), entry.getTargetId(), entry.getCard(), Math.max(0, entry.getXValue()));
+        int count = amountEvaluationService.evaluate(gameData, e.count(),
+                AmountContext.forStackEntry(entry, null));
+        var choiceContext = new ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice(
+                entry.getControllerId(), entry.getTargetId(), entry.getCard(), count);
+
         List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, cardNames, "Choose a card name."));

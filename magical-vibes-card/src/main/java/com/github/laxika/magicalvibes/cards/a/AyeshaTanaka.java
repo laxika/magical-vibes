@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "73")
+@CardRegistration(set = "LEG", collectorNumber = "220")
 public class AyeshaTanaka extends Card {
 
     public AyeshaTanaka() {
@@ -27,6 +28,8 @@ public class AyeshaTanaka extends Card {
                         new StackEntryAllOfPredicate(List.of(
                                 new StackEntryTypeInPredicate(Set.of(StackEntryType.ACTIVATED_ABILITY)),
                                 new StackEntryCardTypeInPredicate(Set.of(CardType.ARTIFACT)))),
-                        "Target must be an activated ability from an artifact source.")));
+                        "Target must be an activated ability from an artifact source."
+                )
+        ));
     }
 }

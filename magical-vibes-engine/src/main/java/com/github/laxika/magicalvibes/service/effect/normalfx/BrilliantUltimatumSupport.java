@@ -34,6 +34,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class BrilliantUltimatumSupport {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
@@ -161,19 +165,23 @@ public class BrilliantUltimatumSupport {
         String playerName = gameData.playerIdToName.get(playerId);
         boolean isControllersTurn = playerId.equals(gameData.activePlayerId);
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        if (!isControllersTurn || landsPlayed >= gameData.getMaxLandsThisTurn(playerId)) {
+        if (!isControllersTurn || landsPlayed >= (gameData.getMaxLandsThisTurn(playerId) + gameQueryService.getConditionalAdditionalLandPlays(gameData, playerId))) {
             String reason = !isControllersTurn ? "not your turn" : "land already played this turn";
             gameLogService.append(gameData, GameLog.builder().card(card).text(" can't be played (" + reason + ") and stays exiled.").build());
             return;
         }
 
         gameData.removeFromExile(card.getId());
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
+        Permanent permanent = new Permanent(card);
+        permanent.setEnteredFromExile(true);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
         gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
-        triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card);
         gameLogService.append(gameData, GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays land {} from exile (Brilliant Ultimatum)", gameData.id, playerName, card.getName());
-        battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
+        battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
+        if (!gameData.interaction.isAwaitingInput()) {
+            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card, true);
+        }
     }
 
     private String describePile(List<Card> allCards, List<UUID> cardIds) {

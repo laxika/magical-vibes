@@ -159,6 +159,7 @@ class GaeasBlessingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         // Graveyard should be empty — everything was shuffled into library
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -169,9 +170,11 @@ class GaeasBlessingTest extends BaseCardTest {
         // all 3 graveyard cards (existing + 2 milled) shuffle into library.
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
 
-        // Log confirms the self-mill trigger
+        // Log confirms the self-mill trigger and its resolution
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Gaea's Blessing") && log.contains("was milled") && log.contains("shuffles their graveyard"));
+                log.contains("Gaea's Blessing") && log.contains("triggers"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
+                log.contains("shuffles their graveyard"));
     }
 
     @Test
@@ -186,6 +189,7 @@ class GaeasBlessingTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).add(new LightningBolt());
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         // Both milled cards were shuffled back into library (trigger fires after both enter graveyard)
@@ -221,6 +225,7 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         // Graveyard should be empty — trigger shuffled everything back

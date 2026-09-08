@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "9ED", collectorNumber = "12")
 @CardRegistration(set = "8ED", collectorNumber = "15")
 @CardRegistration(set = "7ED", collectorNumber = "12")
+@CardRegistration(set = "MMQ", collectorNumber = "16")
 public class CrossbowInfantry extends Card {
 
     public CrossbowInfantry() {

@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "229")
 @CardRegistration(set = "7ED", collectorNumber = "229")
 @CardRegistration(set = "POR", collectorNumber = "158")
+@CardRegistration(set = "USG", collectorNumber = "232")
 public class Anaconda extends Card {
 }

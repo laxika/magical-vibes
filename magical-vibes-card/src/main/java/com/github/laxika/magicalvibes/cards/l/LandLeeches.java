@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "4ED", collectorNumber = "255")
+@CardRegistration(set = "DRK", collectorNumber = "79")
 public class LandLeeches extends Card {
 
     public LandLeeches() {

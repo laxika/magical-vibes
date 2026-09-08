@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -34,15 +34,15 @@ class RecklessAssaultTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to a target creature")
     void damagesCreature() {
         harness.addToBattlefield(player1, new RecklessAssault());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BirdsOfParadise());
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        var targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        var targetId = harness.getPermanentId(player2, "Birds of Paradise");
         harness.activateAbility(player1, battlefieldIndex(player1, "Reckless Assault"), null, targetId);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Birds of Paradise");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 

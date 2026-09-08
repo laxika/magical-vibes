@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("scryfall")
 class BackFacePrintingIdentityTest {
 
-    private static final String CACHE_DIR = "./card-data-cache";
+    private static final String CACHE_DIR = System.getProperty("card-data.cache-dir", "./card-data-cache");
 
     @Test
     void everyBackFaceCarriesItsPrintingIdentity() {

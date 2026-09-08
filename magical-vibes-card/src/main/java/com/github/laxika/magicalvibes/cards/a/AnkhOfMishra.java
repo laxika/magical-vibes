@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 @CardRegistration(set = "6ED", collectorNumber = "273")
 @CardRegistration(set = "5ED", collectorNumber = "348")
 @CardRegistration(set = "4ED", collectorNumber = "294")
+@CardRegistration(set = "SUM", collectorNumber = "233")
 public class AnkhOfMishra extends Card {
 
     public AnkhOfMishra() {

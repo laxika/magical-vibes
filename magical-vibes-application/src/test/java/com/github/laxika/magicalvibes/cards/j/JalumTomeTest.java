@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JalumTome.class, Forest.class})
 class JalumTomeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability taps Jalum Tome and puts the ability on the stack")
     void activatingTapsAndGoesOnStack() {
-        harness.addToBattlefield(player1, new JalumTome());
-        Permanent tome = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent tome = harness.addToBattlefieldAndReturn(player1, new JalumTome());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -36,8 +37,7 @@ class JalumTomeTest extends BaseCardTest {
     void resolvingDrawsThenDiscards() {
         harness.addToBattlefield(player1, new JalumTome());
         harness.setHand(player1, List.of(new Forest()));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -52,5 +52,26 @@ class JalumTomeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("The discard choice can discard the pre-existing card after the draw")
+    void drawsBeforeDiscardChoice() {
+        harness.addToBattlefield(player1, new JalumTome());
+        Forest discardedCard = new Forest();
+        Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of(discardedCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discardedCard, drawnCard);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
     }
 }

@@ -28,11 +28,13 @@ import java.util.List;
  * @param totalDamage       the total to divide (CHOSEN/EVEN). Ignored for ORDERED (pass {@code null}).
  * @param orderedAmounts    fixed per-target amounts (ORDERED only; {@code null} otherwise).
  * @param mode              how the total is split.
- * @param targetRestriction narrows which permanents may be targeted, on top of the creature
- *                          restriction implied by {@code canTargetPlayers == false}; {@code null}
+ * @param targetRestriction narrows which permanents may be targeted, on top of the permanent
+ *                          category implied by {@code canTargetPlayers} and
+ *                          {@code canTargetPlaneswalkers}; {@code null}
  *                          adds no narrowing. Enforced through {@link #targetSpec()}.
  * @param maxTargets        maximum number of targets, {@code 0} = unbounded.
  * @param canTargetPlayers  whether players may be targeted (creatures and/or players).
+ * @param canTargetPlaneswalkers whether planeswalkers may be targeted when players are not legal.
  * @param damagedCreaturesCantBlock    if {@code true}, creatures dealt damage this way can't block this turn.
  * @param etbAssignments    if {@code true} (CHOSEN only), assignments come from
  *                          {@code GameData.pendingETBDamageAssignments}; a null target restriction
@@ -52,7 +54,8 @@ public record DealDividedDamageEffect(
         boolean damagedCreaturesCantBlock,
         boolean etbAssignments,
         boolean tapDamagedCreatures,
-        boolean damagedPlayersCantCastNoncreatureSpells) implements CardEffect {
+        boolean damagedPlayersCantCastNoncreatureSpells,
+        boolean canTargetPlaneswalkers) implements CardEffect {
 
     /**
      * Convenience constructor for the common case with neither of the two rider clauses (tapping
@@ -68,7 +71,23 @@ public record DealDividedDamageEffect(
             boolean damagedCreaturesCantBlock,
             boolean etbAssignments) {
         this(totalDamage, orderedAmounts, mode, targetRestriction, maxTargets, canTargetPlayers,
-                damagedCreaturesCantBlock, etbAssignments, false, false);
+                damagedCreaturesCantBlock, etbAssignments, false, false, false);
+    }
+
+    public DealDividedDamageEffect(
+            DynamicAmount totalDamage,
+            List<Integer> orderedAmounts,
+            DivisionMode mode,
+            PermanentPredicate targetRestriction,
+            int maxTargets,
+            boolean canTargetPlayers,
+            boolean damagedCreaturesCantBlock,
+            boolean etbAssignments,
+            boolean tapDamagedCreatures,
+            boolean damagedPlayersCantCastNoncreatureSpells) {
+        this(totalDamage, orderedAmounts, mode, targetRestriction, maxTargets, canTargetPlayers,
+                damagedCreaturesCantBlock, etbAssignments, tapDamagedCreatures,
+                damagedPlayersCantCastNoncreatureSpells, false);
     }
 
     /**
@@ -102,6 +121,20 @@ public record DealDividedDamageEffect(
         return new DealDividedDamageEffect(
                 new Fixed(totalDamage), null, DivisionMode.CHOSEN,
                 new PermanentIsCreaturePredicate(), 0, false, false, false);
+    }
+
+    /** Dynamic total divided as you choose among any number of target creatures. */
+    public static DealDividedDamageEffect chosenAmongTargetCreatures(DynamicAmount totalDamage) {
+        return new DealDividedDamageEffect(
+                totalDamage, null, DivisionMode.CHOSEN,
+                new PermanentIsCreaturePredicate(), 0, false, false, false);
+    }
+
+    /** Fixed total divided as you choose among any number of target creatures and planeswalkers. */
+    public static DealDividedDamageEffect chosenAmongTargetCreaturesAndPlaneswalkers(int totalDamage) {
+        return new DealDividedDamageEffect(
+                new Fixed(totalDamage), null, DivisionMode.CHOSEN, null, 0,
+                false, false, false, false, false, true);
     }
 
     /**
@@ -169,8 +202,11 @@ public record DealDividedDamageEffect(
         // targetId is null; that tolerance comes from
         // EffectResolution.distributesAmountsAmongTargets, not from picking a category the spec
         // interpreter happens to no-op on.
-        TargetPredicate declaredTarget =
-                canTargetPlayers ? TargetPredicates.anyTarget() : TargetPredicates.creature();
+        TargetPredicate declaredTarget = canTargetPlayers
+                ? TargetPredicates.anyTarget()
+                : canTargetPlaneswalkers
+                        ? TargetPredicates.creatureOrPlaneswalker()
+                        : TargetPredicates.creature();
         return new TargetSpec(declaredTarget, true, targetRestriction, false, 1);
     }
 }

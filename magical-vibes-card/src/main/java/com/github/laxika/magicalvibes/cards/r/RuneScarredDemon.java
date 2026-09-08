@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "106")
+@CardRegistration(set = "FDN", collectorNumber = "184")
 public class RuneScarredDemon extends Card {
 
     public RuneScarredDemon() {

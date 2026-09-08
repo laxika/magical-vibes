@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "123")
+@CardRegistration(set = "S99", collectorNumber = "94")
 public class Devastation extends Card {
 
     public Devastation() {

@@ -7,8 +7,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+
+import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "74")
 public class SearchForAzcanta extends Card {
@@ -16,14 +19,12 @@ public class SearchForAzcanta extends Card {
     public SearchForAzcanta() {
         setBackFaceCard(new AzantaTheSunkenRuin());
 
-        // At the beginning of your upkeep, surveil 1.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(1));
-
-        // Then if you have seven or more cards in your graveyard,
-        // you may transform Search for Azcanta.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new ConditionalEffect(new GraveyardCardThreshold(7, null), new MayEffect(new TransformSelfEffect(),
-                                "Transform Search for Azcanta?")));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SequenceEffect(List.of(
+                new SurveilEffect(1),
+                new ConditionalEffect(
+                        new GraveyardCardThreshold(7, null),
+                        new MayEffect(new TransformSelfEffect(), "Transform Search for Azcanta?"),
+                        false))));
     }
 
     @Override

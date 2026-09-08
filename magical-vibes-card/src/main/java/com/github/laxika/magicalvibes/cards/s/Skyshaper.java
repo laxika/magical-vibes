@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "137")
+@CardRegistration(set = "TPR", collectorNumber = "231")
 public class Skyshaper extends Card {
 
     public Skyshaper() {

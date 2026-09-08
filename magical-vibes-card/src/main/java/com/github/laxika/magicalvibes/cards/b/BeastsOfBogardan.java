@@ -18,15 +18,16 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "45")
+@CardRegistration(set = "LEG", collectorNumber = "133")
 public class BeastsOfBogardan extends Card {
 
     public BeastsOfBogardan() {
         addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
+
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate())
-                ))),
+                        new PermanentNotPredicate(new PermanentIsTokenPredicate())))),
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
     }
 }

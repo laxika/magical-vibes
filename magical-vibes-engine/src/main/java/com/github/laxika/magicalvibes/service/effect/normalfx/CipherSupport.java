@@ -48,6 +48,7 @@ public class CipherSupport {
         creature.addPersistentTriggeredEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, trigger);
 
         int resumeIndex = gameData.pendingEffectResolutionIndex;
+        entry.setExileAndReturnToHandAtNextEndStep(false);
         entry.insertEffectsToResolve(resumeIndex, List.of(new ExileSpellEffect()));
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())

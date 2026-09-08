@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "SOS", collectorNumber = "129")
+@CardRegistration(set = "KHM", collectorNumber = "149")
+@CardRegistration(set = "FDN", collectorNumber = "546")
 public class SeizeTheSpoils extends Card {
 
     public SeizeTheSpoils() {

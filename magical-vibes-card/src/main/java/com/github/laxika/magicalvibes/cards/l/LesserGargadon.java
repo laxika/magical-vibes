@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "199")
+@CardRegistration(set = "PCY", collectorNumber = "97")
 public class LesserGargadon extends Card {
 
     public LesserGargadon() {

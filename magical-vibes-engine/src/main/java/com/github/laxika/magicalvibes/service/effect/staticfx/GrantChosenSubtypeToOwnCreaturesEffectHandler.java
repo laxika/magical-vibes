@@ -26,7 +26,7 @@ public class GrantChosenSubtypeToOwnCreaturesEffectHandler implements StaticEffe
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
         if (grant.scope() == GrantScope.SELF) return;
-        if (support.matchesCreatureScope(context, grant.scope(), null)) {
+        if (support.matchesCreatureScope(context, grant.scope(), grant.filter())) {
             accumulator.addGrantedSubtype(chosenSubtype);
         }
     }

@@ -15,6 +15,15 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * <p>The choice is mandatory: a player who controls/holds fewer than X objects exiles all of
  * them.
  */
-public record EachPlayerExilesPermanentsOrCardsFromHandEffect(DynamicAmount amount)
+public record EachPlayerExilesPermanentsOrCardsFromHandEffect(DynamicAmount amount,
+                                                               boolean opponentsOnly)
         implements CardEffect {
+
+    public EachPlayerExilesPermanentsOrCardsFromHandEffect(DynamicAmount amount) {
+        this(amount, false);
+    }
+
+    public static EachPlayerExilesPermanentsOrCardsFromHandEffect opponents(DynamicAmount amount) {
+        return new EachPlayerExilesPermanentsOrCardsFromHandEffect(amount, true);
+    }
 }

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "188")
 @CardRegistration(set = "M20", collectorNumber = "182")
+@CardRegistration(set = "ROE", collectorNumber = "196")
+@CardRegistration(set = "GRN", collectorNumber = "137")
 public class MightOfTheMasses extends Card {
 
     public MightOfTheMasses() {

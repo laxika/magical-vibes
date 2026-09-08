@@ -42,12 +42,8 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(Objects::nonNull)
                 .toList();
-        // With no qualifying permanents there is nothing the colour choice could apply to.
-        if (targets.isEmpty()) {
-            return;
-        }
-
         UUID choosingPlayerId = e.targetControllerChooses()
+                && !targets.isEmpty()
                 ? gameQueryService.findPermanentController(gameData, targets.getFirst().getId())
                 : entry.getControllerId();
         if (choosingPlayerId == null) {
@@ -55,7 +51,7 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
         }
 
         playerInputService.beginProtectionColorChoice(gameData, choosingPlayerId,
-                targets.stream().map(Permanent::getId).toList(), e.includeArtifacts());
+                targets.stream().map(Permanent::getId).toList(), e.includeArtifacts(), e.includeColorless());
     }
 
     /**
@@ -73,9 +69,20 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
         if (e.scope() == GrantScope.OWN_CREATURES) {
             return ownMatchingCreatureIds(gameData, entry, e);
         }
+        if (e.scope() == GrantScope.ALL_CREATURES) {
+            return allCreatureIds(gameData);
+        }
         return entry.getTargetIds().isEmpty()
                 ? (entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId()))
                 : entry.getTargetIds();
+    }
+
+    private List<UUID> allCreatureIds(GameData gameData) {
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
     }
 
     private List<UUID> ownMatchingCreatureIds(GameData gameData, StackEntry entry,

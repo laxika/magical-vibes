@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "228")
+@CardRegistration(set = "ECL", collectorNumber = "340")
 public class GrubsCommand extends Card {
 
     public GrubsCommand() {

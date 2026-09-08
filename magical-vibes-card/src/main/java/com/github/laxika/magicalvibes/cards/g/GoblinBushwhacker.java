@@ -19,6 +19,6 @@ public class GoblinBushwhacker extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), new BoostAllOwnCreaturesEffect(1, 0)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new Kicked(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)));
+                new ConditionalEffect(new Kicked(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)));
     }
 }

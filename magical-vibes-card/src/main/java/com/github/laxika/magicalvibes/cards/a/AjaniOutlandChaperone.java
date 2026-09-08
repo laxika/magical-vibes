@@ -15,6 +15,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ECL", collectorNumber = "4")
+@CardRegistration(set = "ECL", collectorNumber = "284")
 public class AjaniOutlandChaperone extends Card {
 
     public AjaniOutlandChaperone() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ARB", collectorNumber = "46")
+@CardRegistration(set = "PLS", collectorNumber = "128")
 public class Terminate extends Card {
 
     public Terminate() {

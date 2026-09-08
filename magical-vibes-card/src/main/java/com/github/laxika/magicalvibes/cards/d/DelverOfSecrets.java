@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTra
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "51")
+@CardRegistration(set = "MID", collectorNumber = "47")
 @CardRegistration(set = "INR", collectorNumber = "60")
 @CardRegistration(set = "INR", collectorNumber = "457")
 public class DelverOfSecrets extends Card {

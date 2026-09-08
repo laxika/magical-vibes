@@ -31,18 +31,18 @@ public class RegisterDelayedManaEqualToTargetSpellManaSpentEffectHandler impleme
                 .filter(stackEntry -> stackEntry.getCard().getId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
-        if (targetEntry == null || targetEntry.getManaSpent() <= 0) {
+        if (targetEntry == null || targetEntry.getManaSpentToCast() <= 0) {
             return;
         }
 
         var delayedMana = (RegisterDelayedManaEqualToTargetSpellManaSpentEffect) effect;
         gameData.queueDelayedAction(new AddManaAtNextMainPhase(
-                entry.getControllerId(), delayedMana.color(), targetEntry.getManaSpent(), entry.getCard(), false, false));
+                entry.getControllerId(), delayedMana.color(), targetEntry.getManaSpentToCast(), entry.getCard(), false, false));
 
         log.info("Game {} - {} schedules {} {} at their next main phase (mana spent)",
                 gameData.id,
                 gameData.playerIdToName.get(entry.getControllerId()),
-                targetEntry.getManaSpent(),
+                targetEntry.getManaSpentToCast(),
                 delayedMana.color());
     }
 }

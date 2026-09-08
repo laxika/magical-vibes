@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantingPermanentAwareEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -45,7 +46,7 @@ public class GrantedTriggeredAbilitySupport {
                     if (effect instanceof GrantTriggeredAbilityEffect grant
                             && grant.slot() == slot
                             && ATTACHMENT_SCOPES.contains(grant.scope())) {
-                        result.add(grant.grantedEffect());
+                        result.add(bindGrantingPermanent(grant.grantedEffect(), source.getId()));
                     }
                 }
             }
@@ -57,12 +58,48 @@ public class GrantedTriggeredAbilitySupport {
             GrantScope.ENCHANTED_CREATURE, GrantScope.ENCHANTED_PERMANENT, GrantScope.EQUIPPED_CREATURE);
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
+        return grantedTriggeredEffects(gameData, permanent, null, slot);
+    }
+
+    /**
+     * Controller-aware form for collecting abilities from a permanent snapshot after it has left
+     * the battlefield.
+     */
+    public List<CardEffect> grantedTriggeredEffects(
+            GameData gameData, Permanent permanent, UUID controllerId, EffectSlot slot) {
         List<CardEffect> result = new ArrayList<>();
-        for (CardEffect granted : gameQueryService.computeStaticBonus(gameData, permanent).grantedEffects()) {
+        for (CardEffect granted : gameQueryService.computeStaticBonus(
+                gameData, permanent, controllerId).grantedEffects()) {
             if (granted instanceof GrantTriggeredAbilityEffect grant && grant.slot() == slot) {
                 result.add(grant.grantedEffect());
             }
         }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent source : battlefield) {
+                if (!source.isAttached() || !permanent.getId().equals(source.getAttachedTo())) continue;
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof GrantTriggeredAbilityEffect grant)
+                            || grant.slot() != slot
+                            || !ATTACHMENT_SCOPES.contains(grant.scope())
+                            || !(grant.grantedEffect() instanceof GrantingPermanentAwareEffect)) {
+                        continue;
+                    }
+                    CardEffect bound = bindGrantingPermanent(grant.grantedEffect(), source.getId());
+                    int unboundIndex = result.indexOf(grant.grantedEffect());
+                    if (unboundIndex >= 0) {
+                        result.set(unboundIndex, bound);
+                    } else {
+                        result.add(bound);
+                    }
+                }
+            }
+        }
         return result;
+    }
+
+    private CardEffect bindGrantingPermanent(CardEffect effect, UUID permanentId) {
+        return effect instanceof GrantingPermanentAwareEffect aware
+                ? aware.withGrantingPermanentId(permanentId)
+                : effect;
     }
 }

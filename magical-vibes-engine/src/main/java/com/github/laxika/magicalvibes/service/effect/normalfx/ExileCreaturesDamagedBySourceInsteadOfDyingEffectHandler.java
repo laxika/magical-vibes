@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class ExileCreaturesDamagedBySourceInsteadOfDyingEffectHandler implements NormalEffectHandlerBean {
@@ -22,14 +24,14 @@ public class ExileCreaturesDamagedBySourceInsteadOfDyingEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ExileCreaturesDamagedBySourceInsteadOfDyingEffect) effect;
-        if (!e.targetCreature()) {
+        UUID sourceId = entry.getTargetId() != null
+                ? entry.getTargetId()
+                : entry.getSourcePermanentId();
+        Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+        if (source == null || !gameQueryService.isCreature(gameData, source)) {
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target != null && gameQueryService.isCreature(gameData, target)) {
-            target.setExilesDamagedCreaturesInsteadOfDyingThisTurn(true);
-        }
+        source.setExileDamagedCreaturesInsteadOfDyingThisTurn(true);
     }
 }

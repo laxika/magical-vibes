@@ -1,12 +1,19 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
+import com.github.laxika.magicalvibes.cards.d.DeathSpark;
+import com.github.laxika.magicalvibes.cards.s.StormCrow;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,98 +22,146 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Martyrdom.class, DeathSpark.class, StormCrow.class})
 class MartyrdomTest extends BaseCardTest {
 
-    private void addBearsAndPyromancer() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new ProdigalPyromancer());
-        for (Permanent perm : gd.playerBattlefields.get(player1.getId())) {
-            perm.setSummoningSick(false);
-        }
+    private Permanent addProtectedCreature() {
+        return addCreatureReady(player1, new StormCrow());
     }
 
-    /** Casts Martyrdom on Grizzly Bears (battlefield index 0) and resolves it. */
-    private void castMartyrdomOnBears() {
+    private void castMartyrdom(Permanent target) {
         harness.setHand(player1, List.of(new Martyrdom()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    private void castDeathSpark(UUID targetId) {
+        harness.setHand(player1, List.of(new DeathSpark()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     @Test
-    @DisplayName("Granted ability redirects the next 1 damage dealt to you onto the granted creature")
     void redirectsDamageToPlayer() {
-        addBearsAndPyromancer();
-        harness.setLife(player1, 20);
-        castMartyrdomOnBears();
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        // The Pyromancer pings player1 for 1 — that damage lands on Grizzly Bears instead.
-        harness.activateAbility(player1, 1, null, player1.getId());
-        harness.passBothPriorities();
+        castDeathSpark(player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Granted ability redirects the next 1 damage dealt to a targeted creature")
-    void redirectsDamageToCreature() {
-        addBearsAndPyromancer();
-        harness.addToBattlefield(player2, new SerraAngel());
-        castMartyrdomOnBears();
+    void redirectsDamageToAnotherCreature() {
+        Permanent protectedCreature = addProtectedCreature();
+        Permanent otherCreature = addCreatureReady(player2, new StormCrow());
+        castMartyrdom(protectedCreature);
 
-        UUID angelId = harness.getPermanentId(player2, "Serra Angel");
-        harness.activateAbility(player1, 0, null, angelId);
+        harness.activateAbility(player1, 0, null, otherCreature.getId());
         harness.passBothPriorities();
 
-        harness.activateAbility(player1, 1, null, angelId);
-        harness.passBothPriorities();
+        castDeathSpark(otherCreature.getId());
 
-        assertThat(findPermanent(player2, "Serra Angel").getMarkedDamage()).isEqualTo(0);
-        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
+        assertThat(otherCreature.getMarkedDamage()).isEqualTo(0);
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Only the next 1 damage is redirected; the rest still hits the protected player")
-    void redirectsOnlyOneDamage() {
-        addBearsAndPyromancer();
-        harness.addToBattlefield(player1, new ProdigalPyromancer());
-        for (Permanent perm : gd.playerBattlefields.get(player1.getId())) {
-            perm.setSummoningSick(false);
-        }
-        harness.setLife(player1, 20);
-        castMartyrdomOnBears();
+    void redirectsOnlyTheNextDamage() {
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        harness.activateAbility(player1, 1, null, player1.getId());
-        harness.passBothPriorities();
-
+        castDeathSpark(player1.getId());
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
 
-        // Shield spent: the second Pyromancer's ping goes to player1's life total.
-        harness.activateAbility(player1, 2, null, player1.getId());
-        harness.passBothPriorities();
-
+        castDeathSpark(player1.getId());
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Cannot target a creature an opponent controls")
-    void cannotTargetOpponentsCreature() {
-        addBearsAndPyromancer();
-        harness.addToBattlefield(player2, new SerraAngel());
+    void cannotTargetAnOpponentsCreature() {
+        addProtectedCreature();
+        Permanent opponentsCreature = addCreatureReady(player2, new StormCrow());
         harness.setHand(player1, List.of(new Martyrdom()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID angelId = harness.getPermanentId(player2, "Serra Angel");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, angelId))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, opponentsCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void grantedAbilityExpiresAtEndOfTurn() {
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canRedirectDamageToTheProtectedCreatureItself() {
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
+
+        harness.activateAbility(player1, 0, null, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        castDeathSpark(protectedCreature.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(AjaniGoldmane.class)
+    void redirectsDamageToAPlaneswalker() {
+        Permanent protectedCreature = addProtectedCreature();
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new AjaniGoldmane());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        castMartyrdom(protectedCreature);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        castDeathSpark(planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void onlyTheCasterCanActivateTheGrantedAbilityAfterControlChanges() {
+        Permanent protectedCreature = addProtectedCreature();
+        castMartyrdom(protectedCreature);
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(
+                        gd,
+                        player2.getId(),
+                        protectedCreature,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT,
+                        null,
+                        "Test setup"));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

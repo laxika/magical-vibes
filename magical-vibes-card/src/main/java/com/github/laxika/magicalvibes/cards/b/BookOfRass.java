@@ -9,14 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "95")
+@CardRegistration(set = "DRK", collectorNumber = "98")
 public class BookOfRass extends Card {
 
     public BookOfRass() {
-        addActivatedAbility(new ActivatedAbility(
-                false,
-                "{2}",
+        addActivatedAbility(new ActivatedAbility(false, "{2}",
                 List.of(new PayLifeCost(2), new DrawCardEffect(1)),
-                "{2}, Pay 2 life: Draw a card."
-        ));
+                "{2}, Pay 2 life: Draw a card."));
     }
 }

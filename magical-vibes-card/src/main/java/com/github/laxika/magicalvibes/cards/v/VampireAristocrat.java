@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M10", collectorNumber = "117")
 public class VampireAristocrat extends Card {
@@ -17,8 +16,7 @@ public class VampireAristocrat extends Card {
                 false,
                 null,
                 List.of(new SacrificeCreatureCost(), new BoostSelfEffect(2, 2)),
-                "Sacrifice a creature: Vampire Aristocrat gets +2/+2 until end of turn.",
-                TargetFilters.creatureYouControl()
+                "Sacrifice a creature: Vampire Aristocrat gets +2/+2 until end of turn."
         ));
     }
 }

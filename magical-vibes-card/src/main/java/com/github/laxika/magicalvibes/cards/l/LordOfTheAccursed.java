@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "99")
+@CardRegistration(set = "AKR", collectorNumber = "114")
 public class LordOfTheAccursed extends Card {
 
     public LordOfTheAccursed() {

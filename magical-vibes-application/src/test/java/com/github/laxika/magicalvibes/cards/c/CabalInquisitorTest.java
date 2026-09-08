@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -30,6 +31,10 @@ class CabalInquisitorTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleMultipleCardsChosen(player1, gd.playerGraveyards.get(player1.getId()).stream()
+                .limit(2)
+                .map(Card::getId)
+                .toList());
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 

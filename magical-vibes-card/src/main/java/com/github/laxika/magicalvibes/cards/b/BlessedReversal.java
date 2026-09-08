@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceCon
 @CardRegistration(set = "POR", collectorNumber = "7")
 @CardRegistration(set = "7ED", collectorNumber = "3")
 @CardRegistration(set = "8ED", collectorNumber = "7")
+@CardRegistration(set = "ULG", collectorNumber = "2")
 public class BlessedReversal extends Card {
 
     public BlessedReversal() {

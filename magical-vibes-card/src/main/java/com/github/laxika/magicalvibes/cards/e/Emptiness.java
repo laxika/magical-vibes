@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "222")
+@CardRegistration(set = "ECL", collectorNumber = "294")
 public class Emptiness extends Card {
 
     public Emptiness() {

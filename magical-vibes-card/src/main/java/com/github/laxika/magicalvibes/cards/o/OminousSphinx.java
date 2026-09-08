@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "41")
+@CardRegistration(set = "AKR", collectorNumber = "72")
 public class OminousSphinx extends Card {
 
     public OminousSphinx() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "108")
+@CardRegistration(set = "ECL", collectorNumber = "404")
 public class IronShieldElf extends Card {
 
     public IronShieldElf() {

@@ -73,7 +73,9 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
         if (topCard.hasType(CardType.LAND)) {
             // Land — put onto the battlefield
             gameData.removeFromExile(topCard.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, new Permanent(topCard));
+            Permanent permanent = new Permanent(topCard);
+            permanent.setEnteredFromExile(true);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
 
             gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , topCard, " onto the battlefield."));
             log.info("Game {} - {} puts {} onto battlefield (Omen Machine)", gameData.id, playerName, topCard.getName());

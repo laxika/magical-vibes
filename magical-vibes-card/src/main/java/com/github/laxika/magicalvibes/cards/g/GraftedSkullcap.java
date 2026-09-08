@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "298")
+@CardRegistration(set = "USG", collectorNumber = "296")
 public class GraftedSkullcap extends Card {
 
     public GraftedSkullcap() {

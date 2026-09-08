@@ -4,16 +4,44 @@ import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayWithOpponentTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterControlLossUnattachTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryThenDiscoverEffect;
+import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
+import com.github.laxika.magicalvibes.model.effect.TapAndPreventCombatDamageByTargetAndBlockersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -64,6 +92,63 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(
                 gd, new TapCombatOpponentsOfTargetAtEndOfCombatEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(
+                gd, new AttachTargetAuraToAnotherPermanentOfSameTypeEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new MayEffect(new EnteringCreatureFightsTargetCreatureEffect(), "Fight?"), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classify(gd,
+                new ExileTargetPermanentMayPlayWithOpponentTaxEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        assertThat(classifier.classify(gd,
+                new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        assertThat(classifier.classify(gd,
+                new ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_DAMAGE);
+        assertThat(classifier.classify(gd,
+                new ReturnTargetCardOnDeathThisTurnEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new SacrificePermanentsOrElseEffect(null, 1,
+                        new BoostTargetCreatureEffect(5, 5),
+                        new BoostTargetCreatureEffect(3, 3), "permanent"), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new GrantSubtypeToTargetCreatureEffect(CardSubtype.TREASURE), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classify(gd,
+                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classify(gd,
+                new ShuffleTargetPermanentIntoLibraryThenDiscoverEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        assertThat(classifier.classify(gd,
+                new AttachOneOfControlledEquipmentToTargetCreatureEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new RegisterControlLossUnattachTriggerEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect(List.of()), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd,
+                new TapAndPreventCombatDamageByTargetAndBlockersEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd, new SuspectEffect(GrantScope.TARGET), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+        assertThat(classifier.classify(gd, new SuspectEffect(GrantScope.SELF), aiPlayerId))
+                .isNull();
     }
 
     @Test
@@ -108,6 +193,49 @@ class TargetPolarityGuardTest {
                         keeps the fallback deliberately. Unclassified (effect -> example cards): %s"""
                         .formatted(unclassified))
                 .isEmpty();
+    }
+
+    @Test
+    void classifiesPositionalBoostsAndBlockingRestrictions() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classify(gd, new BoostTargetCreaturesByPositionEffect(List.of(
+                new BoostTargetCreatureEffect(3, 3), new BoostTargetCreatureEffect(2, 2))), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd, new BoostTargetCreaturesByPositionEffect(List.of(
+                new BoostTargetCreatureEffect(3, 3), new BoostTargetCreatureEffect(-1, -1))), aiPlayerId))
+                .isEqualTo(TargetPolarity.HARMFUL);
+        assertThat(classifier.classify(gd, new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
+                new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.WALL),
+                "Walls"), aiPlayerId)).isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd, new MakeTargetCopyOfTargetPermanentEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.NEUTRAL);
+    }
+
+    @Test
+    void classifiesEveryDieRollBranchAndPrioritizesHarmOverBenefits() {
+        GameTestHarness harness = new GameTestHarness();
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        for (int branchIndex = 0; branchIndex < 4; branchIndex++) {
+            CardEffect[] branches = {null, null, null, null};
+            branches[branchIndex] = ReturnToHandEffect.target();
+            branches[(branchIndex + 1) % branches.length] = new BoostTargetCreatureEffect(1, 1);
+            RollD20Effect roll = RollD20Effect.withSubtractedAmount(new Fixed(1),
+                    branches[0], branches[1], branches[2], branches[3]);
+
+            assertThat(classifier.classify(gd, roll, aiPlayerId))
+                    .as("removal in d20 branch %s", branchIndex)
+                    .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        }
+        assertThat(classifier.classify(gd, new RollD20Effect(null,
+                new BoostTargetCreatureEffect(1, 1)), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
     }
 
     private TargetPolarityClassifier createClassifier(GameTestHarness harness) {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "185")
+@CardRegistration(set = "SOI", collectorNumber = "193")
 public class AimHigh extends Card {
 
     public AimHigh() {

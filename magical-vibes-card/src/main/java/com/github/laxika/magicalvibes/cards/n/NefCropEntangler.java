@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "144")
+@CardRegistration(set = "AKR", collectorNumber = "166")
 public class NefCropEntangler extends Card {
 
     public NefCropEntangler() {

@@ -55,6 +55,17 @@ public class AiDecisionScheduler {
         return open.get();
     }
 
+    /** Whether a decision is queued, delayed, executing, or waiting for a coalesced follow-up. */
+    public boolean hasPendingWork() {
+        synchronized (gameStateLock) {
+            return activeDecisionKind != null
+                    || gameStateTaskScheduled
+                    || gameStateDirty
+                    || executor.getActiveCount() > 0
+                    || !executor.getQueue().isEmpty();
+        }
+    }
+
     public void scheduleDecision(AiDecisionKind kind) {
         if (!open.get()) {
             return;
@@ -148,6 +159,11 @@ public class AiDecisionScheduler {
         // thread, and interrupting it would corrupt subsequent subscriber work.
         // Already-queued tasks check open before invoking the decision engine.
         executor.shutdown();
+    }
+
+    /** Waits for any decision already executing when {@link #close()} was called to finish. */
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+        return executor.awaitTermination(timeout, unit);
     }
 
     public String diagnosticSummary() {

@@ -5,8 +5,11 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
+import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 
 import java.util.List;
 
@@ -16,8 +19,8 @@ import java.util.List;
  *
  * <p>{@code LayerSystemService.computeBoardFingerprint} hashes the inputs the pass reads —
  * battlefield permanents and their mutable fields, graveyards, exile, hand sizes, top-of-library
- * identity, floating effects. A condition reading anything else (life totals, the active player,
- * poison counters, the per-turn event trackers, combat state) would let a cached board hand back a
+ * identity, active player, and floating effects. A condition reading anything else (poison counters,
+ * the per-turn event trackers, combat state) would let a cached board hand back a
  * verdict that is no longer true. Such conditions stay outside the pass, where the static-bonus
  * assembly re-evaluates them on every query.
  *
@@ -39,9 +42,13 @@ public final class ConditionBoardStability {
             // type, and the static branch counts through StaticEffectSupport
             // .isArtifactForStaticFilter, which reads the in-flight layer-4 state (CR 613.1d).
             case Metalcraft ignored -> true;
+            // Counter quantities are part of the structural board fingerprint.
+            case SourceCounterThreshold ignored -> true;
             // Devotion reads the mana costs of battlefield permanents, whose identities and
             // current mana-cost strings are included in the board fingerprint.
             case DevotionToColorAtLeast ignored -> true;
+            case DevotionToColorsAtLeast ignored -> true;
+            case NotControllerTurn ignored -> true;
             case NotCondition c -> readsOnlyFingerprintedState(c.inner());
             case AllConditions c -> allStable(c.conditions());
             case AllOf c -> allStable(c.conditions());

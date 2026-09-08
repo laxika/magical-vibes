@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "213")
+@CardRegistration(set = "ECL", collectorNumber = "333")
 public class DeepchannelDuelist extends Card {
 
     public DeepchannelDuelist() {

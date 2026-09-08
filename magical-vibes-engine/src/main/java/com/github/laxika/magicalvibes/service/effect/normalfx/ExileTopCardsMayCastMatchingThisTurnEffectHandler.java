@@ -54,16 +54,22 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
             exileService.exileCard(gameData, controllerId, topCard);
             exiled.add(topCard);
 
-            if (predicateEvaluationService.matchesCardPredicate(topCard, e.filter(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(
+                    topCard, e.filter(), null, gameData, controllerId)) {
                 gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
                 gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+                if (e.withoutPayingManaCost()) {
+                    gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
+                }
                 castableNames.add(topCard.getName());
             }
         }
 
         String castNote = castableNames.isEmpty()
                 ? ""
-                : " (may cast this turn: " + String.join(", ", castableNames) + ")";
+                : " (may cast this turn"
+                        + (e.withoutPayingManaCost() ? " without paying mana costs" : "")
+                        + ": " + String.join(", ", castableNames) + ")";
         GameLog.Builder logEntry = GameLog.builder().text(controllerName + " exiles ");
         for (int i = 0; i < exiled.size(); i++) {
             if (i > 0) {

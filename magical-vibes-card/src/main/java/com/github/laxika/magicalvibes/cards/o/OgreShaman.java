@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "91")
+@CardRegistration(set = "TPR", collectorNumber = "148")
 public class OgreShaman extends Card {
 
     public OgreShaman() {

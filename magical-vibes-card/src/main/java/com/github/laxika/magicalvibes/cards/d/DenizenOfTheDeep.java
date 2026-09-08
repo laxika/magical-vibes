@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "80")
 @CardRegistration(set = "P02", collectorNumber = "35")
+@CardRegistration(set = "S99", collectorNumber = "35")
 public class DenizenOfTheDeep extends Card {
 
     public DenizenOfTheDeep() {

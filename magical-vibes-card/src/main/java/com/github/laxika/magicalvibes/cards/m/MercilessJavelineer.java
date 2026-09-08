@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "202")
+@CardRegistration(set = "AKR", collectorNumber = "245")
 public class MercilessJavelineer extends Card {
 
     public MercilessJavelineer() {

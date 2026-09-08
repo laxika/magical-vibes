@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "186")
+@CardRegistration(set = "AKR", collectorNumber = "217")
 public class ShefetMonitor extends Card {
 
     public ShefetMonitor() {

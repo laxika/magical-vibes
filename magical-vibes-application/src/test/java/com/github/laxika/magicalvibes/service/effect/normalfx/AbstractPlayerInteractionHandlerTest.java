@@ -29,6 +29,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 abstract class AbstractPlayerInteractionHandlerTest {
@@ -46,7 +49,9 @@ abstract class AbstractPlayerInteractionHandlerTest {
     @Mock protected BattlefieldEntryService battlefieldEntryService;
     @Mock protected TriggerCollectionService triggerCollectionService;
     @Mock protected CoinFlipService coinFlipService;
+    @Mock protected PermanentCounterSupport permanentCounterSupport;
     @Mock protected InteractionHandlerRegistry interactionHandlerRegistry;
+    @Mock protected LifeSupport lifeSupport;
 
     protected EffectHandlerRegistry registry;
     protected PlayerInteractionSupport support;
@@ -60,6 +65,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
         player1Id = game.player1Id();
         player2Id = game.player2Id();
         gd = game.gameData();
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
 
         support = new PlayerInteractionSupport(drawService, graveyardService, gameQueryService, predicateEvaluationService,
                 gameLogService, playerInputService, cardRevealService,
@@ -69,7 +75,8 @@ abstract class AbstractPlayerInteractionHandlerTest {
         NormalEffectHandlerBean handler = PlayerInteractionHandlerTestSupport.createHandler(
                 handlerName, support, registry, gameLogService, cardRevealService, drawService, sessionManager, cardViewFactory,
                 gameQueryService, predicateEvaluationService, playerInputService, triggerCollectionService, battlefieldEntryService,
-                permanentRemovalService, graveyardService, interactionHandlerRegistry, coinFlipService);
+                permanentRemovalService, graveyardService, interactionHandlerRegistry, coinFlipService,
+                permanentCounterSupport, lifeSupport);
         PlayerInteractionHandlerTestSupport.registerHandler(registry, handler);
         setUpHandler();
     }

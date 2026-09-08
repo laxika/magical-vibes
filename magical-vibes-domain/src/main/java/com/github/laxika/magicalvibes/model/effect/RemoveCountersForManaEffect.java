@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
+import java.util.List;
+
 /**
  * Mana ability: "Remove any number of {@code counterType} counters from this permanent:
- * Add one {@code color} mana for each counter removed this way." (the storage-land cycle —
+ * Add one mana from {@code colors} for each counter removed this way." (the storage-land cycle —
  * Bottomless Vault, Dwarven Hold, Hollow Trees, Icatian Store, Sand Silos).
  *
  * <p>Resolved in {@code ActivatedAbilityExecutionService}'s mana-ability path: it prompts the
@@ -16,5 +18,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  * engine treats the ability as a mana ability (CR 605.1a); it keeps the neutral estimator
  * defaults because the exact output is a player-chosen, special-routing amount.
  */
-public record RemoveCountersForManaEffect(ManaColor color, CounterType counterType) implements ManaProducingEffect {
+public record RemoveCountersForManaEffect(List<ManaColor> colors, CounterType counterType) implements ManaProducingEffect {
+
+    public RemoveCountersForManaEffect {
+        colors = List.copyOf(colors);
+        if (colors.isEmpty()) {
+            throw new IllegalArgumentException("At least one mana color is required");
+        }
+    }
+
+    public RemoveCountersForManaEffect(ManaColor color, CounterType counterType) {
+        this(List.of(color), counterType);
+    }
 }

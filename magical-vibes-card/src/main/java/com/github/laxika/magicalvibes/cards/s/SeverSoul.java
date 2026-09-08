@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "8ED", collectorNumber = "162")
+@CardRegistration(set = "MMQ", collectorNumber = "159")
 public class SeverSoul extends Card {
 
     public SeverSoul() {

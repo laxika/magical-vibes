@@ -71,7 +71,6 @@ public class LookAtTopCardsChooseCreaturesAndLandsEffectHandler implements Norma
                 "You may reveal up to " + maxCount + " creature and/or land cards from among them.",
                 true,
                 0,
-                false,
-                CardType.LAND));
+                false).withSelectedCardsToBattlefieldType(CardType.LAND));
     }
 }

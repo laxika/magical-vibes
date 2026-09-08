@@ -37,15 +37,16 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CopyControllerActivatedAbilityEffect) effect;
         StackEntry snapshot = e.abilitySnapshot();
-        if (snapshot == null) return;
+        if (snapshot == null || snapshot.getCard().isCantBeCopied()) return;
 
         UUID copyControllerId = e.activatingPlayerId();
         Card copyCard = copySupport.createCopyCard(snapshot.getCard());
         StackEntry copyEntry = copySupport.createCopyStackEntry(snapshot, copyCard, copyControllerId, snapshot.getTargetId());
         copyEntry.setTargetFilter(snapshot.getTargetFilter());
         copyEntry.setDamageSourceCard(snapshot.getDamageSourceCard());
+        copyEntry.setNonTargeting(snapshot.isNonTargeting());
 
-        gameData.stack.add(copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", snapshot.getCard(), "'s ability is created."));
         log.info("Game {} - copy of {}'s ability created for controller", gameData.id, snapshot.getCard().getName());
@@ -54,6 +55,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
         // a copy with no target, or a multi-target ability, keeps the original targets.
         boolean singleTarget = snapshot.getTargetId() != null
                 && (snapshot.getTargetIds() == null || snapshot.getTargetIds().size() <= 1)
+                && !snapshot.isNonTargeting()
                 && e.ability() != null && !e.ability().isMultiTarget();
         if (singleTarget) {
             PendingMayAbility retargetAbility = new PendingMayAbility(

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "228")
+@CardRegistration(set = "AKR", collectorNumber = "271")
 public class GateToTheAfterlife extends Card {
 
     public GateToTheAfterlife() {

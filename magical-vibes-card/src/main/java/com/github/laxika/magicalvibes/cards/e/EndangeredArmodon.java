@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "107")
+@CardRegistration(set = "TPR", collectorNumber = "171")
 public class EndangeredArmodon extends Card {
 
     public EndangeredArmodon() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +38,9 @@ public class FlipTwoCoinsEffectHandler implements NormalEffectHandlerBean {
         String sourceName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        CoinFlipService.CoinFlipResult firstResultValue = coinFlipService.flip(gameData, controllerId);
-        CoinFlipService.CoinFlipResult secondResultValue = coinFlipService.flip(gameData, controllerId);
+        List<CoinFlipService.CoinFlipResult> results = coinFlipService.flipCoins(gameData, controllerId, 2);
+        CoinFlipService.CoinFlipResult firstResultValue = results.get(0);
+        CoinFlipService.CoinFlipResult secondResultValue = results.get(1);
         boolean firstFlip = firstResultValue.heads();
         boolean secondFlip = secondResultValue.heads();
 

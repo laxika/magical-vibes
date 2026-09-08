@@ -14,6 +14,9 @@ import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "187")
 @CardRegistration(set = "5ED", collectorNumber = "238")
+@CardRegistration(set = "ATH", collectorNumber = "42")
+@CardRegistration(set = "FEM", collectorNumber = "59")
+@CardRegistration(set = "FEM", collectorNumber = "187")
 public class GoblinWarrens extends Card {
 
     public GoblinWarrens() {

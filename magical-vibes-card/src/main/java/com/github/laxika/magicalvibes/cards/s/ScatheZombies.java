@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
+@CardRegistration(set = "ITP", collectorNumber = "23")
+@CardRegistration(set = "RQS", collectorNumber = "22")
 @CardRegistration(set = "10E", collectorNumber = "175")
 @CardRegistration(set = "6ED", collectorNumber = "154")
 @CardRegistration(set = "9ED", collectorNumber = "160")
@@ -10,5 +12,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "7ED", collectorNumber = "161")
 @CardRegistration(set = "5ED", collectorNumber = "192")
 @CardRegistration(set = "4ED", collectorNumber = "158")
+@CardRegistration(set = "S99", collectorNumber = "87")
+@CardRegistration(set = "SUM", collectorNumber = "127")
 public class ScatheZombies extends Card {
 }

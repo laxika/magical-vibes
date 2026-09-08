@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "WTH", collectorNumber = "105")
+@CardRegistration(set = "ATH", collectorNumber = "41")
 public class GoblinVandal extends Card {
 
     public GoblinVandal() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "270")
+@CardRegistration(set = "BRB", collectorNumber = "33")
 @CardRegistration(set = "POR", collectorNumber = "170")
 @CardRegistration(set = "P02", collectorNumber = "129")
 @CardRegistration(set = "7ED", collectorNumber = "252")
@@ -15,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 @CardRegistration(set = "5ED", collectorNumber = "303")
 @CardRegistration(set = "4ED", collectorNumber = "251")
 @CardRegistration(set = "ICE", collectorNumber = "249")
+@CardRegistration(set = "ATH", collectorNumber = "58")
+@CardRegistration(set = "SUM", collectorNumber = "202")
+@CardRegistration(set = "DKM", collectorNumber = "28")
 public class Hurricane extends Card {
 
     public Hurricane() {

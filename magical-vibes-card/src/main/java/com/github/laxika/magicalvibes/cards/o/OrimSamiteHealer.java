@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "33")
+@CardRegistration(set = "TPR", collectorNumber = "21")
 public class OrimSamiteHealer extends Card {
 
     public OrimSamiteHealer() {

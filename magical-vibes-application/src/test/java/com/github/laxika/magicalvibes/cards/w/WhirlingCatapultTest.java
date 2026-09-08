@@ -1,25 +1,28 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
+import com.github.laxika.magicalvibes.cards.s.ShieldSphere;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WhirlingCatapult.class, AesthirGlider.class, WildAesthir.class, ShieldSphere.class})
 class WhirlingCatapultTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage to each creature with flying and each player, exiling two cards")
     void damagesFliersAndPlayers() {
         harness.addToBattlefield(player1, new WhirlingCatapult());
-        harness.addToBattlefield(player1, new SuntailHawk());
-        harness.addToBattlefield(player2, new SuntailHawk());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new WildAesthir());
+        harness.addToBattlefield(player2, new WildAesthir());
+        harness.addToBattlefield(player2, new ShieldSphere());
+        var aesthirGlider = harness.addToBattlefieldAndReturn(player2, new AesthirGlider());
         GameData gd = harness.getGameData();
 
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
@@ -36,12 +39,30 @@ class WhirlingCatapultTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(life1 - 1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2 - 1);
 
-        // Both 1/1 fliers die; the non-flying 2/2 is untouched.
+        // Both 1/1 fliers die; the non-flying creature is untouched.
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard() instanceof SuntailHawk);
+                .noneMatch(p -> p.getCard() instanceof WildAesthir);
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard() instanceof SuntailHawk)
-                .anyMatch(p -> p.getCard() instanceof GrizzlyBears);
+                .noneMatch(p -> p.getCard() instanceof WildAesthir)
+                .anyMatch(p -> p.getCard() instanceof ShieldSphere);
+        assertThat(aesthirGlider.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void paysExileCostBeforeResolution() {
+        harness.addToBattlefield(player1, new WhirlingCatapult());
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+        int exileBefore = gd.exiledCards.size();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 2);
+        assertThat(gd.exiledCards).hasSize(exileBefore + 2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+
+        harness.passBothPriorities();
     }
 
     @Test

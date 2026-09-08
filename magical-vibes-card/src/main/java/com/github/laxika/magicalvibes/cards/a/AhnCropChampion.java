@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "194")
+@CardRegistration(set = "AKR", collectorNumber = "226")
 public class AhnCropChampion extends Card {
 
     public AhnCropChampion() {

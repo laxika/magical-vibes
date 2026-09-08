@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "323")
+@CardRegistration(set = "TPR", collectorNumber = "241")
 public class RootwaterDepths extends Card {
 
     public RootwaterDepths() {

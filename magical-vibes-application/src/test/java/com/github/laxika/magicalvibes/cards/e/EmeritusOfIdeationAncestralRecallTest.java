@@ -59,6 +59,7 @@ class EmeritusOfIdeationAncestralRecallTest extends BaseCardTest {
         emeritus.setSummoningSick(false);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(emeritus)));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

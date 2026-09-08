@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "245")
+@CardRegistration(set = "USG", collectorNumber = "257")
 public class GreaterGood extends Card {
 
     public GreaterGood() {

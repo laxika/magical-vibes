@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "148")
+@CardRegistration(set = "AKR", collectorNumber = "175")
 public class SoulScarMage extends Card {
 
     public SoulScarMage() {

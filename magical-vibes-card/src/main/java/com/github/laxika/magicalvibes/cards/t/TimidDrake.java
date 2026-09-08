@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "WTH", collectorNumber = "54")
+@CardRegistration(set = "MMQ", collectorNumber = "111")
 public class TimidDrake extends Card {
 
     public TimidDrake() {

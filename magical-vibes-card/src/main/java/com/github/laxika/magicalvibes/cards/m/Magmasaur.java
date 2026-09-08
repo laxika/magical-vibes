@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MagmasaurUpkeepEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "188")
+@CardRegistration(set = "TPR", collectorNumber = "141")
 public class Magmasaur extends Card {
 
     public Magmasaur() {

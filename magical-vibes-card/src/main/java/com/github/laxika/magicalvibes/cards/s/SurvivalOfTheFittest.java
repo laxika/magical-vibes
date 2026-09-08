@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "129")
+@CardRegistration(set = "TPR", collectorNumber = "199")
 public class SurvivalOfTheFittest extends Card {
 
     public SurvivalOfTheFittest() {

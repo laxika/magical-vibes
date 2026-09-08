@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "218")
+@CardRegistration(set = "ECL", collectorNumber = "336")
 public class EclipsedElf extends Card {
 
     public EclipsedElf() {

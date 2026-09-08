@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "4")
+@CardRegistration(set = "EMN", collectorNumber = "5")
 public class ElderDeepFiend extends Card {
 
     public ElderDeepFiend() {

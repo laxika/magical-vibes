@@ -45,6 +45,10 @@ public class DoublePlusOneCountersOnControlledCreaturesEffectHandler implements 
             if (current <= 0) continue;
 
             permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, current * 2);
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                    gameData, permanent, entry.getControllerId());
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                    gameData, permanent, current);
             doubled.add(permanent);
         }
 
@@ -58,7 +62,7 @@ public class DoublePlusOneCountersOnControlledCreaturesEffectHandler implements 
                 entry.getCard().getName(), doubled.size());
 
         for (Permanent permanent : doubled) {
-            permanentCounterSupport.firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, permanent);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent, entry.getControllerId());
         }
     }
 }

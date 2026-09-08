@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -38,19 +39,26 @@ class CrowdsFavorTest extends BaseCardTest {
     @DisplayName("Convoke lets a tapped creature pay the mana cost")
     void convokePaysCost() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new RagingGoblin());
         harness.setHand(player1, List.of(new CrowdsFavor()));
 
-        List<Permanent> bears = gd.playerBattlefields.get(player1.getId());
-        UUID targetId = bears.getFirst().getId();
-        UUID convokeId = bears.get(1).getId();
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID convokeId = harness.getPermanentId(player1, "Raging Goblin");
 
         harness.castInstantWithConvoke(player1, 0, List.of(targetId), List.of(convokeId));
         harness.passBothPriorities();
 
-        assertThat(bears.get(1).isTapped()).isTrue();
-        assertThat(bears.getFirst().getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getFirst().hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getId().equals(targetId))
+                .findFirst()
+                .orElseThrow();
+        Permanent goblin = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getId().equals(convokeId))
+                .findFirst()
+                .orElseThrow();
+        assertThat(goblin.isTapped()).isTrue();
+        assertThat(bears.getEffectivePower()).isEqualTo(3);
+        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test

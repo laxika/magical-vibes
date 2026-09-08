@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -16,17 +17,19 @@ import java.util.UUID;
  * <p>Contrast {@link ReturnEnchantedCreatureToOwnerHandOnDeathEffect} (Demonic Vigor), which
  * returns the dying creature to its owner's hand instead of the battlefield.</p>
  *
- * @param dyingCreatureCardId          the card ID of the creature that just died; {@code null}
- *                                     in the card definition (baked in at trigger time)
+ * @param dyingCreatureCardIds         physical card IDs represented by the creature that just died;
+ *                                     empty in the card definition and baked in at trigger time
  * @param underAuraControllersControl  {@code true} to put the creature onto the battlefield under
  *                                     the Aura controller's control, {@code false} for its owner's.
  *                                     When the two differ the returned permanent is tracked as a
  *                                     stolen creature so the control change persists.
+ * @param enterTapped                   {@code true} if the creature enters the battlefield tapped
  * @param enterWithCounter             optional counter put on the returned permanent as it enters
  */
 public record ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
-        UUID dyingCreatureCardId,
+        List<UUID> dyingCreatureCardIds,
         boolean underAuraControllersControl,
+        boolean enterTapped,
         CounterType enterWithCounter
 ) implements CardEffect {
 
@@ -35,7 +38,7 @@ public record ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
      * card ID is not yet known.
      */
     public ReturnEnchantedCreatureToBattlefieldOnDeathEffect() {
-        this(null, false, null);
+        this(List.of(), false, false, null);
     }
 
     /**
@@ -44,7 +47,18 @@ public record ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
      * @param underAuraControllersControl see the record component
      */
     public ReturnEnchantedCreatureToBattlefieldOnDeathEffect(boolean underAuraControllersControl) {
-        this(null, underAuraControllersControl, null);
+        this(List.of(), underAuraControllersControl, false, null);
+    }
+
+    /**
+     * Card-definition constructor with an optional tapped entry.
+     *
+     * @param underAuraControllersControl see the record component
+     * @param enterTapped                  see the record component
+     */
+    public ReturnEnchantedCreatureToBattlefieldOnDeathEffect(boolean underAuraControllersControl,
+                                                              boolean enterTapped) {
+        this(List.of(), underAuraControllersControl, enterTapped, null);
     }
 
     /**
@@ -55,7 +69,20 @@ public record ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
      */
     public ReturnEnchantedCreatureToBattlefieldOnDeathEffect(UUID dyingCreatureCardId,
                                                               boolean underAuraControllersControl) {
-        this(dyingCreatureCardId, underAuraControllersControl, null);
+        this(List.of(dyingCreatureCardId), underAuraControllersControl, false, null);
+    }
+
+    /**
+     * Trigger-time constructor with an optional tapped entry.
+     *
+     * @param dyingCreatureCardId          see the record component
+     * @param underAuraControllersControl  see the record component
+     * @param enterTapped                  see the record component
+     */
+    public ReturnEnchantedCreatureToBattlefieldOnDeathEffect(UUID dyingCreatureCardId,
+                                                              boolean underAuraControllersControl,
+                                                              boolean enterTapped) {
+        this(List.of(dyingCreatureCardId), underAuraControllersControl, enterTapped, null);
     }
 
     /**
@@ -66,6 +93,16 @@ public record ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
      */
     public ReturnEnchantedCreatureToBattlefieldOnDeathEffect(boolean underAuraControllersControl,
                                                               CounterType enterWithCounter) {
-        this(null, underAuraControllersControl, enterWithCounter);
+        this(List.of(), underAuraControllersControl, false, enterWithCounter);
+    }
+
+    public ReturnEnchantedCreatureToBattlefieldOnDeathEffect(
+            UUID dyingCreatureCardId, boolean underAuraControllersControl,
+            boolean enterTapped, CounterType enterWithCounter) {
+        this(List.of(dyingCreatureCardId), underAuraControllersControl, enterTapped, enterWithCounter);
+    }
+
+    public UUID dyingCreatureCardId() {
+        return dyingCreatureCardIds.isEmpty() ? null : dyingCreatureCardIds.getFirst();
     }
 }

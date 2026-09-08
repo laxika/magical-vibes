@@ -56,7 +56,8 @@ public class RegisterDelayedWatchedCreaturesCombatDamageEffectHandler implements
         }
 
         gameData.queueDelayedAction(new DelayedWatchedCreaturesCombatDamage(
-                watched, entry.getControllerId(), e.effects(), entry.getCard()));
+                watched, entry.getControllerId(), e.effects(), entry.getCard(),
+                e.combatDamageToPlayerOnly(), e.untilEndOfTurn()));
         log.info("Game {} - {} watches {} creature(s) for combat damage until its controller's next turn",
                 gameData.id, entry.getCard().getName(), watched.size());
     }

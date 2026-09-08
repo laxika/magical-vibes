@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Handles "exile any number of cards named X" choices spanning the target player's hand,
+ * Handles "exile up to N cards named X" choices spanning the target player's hand,
  * graveyard, and library (e.g. Memoricide-style effects). Card views are re-derived by the
  * same hand → graveyard → library scan the begin sites use; the answer (the actual exiling
  * and library shuffle) is applied by {@link ChoiceHandlerService#handleMultiZoneExileCardsChosen}.

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "118")
 @CardRegistration(set = "INR", collectorNumber = "384")
+@CardRegistration(set = "SOI", collectorNumber = "118")
 public class IndulgentAristocrat extends Card {
 
     public IndulgentAristocrat() {

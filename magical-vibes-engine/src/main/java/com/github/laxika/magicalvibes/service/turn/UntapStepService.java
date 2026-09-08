@@ -2,16 +2,19 @@ package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PlayersSkipUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersInsteadOfUntappingEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
@@ -24,8 +27,11 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.UntapPreventionSupport;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,11 +57,23 @@ public class UntapStepService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
     private final PhasingService phasingService;
     private final PermanentRemovalService permanentRemovalService;
     private final UntapPreventionSupport untapPreventionSupport;
+    private final TriggerCollectionService triggerCollectionService;
+    private final DayNightService dayNightService;
+
+    public void snapshotUntappedLandsAtTurnStart(GameData gameData, UUID activePlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        int count = battlefield == null ? 0 : (int) battlefield.stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> gameQueryService.isLand(gameData, permanent))
+                .count();
+        gameData.untappedLandsAtTurnStart.put(activePlayerId, count);
+    }
 
     /**
      * Performs the untap step for the active player.
@@ -123,17 +141,21 @@ public class UntapStepService {
 
     private void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
                                  boolean skipUntapStep, Set<UUID> chosenUntapIds, PermanentPredicate staticOrbFilter) {
+        snapshotUntappedLandsAtTurnStart(gameData, activePlayerId);
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
+        gameData.untapStepPlayerId = activePlayerId;
+        gameData.untapStepUntappedPermanentCount = 0;
+
+        List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (activeBattlefield != null) {
+            activeBattlefield.forEach(p -> p.setUntappedAtTurnStart(!p.isTapped()));
+        }
 
         if (skipUntapStep) {
-            List<Permanent> ownBattlefield = gameData.playerBattlefields.get(activePlayerId);
+            List<Permanent> ownBattlefield = activeBattlefield;
             if (ownBattlefield != null) {
                 ownBattlefield.forEach(p -> {
-                    // Permanents stay tapped, but a queued "skip next untap" is still consumed (this
-                    // untap step would have been its chance to untap) and summoning sickness clears.
-                    if (p.getSkipUntapCount() > 0) {
-                        p.setSkipUntapCount(p.getSkipUntapCount() - 1);
-                    }
+                    // A wholly skipped step does not consume a restriction on the next untap step.
                     p.setSummoningSick(false);
                     p.setLoyaltyActivationsThisTurn(0);
                     p.setExtraLoyaltyActivationsThisTurn(0);
@@ -148,6 +170,7 @@ public class UntapStepService {
         // CR 502.1: phasing is the untap step's first turn-based action, resolved before anything
         // untaps (and skipped entirely along with the rest of the step above).
         phasingService.applyPhasing(gameData, activePlayerId);
+        dayNightService.checkAtUntap(gameData, activePlayerId);
 
         // A permanent that phased out is treated as though it does not exist (CR 702.26b), so an
         // attachment that was kept from following it out (Spatial Binding) is now attached to
@@ -177,6 +200,7 @@ public class UntapStepService {
 
         // Untap all permanents for the new active player (skip those with "doesn't untap" effects)
         List<Permanent> mayNotUntapPermanents = new ArrayList<>();
+        List<Permanent> untappedDuringStep = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield != null) {
             battlefield.forEach(p -> {
@@ -194,7 +218,7 @@ public class UntapStepService {
                 // long as it has such a counter — source-independent continuous rule.
                 boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
                 // Depletion lands (Land Cap): a self-scoped static lock conditioned on a counter.
-                boolean hasCounterLock = counterLockPreventsUntap(p);
+                boolean hasCounterLock = counterLockPreventsUntap(gameData, p);
                 boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);
 
                 boolean blockedByStorageMatrix = restrictPredicate != null
@@ -222,7 +246,9 @@ public class UntapStepService {
                     // Freyalise's Winds: the untap is replaced by removing all counters of the
                     // named type, so the permanent stays tapped this step.
                     if (!removeCountersInsteadOfUntapping(gameData, p)) {
-                        tapUntapSupport.untapPermanent(gameData, p);
+                        if (tapUntapSupport.untapPermanent(gameData, p)) {
+                            untappedDuringStep.add(p);
+                        }
                     }
                 }
                 p.setSummoningSick(false);
@@ -230,6 +256,7 @@ public class UntapStepService {
                 p.setExtraLoyaltyActivationsThisTurn(0);
             });
         }
+        gameData.untapStepUntappedPermanentCount = untappedDuringStep.size();
 
         // Undiscovered Paradise: return flagged permanents to hand as the active player untaps
         // (even if some effect prevented that permanent from untapping).
@@ -253,15 +280,19 @@ public class UntapStepService {
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
             if (playerId.equals(activePlayerId)) return;
 
-            List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> untapEffects =
+            List<CrossPlayerUntap> untapEffects =
                     collectUntapOnEachOtherPlayersStepEffects(gameData, playerId, TurnStep.UNTAP);
             if (untapEffects.isEmpty()) return;
 
-            boolean hasUnfilteredEffect = untapEffects.stream().anyMatch(e -> e.filter() == null);
+            boolean hasUnfilteredEffect = untapEffects.stream().anyMatch(e -> e.effect().filter() == null);
 
             for (Permanent p : playerBattlefield) {
-                if (hasUnfilteredEffect || untapEffects.stream().anyMatch(e -> e.filter() != null
-                        && predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                if (hasUnfilteredEffect || untapEffects.stream().anyMatch(e -> e.effect().filter() != null
+                        && predicateEvaluationService.matchesPermanentPredicate(p, e.effect().filter(),
+                        FilterContext.of(gameData)
+                                .withSourceCardId(e.source().getCard().getId())
+                                .withSourceControllerId(playerId)
+                                .withSourcePermanentId(e.source().getId())))) {
                     tapUntapSupport.untapPermanent(gameData, p);
                 }
             }
@@ -278,7 +309,55 @@ public class UntapStepService {
             }
         });
 
+        untapSelfPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
         untapEnchantedPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
+    }
+
+    private void untapSelfPermanentsDuringOtherPlayersStep(GameData gameData, UUID activePlayerId) {
+        gameData.forEachBattlefield((playerId, playerBattlefield) -> {
+            if (playerId.equals(activePlayerId)) return;
+
+            for (Permanent permanent : playerBattlefield) {
+                if (!permanent.isTapped() || !hasSelfCrossPlayerUntap(gameData, permanent, playerId, TurnStep.UNTAP)) {
+                    continue;
+                }
+
+                tapUntapSupport.untapPermanent(gameData, permanent);
+                String logLine = gameData.playerIdToName.get(playerId) + " untaps " + permanent.getCard().getName()
+                        + " during another player's untap step.";
+                gameLogService.append(gameData, GameLog.text(logLine));
+                log.info("Game {} - {} untaps self-scoped permanent {} during another player's untap step",
+                        gameData.id, playerId, permanent.getCard().getName());
+            }
+        });
+    }
+
+    private boolean hasSelfCrossPlayerUntap(GameData gameData, Permanent source, UUID controllerId, TurnStep step) {
+        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> isActiveSelfCrossPlayerUntap(gameData, source, controllerId, step, effect));
+    }
+
+    private boolean isActiveSelfCrossPlayerUntap(GameData gameData, Permanent source, UUID controllerId,
+                                                 TurnStep step, CardEffect effect) {
+        if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
+                && configuredEffect.step() == step
+                && configuredEffect.scope() == TapUntapScope.SELF) {
+            return true;
+        }
+        return effect instanceof ConditionalEffect conditional
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStaticEffect(source, controllerId))
+                && isActiveSelfCrossPlayerUntap(gameData, source, controllerId, step, conditional.wrapped());
+    }
+
+    /** Queues the batched untap-step triggers after all untap choices are complete. */
+    public void finishUntapStep(GameData gameData, UUID activePlayerId) {
+        if (activePlayerId.equals(gameData.untapStepPlayerId)) {
+            triggerCollectionService.checkControllerUntapsDuringUntapStepTriggers(
+                    gameData, activePlayerId, gameData.untapStepUntappedPermanentCount);
+        }
+        gameData.untapStepPlayerId = null;
+        gameData.untapStepUntappedPermanentCount = 0;
     }
 
     /**
@@ -320,7 +399,8 @@ public class UntapStepService {
      */
     public boolean playersSkipUntapStepApplies(GameData gameData) {
         return gameData.anyPermanentMatches(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                !gameQueryService.hasLostAllAbilities(gameData, p)
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof PlayersSkipUntapStepEffect));
     }
 
@@ -350,19 +430,34 @@ public class UntapStepService {
      */
     public java.util.Optional<StaticOrbEffect> bindingUntapRestriction(GameData gameData, UUID activePlayerId) {
         List<StaticOrbEffect> active = new ArrayList<>();
-        gameData.forEachPermanent((pid, p) -> {
+        gameData.forEachPermanent((controllerId, p) -> {
             for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (e instanceof StaticOrbEffect orb && (!orb.requiresUntappedSource() || !p.isTapped())) {
+                if (e instanceof StaticOrbEffect orb
+                        && appliesToUntapStep(orb, activePlayerId, controllerId)
+                        && (!orb.requiresUntappedSource() || !p.isTapped())) {
                     active.add(orb);
                 }
             }
         });
+        for (Emblem emblem : gameData.emblems) {
+            for (CardEffect e : emblem.staticEffects()) {
+                if (e instanceof StaticOrbEffect orb
+                        && !orb.requiresUntappedSource()
+                        && appliesToUntapStep(orb, activePlayerId, emblem.controllerId())) {
+                    active.add(orb);
+                }
+            }
+        }
         for (StaticOrbEffect effect : active) {
             if (staticOrbUntapCandidates(gameData, activePlayerId, effect).size() > effect.maxUntap()) {
                 return java.util.Optional.of(effect);
             }
         }
         return java.util.Optional.empty();
+    }
+
+    private boolean appliesToUntapStep(StaticOrbEffect effect, UUID activePlayerId, UUID sourceControllerId) {
+        return !effect.opponentsOnly() || !activePlayerId.equals(sourceControllerId);
     }
 
     /**
@@ -402,7 +497,7 @@ public class UntapStepService {
                     || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
             boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
             boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
-            boolean hasCounterLock = counterLockPreventsUntap(p);
+            boolean hasCounterLock = counterLockPreventsUntap(gameData, p);
             boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);
             if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasMayNotUntap
                     && !hasUntapLock && !hasMatchingDoesntUntap && !hasParalyzationLock
@@ -437,7 +532,11 @@ public class UntapStepService {
             return false;
         }
         for (CounterType counterType : replaced) {
+            int removed = permanent.getCounterCount(counterType);
             permanent.setCounterCount(counterType, 0);
+            if (counterType == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(permanent, removed);
+            }
         }
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
                 " doesn't untap; its counters are removed instead."));
@@ -456,17 +555,32 @@ public class UntapStepService {
      * currently has at least one counter of that type on it (Land Cap and the other Ice Age
      * depletion lands).
      */
-    private boolean counterLockPreventsUntap(Permanent permanent) {
-        return hasActiveCounterLock(permanent, permanent.getCard().getEffects(EffectSlot.STATIC))
+    private boolean counterLockPreventsUntap(GameData gameData, Permanent permanent) {
+        return hasActiveCounterLock(permanent, permanent,
+                permanent.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.SELF)
                 // Granted, not printed: Mindbender Spores gives the creature it blocks
                 // "doesn't untap during your untap step if it has a fungus counter on it".
-                || hasActiveCounterLock(permanent, permanent.getPersistentTriggeredEffects(EffectSlot.STATIC));
+                || hasActiveCounterLock(permanent, permanent,
+                        permanent.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.SELF)
+                || gameData.anyPermanentMatches(source -> source.isAttached()
+                        && source.getAttachedTo().equals(permanent.getId())
+                        && (hasActiveCounterLock(source, permanent,
+                                source.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)
+                        || hasActiveCounterLock(source, permanent,
+                                source.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)));
     }
 
-    private static boolean hasActiveCounterLock(Permanent permanent, List<CardEffect> effects) {
+    private static boolean hasActiveCounterLock(Permanent source, Permanent attached,
+                                                List<CardEffect> effects, TapUntapScope scope) {
         return effects.stream()
                 .anyMatch(e -> e instanceof DoesntUntapWithCounterEffect lock
-                        && permanent.getCounterCount(lock.counterType()) > 0);
+                        && lock.scope() == scope
+                        && counterBearer(source, attached, lock).getCounterCount(lock.counterType()) > 0);
+    }
+
+    private static Permanent counterBearer(Permanent source, Permanent attached,
+                                           DoesntUntapWithCounterEffect lock) {
+        return lock.counterBearer() == PermanentReference.ATTACHED ? attached : source;
     }
 
     private boolean matchingStaticPreventsUntap(GameData gameData, Permanent permanent) {
@@ -478,23 +592,56 @@ public class UntapStepService {
                                 FilterContext.of(gameData).withSourceCardId(source.getCard().getId()))));
     }
 
-    List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> collectUntapOnEachOtherPlayersStepEffects(
+    private List<CrossPlayerUntap> collectUntapOnEachOtherPlayersStepEffects(
             GameData gameData, UUID playerId, TurnStep step) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return List.of();
+        List<CrossPlayerUntap> result = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    collectActiveCrossPlayerUntapEffects(gameData, permanent, playerId, step, effect, result);
+                }
+            }
         }
-        List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> result = new ArrayList<>();
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+        for (Emblem emblem : gameData.emblems) {
+            if (!playerId.equals(emblem.controllerId())) {
+                continue;
+            }
+            for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
                         && configuredEffect.step() == step
                         && configuredEffect.scope() == TapUntapScope.CONTROLLED) {
-                    result.add(configuredEffect);
+                    result.add(new CrossPlayerUntap(new Permanent(emblem.sourceCard()), configuredEffect));
                 }
             }
         }
         return result;
+    }
+
+    private void collectActiveCrossPlayerUntapEffects(
+            GameData gameData,
+            Permanent source,
+            UUID controllerId,
+            TurnStep step,
+            CardEffect effect,
+            List<CrossPlayerUntap> result) {
+        if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
+                && configuredEffect.step() == step
+                && configuredEffect.scope() == TapUntapScope.CONTROLLED) {
+            result.add(new CrossPlayerUntap(source, configuredEffect));
+            return;
+        }
+        if (effect instanceof ConditionalEffect conditional
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStaticEffect(source, controllerId))) {
+            collectActiveCrossPlayerUntapEffects(
+                    gameData, source, controllerId, step, conditional.wrapped(), result);
+        }
+    }
+
+    private record CrossPlayerUntap(
+            Permanent source,
+            UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect effect) {
     }
 
     /**

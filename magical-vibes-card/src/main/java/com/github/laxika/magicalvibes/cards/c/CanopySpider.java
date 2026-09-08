@@ -7,5 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "8ED", collectorNumber = "236")
 @CardRegistration(set = "7ED", collectorNumber = "234")
 @CardRegistration(set = "TMP", collectorNumber = "217")
+@CardRegistration(set = "M20", collectorNumber = "339")
+@CardRegistration(set = "TPR", collectorNumber = "166")
+@CardRegistration(set = "ATH", collectorNumber = "52")
 public class CanopySpider extends Card {
 }

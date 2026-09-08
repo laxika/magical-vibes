@@ -7,15 +7,43 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ScryfallOracleLoaderTest {
 
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
+
+    @TempDir
+    Path cacheDir;
+
+    @Test
+    void prefixesSetAndTokenCacheFiles() throws Exception {
+        List<String> fetchedSets = new ArrayList<>();
+        ScryfallOracleLoader loader = new ScryfallOracleLoader(cacheDir.toString(), setCode -> {
+            fetchedSets.add(setCode);
+            return "[]";
+        });
+
+        loader.loadSet("CON", Set.of());
+
+        assertThat(fetchedSets).containsExactly("CON", "tcon");
+        assertThat(cacheDir.resolve("scryfall-con.json")).exists();
+        assertThat(cacheDir.resolve("scryfall-tcon.json")).exists();
+        try (var files = java.nio.file.Files.list(cacheDir)) {
+            assertThat(files.map(path -> path.getFileName().toString()))
+                    .containsExactlyInAnyOrder("scryfall-con.json", "scryfall-tcon.json");
+        }
+    }
 
     /**
      * SOS prepare-spell cards use Scryfall's "prepare" layout: like transform DFCs, the front

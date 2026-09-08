@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.m.MorningtidesLight;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,12 +17,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrimalClay.class, MorningtidesLight.class})
 class PrimalClayTest extends BaseCardTest {
 
     private Permanent castAndReturn(String chosenForm) {
-        harness.setHand(player1, List.of(new PrimalClay()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new PrimalClay(), new String(new char[]{'{', '4', '}'}));
         harness.passBothPriorities();
         if (chosenForm != null) {
             harness.handleListChoice(player1, chosenForm);
@@ -61,7 +63,15 @@ class PrimalClayTest extends BaseCardTest {
     }
 
     @Test
+    void chosenWallSubtypePersistsAcrossTurns() {
+        Permanent clay = castAndReturn(com.github.laxika.magicalvibes.model.PrimalClayForm.ONE_SIX_WALL.name());
+
+        clay.resetModifiers();
+
+        assertThat(GameQueryService.permanentHasSubtype(clay, CardSubtype.WALL)).isTrue();
+    }
     @DisplayName("Choosing the 1/6 Wall shape sets a 1/6 Wall with defender")
+    @Test
     void oneSixWallShape() {
         Permanent clay = castAndReturn("ONE_SIX_WALL");
 
@@ -84,5 +94,39 @@ class PrimalClayTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, clay)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, clay)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, clay, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Returning from exile asks for a new shape")
+    void returningFromExileAsksForNewShape() {
+        Permanent clay = castAndReturn("TWO_TWO_FLYING");
+
+        harness.setHand(player1, List.of(new MorningtidesLight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, List.of(clay.getId()));
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "ONE_SIX_WALL");
+
+        Permanent returnedClay = findPermanent(player1, "Primal Clay");
+        assertThat(gqs.getEffectivePower(gd, returnedClay)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, returnedClay)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, returnedClay, Keyword.DEFENDER)).isTrue();
+        assertThat(GameQueryService.permanentHasSubtype(returnedClay, CardSubtype.WALL)).isTrue();
+    }
+
+    @Test
+    void wallShapeCannotAttack() {
+        Permanent clay = castAndReturn(com.github.laxika.magicalvibes.model.PrimalClayForm.ONE_SIX_WALL.name());
+        clay.setSummoningSick(false);
+
+        assertThat(als.canAttack(gd, clay, player1.getId())).isFalse();
     }
 }

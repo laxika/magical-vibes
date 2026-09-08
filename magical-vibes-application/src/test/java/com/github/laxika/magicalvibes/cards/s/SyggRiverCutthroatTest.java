@@ -107,13 +107,9 @@ class SyggRiverCutthroatTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        for (int i = 0; i < 8; i++) {
-            if (gd.interaction.isAwaitingInput()) break;
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
-            if (gd.currentStep == TurnStep.END_STEP && gd.stack.isEmpty()
-                    && !gd.interaction.isAwaitingInput()) {
-                break;
-            }
         }
     }
 }

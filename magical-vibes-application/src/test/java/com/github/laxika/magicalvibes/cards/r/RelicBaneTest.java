@@ -38,7 +38,7 @@ class RelicBaneTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("Target must be an artifact");
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "117")
 @CardRegistration(set = "AVR", collectorNumber = "180")
+@CardRegistration(set = "SOI", collectorNumber = "206")
 public class Gloomwidow extends Card {
 
     public Gloomwidow() {

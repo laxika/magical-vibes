@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HOU", collectorNumber = "122")
+@CardRegistration(set = "AKR", collectorNumber = "200")
 public class MajesticMyriarch extends Card {
 
     private static final Set<Keyword> COMBAT_KEYWORDS = Set.of(

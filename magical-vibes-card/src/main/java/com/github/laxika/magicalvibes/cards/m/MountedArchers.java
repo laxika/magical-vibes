@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "30")
+@CardRegistration(set = "TPR", collectorNumber = "19")
 public class MountedArchers extends Card {
 
     public MountedArchers() {

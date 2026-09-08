@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
  * Back half (Oblivion) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "149")
+@CardRegistration(set = "AKR", collectorNumber = "230")
 public class ConsignOblivion extends Card {
 
     public ConsignOblivion() {

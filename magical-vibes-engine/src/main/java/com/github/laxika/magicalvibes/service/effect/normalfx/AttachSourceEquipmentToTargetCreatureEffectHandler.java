@@ -6,11 +6,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -28,6 +34,7 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var attachEffect = (AttachSourceEquipmentToTargetCreatureEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             
@@ -50,12 +57,49 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
             return;
         }
 
+        if (!equipSupport.canAttachEquipment(gameData, equipment, target)) {
+            return;
+        }
+
+        UUID oldAttachedTo = equipment.getAttachedTo();
         gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipSupport.expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(target.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
+        equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());
+        equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to " + target.getCard().getName() + "."));
         log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+
+        if (attachEffect.thenEffect() != null) {
+            int effectIndex = findEffectIndex(entry, effect);
+            if (effectIndex < 0) {
+                throw new IllegalStateException(
+                        "AttachSourceEquipmentToTargetCreatureEffect is not part of the resolving entry");
+            }
+            entry.insertEffectsToResolve(effectIndex + 1, List.of(
+                    new QueueReflexiveAbilityEffect(
+                            attachEffect.thenEffect(), attachEffect.thenEffectOptionalTarget())));
+        }
+    }
+
+    private int findEffectIndex(StackEntry entry, CardEffect effect) {
+        int directIndex = entry.getEffectsToResolve().indexOf(effect);
+        if (directIndex >= 0) {
+            return directIndex;
+        }
+        for (int i = 0; i < entry.getEffectsToResolve().size(); i++) {
+            CardEffect parent = entry.getEffectsToResolve().get(i);
+            if (parent instanceof ConditionalEffect conditional && conditional.wrapped() == effect) {
+                return i;
+            }
+            if (parent instanceof MayEffect may
+                    && (may.wrapped() == effect || may.elseEffect() == effect)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

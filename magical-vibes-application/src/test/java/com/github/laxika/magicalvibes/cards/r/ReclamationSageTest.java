@@ -25,8 +25,7 @@ class ReclamationSageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
     }
 
     @Test
@@ -35,13 +34,12 @@ class ReclamationSageTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         castSage();
 
+        UUID targetId = harness.getPermanentId(player2, "Leonin Scimitar");
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-        UUID targetId = harness.getPermanentId(player2, "Leonin Scimitar");
-        harness.handlePermanentChosen(player1, targetId);
-
-        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Reclamation Sage");
@@ -55,11 +53,10 @@ class ReclamationSageTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GloriousAnthem());
         castSage();
 
-        harness.handleMayAbilityChosen(player1, true);
         UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
         harness.handlePermanentChosen(player1, targetId);
-
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
         harness.assertInGraveyard(player2, "Glorious Anthem");
@@ -71,6 +68,8 @@ class ReclamationSageTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         castSage();
 
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
@@ -85,8 +84,6 @@ class ReclamationSageTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player2, new LeoninScimitar());
         castSage();
-
-        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

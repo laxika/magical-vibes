@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "4ED", collectorNumber = "57")
+@CardRegistration(set = "SUM", collectorNumber = "45")
 public class WhiteWard extends Card {
 
     public WhiteWard() {

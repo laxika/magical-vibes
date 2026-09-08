@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ECL", collectorNumber = "102")
+@CardRegistration(set = "ECL", collectorNumber = "312")
 public class GloomRipper extends Card {
 
     public GloomRipper() {

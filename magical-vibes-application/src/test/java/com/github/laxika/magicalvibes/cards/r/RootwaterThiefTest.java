@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RootwaterThief.class, Shock.class})
 class RootwaterThiefTest extends BaseCardTest {
 
     @Test
@@ -58,7 +60,7 @@ class RootwaterThiefTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).extracting("id").contains(exiledCard.getId());
-        assertThat(gd.findExiledCard(exiledCard.getId()).faceDown()).isTrue();
+        assertThat(gd.findExiledCard(exiledCard.getId()).faceDown()).isFalse();
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -31,46 +32,66 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CounterUnlessPaysEffect) effect;
-        UUID targetCardId = entry.getTargetId();
+        List<UUID> boundTargets = entry.targetsForBoundEffectGroup(effect);
+        UUID targetCardId = boundTargets == null
+                ? entry.getTargetId()
+                : boundTargets.stream().findFirst().orElse(null);
         if (targetCardId == null) return;
 
-        StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+        StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(
+                gameData, targetCardId, entry);
         if (targetEntry == null) return;
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                && e.onNotPaidEffects().isEmpty() && e.onPaidEffects().isEmpty()) {
+            return;
+        }
 
         int payAmount;
         if (e.dynamicAmount() != null) {
+            // Source-relative amounts use the live source permanent when it is still on the
+            // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).
+            Permanent source = entry.getSourcePermanentId() != null
+                    ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                    : null;
+            if (source == null) {
+                source = entry.getSourcePermanentSnapshot();
+            }
             payAmount = amountEvaluationService.evaluate(gameData, e.dynamicAmount(),
-                    AmountContext.forStackEntry(entry, null));
+                    AmountContext.forStackEntry(entry, source));
         } else {
             payAmount = e.useXValue() ? entry.getXValue() : e.amount();
         }
         UUID targetControllerId = targetEntry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(targetControllerId);
-        ManaCost cost = new ManaCost("{" + payAmount + "}");
+        String manaCost = e.manaCost() != null ? e.manaCost() : "{" + payAmount + "}";
+        ManaCost cost = new ManaCost(manaCost);
         int lifeCost = e.lifeCost();
         boolean canPayLife = lifeCost <= 0
                 || (gameQueryService.canPlayerLifeChange(gameData, targetControllerId)
                         && gameData.getLife(targetControllerId) >= lifeCost);
 
         if (!cost.canPay(pool) || !canPayLife) {
-            if (e.exileIfCountered()) {
-                counterSupport.counterSpellAndExile(gameData, entry, targetEntry);
-            } else {
-                counterSupport.counterSpell(gameData, entry, targetEntry);
+            StackEntry counterableTarget = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+            if (counterableTarget != null) {
+                if (e.exileIfCountered()) {
+                    counterSupport.counterSpellAndExile(gameData, entry, counterableTarget);
+                } else {
+                    counterSupport.counterSpell(gameData, entry, counterableTarget);
+                }
             }
             // Not paid (couldn't afford): resolve any rider against the spell's controller (Power Sink).
             counterSupport.resolveNotPaidRider(gameData, entry.getCard(), targetControllerId, e.onNotPaidEffects());
         } else {
-            String costText = payAmount == 0 && lifeCost > 0
+            String costText = manaCost.equals("{0}") && lifeCost > 0
                     ? lifeCost + " life"
-                    : "{" + payAmount + "}" + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
+                    : manaCost + (lifeCost > 0 ? " and " + lifeCost + " life" : "");
             String prompt = "Pay " + costText + " to prevent "
                     + targetEntry.getCard().getName() + " from being countered?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), targetControllerId,
                     List.of(new CounterUnlessPaysEffect(payAmount, false, e.exileIfCountered(),
-                            null, e.onNotPaidEffects(), lifeCost)),
-                    prompt, targetCardId
+                            null, e.onNotPaidEffects(), lifeCost, e.manaCost(), e.onPaidEffects())),
+                    prompt, targetCardId, entry.getControllerId()
             ));
         }
     }

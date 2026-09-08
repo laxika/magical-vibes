@@ -33,10 +33,11 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             int lifeBefore = gd.playerLifeTotals.getOrDefault(player1.getId(), 20);
 
             castDeathgorgeScavenger();
-            harness.passBothPriorities(); // resolve creature spell → ETB → MayEffect on stack
-            harness.passBothPriorities(); // resolve MayEffect triggered ability → may prompt
+            harness.passBothPriorities();
+            harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+            harness.passBothPriorities();
 
-            // Accept may ability — single graveyard target is auto-selected and effect resolves
+            // Accept may ability — the chosen graveyard target is exiled and the effect resolves
             assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null).isTrue();
             harness.handleMayAbilityChosen(player1, true);
 
@@ -53,10 +54,11 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             harness.setGraveyard(player1, List.of(shock));
 
             castDeathgorgeScavenger();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect triggered ability
+            harness.passBothPriorities();
+            harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+            harness.passBothPriorities();
 
-            // Accept may ability — single target auto-selected
+            // Accept may ability — the chosen target is exiled
             harness.handleMayAbilityChosen(player1, true);
 
             // Noncreature card exiled: source gets +1/+1
@@ -77,8 +79,9 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             int lifeBefore = gd.playerLifeTotals.getOrDefault(player1.getId(), 20);
 
             castDeathgorgeScavenger();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect triggered ability
+            harness.passBothPriorities();
+            harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+            harness.passBothPriorities();
 
             // Decline the may ability
             harness.handleMayAbilityChosen(player1, false);
@@ -175,15 +178,12 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             int lifeBefore = gd.playerLifeTotals.getOrDefault(player1.getId(), 20);
 
             castDeathgorgeScavenger();
-            harness.passBothPriorities(); // resolve creature spell → ETB → MayEffect on stack
-            harness.passBothPriorities(); // resolve MayEffect triggered ability → may prompt
+            harness.passBothPriorities();
+            harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+            harness.passBothPriorities();
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null).isTrue();
             harness.handleMayAbilityChosen(player1, true);
-
-            // Multiple targets → graveyard choice prompt
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
-            harness.handleGraveyardCardChosen(player1, 0); // choose Grizzly Bears
 
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Grizzly Bears"))).isTrue();
             assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -198,14 +198,11 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             harness.setGraveyard(player1, List.of(bears, shock));
 
             castDeathgorgeScavenger();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect triggered ability
+            harness.passBothPriorities();
+            harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+            harness.passBothPriorities();
 
             harness.handleMayAbilityChosen(player1, true);
-
-            // Multiple targets → graveyard choice prompt
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
-            harness.handleGraveyardCardChosen(player1, 1); // choose Shock (noncreature)
 
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Shock"))).isTrue();
             assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);

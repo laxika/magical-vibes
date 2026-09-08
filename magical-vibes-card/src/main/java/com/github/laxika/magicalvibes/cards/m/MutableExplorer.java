@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "186")
+@CardRegistration(set = "ECL", collectorNumber = "327")
 public class MutableExplorer extends Card {
 
     public MutableExplorer() {

@@ -42,8 +42,10 @@ class GrabTheReinsTest extends BaseCardTest {
         sacrifice.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.setLife(player2, 20);
 
-        cast(new int[]{1}, player2.getId(), List.of(), false);
+        cast(new int[]{1}, List.of(), false);
         harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -56,8 +58,10 @@ class GrabTheReinsTest extends BaseCardTest {
         Permanent sacrifice = addCreatureReady(player1, new GrizzlyBears());
         harness.setLife(player2, 20);
 
-        cast(new int[]{0, 1}, player2.getId(), List.of(stolen.getId()), true);
+        cast(new int[]{0, 1}, List.of(stolen.getId()), true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(stolen.getId()));
         assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();

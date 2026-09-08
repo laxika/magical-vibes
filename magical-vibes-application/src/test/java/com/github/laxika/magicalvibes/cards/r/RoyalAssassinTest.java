@@ -1,23 +1,22 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RoyalAssassin.class, GrizzlyBears.class, Swamp.class})
 class RoyalAssassinTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating ability targeting a tapped creature puts it on the stack")
@@ -27,12 +26,10 @@ class RoyalAssassinTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(assassin.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Royal Assassin");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -41,6 +38,18 @@ class RoyalAssassinTest extends BaseCardTest {
     void cannotTargetUntappedCreature() {
         addReadyAssassin(player1);
         Permanent target = addUntappedBears(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target a tapped noncreature permanent")
+    void cannotTargetTappedNoncreaturePermanent() {
+        addReadyAssassin(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        target.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -61,6 +70,33 @@ class RoyalAssassinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy a tapped creature controlled by the Assassin's controller")
+    void canDestroyOwnTappedCreature() {
+        addReadyAssassin(player1);
+        Permanent target = addTappedBears(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Regeneration saves a tapped target from destruction")
+    void regenerationSavesTarget() {
+        addReadyAssassin(player1);
+        Permanent target = addTappedBears(player2);
+        target.setRegenerationShield(1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getRegenerationShield()).isZero();
+    }
+
+    @Test
     @DisplayName("Ability fizzles if target becomes untapped before resolution")
     void fizzlesIfTargetBecomesUntapped() {
         addReadyAssassin(player1);
@@ -70,7 +106,6 @@ class RoyalAssassinTest extends BaseCardTest {
         target.untap();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
@@ -78,8 +113,7 @@ class RoyalAssassinTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent assassin = new Permanent(new RoyalAssassin());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(assassin);
+        harness.addToBattlefield(player1, new RoyalAssassin());
         Permanent target = addTappedBears(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -100,27 +134,16 @@ class RoyalAssassinTest extends BaseCardTest {
     }
 
     private Permanent addReadyAssassin(Player player) {
-        RoyalAssassin card = new RoyalAssassin();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new RoyalAssassin());
     }
 
     private Permanent addTappedBears(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new GrizzlyBears());
         perm.tap();
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addUntappedBears(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }

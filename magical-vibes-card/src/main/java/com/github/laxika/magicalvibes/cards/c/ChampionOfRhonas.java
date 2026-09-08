@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "159")
+@CardRegistration(set = "AKR", collectorNumber = "185")
 public class ChampionOfRhonas extends Card {
 
     public ChampionOfRhonas() {

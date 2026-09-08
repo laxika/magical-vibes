@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,95 +16,74 @@ import static org.assertj.core.api.Assertions.assertThat;
 class StanggTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Entering the battlefield creates the linked Stangg Twin token")
-    void entersCreatesTwin() {
-        castStangg();
+    @DisplayName("Entering creates a legendary 3/4 red and green Stangg Twin")
+    void enteringCreatesTwin() {
+        enterStangg();
 
-        Permanent twin = findTwin();
-        assertThat(twin.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
+        Permanent twin = findPermanent(player1, "Stangg Twin");
+        assertThat(twin.getCard().isToken()).isTrue();
+        assertThat(twin.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(twin.getCard().getPower()).isEqualTo(3);
+        assertThat(twin.getCard().getToughness()).isEqualTo(4);
+        assertThat(twin.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(twin.getCard().getColors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
         assertThat(twin.getCard().getSubtypes()).containsExactly(CardSubtype.HUMAN, CardSubtype.WARRIOR);
-        assertThat(twin.getEffectivePower()).isEqualTo(3);
-        assertThat(twin.getEffectiveToughness()).isEqualTo(4);
     }
 
     @Test
-    @DisplayName("When Stangg leaves the battlefield, its Twin is exiled")
-    void stanggLeavingExilesTwin() {
-        castStangg();
-        Permanent stangg = findStangg();
+    @DisplayName("When Stangg leaves, its Twin is exiled")
+    void leavingExilesTwin() {
+        Permanent stangg = enterStangg();
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, stangg));
-        harness.clearPriorityPassed();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, stangg));
         harness.passBothPriorities();
 
-        assertThat(findTwinOrNull()).isNull();
-        assertThat(findStanggOrNull()).isNull();
-    }
-
-    @Test
-    @DisplayName("When the Twin leaves the battlefield, Stangg is sacrificed")
-    void twinLeavingSacrificesStangg() {
-        castStangg();
-        Permanent twin = findTwin();
-
-        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, twin));
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(findStanggOrNull()).isNull();
+        harness.assertNotOnBattlefield(player1, "Stangg Twin");
         harness.assertInGraveyard(player1, "Stangg");
     }
 
     @Test
-    @DisplayName("If Stangg leaves before its ETB ability resolves, the Twin remains")
-    void twinRemainsWhenStanggLeavesBeforeEtbResolves() {
-        harness.setHand(player1, List.of(new Stangg()));
-        addStanggMana();
-        harness.castCreature(player1, 0);
+    @DisplayName("When the Twin leaves, Stangg is sacrificed")
+    void leavingTwinSacrificesStangg() {
+        Permanent stangg = enterStangg();
+        Permanent twin = findPermanent(player1, "Stangg Twin");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, twin));
         harness.passBothPriorities();
 
-        Permanent stangg = findStangg();
-        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, stangg));
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(findTwinOrNull()).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Stangg");
+        harness.assertInGraveyard(player1, "Stangg");
     }
 
-    private void castStangg() {
-        harness.setHand(player1, List.of(new Stangg()));
-        addStanggMana();
-        harness.castCreature(player1, 0);
+    @Test
+    @DisplayName("A Twin created after Stangg has left remains unlinked")
+    void enteringTriggerStillCreatesUnlinkedTwinAfterSourceLeaves() {
+        Permanent stangg = castStangg();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, stangg));
         harness.passBothPriorities();
         harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Stangg");
+        assertThat(findPermanents(player1, "Stangg Twin")).hasSize(1);
     }
 
-    private void addStanggMana() {
+    private Permanent enterStangg() {
+        Permanent stangg = castStangg();
+        harness.passBothPriorities();
+        return stangg;
+    }
+
+    private Permanent castStangg() {
+        harness.setHand(player1, List.of(new Stangg()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-    }
-
-    private Permanent findStangg() {
-        return findStanggOrNull();
-    }
-
-    private Permanent findStanggOrNull() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Stangg"))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private Permanent findTwin() {
-        return findTwinOrNull();
-    }
-
-    private Permanent findTwinOrNull() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Stangg Twin"))
-                .findFirst()
-                .orElse(null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        return findPermanent(player1, "Stangg");
     }
 }

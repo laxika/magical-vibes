@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SylvanLibraryDrawEffect;
+import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "329")
 @CardRegistration(set = "4ED", collectorNumber = "273")
+@CardRegistration(set = "LEG", collectorNumber = "207")
 public class SylvanLibrary extends Card {
 
     public SylvanLibrary() {
@@ -15,7 +19,8 @@ public class SylvanLibrary extends Card {
         // cards in your hand drawn this turn. For each of those cards, pay 4 life or put the card on
         // top of your library.
         addEffect(EffectSlot.DRAW_TRIGGERED, new MayEffect(
-                new SylvanLibraryDrawEffect(),
+                new SequenceEffect(List.of(new DrawCardEffect(2),
+                        new SylvanLibraryDrawEffect())),
                 "Draw two additional cards?"
         ));
     }

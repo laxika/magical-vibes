@@ -39,11 +39,6 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent sourceEnchantment = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (sourceEnchantment == null) {
-            log.info("Game {} - Dance of Many enchantment no longer on battlefield, no token created", gameData.id);
-            return;
-        }
-
         Permanent targetCreature = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (targetCreature == null) {
             log.info("Game {} - Target creature no longer on battlefield, no token created", gameData.id);
@@ -53,25 +48,34 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
         // Build the token as a plain copy (no P/T or type overrides), then attach the reciprocal
         // "when this leaves the battlefield, sacrifice the linked enchantment" trigger before freezing.
         Card sourceCard = targetCreature.getCard();
-        Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
-                sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
-        tokenCard.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE));
+        int tokenCount = gameQueryService.getTokenCreationAmount(
+                gameData, entry.getControllerId(), 1, sourceCard.getSubtypes(), true);
+        for (int copy = 0; copy < tokenCount; copy++) {
+            Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
+                    sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
+            tokenCard.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                    new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE));
+            Card createdTokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, entry.getControllerId(), tokenCard);
 
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+            Permanent tokenPermanent = new Permanent(createdTokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, entry.getControllerId(), tokenPermanent);
 
         // Forge the bond: each permanent remembers the other so their leaves-battlefield triggers can
         // find their partner.
-        sourceEnchantment.setChosenPermanentId(tokenPermanent.getId());
-        tokenPermanent.setChosenPermanentId(sourceEnchantment.getId());
+        if (sourceEnchantment != null) {
+            sourceEnchantment.setChosenPermanentId(tokenPermanent.getId());
+            tokenPermanent.setChosenPermanentId(sourceEnchantment.getId());
+        }
 
-        gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
-        log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id, sourceCard.getName());
+            gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
+            log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id, sourceCard.getName());
 
-        // The token wasn't cast; any targeted ETB ability of the copied creature chooses its target at
-        // trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
-        battlefieldEntryService.handleCreatureEnteredBattlefield(
-                gameData, entry.getControllerId(), tokenCard, null, false);
+            // The token wasn't cast; any targeted ETB ability of the copied creature chooses its target at
+            // trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, entry.getControllerId(), createdTokenCard, null, false);
+        }
     }
 }

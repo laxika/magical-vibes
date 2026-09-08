@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "207")
+@CardRegistration(set = "AKR", collectorNumber = "266")
 public class TemmetVizierOfNaktamun extends Card {
 
     public TemmetVizierOfNaktamun() {

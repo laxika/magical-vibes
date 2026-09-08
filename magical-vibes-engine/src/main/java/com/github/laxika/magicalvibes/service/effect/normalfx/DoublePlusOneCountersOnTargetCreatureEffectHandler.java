@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves the targeted +1/+1-counter doubling effect used by Growth Curve. */
 @Component
 @RequiredArgsConstructor
 public class DoublePlusOneCountersOnTargetCreatureEffectHandler implements NormalEffectHandlerBean {
@@ -35,16 +34,13 @@ public class DoublePlusOneCountersOnTargetCreatureEffectHandler implements Norma
 
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null || !gameQueryService.isCreature(gameData, target)
-                    || gameQueryService.cantHaveCounters(gameData, target)
-                    || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
+            if (target == null || !gameQueryService.isCreature(gameData, target)) {
                 continue;
             }
 
             int current = target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
             if (current > 0) {
-                permanentCounterSupport.placeCounterOnPermanent(
-                        gameData, entry, target, CounterType.PLUS_ONE_PLUS_ONE, current);
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, target, current);
             }
         }
     }

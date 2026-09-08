@@ -58,6 +58,19 @@ class TextChangeTransformerTest {
     }
 
     @Test
+    @DisplayName("A color word replacement preserves a grant's permanent filter")
+    void colorReplacementPreservesGrantedColorFilter() {
+        PermanentHasSubtypePredicate filter = new PermanentHasSubtypePredicate(CardSubtype.GOBLIN);
+        GrantColorEffect grant = new GrantColorEffect(
+                CardColor.BLACK, GrantScope.ALL_CREATURES, false, filter);
+
+        CardEffect result = TextChangeTransformer.transform(grant, List.of(BLACK_TO_BLUE));
+
+        assertThat(result).isEqualTo(new GrantColorEffect(
+                CardColor.BLUE, GrantScope.ALL_CREATURES, false, filter));
+    }
+
+    @Test
     @DisplayName("A land type replacement rewrites a landwalk keyword, keeping boost and filter")
     void landTypeReplacementRewritesLandwalk() {
         PermanentHasAnySubtypePredicate filter = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN));

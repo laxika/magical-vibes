@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "5ED", collectorNumber = "52")
 @CardRegistration(set = "4ED", collectorNumber = "42")
+@CardRegistration(set = "DRK", collectorNumber = "15")
 public class Pikemen extends Card {
 
     public Pikemen() {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ import org.springframework.stereotype.Component;
 public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,8 +47,14 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
         UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry);
         if (sourcePermanentId == null) return;
 
+        MayCastCardExiledWithSourceEffect castEffect = (MayCastCardExiledWithSourceEffect) effect;
+        Integer manaValue = castEffect.manaValue() == null
+                ? null
+                : amountEvaluationService.evaluate(gameData, castEffect.manaValue(),
+                        AmountContext.forStackEntry(entry, null));
         List<Card> exiled = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
                 .filter(card -> !card.hasType(CardType.LAND))
+                .filter(card -> manaValue == null || card.getManaValue() == manaValue)
                 .toList();
         if (exiled.isEmpty()) {
             gameLogService.append(gameData,

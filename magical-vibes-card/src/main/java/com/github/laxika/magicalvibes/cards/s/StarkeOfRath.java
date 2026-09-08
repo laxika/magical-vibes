@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "205")
+@CardRegistration(set = "TPR", collectorNumber = "162")
 public class StarkeOfRath extends Card {
 
     public StarkeOfRath() {

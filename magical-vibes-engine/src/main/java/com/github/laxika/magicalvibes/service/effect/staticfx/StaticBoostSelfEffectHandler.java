@@ -30,8 +30,11 @@ public class StaticBoostSelfEffectHandler implements StaticEffectHandlerBean {
         if ((boost.scope() == GrantScope.SELF || boost.scope() == GrantScope.ALL_OWN_CREATURES
                 || boost.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF)
                 && support.matchesStaticFilter(context, context.target(), boost.filter())) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
+            int multiplier = boost.scalingCounter() == null
+                    ? 1
+                    : context.source().getCounterCount(boost.scalingCounter());
+            accumulator.addPower(boost.powerBoost() * multiplier);
+            accumulator.addToughness(boost.toughnessBoost() * multiplier);
             accumulator.addKeywords(boost.grantedKeywords());
         }
     }
