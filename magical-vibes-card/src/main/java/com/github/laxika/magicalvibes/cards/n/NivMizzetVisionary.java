@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "123")
+@CardRegistration(set = "FDN", collectorNumber = "350")
+@CardRegistration(set = "FDN", collectorNumber = "411")
+@CardRegistration(set = "FDN", collectorNumber = "482")
 public class NivMizzetVisionary extends Card {
 
     public NivMizzetVisionary() {

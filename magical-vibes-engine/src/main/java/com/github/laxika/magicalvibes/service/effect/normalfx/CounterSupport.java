@@ -137,7 +137,8 @@ public class CounterSupport {
             } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
             } else {
-                graveyardService.addCardToGraveyard(gameData, target.getOwnerId(), target.getPhysicalCard());
+                graveyardService.addCardToGraveyardFromSpell(gameData, target.getOwnerId(),
+                        target.getPhysicalCard(), target.getControllerId());
             }
         }
 
@@ -260,7 +261,8 @@ public class CounterSupport {
             if (sharesCardType(spell, Set.of(CardType.ARTIFACT, CardType.CREATURE))) {
                 gained = physicalCard;
             } else {
-                graveyardService.addCardToGraveyard(gameData, target.getOwnerId(), physicalCard);
+                graveyardService.addCardToGraveyardFromSpell(gameData, target.getOwnerId(),
+                        physicalCard, target.getControllerId());
             }
         }
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "66")
+@CardRegistration(set = "TMT", collectorNumber = "265")
 public class MadameNullPowerBroker extends Card {
 
     public MadameNullPowerBroker() {

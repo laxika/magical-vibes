@@ -114,6 +114,15 @@ public interface CostModificationHandlerBean {
         return 0;
     }
 
+    /**
+     * Returns a signed generic-mana delta for a Room-door unlock cost. Ordinary spell-cost
+     * modifiers do not affect Room-door unlocks unless they override this method.
+     */
+    default int modifyRoomUnlockCost(GameData gameData, UUID playerId, Card room,
+                                     CardEffect effect, CostModificationSource source) {
+        return 0;
+    }
+
     /** Returns a foretell cost granted to the given card, or {@code null} when it is not eligible. */
     default ManaCost grantedForetellCost(GameData gameData, UUID playerId,
                                          Card card,

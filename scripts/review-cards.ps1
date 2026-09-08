@@ -5,6 +5,7 @@
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner codex
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner muse
 #   .\scripts\review-cards.ps1 sos 1 5 -Runner codex -Effort xhigh
+#   .\scripts\review-cards.ps1 sos 1 5 -Runner codex -Fast
 #
 # The muse runner drives the claude CLI against Meta's Muse endpoint and needs
 # $env:MODEL_API_KEY to be set first:
@@ -38,7 +39,10 @@ param(
     # Reasoning effort for the codex runner. Defaults to "xhigh" and is ignored
     # by the other runners.
     [ValidateSet("low", "medium", "high", "xhigh", "max")]
-    [string] $Effort
+    [string] $Effort,
+
+    # Enable fast mode for the codex runner. Ignored by the other runners.
+    [switch] $Fast
 )
 
 $ErrorActionPreference = "Stop"
@@ -63,6 +67,10 @@ if (-not $PSBoundParameters.ContainsKey("Effort") -or [string]::IsNullOrWhiteSpa
 
 if ($Runner -ne "codex" -and $PSBoundParameters.ContainsKey("Effort")) {
     Write-Warning "-Effort is only supported by the codex runner; ignoring it for $Runner."
+}
+
+if ($Runner -ne "codex" -and $Fast) {
+    Write-Warning "-Fast is only supported by the codex runner; ignoring it for $Runner."
 }
 
 $cliName = switch ($Runner) {
@@ -98,6 +106,9 @@ $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
 if ($Runner -eq "codex") {
     Write-Host "Runner: $Runner  Model: $Model  Effort: $Effort"
+    if ($Fast) {
+        Write-Host "Fast mode: enabled"
+    }
 }
 else {
     Write-Host "Runner: $Runner  Model: $Model"
@@ -119,7 +130,8 @@ $reviewJob = {
         [string] $JobRepositoryRoot,
         [string] $JobSetCode,
         [int] $JobCardId,
-        [string] $JobSystemPrompt
+        [string] $JobSystemPrompt,
+        [bool] $JobFast
     )
 
     try {
@@ -136,7 +148,11 @@ $reviewJob = {
             # under Windows PowerShell 5.1. Codex output is intentionally quiet.
             $ErrorActionPreference = "Continue"
             $reasoningConfig = "model_reasoning_effort=`"$JobEffort`""
-            & codex --search --ask-for-approval never exec --model $JobModel --config $reasoningConfig --cd $JobRepositoryRoot "$prompt`n`n$JobSystemPrompt" *>$null
+            $fastArgs = @()
+            if ($JobFast) {
+                $fastArgs = @("--config", 'service_tier="fast"')
+            }
+            & codex --search --ask-for-approval never exec --model $JobModel --config $reasoningConfig @fastArgs --cd $JobRepositoryRoot "$prompt`n`n$JobSystemPrompt" *>$null
             $exitCode = $LASTEXITCODE
         }
         else {
@@ -169,7 +185,7 @@ foreach ($cardId in $From..$To) {
     Write-Host "# [$startedAt] [$index/$total] review-card $SetCode $cardId"
     Write-Host "############################################################"
 
-    $result = & $reviewJob $Runner $Model $Effort $repositoryRoot $SetCode $cardId $systemPrompt
+    $result = & $reviewJob $Runner $Model $Effort $repositoryRoot $SetCode $cardId $systemPrompt $Fast.IsPresent
 
     foreach ($line in @($result.Output)) {
         Write-Host $line

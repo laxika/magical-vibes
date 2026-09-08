@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -58,11 +59,13 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -81,6 +84,7 @@ import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -109,6 +113,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -1507,6 +1512,22 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Granted beginning-of-combat ability is collected")
+        void grantedBeginningOfCombatAbilityFires() {
+            Card card = createCardWithName("Granted Combat Card");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            when(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gd, permanent, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED))
+                    .thenReturn(List.of(new GainLifeEffect(1)));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Granted Combat Card");
+        }
+
+        @Test
         @DisplayName("BEGINNING_OF_COMBAT_TRIGGERED does not fire for non-active player's permanents")
         void beginningOfCombatSkipsNonActivePlayer() {
             Card card = createCardWithName("Combat Trigger Card");
@@ -2626,6 +2647,77 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isEmpty();
         }
+
+        @Test
+        @DisplayName("Survival wrappers are evaluated only once for the same permanent")
+        void survivalWrapperIsEvaluatedOnlyOnce() {
+            Card card = createCardWithName("Acrobatic Cheerleader");
+            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+                    new SurvivalTriggerEffect(new GainLifeEffect(1)));
+            Permanent perm = new Permanent(card);
+            perm.tap();
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handlePostcombatMainTriggers(gd);
+            assertThat(gd.stack).hasSize(1);
+
+            gd.stack.clear();
+            sut.handlePostcombatMainTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Queues graveyard-targeted postcombat main triggers for target selection")
+        void queuesGraveyardTargetedTrigger() {
+            Card card = createCardWithName("Savior of the Small");
+            CardEffect returnEffect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .filter(new CardTypePredicate(CardType.CREATURE))
+                    .targetGraveyard(true)
+                    .build();
+            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+                    new SurvivalTriggerEffect(new ConditionalEffect(new SourceIsTapped(), returnEffect)));
+            Permanent perm = new Permanent(card);
+            perm.tap();
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handlePostcombatMainTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("Queues permanent-targeted postcombat main triggers for target selection")
+        void queuesPermanentTargetedTrigger() {
+            Card card = createCardWithName("Rootwise Survivor");
+            card.target(TargetFilters.landYouControl(), 0, 1).addEffect(
+                    EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+                    new SurvivalTriggerEffect(new ConditionalEffect(
+                            new SourceIsTapped(), new EarthbendTargetLandEffect(3))));
+            Permanent source = new Permanent(card);
+            source.tap();
+
+            Card landCard = createCardWithName("Forest");
+            landCard.setType(CardType.LAND);
+            Permanent land = new Permanent(landCard);
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(land);
+
+            when(predicateEvaluationService.matchesFilters(any(Permanent.class), any(), any()))
+                    .thenAnswer(invocation -> invocation.getArgument(0, Permanent.class).getId().equals(land.getId()));
+            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), any(), any()))
+                    .thenReturn(true);
+
+            sut.handlePostcombatMainTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
+                    argThat(ids -> ids.contains(land.getId()) && ids.contains(player1Id)), any());
+        }
+
     }
 
     // ---- Test helpers ----

@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "22")
+@CardRegistration(set = "FDN", collectorNumber = "300")
+@CardRegistration(set = "FDN", collectorNumber = "369")
+@CardRegistration(set = "FDN", collectorNumber = "447")
 public class RaiseThePast extends Card {
 
     public RaiseThePast() {

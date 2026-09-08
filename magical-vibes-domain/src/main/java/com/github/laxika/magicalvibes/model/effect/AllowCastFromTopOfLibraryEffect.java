@@ -15,7 +15,8 @@ import java.util.Set;
  * While a permanent with this effect is on the battlefield, the controller may
  * cast spells of the specified types or matching the optional card predicate from the top of their
  * library (paying their mana cost normally). The optional colorless clause is separate from the
- * type clause because colorless is a characteristic, not a card type.
+ * type clause because colorless is a characteristic, not a card type. The optional once-per-turn
+ * flag limits that source to one normal-cost top-library cast each turn.
  */
 public record AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,
                                               CardPredicate filter, boolean oncePerTurn,

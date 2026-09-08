@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandTappedForManaEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "115")
+@CardRegistration(set = "TMT", collectorNumber = "238")
 public class GroundchuckDirtbag extends Card {
 
     public GroundchuckDirtbag() {

@@ -17,7 +17,7 @@ import java.util.Set;
  * is true the choice itself is the "you may" (declinable HandCardChoice): putting a card draws one
  * and re-offers the choice until declined or no matching cards remain (Cultivator Colossus).
  * When {@code putAnyNumber} is true, putting re-offers without drawing until declined
- * (Wrenn and Seven's "put any number of land cards … tapped").
+ * (Wrenn and Seven's "put any number of land cards â€¦ tapped").
  *
  * @param predicate               filter for eligible cards in hand (e.g. {@code CardTypePredicate(CREATURE)},
  *                                {@code CardAllOfPredicate(CardIsHistoricPredicate, CardIsPermanentPredicate)})
@@ -57,10 +57,26 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean returnExiledSourceIfSacrificed,
                                          boolean returnToHandAtEndStep,
                                          CardPredicate enterTappedAndAttackingIf,
-                                         boolean enterBlocking) implements CardEffect, CombatOpponentReferencingEffect {
+                                         boolean enterBlocking, Set<com.github.laxika.magicalvibes.model.CardSubtype> untapSourceIfEnteredCardHasAnySubtype) implements CardEffect, CombatOpponentReferencingEffect {
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
+                                         boolean enterTapped, boolean maxManaValueBoundedByX,
+                                         boolean grantHaste, boolean sacrificeAtEndStep,
+                                         boolean attachSourceEquipment, boolean enterAttacking,
+                                         boolean drawAndRepeat, boolean putAnyNumber,
+                                         boolean faceDown, int faceDownPower, int faceDownToughness,
+                                         Set<CardType> faceDownCardTypes,
+                                         boolean cloaked,
+                                         boolean returnExiledSourceIfSacrificed,
+                                         boolean returnToHandAtEndStep,
+                                         CardPredicate enterTappedAndAttackingIf,
+                                         boolean enterBlocking) {
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep, enterTappedAndAttackingIf, enterBlocking, Set.of());
+    }
+
 
     public PutCardToBattlefieldEffect {
         faceDownCardTypes = Set.copyOf(faceDownCardTypes);
+        untapSourceIfEnteredCardHasAnySubtype = Set.copyOf(untapSourceIfEnteredCardHasAnySubtype);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
@@ -189,7 +205,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked, true,
-                returnToHandAtEndStep, enterTappedAndAttackingIf, enterBlocking);
+                returnToHandAtEndStep, enterTappedAndAttackingIf, enterBlocking, untapSourceIfEnteredCardHasAnySubtype);
     }
 
     /** Surprise Deployment: return the chosen permanent to its owner's hand at the next end step. */
@@ -197,14 +213,23 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                cloaked, returnExiledSourceIfSacrificed, true, enterTappedAndAttackingIf, enterBlocking);
+                cloaked, returnExiledSourceIfSacrificed, true, enterTappedAndAttackingIf, enterBlocking, untapSourceIfEnteredCardHasAnySubtype);
     }
 
     public PutCardToBattlefieldEffect withEnterTappedAndAttackingIf(CardPredicate predicate) {
         return new PutCardToBattlefieldEffect(this.predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep, predicate, enterBlocking);
+                cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep, predicate, enterBlocking, untapSourceIfEnteredCardHasAnySubtype);
+    }
+
+    public PutCardToBattlefieldEffect untapSourceIfEnteredCardHasAnySubtype(
+            Set<com.github.laxika.magicalvibes.model.CardSubtype> subtypes) {
+        return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
+                grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep,
+                enterTappedAndAttackingIf, enterBlocking, Set.copyOf(subtypes));
     }
 
     @Override

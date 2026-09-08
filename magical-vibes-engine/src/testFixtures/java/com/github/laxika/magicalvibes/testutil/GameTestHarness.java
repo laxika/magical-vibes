@@ -664,6 +664,11 @@ public class GameTestHarness {
         gameService.foretellCard(gameData, player, cardIndex);
     }
 
+    public void unlockRoomDoor(Player player, int permanentIndex, int doorIndex) {
+        ensurePriority(player);
+        gameService.unlockRoomDoor(gameData, player, permanentIndex, doorIndex);
+    }
+
     public void castCreatureWithAlternateCost(Player player, int cardIndex, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         if (sacrificePermanentIds == null || sacrificePermanentIds.isEmpty()) {

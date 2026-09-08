@@ -476,8 +476,11 @@ public class ETBTokenTargetService {
     private int effectiveMaxTargets(GameData gameData,
                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
                                     SpellTarget group) {
+        int staticMax = group.isXScaled()
+                ? Math.min(pending.xValue(), group.getMaxTargets())
+                : group.getMaxTargets();
         if (group.getDynamicMaxTargets() == null) {
-            return group.getMaxTargets();
+            return staticMax;
         }
         Permanent source = pending.sourcePermanentId() == null
                 ? null
@@ -485,7 +488,7 @@ public class ETBTokenTargetService {
         int dynamicMax = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
                 new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0, false,
                         null, pending.repeatedAdditionalCosts(), null));
-        return Math.min(group.getMaxTargets(), Math.max(0, dynamicMax));
+        return Math.min(staticMax, Math.max(0, dynamicMax));
     }
 
     public int effectiveMinTargets(GameData gameData,

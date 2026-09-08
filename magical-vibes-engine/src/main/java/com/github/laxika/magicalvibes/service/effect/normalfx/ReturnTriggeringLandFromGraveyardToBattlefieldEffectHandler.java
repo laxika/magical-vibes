@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Returns the triggering land (Sacred Ground) from the graveyard back to the battlefield under the
- * ability controller's control. The controller is the graveyard owner, so the land returns under its
+ * Returns the triggering land from the graveyard back to the battlefield under the ability
+ * controller's control. The controller is the graveyard owner, so the land returns under its
  * owner's control. Fizzles silently if the land is no longer in a graveyard.
  */
 @Component
@@ -45,6 +45,7 @@ public class ReturnTriggeringLandFromGraveyardToBattlefieldEffectHandler impleme
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, landCard.getId());
-        graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, landCard);
+        graveyardReturnSupport.putCardOntoBattlefield(
+                gameData, controllerId, landCard, null, null, e.enterTapped());
     }
 }

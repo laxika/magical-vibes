@@ -5,6 +5,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+
+import java.util.List;
 
 /**
  * Deals damage to any target (creature, planeswalker, or player). The amount is a
@@ -116,12 +123,27 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
         return new DealDamageToAnyTargetEffect(damage, false, false, ANY_OTHER_TARGET, null);
     }
 
+    /** Target filter for an any-target effect that excludes its source permanent. */
+    public static TargetFilter anyOtherTargetFilter() {
+        return new AnyTargetPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be another target");
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return targetGroup == ANY_OTHER_TARGET
                 ? TargetSpec.harmful(TargetPredicates.anyTarget(),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))
                 : TargetSpec.harmful(TargetPredicates.anyTarget());
+    }
+
+    @Override
+    public TargetFilter triggeredTargetFilter() {
+        return targetGroup == ANY_OTHER_TARGET ? anyOtherTargetFilter() : null;
     }
 
     @Override

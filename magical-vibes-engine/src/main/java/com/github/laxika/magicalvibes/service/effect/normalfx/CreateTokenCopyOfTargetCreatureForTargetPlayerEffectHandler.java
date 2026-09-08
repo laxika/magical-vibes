@@ -47,6 +47,27 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
         }
 
         Card sourceCard = targetPermanent.getCard();
+        int tokenCount = gameQueryService.getTokenCreationAmount(
+                gameData, tokenControllerId, 1, sourceCard.getSubtypes(), true);
+        for (int copy = 0; copy < tokenCount; copy++) {
+            Card tokenCard = buildTokenCopy(sourceCard);
+            Card createdTokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, tokenControllerId, tokenCard);
+
+            Permanent tokenPermanent = new Permanent(createdTokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, tokenControllerId, tokenPermanent);
+
+            String controllerName = gameData.playerIdToName.get(tokenControllerId);
+            gameLogService.append(gameData, GameLog.textCardText(controllerName + " creates a token copy of " , sourceCard, "."));
+            log.info("Game {} - {} creates token copy of {} for {}", gameData.id, controllerName,
+                    sourceCard.getName(), tokenControllerId);
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, tokenControllerId, createdTokenCard, null, false);
+        }
+    }
+
+    private Card buildTokenCopy(Card sourceCard) {
         Card tokenCard = new Card();
         tokenCard.setName(sourceCard.getName());
         tokenCard.setType(sourceCard.getType());
@@ -76,18 +97,6 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
             tokenCard.addActivatedAbility(ability);
         }
         tokenCard.copyTargetingFrom(sourceCard);
-        tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                gameData, tokenControllerId, tokenCard);
-
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, tokenControllerId, tokenPermanent);
-
-        String controllerName = gameData.playerIdToName.get(tokenControllerId);
-        gameLogService.append(gameData, GameLog.textCardText(controllerName + " creates a token copy of " , sourceCard, "."));
-        log.info("Game {} - {} creates token copy of {} for {}", gameData.id, controllerName,
-                sourceCard.getName(), tokenControllerId);
-
-        battlefieldEntryService.handleCreatureEnteredBattlefield(
-                gameData, tokenControllerId, tokenCard, null, false);
+        return tokenCard;
     }
 }

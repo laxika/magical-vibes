@@ -7,6 +7,11 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "58")
+@CardRegistration(set = "FDN", collectorNumber = "318")
+@CardRegistration(set = "FDN", collectorNumber = "383")
+@CardRegistration(set = "FDN", collectorNumber = "426")
+@CardRegistration(set = "FDN", collectorNumber = "436")
+@CardRegistration(set = "FDN", collectorNumber = "460")
 public class BloodthirstyConqueror extends Card {
 
     public BloodthirstyConqueror() {

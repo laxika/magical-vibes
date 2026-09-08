@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedBlockPermissionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -38,7 +38,7 @@ public final class BlockLegalityContext {
     /** The defending player's battlefield; empty rather than {@code null} when there is none. */
     final List<Permanent> defenderBattlefield;
 
-    /** Board-wide "X can't block Y" statics (e.g. Boldwyr Intimidator), collected once. */
+    /** Board-wide "X can't block Y" restrictions, collected once. */
     final List<GlobalBlockRestriction> globalBlockRestrictions;
 
     /** Board-wide "creatures matching X can't attack or block" statics, collected once. */
@@ -109,7 +109,7 @@ public final class BlockLegalityContext {
      * controller-relative (Bower Passage: "creatures you control"), so both are evaluated against the
      * source's controller rather than bare game data.
      */
-    record GlobalBlockRestriction(MatchingCreaturesCantBlockMatchingCreaturesEffect effect,
+    record GlobalBlockRestriction(BlockingRestrictionEffect effect,
                                   FilterContext filterContext) {
     }
 

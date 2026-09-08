@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCreatureToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -79,7 +80,7 @@ public class RevealUntilCreatureToBattlefieldRestToGraveyardEffectHandler implem
         }
 
         for (Card card : revealedCards) {
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
         }
 
         if (permanent != null && !gameData.interaction.isAwaitingInput()) {

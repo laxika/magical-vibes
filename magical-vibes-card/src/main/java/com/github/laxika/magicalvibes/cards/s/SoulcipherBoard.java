@@ -29,6 +29,7 @@ import java.util.List;
  */
 @CardRegistration(set = "INR", collectorNumber = "85")
 @CardRegistration(set = "INR", collectorNumber = "459")
+@CardRegistration(set = "VOW", collectorNumber = "79")
 public class SoulcipherBoard extends Card {
 
     public SoulcipherBoard() {

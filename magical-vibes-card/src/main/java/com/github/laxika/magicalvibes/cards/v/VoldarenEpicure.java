@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "182")
 @CardRegistration(set = "INR", collectorNumber = "405")
+@CardRegistration(set = "VOW", collectorNumber = "182")
 public class VoldarenEpicure extends Card {
 
     public VoldarenEpicure() {

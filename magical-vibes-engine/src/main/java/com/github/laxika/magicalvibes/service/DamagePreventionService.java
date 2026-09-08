@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfF
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndExileFromLibraryEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageMillReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
@@ -377,7 +378,8 @@ public class DamagePreventionService {
             if (controllerId != null && gameData.playersWithAllCreatureDamagePrevented.contains(controllerId)) return 0;
             if (controllerId != null && gameData.playersWithAllDamagePrevented.contains(controllerId)) return 0;
         }
-        // Protean Hydra / Unbreathing Horde / Rock Hydra / Ugin's Conjurant: counter-based damage replacement.
+        // Protean Hydra / Unbreathing Horde / Rock Hydra / Ugin's Conjurant / Magma Pummeler:
+        // counter-based damage replacement.
         // Counters are removed regardless of whether damage is preventable. When removeOneOnly=true
         // (Unbreathing Horde), exactly one counter is removed per damage event. When
         // preventOnlyIfCounterAvailable=true (Rock Hydra), only the damage represented by removed
@@ -396,6 +398,9 @@ public class DamagePreventionService {
             if (countersToRemove > 0 && !gameQueryService.cantHaveCounters(gameData, permanent)) {
                 permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - countersToRemove);
                 registerDelayedRegrowth(gameData, permanent, countersToRemove);
+                if (preventRemoveEffect.dealsPreventedDamage()) {
+                    queuePreventedDamageTrigger(gameData, permanent, countersToRemove, false);
+                }
             }
             int preventedDamage = preventRemoveEffect.preventOnlyIfCounterAvailable()
                     ? countersToRemove
@@ -646,17 +651,24 @@ public class DamagePreventionService {
     }
 
     private void queuePhyrexianVindicatorTrigger(GameData gameData, Permanent permanent, int preventedDamage) {
-        UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-        if (controllerId == null || preventedDamage <= 0) return;
+        queuePreventedDamageTrigger(gameData, permanent, preventedDamage, true);
+    }
 
-        var targetFilter = new AnyTargetPredicateTargetFilter(
+    private void queuePreventedDamageTrigger(GameData gameData, Permanent permanent, int damageAmount,
+                                             boolean excludeSource) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        if (controllerId == null || damageAmount <= 0) return;
+
+        var targetFilter = excludeSource
+                ? new AnyTargetPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "another target");
+                "another target")
+                : null;
         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 permanent.getCard(), controllerId,
                 List.of(new DealDamageToAnyTargetEffect(new XValue())),
-                false, targetFilter, preventedDamage, permanent.getId(), new Permanent(permanent)));
+                false, targetFilter, damageAmount, permanent.getId(), new Permanent(permanent)));
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), "'s ability triggers."));
     }
 
@@ -2290,6 +2302,27 @@ public class DamagePreventionService {
                 .findFirst().orElse(null);
     }
 
+    /** Returns whether a source controlled by the given player must replace damage to an opponent with milling. */
+    public boolean hasControllerOpponentDamageMillReplacement(GameData gameData, UUID sourceControllerId,
+                                                               UUID targetPlayerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)
+                || damage <= 0
+                || sourceControllerId == null
+                || targetPlayerId == null
+                || sourceControllerId.equals(targetPlayerId)) {
+            return false;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+        if (battlefield == null) return false;
+
+        return battlefield.stream()
+                .filter(permanent -> !permanent.isFaceDown()
+                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn())
+                .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, ControllerOpponentDamageMillReplacementEffect.class));
+    }
+
     /**
      * Applies per-source damage reduction from attached permanents with
      * {@link PreventXDamageFromEachSourceToAttachedCreatureEffect}
@@ -2321,7 +2354,8 @@ public class DamagePreventionService {
 
     private void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(GameData gameData, Permanent permanent) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-        if (controllerId != null) {
+        if (controllerId != null && gameQueryService.isCreature(gameData, permanent)) {
+            gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(controllerId);
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
         }
     }

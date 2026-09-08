@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "172")
+@CardRegistration(set = "TMT", collectorNumber = "276")
 public class ChromeDome extends Card {
 
     public ChromeDome() {

@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "92")
+@CardRegistration(set = "FDN", collectorNumber = "331")
+@CardRegistration(set = "FDN", collectorNumber = "393")
+@CardRegistration(set = "FDN", collectorNumber = "467")
 public class RiteOfTheDragoncaller extends Card {
 
     public RiteOfTheDragoncaller() {

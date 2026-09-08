@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisT
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "29")
+@CardRegistration(set = "TMT", collectorNumber = "227")
+@CardRegistration(set = "TMT", collectorNumber = "282")
+@CardRegistration(set = "TMT", collectorNumber = "292")
 public class AprilONeilHacktivist extends Card {
 
     public AprilONeilHacktivist() {

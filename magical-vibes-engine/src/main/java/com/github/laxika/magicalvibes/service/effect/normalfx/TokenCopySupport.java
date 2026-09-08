@@ -42,17 +42,25 @@ public class TokenCopySupport {
     private final PermanentCounterSupport permanentCounterSupport;
     private final SagaChapterService sagaChapterService;
 
-    public void createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
-                                  Permanent sourcePermanent,
-                                  CreateTokenCopyOfTargetPermanentEffect effect) {
-        createTokenCopies(gameData, entry, sourceCards, sourcePermanent, entry.getControllerId(), effect);
+    public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                        Permanent sourcePermanent,
+                                        CreateTokenCopyOfTargetPermanentEffect effect) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, entry.getControllerId(), effect,
+                null);
     }
 
-    public void createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
-                                  Permanent sourcePermanent, UUID tokenControllerId,
-                                  CreateTokenCopyOfTargetPermanentEffect effect) {
+    public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                        Permanent sourcePermanent, UUID tokenControllerId,
+                                        CreateTokenCopyOfTargetPermanentEffect effect) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect, null);
+    }
+
+    public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                        Permanent sourcePermanent, UUID tokenControllerId,
+                                        CreateTokenCopyOfTargetPermanentEffect effect,
+                                        List<UUID> attackTargetIds) {
         if (sourceCards == null || sourceCards.isEmpty()) {
-            return;
+            return List.of();
         }
 
         List<Permanent> tokens = new ArrayList<>();
@@ -60,8 +68,8 @@ public class TokenCopySupport {
         for (Card sourceCard : sourceCards) {
             Card tokenTemplate = buildTokenCopyCard(
                     sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
-            int tokenMultiplier = gameQueryService.getTokenMultiplier(
-                    gameData, tokenControllerId, tokenTemplate.hasType(CardType.CREATURE));
+            int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                    gameData, tokenControllerId, 1, tokenTemplate.getSubtypes(), tokenTemplate.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 Card tokenCard = copy == 0
                         ? tokenTemplate
@@ -89,10 +97,13 @@ public class TokenCopySupport {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<UUID> createdIds = new ArrayList<>();
+        int tokenIndex = 0;
         for (Permanent tokenPermanent : tokens) {
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered);
+                gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered);
             entry.getCreatedPermanentIds().add(tokenPermanent.getId());
+            createdIds.add(tokenPermanent.getId());
             if (effect.trackWithSource() && entry.getSourcePermanentId() != null) {
                 gameData.sourceCreatedTokens
                         .computeIfAbsent(entry.getSourcePermanentId(), ignored -> ConcurrentHashMap.newKeySet())
@@ -104,10 +115,13 @@ public class TokenCopySupport {
             }
             if (effect.tappedAndAttacking()) {
                 tokenPermanent.setAttacking(true);
-                if (sourcePermanent != null) {
+                if (attackTargetIds != null && tokenIndex < attackTargetIds.size()) {
+                    tokenPermanent.setAttackTarget(attackTargetIds.get(tokenIndex));
+                } else if (attackTargetIds == null && sourcePermanent != null) {
                     tokenPermanent.setAttackTarget(sourcePermanent.getAttackTarget());
                 }
             }
+            tokenIndex++;
 
             if (effect.exileAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
@@ -148,6 +162,7 @@ public class TokenCopySupport {
 
         battlefieldEntryService.checkAllyTokenEntersTriggers(
                 gameData, tokenControllerId, tokens.stream().map(Permanent::getId).toList());
+        return createdIds;
     }
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
@@ -171,9 +186,19 @@ public class TokenCopySupport {
         tokenCard.setToken(true);
         CardColor color = effect.colorOverride() != null ? effect.colorOverride() : sourceCard.getColor();
         tokenCard.setColor(color);
-        tokenCard.setColors(effect.colorOverride() != null
-                ? List.of(effect.colorOverride())
-                : sourceCard.getColors());
+        List<CardColor> colors = effect.colorOverride() != null
+                ? new ArrayList<>(List.of(effect.colorOverride()))
+                : sourceCard.getColors() == null
+                        ? new ArrayList<>()
+                        : new ArrayList<>(sourceCard.getColors());
+        if (effect.additionalColors() != null) {
+            for (CardColor additionalColor : effect.additionalColors()) {
+                if (!colors.contains(additionalColor)) {
+                    colors.add(additionalColor);
+                }
+            }
+        }
+        tokenCard.setColors(colors);
         EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
         if (sourceCard.getSupertypes() != null) {
             supertypes.addAll(sourceCard.getSupertypes());

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -175,6 +176,8 @@ public class CardChoiceHandlerService {
         boolean cloaked = false;
         UUID returnExiledSourceCardId = null;
         UUID returnSourcePermanentId = null;
+        UUID untapSourcePermanentId = null;
+        Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype = Set.of();
         UUID blockingAttackerId = null;
         CardPredicate drawAndRepeatPredicate = null;
         CardPredicate enterTappedAndAttackingIf = null;
@@ -202,6 +205,8 @@ public class CardChoiceHandlerService {
             drawAndRepeat = hc.drawAndRepeat();
             putAnyNumber = hc.putAnyNumber();
             returnExiledSourceCardId = hc.returnExiledSourceCardId();
+            untapSourcePermanentId = hc.untapSourcePermanentId();
+            untapSourceIfEnteredCardHasAnySubtype = hc.untapSourceIfEnteredCardHasAnySubtype();
             drawAndRepeatPredicate = hc.drawAndRepeatPredicate();
             drawAndRepeatLabel = hc.drawAndRepeatLabel();
             enterTappedAndAttackingIf = hc.enterTappedAndAttackingIf();
@@ -323,6 +328,16 @@ public class CardChoiceHandlerService {
                                 List.of(ReturnToHandEffect.self()));
                     }
                 }
+                if (untapSourcePermanentId != null && untapSourceIfEnteredCardHasAnySubtype.stream()
+                        .anyMatch(subtype -> gameQueryService.effectiveCreatureSubtypes(gameData, enteredPermanent)
+                                .contains(subtype)
+                                || (gameQueryService.isCreatureSubtype(subtype)
+                                && gameQueryService.hasKeyword(gameData, enteredPermanent, Keyword.CHANGELING)))) {
+                    Permanent source = gameQueryService.findPermanentById(gameData, untapSourcePermanentId);
+                    if (source != null && tapUntapSupport.untapPermanent(gameData, source)) {
+                        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
+                    }
+                }
                 if (thenEffect != null) {
                     StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
                     if (pendingEntry != null) {
@@ -349,7 +364,12 @@ public class CardChoiceHandlerService {
                     if (returnToHandAtEndStep) {
                         repeatEffect = repeatEffect.returningToHandAtEndStep();
                     }
-                    playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId, repeatEffect);
+                    if (!untapSourceIfEnteredCardHasAnySubtype.isEmpty()) {
+                        repeatEffect = repeatEffect.untapSourceIfEnteredCardHasAnySubtype(
+                                untapSourceIfEnteredCardHasAnySubtype);
+                    }
+                    playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId, repeatEffect, 0,
+                            null, null, untapSourcePermanentId);
                 }
             }
         }
@@ -397,9 +417,15 @@ public class CardChoiceHandlerService {
             // Invalid index (e.g. player clicked "Decline" sending -1) — re-prompt the discard choice
             // Preserve filtered validIndices/prompt (e.g. DiscardCardThenEffect land-only discard).
             log.warn("Game {} - {} sent invalid discard card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
-            playerInputService.beginDiscardChoice(gameData, player.getId(), discardChoice.validIndices(),
-                    discardChoice.prompt(), discardChoice.remainingCount(), discardChoice.followUp(),
-                    discardChoice.stopAfterDiscardingType(), discardChoice.declinable());
+            if (discardChoice.stopAfterDiscardingPredicate() != null) {
+                playerInputService.beginDiscardChoice(gameData, player.getId(), discardChoice.validIndices(),
+                        discardChoice.prompt(), discardChoice.remainingCount(), discardChoice.followUp(),
+                        discardChoice.stopAfterDiscardingPredicate(), discardChoice.declinable());
+            } else {
+                playerInputService.beginDiscardChoice(gameData, player.getId(), discardChoice.validIndices(),
+                        discardChoice.prompt(), discardChoice.remainingCount(), discardChoice.followUp(),
+                        discardChoice.stopAfterDiscardingType(), discardChoice.declinable());
+            }
             return;
         }
 
@@ -479,9 +505,12 @@ public class CardChoiceHandlerService {
         }
 
         int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
-        boolean mayDecline = remainingDiscards > 0
-                && discardChoice.stopAfterDiscardingType() != null
+        boolean matchesStopCondition = discardChoice.stopAfterDiscardingPredicate() != null
+                ? predicateEvaluationService.matchesCardPredicate(
+                        card, discardChoice.stopAfterDiscardingPredicate(), null)
+                : discardChoice.stopAfterDiscardingType() != null
                 && card.hasType(discardChoice.stopAfterDiscardingType());
+        boolean mayDecline = remainingDiscards > 0 && matchesStopCondition;
 
         List<Integer> remainingValidIndices = validIndices.stream()
                 .filter(index -> index != cardIndex)
@@ -490,9 +519,15 @@ public class CardChoiceHandlerService {
 
         if (remainingDiscards > 0 && !hand.isEmpty() && !remainingValidIndices.isEmpty()) {
             inputCompletionService.publishStateAfterInput(gameData);
-            playerInputService.beginDiscardChoice(gameData, playerId, remainingValidIndices,
-                    discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
-                    discardChoice.stopAfterDiscardingType(), mayDecline);
+            if (discardChoice.stopAfterDiscardingPredicate() != null) {
+                playerInputService.beginDiscardChoice(gameData, playerId, remainingValidIndices,
+                        discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
+                        discardChoice.stopAfterDiscardingPredicate(), mayDecline);
+            } else {
+                playerInputService.beginDiscardChoice(gameData, playerId, remainingValidIndices,
+                        discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
+                        discardChoice.stopAfterDiscardingType(), mayDecline);
+            }
         } else {
             finishDiscardChoice(gameData, player, playerId, discardChoice.followUp(), card);
         }
@@ -762,6 +797,20 @@ public class CardChoiceHandlerService {
         if (thenEffectConditionMet && selectedThenEffect != null && followUp.thenEffectSourceCard() != null) {
             CardEffect thenEffect = selectedThenEffect;
             Card sourceCard = followUp.thenEffectSourceCard();
+            int thenEffectTargetGroup = thenEffect.targetGroup();
+            if (followUp.thenEffectTargetId() == null
+                    && thenEffectTargetGroup >= 0
+                    && thenEffectTargetGroup < sourceCard.getSpellTargets().size()) {
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        sourceCard, playerId, List.of(thenEffect), followUp.thenEffectSourcePermanentId(),
+                        List.of(), 0, 0, List.of(), followUp.thenEffectEventValue(), List.of()));
+                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+                resumeRemainingEffectsAfterDiscard(gameData);
+                return;
+            }
             TargetSpec targetSpec = thenEffect.targetSpec();
             boolean hasPreboundTarget = followUp.thenEffectTargetId() != null;
             GraveyardTargetingSupport.Target graveyardTarget = graveyardTargetingSupport.findTarget(List.of(thenEffect));
@@ -1327,8 +1376,12 @@ public class CardChoiceHandlerService {
                     gameData.exilePlayWithoutPayingManaCost.add(exiled.getId());
                     triggerCollectionService.checkPlotTriggers(gameData, targetPlayerId, exiled);
                 }
-                if (revealedHandChoice.imprintOnSource() && sourcePermanentId != null) {
-                    exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, exiled);
+                if (revealedHandChoice.imprintOnSource()) {
+                    if (sourcePermanentId != null) {
+                        exileService.setImprintedCardOnPermanent(gameData, sourcePermanentId, exiled);
+                    } else if (gameData.pendingEffectResolutionEntry != null) {
+                        gameData.setImprintedCard(gameData.pendingEffectResolutionEntry.getCard(), exiled);
+                    }
                 }
                 if (revealedHandChoice.grantPlayPermission()) {
                     if (revealedHandChoice.exilePlayOpponentTax() > 0) {

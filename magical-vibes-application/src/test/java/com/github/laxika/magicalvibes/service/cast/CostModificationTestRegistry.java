@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.cast.costmod.ReduceDashCostEffectH
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostByManaCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.ReduceRoomUnlockCostEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -61,6 +62,7 @@ public final class CostModificationTestRegistry {
         registry.register(new ReduceCastCostForChosenSubtypeSpellsEffectHandler(gameQueryService));
         registry.register(new ReduceOwnCastCostEffectHandler(amountEvaluationService));
         registry.register(new ReduceOwnCastCostByManaCostEffectHandler());
+        registry.register(new ReduceRoomUnlockCostEffectHandler());
         registry.register(new ConditionalCostModificationHandler(conditionEvaluationService, registry));
         registry.register(new ConditionalBattlefieldCostModificationHandler(conditionEvaluationService, registry));
         return registry;
