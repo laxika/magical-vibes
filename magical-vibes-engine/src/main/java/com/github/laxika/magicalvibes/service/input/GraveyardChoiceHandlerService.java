@@ -236,6 +236,9 @@ public class GraveyardChoiceHandlerService {
                     if (grantSubtype != null && !perm.getGrantedSubtypes().contains(grantSubtype)) {
                         perm.getGrantedSubtypes().add(grantSubtype);
                     }
+                    if (graveyardChoice.enterTapped()) {
+                        perm.tap();
+                    }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
 
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " , card, " from a graveyard onto the battlefield."));

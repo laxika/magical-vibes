@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Shared permanent-counter helpers used by every migrated counter effect handler and by
@@ -653,7 +654,13 @@ public class PermanentCounterSupport {
     }
 
     public void recordCounterPlacedOnCreature(GameData gameData, Permanent target, UUID placingPlayerId) {
-        if (placingPlayerId != null && target != null && gameQueryService.isCreature(gameData, target)) {
+        if (placingPlayerId == null || target == null) {
+            return;
+        }
+        gameData.permanentsWithCountersPutByPlayerThisTurn
+                .computeIfAbsent(placingPlayerId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(target.getId());
+        if (gameQueryService.isCreature(gameData, target)) {
             gameData.playersWhoPutCountersOnCreaturesThisTurn.add(placingPlayerId);
         }
     }

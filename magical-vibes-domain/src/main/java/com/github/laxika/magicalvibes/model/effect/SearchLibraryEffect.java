@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * Search your library for up to {@code count} cards matching {@code filter} and move them to
- * {@code destination} (hand, battlefield, battlefield tapped, or top of library), then shuffle.
+ * {@code destination} (hand, hand or graveyard, battlefield, battlefield tapped, or top of library),
+ * then shuffle.
  *
  * <p>A {@code null} filter is an unrestricted search (any card): the cards are not revealed and the
  * search cannot fail to find. A non-null filter restricts the search: the chosen cards are revealed
- * (for {@code HAND}/{@code TOP_OF_LIBRARY} destinations) and the search may fail to find. The prompt
- * and log text are derived from the filter (via {@code CardPredicateUtils.describeFilter}).
+ * (for {@code HAND}, {@code HAND_OR_GRAVEYARD}, or {@code TOP_OF_LIBRARY} destinations) and the
+ * search may fail to find. The prompt and log text are derived from the filter (via
+ * {@code CardPredicateUtils.describeFilter}).
  *
  * <p>{@code manaValueBound} adds a dynamic mana-value constraint (see {@link ManaValueBound});
  * {@code null} means none. {@code castFromGraveyardCount} overrides {@code count} when the producing

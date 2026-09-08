@@ -133,6 +133,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -612,6 +613,27 @@ public class GameQueryService {
                         && predicateEvaluationService.matchesCardPredicate(
                                 card, g.madnessGrantFilter(), null, gameData, ownerId)) {
                     return Optional.ofNullable(card.getManaCost());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Returns the miracle cost granted to {@code card} by a permanent the drawing player controls,
+     * or empty if no grant applies. Native miracle is intentionally not consulted here.
+     */
+    public Optional<String> findGrantedMiracleCost(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null || card == null || card.isToken()) {
+            return Optional.empty();
+        }
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof MiracleGrantingEffect grant
+                        && predicateEvaluationService.matchesCardPredicate(
+                                card, grant.miracleGrantFilter(), null, gameData, playerId)) {
+                    return Optional.ofNullable(grant.miracleCost());
                 }
             }
         }

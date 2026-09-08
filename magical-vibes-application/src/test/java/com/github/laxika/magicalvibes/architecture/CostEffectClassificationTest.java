@@ -90,6 +90,7 @@ class CostEffectClassificationTest {
             "ExileCardFromGraveyardCost",
             "ExileXCardsFromGraveyardCost",
             "ExileNCardsFromGraveyardCost",
+            "ExileNCardsFromGraveyardOrPayManaCost",
             "DiscardCardTypeCost",
             "DiscardRandomCardCost",
             "DiscardCardOrPayManaCost",

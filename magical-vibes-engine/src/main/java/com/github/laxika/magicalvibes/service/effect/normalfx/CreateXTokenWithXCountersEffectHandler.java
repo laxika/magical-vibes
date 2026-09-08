@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +22,7 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
     private final PermanentControlSupport permanentControlSupport;
     private final PermanentCounterSupport permanentCounterSupport;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,8 +32,15 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateXTokenWithXCountersEffect) effect;
-        int xValue = entry.getXValue();
-        if (xValue < 0) {
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int counterAmount = amountEvaluationService.evaluate(
+                gameData, e.counterAmount(), AmountContext.forStackEntry(entry, source));
+        if (counterAmount < 0) {
             return;
         }
 
@@ -40,7 +50,7 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
         permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
 
-        if (xValue == 0) {
+        if (counterAmount == 0) {
             return;
         }
 
@@ -50,7 +60,7 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
         }
 
         permanentCounterSupport.placeCounterOnPermanent(
-                gameData, entry, token, e.counterType(), xValue);
+                gameData, entry, token, e.counterType(), counterAmount);
     }
 
     private Permanent findLastMatchingToken(GameData gameData, UUID controllerId, String tokenName) {

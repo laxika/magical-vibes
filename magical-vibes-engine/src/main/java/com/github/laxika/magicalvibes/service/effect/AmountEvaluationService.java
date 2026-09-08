@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaCostsAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -194,6 +195,8 @@ public class AmountEvaluationService {
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
             case DistinctManaCostsAmongCardsInGraveyard c ->
                     countDistinctManaCostsAmongCardsInGraveyard(gameData, c, ctx);
+            case DistinctPermanentNamesAmongControlled c ->
+                    countDistinctPermanentNamesAmongControlled(gameData, c, ctx);
             case CardsInExile c ->
                     countExileCards(gameData, c, ctx);
             case CardsInGraveyard c ->
@@ -603,6 +606,33 @@ public class AmountEvaluationService {
             for (Card card : graveyard) {
                 if (card.isToken() || card.hasType(CardType.LAND) || card.getManaCost() == null) continue;
                 found.add(card.getManaCost());
+            }
+        }
+        return found.size();
+    }
+
+    private int countDistinctPermanentNamesAmongControlled(
+            GameData gameData, DistinctPermanentNamesAmongControlled amount, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        FilterContext filterContext = GameQueryService.isStaticEvaluationActive()
+                ? FilterContext.empty()
+                : FilterContext.of(gameData);
+        filterContext = filterContext.withSourceControllerId(ctx.controllerId());
+        if (ctx.sourcePermanent() != null) {
+            filterContext = filterContext
+                    .withSourceCardId(ctx.sourcePermanent().getCard().getId())
+                    .withSourcePermanentSnapshot(ctx.sourcePermanent());
+        }
+        java.util.Set<String> found = new java.util.HashSet<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, amount.filter(), filterContext)) {
+                    found.add(permanent.getCard().getName());
+                }
             }
         }
         return found.size();

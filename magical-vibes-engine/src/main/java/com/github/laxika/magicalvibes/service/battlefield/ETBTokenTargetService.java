@@ -143,7 +143,7 @@ public class ETBTokenTargetService {
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
                         if (matchesPermanentTargetFilter(gameData, p, pending.targetFilter(),
-                                pending.controllerId(), pending.sourceCard())) {
+                                pending.controllerId(), pending.sourceCard(), pending.xValue())) {
                             validPermanentTargets.add(p.getId());
                         }
                     }
@@ -256,7 +256,7 @@ public class ETBTokenTargetService {
                     for (Permanent p : battlefield) {
                         if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
                         if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
-                                pending.controllerId(), card)) {
+                                pending.controllerId(), card, pending.xValue())) {
                             validPermanentTargets.add(p.getId());
                         }
                     }
@@ -428,7 +428,7 @@ public class ETBTokenTargetService {
 
     private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
                                                   TargetFilter targetFilter,
-                                                  UUID controllerId, Card sourceCard) {
+                                                  UUID controllerId, Card sourceCard, int xValue) {
         if (targetFilter == null) {
             return gameQueryService.isCreature(gameData, permanent);
         }
@@ -436,7 +436,7 @@ public class ETBTokenTargetService {
             return false;
         }
         FilterContext filterContext = new FilterContext(
-                gameData, sourceCard.getId(), controllerId, null, null);
+                gameData, sourceCard.getId(), controllerId, xValue, null);
         return predicateEvaluationService.checkTargetFilter(targetFilter, permanent, filterContext).isEmpty();
     }
 }

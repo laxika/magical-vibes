@@ -17,6 +17,7 @@ public sealed interface DynamicAmount permits
         BasicLandTypesAmongControlledLands,
         CardTypesAmongCardsInGraveyard,
         DistinctManaCostsAmongCardsInGraveyard,
+        DistinctPermanentNamesAmongControlled,
         CardsDiscardedByTargetPlayerThisTurn,
         CardsDiscardedOrCycledThisTurn,
         CardsInExile,

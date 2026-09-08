@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraEnchantCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
@@ -300,6 +301,8 @@ public class PredicateEvaluationService {
                     isAuraEnchantingCreature(card);
             case CardHasFlashbackPredicate ignored ->
                     card.getCastingOption(FlashbackCast.class).isPresent();
+            case CardHasXInManaCostPredicate ignored ->
+                    card.getManaCost() != null && new ManaCost(card.getManaCost()).hasX();
             case CardHasCyclingPredicate ignored ->
                     card.getHandActivatedAbilities().stream()
                             .anyMatch(ActivatedAbility::isCyclingAbility);

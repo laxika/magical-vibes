@@ -26,6 +26,8 @@ public class StackEntry {
     private final String description;
     private List<CardEffect> effectsToResolve;
     private final int xValue;
+    /** Total mana actually spent to cast this spell, captured before the cast snapshot is cleared. */
+    @Setter private int manaSpent;
     /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
     @Setter private Integer etbMode;
     @Setter private UUID targetId;
@@ -411,6 +413,7 @@ public class StackEntry {
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.xValue = source.xValue;
+        this.manaSpent = source.manaSpent;
         this.etbMode = source.etbMode;
         this.targetId = source.targetId;
         this.sourcePermanentId = source.sourcePermanentId;

@@ -691,6 +691,27 @@ class PlayerInputServiceTest {
         }
 
         @Test
+        @DisplayName("Restricts names to cards with the required type")
+        void restrictsNamesToRequiredType() {
+            Card land = createCard("Forest", CardType.LAND);
+            Card creature = createCreature("Bear");
+            Card sourceCard = createCreature("Source");
+
+            gd.playerHands.get(PLAYER1_ID).add(land);
+            gd.playerHands.get(PLAYER1_ID).add(creature);
+
+            svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of(), false, false, CardType.LAND);
+
+            InteractionPromptMessage msg = projectedPrompt();
+            assertThat(msg.options()).contains("Forest");
+            assertThat(msg.options()).doesNotContain("Bear");
+            assertThat(msg.prompt()).isEqualTo("Choose a land card name.");
+            ChoiceContext.CardNameChoice ctx =
+                    (ChoiceContext.CardNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.requiredType()).isEqualTo(CardType.LAND);
+        }
+
+        @Test
         @DisplayName("Returns sorted unique names")
         void returnsSortedUniqueNames() {
             Card card1 = createCreature("Zebra");

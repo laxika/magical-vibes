@@ -1014,14 +1014,18 @@ public class DrawService {
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
             return;
         }
-        if (drawn.getCastingOption(MiracleCast.class).isEmpty()) {
+        String miracleCost = drawn.getCastingOption(MiracleCast.class)
+                .map(MiracleCast::manaCostString)
+                .orElseGet(() -> gameQueryService.findGrantedMiracleCost(gameData, drawingPlayerId, drawn)
+                        .orElse(null));
+        if (miracleCost == null) {
             return;
         }
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 drawn,
                 drawingPlayerId,
-                List.of(new MiracleRevealEffect()),
+                List.of(new MiracleRevealEffect(miracleCost)),
                 "Reveal " + drawn.getName() + " for its miracle ability?"
         ));
         log.info("Game {} - offering miracle reveal for {}", gameData.id, drawn.getName());

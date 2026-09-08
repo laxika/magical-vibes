@@ -1025,6 +1025,19 @@ public class AbilityActivationService {
             throw new IllegalStateException("No valid card to discard for the activation cost");
         }
 
+        ExileCardFromGraveyardCost exileGraveyardCost = abilityEffects.stream()
+                .filter(ExileCardFromGraveyardCost.class::isInstance)
+                .map(ExileCardFromGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileGraveyardCost != null
+                && collectGraveyardIndicesForType(graveyard, exileGraveyardCost.requiredType(),
+                exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype()).isEmpty()) {
+            String typeName = graveyardExileFilterLabel(exileGraveyardCost.requiredType(),
+                    exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype());
+            throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
+        }
+
         // Pay mana cost. Static effects (Embalmer's Tools) can make a matching graveyard card's
         // ability cost {N} less to activate; the reduction is floored to the generic portion so the
         // cost never drops below its colored requirements, then threaded through as a negative
@@ -1050,6 +1063,20 @@ public class AbilityActivationService {
 
         if (exileXGraveyardCost != null) {
             payGraveyardExileXCost(gameData, player, exileXGraveyardCost, xValue, card);
+        }
+
+        if (exileGraveyardCost != null) {
+            List<Integer> validExileIndices = collectGraveyardIndicesForType(graveyard,
+                    exileGraveyardCost.requiredType(), exileGraveyardCost.alternateType(),
+                    exileGraveyardCost.requiredSubtype());
+            gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(
+                    playerId, card, ability, xValue, targetId, graveyardTargetIds);
+            String typeName = graveyardExileFilterLabel(exileGraveyardCost.requiredType(),
+                    exileGraveyardCost.alternateType(), exileGraveyardCost.requiredSubtype());
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.GraveyardExileCostChoice(
+                    playerId, validExileIndices,
+                    "Choose a " + typeName + "card from your graveyard to exile as an activation cost."));
+            return;
         }
 
         // Pay the exile-this-card cost (Embalm / Eternalize). Exiling the source now — before the
@@ -1833,9 +1860,35 @@ public class AbilityActivationService {
     }
 
     public void handleActivatedAbilityGraveyardExileCostChosen(GameData gameData, Player player, int cardIndex) {
-        if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardExileCostChoice.class) == null) {
+        PendingInteraction.GraveyardExileCostChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.GraveyardExileCostChoice.class);
+        if (choice == null) {
             throw new IllegalStateException("Not awaiting graveyard exile cost choice");
         }
+
+        PendingGraveyardAbilityActivation pendingGraveyard = gameData.pendingGraveyardAbilityActivation;
+        if (pendingGraveyard != null && pendingGraveyard.awaitingGraveyardExileCost()) {
+            if (!player.getId().equals(pendingGraveyard.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            if (!choice.validIndices().contains(cardIndex)) {
+                throw new IllegalStateException("Invalid graveyard card index");
+            }
+
+            ExileCardFromGraveyardCost cost = pendingGraveyard.ability().getEffects().stream()
+                    .filter(ExileCardFromGraveyardCost.class::isInstance)
+                    .map(ExileCardFromGraveyardCost.class::cast)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Ability no longer has the graveyard exile cost"));
+            gameData.interaction.clearAwaitingInput();
+            gameData.pendingGraveyardAbilityActivation = null;
+            payGraveyardExileCost(gameData, player, cost, cardIndex);
+            completeGraveyardAbilityActivation(gameData, player, pendingGraveyard.card(),
+                    pendingGraveyard.ability(), pendingGraveyard.xValue(), pendingGraveyard.targetId(),
+                    pendingGraveyard.graveyardTargetIds());
+            return;
+        }
+
         if (gameData.pendingAbilityActivation == null) {
             throw new IllegalStateException("No pending ability activation");
         }

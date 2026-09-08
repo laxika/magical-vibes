@@ -9,4 +9,8 @@ public interface SpellCastingAbilityGrantingEffect extends CardEffect {
     CardPredicate filter();
 
     Keyword grantedAbility();
+
+    default int abilityValue() {
+        return 0;
+    }
 }

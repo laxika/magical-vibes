@@ -139,6 +139,8 @@ public class GameData {
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who put at least one counter on a creature this turn. */
     public final Set<UUID> playersWhoPutCountersOnCreaturesThisTurn = ConcurrentHashMap.newKeySet();
+    /** Permanent IDs keyed by the player who put a counter on them during this turn. */
+    public final Map<UUID, Set<UUID>> permanentsWithCountersPutByPlayerThisTurn = new ConcurrentHashMap<>();
     /** Cumulative count of attacking creatures each player declared this turn (for Windbrisk Heights etc.). */
     public final Map<UUID, Integer> creaturesAttackedCountThisTurn = new ConcurrentHashMap<>();
     /** Cumulative count of attacking creatures by subtype each player declared this turn. */
@@ -278,6 +280,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
+    /** Number of cards put into exile during the current turn. */
+    public int cardsExiledThisTurn;
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
     /** Maps exiled card UUID → dream counter count (Goliath Daydreamer). */
@@ -863,6 +867,9 @@ public class GameData {
      *  {@code TriggerCollectionService} when the spell-cast triggers are collected, queuing a
      *  single "copy it, you may choose a new target" trigger above the spell. */
     public final Set<UUID> conspiredSpellIds = ConcurrentHashMap.newKeySet();
+
+    /** Number of casualty copies still to queue for each just-cast spell. */
+    public final Map<UUID, Integer> casualtySpellCopyCounts = new ConcurrentHashMap<>();
 
     /** Pending one-shot spell copy triggers from mana abilities (e.g. Primal Wellspring).
      *  Each value tracks how many copies are pending for that player.
@@ -1995,6 +2002,9 @@ public class GameData {
      * Records a spell cast by the given player this turn.
      */
     public void recordSpellCast(UUID playerId, Card card) {
+        // Per-spell entry grants belong to this cast object. Clear a stale grant when a countered
+        // card is cast again before end-of-turn cleanup, then let current grants be recorded below.
+        spellAdditionalEnterCounters.remove(card.getId());
         spellsCastThisTurn.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
         spellCastOrderThisTurn.add(card.getId());
         mostRecentSpellCastThisTurn = card;
@@ -2365,24 +2375,34 @@ public class GameData {
     public void addToExile(UUID ownerId, Card card) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, turnNumber));
+        recordCardPutIntoExile(card);
     }
 
     /** Adds a card to exile with source permanent tracking. */
     public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, false, turnNumber));
+        recordCardPutIntoExile(card);
     }
 
     /** Adds a card to exile with source permanent tracking and an explicit face-down status. */
     public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId, boolean faceDown) {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, turnNumber));
+        recordCardPutIntoExile(card);
     }
 
     /** Adds a card to exile with source tracking, face-down status, and its exiling player. */
     public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId, boolean faceDown,
                            UUID exilerId) {
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, exilerId));
+        recordCardPutIntoExile(card);
+    }
+
+    private void recordCardPutIntoExile(Card card) {
+        if (!card.isToken()) {
+            cardsExiledThisTurn++;
+        }
     }
 
     /**
@@ -2644,6 +2664,7 @@ public class GameData {
         copy.activePlayerId = this.activePlayerId;
         copy.turnNumber = this.turnNumber;
         copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
+        copy.cardsExiledThisTurn = this.cardsExiledThisTurn;
         copy.gameResult = this.gameResult;
         copy.winnerPlayerId = this.winnerPlayerId;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
@@ -2844,6 +2865,8 @@ public class GameData {
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
+        this.permanentsWithCountersPutByPlayerThisTurn.forEach((playerId, permanentIds) ->
+                copy.permanentsWithCountersPutByPlayerThisTurn.put(playerId, new HashSet<>(permanentIds)));
         copy.creaturesAttackedCountThisTurn.putAll(this.creaturesAttackedCountThisTurn);
         this.creaturesAttackedCountBySubtypeThisTurn.forEach((playerId, counts) ->
                 copy.creaturesAttackedCountBySubtypeThisTurn.put(playerId, new ConcurrentHashMap<>(counts)));
@@ -3121,6 +3144,7 @@ public class GameData {
         // --- Spell copy until end of turn (The Mirari Conjecture chapter III) ---
         copy.playersWithSpellCopyUntilEndOfTurn.addAll(this.playersWithSpellCopyUntilEndOfTurn);
         copy.conspiredSpellIds.addAll(this.conspiredSpellIds);
+        copy.casualtySpellCopyCounts.putAll(this.casualtySpellCopyCounts);
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);

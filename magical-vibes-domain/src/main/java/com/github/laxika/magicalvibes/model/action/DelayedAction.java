@@ -74,5 +74,6 @@ public sealed interface DelayedAction permits
         PutCounterOnPermanentAtNextUpkeep,
         RevokeExilePlayPermissionAtNextUpkeep,
         TransformSourceAtNextUpkeep,
+        GrantChosenLandwalkAtNextUpkeep,
         PendingExileReturn {
 }

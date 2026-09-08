@@ -250,6 +250,7 @@ public class CardChoiceHandlerService {
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand.remove(cardIndex);
+        DiscardFollowUp followUp = discardChoice.followUp();
 
         boolean replacedByBattlefield = false;
         if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
@@ -264,6 +265,10 @@ public class CardChoiceHandlerService {
             graveyardService.discardCard(gameData, playerId, card);
             gameLogService.append(gameData, GameLog.playerDiscards(player.getUsername(), card));
             log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
+        }
+
+        if (!replacedByBattlefield) {
+            followUp = followUp.withDiscardedCard(card.getId());
         }
 
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
@@ -284,7 +289,6 @@ public class CardChoiceHandlerService {
         // Check if the discarded card should pump the source by its mana value (e.g. Spellbound Dragon)
         checkPendingBoostSourceByDiscardedManaValue(gameData, card);
 
-        DiscardFollowUp followUp = discardChoice.followUp();
         if (followUp.enteringPermanent() != null) {
             gameData.interaction.clearAwaitingInput();
             battlefieldEntryService.completeDiscardCardToEnter(
@@ -307,10 +311,10 @@ public class CardChoiceHandlerService {
         if (remainingDiscards > 0 && !hand.isEmpty() && !remainingValidIndices.isEmpty()) {
             inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginDiscardChoice(gameData, playerId, remainingValidIndices,
-                    discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
+                    discardChoice.prompt(), remainingDiscards, followUp,
                     discardChoice.stopAfterDiscardingType(), mayDecline);
         } else {
-            finishDiscardChoice(gameData, player, playerId, discardChoice.followUp(), card);
+            finishDiscardChoice(gameData, player, playerId, followUp, card);
         }
     }
 
@@ -415,6 +419,22 @@ public class CardChoiceHandlerService {
             }
         }
 
+        List<Card> discardedLands = discardedCardsStillInGraveyard(gameData, followUp);
+        if (!discardedLands.isEmpty()) {
+            List<Integer> validIndices = new ArrayList<>();
+            for (int i = 0; i < discardedLands.size(); i++) {
+                validIndices.add(i);
+            }
+            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice.builder(
+                            followUp.discardedCardSelectionControllerId(), validIndices,
+                            GraveyardChoiceDestination.BATTLEFIELD,
+                            "Choose up to one land card discarded this way to put onto the battlefield tapped.")
+                    .cardPool(discardedLands)
+                    .enterTapped(true)
+                    .build());
+            return;
+        }
+
         // Push "if you do" rider after a filtered discard (DiscardCardThenEffect / Pack Guardian)
         boolean thenEffectConditionMet = followUp.thenEffectCondition() == null
                 || discardedCard != null && predicateEvaluationService.matchesCardPredicate(
@@ -479,6 +499,20 @@ public class CardChoiceHandlerService {
         }
 
         resumeRemainingEffectsAfterDiscard(gameData);
+    }
+
+    private List<Card> discardedCardsStillInGraveyard(GameData gameData, DiscardFollowUp followUp) {
+        if (followUp.discardedCardSelectionControllerId() == null) {
+            return List.of();
+        }
+        List<Card> discardedLands = new ArrayList<>();
+        for (UUID cardId : followUp.discardedCardIds()) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card != null && card.hasType(CardType.LAND)) {
+                discardedLands.add(card);
+            }
+        }
+        return discardedLands;
     }
 
     /**

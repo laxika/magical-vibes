@@ -216,7 +216,7 @@ public class BattlefieldEntryService {
             applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
             applyEnterTappedEffects(permanent, enterTappedTypes);
             applySelfEnterTapped(permanent);
-            applyConditionalEnterTapped(gameData, controllerId, permanent);
+            applyConditionalEnterTapped(gameData, controllerId, permanent, xValue);
             applyAllPermanentsEnterTapped(gameData, permanent);
             applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
@@ -779,11 +779,13 @@ public class BattlefieldEntryService {
      * entering permanent's controller; since the permanent is not yet on the battlefield (added
      * after this method), "other lands" / "matching permanents" counts naturally exclude it.
      */
-    private void applyConditionalEnterTapped(GameData gameData, UUID controllerId, Permanent enteringPermanent) {
+    private void applyConditionalEnterTapped(GameData gameData, UUID controllerId, Permanent enteringPermanent,
+                                              int xValue) {
         for (CardEffect effect : enteringPermanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ConditionalReplacementEffect conditional
                     && conditional.upgradedEffect() instanceof EntersTappedEffect) {
-                ConditionContext ctx = ConditionContext.forPermanent(enteringPermanent, controllerId);
+                ConditionContext ctx = ConditionContext.forPermanent(enteringPermanent, controllerId)
+                        .withXValue(xValue);
                 if (conditionEvaluationService.isMet(gameData, conditional.condition(), ctx)) {
                     enteringPermanent.tap();
                 }
@@ -1711,12 +1713,12 @@ public class BattlefieldEntryService {
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                             card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
                             List.of(), card.isAura() ? 1 : 0, 0,
-                            card.isAura() ? List.of(1) : List.of()));
+                            card.isAura() ? List.of(1) : List.of(), xValue));
                     for (int i = 0; i < extraTriggerCopies; i++) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
                                 List.of(), card.isAura() ? 1 : 0, 0,
-                                card.isAura() ? List.of(1) : List.of()));
+                                card.isAura() ? List.of(1) : List.of(), xValue));
                     }
                     gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose targets."));
@@ -1726,10 +1728,10 @@ public class BattlefieldEntryService {
                     TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
 
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter, xValue));
                     for (int i = 0; i < extraTriggerCopies; i++) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter, xValue));
                     }
                     gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose a target."));

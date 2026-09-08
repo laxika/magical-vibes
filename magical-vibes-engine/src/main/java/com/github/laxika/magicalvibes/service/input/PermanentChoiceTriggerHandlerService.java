@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -1383,8 +1384,13 @@ public class PermanentChoiceTriggerHandlerService {
                 etbTtt.controllerId(),
                 etbTtt.sourceCard().getName() + "'s ETB ability",
                 new ArrayList<>(etbTtt.effects()),
+                etbTtt.xValue(),
                 targetId,
-                etbTtt.sourcePermanentId()
+                etbTtt.sourcePermanentId(),
+                Map.of(),
+                null,
+                List.of(),
+                List.of()
         );
         if (etbTtt.targetFilter() != null) {
             entry.setTargetFilter(etbTtt.targetFilter());

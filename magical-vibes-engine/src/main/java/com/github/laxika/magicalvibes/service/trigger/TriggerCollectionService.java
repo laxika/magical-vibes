@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemLifeGainTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCounterAwareEffect;
@@ -588,6 +589,33 @@ public class TriggerCollectionService {
             }
         }
 
+        Integer casualtyCopies = gameData.casualtySpellCopyCounts.remove(spellCard.getId());
+        if (casualtyCopies != null && casualtyCopies > 0) {
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry != null) {
+                for (int copyNumber = 0; copyNumber < casualtyCopies; copyNumber++) {
+                    CopyControllerCastSpellEffect copyEffect =
+                            new CopyControllerCastSpellEffect(new StackEntry(spellEntry), castingPlayerId);
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            "Copy " + spellCard.getName() + " (Casualty)",
+                            new ArrayList<>(List.of(copyEffect))
+                    ));
+                }
+                gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied (Casualty)."));
+                log.info("Game {} - {} casualty copy trigger(s) queued for {}",
+                        gameData.id, casualtyCopies, spellCard.getName());
+            }
+        }
+
         // ON_SELF_CAST — "When you cast this spell, ..." triggers scanned against the just-cast card
         // itself (it's a spell on the stack, not a permanent). CopyThisSpellIfConditionEffect (SOS
         // Infusion copy cycle) needs a snapshot of the spell entry; any other effect (e.g. Demigod of
@@ -604,10 +632,22 @@ public class TriggerCollectionService {
                 }
                 if (spellEntry == null) continue;
 
-                // Always triggers; the "if <condition>" is an effect clause re-checked at resolution.
                 StackEntry snapshot = new StackEntry(spellEntry);
-                CardEffect copyEffect = new ConditionalEffect(trigger.condition(),
-                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId));
+                CardEffect copyEffect = new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
+                if (trigger.conditionAtCast()) {
+                    if (!conditionEvaluationService.isMet(gameData, trigger.condition(),
+                            ConditionContext.forStackEntry(spellEntry))) {
+                        continue;
+                    }
+                    if (trigger.optional()) {
+                        copyEffect = new MayEffect(copyEffect, "Copy " + spellCard.getName() + "?");
+                    }
+                } else {
+                    if (trigger.optional()) {
+                        copyEffect = new MayEffect(copyEffect, "Copy " + spellCard.getName() + "?");
+                    }
+                    copyEffect = new ConditionalEffect(trigger.condition(), copyEffect);
+                }
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         spellCard,
@@ -693,6 +733,29 @@ public class TriggerCollectionService {
             }
         }
 
+        if (castZone == Zone.HAND && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    List<CardEffect> grantEffects = perm.getCard().getEffects(
+                            EffectSlot.GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND);
+                    if (grantEffects.isEmpty()) continue;
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects)
+                    ));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to {} cast from hand for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+
         // "The first spell you cast each turn has cascade" (Maelstrom Nexus). A permanent-granted
         // keyword, detected by the presence of a GRANT_CASCADE_TO_FIRST_SPELL slot on the caster's
         // battlefield rather than an effect-type check. recordSpellCast runs before this method in
@@ -716,6 +779,42 @@ public class TriggerCollectionService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} grants cascade to first spell {} for {}",
                             gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+
+        if (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY)) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    List<CardEffect> grantEffects = perm.getCard().getEffects(
+                            EffectSlot.GRANT_STORM_TO_INSTANT_OR_SORCERY);
+                    if (grantEffects.isEmpty()) continue;
+
+                    StackEntry spellEntry = null;
+                    for (StackEntry se : gameData.stack) {
+                        if (se.getCard().getId().equals(spellCard.getId())) {
+                            spellEntry = se;
+                            break;
+                        }
+                    }
+                    if (spellEntry == null) continue;
+
+                    int copies = gameData.getTotalSpellsCastThisTurnCount() - 1;
+                    StackEntry snapshot = new StackEntry(spellEntry);
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            castingPlayerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(new StormCopyEffect(snapshot, castingPlayerId, copies))),
+                            0,
+                            perm.getId()
+                    ));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants Storm to {} ({} copies) for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), copies, castingPlayerId);
                 }
             }
         }
@@ -3317,13 +3416,60 @@ public class TriggerCollectionService {
 
             for (Permanent perm : battlefield) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)) {
+                    CardEffect resolved = effect;
+                    OncePerTurnTriggerEffect oncePerTurnEffect =
+                            effect instanceof OncePerTurnTriggerEffect once ? once : null;
+                    if (oncePerTurnEffect != null) {
+                        if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                            continue;
+                        }
+                        resolved = oncePerTurnEffect.wrapped();
+                    }
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                    dispatch(match, EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    if (dispatch(match, EffectSlot.ON_CONTROLLER_GAINS_LIFE, resolved, ctx)
+                            && oncePerTurnEffect != null) {
+                        gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                    }
                 }
             }
         });
 
         collectLifeGainOpponentLifeLossTriggers(gameData, gainingPlayerId, lifeGainedAmount);
+        collectEmblemLifeGainTriggers(gameData, gainingPlayerId, lifeGainedAmount);
+    }
+
+    /**
+     * Fires emblem triggers whose text starts "Whenever you gain life". Emblems live outside the
+     * battlefield, so the permanent sweep in {@link #checkLifeGainTriggers} cannot see them.
+     */
+    private void collectEmblemLifeGainTriggers(GameData gameData, UUID gainingPlayerId,
+                                                int lifeGainedAmount) {
+        for (Emblem emblem : gameData.emblems) {
+            if (!emblem.controllerId().equals(gainingPlayerId)) continue;
+
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (!(effect instanceof EmblemLifeGainTriggerEffect trigger)) continue;
+
+                Card source = emblem.sourceCard();
+                String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
+                UUID opponentId = gameQueryService.getOpponentId(gameData, gainingPlayerId);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source,
+                        gainingPlayerId,
+                        description,
+                        new ArrayList<>(trigger.effects()),
+                        opponentId,
+                        null
+                );
+                entry.setEventValue(lifeGainedAmount);
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData, GameLog.text(
+                        description + " triggers — target opponent loses that much life."));
+                log.info("Game {} - {} triggers on life gain ({} life)",
+                        gameData.id, description, lifeGainedAmount);
+            }
+        }
     }
 
     /**

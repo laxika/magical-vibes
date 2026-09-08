@@ -51,6 +51,7 @@ public enum Keyword {
     SHADOW,
     FLANKING,
     CONSPIRE,
+    CASUALTY,
     RETRACE,
     BANDING,
     EMERGE,

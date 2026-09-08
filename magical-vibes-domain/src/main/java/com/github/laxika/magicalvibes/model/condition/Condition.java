@@ -39,6 +39,7 @@ public sealed interface Condition permits
         CardsInLibraryAtLeast,
         CardsInHandAtLeast,
         CardsInHandAtMost,
+        CardsExiledThisTurn,
         CardsLeftGraveyardThisTurn,
         CastForProwlCost,
         CastFromZone,
@@ -136,6 +137,7 @@ public sealed interface Condition permits
         PermanentEnteredThisTurn,
         PutCounterOnCreatureThisTurn,
         PutCounterCostPaid,
+        PutCounterOnSourceThisTurn,
         Raid,
         SelfDealtDamageThisTurn,
         SelfDealtDamageToOpponentThisTurn,
@@ -153,6 +155,7 @@ public sealed interface Condition permits
         SourceHasSubtype,
         SourceBlockedOrWasBlockedByColorThisTurn,
         SourceIsAttacking,
+        SourceIsCreature,
         SourceIsEnchantment,
         SourceWasBlockedThisTurn,
         SourceIsPaired,
@@ -173,6 +176,7 @@ public sealed interface Condition permits
         TopCardOfLibraryColor,
         TopCardOfLibraryType,
         TotalPermanentCountEven,
+        TwoOrMoreCreaturesDiedThisTurn,
         TwoOrMoreSpellsCastLastTurn,
         WonClash {
 

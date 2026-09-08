@@ -2326,12 +2326,22 @@ public class StepTriggerService {
                 continue;
             }
 
+            List<CardEffect> triggering = effects.stream()
+                    .filter(effect -> !(effect instanceof ConditionalEffect conditional
+                            && conditional.interveningIf())
+                            || conditionEvaluationService.isInterveningIfMet(
+                            gameData, effect, perm, activePlayerId))
+                    .toList();
+            if (triggering.isEmpty()) {
+                continue;
+            }
+
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     activePlayerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(effects),
+                    new ArrayList<>(triggering),
                     null,
                     perm.getId()
             ));

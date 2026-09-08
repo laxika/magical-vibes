@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
@@ -489,6 +490,27 @@ public class MiscTriggerCollectorService {
     }
 
     // ── ON_CONTROLLER_GAINS_LIFE ────────────────────────────────────────
+
+    @CollectsTrigger(value = BecomePreparedEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainBecomePrepared(TriggerMatchContext match,
+            BecomePreparedEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on life gain (becomes prepared)", gameData.id, cardName);
+        return true;
+    }
 
     @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCounters(TriggerMatchContext match,

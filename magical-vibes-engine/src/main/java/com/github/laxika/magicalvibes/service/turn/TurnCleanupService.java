@@ -293,12 +293,14 @@ public class TurnCleanupService {
         gameData.creatureSpellCastDrawsThisTurn.clear();
         gameData.creatureEntersDrawSourcesThisTurn.clear();
         gameData.conspiredSpellIds.clear();
+        gameData.casualtySpellCopyCounts.clear();
 
         // Defensive reset of graveyard-leave batching state (always balanced via try/finally,
         // but guard against any leaked batch depth across turns).
         gameData.graveyardLeaveNotificationDepth = 0;
         gameData.graveyardLeaveNotificationPendingOwners.clear();
         gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
+        gameData.cardsExiledThisTurn = 0;
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
@@ -100,6 +101,7 @@ public class AdditionalSpellCostService {
             ExileCardFromGraveyardCost.class,
             ExileXCardsFromGraveyardCost.class,
             ExileNCardsFromGraveyardCost.class,
+            ExileNCardsFromGraveyardOrPayManaCost.class,
             DiscardCardTypeCost.class,
             DiscardRandomCardCost.class,
             DiscardCardOrPayManaCost.class,
@@ -141,6 +143,7 @@ public class AdditionalSpellCostService {
             ExileCardFromGraveyardCost exileGraveyardCost,
             ExileXCardsFromGraveyardCost exileXCardsCost,
             ExileNCardsFromGraveyardCost exileNCardsCost,
+            ExileNCardsFromGraveyardOrPayManaCost exileNCardsOrPayManaCost,
             DiscardCardTypeCost discardCost,
             DiscardRandomCardCost discardRandomCost,
             DiscardCardOrPayManaCost discardCardOrPayManaCost,
@@ -165,6 +168,7 @@ public class AdditionalSpellCostService {
                     || returnCreatureToHand || blightCost != null || putCounterCost != null || putCountersOrPayManaCost != null
                     || payXLife || payLifeCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
+                    || exileNCardsOrPayManaCost != null
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
                     || discardHand || discardXCardsCost != null
                     || escalateDiscardCost != null || escalateManaCost != null
@@ -288,6 +292,8 @@ public class AdditionalSpellCostService {
         ExileCardFromGraveyardCost exileGraveyardCost = removeFirst(effects, ExileCardFromGraveyardCost.class);
         ExileXCardsFromGraveyardCost exileXCardsCost = removeFirst(effects, ExileXCardsFromGraveyardCost.class);
         ExileNCardsFromGraveyardCost exileNCardsCost = removeFirst(effects, ExileNCardsFromGraveyardCost.class);
+        ExileNCardsFromGraveyardOrPayManaCost exileNCardsOrPayManaCost =
+                removeFirst(effects, ExileNCardsFromGraveyardOrPayManaCost.class);
         DiscardCardTypeCost discardCost = removeFirst(effects, DiscardCardTypeCost.class);
         DiscardRandomCardCost discardRandomCost = removeFirst(effects, DiscardRandomCardCost.class);
         DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
@@ -305,6 +311,7 @@ public class AdditionalSpellCostService {
                 sacAnyNumberCost, tapAnyNumberCost, returnAnyNumberCost, returnCreature,
                 blightCost, putCounterCost, putCountersOrPayManaCost,
                 payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost,
+                exileNCardsOrPayManaCost,
                 discardCost, discardRandomCost, discardOrPay,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, delveCost);
@@ -404,6 +411,17 @@ public class AdditionalSpellCostService {
                                     || predicateEvaluationService.matchesCardPredicate(c, cost.predicate(), null)))
                             .count();
                     if (matchingCount < cost.count()) return false;
+                }
+                case ExileNCardsFromGraveyardOrPayManaCost cost -> {
+                    long matchingCount = graveyard.stream()
+                            .filter(c -> (cost.requiredType() == null || c.hasType(cost.requiredType()))
+                                    && (cost.predicate() == null
+                                    || predicateEvaluationService.matchesCardPredicate(c, cost.predicate(), null)))
+                            .count();
+                    if (matchingCount < cost.count()
+                            && !canAffordExileNCardsOrPayManaOption(gameData, playerId, card, cost)) {
+                        return false;
+                    }
                 }
                 case ExileCardFromGraveyardCost cost -> {
                     if (graveyard.stream().noneMatch(c ->
@@ -622,6 +640,19 @@ public class AdditionalSpellCostService {
         if (costs.exileNCardsCost() != null) {
             validateExileNCardsFromGraveyardCost(gameData, player, card, costs.exileNCardsCost(),
                     selection.exileGraveyardCardIndices(), -1);
+        }
+        if (costs.exileNCardsOrPayManaCost() != null) {
+            if (selection.exileGraveyardCardIndices() != null) {
+                ExileNCardsFromGraveyardOrPayManaCost cost = costs.exileNCardsOrPayManaCost();
+                validateExileNCardsFromGraveyardCost(gameData, player, card,
+                        new ExileNCardsFromGraveyardCost(cost.count(), cost.requiredType(), cost.predicate()),
+                        selection.exileGraveyardCardIndices(), -1);
+            } else if (!canAffordExileNCardsOrPayManaOption(gameData, player.getId(), card,
+                    costs.exileNCardsOrPayManaCost())) {
+                throw new IllegalStateException("Must exile " + costs.exileNCardsOrPayManaCost().count()
+                        + " cards from your graveyard or pay " + costs.exileNCardsOrPayManaCost().manaCost()
+                        + " to cast " + card.getName());
+            }
         }
         if (costs.delveCost() != null) {
             validateDelveCost(gameData, player, card, costs.delveCost(), selection.exileGraveyardCardIndices());
@@ -930,8 +961,26 @@ public class AdditionalSpellCostService {
         return canAffordManaOption(gameData, playerId, card, cost.manaCost());
     }
 
+    /** True when the pool can pay the spell's mana cost plus the graveyard-exile option's mana. */
+    public boolean canAffordExileNCardsOrPayManaOption(GameData gameData, UUID playerId, Card card,
+                                                       ExileNCardsFromGraveyardOrPayManaCost cost) {
+        return canAffordManaOption(gameData, playerId, card, cost.manaCost());
+    }
+
+    /** True when the supplied pool can pay the spell's mana cost plus the alternate mana option. */
+    public boolean canAffordExileNCardsOrPayManaOption(GameData gameData, UUID playerId, Card card,
+                                                       ExileNCardsFromGraveyardOrPayManaCost cost,
+                                                       ManaPool pool) {
+        return canAffordManaOption(gameData, playerId, card, cost.manaCost(), pool);
+    }
+
     private boolean canAffordManaOption(GameData gameData, UUID playerId, Card card, String optionManaCost) {
-        ManaPool pool = gameData.playerManaPools.get(playerId);
+        return canAffordManaOption(gameData, playerId, card, optionManaCost,
+                gameData.playerManaPools.get(playerId));
+    }
+
+    private boolean canAffordManaOption(GameData gameData, UUID playerId, Card card,
+                                        String optionManaCost, ManaPool pool) {
         if (pool == null) {
             return false;
         }

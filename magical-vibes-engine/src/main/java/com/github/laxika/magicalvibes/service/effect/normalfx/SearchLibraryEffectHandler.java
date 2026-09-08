@@ -36,8 +36,9 @@ import org.springframework.stereotype.Component;
  * <p>Collapses the former {@code SearchLibraryFor*} family (to-hand tutors, by-name searches,
  * to-top, creature-to-battlefield with MV/colour/subtype constraints, card-types-to-battlefield).
  * Reveal / fail-to-find behaviour is derived uniformly: a restricted search (non-null filter or a
- * mana-value bound) can fail to find, and reveals its pick for {@code HAND}/{@code TOP_OF_LIBRARY}
- * destinations; an unrestricted search does neither.
+ * mana-value bound) can fail to find, and reveals its pick for {@code HAND},
+ * {@code HAND_OR_GRAVEYARD}, or {@code TOP_OF_LIBRARY} destinations; an unrestricted search does
+ * neither.
  */
 @Component
 @RequiredArgsConstructor
@@ -162,6 +163,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private boolean reveals(boolean restricted, LibrarySearchDestination destination) {
         return restricted && (destination == LibrarySearchDestination.HAND
+                || destination == LibrarySearchDestination.HAND_OR_GRAVEYARD
                 || destination == LibrarySearchDestination.TOP_OF_LIBRARY);
     }
 
@@ -173,6 +175,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             case HAND -> "Search your library for a " + desc + distinct
                     + (restricted ? " to reveal and put into your hand" : " to put into your hand")
                     + remaining + ".";
+            case HAND_OR_GRAVEYARD -> "Search your library for a " + desc
+                    + distinct + " to reveal and put into your hand or graveyard" + remaining + ".";
             case TOP_OF_LIBRARY -> "Search your library for a " + desc
                     + (restricted
                             ? ", reveal it, then shuffle and put that card on top."

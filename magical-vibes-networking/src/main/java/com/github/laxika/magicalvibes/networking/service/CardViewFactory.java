@@ -200,6 +200,7 @@ public class CardViewFactory {
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,
                 modalEffect != null && modalEffect.optional(),
+                modalEffect != null && modalEffect.allowRepeatedModes(),
                 modalOptions,
                 0,
                 prepareSpellView);

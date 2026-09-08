@@ -488,6 +488,14 @@ public class LibraryChoiceHandlerService {
             throw new IllegalStateException("Chosen card not found in library");
         }
 
+        if (destination == LibrarySearchDestination.HAND_OR_GRAVEYARD) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " reveals ", chosenCard, "."));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearchDestinationChoice(
+                    playerId, chosenCard));
+            return;
+        }
+
         if (destination == LibrarySearchDestination.EXILE_AND_CREATE_TOKENS) {
             exileService.exileCard(gameData, deckOwnerId, chosenCard);
             accumulatedCards.add(chosenCard);
@@ -1071,6 +1079,7 @@ public class LibraryChoiceHandlerService {
                 case BATTLEFIELD_ATTACHED_TO_PERMANENT -> "onto the battlefield";
                 case BATTLEFIELD_ATTACHED_TO_CREATURE -> throw new IllegalStateException("BATTLEFIELD_ATTACHED_TO_CREATURE should be handled earlier");
                 case HAND -> "into their hand";
+                case HAND_OR_GRAVEYARD -> throw new IllegalStateException("HAND_OR_GRAVEYARD should be handled earlier");
                 case REVEAL_ONLY -> "back into their library";
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> "into exile";
@@ -1223,6 +1232,26 @@ public class LibraryChoiceHandlerService {
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + "'s library is shuffled."));
         }
+        finishSearchAndResume(gameData);
+    }
+
+    /** Completes the destination choice for a revealed single-card library search. */
+    public void handleLibrarySearchDestinationChosen(GameData gameData, Player player, Card card,
+                                                     boolean toHand) {
+        UUID playerId = player.getId();
+        if (toHand) {
+            gameData.addCardToHand(playerId, card);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " puts ", card, " into their hand."));
+        } else {
+            graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.LIBRARY);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " puts ", card, " into their graveyard."));
+        }
+
+        LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " shuffles their library."));
+        gameData.interaction.clearAwaitingInput();
         finishSearchAndResume(gameData);
     }
 
@@ -1639,6 +1668,13 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (libraryRevealChoice.selectedCardsToBattlefieldType() != null) {
+            resolveRevealChoiceSplitByType(gameData, controllerId, playerName, selectedCards, remainingCards,
+                    libraryRevealChoice.selectedCardsToBattlefieldType(),
+                    libraryRevealChoice.selectedToBattlefieldTapped());
+            return;
+        }
+
         // Put selected cards onto the battlefield
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
@@ -1732,6 +1768,40 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        finishSearchAndResume(gameData);
+    }
+
+    private void resolveRevealChoiceSplitByType(GameData gameData, UUID controllerId, String playerName,
+                                                List<Card> selectedCards, List<Card> remainingCards,
+                                                CardType battlefieldType, boolean battlefieldTapped) {
+        List<Card> battlefieldCards = selectedCards.stream()
+                .filter(card -> card.hasType(battlefieldType))
+                .toList();
+        List<Card> handCards = selectedCards.stream()
+                .filter(card -> !card.hasType(battlefieldType))
+                .toList();
+
+        if (!battlefieldCards.isEmpty()) {
+            placeCardsOnBattlefieldSimultaneously(gameData, battlefieldCards, controllerId,
+                    battlefieldTapped, false, false, null);
+        }
+        for (Card card : handCards) {
+            gameData.addCardToHand(controllerId, card);
+        }
+        if (!handCards.isEmpty()) {
+            gameLogService.append(gameData,
+                    appendCards(GameLog.builder().text(playerName + " reveals "), handCards)
+                            .text(" and puts them into their hand.").build());
+        }
+
+        if (!remainingCards.isEmpty()) {
+            Collections.shuffle(remainingCards);
+            gameData.playerDecks.get(controllerId).addAll(remainingCards);
+            gameLogService.append(gameData, GameLog.text(playerName
+                    + " puts the unchosen cards on the bottom of their library in a random order."));
+        }
+
+        performStateBasedActionsIfResolutionComplete(gameData);
         finishSearchAndResume(gameData);
     }
 

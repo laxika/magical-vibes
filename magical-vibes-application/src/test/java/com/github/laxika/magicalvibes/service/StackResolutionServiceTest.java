@@ -694,6 +694,25 @@ class StackResolutionServiceTest {
             verify(playerInputService).beginCardNameChoice(gd, PLAYER1_ID, card, List.of(), false);
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
         }
+
+        @Test
+        @DisplayName("ChooseCardNameOnEnterEffect forwards a required card type")
+        void chooseCardNameOnEnterForwardsRequiredType() {
+            Card card = createArtifact("Petrified Hamlet");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                    new ChooseCardNameOnEnterEffect(CardType.LAND));
+            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            gd.stack.addLast(entry);
+            when(playerInputService.beginCardNameChoice(
+                    gd, PLAYER1_ID, card, List.of(), false, false, CardType.LAND)).thenReturn(true);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(playerInputService).beginCardNameChoice(
+                    gd, PLAYER1_ID, card, List.of(), false, false, CardType.LAND);
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+        }
     }
 
     @Nested

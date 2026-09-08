@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreatur
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
@@ -53,6 +54,7 @@ import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -1921,6 +1923,41 @@ class StepTriggerServiceTest {
             sut.handlePostcombatMainTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Does not push an intervening-if trigger when its condition is false")
+        void skipsUnmetInterveningIf() {
+            Card card = createCardWithName("Scheming Silvertongue");
+            ConditionalEffect effect = new ConditionalEffect(
+                    new GainedLifeThisTurn(2), new BecomePreparedEffect());
+            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, effect);
+            Permanent perm = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            when(conditionEvaluationService.isInterveningIfMet(gd, effect, perm, player1Id))
+                    .thenReturn(false);
+
+            sut.handlePostcombatMainTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Pushes an intervening-if trigger when its condition is true")
+        void firesMetInterveningIf() {
+            Card card = createCardWithName("Scheming Silvertongue");
+            ConditionalEffect effect = new ConditionalEffect(
+                    new GainedLifeThisTurn(2), new BecomePreparedEffect());
+            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, effect);
+            Permanent perm = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            when(conditionEvaluationService.isInterveningIfMet(gd, effect, perm, player1Id))
+                    .thenReturn(true);
+
+            sut.handlePostcombatMainTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
         }
     }
 

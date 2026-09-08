@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class QuickStudy extends Card {
 
     public QuickStudy() {
-        // Draw two cards.
         addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
     }
 }

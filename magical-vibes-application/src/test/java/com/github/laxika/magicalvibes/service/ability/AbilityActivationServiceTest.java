@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -1209,6 +1211,47 @@ class AbilityActivationServiceTest {
 
             assertThat(perm.getCounterCount(CounterType.BRICK)).isEqualTo(2);
         }
+    }
+
+    @Test
+    @DisplayName("Graveyard ability: single instant-or-sorcery exile cost prompts and resumes activation")
+    void graveyardAbilitySingleExileCostPromptsAndResumes() {
+        Card source = createCard("Test Professor", CardType.CREATURE);
+        source.addGraveyardActivatedAbility(new ActivatedAbility(
+                false,
+                "{1}{B}",
+                List.of(new ExileCardFromGraveyardCost(CardType.INSTANT, CardType.SORCERY), new DrawCardEffect()),
+                "Exile an instant or sorcery card: Draw a card."
+        ));
+        Card instant = createCard("Test Shock", CardType.INSTANT);
+        gameData.playerGraveyards.get(player1Id).add(source);
+        gameData.playerGraveyards.get(player1Id).add(instant);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+        when(gameQueryService.canPlayersActivateGraveyardAbilities(gameData)).thenReturn(true);
+        when(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard(gameData, player1Id, source))
+                .thenReturn(List.of());
+
+        service.activateGraveyardAbility(gameData, player1, 0, null);
+
+        assertThat(gameData.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
+        assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
+
+        service.handleActivatedAbilityGraveyardExileCostChosen(gameData, player1, 1);
+
+        assertThat(gameData.playerGraveyards.get(player1Id)).containsExactly(source);
+        assertThat(gameData.stack).hasSize(1);
+        verify(exileService).exileCard(gameData, player1Id, instant);
+    }
+
+    private Card createCard(String name, CardType type) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(type);
+        card.setManaCost("{0}");
+        return card;
     }
 
     // =========================================================================

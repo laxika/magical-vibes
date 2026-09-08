@@ -120,7 +120,9 @@ export class TargetingChoiceService {
     this.modeChoicesRequired = 1;
     this.modeChoicesMax = 1;
     this.modeOptional = false;
+    this.modeAllowsRepeatedModes = false;
     this.modeSelectedIndices = [];
+    this.pendingModalTargeting = false;
     this.spellTargetCount = 1;
     this.spellTargetSelectedIds = [];
     // Flashback
@@ -236,7 +238,9 @@ export class TargetingChoiceService {
   modeChoicesRequired = 1;
   modeChoicesMax = 1;
   modeOptional = false;
+  modeAllowsRepeatedModes = false;
   modeSelectedIndices: number[] = [];
+  private pendingModalTargeting = false;
   // Multi-spell-target modal modes (e.g. "copy target instant and target creature spell")
   spellTargetCount = 1;
   spellTargetSelectedIds: string[] = [];
@@ -414,7 +418,27 @@ export class TargetingChoiceService {
       return;
     }
 
-    // Graveyard targeting: show graveyard cards as targets in an overlay
+    this.validTargetIds.set(new Set(msg.validPermanentIds));
+    this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
+    this.targetingPrompt = msg.prompt;
+    this.targetingGraveyard = false;
+    this.graveyardTargetCards = [];
+    this.graveyardTargetCardIds = [];
+    this.graveyardTargetPrompt = '';
+
+    if (msg.maxTargets > 1) {
+      if (!this.multiTargeting) {
+        this.multiTargeting = true;
+        this.multiTargetCardIndex = this.targetingCardIndex;
+        this.multiTargetCardName = this.targetingCardName;
+        this.multiTargetSelectedIds.set([]);
+      }
+      this.multiTargetMinCount = msg.minTargets;
+      this.multiTargetMaxCount = msg.maxTargets;
+    }
+
+    // Graveyard targeting: show graveyard cards as targets in an overlay. A multi-target response
+    // may also contain permanent targets; the selected cards stay in the same ordered target list.
     if (hasGraveyardTargets) {
       const g = this.gameSignal();
       if (g) {
@@ -436,10 +460,6 @@ export class TargetingChoiceService {
       }
       return;
     }
-
-    this.validTargetIds.set(new Set(msg.validPermanentIds));
-    this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
-    this.targetingPrompt = msg.prompt;
 
     if (msg.maxTargets > 1) {
       // Multi-target mode. Responses also arrive as refreshes after each pick
@@ -561,7 +581,7 @@ export class TargetingChoiceService {
     if (this.skipBeholdForCardIndex === index) this.skipBeholdForCardIndex = null;
 
     // Modal ("choose one/two") spell or ETB — pick mode(s) before anything else
-    if (card.modalChoicesRequired > 0 && card.modalOptions && card.modalOptions.length > 0) {
+    if (card.modalChoicesMax > 0 && card.modalOptions && card.modalOptions.length > 0) {
       this.choosingMode = true;
       this.modeCardIndex = index;
       this.modeCardName = card.name;
@@ -569,6 +589,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = card.modalChoicesRequired;
       this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
+      this.modeAllowsRepeatedModes = card.modalAllowsRepeatedModes === true;
       this.modeSelectedIndices = [];
       return;
     }
@@ -840,6 +861,12 @@ export class TargetingChoiceService {
 
   toggleMode(optionIndex: number): void {
     if (!this.choosingMode) return;
+    if (this.modeAllowsRepeatedModes) {
+      if (this.modeSelectedIndices.length < this.modeChoicesMax) {
+        this.modeSelectedIndices = [...this.modeSelectedIndices, optionIndex];
+      }
+      return;
+    }
     if (this.modeChoicesRequired === 1 && this.modeChoicesMax === 1) {
       this.modeSelectedIndices = [optionIndex];
       return;
@@ -855,6 +882,17 @@ export class TargetingChoiceService {
     return this.modeSelectedIndices.includes(optionIndex);
   }
 
+  modeSelectionCount(optionIndex: number): number {
+    return this.modeSelectedIndices.filter(i => i === optionIndex).length;
+  }
+
+  removeMode(optionIndex: number): void {
+    if (!this.choosingMode || !this.modeAllowsRepeatedModes) return;
+    const last = this.modeSelectedIndices.lastIndexOf(optionIndex);
+    if (last < 0) return;
+    this.modeSelectedIndices = this.modeSelectedIndices.filter((_, index) => index !== last);
+  }
+
   /**
    * Encodes the mode selection the same way the engine's ChooseOneEffect.encodeModeSelection
    * does: exact choose-one uses the 0-based mode index; choose-two / one-or-more use a
@@ -863,6 +901,14 @@ export class TargetingChoiceService {
   private encodeModeSelection(indices: number[]): number {
     if (this.modeChoicesRequired === 1 && this.modeChoicesMax === 1) {
       return indices[0];
+    }
+    if (this.modeAllowsRepeatedModes) {
+      const base = this.modeOptions.length + 1;
+      let encoded = 1;
+      for (const i of indices) {
+        encoded = encoded * base + i + 1;
+      }
+      return -encoded;
     }
     let mask = 0;
     for (const i of indices) {
@@ -898,6 +944,7 @@ export class TargetingChoiceService {
       return;
     }
     if (chosen.some(o => o.needsTarget)) {
+      this.pendingModalTargeting = true;
       if (zoneCard) {
         // Zone plays can't use VALID_TARGETS_REQUEST (it only knows hand cards)
         this.pendingZoneCard = null;
@@ -950,6 +997,7 @@ export class TargetingChoiceService {
     this.modeChoicesRequired = 1;
     this.modeChoicesMax = 1;
     this.modeOptional = false;
+    this.modeAllowsRepeatedModes = false;
     this.modeSelectedIndices = [];
   }
 
@@ -1015,7 +1063,7 @@ export class TargetingChoiceService {
       return;
     }
     // Modal ("choose one/two") spell — pick mode(s) before anything else
-    if (card.modalChoicesRequired > 0 && card.modalOptions && card.modalOptions.length > 0) {
+    if (card.modalChoicesMax > 0 && card.modalOptions && card.modalOptions.length > 0) {
       this.pendingZoneCard = card;
       this.choosingMode = true;
       this.modeCardIndex = 0;
@@ -1024,6 +1072,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = card.modalChoicesRequired;
       this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
+      this.modeAllowsRepeatedModes = card.modalAllowsRepeatedModes === true;
       this.modeSelectedIndices = [];
       return;
     }
@@ -1201,9 +1250,11 @@ export class TargetingChoiceService {
         || msg.morph === true
         || (msg.alternateCostSacrificePermanentIds?.length ?? 0) > 0;
     if (!isZonePlay && this.beginCastPaymentIfUnaffordable(msg)) {
+      this.pendingModalTargeting = false;
       return;
     }
     this.websocketService.send(msg);
+    this.pendingModalTargeting = false;
   }
 
   // ========== MTGO-style cast payment ==========
@@ -1577,7 +1628,12 @@ export class TargetingChoiceService {
       if (this.pendingAbilityXValue != null) {
         extra['xValue'] = this.pendingAbilityXValue;
       }
-      this.sendPlayCardMessage(this.targetingCardIndex, permanentId, extra);
+      if (this.pendingModalTargeting) {
+        extra['targetIds'] = [permanentId];
+        this.sendPlayCardMessage(this.targetingCardIndex, null, extra);
+      } else {
+        this.sendPlayCardMessage(this.targetingCardIndex, permanentId, extra);
+      }
     }
     this.resetTargetingState();
   }
@@ -1600,7 +1656,12 @@ export class TargetingChoiceService {
       if (this.pendingAbilityXValue != null) {
         extra['xValue'] = this.pendingAbilityXValue;
       }
-      this.sendPlayCardMessage(this.targetingCardIndex, playerId, extra);
+      if (this.pendingModalTargeting) {
+        extra['targetIds'] = [playerId];
+        this.sendPlayCardMessage(this.targetingCardIndex, null, extra);
+      } else {
+        this.sendPlayCardMessage(this.targetingCardIndex, playerId, extra);
+      }
     }
     this.resetTargetingState();
   }
@@ -1608,11 +1669,30 @@ export class TargetingChoiceService {
   selectGraveyardTarget(cardId: string): void {
     if (!this.targetingGraveyard) return;
     if (!this.graveyardTargetCardIds.includes(cardId)) return;
+    if (this.multiTargeting) {
+      const current = this.multiTargetSelectedIds();
+      if (current.includes(cardId) || current.length >= this.multiTargetMaxCount) return;
+      const selected = [...current, cardId];
+      this.multiTargetSelectedIds.set(selected);
+      this.targetingGraveyard = false;
+      this.graveyardTargetCards = [];
+      this.graveyardTargetCardIds = [];
+      this.graveyardTargetPrompt = '';
+      if (selected.length < this.multiTargetMaxCount) {
+        this.refreshMultiTargets(selected);
+      }
+      return;
+    }
     const extra: Record<string, any> = {};
     if (this.pendingAbilityXValue != null) {
       extra['xValue'] = this.pendingAbilityXValue;
     }
-    this.sendPlayCardMessage(this.targetingCardIndex, cardId, extra);
+    if (this.pendingModalTargeting) {
+      extra['targetIds'] = [cardId];
+      this.sendPlayCardMessage(this.targetingCardIndex, null, extra);
+    } else {
+      this.sendPlayCardMessage(this.targetingCardIndex, cardId, extra);
+    }
     this.targetingGraveyard = false;
     this.graveyardTargetCards = [];
     this.graveyardTargetCardIds = [];
@@ -1625,7 +1705,12 @@ export class TargetingChoiceService {
     this.graveyardTargetCards = [];
     this.graveyardTargetCardIds = [];
     this.graveyardTargetPrompt = '';
+    if (this.multiTargeting) {
+      this.cancelMultiTargeting();
+      return;
+    }
     this.resetTargetingState();
+    this.pendingModalTargeting = false;
   }
 
   private resetTargetingState(): void {
@@ -1652,6 +1737,7 @@ export class TargetingChoiceService {
 
   cancelTargeting(): void {
     this.resetTargetingState();
+    this.pendingModalTargeting = false;
     this.pendingPhyrexianLifeCount = null;
   }
 
@@ -1826,6 +1912,7 @@ export class TargetingChoiceService {
     this.targetingForAbility = false;
     this.targetingForGraveyardAbility = false;
     this.targetingAbilityIndex = -1;
+    this.pendingModalTargeting = false;
     this.pendingPhyrexianLifeCount = null;
   }
 
@@ -1902,13 +1989,14 @@ export class TargetingChoiceService {
 
   private addPendingTargetsToMsg(msg: any): void {
     if (this.pendingMultiTargetIds.length > 0) {
-      if (this.pendingConvokeCard && this.multiTargetMaxCount > 1) {
+      if (this.pendingModalTargeting || this.pendingConvokeCard && this.multiTargetMaxCount > 1) {
         msg.targetIds = this.pendingMultiTargetIds;
       } else {
         // Single-target card that went through convoke flow
         msg.targetId = this.pendingMultiTargetIds[0];
       }
     }
+    this.pendingModalTargeting = false;
   }
 
   private addPendingPhyrexianToMsg(msg: any): void {

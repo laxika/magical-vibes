@@ -49,7 +49,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Torment of Hailfire: {@code playerId} sacrifices the chosen nonland permanent they control. */
     record TormentSacrifice(UUID playerId) implements PermanentChoiceContext {}
 
-    /** The chosen creature is destroyed, or exiled instead when {@code exile} is true (Doomfall). */
+    /** The chosen permanent is destroyed, or exiled instead when {@code exile} is true. */
     record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile) implements PermanentChoiceContext {
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName) {
             this(choosingPlayerId, sourceCardName, false);
@@ -597,7 +597,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * time because the token wasn't cast — it's created directly on the battlefield.
      */
     record ETBTokenTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                 UUID sourcePermanentId, TargetFilter targetFilter) implements PermanentChoiceContext {}
+                                 UUID sourcePermanentId, TargetFilter targetFilter, int xValue) implements PermanentChoiceContext {
+
+        public ETBTokenTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                     UUID sourcePermanentId, TargetFilter targetFilter) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, 0);
+        }
+    }
 
     /**
      * Multi-target trigger for creatures with multiple target groups or groups with

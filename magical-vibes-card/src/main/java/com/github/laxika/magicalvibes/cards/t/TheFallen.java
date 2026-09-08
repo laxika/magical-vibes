@@ -1,0 +1,14 @@
+package com.github.laxika.magicalvibes.cards.t;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPreviouslyDamagedBySourceEffect;
+
+@CardRegistration(set = "CHR", collectorNumber = "38")
+public class TheFallen extends Card {
+
+    public TheFallen() {
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new DealDamageToPreviouslyDamagedBySourceEffect(1));
+    }
+}

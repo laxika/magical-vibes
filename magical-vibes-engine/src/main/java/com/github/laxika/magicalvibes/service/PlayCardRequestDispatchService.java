@@ -64,6 +64,24 @@ public class PlayCardRequestDispatchService {
         }
         CardSubtype chosenBeholdType = request.beholdCreatureType() != null
                 ? CardSubtype.valueOf(request.beholdCreatureType()) : null;
+        List<UUID> casualtyCreatureIds = listOrEmpty(request.casualtyCreatureIds());
+        if (!casualtyCreatureIds.isEmpty()) {
+            gameService.playCardWithCasualty(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
+                    request.damageAssignments(), listOrEmpty(request.targetIds()), listOrEmpty(request.convokeCreatureIds()),
+                    Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(),
+                    request.phyrexianLifeCount(), nullIfEmpty(request.alternateCostSacrificePermanentIds()),
+                    request.exileGraveyardCardIndex(), nullIfEmpty(request.exileGraveyardCardIndices()),
+                    Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex(),
+                    nullIfEmpty(request.discardHandCardIndices()),
+                    nullIfEmpty(request.imposedSacrificePermanentIds()),
+                    nullIfEmpty(request.additionalCostSacrificePermanentIds()),
+                    request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of(),
+                    Boolean.TRUE.equals(request.buyback()), request.sharedColorDiscardHandCardIndex(),
+                    request.beholdPermanentId(), request.beholdHandCardIndex(),
+                    listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
+                    chosenBeholdType, casualtyCreatureIds);
+            return;
+        }
         // The empty-to-null normalization on the two list costs mirrors the presence checks the
         // former per-field branches keyed on, so an empty list still means "cost not used".
         if (request.sharedColorDiscardHandCardIndex() != null) {

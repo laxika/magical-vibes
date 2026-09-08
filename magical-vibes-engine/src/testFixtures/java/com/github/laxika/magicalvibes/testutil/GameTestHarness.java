@@ -1005,6 +1005,14 @@ public class GameTestHarness {
         gameService.playCardWithConspire(gameData, player, cardIndex, 0, targetId, null, List.of(), conspireCreatureIds);
     }
 
+    public void castWithCasualty(Player player, int cardIndex, UUID targetId, List<UUID> casualtyCreatureIds) {
+        ensurePriority(player);
+        gameService.playCardWithCasualty(gameData, player, cardIndex, 0, targetId, null,
+                List.of(), List.of(), false, null, null, null, null, null, false, null, null,
+                List.of(), List.of(), List.of(), false, null, null, null, List.of(), List.of(), null,
+                casualtyCreatureIds);
+    }
+
     public void castWithSplice(Player player, int cardIndex, UUID targetId, List<Integer> spliceHandCardIndices) {
         castWithSplice(player, cardIndex, targetId, spliceHandCardIndices, List.of());
     }

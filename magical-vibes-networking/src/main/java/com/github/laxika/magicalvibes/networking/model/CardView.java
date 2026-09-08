@@ -79,6 +79,7 @@ public record CardView(
         int modalChoicesRequired,
         int modalChoicesMax,
         boolean modalOptional,
+        boolean modalAllowsRepeatedModes,
         List<ModalOptionView> modalOptions,
         int exileCastCounterCost,
         CardView prepareSpell

@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
@@ -548,6 +549,7 @@ public class CastingCostService {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof AlternativeCostForSpellsEffect altCost
                             && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
+                            && (!altCost.controllerTurnOnly() || ownerId.equals(gameData.activePlayerId))
                             && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                             && (fromHand || !altCost.fromHandOnly())
                             && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
@@ -583,6 +585,7 @@ public class CastingCostService {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && altCost.manaValueCapCounter() == null
                         && !altCost.oncePerTurn()
+                        && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
                         && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                         && (fromHand || !altCost.fromHandOnly())
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
@@ -910,6 +913,14 @@ public class CastingCostService {
     public boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
         return additionalSpellCostService.satisfiable(gameData, playerId, card)
                 && canPayImposedSacrificeTax(gameData, playerId, card);
+    }
+
+    /** Checks the alternate mana option of a graveyard-exile-or-pay spell against a given pool. */
+    public boolean canPayExileNCardsOrPayManaOption(GameData gameData, UUID playerId, Card card,
+                                                    ExileNCardsFromGraveyardOrPayManaCost cost,
+                                                    ManaPool pool) {
+        return additionalSpellCostService.canAffordExileNCardsOrPayManaOption(
+                gameData, playerId, card, cost, pool);
     }
 
     /** Checks additional costs for a spell being cast from a graveyard zone. */

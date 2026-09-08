@@ -739,12 +739,18 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle
      *  (e.g. Lumaret's Favor) via {@code CopyThisSpellIfConditionEffect}. */
     ON_SELF_CAST,
+    /** Marker slot for a permanent that gives its controller's instant and sorcery spells storm. */
+    GRANT_STORM_TO_INSTANT_OR_SORCERY,
     /** Marker slot: "The first spell you cast each turn has cascade." Holds a {@code CascadeEffect};
      *  detected by presence (not effect type) in {@code TriggerCollectionService.checkSpellCastTriggers},
      *  which — when the casting player casts their first spell of the turn — queues that CascadeEffect as
      *  a triggered ability keyed to the just-cast spell (so the cascade threshold is the spell's mana
      *  value, not this permanent's). Used by Maelstrom Nexus. */
     GRANT_CASCADE_TO_FIRST_SPELL,
+    /** Marker slot: "Instant and sorcery spells you cast from your hand have cascade." Holds a
+     *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
+     *  instant or sorcery is cast from hand. */
+    GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller

@@ -24,6 +24,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * source's controller — "Any player may cast creature spells with mana value 3 or less without
  * paying their mana costs" (Aluren).
  *
+ * <p>{@code controllerTurnOnly} restricts the alternative cost to the source permanent's
+ * controller's turn. It is used with {@code oncePerTurn} for "once during each of your turns"
+ * permissions.
+ *
  * <p>{@code genericEqualToManaValue} makes the alternative cost generic mana equal to the spell's own
  * mana value rather than the fixed {@code manaCost} string — "You may pay {X} rather than pay the mana
  * cost for Samurai spells you cast, where X is that spell's mana value" (Kentaro, the Smiling Cat).
@@ -32,27 +36,36 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                              CounterType manaValueCapCounter, boolean oncePerTurn,
                                              boolean fromHandOnly, boolean appliesToAllPlayers,
-                                             boolean genericEqualToManaValue) implements CardEffect {
+                                             boolean genericEqualToManaValue,
+                                             boolean controllerTurnOnly) implements CardEffect {
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter) {
-        this(manaCost, filter, null, false, false, false, false);
+        this(manaCost, filter, null, false, false, false, false, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false, false, false);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false, false, false, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn,
                                           boolean fromHandOnly) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, false, false);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, false, false, false);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn,
                                           boolean fromHandOnly, boolean appliesToAllPlayers) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers, false);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers, false, false);
+    }
+
+    public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
+                                          CounterType manaValueCapCounter, boolean oncePerTurn,
+                                          boolean fromHandOnly, boolean appliesToAllPlayers,
+                                          boolean genericEqualToManaValue) {
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
+                genericEqualToManaValue, false);
     }
 
     /**
@@ -69,6 +82,6 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
      * the filter (Kentaro, the Smiling Cat).
      */
     public static AlternativeCostForSpellsEffect genericEqualToManaValue(CardPredicate filter) {
-        return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false, true);
+        return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false, true, false);
     }
 }

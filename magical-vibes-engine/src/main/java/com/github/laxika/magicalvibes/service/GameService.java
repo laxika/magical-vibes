@@ -651,6 +651,46 @@ public class GameService {
         }
     }
 
+    public void playCardWithCasualty(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                     UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                                     List<UUID> convokeCreatureIds, boolean fromGraveyard,
+                                     UUID sacrificePermanentId, Integer phyrexianLifeCount,
+                                     List<UUID> alternateCostSacrificePermanentIds,
+                                     Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
+                                     boolean kicked, Integer discardHandCardIndex,
+                                     List<Integer> discardHandCardIndices,
+                                     List<UUID> imposedSacrificePermanentIds,
+                                     List<UUID> additionalCostSacrificePermanentIds,
+                                     List<String> repeatedAdditionalCosts, boolean buyback,
+                                     Integer sharedColorDiscardHandCardIndex,
+                                     UUID beholdPermanentId, Integer beholdHandCardIndex,
+                                     List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                                     CardSubtype beholdChosenSubtype, List<UUID> casualtyCreatureIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithCasualty(gameData, actionPlayer, cardIndex, xValue, targetId,
+                        damageAssignments, targetIds, convokeCreatureIds, fromGraveyard,
+                        sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds,
+                        exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, discardHandCardIndex,
+                        discardHandCardIndices, imposedSacrificePermanentIds,
+                        additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
+                        sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex,
+                        beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype,
+                        casualtyCreatureIds))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardWithCasualty(gameData, player, cardIndex, xValue, targetId,
+                    damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId,
+                    phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex,
+                    exileGraveyardCardIndices, kicked, discardHandCardIndex, discardHandCardIndices,
+                    imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
+                    repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex,
+                    beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
+                    beholdChosenSubtype, casualtyCreatureIds);
+        }
+    }
+
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetId) {
         playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, List.of(), null, null);
     }

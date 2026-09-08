@@ -320,6 +320,11 @@ public class StackResolutionService {
             return playerInputService.beginCardNameChoice(
                     gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards, true);
         }
+        if (effect.requiredType() != null) {
+            return playerInputService.beginCardNameChoice(
+                    gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards,
+                    false, effect.requiredType());
+        }
         return playerInputService.beginCardNameChoice(
                 gameData, controllerId, card, effect.excludedTypes(), restrictToRevealedCards);
     }

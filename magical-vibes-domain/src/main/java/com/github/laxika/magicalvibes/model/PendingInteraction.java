@@ -61,6 +61,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice,
         PendingInteraction.TargetLibraryDestinationChoice,
         PendingInteraction.CounteredSpellLibraryDestinationChoice,
+        PendingInteraction.LibrarySearchDestinationChoice,
         PendingInteraction.SylvanLibraryChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
         PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice,
@@ -1104,7 +1105,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * drives the message's all-graveyards flag). {@code prompt} is the exact begin-time text
      * (also re-sent on reconnect). The remaining components mirror the auxiliary fields of the
      * deleted {@code GraveyardChoiceState}, all pre-seeded by the begin sites and consumed by
-     * the answer handler; build instances via {@link #builder}.
+     * the answer handler; {@code enterTapped} is used by resolution-time returns that explicitly
+     * enter tapped. Build instances via {@link #builder}.
      */
     record GraveyardChoice(UUID playerId, java.util.List<Integer> validIndices,
                            GraveyardChoiceDestination destination, java.util.List<Card> cardPool,
@@ -1115,7 +1117,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            UUID mayAbilityControllerId, java.util.List<CardEffect> mayAbilityEffects,
                            UUID mayAbilitySourcePermanentId,
                            CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
-                           boolean mandatory, String prompt)
+                           boolean mandatory, boolean enterTapped, String prompt)
             implements PendingInteraction {
 
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -1160,6 +1162,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private CardSubtype grantSourceHasteIfSubtype;
             private UUID grantSourceHasteSourcePermanentId;
             private boolean mandatory;
+            private boolean enterTapped;
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
                             GraveyardChoiceDestination destination, String prompt) {
@@ -1230,13 +1233,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return this;
             }
 
+            public Builder enterTapped(boolean enterTapped) {
+                this.enterTapped = enterTapped;
+                return this;
+            }
+
             public GraveyardChoice build() {
                 return new GraveyardChoice(playerId, validIndices, destination, cardPool,
                         gainLifeEqualToManaValue, attachToSourcePermanentId, grantColor, grantSubtype,
                         exileRemainingCount, gainLifeIfCreatureAmount, gainLifeIfCreaturePlayerId,
                         trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
-                        grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId, mandatory, prompt);
+                        grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId, mandatory,
+                        enterTapped, prompt);
             }
         }
     }
@@ -1679,6 +1688,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Choose whether a revealed library-search card goes to hand or to the graveyard. */
+    record LibrarySearchDestinationChoice(UUID playerId, Card card) implements PendingInteraction {
+
+        /** The exact option strings the handler's prompt offers and its answer parser matches. */
+        public static final java.util.List<String> OPTIONS = java.util.List.of("Hand", "Graveyard");
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.ListPick(OPTIONS);
+        }
+    }
+
     /**
      * Sylvan Library's "choose two cards drawn this turn; for each pay 4 life or put it on top of
      * your library" decision, collapsed into a single multi-select. {@code drawnThisTurnCardIds}
@@ -1827,7 +1853,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@code prompt} means the begin site sent no choice message (the Karn Scion flows, which
      * prompt via the game-state broadcast alone) - nothing is sent on reconnect replay either,
      * matching begin. The boolean/punisher components drive the answer handling exactly as the
-     * legacy context did.
+     * legacy context did. When {@code selectedCardsToBattlefieldType} is non-null, selected cards
+     * with that type go onto the battlefield and the other selected cards go into the hand.
      */
     record LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
@@ -1836,7 +1863,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                int lifeCostPerSelection,
                                UUID beneficiaryPlayerId, int maxCount, String prompt,
                                boolean selectedToBattlefieldTapped, int minCount,
-                               boolean gainLifeEqualToSelectedCardManaValue)
+                               boolean gainLifeEqualToSelectedCardManaValue,
+                               CardType selectedCardsToBattlefieldType)
             implements PendingInteraction {
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -1846,8 +1874,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
                                    String prompt) {
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
-                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
-                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt, false, 0, false);
+                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt, false, 0, false, null);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -1857,9 +1885,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
                                    String prompt, boolean selectedToBattlefieldTapped) {
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
-                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
-                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
-                    selectedToBattlefieldTapped, 0, false);
+                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                     selectedToBattlefieldTapped, 0, false, null);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -1869,9 +1897,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
                                    String prompt, int minCount, boolean gainLifeEqualToSelectedCardManaValue) {
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
-                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
-                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
-                    false, minCount, gainLifeEqualToSelectedCardManaValue);
+                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                     false, minCount, gainLifeEqualToSelectedCardManaValue, null);
         }
 
         @Override

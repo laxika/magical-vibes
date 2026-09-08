@@ -25,6 +25,8 @@ import java.util.UUID;
  * source permanent after a filtered discard completes.
  * {@code thenEffect}/{@code thenEffectSourceCard} push {@code thenEffect} as a reflexive triggered
  * ability afterwards ("discard a [matching] card. If you do, [effect]", Pack Guardian).
+ * {@code discardedCardSelectionControllerId}/{@code discardedCardIds} retain the exact cards
+ * discarded by a targeted discard so a later resolution-time choice can use only those cards.
  */
 public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               List<UUID> remainingEachPlayerDiscards,
@@ -33,7 +35,8 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               UUID boostPermanentId, int boostPower, int boostToughness,
                               Card thenEffectSourceCard, CardEffect thenEffect, CardPredicate thenEffectCondition,
                               Permanent enteringPermanent, UUID enteringControllerId,
-                              UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount) {
+                              UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount,
+                              UUID discardedCardSelectionControllerId, List<UUID> discardedCardIds) {
 
     public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                            List<UUID> remainingEachPlayerDiscards,
@@ -46,12 +49,29 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 boostToughness, thenEffectSourceCard, thenEffect, null, null, null, null, 0);
     }
 
+    public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
+                           List<UUID> remainingEachPlayerDiscards,
+                           UUID eachPlayerControllerId, int eachPlayerAmount,
+                           int graveyardReturnCount, List<Integer> eachPlayerAmounts,
+                           UUID boostPermanentId, int boostPower, int boostToughness,
+                           Card thenEffectSourceCard, CardEffect thenEffect,
+                           CardPredicate thenEffectCondition, Permanent enteringPermanent,
+                           UUID enteringControllerId, UUID plusOnePlusOneCounterPermanentId,
+                           int plusOnePlusOneCounterAmount) {
+        this(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId,
+                eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower,
+                boostToughness, thenEffectSourceCard, thenEffect, thenEffectCondition,
+                enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId,
+                plusOnePlusOneCounterAmount, null, List.of());
+    }
+
     public static final DiscardFollowUp NONE =
             new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0, null, null);
 
     public DiscardFollowUp {
         remainingEachPlayerDiscards = List.copyOf(remainingEachPlayerDiscards);
         eachPlayerAmounts = List.copyOf(eachPlayerAmounts);
+        discardedCardIds = List.copyOf(discardedCardIds);
     }
 
     public static DiscardFollowUp rummage(int drawCount) {
@@ -93,6 +113,29 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     }
 
     /**
+     * Retain the cards discarded by a targeted player so the controller can choose one matching
+     * land card to put onto the battlefield afterwards.
+     */
+    public static DiscardFollowUp chooseDiscardedLandForBattlefield(UUID controllerId) {
+        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
+                null, null, null, null, null, null, 0, controllerId, List.of());
+    }
+
+    public DiscardFollowUp withDiscardedCard(UUID cardId) {
+        if (discardedCardSelectionControllerId == null) {
+            return this;
+        }
+        List<UUID> updatedCardIds = new java.util.ArrayList<>(discardedCardIds);
+        updatedCardIds.add(cardId);
+        return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards,
+                eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts,
+                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
+                thenEffectCondition, enteringPermanent, enteringControllerId,
+                plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount,
+                discardedCardSelectionControllerId, updatedCardIds);
+    }
+
+    /**
      * Push {@code thenEffect} onto the stack as a reflexive triggered ability once the discard
      * completes ("discard a [matching] card. If you do, [effect]").
      */
@@ -125,6 +168,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
                 thenEffectCondition,
                 enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId,
-                plusOnePlusOneCounterAmount);
+                plusOnePlusOneCounterAmount, discardedCardSelectionControllerId,
+                discardedCardIds);
     }
 }

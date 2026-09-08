@@ -109,18 +109,71 @@ public class ValidTargetService {
         return computeValidTargetsForSpell(gameData, card, controllerId, alreadySelectedIds, xValue, null);
     }
 
+    /** Returns the target filters for the selected modal modes in target-position order. */
+    private List<TargetFilter> modalTargetFilters(ChooseOneEffect modal, Integer xValue) {
+        if (modal == null || xValue == null) {
+            return List.of();
+        }
+        List<TargetFilter> filters = new ArrayList<>();
+        List<Integer> chosenModeIndices;
+        try {
+            chosenModeIndices = modal.decodeModeIndices(xValue);
+        } catch (IllegalStateException ignored) {
+            return List.of();
+        }
+        for (int modeIndex : chosenModeIndices) {
+            ChooseOneEffect.ChooseOneOption option = modal.options().get(modeIndex);
+            if (option.targetFilters() != null) {
+                filters.addAll(option.targetFilters());
+            } else if (option.targetFilter() != null) {
+                for (int i = 0; i < option.maxTargets(); i++) {
+                    filters.add(option.targetFilter());
+                }
+            }
+        }
+        return filters;
+    }
+
+    /** Returns the selected modal's total minimum or maximum target count. */
+    private int modalTargetCount(ChooseOneEffect modal, Integer xValue, boolean minimum, int fallback) {
+        if (modal == null || xValue == null) {
+            return fallback;
+        }
+        List<Integer> chosenModeIndices;
+        try {
+            chosenModeIndices = modal.decodeModeIndices(xValue);
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+        int count = 0;
+        for (int modeIndex : chosenModeIndices) {
+            ChooseOneEffect.ChooseOneOption option = modal.options().get(modeIndex);
+            if (option.targetFilters() != null) {
+                count += option.targetFilters().size();
+            } else {
+                count += minimum ? option.minTargets() : option.maxTargets();
+            }
+        }
+        return count;
+    }
+
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked) {
-        boolean isMultiTarget = card.getMaxTargets() > 1;
         int effectiveXValue = resolveCastTimeXValue(gameData, card, controllerId, xValue);
 
         // For modal spells (and modal ETB creatures) the request's xValue carries the encoded
         // mode selection; resolve to the chosen mode's effects so targeting reflects that mode.
+        ChooseOneEffect modalEffect = findModalEffect(card);
         ChooseOneEffect.ChooseOneOption chosenMode = findChosenMode(card, xValue);
         Integer modeSelection = chosenMode != null || hasModalEffect(card) && xValue != null ? xValue : null;
+        List<TargetFilter> modalTargetFilters = modalTargetFilters(modalEffect, xValue);
+        boolean isMultiTarget = card.getMaxTargets() > 1 || modalTargetFilters.size() > 1;
 
         List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
         List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
-        TargetFilter modeFilter = chosenMode != null ? chosenMode.targetFilter() : null;
+        TargetFilter modeFilter = chosenMode != null ? chosenMode.targetFilter()
+                : modalTargetFilters.size() == 1 ? modalTargetFilters.getFirst() : null;
+        List<TargetFilter> targetFilters = modalTargetFilters.isEmpty()
+                ? card.getMultiTargetFilters() : modalTargetFilters;
         Set<TargetType> allowedTargets;
         if (kicked != null || modeSelection != null) {
             spellEffects = EffectResolution.resolveEffects(spellEffects, kicked, modeSelection);
@@ -143,8 +196,8 @@ public class ValidTargetService {
         if (allowedTargets.contains(TargetType.PERMANENT)) {
             // Determine per-position filter for multi-target spells; a chosen mode's
             // filter override plays the same role for modal spells.
-            TargetFilter positionFilter = isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
-                    ? card.getMultiTargetFilters().get(positionIndex)
+            TargetFilter positionFilter = isMultiTarget && positionIndex < targetFilters.size()
+                    ? targetFilters.get(positionIndex)
                     : modeFilter;
 
             if (!gameQueryService.isPeaceTalksActive(gameData)) {
@@ -196,13 +249,21 @@ public class ValidTargetService {
             if (!isMultiTarget) {
                 positionAllowsPlayers = true;
             } else {
-                positionAllowsPlayers = card.doesPositionAllowPlayerTargets(positionIndex);
+                TargetFilter positionFilter = positionIndex < targetFilters.size()
+                        ? targetFilters.get(positionIndex) : null;
+                positionAllowsPlayers = modalEffect != null && xValue != null
+                        ? positionFilter instanceof PlayerPredicateTargetFilter
+                        || positionFilter instanceof AnyTargetPredicateTargetFilter
+                        : card.doesPositionAllowPlayerTargets(positionIndex);
             }
 
             if (positionAllowsPlayers && !gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, modeFilter != null ? modeFilter : card.getTargetFilter(),
+                    TargetFilter playerFilter = isMultiTarget && positionIndex < targetFilters.size()
+                            ? targetFilters.get(positionIndex)
+                            : modeFilter != null ? modeFilter : card.getTargetFilter();
+                    if (isValidPlayerTarget(gameData, playerFilter,
                             playerId, controllerId, null, card)) {
                         validPlayerIds.add(playerId);
                     }
@@ -214,8 +275,8 @@ public class ValidTargetService {
             // A graveyard target group declares its own scope + card filter, so per-position
             // enumeration honours the group being filled (Spelltwine: own graveyard, then an
             // opponent's). Groups that declare no graveyard filter keep the card-wide enumeration.
-            TargetFilter graveyardPositionFilter = isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
-                    ? card.getMultiTargetFilters().get(positionIndex)
+            TargetFilter graveyardPositionFilter = isMultiTarget && positionIndex < targetFilters.size()
+                    ? targetFilters.get(positionIndex)
                     : null;
             if (graveyardPositionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                 validGraveyardCardIds.addAll(
@@ -230,10 +291,10 @@ public class ValidTargetService {
             prompt = "Select targets for " + card.getName();
         }
 
-        int responseMinTargets = card.getMinTargets();
+        int responseMinTargets = modalTargetCount(modalEffect, xValue, true, card.getMinTargets());
         int effectiveX = xValue != null ? xValue : 0;
-        int responseMaxTargets = targetLegalityService.getEffectiveMaxTargets(
-                gameData, card, controllerId, effectiveX);
+        int responseMaxTargets = modalTargetCount(modalEffect, xValue, false,
+                targetLegalityService.getEffectiveMaxTargets(gameData, card, controllerId, effectiveX));
         if (card.hasXScaledTargets()) {
             responseMinTargets = card.getEffectiveMinTargets(effectiveXValue);
             responseMaxTargets = card.getEffectiveMaxTargets(effectiveXValue);
@@ -272,7 +333,7 @@ public class ValidTargetService {
     /**
      * Resolves the single chosen mode of a modal card from the request's encoded xValue.
      * Returns null for non-modal cards, missing/skip ({@code < 0}) selections, and
-     * choose-multiple selections (whose modes may not declare per-mode filters).
+     * choose-multiple selections.
      */
     private ChooseOneEffect.ChooseOneOption findChosenMode(Card card, Integer xValue) {
         if (xValue == null) return null;

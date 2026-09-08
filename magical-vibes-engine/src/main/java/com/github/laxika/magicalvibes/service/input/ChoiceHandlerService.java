@@ -131,6 +131,10 @@ public class ChoiceHandlerService {
 
         // Card name choice (Pithing Needle, etc.)
         if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx) {
+            if (ctx.requiredType() != null && !colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid " + ctx.requiredType().getDisplayName().toLowerCase()
+                        + " card name choice: " + colorName);
+            }
             handleCardNameChosen(gameData, player, colorName, ctx);
             return;
         }

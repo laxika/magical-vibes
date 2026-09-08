@@ -928,12 +928,20 @@ public class PlayerInputService {
 
     public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
                                        boolean restrictToOpponentHands, boolean nonbasicLandOnly) {
-        ChoiceContext.CardNameChoice choiceContext = new ChoiceContext.CardNameChoice(card, playerId, excludedTypes);
+        return beginCardNameChoice(gameData, playerId, card, excludedTypes, restrictToOpponentHands,
+                nonbasicLandOnly, null);
+    }
+
+    public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
+                                       boolean restrictToOpponentHands, boolean nonbasicLandOnly,
+                                       CardType requiredType) {
+        ChoiceContext.CardNameChoice choiceContext =
+                new ChoiceContext.CardNameChoice(card, playerId, excludedTypes, requiredType);
 
         List<String> cardNames;
         String prompt;
         if (restrictToOpponentHands) {
-            cardNames = collectOpponentHandCardNames(gameData, playerId, excludedTypes);
+            cardNames = collectOpponentHandCardNames(gameData, playerId, excludedTypes, requiredType);
             if (cardNames.isEmpty()) {
                 return false;
             }
@@ -941,6 +949,9 @@ public class PlayerInputService {
         } else if (nonbasicLandOnly) {
             cardNames = collectNonBasicLandCardNamesInGame(gameData);
             prompt = "Choose a nonbasic land card name.";
+        } else if (requiredType != null) {
+            cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes, requiredType);
+            prompt = "Choose a " + requiredType.getDisplayName().toLowerCase() + " card name.";
         } else if (excludedTypes.isEmpty()) {
             cardNames = collectAllCardNamesInGame(gameData);
             prompt = "Choose a card name.";
@@ -974,13 +985,18 @@ public class PlayerInputService {
 
     /** Distinct names of the cards held by {@code playerId}'s opponents, minus {@code excludedTypes}. */
     private List<String> collectOpponentHandCardNames(GameData gameData, UUID playerId, List<CardType> excludedTypes) {
+        return collectOpponentHandCardNames(gameData, playerId, excludedTypes, null);
+    }
+
+    private List<String> collectOpponentHandCardNames(GameData gameData, UUID playerId,
+                                                      List<CardType> excludedTypes, CardType requiredType) {
         Set<String> names = new TreeSet<>();
         for (UUID pid : gameData.playerIds) {
             if (pid.equals(playerId)) {
                 continue;
             }
             gameData.playerHands.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> isNameCandidate(c, excludedTypes, null))
+                    .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
                     .forEach(c -> names.add(c.getName()));
         }
         return List.copyOf(names);

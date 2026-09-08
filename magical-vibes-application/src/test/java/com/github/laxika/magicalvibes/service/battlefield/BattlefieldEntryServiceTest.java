@@ -15,7 +15,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
@@ -154,6 +156,25 @@ class BattlefieldEntryServiceTest {
         service.putPermanentOntoBattlefield(gd, player1Id, entering);
 
         assertThat(entering.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Conditional enters-tapped replacement uses the spell's X value")
+    void conditionalEntersTappedUsesSpellXValue() {
+        Card card = new Card();
+        card.setName("X-dependent Permanent");
+        card.setType(CardType.ARTIFACT);
+        card.addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+                new NotCondition(new SpellXAtLeast(3)), new EntersTappedEffect()));
+
+        Permanent enteringAtTwo = new Permanent(card);
+        service.putPermanentOntoBattlefield(gd, player1Id, enteringAtTwo, 2, false);
+
+        Permanent enteringAtThree = new Permanent(card);
+        service.putPermanentOntoBattlefield(gd, player1Id, enteringAtThree, 3, false);
+
+        assertThat(enteringAtTwo.isTapped()).isTrue();
+        assertThat(enteringAtThree.isTapped()).isFalse();
     }
 
     // ===== "Enters with … counters" replacement effects (CR 614.1c / 614.12) =====
