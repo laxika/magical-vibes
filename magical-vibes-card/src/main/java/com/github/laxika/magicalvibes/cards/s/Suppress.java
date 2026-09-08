@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandFaceDownAndReturnAtNextTurnEndStepEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "52")
+@CardRegistration(set = "PHUK", collectorNumber = "26")
 public class Suppress extends Card {
 
     public Suppress() {

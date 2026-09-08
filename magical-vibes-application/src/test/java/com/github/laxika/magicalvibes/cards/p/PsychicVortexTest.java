@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PsychicVortex.class, Forest.class, GrizzlyBears.class, Island.class})
 class PsychicVortexTest extends BaseCardTest {
 
     @Test
@@ -83,8 +85,7 @@ class PsychicVortexTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Island")).isZero();
@@ -105,11 +106,36 @@ class PsychicVortexTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
         assertThat(countPermanents(player1, "Island") + countPermanents(player1, "Forest")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Choosing a land sacrifices it and then discards the hand")
+    void endStepSacrificesChosenLandAndDiscardsHand() {
+        harness.addToBattlefield(player1, new PsychicVortex());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(island);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -122,9 +148,27 @@ class PsychicVortexTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The end-step trigger does not fire during an opponent's end step")
+    void endStepTriggerDoesNotFireDuringOpponentsEndStep() {
+        Permanent vortex = harness.addToBattlefieldAndReturn(player1, new PsychicVortex());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vortex, island);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

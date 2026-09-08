@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSB", collectorNumber = "50")
 @CardRegistration(set = "DDD", collectorNumber = "45")
+@CardRegistration(set = "SCG", collectorNumber = "76")
 public class TwistedAbomination extends Card {
 
     public TwistedAbomination() {

@@ -24,7 +24,7 @@ public class SourceBecomesChosenBasicLandTypeEffectHandler implements StaticEffe
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
-        if (chosenSubtype == null || !context.source().getCard().hasType(CardType.LAND)) {
+        if (chosenSubtype == null || !context.sourceCard().hasType(CardType.LAND)) {
             return;
         }
         accumulator.addGrantedSubtype(chosenSubtype);

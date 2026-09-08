@@ -132,8 +132,8 @@ public class PsychicBattleSupport {
         Set<UUID> candidates = new LinkedHashSet<>();
         if (entry.getTargetZone() == Zone.STACK) {
             for (StackEntry stackEntry : gameData.stack) {
-                if (!stackEntry.getCard().getId().equals(entry.getCard().getId())) {
-                    candidates.add(stackEntry.getCard().getId());
+                if (!stackEntry.getTargetableId().equals(entry.getCard().getId())) {
+                    candidates.add(stackEntry.getTargetableId());
                 }
             }
         } else if (entry.getTargetZone() == Zone.GRAVEYARD) {

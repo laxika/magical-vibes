@@ -195,7 +195,12 @@ public class CombatTriggerService {
                             boolean needsTarget = effectsForStack.stream()
                                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                             if (needsTarget) {
-                                if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
+                                if (perm.getCard().isAura() && perm.getCard().getSpellTargets().size() > 1) {
+                                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                            List.of(), 1, 0, List.of(0), 0, List.of(), false, null,
+                                            creature.getId()));
+                                } else if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                                     perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),

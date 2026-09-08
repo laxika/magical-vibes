@@ -46,7 +46,7 @@ export class DeckBuilderComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   filteredCards = computed(() => {
-    let result = this.cards();
+    let result = this.cards().filter(card => !/^(Plane|Phenomenon)(?: |$)/.test(card.typeLine));
     const query = this.searchQuery().toLowerCase().trim();
     if (query) {
       result = result.filter(c => c.name.toLowerCase().includes(query));

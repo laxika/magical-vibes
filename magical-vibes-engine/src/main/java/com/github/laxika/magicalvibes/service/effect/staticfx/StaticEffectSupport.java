@@ -119,7 +119,7 @@ public class StaticEffectSupport {
         }
         if (scope == GrantScope.SELF_AND_PAIRED) {
             UUID pairedId = context.source().getPairedWithId();
-            return context.target().getId().equals(context.source().getId())
+            return context.target().getId().equals(context.sourceId())
                     || (pairedId != null && context.target().getId().equals(pairedId));
         }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
@@ -134,7 +134,7 @@ public class StaticEffectSupport {
                 || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
             if ((scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_CREATURES)
-                    && context.target().getId().equals(context.source().getId())) {
+                    && context.target().getId().equals(context.sourceId())) {
                 return false;
             }
             boolean ownCheck = scope == GrantScope.ALL_CREATURES
@@ -222,7 +222,7 @@ public class StaticEffectSupport {
                         ? 1
                         : (boost.scalingCounterOnTarget()
                                 ? context.target().getCounterCount(boost.scalingCounter())
-                                : context.source().getCounterCount(boost.scalingCounter()));
+                                : context.sourceCounterCount(boost.scalingCounter()));
                 accumulator.addPower(boost.powerBoost() * multiplier);
                 accumulator.addToughness(boost.toughnessBoost() * multiplier);
                 accumulator.addKeywords(boost.grantedKeywords());
@@ -248,7 +248,7 @@ public class StaticEffectSupport {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
                     || grant.scope() == GrantScope.ALL_OWN_CREATURES
                     || grant.scope() == GrantScope.OWN_PERMANENTS) {
-                accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
+                accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
             }
         } else if (wrapped instanceof GrantColorEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
@@ -332,7 +332,7 @@ public class StaticEffectSupport {
      */
     private static FilterContext filterContextOf(StaticEffectContext context) {
         return FilterContext.of(context.gameData())
-                .withSourceCardId(context.source().getCard().getId())
+                .withSourceCardId(context.sourceCard().getId())
                 .withSourceControllerId(context.sourceControllerId())
                 .withSourcePermanentSnapshot(context.source());
     }

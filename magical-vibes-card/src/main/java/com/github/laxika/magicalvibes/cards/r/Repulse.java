@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INV", collectorNumber = "70")
+@CardRegistration(set = "DD2", collectorNumber = "25")
 public class Repulse extends Card {
 
     public Repulse() {

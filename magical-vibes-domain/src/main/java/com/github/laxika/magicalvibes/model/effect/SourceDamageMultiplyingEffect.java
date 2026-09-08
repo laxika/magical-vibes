@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Static effect that multiplies damage dealt by matching sources controlled by the same player as
- * the permanent carrying this effect.
+ * Static effect that multiplies damage dealt by matching sources. By default, matching sources
+ * must be controlled by the permanent carrying this effect.
  */
 public interface SourceDamageMultiplyingEffect extends CardEffect {
 
@@ -21,6 +21,11 @@ public interface SourceDamageMultiplyingEffect extends CardEffect {
 
     /** Whether this multiplier applies to combat damage aimed at the supplied permanent. */
     default boolean appliesToCombatDamageTarget(Permanent target) {
+        return true;
+    }
+
+    /** Whether matching sources must be controlled by the permanent carrying this effect. */
+    default boolean requiresSourceControllerMatch() {
         return true;
     }
 

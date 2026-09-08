@@ -283,6 +283,7 @@ public class TurnCleanupService {
         gameData.sourceNextDamageToAnyTargetShields.clear();
         gameData.eyeForAnEyeShields.clear();
         gameData.reflectDamageToSourceControllerShields.clear();
+        gameData.sourceNextCombatDamageToControllerShields.clear();
         gameData.sourceNextDamageRedirectToPermanentShields.clear();
         gameData.playerSourceNextDamageRedirectShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();
@@ -402,6 +403,7 @@ public class TurnCleanupService {
         gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
         gameData.nextSpellCostReductionsThisTurn.clear();
+        gameData.nextSpellFreeCastPermissionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
         gameData.spellEntryCounters.clear();

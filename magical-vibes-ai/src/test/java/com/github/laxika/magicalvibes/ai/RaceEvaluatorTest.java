@@ -8,9 +8,15 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WallOfFrost;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -179,10 +185,42 @@ class RaceEvaluatorTest {
         }
 
         @Test
-        @DisplayName("Lava Axe deals 5 face damage (DealDamageToPlayersEffect TARGET_PLAYER)")
+        @DisplayName("Lava Axe deals 5 face damage when it targets a player")
         void lavaAxeFaceDamage() {
             int damage = raceEvaluator.getBurnToFaceDamage(new LavaAxe());
             assertThat(damage).isEqualTo(5);
+        }
+
+        @Test
+        void targetedPlayerDamageCountsAsBurn() {
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER));
+
+            assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isEqualTo(4);
+        }
+
+        @Test
+        void controllerDamageDoesNotCountAsBurn() {
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(5, DamageRecipient.CONTROLLER));
+
+            assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isZero();
+        }
+
+        @Test
+        void creatureOnlyDamageDoesNotCountAsBurn() {
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
+
+            assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isZero();
+        }
+
+        @Test
+        void variableDamageDoesNotCountAsFixedBurn() {
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
+
+            assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isZero();
         }
 
         @Test

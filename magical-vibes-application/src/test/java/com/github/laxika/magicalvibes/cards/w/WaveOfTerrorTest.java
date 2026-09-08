@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WaveOfTerror.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class, SavannahLions.class})
 class WaveOfTerrorTest extends BaseCardTest {
 
     @Test
@@ -63,6 +65,46 @@ class WaveOfTerrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(lions).contains(thopter);
+    }
+
+    @Test
+    @DisplayName("Matching creatures cannot be regenerated")
+    void matchingCreaturesCannotBeRegenerated() {
+        Permanent wave = addWave(player1);
+        wave.setCounterCount(CounterType.AGE, 2);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setRegenerationShield(1);
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The sweep does not trigger during an opponent's draw step")
+    void doesNotTriggerDuringOpponentsDrawStep() {
+        addWave(player1).setCounterCount(CounterType.AGE, 1);
+        Permanent lions = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
+
+        advanceToDraw(player2);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(lions);
+    }
+
+    @Test
+    @DisplayName("The triggered sweep uses Wave of Terror's last-known age counters")
+    void triggeredSweepUsesLastKnownAgeCounters() {
+        Permanent wave = addWave(player1);
+        wave.setCounterCount(CounterType.AGE, 2);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToDraw(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(wave);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
     }
 
     @Test

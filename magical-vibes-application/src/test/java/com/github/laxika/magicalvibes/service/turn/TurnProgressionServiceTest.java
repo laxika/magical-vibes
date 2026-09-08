@@ -594,6 +594,29 @@ class TurnProgressionServiceTest {
     class AdvanceTurn {
 
         @Test
+        void extraTurnRestrictionsStayWithTheirQueuedTurn() {
+            gd.queueExtraTurnFirst(player1Id, false, false, true);
+            gd.queueExtraTurnFirst(player1Id, false, true);
+            gd.queueExtraTurnFirst(player1Id, false);
+
+            turnProgressionService.advanceTurn(gd);
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
+            assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+
+            turnProgressionService.advanceTurn(gd);
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
+            assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+
+            turnProgressionService.advanceTurn(gd);
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isTrue();
+            assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+
+            turnProgressionService.advanceTurn(gd);
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
+            assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        }
+
+        @Test
         @DisplayName("Switches active player to the other player")
         void switchesActivePlayer() {
             gd.activePlayerId = player1Id;
