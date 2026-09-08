@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BreathOfLife.class, GrizzlyBears.class, Plains.class})
 class BreathOfLifeTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class BreathOfLifeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BreathOfLife()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -37,14 +38,34 @@ class BreathOfLifeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target non-creature card in graveyard")
-    void cannotTargetNonCreatureCard() {
-        Card instant = new HolyDay();
-        harness.setGraveyard(player1, List.of(instant));
+    @DisplayName("Returns only the selected creature card when multiple creatures are in your graveyard")
+    void returnsOnlySelectedCreatureFromMultipleGraveyardCreatures() {
+        Card otherCreature = new GrizzlyBears();
+        Card selectedCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(otherCreature, selectedCreature));
         harness.setHand(player1, List.of(new BreathOfLife()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, instant.getId()))
+        harness.castAndResolveSorcery(player1, 0, selectedCreature.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(selectedCreature.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(otherCreature.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(otherCreature.getId()))
+                .noneMatch(c -> c.getId().equals(selectedCreature.getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot target non-creature card in graveyard")
+    void cannotTargetNonCreatureCard() {
+        Card nonCreature = new Plains();
+        harness.setGraveyard(player1, List.of(nonCreature));
+        harness.setHand(player1, List.of(new BreathOfLife()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

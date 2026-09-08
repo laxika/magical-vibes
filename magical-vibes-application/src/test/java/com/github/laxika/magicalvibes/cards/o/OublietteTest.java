@@ -47,7 +47,6 @@ class OublietteTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, oublietteId);
         harness.passBothPriorities();
 

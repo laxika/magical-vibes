@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -54,12 +55,12 @@ class ProsperityTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({PhyrexianWalker.class})
+    @CardUsed({GrizzlyBears.class})
     @DisplayName("X=1: each player draws one card from their own library")
     void eachPlayerDrawsOneCardFromTheirOwnLibrary() {
         Prosperity player1Spell = new Prosperity();
-        PhyrexianWalker player1Card = new PhyrexianWalker();
-        PhyrexianWalker player2Card = new PhyrexianWalker();
+        GrizzlyBears player1Card = new GrizzlyBears();
+        GrizzlyBears player2Card = new GrizzlyBears();
         harness.setHand(player1, List.of(player1Spell));
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(player1Card));

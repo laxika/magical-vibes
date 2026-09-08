@@ -343,7 +343,12 @@ public class CardChoiceHandlerService {
                     if (pendingEntry != null) {
                         if (thenCondition == null || predicateEvaluationService.matchesCardPredicate(
                                 card, thenCondition, sourceCardId, gameData, playerId)) {
+                            if (thenEffect.usesChosenPermanentReference()) {
+                                pendingEntry.setChosenPermanentId(enteredPermanent.getId());
+                            }
+                            else {
                             pendingEntry.setTargetId(enteredPermanent.getId());
+                            }
                             pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                                     List.of(thenEffect));
                         }
@@ -650,6 +655,11 @@ public class CardChoiceHandlerService {
                 continue;
             }
 
+            if (!selection.playerId().equals(gameData.discardEventPlayerId)) {
+                triggerCollectionService.finishDiscardEvent(gameData);
+                triggerCollectionService.beginDiscardEvent(gameData, selection.playerId());
+            }
+
             boolean causedByOpponent = !selection.playerId().equals(sourceControllerId);
             gameData.discardCausedByOpponent = causedByOpponent;
             boolean replacedByBattlefield = false;
@@ -679,6 +689,7 @@ public class CardChoiceHandlerService {
             checkPendingConniveOnDiscard(gameData, card);
             discardedCounts.merge(selection.playerId(), 1, Integer::sum);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
         return discardedCounts;
     }
 

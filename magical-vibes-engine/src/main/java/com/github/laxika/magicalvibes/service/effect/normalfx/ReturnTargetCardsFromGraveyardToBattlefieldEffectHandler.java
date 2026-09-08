@@ -62,7 +62,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                                           ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         List<GraveyardCard> cardsToReturn = new ArrayList<>();
         int totalManaValue = 0;
-        for (UUID targetCardId : entry.getTargetCardIds()) {
+        for (UUID targetCardId : targets(entry, effect)) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
             if (graveyardOwnerId == null) {
                 continue;
@@ -122,7 +122,16 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
 
     public void resolveForController(GameData gameData, StackEntry entry, CardEffect effect,
                                      UUID graveyardOwnerId) {
-        resolveForController(gameData, entry, effect, graveyardOwnerId, entry.getTargetCardIds());
+        resolveForController(gameData, entry, effect, graveyardOwnerId, targets(entry, effect));
+    }
+
+    private List<UUID> targets(StackEntry entry, CardEffect effect) {
+        List<UUID> bound = entry.targetsForBoundEffectGroup(effect);
+        if (bound != null) return bound;
+        List<UUID> graveyardTargets = entry.getTargetCardIdsForEffect(effect);
+        if (!graveyardTargets.isEmpty()) return graveyardTargets;
+        Integer group = entry.getResolvingEffectTargetGroup();
+        return group != null ? entry.targetsForGroup(group) : entry.targetsForEffect(effect);
     }
 
     public void resolveForController(GameData gameData, StackEntry entry, CardEffect effect,

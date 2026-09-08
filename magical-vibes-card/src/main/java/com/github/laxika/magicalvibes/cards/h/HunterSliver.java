@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "102")
 public class HunterSliver extends Card {
@@ -22,7 +26,10 @@ public class HunterSliver extends Card {
                 EffectSlot.ON_ATTACK,
                 new MayEffect(
                         SequenceEffect.of(
-                                new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                new UntapPermanentsEffect(TapUntapScope.TARGET,
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsCreaturePredicate(),
+                                                new PermanentControlledByDefendingPlayerPredicate()))),
                                 new MustBlockSourceEffect(null,
                                         new PermanentControlledByDefendingPlayerPredicate())),
                         "Have target creature defending player controls untap and block it if able?"),

@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ITP", collectorNumber = "11")
 @CardRegistration(set = "SUM", collectorNumber = "71")
 @CardRegistration(set = "ME1", collectorNumber = "43")
+@CardRegistration(set = "3ED", collectorNumber = "71")
 public class PhantomMonster extends Card {
 }

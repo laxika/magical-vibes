@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "45")
+@CardRegistration(set = "3ED", collectorNumber = "35")
 @CardRegistration(set = "9ED", collectorNumber = "35")
 @CardRegistration(set = "5ED", collectorNumber = "55")
 @CardRegistration(set = "7ED", collectorNumber = "34")

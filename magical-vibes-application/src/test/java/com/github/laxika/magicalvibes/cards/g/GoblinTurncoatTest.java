@@ -47,6 +47,7 @@ class GoblinTurncoatTest extends BaseCardTest {
     @DisplayName("Sacrifice cost only accepts Goblins")
     void sacrificeCostOnlyAcceptsGoblins() {
         harness.addToBattlefield(player1, new GoblinTurncoat());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
         Permanent nonGoblin = harness.addToBattlefieldAndReturn(player1, new FarrelitePriest());
 
         harness.activateAbility(player1, 0, null, null);
@@ -54,5 +55,8 @@ class GoblinTurncoatTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, nonGoblin.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonGoblin).doesNotContain(goblin);
     }
 }

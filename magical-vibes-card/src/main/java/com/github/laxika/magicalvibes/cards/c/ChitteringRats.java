@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DST", collectorNumber = "39")
+@CardRegistration(set = "PHUK", collectorNumber = "5")
+@CardRegistration(set = "PHUK", collectorNumber = "19")
+@CardRegistration(set = "PHUK", collectorNumber = "54")
 public class ChitteringRats extends Card {
 
     public ChitteringRats() {

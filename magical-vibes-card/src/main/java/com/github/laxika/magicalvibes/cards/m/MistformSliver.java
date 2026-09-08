@@ -19,12 +19,17 @@ public class MistformSliver extends Card {
         ActivatedAbility becomeCreatureType = new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new SourceBecomesChosenSubtypeUntilEndOfTurnEffect()),
+                List.of(new SourceBecomesChosenSubtypeUntilEndOfTurnEffect(true)),
                 "{1}: This permanent becomes the creature type of your choice in addition to its other types until end of turn."
         );
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 becomeCreatureType,
-                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                GrantScope.ALL_PERMANENTS,
+                new PermanentHasSubtypePredicate(CardSubtype.SLIVER)
+        ));
+        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                becomeCreatureType,
+                GrantScope.SELF,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)
         ));
     }

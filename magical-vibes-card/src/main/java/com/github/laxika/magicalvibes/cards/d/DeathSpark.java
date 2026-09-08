@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ALL", collectorNumber = "70")
 @CardRegistration(set = "DKM", collectorNumber = "11")
+@CardRegistration(set = "CST", collectorNumber = "32")
 public class DeathSpark extends Card {
 
     public DeathSpark() {

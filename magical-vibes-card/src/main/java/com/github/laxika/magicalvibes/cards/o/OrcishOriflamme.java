@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 @CardRegistration(set = "6ED", collectorNumber = "197")
 @CardRegistration(set = "5ED", collectorNumber = "257")
 @CardRegistration(set = "4ED", collectorNumber = "215")
+@CardRegistration(set = "3ED", collectorNumber = "169")
 @CardRegistration(set = "ITP", collectorNumber = "37")
 @CardRegistration(set = "RQS", collectorNumber = "36")
 @CardRegistration(set = "SUM", collectorNumber = "169")
