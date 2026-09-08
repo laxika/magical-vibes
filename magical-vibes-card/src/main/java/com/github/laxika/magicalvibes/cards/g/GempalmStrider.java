@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "127")
+@CardRegistration(set = "DD1", collectorNumber = "6")
 public class GempalmStrider extends Card {
 
     public GempalmStrider() {

@@ -159,7 +159,11 @@ public enum CardSet {
     SET_LCI("LCI"),
     SET_BIG("BIG"),
     SET_TLA("TLA"),
-    SET_OM1("OM1");
+    SET_OM1("OM1"),
+    SET_DD1("DD1"),
+    SET_CP1("CP1"),
+    SET_CP2("CP2"),
+    SET_CP3("CP3");
 
     @Getter
     private final String code;

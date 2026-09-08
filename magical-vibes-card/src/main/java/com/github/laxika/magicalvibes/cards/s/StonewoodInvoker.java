@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "139")
+@CardRegistration(set = "DD1", collectorNumber = "11")
 public class StonewoodInvoker extends Card {
 
     public StonewoodInvoker() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GPT", collectorNumber = "98")
+@CardRegistration(set = "DD1", collectorNumber = "23")
 public class Wildsize extends Card {
 
     public Wildsize() {
