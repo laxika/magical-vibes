@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SUM", collectorNumber = "53")
+@CardRegistration(set = "3ED", collectorNumber = "53")
 public class CopyArtifact extends Card {
 
     public CopyArtifact() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "156")
+@CardRegistration(set = "3ED", collectorNumber = "156")
 public class GraniteGargoyle extends Card {
 
     public GraniteGargoyle() {

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "239")
 @CardRegistration(set = "5ED", collectorNumber = "313")
 @CardRegistration(set = "4ED", collectorNumber = "261")
+@CardRegistration(set = "3ED", collectorNumber = "211")
 @CardRegistration(set = "BTD", collectorNumber = "58")
 @CardRegistration(set = "SUM", collectorNumber = "211")
 public class LlanowarElves extends Card {
