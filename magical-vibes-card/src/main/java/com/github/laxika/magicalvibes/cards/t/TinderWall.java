@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "270")
+@CardRegistration(set = "CST", collectorNumber = "40")
 public class TinderWall extends Card {
 
     public TinderWall() {

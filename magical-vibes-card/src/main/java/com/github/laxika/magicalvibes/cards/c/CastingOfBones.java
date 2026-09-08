@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALL", collectorNumber = "44a")
 @CardRegistration(set = "ALL", collectorNumber = "44b")
+@CardRegistration(set = "CST", collectorNumber = "22")
+@CardRegistration(set = "CST", collectorNumber = "44")
 public class CastingOfBones extends Card {
 
     public CastingOfBones() {

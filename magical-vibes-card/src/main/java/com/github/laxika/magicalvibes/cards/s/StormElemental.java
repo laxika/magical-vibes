@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "37")
+@CardRegistration(set = "CST", collectorNumber = "37")
 public class StormElemental extends Card {
 
     public StormElemental() {
