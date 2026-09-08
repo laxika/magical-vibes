@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "159")
+@CardRegistration(set = "H09", collectorNumber = "20")
 public class NecroticSliver extends Card {
 
     public NecroticSliver() {
