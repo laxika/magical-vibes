@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,10 +18,8 @@ class TouchOfBrillianceTest extends BaseCardTest {
     void resolvingDrawsTwoCards() {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new TouchOfBrilliance()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new TouchOfBrilliance(), "{3}{U}");
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
@@ -30,12 +28,26 @@ class TouchOfBrillianceTest extends BaseCardTest {
     @Test
     @DisplayName("Touch of Brilliance goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new TouchOfBrilliance()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new TouchOfBrilliance(), "{3}{U}");
+        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Touch of Brilliance");
+    }
+
+    @Test
+    @DisplayName("Drawing two cards with only one card left loses to the empty library")
+    void drawingPastTheEndOfTheLibraryLosesTheGame() {
+        TouchOfBrilliance onlyLibraryCard = new TouchOfBrilliance();
+        harness.setLibrary(player1, List.of(onlyLibraryCard));
+
+        harness.castFromHand(player1, new TouchOfBrilliance(), "{3}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyLibraryCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playersAttemptedDrawFromEmptyLibrary).contains(player1.getId());
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }

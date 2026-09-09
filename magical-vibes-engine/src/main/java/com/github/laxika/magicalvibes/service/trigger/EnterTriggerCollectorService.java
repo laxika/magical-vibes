@@ -1124,14 +1124,16 @@ public class EnterTriggerCollectorService {
         }
         Card sourceCard = match.permanent().getCard();
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().stack.add(new StackEntry(
+            StackEntry damageEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(effect)),
                     enteringPermanentId,
-                    match.permanent().getId()));
+                    match.permanent().getId());
+            damageEntry.setNonTargeting(true);
+            match.gameData().stack.add(damageEntry);
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (deal damage to entering creature)",

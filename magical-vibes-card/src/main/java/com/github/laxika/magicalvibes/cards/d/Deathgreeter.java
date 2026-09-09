@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "71")
+@CardRegistration(set = "DDD", collectorNumber = "33")
 public class Deathgreeter extends Card {
 
     public Deathgreeter() {

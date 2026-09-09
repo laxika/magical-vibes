@@ -835,9 +835,9 @@ public class AmountEvaluationService {
         UUID triggeringCardId = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringCardId();
         for (StackEntry se : gameData.stack) {
             boolean isTargetedSpell = ctx.targetPermanentId() != null
-                    && se.getCard().getId().equals(ctx.targetPermanentId());
+                    && se.getTargetableId().equals(ctx.targetPermanentId());
             boolean isTriggeringSpell = triggeringCardId != null
-                    && se.getCard().getId().equals(triggeringCardId);
+                    && se.getTargetableId().equals(triggeringCardId);
             if (isTargetedSpell || isTriggeringSpell) {
                 return se.getCard().getManaValue() + se.getXValue();
             }
@@ -849,7 +849,7 @@ public class AmountEvaluationService {
     private int targetSpellPower(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(ctx.targetPermanentId())) {
+            if (se.getTargetableId().equals(ctx.targetPermanentId())) {
                 Integer power = se.getCard().getPower();
                 return power == null ? 0 : Math.max(0, power);
             }
@@ -1406,7 +1406,7 @@ public class AmountEvaluationService {
         }
         return gameData.stack.stream()
                 .filter(entry -> entry.getCard() != null)
-                .filter(entry -> entry.getCard().getId().equals(ctx.sourceCard().getId()))
+                .filter(entry -> entry.getTargetableId().equals(ctx.sourceCard().getId()))
                 .findFirst()
                 .map(entry -> entry.getCounterCount(amount.counterType()))
                 .orElse(0);

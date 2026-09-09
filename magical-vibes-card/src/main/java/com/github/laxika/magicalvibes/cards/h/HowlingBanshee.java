@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "M10", collectorNumber = "99")
 @CardRegistration(set = "M11", collectorNumber = "100")
+@CardRegistration(set = "DDD", collectorNumber = "43")
 public class HowlingBanshee extends Card {
 
     public HowlingBanshee() {

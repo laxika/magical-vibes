@@ -3,12 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +16,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SteamFrigate.class, Island.class})
 class SteamFrigateTest extends BaseCardTest {
 
     // ===== Attack restriction =====
@@ -28,16 +27,8 @@ class SteamFrigateTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player2, new Island());
 
-        Permanent frigate = new Permanent(new SteamFrigate());
-        frigate.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(frigate);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        addCreatureReady(player1, new SteamFrigate());
+        declareAttackers(List.of(0));
 
         // Combat auto-advances; verify attack went through by checking damage dealt (3/3)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -46,16 +37,19 @@ class SteamFrigateTest extends BaseCardTest {
     @Test
     @DisplayName("Steam Frigate cannot attack when defending player does not control an Island")
     void cannotAttackWhenDefenderDoesNotControlIsland() {
-        Permanent frigate = new Permanent(new SteamFrigate());
-        frigate.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(frigate);
+        addCreatureReady(player1, new SteamFrigate());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+    @Test
+    @DisplayName("Steam Frigate cannot attack when only its controller controls an Island")
+    void cannotAttackWhenOnlyAttackingPlayerControlsIsland() {
+        addCreatureReady(player1, new SteamFrigate());
+        harness.addToBattlefield(player1, new Island());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -67,18 +61,10 @@ class SteamFrigateTest extends BaseCardTest {
         changeling.setType(CardType.CREATURE);
         changeling.setSubtypes(List.of(CardSubtype.SHAPESHIFTER));
         changeling.setKeywords(Set.of(Keyword.CHANGELING));
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(changeling));
+        addCreatureReady(player2, changeling);
+        addCreatureReady(player1, new SteamFrigate());
 
-        Permanent frigate = new Permanent(new SteamFrigate());
-        frigate.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(frigate);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -1151,6 +1151,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` | A creature you control deals combat damage to a player |
 | `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE` | One or more matching creatures you control deal combat damage to a player or battle; `oneOrMoreDealers=true` batches separately for each damaged player or battle and passes the matching dealer ids through `CombatDamageDealerAwareEffect` wrappers |
 | `ON_SELF_MILLED` | This card is milled into graveyard |
+| `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY` | This card moves from its library to its graveyard, including effects that do not mill |
 | `STATE_TRIGGERED` | State-triggered ability (rule 603.8). Fires when predicate is true, won't retrigger while on stack |
 | `SAGA_CHAPTER_I` | Saga chapter I (first lore counter placed, on ETB and precombat main) |
 | `SAGA_CHAPTER_II` | Saga chapter II (second lore counter) |

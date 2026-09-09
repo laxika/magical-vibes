@@ -32,7 +32,7 @@ public class StaticBoostSelfEffectHandler implements StaticEffectHandlerBean {
                 && support.matchesStaticFilter(context, context.target(), boost.filter())) {
             int multiplier = boost.scalingCounter() == null
                     ? 1
-                    : context.source().getCounterCount(boost.scalingCounter());
+                    : context.sourceCounterCount(boost.scalingCounter());
             accumulator.addPower(boost.powerBoost() * multiplier);
             accumulator.addToughness(boost.toughnessBoost() * multiplier);
             accumulator.addKeywords(boost.grantedKeywords());

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "51")
 @CardRegistration(set = "DRK", collectorNumber = "70")
+@CardRegistration(set = "ME1", collectorNumber = "98")
 public class GoblinsOfTheFlarg extends Card {
 
     public GoblinsOfTheFlarg() {

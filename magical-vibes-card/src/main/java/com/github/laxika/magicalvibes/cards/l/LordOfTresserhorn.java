@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "112")
+@CardRegistration(set = "ME1", collectorNumber = "149")
 public class LordOfTresserhorn extends Card {
 
     public LordOfTresserhorn() {

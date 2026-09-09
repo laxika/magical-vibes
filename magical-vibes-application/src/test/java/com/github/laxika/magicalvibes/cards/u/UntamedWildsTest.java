@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.StripMine;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UntamedWilds.class, Plains.class, Forest.class, Island.class, Mountain.class, StripMine.class})
+@CardUsed({Forest.class, Island.class, Mountain.class, Plains.class, StripMine.class, UntamedWilds.class})
 class UntamedWildsTest extends BaseCardTest {
 
     @Test
@@ -100,5 +101,38 @@ class UntamedWildsTest extends BaseCardTest {
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(
                 new Plains(), new Forest(), new Island(), new Mountain(), new StripMine()));
+    }
+
+    @Test
+    @DisplayName("Chosen basic land is removed from the library and the library is shuffled")
+    void chosenBasicLandIsRemovedAndLibraryIsShuffled() {
+        setupAndCast();
+        setupLibrary();
+
+        harness.passBothPriorities();
+
+        Card chosenCard = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().getFirst();
+        int libraryBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(libraryBefore - 1)
+                .noneMatch(card -> card.getId().equals(chosenCard.getId()));
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolving with an empty library does not prompt and still shuffles")
+    void emptyLibraryNoPrompt() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("it is empty")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 }

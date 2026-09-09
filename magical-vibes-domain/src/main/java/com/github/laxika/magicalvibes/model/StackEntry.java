@@ -26,6 +26,13 @@ public class StackEntry {
 
     private final StackEntryType entryType;
     private final Card card;
+    private UUID planarAbilityId = UUID.randomUUID();
+
+    /** Independent stack identity for planar abilities, including abilities with no card source. */
+    public UUID getTargetableId() {
+        return getCard() == null || sourcePlanarObject != null ? planarAbilityId : getCard().getId();
+    }
+
     private Card castCard;
     @Setter private UUID controllerId;
     /** The player whose upkeep caused this entry's each-upkeep trigger, when applicable. */
@@ -44,6 +51,7 @@ public class StackEntry {
     private boolean targetIdOverriddenForEffectResolution;
     private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
+    @Setter private com.github.laxika.magicalvibes.model.planar.PlanarObject sourcePlanarObject;
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
@@ -705,6 +713,8 @@ public class StackEntry {
         this.chosenCreatureType = source.chosenCreatureType;
         this.chosenCreatureTypes.putAll(source.chosenCreatureTypes);
         this.damageSourceCard = source.damageSourceCard;
+        this.planarAbilityId = source.planarAbilityId;
+        this.sourcePlanarObject = source.sourcePlanarObject == null ? null : source.sourcePlanarObject.copy();
         this.spellDamageContinuation = source.spellDamageContinuation;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;

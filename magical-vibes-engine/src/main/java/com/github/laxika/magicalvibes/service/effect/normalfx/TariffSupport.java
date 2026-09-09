@@ -43,7 +43,9 @@ public class TariffSupport {
     /** Entry point from the effect handler: build the APNAP player queue and start processing. */
     public void begin(GameData gameData, Card sourceCard) {
         gameData.tariffRemainingPlayers.clear();
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        int start = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
+        for (int offset = 0; offset < gameData.orderedPlayerIds.size(); offset++) {
+            UUID playerId = gameData.orderedPlayerIds.get((start + offset) % gameData.orderedPlayerIds.size());
             if (!collectCreatures(gameData, playerId).isEmpty()) {
                 gameData.tariffRemainingPlayers.add(playerId);
             }

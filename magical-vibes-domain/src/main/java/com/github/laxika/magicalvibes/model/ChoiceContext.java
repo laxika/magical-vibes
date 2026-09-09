@@ -14,6 +14,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 public sealed interface ChoiceContext {
 
+    /** Chooses the regeneration replacement before the destruction event is completed. */
+    record RegenerationShieldChoice(UUID permanentId, Map<String, String> shields,
+                                    boolean stateBasedDestruction) implements ChoiceContext {
+        public RegenerationShieldChoice(UUID permanentId, Map<String, String> shields) {
+            this(permanentId, shields, false);
+        }
+
+        public RegenerationShieldChoice {
+            shields = Map.copyOf(shields);
+        }
+    }
+
     record CappedCounterAmountChoice(UUID sourcePermanentId) implements ChoiceContext {}
 
     record SagaChapterCounterAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.d.DelugeOfTheDead;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HighlandGiant;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,8 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BeeSting.class, ChandraHopesBeacon.class, DelugeOfTheDead.class, GrizzlyBears.class,
-        HighlandGiant.class, InvasionOfInnistrad.class})
+@CardUsed({BeeSting.class, DelugeOfTheDead.class, ChandraNalaar.class, GrizzlyBears.class, InvasionOfInnistrad.class, SerraAngel.class})
 class BeeStingTest extends BaseCardTest {
 
     @Test
@@ -36,6 +35,7 @@ class BeeStingTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
+        assertThat(entry.getCard()).isInstanceOf(BeeSting.class);
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -57,10 +57,9 @@ class BeeStingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -71,8 +70,7 @@ class BeeStingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -81,29 +79,42 @@ class BeeStingTest extends BaseCardTest {
     @Test
     @DisplayName("Bee Sting does not destroy a creature with toughness greater than 2")
     void doesNotDestroyHigherToughnessCreature() {
-        harness.addToBattlefield(player2, new HighlandGiant());
+        harness.addToBattlefield(player2, new SerraAngel());
         harness.setHand(player1, List.of(new BeeSting()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Highland Giant");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Serra Angel");
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
-        harness.assertOnBattlefield(player2, "Highland Giant");
+        harness.assertOnBattlefield(player2, "Serra Angel");
     }
 
     @Test
-    @DisplayName("Bee Sting deals 2 damage to a target planeswalker")
+    @DisplayName("Bee Sting deals 2 damage to target planeswalker")
     void deals2DamageToPlaneswalker() {
-        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraHopesBeacon());
-        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        var planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new BeeSting()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
 
-        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Bee Sting goes to graveyard after resolution")
+    void goesToGraveyardAfterResolution() {
+        harness.setHand(player1, List.of(new BeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Bee Sting");
     }
 
     @Test
@@ -118,19 +129,5 @@ class BeeStingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Bee Sting goes to graveyard after resolution")
-    void goesToGraveyardAfterResolution() {
-        harness.setHand(player1, List.of(new BeeSting()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.setLife(player2, 20);
-
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
-
-        assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Bee Sting");
     }
 }

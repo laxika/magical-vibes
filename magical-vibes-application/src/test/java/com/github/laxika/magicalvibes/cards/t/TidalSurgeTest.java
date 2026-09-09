@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,8 +18,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TidalSurge.class, GrizzlyBears.class, WindDrake.class, Island.class})
+@CardUsed({AirElemental.class, AlabornTrooper.class, GrizzlyBears.class, Island.class, TidalSurge.class})
 class TidalSurgeTest extends BaseCardTest {
+
+    private void castTidalSurge(List<UUID> targets) {
+        prepareTidalSurge();
+        harness.castAndResolveSorcery(player1, 0, targets);
+    }
 
     private void prepareTidalSurge() {
         harness.setHand(player1, List.of(new TidalSurge()));
@@ -25,21 +32,18 @@ class TidalSurgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
     }
 
-    private void castTidalSurge(List<UUID> targets) {
-        prepareTidalSurge();
-        harness.castAndResolveSorcery(player1, 0, targets);
-    }
-
     @Test
     @DisplayName("Taps up to three target creatures without flying")
     void tapsThreeCreatures() {
-        List<UUID> targetIds = List.of(
-                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId(),
-                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId(),
-                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId());
+        addCreatureReady(player2, new AlabornTrooper());
+        addCreatureReady(player2, new AlabornTrooper());
+        addCreatureReady(player2, new AlabornTrooper());
+        List<UUID> targetIds = gd.playerBattlefields.get(player2.getId()).stream()
+                .map(Permanent::getId).toList();
 
         castTidalSurge(targetIds);
 
+        GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .allMatch(Permanent::isTapped);
     }
@@ -47,10 +51,12 @@ class TidalSurgeTest extends BaseCardTest {
     @Test
     @DisplayName("Can target only one creature")
     void tapsOneCreature() {
-        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        addCreatureReady(player2, new AlabornTrooper());
+        UUID targetId = harness.getPermanentId(player2, "Alaborn Trooper");
 
         castTidalSurge(List.of(targetId));
 
+        GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getId().equals(targetId))
                 .allMatch(Permanent::isTapped);
@@ -59,7 +65,8 @@ class TidalSurgeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with flying")
     void cannotTargetFlyer() {
-        UUID flyerId = harness.addToBattlefieldAndReturn(player2, new WindDrake()).getId();
+        addCreatureReady(player2, new AirElemental());
+        UUID flyerId = harness.getPermanentId(player2, "Air Elemental");
         prepareTidalSurge();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(flyerId)))
@@ -69,13 +76,29 @@ class TidalSurgeTest extends BaseCardTest {
     @Test
     @DisplayName("Can be cast with no targets")
     void castWithNoTargets() {
-        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        addCreatureReady(player2, new AlabornTrooper());
+        UUID creatureId = harness.getPermanentId(player2, "Alaborn Trooper");
 
         castTidalSurge(List.of());
 
+        GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .filteredOn(p -> p.getId().equals(bearsId))
+                .filteredOn(p -> p.getId().equals(creatureId))
                 .noneMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Can tap non-flying creatures controlled by either player without tapping flyers")
+    void tapsValidTargetsRegardlessOfController() {
+        Permanent ownCreature = addCreatureReady(player1, new AlabornTrooper());
+        Permanent opposingCreature = addCreatureReady(player2, new AlabornTrooper());
+        Permanent opposingFlyer = addCreatureReady(player2, new AirElemental());
+
+        castTidalSurge(List.of(ownCreature.getId(), opposingCreature.getId()));
+
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(opposingCreature.isTapped()).isTrue();
+        assertThat(opposingFlyer.isTapped()).isFalse();
     }
 
     @Test

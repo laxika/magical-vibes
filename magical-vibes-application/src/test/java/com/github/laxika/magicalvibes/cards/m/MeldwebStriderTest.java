@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.o.ObsidianGiant;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MeldwebStrider.class, ObsidianGiant.class})
 class MeldwebStriderTest extends BaseCardTest {
 
     @Test
@@ -67,7 +67,7 @@ class MeldwebStriderTest extends BaseCardTest {
     @DisplayName("Crew 3 animates it and taps the crewing creature")
     void crewAnimatesIt() {
         Permanent strider = addReadyStrider(0);
-        Permanent giant = addReadyCreature(player1, new ObsidianGiant());
+        Permanent giant = addCreatureReady(player1, new ObsidianGiant());
 
         harness.activateAbility(player1, indexOf(strider), 1, null, null);
         harness.passBothPriorities();
@@ -84,13 +84,6 @@ class MeldwebStriderTest extends BaseCardTest {
         strider.setCounterCount(CounterType.OIL, oilCounters);
         gd.playerBattlefields.get(player1.getId()).add(strider);
         return strider;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
     }
 
     private int indexOf(Permanent permanent) {

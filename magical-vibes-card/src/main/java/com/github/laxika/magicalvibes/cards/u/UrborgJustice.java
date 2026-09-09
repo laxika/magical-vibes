@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import java.util.List;
 
 /**
@@ -22,6 +25,8 @@ import java.util.List;
 public class UrborgJustice extends Card {
 
     public UrborgJustice() {
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"));
         addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
                 new CreaturesPutIntoOwnGraveyardThisTurn(),
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),

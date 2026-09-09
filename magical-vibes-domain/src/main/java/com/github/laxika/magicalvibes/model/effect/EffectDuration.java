@@ -4,6 +4,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * How long an effect lasts.
  */
 public enum EffectDuration {
+    UNTIL_PLANESWALK,
     /** Permanent static/continuous effect (e.g. auras, equipment). */
     CONTINUOUS,
     /** One-shot effect that wears off at end of turn (cleared by resetModifiers). */

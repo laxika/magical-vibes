@@ -127,7 +127,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                         && targetPredicateEvaluationService.matchesSpell(
                         predicate, stackEntry, entry.getControllerId(), entry.getSourcePermanentSnapshot(),
                         filterContext)) {
-                    validPermanentIds.add(stackEntry.getCard().getId());
+                    validPermanentIds.add(stackEntry.getTargetableId());
                 }
             }
         }

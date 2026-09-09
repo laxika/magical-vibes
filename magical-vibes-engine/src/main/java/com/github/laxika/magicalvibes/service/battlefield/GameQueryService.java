@@ -762,7 +762,7 @@ public class GameQueryService {
     public StackEntry findStackEntryByCardId(GameData gameData, UUID cardId) {
         if (cardId == null) return null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(cardId)) {
+            if (se.getTargetableId().equals(cardId)) {
                 return se;
             }
         }
@@ -2360,6 +2360,18 @@ public class GameQueryService {
      */
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return hasKeyword(permanent, computeStaticBonus(gameData, permanent), keyword);
+    }
+
+    /** Counts the flanking abilities that survive the current ability layer. */
+    public int flankingInstances(GameData gameData, Permanent permanent) {
+        if (!hasKeyword(gameData, permanent, Keyword.FLANKING)) return 0;
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+            return state == null ? 1 : state.getFlankingInstances();
+        } finally {
+            layerSystemService.endPass(pass);
+        }
     }
 
     /**
@@ -4235,7 +4247,24 @@ public class GameQueryService {
                 }
             }
         }
-        // Process emblem static effects
+        if (gameData.planechase != null) {
+            UUID controller = gameData.planechase.controllerId;
+            for (var planar : gameData.planechase.faceUp) {
+                StaticEffectContext context = new StaticEffectContext(null, target, controller,
+                        controller.equals(resolvedTargetControllerId), gameData, planar);
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);
+                    if (handler == null) continue;
+                    accumulator.setLayeredOutputsSuppressed(board.isManagedL56(effect));
+                    try {
+                        handler.apply(context, effect, accumulator);
+                    } finally {
+                        accumulator.setLayeredOutputsSuppressed(false);
+                    }
+                }
+            }
+        }
+
         for (Emblem emblem : gameData.emblems) {
             List<Permanent> ownerBf = gameData.playerBattlefields.get(emblem.controllerId());
             if (ownerBf == null || !ownerBf.contains(target)) continue;
@@ -6304,7 +6333,7 @@ public class GameQueryService {
             return true;
         }
         StackEntry stackEntry = gameData.stack.stream()
-                .filter(entry -> entry.getCard().getId().equals(card.getId())
+                .filter(entry -> entry.getTargetableId().equals(card.getId())
                         && isSpellStackEntry(entry.getEntryType()))
                 .findFirst()
                 .orElse(null);

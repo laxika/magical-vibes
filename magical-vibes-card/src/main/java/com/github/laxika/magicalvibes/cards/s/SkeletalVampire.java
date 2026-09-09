@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GPT", collectorNumber = "62")
+@CardRegistration(set = "DDD", collectorNumber = "46")
 public class SkeletalVampire extends Card {
 
     private static final CreateTokenEffect BAT_TOKENS = new CreateTokenEffect(

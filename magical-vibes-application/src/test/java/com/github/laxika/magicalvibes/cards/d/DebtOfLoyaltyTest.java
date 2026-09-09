@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FatalBlow;
 import com.github.laxika.magicalvibes.cards.j.JabarisBanner;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +18,35 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DebtOfLoyalty.class, BenalishKnight.class, JabarisBanner.class, FatalBlow.class})
 class DebtOfLoyaltyTest extends BaseCardTest {
+
+    @Test
+    void simultaneousDestructionCollectsAllShieldChoicesInActivePlayerOrder() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BenalishKnight());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BenalishKnight());
+        for (Permanent creature : List.of(first, second)) {
+            harness.setHand(player1, List.of(new DebtOfLoyalty()));
+            harness.addMana(player1, ManaColor.WHITE, 3);
+            harness.castAndResolveInstant(player1, 0, creature.getId());
+            creature.setRegenerationShield(2);
+        }
+        harness.forceActivePlayer(player2);
+        first.setMarkedDamage(2);
+        second.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, "Regenerate without an additional effect");
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(first.getRegenerationShield()).isEqualTo(2);
+        assertThat(second.getRegenerationShield()).isEqualTo(2);
+        harness.handleListChoice(player1, "Regenerate without an additional effect");
+        assertThat(first.getRegenerationShield()).isEqualTo(1);
+        assertThat(second.getRegenerationShield()).isEqualTo(1);
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        assertThat(gd.chosenRegenerationShields).isEmpty();
+    }
 
     @Test
     @DisplayName("Debt of Loyalty grants a regeneration shield but does not move the creature on resolution")
@@ -63,6 +93,7 @@ class DebtOfLoyaltyTest extends BaseCardTest {
         bear.setRegenerationShield(bear.getRegenerationShield() + 1);
         bear.setMarkedDamage(2);
         harness.passBothPriorities();
+        harness.handleListChoice(player2, "Regenerate without an additional effect");
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bear);
         assertThat(bear.getRegenerationShield()).isEqualTo(1);
@@ -84,7 +115,22 @@ class DebtOfLoyaltyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .as("the creature's controller must choose the regeneration shield")
-                .isNotNull();
+                .isInstanceOf(PendingInteraction.ColorChoice.class);
+        var choice = (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(bear.getRegenerationShield()).isEqualTo(2);
+        assertThat(bear.getMarkedDamage()).isEqualTo(2);
+        String debtShield = choice.options().stream()
+                .filter(option -> option.contains(" control")).findFirst().orElseThrow();
+        assertThatThrownBy(() -> harness.handleListChoice(player1, debtShield))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleListChoice(player2, debtShield);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
+        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(bear.getGainControlRegenerationShields()).isEmpty();
+        assertThat(bear.getMarkedDamage()).isZero();
     }
 
     @Test

@@ -20,6 +20,7 @@ public final class AiInteractionStrategies {
         register(new AlternateCastXValueChoiceAiStrategy());
         register(new TurnFaceUpXValueChoiceAiStrategy());
         register(new ScryAiStrategy());
+        register(new WorldsWithinWorldsChoiceAiStrategy());
         register(new HandTopBottomChoiceAiStrategy());
         register(new HandBottomExileChoiceAiStrategy());
         register(new EcologicalAppreciationSearchChoiceAiStrategy());

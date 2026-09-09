@@ -46,8 +46,8 @@ public class TargetRedirectionSupport {
 
         if (targetSpell.getTargetZone() == Zone.STACK) {
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(targetSpell.getCard().getId())) continue;
-                candidates.add(se.getCard().getId());
+                if (se.getTargetableId().equals(targetSpell.getCard().getId())) continue;
+                candidates.add(se.getTargetableId());
             }
         } else if (targetSpell.getTargetZone() == Zone.GRAVEYARD) {
             for (UUID playerId : gameData.orderedPlayerIds) {

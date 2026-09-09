@@ -1057,7 +1057,7 @@ public class SpellCastingService {
             throw new IllegalStateException("This spell cannot target players");
         }
         boolean targetsSpell = gameData.stack.stream()
-                .anyMatch(entry -> entry.getCard().getId().equals(targetId));
+                .anyMatch(entry -> entry.getTargetableId().equals(targetId));
         if (targetsSpell
                 && !allowed.contains(TargetType.SPELL_ON_STACK)
                 && !(card.getCastTimeTargetFilter() instanceof StackEntryPredicateTargetFilter)) {
@@ -1407,7 +1407,7 @@ public class SpellCastingService {
                 false, null, null, null, null, null, false, null, null, null, null, null,
                 List.of(), buyback);
         gameData.stack.stream()
-                .filter(entry -> entry.getCard().getId().equals(card.getId()))
+                .filter(entry -> entry.getTargetableId().equals(card.getId()))
                 .findFirst()
                 .ifPresent(entry -> entry.setOpponentChosenTargetPlayerId(chosenOpponentId));
     }
@@ -4216,7 +4216,7 @@ public class SpellCastingService {
             entry.setGiftPromised(giftPromised);
             gameData.stack.add(entry);
             gameData.stack.stream()
-                    .filter(stackEntry -> stackEntry.getCard().getId().equals(card.getId()))
+                    .filter(stackEntry -> stackEntry.getTargetableId().equals(card.getId()))
                     .findFirst()
                     .ifPresent(stackEntry -> stackEntry.setGiftPromised(giftPromised));
             finishSpellCast(gameData, playerId, player, hand, card);
@@ -5430,7 +5430,7 @@ public class SpellCastingService {
                 }
             }
             gameData.stack.stream()
-                    .filter(stackEntry -> stackEntry.getCard().getId().equals(card.getId()))
+                    .filter(stackEntry -> stackEntry.getTargetableId().equals(card.getId()))
                     .findFirst()
                     .ifPresent(stackEntry -> stackEntry.setGiftPromised(giftPromised));
             finishSpellCast(gameData, playerId, player, hand, card);

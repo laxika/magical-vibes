@@ -167,6 +167,20 @@ class HiddenHorrorTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Hidden Horror");
     }
 
+    @Test
+    @DisplayName("Creature cards in an opponent's hand do not satisfy the discard requirement")
+    void opponentCreatureDoesNotSatisfyDiscardRequirement() {
+        harness.castFromHand(player1, new HiddenHorror(), "{1}{B}{B}");
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hidden Horror");
+        harness.assertInGraveyard(player1, "Hidden Horror");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
     // ===== Filtered discard — only creature cards =====
 
     @Test

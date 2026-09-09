@@ -1,83 +1,78 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RighteousCharge.class, GrizzlyBears.class})
 class RighteousChargeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving boosts all own creatures +2/+2")
     void resolvingBoostsAllOwnCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new RighteousCharge()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RighteousCharge(), "{1}{W}{W}");
         harness.passBothPriorities();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        for (Permanent p : battlefield) {
-            if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getEffectivePower()).isEqualTo(4);
-                assertThat(p.getEffectiveToughness()).isEqualTo(4);
-            }
-        }
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Does not boost opponent's creatures")
     void doesNotBoostOpponentCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new RighteousCharge()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RighteousCharge(), "{1}{W}{W}");
         harness.passBothPriorities();
 
-        List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
-        for (Permanent p : p2Battlefield) {
-            if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
-            }
-        }
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Boost wears off at cleanup step")
     void boostResetsAtCleanup() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new RighteousCharge()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RighteousCharge(), "{1}{W}{W}");
         harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        for (Permanent p : battlefield) {
-            if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getEffectivePower()).isEqualTo(2);
-                assertThat(p.getEffectiveToughness()).isEqualTo(2);
-            }
-        }
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not boost creatures that enter after resolution")
+    void doesNotBoostCreaturesEnteringAfterResolution() {
+        Permanent creatureAlreadyOnBattlefield = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new RighteousCharge(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        Permanent creatureEnteringLater = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, creatureAlreadyOnBattlefield)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creatureAlreadyOnBattlefield)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creatureEnteringLater)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creatureEnteringLater)).isEqualTo(2);
     }
 }

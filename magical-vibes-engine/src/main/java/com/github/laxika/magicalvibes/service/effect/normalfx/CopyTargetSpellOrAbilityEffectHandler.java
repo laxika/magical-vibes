@@ -54,12 +54,12 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             log.info("Game {} - Copy target spell or ability is no longer on the stack", gameData.id);
             return;
         }
-        if (targetEntry.getCard().isCantBeCopied()) {
+        if (targetEntry.getCard() != null && targetEntry.getCard().isCantBeCopied()) {
             gameLogService.append(gameData, GameLog.cardThen(targetEntry.getCard(), " can't be copied."));
             return;
         }
 
-        Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
+        Card copyCard = targetEntry.getCard() == null ? null : copySupport.createCopyCard(targetEntry.getCard());
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 targetEntry, copyCard, entry.getControllerId(), targetEntry.getTargetId());
         copyEntry.setTargetFilter(targetEntry.getTargetFilter());
@@ -76,9 +76,8 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
         copyEntry.setAttackedTargetId(targetEntry.getAttackedTargetId());
         gameData.stack.add(copyEntry);
 
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A copy of ", targetEntry.getCard(), " is created."));
-        queueRetargetChoice(gameData, entry, targetEntry, copyCard);
+        gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
+        queueRetargetChoice(gameData, entry, targetEntry, copyEntry);
     }
 
     private StackEntry findTargetEntry(GameData gameData, UUID targetCardId, StackEntryPredicate predicate) {
@@ -86,7 +85,7 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             return null;
         }
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getCard().getId().equals(targetCardId)
+            if (stackEntry.getTargetableId().equals(targetCardId)
                     && COPYABLE_STACK_TYPES.contains(stackEntry.getEntryType())
                     && matchesTargetPredicate(stackEntry, predicate)) {
                 return stackEntry;
@@ -109,7 +108,7 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
     }
 
     private void queueRetargetChoice(GameData gameData, StackEntry entry,
-                                     StackEntry targetEntry, Card copyCard) {
+                                     StackEntry targetEntry, StackEntry copyEntry) {
         if (!targetEntry.isSingleTarget()) {
             return;
         }
@@ -130,8 +129,8 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
 
         PendingMayAbility retargetAbility = new PendingMayAbility(
                 entry.getCard(), entry.getControllerId(), List.of(retargetEffect),
-                "Choose a new target for the copy of " + targetEntry.getCard().getName() + "?",
-                copyCard.getId());
+                "Choose a new target for the copy of " + targetEntry.getDescription() + "?",
+                copyEntry.getTargetableId());
         gameData.pendingMayAbilities.addFirst(retargetAbility);
     }
 }

@@ -1149,6 +1149,13 @@ public class DamagePreventionService {
 
     public int applyPlayerNextSourceDamageShield(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                                   int damage, boolean combatDamage, Card sourceCard) {
+        return applyPlayerNextSourceDamageShield(
+                gameData, playerId, sourcePermanentId, damage, combatDamage, sourceCard, false);
+    }
+
+    public int applyPlayerNextSourceDamageShield(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                                  int damage, boolean combatDamage, Card sourceCard,
+                                                  boolean sourceUnblocked) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
         if (damage <= 0 || playerId == null || sourcePermanentId == null
                 || gameData.playerSourceNextDamageShields.isEmpty()) {
@@ -1160,8 +1167,16 @@ public class DamagePreventionService {
             var shield = it.next();
             if (shield.playerId().equals(playerId)
                     && shieldMatchesSource(gameData, shield, sourcePermanentId, sourceCard)) {
+                if (shield.combatOnly() && !combatDamage) {
+                    continue;
+                }
+                if (shield.unblockedOnly() && !sourceUnblocked) {
+                    continue;
+                }
                 it.remove();
-                int prevented = shield.preventHalfDamage() ? remaining / 2 : remaining;
+                int prevented = shield.preventAllButOne()
+                        ? Math.max(0, remaining - 1)
+                        : shield.preventHalfDamage() ? remaining / 2 : remaining;
                 applyNextSourceShieldRiders(gameData, shield, prevented, sourceCard);
                 remaining -= prevented;
                 if (remaining == 0) {
@@ -1284,7 +1299,7 @@ public class DamagePreventionService {
                     : sourceCard != null
                             ? gameQueryService.getEffectiveCardColors(gameData, sourceCard).contains(CardColor.BLACK)
                             : gameData.stack.stream()
-                            .filter(entry -> entry.getCard().getId().equals(shield.sourceId()))
+                            .filter(entry -> entry.getTargetableId().equals(shield.sourceId()))
                             .anyMatch(entry -> gameQueryService.getEffectiveCardColors(
                                     gameData, entry.getCard()).contains(CardColor.BLACK));
             if (!black) {
@@ -1371,7 +1386,7 @@ public class DamagePreventionService {
                             ? sourceEntry
                             : gameData.stack.stream()
                             .filter(stackEntry -> stackEntry.getCard() != null
-                                    && sourcePermanentId.equals(stackEntry.getCard().getId()))
+                                    && sourcePermanentId.equals(stackEntry.getTargetableId()))
                             .findFirst()
                             .orElse(null);
                     if (matchingEntry != null) {

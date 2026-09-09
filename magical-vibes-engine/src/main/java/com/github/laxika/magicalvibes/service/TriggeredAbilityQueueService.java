@@ -661,7 +661,7 @@ public class TriggeredAbilityQueueService {
                 targetGroupIndex = compatibleTargetGroups.iterator().next();
             }
         }
-        if (targetGroupIndex < 0 && effects.stream()
+        if (sourceCard.isAura() && targetGroupIndex < 0 && effects.stream()
                 .anyMatch(effect -> !TargetSpec.NONE.equals(effect.targetSpec()))) {
             // An Aura's declared target is its enchantment target, not the target of an
             // unbound granted trigger. Let the trigger's own target specification decide
@@ -1273,6 +1273,19 @@ public class TriggeredAbilityQueueService {
     public void processNextSpellTargetTrigger(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             PermanentChoiceContext.SpellTargetTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+
+            if (pending.planarSource() != null) {
+                var targets = triggerTargetCollector.collect(gameData, pending.effects(), pending.targetFilter(),
+                        pending.controllerId(), pending.sourceCard(), TriggerTargetCollector.Options.END_STEP);
+                gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+                if (targets.validTargets().isEmpty()) continue;
+                gameData.interaction.setPermanentChoiceContext(pending);
+                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                        targets.validTargets().stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
+                        targets.validTargets().stream().filter(gameData.playerIds::contains).toList(),
+                        pending.sourceCard().getName() + "'s ability: choose a target.");
+                return;
+            }
 
             // Collect valid targets based on whether this is player-only targeting
             List<UUID> validPermanentTargets = new ArrayList<>();
@@ -2462,7 +2475,7 @@ public class TriggeredAbilityQueueService {
                                 gameData, se, pending.stackFilter(), pending.controllerId())) {
                     continue;
                 }
-                validStackCardIds.add(se.getCard().getId());
+                validStackCardIds.add(se.getTargetableId());
             }
 
             if (validStackCardIds.isEmpty()) {

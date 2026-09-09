@@ -495,7 +495,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * (also re-sent on reconnect).
      */
     record LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
-                          UUID deckOwnerId, String prompt, int drawAfterReorder) implements PendingInteraction {
+                          UUID deckOwnerId, String prompt, int drawAfterReorder, boolean planar) implements PendingInteraction {
+        public LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
+                              UUID deckOwnerId, String prompt, int drawAfterReorder) {
+            this(playerId, cards, toBottom, deckOwnerId, prompt, drawAfterReorder, false);
+        }
 
         public LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
                               UUID deckOwnerId, String prompt) {
@@ -1262,10 +1266,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Doomsday: choose up to five cards from the combined library+graveyard {@code pool} (held
+     * Doomsday: choose five cards, or all available cards if fewer, from the library+graveyard {@code pool} (held
      * out of both zones) to put on top of the library in any order; the unchosen cards are
      * exiled. IDs and card views are derived from {@code pool} at prompt time. The half-life
-     * loss is applied by the effect handler before this choice begins.
+     * loss follows this choice and the library ordering as a subsequent spell effect.
      */
     record DoomsdayChoice(UUID playerId, java.util.List<Card> pool, int maxCount)
             implements PendingInteraction {
@@ -1286,7 +1290,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 0, maxCount);
+            return new InteractionOptions.MultiCardPick(validCardIds(), maxCount, maxCount);
         }
     }
 

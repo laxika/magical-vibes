@@ -14,6 +14,6 @@ public class AbyssalGatekeeper extends Card {
     public AbyssalGatekeeper() {
         // When this creature dies, each player sacrifices a creature of their choice.
         addEffect(EffectSlot.ON_DEATH, new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_PLAYER));
+                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_PLAYER).withSimultaneousChoices());
     }
 }

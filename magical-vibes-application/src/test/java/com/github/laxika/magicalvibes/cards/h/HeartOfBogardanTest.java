@@ -73,6 +73,8 @@ class HeartOfBogardanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // X = 2 * 3 - 2 = 4: lethal to the 2/2 and 4 off the opponent's life total.
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         harness.assertInGraveyard(player2, "Benalish Knight");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(heart);

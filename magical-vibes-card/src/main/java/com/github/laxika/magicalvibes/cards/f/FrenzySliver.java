@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "85")
+@CardRegistration(set = "H09", collectorNumber = "6")
 public class FrenzySliver extends Card {
 
     public FrenzySliver() {

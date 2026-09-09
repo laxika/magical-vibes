@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,10 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LavaAxe.class, GrizzlyBears.class})
+@CardUsed({ChandraNalaar.class, LavaAxe.class, RuneclawBear.class})
 class LavaAxeTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Lava Axe targeting a player puts it on the stack")
@@ -47,8 +45,6 @@ class LavaAxeTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Damage to player =====
-
     @Test
     @DisplayName("Lava Axe deals 5 damage to target player")
     void deals5DamageToPlayer() {
@@ -56,25 +52,9 @@ class LavaAxeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LavaAxe()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
-    }
-
-    @Test
-    @CardUsed(ChandraNalaar.class)
-    @DisplayName("Lava Axe deals 5 damage to a target planeswalker")
-    void deals5DamageToPlaneswalker() {
-        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
-        chandra.setCounterCount(CounterType.LOYALTY, 6);
-        harness.setHand(player1, List.of(new LavaAxe()));
-        harness.addMana(player1, ManaColor.RED, 5);
-
-        harness.castSorcery(player1, 0, chandra.getId());
-        harness.passBothPriorities();
-
-        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
     @Test
@@ -84,18 +64,15 @@ class LavaAxeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LavaAxe()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
 
-    // ===== Cannot target creatures =====
-
     @Test
     @DisplayName("Lava Axe cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
         harness.setHand(player1, List.of(new LavaAxe()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -104,7 +81,18 @@ class LavaAxeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Goes to graveyard after resolution =====
+    @Test
+    @DisplayName("Lava Axe can target a planeswalker")
+    void canTargetPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player1, List.of(new LavaAxe()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Lava Axe goes to graveyard after resolution")
@@ -112,14 +100,11 @@ class LavaAxeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LavaAxe()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Lava Axe");
     }
-
-    // ===== Lethal damage =====
 
     @Test
     @DisplayName("Lava Axe can deal lethal damage to a player")
@@ -128,8 +113,7 @@ class LavaAxeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LavaAxe()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
     }

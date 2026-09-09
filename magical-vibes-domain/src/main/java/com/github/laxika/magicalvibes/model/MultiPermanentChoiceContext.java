@@ -21,6 +21,10 @@ import java.util.UUID;
  */
 public sealed interface MultiPermanentChoiceContext {
 
+    /** Selects an optional group of player targets without reserving the controller as a decline sentinel. */
+    record EtbPlayerTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
+            implements MultiPermanentChoiceContext {}
+
     record RemoveCounterFromChosenPermanents(StackEntry resolvingEntry, CounterType counterType,
                                              PermanentPredicate permanentFilter)
             implements MultiPermanentChoiceContext {

@@ -1113,7 +1113,7 @@ public class AbilityActivationService {
                                      Integer abilityIndex, Integer discardHandCardIndex) {
         StackEntry sourceEntry = gameData.stack.stream()
                 .filter(entry -> entry.getCard() != null)
-                .filter(entry -> entry.getCard().getId().equals(stackCardId))
+                .filter(entry -> entry.getTargetableId().equals(stackCardId))
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
                 .findFirst()
@@ -7582,8 +7582,8 @@ public class AbilityActivationService {
         }
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
-            boolean typeMatch = requiredType == null || card.getType() == requiredType
-                    || (alternateType != null && card.getType() == alternateType);
+            boolean typeMatch = requiredType == null || card.hasType(requiredType)
+                    || (alternateType != null && card.hasType(alternateType));
             boolean subtypeMatch = requiredSubtype == null || card.getSubtypes().contains(requiredSubtype);
             if (typeMatch && subtypeMatch) {
                 validIndices.add(i);

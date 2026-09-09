@@ -57,6 +57,7 @@ public class GameData {
     public volatile GameStatus status;
     /** "All Random" game mode: every player is dealt a randomly generated deck. */
     public volatile boolean allRandom;
+    public com.github.laxika.magicalvibes.model.planar.PlanechaseState planechase;
     /** For an {@link #allRandom} game: the set code the random decks draw from, or {@code null} for all sets. */
     public volatile String randomSetCode;
     public final Set<UUID> playerIds = ConcurrentHashMap.newKeySet();
@@ -286,6 +287,8 @@ public class GameData {
      * in, and no leave/enter-the-battlefield trigger fires either way.
      */
     public final Map<UUID, List<Permanent>> phasedOutPermanents = new ConcurrentHashMap<>();
+    /** Directly phased-out permanent ids that remain phased out until their source leaves. */
+    public final Map<UUID, Set<UUID>> phasedOutUntilSourceLeaves = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     /**
@@ -426,6 +429,8 @@ public class GameData {
      * battlefield lists) is queued here and applied once that sweep is done.
      */
     public final Map<UUID, UUID> pendingRegenerationControlChanges = new ConcurrentHashMap<>();
+    /** Replacement choices collected before a batch of state-based destruction is applied. */
+    public final Map<UUID, String> chosenRegenerationShields = new ConcurrentHashMap<>();
     /** Source permanent id → ids of the tokens created with it ("tokens created with this permanent"; Tetravus, Tombstone Stairwell). */
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
@@ -758,6 +763,8 @@ public class GameData {
      *  replacement applies to one draw). Consumed in {@code DrawService.resolveDrawCard} and
      *  cleared at end-of-turn cleanup. */
     public final Map<UUID, List<UUID>> pendingNextDrawFromExiledPile = new ConcurrentHashMap<>();
+    /** Ring of Ma'rûf — one queued, turn-scoped replacement per activation of the controller's next draw. */
+    public final Map<UUID, Integer> pendingNextDrawFromOutsideGame = new ConcurrentHashMap<>();
     /** Player IDs → number of pending Urabrask-style next-draw replacements this turn. */
     public final Map<UUID, Integer> pendingNextDrawExileTopCard = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
@@ -4595,6 +4602,7 @@ public class GameData {
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
         copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
+        copy.chosenRegenerationShields.putAll(this.chosenRegenerationShields);
         copy.unpreventableDamageInProgress = this.unpreventableDamageInProgress;
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
@@ -4844,6 +4852,7 @@ public class GameData {
         copy.pendingNextDrawDiscardOpponents.putAll(this.pendingNextDrawDiscardOpponents);
         this.pendingNextDrawFromExiledPile.forEach((k, v) ->
                 copy.pendingNextDrawFromExiledPile.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.pendingNextDrawFromOutsideGame.putAll(this.pendingNextDrawFromOutsideGame);
         copy.pendingNextDrawExileTopCard.putAll(this.pendingNextDrawExileTopCard);
         copy.pendingMysticReflections.addAll(this.pendingMysticReflections);
         copy.activeMysticReflectionsForEntryBatch.addAll(this.activeMysticReflectionsForEntryBatch);
@@ -4988,6 +4997,11 @@ public class GameData {
         this.phasedOutPermanents.forEach((k, v) -> copy.phasedOutPermanents.put(k,
                 Collections.synchronizedList(v.stream().map(Permanent::new)
                         .collect(java.util.stream.Collectors.toCollection(ArrayList::new)))));
+        this.phasedOutUntilSourceLeaves.forEach((k, v) -> {
+            Set<UUID> targetIds = ConcurrentHashMap.newKeySet();
+            targetIds.addAll(v);
+            copy.phasedOutUntilSourceLeaves.put(k, targetIds);
+        });
 
         // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---
         this.playerManaPools.forEach((k, v) -> copy.playerManaPools.put(k, new ManaPool(v)));
@@ -5291,7 +5305,9 @@ public class GameData {
         copy.permanentAbilityResolutionsThisTurn.putAll(this.permanentAbilityResolutionsThisTurn);
 
         // --- Deques ---
-        copy.pendingInteractions.addAll(this.pendingInteractions);
+        this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
+                pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
+                        ? trigger.copyPlanarSnapshot() : pending));
         copy.extraTurns.addAll(this.extraTurns);
         copy.extraTurnSkipsUntap.addAll(this.extraTurnSkipsUntap);
         copy.extraTurnPowerUpAbilitiesDisabled.addAll(this.extraTurnPowerUpAbilitiesDisabled);
@@ -5626,6 +5642,7 @@ public class GameData {
 
         // --- Game-creation config ---
         copy.allRandom = this.allRandom;
+        copy.planechase = this.planechase == null ? null : this.planechase.copy();
         copy.randomSetCode = this.randomSetCode;
 
         // --- Game log (share reference for simulation — not read during MCTS) ---

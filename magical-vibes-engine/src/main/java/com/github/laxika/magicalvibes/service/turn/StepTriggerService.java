@@ -284,6 +284,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @Slf4j
 @Service
 public class StepTriggerService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
 
 
     private final DrawService drawService;
@@ -424,6 +428,8 @@ public class StepTriggerService {
     }
 
     public void handleUpkeepTriggers(GameData gameData) {
+        if (gameData.planechase != null) planechaseService.step(gameData,
+                EffectSlot.UPKEEP_TRIGGERED, EffectSlot.EACH_UPKEEP_TRIGGERED);
         // "… until your next upkeep" (Cycle of Life): the floating layer-7b effect ends as the
         // upkeep begins, before the delayed trigger below puts its counter on the creature.
         gameData.expireFloatingEffectsAtUpkeep(gameData.activePlayerId);
@@ -859,9 +865,12 @@ public class StepTriggerService {
                     + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                     gameData, activePlayerId, perm));
             try {
-            List<CardEffect> upkeepEffects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED));
-            upkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
-            upkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+            List<CardEffect> upkeepEffects = new ArrayList<>();
+            if (!gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                upkeepEffects.addAll(perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED));
+                upkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+                upkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+            }
             if (upkeepEffects.stream().anyMatch(SoulEchoUpkeepEffect.class::isInstance)) {
                 perm.setEchoDamageRedirectionActive(false);
             }
@@ -2802,6 +2811,8 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.planechase != null) planechaseService.drawStep(gameData);
+
         // Check active player's battlefield for DRAW_TRIGGERED effects (controller's own draw step only)
         List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
         if (activeBattlefield != null) {
@@ -2831,6 +2842,7 @@ public class StepTriggerService {
                             });
                             triggerEntry.setEventCardIds(lockedPermanentIds);
                         }
+                        triggerEntry.setSourcePermanentSnapshot(new Permanent(perm));
                         gameData.stack.add(triggerEntry);
 
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s draw step ability triggers."));
@@ -3831,6 +3843,8 @@ public class StepTriggerService {
     private record DelayedReturningGraveyardCard(Card card, UUID ownerId) {}
 
     public void handleEndStepTriggers(GameData gameData) {
+        if (gameData.planechase != null) planechaseService.step(gameData,
+                EffectSlot.END_STEP_TRIGGERED, EffectSlot.CONTROLLER_END_STEP_TRIGGERED);
         expireNextEndStepTemporaryCopies(gameData);
         for (var delayed : gameData.drainDelayedActions(
                 com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger.class)) {

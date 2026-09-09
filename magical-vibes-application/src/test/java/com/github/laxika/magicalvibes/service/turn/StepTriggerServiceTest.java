@@ -485,6 +485,19 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        void permanentWithNoAbilitiesDoesNotTriggerAtUpkeep() {
+            Card card = createCardWithName("Upkeep creature");
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(1));
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            when(gameQueryService.hasLostAllAbilities(gd, permanent)).thenReturn(true);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("Dynamic echo cost is evaluated when the upkeep trigger is created")
         void dynamicEchoCostIsEvaluatedAtUpkeep() {
             Card card = createCardWithName("Dynamic Echo");

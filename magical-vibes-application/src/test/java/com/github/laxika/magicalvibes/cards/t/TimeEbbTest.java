@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TimeEbb.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Forest.class, GrizzlyBears.class, TimeEbb.class})
 class TimeEbbTest extends BaseCardTest {
 
     @Test

@@ -301,7 +301,9 @@ public enum CardSubtype {
     GLIMMER("Glimmer"),
     NEPHILIM("Nephilim"),
     SAND("Sand"),
-    RIGGER("Rigger");
+    RIGGER("Rigger"),
+    MIRRODIN("Mirrodin"),
+    SERRAS_REALM("Serra's Realm");
 
     private static final List<CardSubtype> BASIC_LAND_TYPES = List.of(
             PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST);

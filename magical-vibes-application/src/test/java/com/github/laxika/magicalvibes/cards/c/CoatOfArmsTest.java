@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
-import com.github.laxika.magicalvibes.cards.b.BallistaSquad;
-import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.Anarchist;
+import com.github.laxika.magicalvibes.cards.a.ArcaneAdaptation;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.s.StandingTroops;
+import com.github.laxika.magicalvibes.cards.w.WelkinHawk;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +19,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CoatOfArms.class, Anarchist.class, ChangelingWayfinder.class, RagingGoblin.class,
+        StandingTroops.class, WelkinHawk.class})
 class CoatOfArmsTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting puts it on the stack")
@@ -31,7 +34,6 @@ class CoatOfArmsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Coat of Arms");
     }
 
     @Test
@@ -44,293 +46,236 @@ class CoatOfArmsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Coat of Arms");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
-
-    // ===== No bonus when creatures don't share a type =====
 
     @Test
-    @DisplayName("No bonus for creatures that don't share a creature type")
+    @DisplayName("No bonus for creatures that do not share a creature type")
     void noBonusForUnrelatedCreatures() {
-        // GrizzlyBears (Bear) and AvenCloudchaser (Bird Soldier) share no types
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new AvenCloudchaser());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new WelkinHawk());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        Permanent aven = findPermanent(player1, "Aven Cloudchaser");
-
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, aven)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, aven)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(1);
     }
-
-    // ===== Bonus for creatures sharing a type =====
 
     @Test
     @DisplayName("Two creatures sharing a type each get +1/+1")
     void twoCreaturesSharingType() {
-        // Two GrizzlyBears (Bear, 2/2) share the Bear type
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent firstGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent secondGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
 
-        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
-
-        assertThat(bears).hasSize(2);
-        for (Permanent bear : bears) {
-            // Each shares Bear with the other → +1/+1
-            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
-            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
-        }
+        assertThat(gqs.getEffectivePower(gd, firstGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondGoblin)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Three creatures sharing a type each get +2/+2")
     void threeCreaturesSharingType() {
-        // Three GrizzlyBears (Bear, 2/2) all share Bear
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent firstGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent secondGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent thirdGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
 
-        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, firstGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, thirdGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, thirdGoblin)).isEqualTo(3);
+    }
 
-        assertThat(bears).hasSize(3);
-        for (Permanent bear : bears) {
-            // Each shares Bear with 2 others → +2/+2
-            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
-            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
-        }
+    @Test
+    @DisplayName("Multiple Coat of Arms permanents stack their bonuses")
+    void multipleCoatsStackTheirBonuses() {
+        harness.addToBattlefield(player1, new CoatOfArms());
+        harness.addToBattlefield(player2, new CoatOfArms());
+        Permanent firstGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent secondGoblin = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+
+        assertThat(gqs.getEffectivePower(gd, firstGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondGoblin)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Creatures with partial type overlap get different bonuses")
     void partialTypeOverlap() {
-        // BallistaSquad (Human Rebel, 2/4) and BenalishKnight (Human Knight, 2/2) share Human
-        // AvenCloudchaser (Bird Soldier, 2/2) shares no type with either
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new BallistaSquad());
-        harness.addToBattlefield(player1, new BenalishKnight());
-        harness.addToBattlefield(player1, new AvenCloudchaser());
+        Permanent anarchist = harness.addToBattlefieldAndReturn(player1, new Anarchist());
+        Permanent standingTroops = harness.addToBattlefieldAndReturn(player1, new StandingTroops());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new WelkinHawk());
 
-        Permanent ballista = findPermanent(player1, "Ballista Squad");
-        Permanent knight = findPermanent(player1, "Benalish Knight");
-        Permanent aven = findPermanent(player1, "Aven Cloudchaser");
-
-        // Ballista shares Human with Benalish → +1/+1
-        assertThat(gqs.getEffectivePower(gd, ballista)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, ballista)).isEqualTo(3);
-        // Benalish shares Human with Ballista → +1/+1
-        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
-        // Aven shares no type with either → +0/+0
-        assertThat(gqs.getEffectivePower(gd, aven)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, aven)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, anarchist)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, anarchist)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, standingTroops)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, standingTroops)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hawk)).isEqualTo(1);
     }
-
-    // ===== Applies across both players' battlefields =====
 
     @Test
     @DisplayName("Bonus counts creatures on opponent's battlefield too")
     void bonusCountsOpponentCreatures() {
-        // GrizzlyBears (Bear) on each side of the battlefield
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent ownGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent opponentGoblin = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
 
-        Permanent ownBears = findPermanent(player1, "Grizzly Bears");
-        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
-
-        // Share Bear across battlefields → +1/+1 each
-        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentGoblin)).isEqualTo(2);
     }
-
-    // ===== Changeling interaction =====
 
     @Test
     @DisplayName("Changeling shares a creature type with every typed creature")
     void changelingSharesTypeWithEverything() {
-        // ChangelingWayfinder (Shapeshifter, Changeling, 1/2) shares all creature types
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new ChangelingWayfinder());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player1, new ChangelingWayfinder());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
 
-        Permanent wayfinder = findPermanent(player1, "Changeling Wayfinder");
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-
-        // Changeling shares Bear with Grizzly Bears → each gets +1/+1
-        assertThat(gqs.getEffectivePower(gd, wayfinder)).isEqualTo(2);  // 1 base + 1
-        assertThat(gqs.getEffectiveToughness(gd, wayfinder)).isEqualTo(3); // 2 base + 1
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);     // 2 base + 1
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wayfinder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wayfinder)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Two changelings share creature types with each other")
     void twoChangelingsShareTypes() {
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new ChangelingWayfinder());
-        harness.addToBattlefield(player1, new ChangelingWayfinder());
+        Permanent firstWayfinder = harness.addToBattlefieldAndReturn(player1, new ChangelingWayfinder());
+        Permanent secondWayfinder = harness.addToBattlefieldAndReturn(player1, new ChangelingWayfinder());
 
-        List<Permanent> wayfinders = findPermanents(player1, "Changeling Wayfinder");
-
-        assertThat(wayfinders).hasSize(2);
-        for (Permanent wayfinder : wayfinders) {
-            // Each changeling shares types with the other → +1/+1
-            assertThat(gqs.getEffectivePower(gd, wayfinder)).isEqualTo(2);  // 1 base + 1
-            assertThat(gqs.getEffectiveToughness(gd, wayfinder)).isEqualTo(3); // 2 base + 1
-        }
+        assertThat(gqs.getEffectivePower(gd, firstWayfinder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstWayfinder)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondWayfinder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondWayfinder)).isEqualTo(3);
     }
 
     @Test
-    @DisplayName("Changeling gets bonus from every typed creature on the battlefield")
+    @DisplayName("Changeling gets a bonus from every typed creature on the battlefield")
     void changelingBonusScalesWithAllCreatures() {
-        // Changeling with GrizzlyBears (Bear) + AvenCloudchaser (Bird Soldier) + BenalishKnight (Human Knight)
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new ChangelingWayfinder());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new AvenCloudchaser());
-        harness.addToBattlefield(player1, new BenalishKnight());
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player1, new ChangelingWayfinder());
+        harness.addToBattlefield(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new WelkinHawk());
+        harness.addToBattlefield(player1, new StandingTroops());
 
-        Permanent wayfinder = findPermanent(player1, "Changeling Wayfinder");
-
-        // Changeling shares types with all 3 other creatures → +3/+3
-        assertThat(gqs.getEffectivePower(gd, wayfinder)).isEqualTo(4);     // 1 base + 3
-        assertThat(gqs.getEffectiveToughness(gd, wayfinder)).isEqualTo(5); // 2 base + 3
+        assertThat(gqs.getEffectivePower(gd, wayfinder)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wayfinder)).isEqualTo(5);
     }
 
-    // ===== Coat of Arms itself is not a creature =====
+    @Test
+    @CardUsed(ArcaneAdaptation.class)
+    @DisplayName("Counts a creature type granted by another continuous effect")
+    void countsGrantedCreatureTypes() {
+        harness.addToBattlefield(player1, new CoatOfArms());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent standingTroops = harness.addToBattlefieldAndReturn(player1, new StandingTroops());
+        Permanent adaptation = harness.addToBattlefieldAndReturn(player1, new ArcaneAdaptation());
+        adaptation.setChosenSubtype(CardSubtype.HUMAN);
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, standingTroops)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, standingTroops)).isEqualTo(5);
+    }
 
     @Test
-    @DisplayName("Single creature on battlefield gets no bonus")
+    @DisplayName("A single creature on the battlefield gets no bonus")
     void singleCreatureNoBonus() {
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-
-        // Only creature on battlefield, no shared types possible
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
     }
-
-    // ===== Bonus removed when Coat of Arms leaves =====
 
     @Test
     @DisplayName("Bonus is removed when Coat of Arms leaves the battlefield")
     void bonusRemovedWhenCoatLeaves() {
-        harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent coat = harness.addToBattlefieldAndReturn(player1, new CoatOfArms());
+        Permanent firstGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new RagingGoblin());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, firstGoblin)).isEqualTo(2);
 
-        // With Coat: shares Bear → +1/+1
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        gd.playerBattlefields.get(player1.getId()).remove(coat);
 
-        // Remove Coat of Arms
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Coat of Arms"));
-
-        // Bonus gone
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstGoblin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, firstGoblin)).isEqualTo(1);
     }
-
-    // ===== Bonus applies on resolve =====
 
     @Test
     @DisplayName("Bonus applies when Coat of Arms resolves onto the battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent firstGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new RagingGoblin());
         harness.setHand(player1, List.of(new CoatOfArms()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-
-        // Before casting, no bonus
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstGoblin)).isEqualTo(1);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        // After resolving, bears share Bear → +1/+1
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstGoblin)).isEqualTo(2);
     }
-
-    // ===== Static bonus survives end-of-turn reset =====
 
     @Test
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new RagingGoblin());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        goblin.setPowerModifier(goblin.getPowerModifier() + 3);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(5);
 
-        // Simulate a temporary spell boost
-        bears.setPowerModifier(bears.getPowerModifier() + 3);
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6); // 2 base + 3 spell + 1 static
+        goblin.resetModifiers();
 
-        // Reset end-of-turn modifiers
-        bears.resetModifiers();
-
-        // Spell bonus gone, static bonus still computed
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3); // 2 base + 1 static
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
     }
-
-    // ===== Bonus updates dynamically as creatures enter/leave =====
 
     @Test
     @DisplayName("Bonus increases when a new creature sharing a type enters")
     void bonusIncreasesWhenNewCreatureEnters() {
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent trackedGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new RagingGoblin());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, trackedGoblin)).isEqualTo(2);
 
-        // Shares Bear with 1 other → +1/+1
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        harness.addToBattlefield(player1, new WelkinHawk());
+        assertThat(gqs.getEffectivePower(gd, trackedGoblin)).isEqualTo(2);
 
-        // Add AvenCloudchaser (Bird Soldier) — does NOT share Bear
-        harness.addToBattlefield(player1, new AvenCloudchaser());
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3); // unchanged
-
-        // Add another GrizzlyBears — shares Bear
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4); // now +2/+2
+        harness.addToBattlefield(player1, new RagingGoblin());
+        assertThat(gqs.getEffectivePower(gd, trackedGoblin)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Bonus decreases when a creature sharing a type leaves")
     void bonusDecreasesWhenCreatureLeaves() {
         harness.addToBattlefield(player1, new CoatOfArms());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent trackedGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent removedGoblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.addToBattlefield(player1, new RagingGoblin());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, trackedGoblin)).isEqualTo(3);
 
-        // Shares Bear with 2 others → +2/+2
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        gd.playerBattlefields.get(player1.getId()).remove(removedGoblin);
 
-        // Remove one GrizzlyBears (not the one we're tracking)
-        List<Permanent> allBears = findPermanents(player1, "Grizzly Bears");
-        gd.playerBattlefields.get(player1.getId()).remove(allBears.get(1));
-
-        // Now shares Bear with 1 other → +1/+1
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, trackedGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, trackedGoblin)).isEqualTo(2);
     }
 }
-

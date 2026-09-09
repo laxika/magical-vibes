@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "131")
 @CardRegistration(set = "TPR", collectorNumber = "215")
+@CardRegistration(set = "H09", collectorNumber = "15")
 public class VictualSliver extends Card {
 
     public VictualSliver() {

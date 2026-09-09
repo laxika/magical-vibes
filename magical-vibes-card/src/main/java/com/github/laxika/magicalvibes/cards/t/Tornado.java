@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "101")
+@CardRegistration(set = "ME1", collectorNumber = "136")
 public class Tornado extends Card {
 
     public Tornado() {

@@ -470,7 +470,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         if (duration != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
                 && duration != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP
                 && duration != GrantDuration.UNTIL_END_OF_COMBAT) {
-            bucketFor(permanent, duration).addAll(keywords);
+            keywords.stream().filter(keyword -> keyword != Keyword.FLANKING)
+                    .forEach(bucketFor(permanent, duration)::add);
         }
     }
 

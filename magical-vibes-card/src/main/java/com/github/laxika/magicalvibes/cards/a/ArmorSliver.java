@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "4")
 @CardRegistration(set = "TPR", collectorNumber = "4")
+@CardRegistration(set = "H09", collectorNumber = "16")
 public class ArmorSliver extends Card {
 
     public ArmorSliver() {

@@ -158,6 +158,16 @@ public class ChoiceHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.RegenerationShieldChoice choice) {
+            if (!choice.shields().containsKey(colorName)) {
+                throw new IllegalArgumentException("Invalid regeneration shield");
+            }
+            gameData.interaction.clearAwaitingInput();
+            graveyardService.resolveRegenerationShieldChoice(gameData, choice, colorName);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx
                 && ctx.nonbasicLandOnly()
                 && !colorChoice.options().contains(colorName)) {
@@ -2015,7 +2025,7 @@ public class ChoiceHandlerService {
                     continue;
                 }
                 if (!ctx.controllerId().equals(se.getControllerId())) {
-                    validSpellCardIds.add(se.getCard().getId());
+                    validSpellCardIds.add(se.getTargetableId());
                 }
             }
             if (validSpellCardIds.isEmpty()) {

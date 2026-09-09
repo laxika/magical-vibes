@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPred
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "LEG", collectorNumber = "28")
+@CardRegistration(set = "ME1", collectorNumber = "21")
 public class Moat extends Card {
 
     public Moat() {

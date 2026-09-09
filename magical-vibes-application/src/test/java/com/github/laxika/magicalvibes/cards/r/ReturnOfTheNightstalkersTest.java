@@ -1,28 +1,29 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
+import com.github.laxika.magicalvibes.cards.e.EyeSpy;
 import com.github.laxika.magicalvibes.cards.l.LurkingNightstalker;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReturnOfTheNightstalkers.class, LurkingNightstalker.class, AlabornTrooper.class,
+        EyeSpy.class, Mountain.class, Swamp.class})
 class ReturnOfTheNightstalkersTest extends BaseCardTest {
 
     private void castReturnOfTheNightstalkers() {
-        harness.setHand(player1, new ArrayList<>(List.of(new ReturnOfTheNightstalkers())));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ReturnOfTheNightstalkers(), "{5}{B}{B}");
         harness.passBothPriorities();
     }
 
@@ -37,7 +38,8 @@ class ReturnOfTheNightstalkersTest extends BaseCardTest {
 
         castReturnOfTheNightstalkers();
 
-        harness.assertOnBattlefield(player1, "Lurking Nightstalker");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == nightstalker);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(nightstalker);
     }
 
@@ -47,13 +49,31 @@ class ReturnOfTheNightstalkersTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card creature = new GrizzlyBears();
+        Card creature = new AlabornTrooper();
         gd.playerGraveyards.get(player1.getId()).add(creature);
 
         castReturnOfTheNightstalkers();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("Does not return nonpermanent cards with the Nightstalker subtype")
+    void doesNotReturnNonPermanentNightstalkers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Card nonPermanentNightstalker = new EyeSpy();
+        nonPermanentNightstalker.setSubtypes(List.of(CardSubtype.NIGHTSTALKER));
+        gd.playerGraveyards.get(player1.getId()).add(nonPermanentNightstalker);
+
+        castReturnOfTheNightstalkers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == nonPermanentNightstalker);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonPermanentNightstalker);
     }
 
     @Test
@@ -62,12 +82,13 @@ class ReturnOfTheNightstalkersTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new Swamp());
-        harness.addToBattlefield(player1, new Swamp());
+        Permanent firstSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent secondSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
 
         castReturnOfTheNightstalkers();
 
-        harness.assertNotOnBattlefield(player1, "Swamp");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent == firstSwamp || permanent == secondSwamp);
     }
 
     @Test
@@ -76,15 +97,15 @@ class ReturnOfTheNightstalkersTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new Swamp());
-        harness.addToBattlefield(player1, new Mountain());
-        harness.addToBattlefield(player2, new Swamp());
+        Permanent ownSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent ownMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent opponentSwamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
 
         castReturnOfTheNightstalkers();
 
-        harness.assertNotOnBattlefield(player1, "Swamp");
-        harness.assertOnBattlefield(player1, "Mountain");
-        harness.assertOnBattlefield(player2, "Swamp");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownSwamp);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownMountain);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentSwamp);
     }
 
     @Test
@@ -95,11 +116,12 @@ class ReturnOfTheNightstalkersTest extends BaseCardTest {
 
         Card nightstalker = new LurkingNightstalker();
         gd.playerGraveyards.get(player1.getId()).add(nightstalker);
-        harness.addToBattlefield(player1, new Swamp());
+        Permanent ownSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
 
         castReturnOfTheNightstalkers();
 
-        harness.assertOnBattlefield(player1, "Lurking Nightstalker");
-        harness.assertNotOnBattlefield(player1, "Swamp");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == nightstalker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownSwamp);
     }
 }
