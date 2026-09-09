@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLS", collectorNumber = "122")
+@CardRegistration(set = "DDE", collectorNumber = "60")
 public class RithsCharm extends Card {
 
     public RithsCharm() {

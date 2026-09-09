@@ -659,6 +659,14 @@ public record LookAtTopCardsEffect(
                 LibrarySearchDestination.TOP_OF_LIBRARY, true);
     }
 
+    /** You may reveal any number of matching cards onto the top of your library; the rest go on the bottom. */
+    public static LookAtTopCardsEffect mayRevealAnyNumberOnTopRestOnBottom(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY, false,
+                LibrarySearchDestination.TOP_OF_LIBRARY, true);
+    }
+
     /** You may put one of the looked-at cards on top of your library and the rest into your graveyard. */
     public static LookAtTopCardsEffect mayPutOneOnTopRestToGraveyard(int lookCount) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,

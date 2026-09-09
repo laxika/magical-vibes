@@ -130,6 +130,7 @@ class ScryfallOracleLoaderTest {
 
         assertThat(data.cardText()).isEqualTo(
                 "Trample, Reach\nConverge — This creature enters with a +1/+1 counter on it for each color of mana spent to cast it.");
+        assertThat(data.keywords()).contains(Keyword.CONVERGE);
     }
 
     /** A keyword mentioned inside rules text is not part of a keyword list and stays lowercase. */

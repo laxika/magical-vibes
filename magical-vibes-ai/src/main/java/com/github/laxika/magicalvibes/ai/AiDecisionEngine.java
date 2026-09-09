@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -2535,7 +2536,7 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Builds the common spell cast request, including the selected object for any behold cost.
+     * Builds the common spell cast request, including selected objects for behold and additional costs.
      * The other additional-cost fields mirror the request shape used by all AI spell paths.
      */
     protected PlayCardRequest buildSpellPlayCardRequest(
@@ -2571,6 +2572,7 @@ public abstract class AiDecisionEngine {
                 gameData, card, targetId, targetIds, exileGraveyardCardIndices);
         CardSubtype chosenCreatureType = chooseCastTimeCreatureType(
                 gameData, card, collectEvidencePlan.targetId(), collectEvidencePlan.targetIds());
+        UUID chosenAdditionalCostObjectId = chooseOpponentOwnedExiledCard(gameData, card);
         return new PlayCardRequest(
                 cardIndex, effectiveXValue, collectEvidencePlan.targetId(), damageAssignments,
                 collectEvidencePlan.targetIds(), convokeCreatureIds,
@@ -2581,7 +2583,8 @@ public abstract class AiDecisionEngine {
                 List.of(), null,
                 null, selection.permanentId(), selection.handCardIndex(), null, null, null,
                 chosenAdditionalCostCreatureType == null ? null : chosenAdditionalCostCreatureType.name(), null,
-                chosenCreatureType == null ? null : chosenCreatureType.name());
+                chosenCreatureType == null ? null : chosenCreatureType.name(), null, null,
+                chosenAdditionalCostObjectId);
     }
 
     /**
@@ -2601,6 +2604,20 @@ public abstract class AiDecisionEngine {
         boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(ChooseCreatureTypeCost.class::isInstance);
         return requiresChoice ? CardSubtype.HUMAN : null;
+    }
+
+    private UUID chooseOpponentOwnedExiledCard(GameData gameData, Card card) {
+        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(PutOpponentOwnedExiledCardIntoGraveyardCost.class::isInstance);
+        if (!requiresChoice) {
+            return null;
+        }
+        return gameData.exiledCards.stream()
+                .filter(exiled -> gameData.playerIds.contains(exiled.ownerId()))
+                .filter(exiled -> !aiPlayer.getId().equals(exiled.ownerId()))
+                .map(exiled -> exiled.card().getId())
+                .findFirst()
+                .orElse(null);
     }
 
     private CardSubtype chooseCastTimeCreatureType(GameData gameData, Card card, UUID targetId,

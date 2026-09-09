@@ -166,6 +166,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCr
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactEntersTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.MayFightTargetCreatureOnAllyCreatureEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -9857,17 +9859,31 @@ public class TriggerCollectionService {
             for (Emblem emblem : gameData.emblems) {
                 if (!emblem.controllerId().equals(controllerId)) continue;
                 for (CardEffect effect : emblem.staticEffects()) {
-                    if (!(effect instanceof DealDamageToAnyTargetOnAllyCreatureEntersEffect)) continue;
                     Card sourceCard = emblem.sourceCard() != null ? emblem.sourceCard() : enteringCreature;
-                    gameData.queueInteraction(new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
-                            sourceCard, controllerId,
-                            List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
-                            enteringPermanent.getId()));
-                    gameLogService.append(gameData, GameLog.text(
-                            sourceCard.getName() + "'s emblem triggers for " + enteringCreature.getName()
-                                    + " entering."));
-                    log.info("Game {} - {}'s emblem triggers for {} entering",
-                            gameData.id, sourceCard.getName(), enteringCreature.getName());
+                    if (effect instanceof MayFightTargetCreatureOnAllyCreatureEntersEffect) {
+                        gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                                sourceCard, controllerId,
+                                List.of(new MayEffect(
+                                        new EnteringCreatureFightsTargetCreatureEffect(),
+                                        "Have it fight target creature?")),
+                                null,
+                                enteringPermanent.getId()));
+                        gameLogService.append(gameData, GameLog.text(
+                                sourceCard.getName() + "'s emblem triggers for " + enteringCreature.getName()
+                                        + " entering."));
+                        log.info("Game {} - {}'s emblem triggers for {} entering",
+                                gameData.id, sourceCard.getName(), enteringCreature.getName());
+                    } else if (effect instanceof DealDamageToAnyTargetOnAllyCreatureEntersEffect) {
+                        gameData.queueInteraction(new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
+                                sourceCard, controllerId,
+                                List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
+                                enteringPermanent.getId()));
+                        gameLogService.append(gameData, GameLog.text(
+                                sourceCard.getName() + "'s emblem triggers for " + enteringCreature.getName()
+                                        + " entering."));
+                        log.info("Game {} - {}'s emblem triggers for {} entering",
+                                gameData.id, sourceCard.getName(), enteringCreature.getName());
+                    }
                 }
             }
         }
@@ -11038,6 +11054,29 @@ public class TriggerCollectionService {
                     + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                     gameData, landControllerId, perm);
 
+            boolean needsGraveyardTarget = resolvedEffects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+            if (needsGraveyardTarget) {
+                for (int i = 0; i < permanentTriggerCount; i++) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            perm.getCard(),
+                            landControllerId,
+                            resolvedEffects,
+                            null,
+                            0,
+                            0,
+                            0,
+                            null,
+                            false,
+                            enteringPermanentId));
+                    gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                            "'s landfall ability triggers — choose a graveyard target."));
+                    log.info("Game {} - {} landfall trigger queued for graveyard target selection",
+                            gameData.id, perm.getCard().getName());
+                }
+                continue;
+            }
+
             boolean needsPlayerTarget = resolvedEffects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
             boolean needsPermanentTarget = resolvedEffects.stream()
@@ -11081,7 +11120,7 @@ public class TriggerCollectionService {
             }
 
             for (int i = 0; i < permanentTriggerCount; i++) {
-                gameData.stack.add(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         landControllerId,
@@ -11089,7 +11128,10 @@ public class TriggerCollectionService {
                         resolvedEffects,
                         null,
                         perm.getId()
-                ));
+                );
+                entry.setTriggeringCardId(enteringLand.getId());
+                entry.setTriggeringPermanentId(enteringPermanentId);
+                gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
             }

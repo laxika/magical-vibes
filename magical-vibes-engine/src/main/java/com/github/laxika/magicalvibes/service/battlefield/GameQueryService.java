@@ -209,7 +209,6 @@ import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
@@ -707,6 +706,43 @@ public class GameQueryService {
      */
     public Permanent findPermanentById(GameData gameData, UUID permanentId) {
         return findInBattlefields(gameData, permanentId, (playerId, p) -> p);
+    }
+
+    /**
+     * Finds a card in any game zone by its unique ID.
+     *
+     * @return the card, or {@code null} if not found
+     */
+    public Card findCardById(GameData gameData, UUID cardId) {
+        if (cardId == null) return null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null) {
+                for (Permanent permanent : battlefield) {
+                    if (cardId.equals(permanent.getCard().getId())) return permanent.getCard();
+                }
+            }
+            Card found = findCard(gameData.playerHands.get(playerId), cardId);
+            if (found != null) return found;
+            found = findCard(gameData.playerDecks.get(playerId), cardId);
+            if (found != null) return found;
+            found = findCard(gameData.playerGraveyards.get(playerId), cardId);
+            if (found != null) return found;
+            found = findCard(gameData.getPlayerExiledCards(playerId), cardId);
+            if (found != null) return found;
+        }
+        for (StackEntry stackEntry : gameData.stack) {
+            if (cardId.equals(stackEntry.getCard().getId())) return stackEntry.getCard();
+        }
+        return null;
+    }
+
+    private Card findCard(List<Card> cards, UUID cardId) {
+        if (cards == null) return null;
+        for (Card card : cards) {
+            if (cardId.equals(card.getId())) return card;
+        }
+        return null;
     }
 
     /**
@@ -8325,6 +8361,12 @@ public class GameQueryService {
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData, isCombatDamage)) return false;
+        UUID sourceControllerId = findPermanentController(gameData, creature.getId());
+        if (isCombatDamage && sourceControllerId != null
+                && gameData.playersWithCombatDamageFromTargetOpponentCreaturesPrevented.contains(sourceControllerId)
+                && !damageCantBePreventedFromSource(gameData, creature)) {
+            return true;
+        }
         boolean globalCreaturePrevention = isDamageByCreaturePrevented(gameData, creature)
                 && gameData.damageByCreaturesPreventionLifeGainPlayers.isEmpty();
         if (globalCreaturePrevention

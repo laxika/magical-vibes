@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "27")
+@CardRegistration(set = "DDE", collectorNumber = "55")
 public class NarrowEscape extends Card {
 
     public NarrowEscape() {
