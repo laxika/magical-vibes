@@ -40,6 +40,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @Service
 @RequiredArgsConstructor
 public class StateBasedActionService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
 
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
@@ -80,7 +84,8 @@ public class StateBasedActionService {
         boolean anyPerformed;
         int passes = 0;
         do {
-            anyPerformed = enforceCounterLimits(gameData);
+            anyPerformed = gameData.planechase != null && planechaseService.checkPhenomena(gameData);
+            anyPerformed |= enforceCounterLimits(gameData);
             anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
             anyPerformed |= removeTokensOutsideBattlefield(gameData);
 

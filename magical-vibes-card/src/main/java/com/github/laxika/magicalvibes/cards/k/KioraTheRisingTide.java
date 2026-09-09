@@ -20,6 +20,9 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "45")
+@CardRegistration(set = "FDN", collectorNumber = "309")
+@CardRegistration(set = "FDN", collectorNumber = "377")
+@CardRegistration(set = "FDN", collectorNumber = "455")
 public class KioraTheRisingTide extends Card {
 
     public KioraTheRisingTide() {

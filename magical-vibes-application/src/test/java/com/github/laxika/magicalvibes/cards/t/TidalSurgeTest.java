@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TidalSurge.class, AlabornTrooper.class, AirElemental.class})
+@CardUsed({AirElemental.class, AlabornTrooper.class, GrizzlyBears.class, Island.class, TidalSurge.class})
 class TidalSurgeTest extends BaseCardTest {
 
     private void castTidalSurge(List<UUID> targets) {
@@ -97,5 +99,29 @@ class TidalSurgeTest extends BaseCardTest {
         assertThat(ownCreature.isTapped()).isTrue();
         assertThat(opposingCreature.isTapped()).isTrue();
         assertThat(opposingFlyer.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target more than three creatures")
+    void cannotTargetMoreThanThreeCreatures() {
+        List<UUID> targetIds = List.of(
+                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId(),
+                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId(),
+                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId(),
+                harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId());
+        prepareTidalSurge();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, targetIds))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        UUID islandId = harness.addToBattlefieldAndReturn(player2, new Island()).getId();
+        prepareTidalSurge();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(islandId)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

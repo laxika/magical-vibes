@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AncientCraving;
+import com.github.laxika.magicalvibes.cards.t.TouchOfBrilliance;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DJVu.class, AncientCraving.class, AirElemental.class})
+@CardUsed({AirElemental.class, AncientCraving.class, DJVu.class, TouchOfBrilliance.class})
 class DJVuTest extends BaseCardTest {
 
     @Test
@@ -74,5 +75,35 @@ class DJVuTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Requires a sorcery card target in your graveyard")
+    void requiresSorceryTarget() {
+        harness.setHand(player1, List.of(new DJVu()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Returns only the targeted sorcery when several are in the graveyard")
+    void returnsOnlyTargetedSorcery() {
+        Card otherSorcery = new TouchOfBrilliance();
+        Card targetSorcery = new TouchOfBrilliance();
+        harness.setGraveyard(player1, List.of(otherSorcery, targetSorcery));
+        harness.setHand(player1, List.of(new DJVu()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, targetSorcery.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(targetSorcery.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(otherSorcery.getId()))
+                .noneMatch(c -> c.getId().equals(targetSorcery.getId()));
     }
 }

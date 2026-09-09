@@ -33,13 +33,21 @@ public class TargetRedirectionSupport {
     private final ValidTargetService validTargetService;
 
     public List<UUID> collectValidNewTargets(GameData gameData, StackEntry targetSpell) {
+        return collectValidTargets(gameData, targetSpell, false);
+    }
+
+    public List<UUID> collectValidTargetsIncludingCurrent(GameData gameData, StackEntry targetSpell) {
+        return collectValidTargets(gameData, targetSpell, true);
+    }
+
+    private List<UUID> collectValidTargets(GameData gameData, StackEntry targetSpell, boolean includeCurrentTarget) {
         UUID currentTargetId = targetSpell.getTargetId();
         List<UUID> candidates = new ArrayList<>();
 
         if (targetSpell.getTargetZone() == Zone.STACK) {
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(targetSpell.getCard().getId())) continue;
-                candidates.add(se.getCard().getId());
+                if (se.getTargetableId().equals(targetSpell.getCard().getId())) continue;
+                candidates.add(se.getTargetableId());
             }
         } else if (targetSpell.getTargetZone() == Zone.GRAVEYARD) {
             for (UUID playerId : gameData.orderedPlayerIds) {
@@ -53,7 +61,7 @@ public class TargetRedirectionSupport {
 
         List<UUID> validTargets = new ArrayList<>();
         for (UUID candidate : candidates) {
-            if (candidate.equals(currentTargetId)) {
+            if (!includeCurrentTarget && candidate.equals(currentTargetId)) {
                 continue;
             }
             if (isValidNewTargetForSpell(gameData, targetSpell, candidate)) {

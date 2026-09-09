@@ -17,10 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LavaAxe.class, RuneclawBear.class, ChandraNalaar.class})
+@CardUsed({ChandraNalaar.class, LavaAxe.class, RuneclawBear.class})
 class LavaAxeTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Lava Axe targeting a player puts it on the stack")
@@ -47,8 +45,6 @@ class LavaAxeTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Damage to player =====
-
     @Test
     @DisplayName("Lava Axe deals 5 damage to target player")
     void deals5DamageToPlayer() {
@@ -72,8 +68,6 @@ class LavaAxeTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
-
-    // ===== Cannot target creatures =====
 
     @Test
     @DisplayName("Lava Axe cannot target a creature")
@@ -100,8 +94,6 @@ class LavaAxeTest extends BaseCardTest {
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
-    // ===== Goes to graveyard after resolution =====
-
     @Test
     @DisplayName("Lava Axe goes to graveyard after resolution")
     void goesToGraveyardAfterResolution() {
@@ -113,8 +105,6 @@ class LavaAxeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Lava Axe");
     }
-
-    // ===== Lethal damage =====
 
     @Test
     @DisplayName("Lava Axe can deal lethal damage to a player")

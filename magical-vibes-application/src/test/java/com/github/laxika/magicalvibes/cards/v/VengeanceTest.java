@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Vengeance.class, AlabornTrooper.class, Forest.class})
+@CardUsed({AlabornTrooper.class, Forest.class, Vengeance.class})
 class VengeanceTest extends BaseCardTest {
 
     @Test

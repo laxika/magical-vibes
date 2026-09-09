@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NaturalSpring.class, BearCub.class})
+@CardUsed({BearCub.class, NaturalSpring.class})
 class NaturalSpringTest extends BaseCardTest {
 
     @Test

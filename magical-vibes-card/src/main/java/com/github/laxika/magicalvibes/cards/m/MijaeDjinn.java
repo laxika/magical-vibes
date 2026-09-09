@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "SUM", collectorNumber = "166")
+@CardRegistration(set = "3ED", collectorNumber = "166")
 public class MijaeDjinn extends Card {
 
     public MijaeDjinn() {

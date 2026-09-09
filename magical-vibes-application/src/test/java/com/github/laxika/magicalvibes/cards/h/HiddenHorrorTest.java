@@ -139,6 +139,22 @@ class HiddenHorrorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the controller's hand can pay the creature discard requirement")
+    void ignoresCreatureCardsInOpponentsHand() {
+        harness.castFromHand(player1, new HiddenHorror(), "{1}{B}{B}");
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        harness.passBothPriorities(); // resolve creature spell → ETB on stack
+        harness.passBothPriorities(); // resolve ETB → auto-sacrifice
+
+        harness.assertNotOnBattlefield(player1, "Hidden Horror");
+        harness.assertInGraveyard(player1, "Hidden Horror");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Auto-sacrifices when controller has empty hand")
     void autoSacrificesWithEmptyHand() {
         harness.castFromHand(player1, new HiddenHorror(), "{1}{B}{B}");

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 
 @CardRegistration(set = "M21", collectorNumber = "158")
 @CardRegistration(set = "ELD", collectorNumber = "139")
+@CardRegistration(set = "DSK", collectorNumber = "156")
+@CardRegistration(set = "FDN", collectorNumber = "545")
 public class ScorchingDragonfire extends Card {
 
     public ScorchingDragonfire() {

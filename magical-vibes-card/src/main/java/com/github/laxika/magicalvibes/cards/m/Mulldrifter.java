@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "76")
+@CardRegistration(set = "DD2", collectorNumber = "12")
 public class Mulldrifter extends Card {
 
     public Mulldrifter() {

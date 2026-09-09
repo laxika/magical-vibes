@@ -45,6 +45,11 @@ public class LibraryExileSupport {
 
     /** Exiles every card in {@code playerId}'s library (Thought Lash). */
     public void exileEntireLibrary(GameData gameData, UUID playerId) {
+        exileEntireLibrary(gameData, playerId, false);
+    }
+
+    /** Exiles every card in {@code playerId}'s library, optionally face down. */
+    public void exileEntireLibrary(GameData gameData, UUID playerId, boolean faceDown) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
         if (deck == null || deck.isEmpty()) {
@@ -54,9 +59,16 @@ public class LibraryExileSupport {
         int exiled = deck.size();
         List<Card> cards = List.copyOf(deck);
         deck.clear();
-        cards.forEach(card -> exileService.exileCard(gameData, playerId, card));
+        if (faceDown) {
+            cards.forEach(card -> exileService.exileCardFaceDown(gameData, playerId, card, null));
+        } else {
+            cards.forEach(card -> exileService.exileCard(gameData, playerId, card));
+        }
         gameLogService.append(gameData, GameLog.text(
-                playerName + " exiles all " + exiled + " cards from their library."));
-        log.info("Game {} - {} exiles their entire library ({} cards)", gameData.id, playerName, exiled);
+                playerName + " exiles all " + exiled + " cards from their library"
+                        + (faceDown ? " face down." : ".")));
+        log.info("Game {} - {} exiles their entire library{} ({} cards)", gameData.id, playerName,
+                faceDown ? " face down" : "", exiled);
     }
+
 }

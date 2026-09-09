@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "79")
+@CardRegistration(set = "ME1", collectorNumber = "40")
 public class IllusionsOfGrandeur extends Card {
 
     public IllusionsOfGrandeur() {

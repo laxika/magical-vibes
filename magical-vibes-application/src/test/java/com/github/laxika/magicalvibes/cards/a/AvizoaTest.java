@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Avizoa.class)
 class AvizoaTest extends BaseCardTest {
 
     @Test
@@ -46,10 +48,12 @@ class AvizoaTest extends BaseCardTest {
     @DisplayName("Queued skip leaves the controller's permanents tapped on their next turn")
     void skipsNextUntapStep() {
         Permanent avizoa = addCreatureReady(player1, new Avizoa());
+        Permanent otherAvizoa = addCreatureReady(player1, new Avizoa());
 
         harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
         harness.passBothPriorities();
         avizoa.tap();
+        otherAvizoa.tap();
 
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
@@ -57,11 +61,13 @@ class AvizoaTest extends BaseCardTest {
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(avizoa.isTapped()).isTrue();
+        assertThat(otherAvizoa.isTapped()).isTrue();
         assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
 
         advanceTurn();
         advanceTurn();
         assertThat(avizoa.isTapped()).isFalse();
+        assertThat(otherAvizoa.isTapped()).isFalse();
     }
 
     @Test
@@ -75,6 +81,30 @@ class AvizoaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(avizoa), null, null))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can activate again on a new turn")
+    void canActivateAgainOnNewTurn() {
+        Permanent avizoa = addCreatureReady(player1, new Avizoa());
+
+        harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        advanceTurn();
+        advanceTurn();
+
+        harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
+        harness.passBothPriorities();
+
+        assertThat(avizoa.getEffectivePower()).isEqualTo(4);
+        assertThat(avizoa.getEffectiveToughness()).isEqualTo(4);
         assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
     }
 

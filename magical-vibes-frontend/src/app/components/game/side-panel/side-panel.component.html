@@ -155,15 +155,17 @@
         } @else {
           @for (entry of stackEntries; track $index) {
             <div class="stack-entry-wrapper"
-                 [class.spell-targetable]="choice.targeting.targetingSpell && entry.isSpell"
+                 [class.spell-targetable]="choice.targeting.targetingSpell && (entry.isSpell || choice.targeting.validTargetIds().has(entry.cardId))"
                  [class.stack-targeted]="isStackTargetSpell(entry)"
                  [class.choosable-permanent]="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId)"
-                 (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId) ? choice.choosePermanent(entry.cardId) : (choice.targeting.targetingSpell && entry.isSpell ? choice.targeting.selectSpellTarget(entry) : null)"
-                 (mouseenter)="stackEntryHover.emit(entry); onCardHover(entry.card)"
+                 (click)="choice.choosingPermanent && choice.choosablePermanentIds().has(entry.cardId) ? choice.choosePermanent(entry.cardId) : (choice.targeting.targetingSpell && (entry.isSpell || choice.targeting.validTargetIds().has(entry.cardId)) ? choice.targeting.selectSpellTarget(entry) : null)"
+                 (mouseenter)="stackEntryHover.emit(entry); entry.card && onCardHover(entry.card)"
                  (mouseleave)="stackEntryHoverEnd.emit(); onCardHoverEnd()">
-              <app-card-display
-                [card]="entry.card"
-                [attr.data-entry-type]="entry.entryType" />
+              @if (entry.card) {
+                <app-card-display [card]="entry.card" [attr.data-entry-type]="entry.entryType" />
+              } @else {
+                <div class="source-less-ability">{{ entry.description }}</div>
+              }
               <div class="stack-entry-overlay">
                 <div class="stack-entry-controller">
                   ({{ getPlayerName(entry.controllerId) }})
@@ -479,7 +481,9 @@
       <div class="side-prompt prompt-targeting">
         <span class="side-prompt-text">
           {{ choice.targeting.modeCardName }} &mdash; choose
-          @if (choice.targeting.modeChoicesRequired === choice.targeting.modeChoicesMax) {
+          @if (choice.targeting.modeChoicesRequired === 0) {
+            up to {{ choice.targeting.modeChoicesMax }}
+          } @else if (choice.targeting.modeChoicesRequired === choice.targeting.modeChoicesMax) {
             {{ choice.targeting.modeChoicesRequired === 1 ? (choice.targeting.modeOptional ? 'up to one' : 'one') : (choice.targeting.modeChoicesRequired === 2 ? 'two' : choice.targeting.modeChoicesRequired) }}
           } @else {
             {{ choice.targeting.modeChoicesRequired }} or more
@@ -492,6 +496,9 @@
                     (click)="choice.targeting.toggleMode($index)">
               {{ option.label }}@if (choice.targeting.modeModesMayRepeat && choice.targeting.modeSelectionCount($index) > 1) { <span> (×{{ choice.targeting.modeSelectionCount($index) }})</span> }@if (option.manaCost) { <span class="mode-option-cost">{{ option.manaCost }}</span> }
             </button>
+            @if (choice.targeting.modeModesMayRepeat && choice.targeting.modeSelectionCount($index) > 0) {
+              <button class="btn-side-prompt" (click)="choice.targeting.removeMode($index)">−</button>
+            }
           }
           <button class="btn-side-prompt"
                   [disabled]="choice.targeting.modeSelectedIndices.length < choice.targeting.modeChoicesRequired || choice.targeting.modeSelectedIndices.length > choice.targeting.modeChoicesMax"

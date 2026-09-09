@@ -29,6 +29,12 @@ public interface CardEffect {
     default TargetSpec targetSpec() { return TargetSpec.NONE; }
 
     /**
+     * Returns the positional target-group index used by effects that resolve against a declared
+     * group rather than the entry's ordinary target. A negative value means no explicit group.
+     */
+    default int targetGroup() { return -1; }
+
+    /**
      * Returns whether an upkeep trigger using this effect has its permanent target chosen by the
      * active player rather than by the ability's controller.
      */
@@ -104,6 +110,12 @@ public interface CardEffect {
      * hidden reference used by this effect.
      */
     default boolean usesEnteringPermanentReference() { return false; }
+
+    /**
+     * Returns whether a hand-choice follow-up reads the permanent just put onto the battlefield.
+     * The hand-choice completion code binds that permanent as the follow-up's chosen reference.
+     */
+    default boolean usesChosenPermanentReference() { return false; }
 
     /**
      * Returns whether this effect or one of its nested effects branches on the source ability's

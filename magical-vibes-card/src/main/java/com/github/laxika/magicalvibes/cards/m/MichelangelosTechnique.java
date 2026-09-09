@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "122")
+@CardRegistration(set = "TMT", collectorNumber = "239")
 public class MichelangelosTechnique extends Card {
 
     public MichelangelosTechnique() {

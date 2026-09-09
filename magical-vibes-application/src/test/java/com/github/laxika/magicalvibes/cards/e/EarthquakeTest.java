@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.ScrybSprites;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -61,8 +62,10 @@ class EarthquakeTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 3);
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.castAndResolveSorcery(player1, 0, 2);
 
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -95,10 +98,13 @@ class EarthquakeTest extends BaseCardTest {
     @Test
     @DisplayName("Earthquake with X=0 deals no damage")
     void earthquakeWithXZeroDealsNoDamage() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
 
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
@@ -126,5 +132,20 @@ class EarthquakeTest extends BaseCardTest {
 
         harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Earthquake deals exactly X damage to a surviving non-flying creature")
+    void earthquakeDealsExactlyXDamageToNonFlyingCreature() {
+        Permanent grizzlyBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThat(grizzlyBears.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 }

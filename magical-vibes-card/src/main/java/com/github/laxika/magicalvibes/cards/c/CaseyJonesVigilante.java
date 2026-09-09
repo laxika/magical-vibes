@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterRandomDiscardAtNextUpkeepEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "88")
+@CardRegistration(set = "TMT", collectorNumber = "235")
+@CardRegistration(set = "TMT", collectorNumber = "286")
+@CardRegistration(set = "TMT", collectorNumber = "296")
 public class CaseyJonesVigilante extends Card {
 
     public CaseyJonesVigilante() {

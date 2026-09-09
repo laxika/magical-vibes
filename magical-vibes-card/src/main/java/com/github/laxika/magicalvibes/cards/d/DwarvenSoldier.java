@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "FEM", collectorNumber = "107")
 @CardRegistration(set = "FEM", collectorNumber = "108")
 @CardRegistration(set = "FEM", collectorNumber = "109")
+@CardRegistration(set = "ME1", collectorNumber = "92")
 public class DwarvenSoldier extends Card {
 
     public DwarvenSoldier() {

@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TouchOfBrilliance.class)
+@CardUsed({TouchOfBrilliance.class})
 class TouchOfBrillianceTest extends BaseCardTest {
 
     @Test

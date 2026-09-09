@@ -40,6 +40,15 @@ public interface CostModificationHandlerBean {
     int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source);
 
     /**
+     * Returns a signed generic-mana delta for a morph cost paid to turn a permanent face up.
+     * Ordinary spell-cost modifiers do not affect morph costs unless they override this method.
+     */
+    default int modifyMorphCost(CostModificationContext context, CardEffect effect,
+                                CostModificationSource source) {
+        return 0;
+    }
+
+    /**
      * Returns a signed generic-mana delta for an alternate cost explicitly affected by this
      * modifier. Ordinary cast-cost modifiers do not affect alternate costs unless they override
      * this method.
@@ -111,6 +120,15 @@ public interface CostModificationHandlerBean {
      */
     default int modifyForetellCost(GameData gameData, UUID playerId, CardEffect effect,
                                    CostModificationSource source) {
+        return 0;
+    }
+
+    /**
+     * Returns a signed generic-mana delta for a Room-door unlock cost. Ordinary spell-cost
+     * modifiers do not affect Room-door unlocks unless they override this method.
+     */
+    default int modifyRoomUnlockCost(GameData gameData, UUID playerId, Card room,
+                                     CardEffect effect, CostModificationSource source) {
         return 0;
     }
 

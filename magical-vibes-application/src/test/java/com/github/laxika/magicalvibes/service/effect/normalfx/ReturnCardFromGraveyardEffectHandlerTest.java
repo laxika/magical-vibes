@@ -53,6 +53,32 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 @ExtendWith(MockitoExtension.class)
 class ReturnCardFromGraveyardEffectHandlerTest {
 
+    @Test
+    void allGraveyardsChoicePreservesTheReturnRiders() {
+        Card creature = createCard("Chosen creature");
+        gd.playerGraveyards.get(player2Id).add(creature);
+        CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+        ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .filter(filter)
+                .mandatory(true)
+                .grantHaste(true)
+                .build();
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Return spell"),
+                player1Id, "Return spell", new ArrayList<>(List.of(effect)));
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(creature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
+                isNull(), isNull(), anyInt())).thenReturn(true);
+
+        returnCardFromGraveyardHandler.resolve(gd, entry, effect);
+
+        verify(interactionHandlerRegistry).begin(eq(gd), argThat(interaction ->
+                interaction instanceof PendingInteraction.GraveyardChoice choice
+                        && choice.cardPool().equals(List.of(creature))
+                        && choice.mandatory() && choice.returnEffect().equals(effect)));
+    }
+
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
     @Mock

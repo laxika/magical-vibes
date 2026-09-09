@@ -328,7 +328,7 @@ public class EtbTriggerService {
                             choice.options().size(),
                             Math.max(0, amountEvaluationService.evaluate(gameData,
                                     triggerTimeChoice.maximumChoices(),
-                                    new AmountContext(controllerId, enteringPermanent, null, 0, 0))));
+                                    new AmountContext(controllerId, enteringPermanent, null, xValue, 0))));
                     if (maximumChoices == 0) {
                         continue;
                     }
@@ -377,13 +377,9 @@ public class EtbTriggerService {
                             repeatedAdditionalCosts, convokeCreatureIds);
                     continue;
                 }
-                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
-                gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
-                // Naban: extra triggers for Wizard ETB
-                for (int i = 0; i < extraTriggerCopies; i++) {
-                    gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
-                }
+                queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
+                        List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue,
+                        repeatedAdditionalCosts, convokeCreatureIds);
             }
 
             if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
@@ -708,10 +704,10 @@ public class EtbTriggerService {
                     TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
 
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter, xValue));
                     for (int i = 0; i < extraTriggerCopies; i++) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter, xValue));
                     }
                     gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose a target."));
@@ -805,7 +801,7 @@ public class EtbTriggerService {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                        card, controllerId, List.of(effect), sourcePermanentId, etbTargetFilter));
+                        card, controllerId, List.of(effect), sourcePermanentId, etbTargetFilter, xValue));
             }
         }
 
@@ -897,9 +893,18 @@ public class EtbTriggerService {
                     : Math.max(0, amountEvaluationService.evaluate(gameData, returnEffect.dynamicMaxTargets(),
                             new AmountContext(controllerId, null, null, xValue, 0, false, null,
                                     repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card)));
+            Integer maxTotalManaValue = null;
+            if (returnEffect.hasTotalManaValueCap()) {
+                maxTotalManaValue = returnEffect.dynamicMaxTotalManaValue() == null
+                        ? returnEffect.maxTotalManaValue()
+                        : Math.max(0, amountEvaluationService.evaluate(gameData,
+                                returnEffect.dynamicMaxTotalManaValue(),
+                                new AmountContext(controllerId, null, null, xValue, 0, false, null,
+                                        repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card)));
+            }
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData, controllerId, card,
-                        List.of(effect), returnEffect, maxTargets);
+                        List.of(effect), returnEffect, maxTargets, maxTotalManaValue, xValue);
             }
         }
 

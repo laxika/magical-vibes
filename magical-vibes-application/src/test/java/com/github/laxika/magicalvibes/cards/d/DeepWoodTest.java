@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.r.RagingRegisaur;
 import com.github.laxika.magicalvibes.cards.w.WildGriffin;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeepWood.class, WildGriffin.class})
+@CardUsed({DeepWood.class, GrizzlyBears.class, WildGriffin.class})
 class DeepWoodTest extends BaseCardTest {
 
     @Test
@@ -102,6 +106,35 @@ class DeepWoodTest extends BaseCardTest {
         perm.tap();
         perm.setAttacking(true);
         perm.setAttackTarget(player2.getId());
+        return perm;
+    }
+
+    @Test
+    @CardUsed({ProdigalSorcerer.class})
+    @DisplayName("Noncombat damage from a nonattacking creature is not prevented")
+    void doesNotPreventNoncombatDamageFromNonAttacker() {
+        harness.forceActivePlayer(player1);
+        addAttacker(player1, player2, new GrizzlyBears());
+        addCreatureReady(player1, new ProdigalSorcerer());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        int defenderLifeBefore = gd.getLife(player2.getId());
+
+        // Put the nonattacking creature's ability below Deep Wood so it resolves while the
+        // declare attackers step is still active.
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.castFromHand(player2, new DeepWood(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(defenderLifeBefore - 1);
+    }
+
+    private Permanent addAttacker(Player attackerController, Player defender, Card card) {
+        Permanent perm = addCreatureReady(attackerController, card);
+        perm.setAttacking(true);
+        perm.setAttackTarget(defender.getId());
         return perm;
     }
 }

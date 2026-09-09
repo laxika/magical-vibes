@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "8ED", collectorNumber = "167")
 @CardRegistration(set = "9ED", collectorNumber = "166")
 @CardRegistration(set = "P02", collectorNumber = "89")
+@CardRegistration(set = "PHUK", collectorNumber = "2")
+@CardRegistration(set = "PHUK", collectorNumber = "14")
+@CardRegistration(set = "PHUK", collectorNumber = "27")
 public class SwarmOfRats extends Card {
 
     public SwarmOfRats() {

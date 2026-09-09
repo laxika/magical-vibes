@@ -10,25 +10,33 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param includeHand whether the controller's hand is also searched
  * @param attachToSource whether the found permanent is attached to the source permanent
+ * @param enterWithCounters optional as-enters counters for the found permanent
  */
 public record SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(
         CardPredicate filter,
         boolean includeHand,
         boolean attachToSource,
-        ManaValueBound manaValueBound
+        ManaValueBound manaValueBound,
+        EnterWithCountersEffect enterWithCounters
 ) implements CardEffect {
 
     public SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(CardPredicate filter) {
-        this(filter, false, false, null);
+        this(filter, false, false, null, null);
     }
 
     public SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(
             CardPredicate filter, boolean includeHand, boolean attachToSource) {
-        this(filter, includeHand, attachToSource, null);
+        this(filter, includeHand, attachToSource, null, null);
     }
 
     public SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(
             CardPredicate filter, ManaValueBound manaValueBound) {
-        this(filter, false, false, manaValueBound);
+        this(filter, false, false, manaValueBound, null);
+    }
+
+    public SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(
+            CardPredicate filter, ManaValueBound manaValueBound,
+            EnterWithCountersEffect enterWithCounters) {
+        this(filter, false, false, manaValueBound, enterWithCounters);
     }
 }

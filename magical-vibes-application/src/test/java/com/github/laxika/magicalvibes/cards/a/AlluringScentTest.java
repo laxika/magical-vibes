@@ -65,7 +65,7 @@ class AlluringScentTest extends BaseCardTest {
 
         prepareDeclareBlockers(player2);
 
-        // Only one blocker assigned — illegal, both must block
+        // Only one blocker assigned â€” illegal, both must block
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block");

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "216")
+@CardRegistration(set = "LGN", collectorNumber = "105")
 public class LavabornMuse extends Card {
 
     public LavabornMuse() {

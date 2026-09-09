@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BearCub;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpittingEarth.class, BearCub.class, Mountain.class, Plains.class})
+@CardUsed({BearCub.class, HillGiant.class, Mountain.class, Plains.class, SpittingEarth.class})
 class SpittingEarthTest extends BaseCardTest {
 
     @Test
@@ -136,5 +137,20 @@ class SpittingEarthTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
                 .anyMatch(log -> log.contains("fizzles"));
     }
-}
 
+    @Test
+    @DisplayName("Spitting Earth deals exactly one damage per controlled Mountain")
+    void dealsExactDamageForEachControlledMountain() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Plains());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SpittingEarth()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+}

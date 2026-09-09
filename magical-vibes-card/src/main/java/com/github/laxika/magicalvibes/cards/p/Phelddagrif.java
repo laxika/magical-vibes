@@ -25,6 +25,7 @@ import java.util.Set;
  * legal choice.
  */
 @CardRegistration(set = "ALL", collectorNumber = "115")
+@CardRegistration(set = "ME1", collectorNumber = "150")
 public class Phelddagrif extends Card {
 
     public Phelddagrif() {

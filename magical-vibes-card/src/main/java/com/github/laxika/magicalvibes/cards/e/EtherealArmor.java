@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "9")
+@CardRegistration(set = "DSK", collectorNumber = "7")
 public class EtherealArmor extends Card {
 
     public EtherealArmor() {

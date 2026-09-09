@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HandOfDeath.class, WildGriffin.class, MuckRats.class, Swamp.class, IgneousGolem.class})
+@CardUsed({HandOfDeath.class, IgneousGolem.class, MuckRats.class, Swamp.class, WildGriffin.class})
 class HandOfDeathTest extends BaseCardTest {
 
     @Test
@@ -40,6 +40,7 @@ class HandOfDeathTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
+        harness.addToBattlefield(player1, new WildGriffin());
         Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new MuckRats());
 
         harness.setHand(player1, List.of(new HandOfDeath()));
@@ -53,6 +54,7 @@ class HandOfDeathTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new WildGriffin());
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
 
         harness.setHand(player1, List.of(new HandOfDeath()));
@@ -92,6 +94,7 @@ class HandOfDeathTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Wild Griffin");
         harness.assertNotInGraveyard(player2, "Wild Griffin");
+        assertThat(griffin.getRegenerationShield()).isZero();
     }
 
     @Test

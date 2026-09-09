@@ -117,10 +117,12 @@ public sealed interface DelayedAction permits
         TransformSourceAtNextUpkeep,
         GrantChosenLandwalkAtNextUpkeep,
         ReboundAtNextUpkeep,
+        DimensionalBreachUpkeepReturn,
         PendingExileReturn,
         ReturnExiledCardAtNextEndStepUnlessPays,
         EachPlayerHandExileReturnAtNextEndStep,
         TargetPlayerHandExileReturnAtNextTurnEndStep,
+        ExpireControlAtEndOfNextTurn,
         DelayedDamageDoubling,
         DelayedVehicleAttack,
         UnattachEquipmentAtNextEndStep {

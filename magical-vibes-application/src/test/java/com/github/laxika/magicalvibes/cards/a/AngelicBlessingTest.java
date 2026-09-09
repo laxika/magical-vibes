@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,16 +15,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AngelicBlessing.class, AlabornTrooper.class, Forest.class})
+@CardUsed({AlabornTrooper.class, AngelicBlessing.class, Forest.class})
 class AngelicBlessingTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target creature gets +3/+3 and gains flying until end of turn")
     void boostsAndGrantsFlyingUntilEndOfTurn() {
+        Permanent other = addCreatureReady(player1, new AlabornTrooper());
         Permanent target = castAngelicBlessing(addCreatureReady(player1, new AlabornTrooper()));
 
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
     }
 
@@ -85,5 +89,20 @@ class AngelicBlessingTest extends BaseCardTest {
     private void addMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    @Test
+    @DisplayName("Angelic Blessing fizzles if its target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player1, new AlabornTrooper());
+        harness.setHand(player1, List.of(new AngelicBlessing()));
+        addMana();
+
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 }

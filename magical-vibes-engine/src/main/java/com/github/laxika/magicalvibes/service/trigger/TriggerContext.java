@@ -117,6 +117,21 @@ public sealed interface TriggerContext {
     /** Context for controller-surveil triggers. */
     record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
 
+    /** Context for controller manifest-dread triggers. */
+    record ManifestDread(UUID manifestingPlayerId, Card cardPutIntoGraveyard) implements TriggerContext {}
+
+    /** Context for triggers caused by completing a dungeon. */
+    record DungeonCompletion(UUID completingPlayerId) implements TriggerContext {}
+
+    /** Context for triggers caused by rolling one or more dice. */
+    record DiceRoll(UUID rollingPlayerId, int diceCount, int result, boolean planar) implements TriggerContext {
+        public DiceRoll(UUID rollingPlayerId, int diceCount, int result) {
+            this(rollingPlayerId, diceCount, result, false);
+        }
+        public DiceRoll(UUID rollingPlayerId, int diceCount) {
+            this(rollingPlayerId, diceCount, 0);
+        }
+    }
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
     /** Context for controller collect-evidence triggers. */
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
@@ -177,6 +192,14 @@ public sealed interface TriggerContext {
 
         public DamageToControllerAmount(UUID damagedPlayerId, int amount) {
             this(damagedPlayerId, amount, null, null);
+        }
+    }
+
+    /** Context for batched ally-creature damage-to-player triggers. */
+    record AllyCreaturesDealDamageToPlayer(UUID damagedPlayerId, UUID sourceControllerId,
+                                            List<Permanent> damageDealers) implements TriggerContext {
+        public AllyCreaturesDealDamageToPlayer {
+            damageDealers = List.copyOf(damageDealers);
         }
     }
 
@@ -330,6 +353,12 @@ public sealed interface TriggerContext {
     /** Context for a permanent controlled by a player transforming. */
     record PermanentTransforms(Permanent transformedPermanent, Card transformedCard, UUID controllerId)
             implements TriggerContext {}
+
+    /** Context for an ability that triggers when a player fully unlocks a Room they control. */
+    record RoomFullyUnlocked(UUID roomPermanentId) implements TriggerContext {}
+
+    /** Context for an ability that triggers when a specific door of a Room becomes unlocked. */
+    record RoomDoorUnlocked(UUID roomPermanentId, int doorIndex) implements TriggerContext {}
 
     /** Context for a permanent changing from one player's control to an opponent's control. */
     record PermanentControlChanged(Permanent changedPermanent, UUID previousControllerId,
@@ -599,8 +628,16 @@ public sealed interface TriggerContext {
             implements TriggerContext {}
 
     /** Context for ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
-    record CardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int cardCount)
-            implements TriggerContext {}
+    record CardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int cardCount, List<Card> cards)
+            implements TriggerContext {
+        public CardsPutIntoGraveyardFromLibrary {
+            cards = cards == null ? List.of() : List.copyOf(cards);
+        }
+
+        public CardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int cardCount) {
+            this(graveyardOwnerId, cardCount, List.of());
+        }
+    }
 
     /** Context for ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
     record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)

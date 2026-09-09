@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,8 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Blaze.class, ChandraNalaar.class, GrizzlyBears.class, HowlingMine.class, SerraAngel.class})
 class BlazeTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Blaze targeting a player puts it on the stack")
@@ -59,7 +60,7 @@ class BlazeTest extends BaseCardTest {
     @DisplayName("Cannot cast without enough mana for base cost")
     void cannotCastWithoutBaseMana() {
         harness.setHand(player1, List.of(new Blaze()));
-        // No mana at all — need at least {R}
+        // No mana at all â€” need at least {R}
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -88,8 +89,6 @@ class BlazeTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
-
-    // ===== Dealing damage to player =====
 
     @Test
     @DisplayName("Deals X damage to target player")
@@ -129,8 +128,6 @@ class BlazeTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
-
-    // ===== Dealing damage to creature =====
 
     @Test
     @DisplayName("Deals X damage to target creature, destroying it")
@@ -175,8 +172,6 @@ class BlazeTest extends BaseCardTest {
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
-    // ===== Graveyard and stack cleanup =====
-
     @Test
     @DisplayName("Blaze goes to graveyard after resolution")
     void goesToGraveyardAfterResolution() {
@@ -202,5 +197,34 @@ class BlazeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
     }
-}
 
+    @CardUsed({DisciplesOfTheInferno.class, InvasionOfRegatha.class})
+    @Test
+    @DisplayName("Deals X damage to target battle")
+    void dealsXDamageToBattle() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfRegatha());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2, battle.getId());
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+    }
+
+    @CardUsed({Plains.class})
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Blaze blaze = new Blaze();
+        harness.setHand(player1, List.of(blaze));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(blaze);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+    }
+}

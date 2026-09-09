@@ -33,8 +33,10 @@ public class AwardHasteGrantingManaEffectHandler implements NormalEffectHandlerB
         e.applyTo(pool);
 
         String playerName = gameData.playerIdToName.get(controllerId);
+        String creatureSpell = e.creatureSubtype() == null
+                ? "a creature" : "a " + e.creatureSubtype().getDisplayName() + " creature";
         gameLogService.append(gameData, GameLog.text(playerName + " adds " + e.amount() + " " + e.color().getCode()
-                + " (grants haste if spent on a creature spell)."));
+                + " (grants haste if spent on " + creatureSpell + " spell)."));
         log.info("Game {} - {} adds {} {} (haste-granting)", gameData.id, playerName, e.amount(), e.color());
     }
 }

@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "M15", collectorNumber = "194")
 @CardRegistration(set = "M19", collectorNumber = "196")
 @CardRegistration(set = "FDN", collectorNumber = "231")
+@CardRegistration(set = "FDN", collectorNumber = "340")
 public class ReclamationSage extends Card {
 
     public ReclamationSage() {

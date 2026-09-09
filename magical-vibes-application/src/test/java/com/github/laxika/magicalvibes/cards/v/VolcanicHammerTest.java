@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VolcanicHammer.class, HillGiant.class, SerraAngel.class, Mountain.class})
+@CardUsed({ChandraNalaar.class, HillGiant.class, Mountain.class, SerraAngel.class, VolcanicHammer.class})
 class VolcanicHammerTest extends BaseCardTest {
 
     @Test

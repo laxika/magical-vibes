@@ -39,10 +39,11 @@ public class ManifestService {
         return manifestCardAndReturnPermanent(gameData, playerId, sourceCard, manifestedCard) != null;
     }
 
-    private Permanent manifestCardAndReturnPermanent(GameData gameData, UUID playerId,
-                                                     Card sourceCard, Card manifestedCard) {
+    public Permanent manifestCardAndReturnPermanent(GameData gameData, UUID playerId,
+                                                    Card sourceCard, Card manifestedCard) {
         Permanent manifested = putManifestedCard(gameData, playerId, manifestedCard, new ArrayList<>(),
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, playerId, manifestedCard);
 
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " manifests the top card of its controller's library."));

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLS", collectorNumber = "60")
+@CardRegistration(set = "DD2", collectorNumber = "42")
 public class FlametongueKavu extends Card {
 
     public FlametongueKavu() {

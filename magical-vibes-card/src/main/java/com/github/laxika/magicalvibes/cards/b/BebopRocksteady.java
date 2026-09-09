@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCa
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "140")
+@CardRegistration(set = "TMT", collectorNumber = "204")
+@CardRegistration(set = "TMT", collectorNumber = "241")
 public class BebopRocksteady extends Card {
 
     public BebopRocksteady() {

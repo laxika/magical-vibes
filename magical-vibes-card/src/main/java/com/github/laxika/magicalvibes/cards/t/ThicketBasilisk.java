@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "5ED", collectorNumber = "331")
 @CardRegistration(set = "4ED", collectorNumber = "274")
 @CardRegistration(set = "SUM", collectorNumber = "218")
+@CardRegistration(set = "ME1", collectorNumber = "134")
+@CardRegistration(set = "3ED", collectorNumber = "218")
 public class ThicketBasilisk extends Card {
 
     public ThicketBasilisk() {

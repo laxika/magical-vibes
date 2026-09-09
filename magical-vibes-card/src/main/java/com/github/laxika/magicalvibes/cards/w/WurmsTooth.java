@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "M11", collectorNumber = "222")
 @CardRegistration(set = "M12", collectorNumber = "223")
 @CardRegistration(set = "DST", collectorNumber = "162")
+@CardRegistration(set = "DPA", collectorNumber = "97")
 public class WurmsTooth extends Card {
 
     public WurmsTooth() {

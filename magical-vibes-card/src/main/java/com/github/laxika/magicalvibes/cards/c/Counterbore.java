@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSameNameEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "33")
+@CardRegistration(set = "DPA", collectorNumber = "5")
 public class Counterbore extends Card {
 
     public Counterbore() {

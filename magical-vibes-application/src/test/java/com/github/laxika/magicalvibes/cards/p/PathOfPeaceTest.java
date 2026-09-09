@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VolunteerMilitia;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PathOfPeace.class, VolunteerMilitia.class, Plains.class})
+@CardUsed({GrizzlyBears.class, PathOfPeace.class, Plains.class, VolunteerMilitia.class})
 class PathOfPeaceTest extends BaseCardTest {
 
     @Test
@@ -102,5 +105,21 @@ class PathOfPeaceTest extends BaseCardTest {
 
         assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertLife(player2, ownerLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Its owner gains life even when the target creature is indestructible")
+    void ownerGainsLifeWhenCreatureIsIndestructible() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new PathOfPeace()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        int ownerLifeBefore = gd.getLife(player2.getId());
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, ownerLifeBefore + 4);
     }
 }

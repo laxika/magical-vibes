@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "256")
+@CardRegistration(set = "3ED", collectorNumber = "256")
 public class JandorsRing extends Card {
 
     public JandorsRing() {
