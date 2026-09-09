@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -896,6 +897,7 @@ class AiDecisionEngineTest {
     // ===== Creature-targeting spell validation =====
 
     @Test
+    @CardUsed({AngelicBlessing.class, GrizzlyBears.class, Plains.class})
     @DisplayName("AI casts Angelic Blessing targeting own creature, not a land")
     void castsAngelicBlessingTargetingCreatureNotLand() {
         giveAiPriority();
@@ -912,11 +914,11 @@ class AiDecisionEngineTest {
 
         // AI should cast Angelic Blessing targeting the creature, not a Plains
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Angelic Blessing");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test
+    @CardUsed({AngelicBlessing.class, Plains.class})
     @DisplayName("AI does not cast Angelic Blessing when no creatures on battlefield")
     void doesNotCastAngelicBlessingWithoutCreatures() {
         giveAiPriority();

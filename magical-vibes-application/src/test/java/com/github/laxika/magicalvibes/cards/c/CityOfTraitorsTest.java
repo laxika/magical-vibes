@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,23 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CityOfTraitors.class, Forest.class})
 class CityOfTraitorsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Playing City of Traitors does not sacrifice itself")
+    void playingCityOfTraitorsDoesNotSacrificeItself() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new CityOfTraitors()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "City of Traitors");
+        harness.assertNotInGraveyard(player1, "City of Traitors");
+    }
 
     @Test
     @DisplayName("Playing another land sacrifices City of Traitors")

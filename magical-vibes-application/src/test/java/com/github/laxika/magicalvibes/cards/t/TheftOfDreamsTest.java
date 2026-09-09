@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TheftOfDreams.class, GrizzlyBears.class, Forest.class})
 class TheftOfDreamsTest extends BaseCardTest {
 
     private void castTheftOfDreams() {
@@ -36,7 +37,7 @@ class TheftOfDreamsTest extends BaseCardTest {
         addTapped(new GrizzlyBears());
         addTapped(new GrizzlyBears());
         // Untapped creature is not counted.
-        harness.addToBattlefield(player2, new GoblinPiker());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         castTheftOfDreams();
@@ -71,6 +72,21 @@ class TheftOfDreamsTest extends BaseCardTest {
         castTheftOfDreams();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Counts the target's tapped creatures when the spell resolves")
+    void countsAtResolution() {
+        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        Permanent bears = addTapped(new GrizzlyBears());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+        bears.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
     }
 
     @Test
