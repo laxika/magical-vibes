@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "DSK", collectorNumber = "269")
 @CardRegistration(set = "SOS", collectorNumber = "265")
 @CardRegistration(set = "TSP", collectorNumber = "279")
+@CardRegistration(set = "DDE", collectorNumber = "66")
 public class TerramorphicExpanse extends Card {
 
     public TerramorphicExpanse() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "124")
+@CardRegistration(set = "DDE", collectorNumber = "44")
 public class YavimayaElder extends Card {
 
     public YavimayaElder() {

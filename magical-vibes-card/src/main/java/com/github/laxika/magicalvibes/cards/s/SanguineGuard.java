@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "155")
+@CardRegistration(set = "DDE", collectorNumber = "9")
 public class SanguineGuard extends Card {
 
     public SanguineGuard() {

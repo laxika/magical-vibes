@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "98")
+@CardRegistration(set = "DDE", collectorNumber = "26")
 public class HideousEnd extends Card {
 
     public HideousEnd() {
