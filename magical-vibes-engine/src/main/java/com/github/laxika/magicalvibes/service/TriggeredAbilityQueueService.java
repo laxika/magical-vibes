@@ -661,7 +661,7 @@ public class TriggeredAbilityQueueService {
                 targetGroupIndex = compatibleTargetGroups.iterator().next();
             }
         }
-        if (targetGroupIndex < 0 && effects.stream()
+        if (sourceCard.isAura() && targetGroupIndex < 0 && effects.stream()
                 .anyMatch(effect -> !TargetSpec.NONE.equals(effect.targetSpec()))) {
             // An Aura's declared target is its enchantment target, not the target of an
             // unbound granted trigger. Let the trigger's own target specification decide

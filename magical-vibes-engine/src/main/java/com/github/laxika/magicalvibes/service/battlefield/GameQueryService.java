@@ -2362,6 +2362,18 @@ public class GameQueryService {
         return hasKeyword(permanent, computeStaticBonus(gameData, permanent), keyword);
     }
 
+    /** Counts the flanking abilities that survive the current ability layer. */
+    public int flankingInstances(GameData gameData, Permanent permanent) {
+        if (!hasKeyword(gameData, permanent, Keyword.FLANKING)) return 0;
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+            return state == null ? 1 : state.getFlankingInstances();
+        } finally {
+            layerSystemService.endPass(pass);
+        }
+    }
+
     /**
      * Keyword check against a pre-computed static bonus, for callers that read many keywords
      * off the same permanent (mirrors {@link #getEffectivePower(Permanent, StaticBonus)}).

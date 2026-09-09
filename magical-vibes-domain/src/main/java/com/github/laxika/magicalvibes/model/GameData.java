@@ -429,6 +429,8 @@ public class GameData {
      * battlefield lists) is queued here and applied once that sweep is done.
      */
     public final Map<UUID, UUID> pendingRegenerationControlChanges = new ConcurrentHashMap<>();
+    /** Replacement choices collected before a batch of state-based destruction is applied. */
+    public final Map<UUID, String> chosenRegenerationShields = new ConcurrentHashMap<>();
     /** Source permanent id → ids of the tokens created with it ("tokens created with this permanent"; Tetravus, Tombstone Stairwell). */
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
@@ -4600,6 +4602,7 @@ public class GameData {
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
         copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
+        copy.chosenRegenerationShields.putAll(this.chosenRegenerationShields);
         copy.unpreventableDamageInProgress = this.unpreventableDamageInProgress;
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---

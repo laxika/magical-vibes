@@ -72,6 +72,10 @@ public class StateBasedActionService {
     private static final int MAX_SBA_PASSES = 100;
 
     public void performStateBasedActions(GameData gameData) {
+        if (graveyardService.hasPendingRegenerationChoice(gameData)) {
+            graveyardService.processPendingRegenerationChoice(gameData);
+            return;
+        }
         triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
         initializeSpeedForPlayers(gameData);
 
@@ -87,6 +91,7 @@ public class StateBasedActionService {
             anyPerformed = gameData.planechase != null && planechaseService.checkPhenomena(gameData);
             anyPerformed |= enforceCounterLimits(gameData);
             anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
+            if (graveyardService.hasPendingRegenerationChoice(gameData)) return;
             anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
             // CR 704.5a — player with 0 or less life loses the game
@@ -319,6 +324,17 @@ public class StateBasedActionService {
         });
 
         boolean replacementPerformed = false;
+        int activeIndex = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
+        for (int offset = 0; offset < gameData.orderedPlayerIds.size(); offset++) {
+            UUID playerId = gameData.orderedPlayerIds.get(
+                    (activeIndex + offset) % gameData.orderedPlayerIds.size());
+            for (DeathEntry candidate : lethalDamageCandidates) {
+                if (playerId.equals(gameQueryService.findPermanentController(gameData, candidate.permanent().getId()))) {
+                    graveyardService.prepareRegenerationChoice(gameData, candidate.permanent());
+                }
+            }
+        }
+        if (graveyardService.hasPendingRegenerationChoice(gameData)) return false;
         for (DeathEntry candidate : lethalDamageCandidates) {
             if (graveyardService.tryRegenerate(gameData, candidate.permanent())) {
                 replacementPerformed = true;
@@ -326,6 +342,7 @@ public class StateBasedActionService {
                 toDie.add(candidate);
             }
         }
+        if (graveyardService.hasPendingRegenerationChoice(gameData)) return false;
 
         // CR 704.5h spans "since the last state-based check" and this pass is that check:
         // consume the deathtouch memory so survivors (indestructible, regenerated) aren't

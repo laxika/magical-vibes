@@ -211,6 +211,12 @@ class CombatDamageServiceTest {
      * controller lookups, redirect, and win condition. Requires stubCombatSetup().
      */
     private void stubDamageResolution() {
+        lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true), any(), anyBoolean()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applySourceNextCombatDamageToControllerShield(
+                eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
         when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(), any(), any()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gameData), anyInt()))

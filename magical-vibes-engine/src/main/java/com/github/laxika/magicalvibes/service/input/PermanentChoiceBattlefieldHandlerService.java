@@ -1866,15 +1866,15 @@ public class PermanentChoiceBattlefieldHandlerService {
      */
     public void handleDoubleOrPreventNextDamageFromSourceChoice(GameData gameData, UUID permanentId,
                                                                 PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, ctx.controllerId());
         boolean wonFlip = result.heads();
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        String sourceName = chosenPermanent.getCard().getName();
+        String sourceName = chosenSource.getName();
         gameLogService.append(gameData, GameLog.text(wonFlip
                 ? playerName + " wins the coin flip for Desperate Gambit"
                         + coinFlipService.replacementDetails(result) + "."

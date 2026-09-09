@@ -2339,6 +2339,9 @@ public class AdditionalSpellCostService {
         if (graveyard == null && !exileGraveyardCardIndices.isEmpty()) {
             throw new IllegalStateException("No cards in graveyard to exile");
         }
+        if (exileGraveyardCardIndices.stream().distinct().count() != exileGraveyardCardIndices.size()) {
+            throw new IllegalStateException("Duplicate graveyard card indices");
+        }
         for (int idx : exileGraveyardCardIndices) {
             if (idx < 0 || idx >= graveyard.size()) {
                 throw new IllegalStateException("Invalid graveyard card index: " + idx);

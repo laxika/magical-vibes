@@ -603,6 +603,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).
      *  Checked per-card inside {@code GraveyardService.resolveMillPlayer}. */
     ON_SELF_MILLED,
+    ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers when this card is put into a graveyard from anywhere (battlefield, hand, library,
      *  stack, exile). Checked for every card entering a graveyard in
      *  {@code GraveyardService.addCardToGraveyard}, which is the single choke point for all

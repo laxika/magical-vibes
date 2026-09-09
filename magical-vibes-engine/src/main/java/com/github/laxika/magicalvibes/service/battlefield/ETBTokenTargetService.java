@@ -452,6 +452,15 @@ public class ETBTokenTargetService {
             }
 
             boolean minMet = chosenInGroup >= effectiveMinTargets;
+            if (effectiveMinTargets == 0 && group.getMaxTargets() > 1
+                    && validPermanentTargets.isEmpty() && validExiledCardTargets.isEmpty()
+                    && validPlayerTargets.contains(pending.controllerId())) {
+                playerInputService.beginMultiPermanentOrPlayerChoice(gameData, pending.controllerId(),
+                        List.of(), validPlayerTargets, Math.min(validPlayerTargets.size(), effectiveMaxTargets - chosenInGroup),
+                        new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbPlayerTargetGroup(pending),
+                        card.getName() + "'s ability — Choose target players.");
+                return;
+            }
             boolean mustChooseRemainingController =
                     card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
             if (minMet && !mustChooseRemainingController

@@ -7582,8 +7582,8 @@ public class AbilityActivationService {
         }
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
-            boolean typeMatch = requiredType == null || card.getType() == requiredType
-                    || (alternateType != null && card.getType() == alternateType);
+            boolean typeMatch = requiredType == null || card.hasType(requiredType)
+                    || (alternateType != null && card.hasType(alternateType));
             boolean subtypeMatch = requiredSubtype == null || card.getSubtypes().contains(requiredSubtype);
             if (typeMatch && subtypeMatch) {
                 validIndices.add(i);

@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Handles the Doomsday choice: pick up to five cards from the held-out library+graveyard pool to
+ * Handles the Doomsday choice: pick five cards, or all available cards, from the held-out pool to
  * put on top of the library (ordered via {@link PendingInteraction.LibraryReorder} when more than
  * one is kept); the rest are exiled. Card views are re-derived from the pool at prompt time.
  */
@@ -64,8 +64,8 @@ public class DoomsdayChoiceInteractionHandler
                 throw new IllegalStateException("Duplicate card ID: " + id);
             }
         }
-        if (cardIds.size() > interaction.maxCount()) {
-            throw new IllegalStateException("Too many cards selected (max " + interaction.maxCount() + ")");
+        if (cardIds.size() != interaction.maxCount()) {
+            throw new IllegalStateException("Choose exactly " + interaction.maxCount() + " cards");
         }
 
         UUID controllerId = interaction.playerId();

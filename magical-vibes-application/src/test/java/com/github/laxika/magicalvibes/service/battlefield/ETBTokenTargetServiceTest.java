@@ -50,6 +50,27 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ETBTokenTargetServiceTest {
 
+    @Test
+    void optionalPlayerTargetGroupAllowsTheControllerToBeSelected() {
+        UUID otherPlayer = UUID.randomUUID();
+        gd.orderedPlayerIds.add(otherPlayer);
+        Card card = new Card();
+        card.setName("Player targeting trigger");
+        var effect = new com.github.laxika.magicalvibes.model.effect.LoseLifeEffect(
+                1, com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient.TARGET_PLAYER);
+        card.target(0, 2).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        var pending = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                card, player1Id, List.of(effect), null, List.of(), 0, 0);
+        gd.queueInteraction(pending);
+
+        service.processNextETBTokenMultiTargetTrigger(gd);
+
+        verify(playerInputService).beginMultiPermanentOrPlayerChoice(eq(gd), eq(player1Id),
+                eq(List.of()), eq(List.of(player1Id, otherPlayer)), eq(2),
+                eq(new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbPlayerTargetGroup(pending)),
+                org.mockito.ArgumentMatchers.anyString());
+    }
+
     @Mock private GameQueryService gameQueryService;
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;

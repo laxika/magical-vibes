@@ -865,9 +865,12 @@ public class StepTriggerService {
                     + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                     gameData, activePlayerId, perm));
             try {
-            List<CardEffect> upkeepEffects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED));
-            upkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
-            upkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+            List<CardEffect> upkeepEffects = new ArrayList<>();
+            if (!gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                upkeepEffects.addAll(perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED));
+                upkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+                upkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+            }
             if (upkeepEffects.stream().anyMatch(SoulEchoUpkeepEffect.class::isInstance)) {
                 perm.setEchoDamageRedirectionActive(false);
             }
@@ -2839,6 +2842,7 @@ public class StepTriggerService {
                             });
                             triggerEntry.setEventCardIds(lockedPermanentIds);
                         }
+                        triggerEntry.setSourcePermanentSnapshot(new Permanent(perm));
                         gameData.stack.add(triggerEntry);
 
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s draw step ability triggers."));

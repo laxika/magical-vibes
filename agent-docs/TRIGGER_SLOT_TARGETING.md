@@ -338,7 +338,7 @@ with the slot whenever another creature leaves the battlefield by any means, che
 counters before the trigger is queued.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
-`ON_SELF_MILLED`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
+`ON_SELF_MILLED`, `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
 `EACH_BEGINNING_OF_COMBAT_TRIGGERED`, `OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED`,
 `ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
 `ON_CONTROLLER_LOSES_LIFE`,
@@ -701,3 +701,11 @@ Controller end-step effects bound to multiple declared target groups are queued 
 ## Planar event slots
 
 `PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED` and `ENCOUNTER_TRIGGERED` are collected by `PlanechaseService`. Targeted payloads reuse `SpellTargetTriggerAnyTarget` with a planar source snapshot. Never resolve a target-requiring encounter before its choice, or let phenomenon state-based actions skip that choice. See [PLANECHASE.md](PLANECHASE.md).
+
+`ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY` is collected by `GraveyardService` when the
+source zone is the library. It includes non-mill moves such as Call of the Wild; use
+`ON_SELF_MILLED` only when the ability specifically requires milling.
+
+Optional multi-target groups consisting of player targets use
+`MultiPermanentChoiceContext.EtbPlayerTargetGroup` when the controller is a legal target.
+An empty selection ends the group, leaving the controller available as an actual target.

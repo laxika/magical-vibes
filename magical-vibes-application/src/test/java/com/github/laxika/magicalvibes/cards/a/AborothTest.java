@@ -88,7 +88,7 @@ class AborothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(aboroth.getCounterCount(CounterType.AGE)).isEqualTo(1);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.assertNotOnBattlefield(player1, "Aboroth");
         harness.assertInGraveyard(player1, "Aboroth");

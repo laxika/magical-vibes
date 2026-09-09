@@ -269,9 +269,14 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveAllCreatures(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {
+        UUID attackedTargetId = entry.getAttackedTargetId();
+        UUID defendingPlayerId = attackedTargetId == null ? null
+                : gameData.playerIds.contains(attackedTargetId) ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withDefendingPlayerId(defendingPlayerId);
 
         final int[] count = {0};
         gameData.forEachPermanent((playerId, p) -> {

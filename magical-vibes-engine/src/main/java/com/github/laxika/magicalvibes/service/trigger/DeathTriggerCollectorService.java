@@ -905,6 +905,19 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayEffect.class,
+            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleOwnedCreatureGraveyardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
+        CardEffect wrapped = may.wrapped();
+        if (wrapped instanceof DyingCreatureCardAwareEffect aware && death.dyingCard() != null) {
+            wrapped = aware.boundToDyingCard(death.dyingCard().getId());
+        }
+        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(),
+                new MayEffect(wrapped, may.prompt()), null, match.permanent().getId());
+        return true;
+    }
+
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES)
     boolean handleAllyCreatureOrPlaneswalkerMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
