@@ -281,7 +281,7 @@ public class StackEntry {
     @Setter private Integer chosenPermanentPowerAtLastKnown;
     /** Last-known effective toughness of a permanent chosen for stationing. */
     @Setter private Integer chosenPermanentToughnessAtLastKnown;
-    /** Card chosen from exile for a creature-or-warped-card cost. */
+    /** Card chosen from exile for a creature-or-warped-card cost or a library-search follow-up. */
     @Setter private Card chosenObjectCard;
     /** Permanents placed onto the battlefield by the preceding library search. */
     @Setter private List<UUID> searchedPermanentIds = List.of();

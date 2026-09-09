@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwar
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -1495,6 +1494,9 @@ public class DeathTriggerCollectorService {
     boolean handleArtifactGraveyardControllerConditional(TriggerMatchContext match,
             TriggeringArtifactControllerConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.ArtifactGraveyard ag = (TriggerContext.ArtifactGraveyard) ctx;
+        if (conditional.onlyIfNotSacrificed() && ag.wasSacrificed()) {
+            return false;
+        }
         if (!match.controllerId().equals(ag.artifactControllerId())) {
             return false;
         }

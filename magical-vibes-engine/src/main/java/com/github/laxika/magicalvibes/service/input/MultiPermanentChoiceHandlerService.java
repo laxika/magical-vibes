@@ -892,7 +892,7 @@ public class MultiPermanentChoiceHandlerService {
             UUID sourceController = source == null ? null
                     : gameQueryService.findPermanentController(gameData, sourcePermId);
             if (source != null && playerId.equals(sourceController)) {
-                if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {
+                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, source)) {
                     triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, source.getCard());
                     gameLogService.append(gameData, GameLog.isSacrificed(source.getCard()));
                     log.info("Game {} - {} sacrificed for combat damage trigger", gameData.id, source.getCard().getName());
@@ -1134,7 +1134,7 @@ public class MultiPermanentChoiceHandlerService {
             if (target != null) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
                 String ownerName = controllerId != null ? gameData.playerIdToName.get(controllerId) : "Unknown";
-                if (permanentRemovalService.removePermanentToGraveyard(gameData, target)) {
+                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, target)) {
                     if (controllerId != null) {
                         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId, target.getCard());
                     }
@@ -1160,7 +1160,7 @@ public class MultiPermanentChoiceHandlerService {
                         break;
                     }
                 }
-                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
                 String ownerName = ownerId != null ? gameData.playerIdToName.get(ownerId) : "Unknown";
                 gameLogService.append(gameData, GameLog.playerSacrifices(ownerName, creature.getCard()));
                 log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, creature.getCard().getName());
@@ -1178,7 +1178,7 @@ public class MultiPermanentChoiceHandlerService {
                     || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
                 throw new IllegalStateException("A selected permanent is no longer controlled by the attacker");
             }
-            if (permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+            if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(
                         gameData, playerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.playerSacrifices(playerName, permanent.getCard()));

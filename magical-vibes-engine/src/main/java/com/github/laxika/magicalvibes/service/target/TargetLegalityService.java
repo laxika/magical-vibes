@@ -1032,6 +1032,11 @@ public class TargetLegalityService {
                             + " can't be the target of abilities opponents control");
                 }
             }
+            if (target != null && gameQueryService.cantBeTargetedByAbilityFromCardType(
+                    gameData, target, sourceCard, null, playerId, CardType.ARTIFACT)) {
+                throw new IllegalStateException(target.getCard().getName()
+                        + " can't be the target of abilities from artifact sources");
+            }
         }
 
         // Hexproof from color (blocks opponent's abilities of the specified color)
@@ -1472,6 +1477,10 @@ public class TargetLegalityService {
         UUID candidateController = gameQueryService.findPermanentController(gameData, candidate.getId());
         if (gameQueryService.cantBeTargetOfOpponentAbilities(gameData, candidate)
                 && candidateController != null && !candidateController.equals(playerId)) {
+            return false;
+        }
+        if (gameQueryService.cantBeTargetedByAbilityFromCardType(
+                gameData, candidate, sourceCard, null, playerId, CardType.ARTIFACT)) {
             return false;
         }
         if (hexproofFromColorReason(gameData, candidate, sourceCard, playerId) != null
@@ -2812,7 +2821,9 @@ public class TargetLegalityService {
                     }
                     if (!targetFizzled
                             && (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)) {
-                        targetFizzled = isBlockedByOpponentAbilityRestriction(gameData, targetPerm, entry.getControllerId());
+                        targetFizzled = isBlockedByAbilityTargetingRestriction(
+                                gameData, targetPerm, entry.getControllerId(), entry.getCard(),
+                                entry.getSourcePermanentId());
                     }
                     if (!targetFizzled) {
                         targetFizzled = isSpellProtected(gameData, targetPerm, entry);
@@ -3141,7 +3152,8 @@ public class TargetLegalityService {
         }
         if ((entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
-                && isBlockedByOpponentAbilityRestriction(gameData, target, entry.getControllerId())) {
+                && isBlockedByAbilityTargetingRestriction(
+                gameData, target, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId())) {
             return false;
         }
         if (isProtectedFromSource(gameData, target, entry) || isSpellProtected(gameData, target, entry)
@@ -3465,12 +3477,15 @@ public class TargetLegalityService {
         return null;
     }
 
-    private boolean isBlockedByOpponentAbilityRestriction(GameData gameData, Permanent target, UUID sourcePlayerId) {
+    private boolean isBlockedByAbilityTargetingRestriction(GameData gameData, Permanent target,
+                                                           UUID sourcePlayerId, Card sourceCard,
+                                                           UUID sourcePermanentId) {
         if (gameQueryService.cantBeTargetOfOpponentAbilities(gameData, target)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-            return targetController != null && !targetController.equals(sourcePlayerId);
+            if (targetController != null && !targetController.equals(sourcePlayerId)) return true;
         }
-        return false;
+        return gameQueryService.cantBeTargetedByAbilityFromCardType(
+                gameData, target, sourceCard, sourcePermanentId, sourcePlayerId, CardType.ARTIFACT);
     }
 
     private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {
