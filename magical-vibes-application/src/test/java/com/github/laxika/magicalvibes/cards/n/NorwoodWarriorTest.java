@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,15 +15,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NorwoodWarrior.class, BearCub.class})
 class NorwoodWarriorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Becoming blocked creates one becomes-blocked trigger")
     void becomingBlockedCreatesTrigger() {
-        Permanent warrior = addReadyWarrior(player1);
-        warrior.setAttacking(true);
-        addReadyBears(player2);
+        Permanent warrior = addCreatureReady(player1, new NorwoodWarrior());
+        addCreatureReady(player2, new BearCub());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -35,13 +37,13 @@ class NorwoodWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("When blocked Norwood Warrior gets +1/+1 until end of turn")
     void blockedGivesPlusOnePlusOne() {
-        Permanent warrior = addReadyWarrior(player1);
-        warrior.setAttacking(true);
-        addReadyBears(player2);
+        Permanent warrior = addCreatureReady(player1, new NorwoodWarrior());
+        addCreatureReady(player2, new BearCub());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(warrior.getPowerModifier()).isEqualTo(1);
         assertThat(warrior.getToughnessModifier()).isEqualTo(1);
@@ -52,17 +54,17 @@ class NorwoodWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Boost is a flat +1/+1 regardless of the number of blockers")
     void twoBlockersStillGivesPlusOnePlusOne() {
-        Permanent warrior = addReadyWarrior(player1);
-        warrior.setAttacking(true);
-        addReadyBears(player2);
-        addReadyBears(player2);
+        Permanent warrior = addCreatureReady(player1, new NorwoodWarrior());
+        addCreatureReady(player2, new BearCub());
+        addCreatureReady(player2, new BearCub());
 
+        declareAttackers(List.of(0));
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
         ));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(warrior.getPowerModifier()).isEqualTo(1);
         assertThat(warrior.getToughnessModifier()).isEqualTo(1);
@@ -71,7 +73,7 @@ class NorwoodWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("If unblocked no becomes-blocked trigger is created")
     void unblockedCreatesNoTrigger() {
-        Permanent warrior = addReadyWarrior(player1);
+        Permanent warrior = addCreatureReady(player1, new NorwoodWarrior());
         warrior.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -82,16 +84,25 @@ class NorwoodWarriorTest extends BaseCardTest {
         assertThat(warrior.getToughnessModifier()).isZero();
     }
 
-    private Permanent addReadyWarrior(Player player) {
-        Permanent permanent = new Permanent(new NorwoodWarrior());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("The becomes-blocked boost wears off at end of turn")
+    void boostWearsOffAtEndOfTurn() {
+        Permanent warrior = addCreatureReady(player1, new NorwoodWarrior());
+        warrior.setAttacking(true);
+        addCreatureReady(player2, new BearCub());
 
-    private void addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(warrior.getPowerModifier()).isEqualTo(1);
+        assertThat(warrior.getToughnessModifier()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(warrior.getToughnessModifier()).isZero();
     }
 }

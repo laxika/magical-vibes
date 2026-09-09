@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "120")
 @CardRegistration(set = "HML", collectorNumber = "38")
+@CardRegistration(set = "ME1", collectorNumber = "48")
 public class SeaSprite extends Card {
 
     public SeaSprite() {

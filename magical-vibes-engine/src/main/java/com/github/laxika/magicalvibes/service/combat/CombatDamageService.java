@@ -840,7 +840,8 @@ public class CombatDamageService {
                     applyPlayerAssignedDamage(gameData, state, atk, atkStats, defBf,
                             playerAssignment, activeId, defenderId, unblockedDamageRedirectTarget,
                             damagePreventableFrom(gameData, snap.damagePreventable(), atk),
-                            assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, atk));
+                            assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, atk),
+                            blkIndices.isEmpty() && !atk.isBlockedWithoutBlockers());
                 }
             } else if (blkIndices.isEmpty() || assignAsUnblocked) {
                 // A creature made blocked without a creature blocking it deals no damage unless it
@@ -849,7 +850,7 @@ public class CombatDamageService {
                         && (!atk.isBlockedWithoutBlockers() || atkStats.trample())) {
                     int power = gameQueryService.applyCombatDamageMultiplier(gameData, atkStats.combatDamage(), atk, null);
                     accumulatePlayerDamage(gameData, atk, atkStats, power, defenderId,
-                            unblockedDamageRedirectTarget, state);
+                            unblockedDamageRedirectTarget, state, !atk.isBlockedWithoutBlockers());
                 }
             } else {
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()) {
@@ -1041,7 +1042,7 @@ public class CombatDamageService {
         }
         if (remaining > 0 && atkStats.trample()) {
             int doubledRemaining = gameQueryService.applyCombatDamageMultiplier(gameData, remaining, atk, null);
-            accumulatePlayerDamage(gameData, atk, atkStats, doubledRemaining, defenderId, null, state);
+            accumulatePlayerDamage(gameData, atk, atkStats, doubledRemaining, defenderId, null, state, false);
         }
     }
 
@@ -1051,7 +1052,8 @@ public class CombatDamageService {
                                             Map<UUID, Integer> playerAssignment,
                                             UUID activeId, UUID defenderId,
                                             Permanent redirectTarget, boolean damagePreventable,
-                                            boolean assignsAmongDefendingPlayerAndCreatures) {
+                                            boolean assignsAmongDefendingPlayerAndCreatures,
+                                            boolean sourceUnblocked) {
         UUID overflowTargetId = atk.getAttackTarget() != null ? atk.getAttackTarget() : defenderId;
         for (var dmgEntry : playerAssignment.entrySet()) {
             UUID targetId = dmgEntry.getKey();
@@ -1064,10 +1066,10 @@ public class CombatDamageService {
                 int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, null);
                 if (assignedToDefendingPlayer) {
                     accumulatePlayerDamageToPlayer(gameData, atk, atkStats, actualDmg, defenderId,
-                            redirectTarget, state);
+                            redirectTarget, state, sourceUnblocked);
                 } else {
                     accumulatePlayerDamage(gameData, atk, atkStats, actualDmg, defenderId,
-                            redirectTarget, state);
+                            redirectTarget, state, sourceUnblocked);
                 }
             } else {
                 // Damage assigned to a defending creature. For a blocked attacker this is one of
@@ -1098,6 +1100,9 @@ public class CombatDamageService {
                                           Permanent redirectTarget) {
         if (redirectTarget != null && state.infectDamageRedirectedToGuard > 0) {
             state.infectDamageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard, true);
+            if (state.infectDamageRedirectedToGuard > 0) {
+                damagePreventionService.applyDamageHealingReplacement(gameData, redirectTarget, state.infectDamageRedirectedToGuard);
+            }
             if (state.infectDamageRedirectedToGuard > 0 && !gameQueryService.cantHaveCounters(gameData, redirectTarget)) {
                 redirectTarget.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, redirectTarget.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + state.infectDamageRedirectedToGuard);
                 gameLogService.append(gameData, GameLog.cardThen(redirectTarget.getCard(),
@@ -1108,6 +1113,7 @@ public class CombatDamageService {
         if (redirectTarget != null && state.damageRedirectedToGuard > 0) {
             state.damageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.damageRedirectedToGuard, true);
             if (state.damageRedirectedToGuard > 0) {
+                damagePreventionService.applyDamageHealingReplacement(gameData, redirectTarget, state.damageRedirectedToGuard);
                 // Redirected combat damage is still damage dealt to the guard (CR 120.3d): record
                 // it as marked damage plus the CR 704.5h deathtouch memory — the state-based
                 // action check at the end of the damage step performs any destruction.
@@ -1255,6 +1261,12 @@ public class CombatDamageService {
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
+                gameData, attackerId, defenderId,
+                combatDamageDealtToPlayer.entrySet().stream()
+                        .filter(entry -> entry.getValue() > 0)
+                        .map(Map.Entry::getKey)
+                        .toList());
         // Graveyard cards whose "whenever one or more creatures you control deal combat damage"
         // trigger has already fired for this damage event — such a trigger fires only once no
         // matter how many creatures connected.
@@ -2847,6 +2859,7 @@ public class CombatDamageService {
                     ? effectiveDamage
                     : Math.max(unpreventable, effectiveDamage);
             if (dmg > 0) {
+                damagePreventionService.applyDamageHealingReplacement(gameData, perm, dmg);
                 Map<UUID, Integer> attributedDamage = recordCombatMarkedDamage(perm, dmg, bySource);
                 gameData.recordDamageToPermanent(perm.getId(), dmg);
                 triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, perm, dmg);
@@ -3218,6 +3231,7 @@ public class CombatDamageService {
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(
                         gameData, targetPerm, channelHarmAdjusted, true, damageSource);
                 if (effectiveDamage > 0) {
+                    damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
                     if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
                         int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
                                 gameData, targetPerm, effectiveDamage);
@@ -3296,7 +3310,7 @@ public class CombatDamageService {
 
     private void accumulatePlayerDamage(GameData gameData, Permanent atk, CombatantStats atkStats,
                                          int damage, UUID defenderId, Permanent redirectTarget,
-                                         CombatDamageState state) {
+                                         CombatDamageState state, boolean sourceUnblocked) {
         UUID attackTargetId = atk.getAttackTarget();
         Permanent attackTarget = attackTargetId != null && !gameData.playerIds.contains(attackTargetId)
                 ? gameQueryService.findPermanentById(gameData, attackTargetId)
@@ -3306,19 +3320,20 @@ public class CombatDamageService {
             return;
         }
         withSourceUnpreventableDamage(gameData, atk, () -> accumulatePlayerDamageInternal(
-                gameData, atk, atkStats, damage, defenderId, redirectTarget, state, null));
+                gameData, atk, atkStats, damage, defenderId, redirectTarget, state, null, sourceUnblocked));
     }
 
     private void accumulatePlayerDamageToPlayer(GameData gameData, Permanent atk, CombatantStats atkStats,
                                                 int damage, UUID playerId, Permanent redirectTarget,
-                                                CombatDamageState state) {
+                                                CombatDamageState state, boolean sourceUnblocked) {
         withSourceUnpreventableDamage(gameData, atk, () -> accumulatePlayerDamageInternal(
-                gameData, atk, atkStats, damage, playerId, redirectTarget, state, playerId));
+                gameData, atk, atkStats, damage, playerId, redirectTarget, state, playerId, sourceUnblocked));
     }
 
     private void accumulatePlayerDamageInternal(GameData gameData, Permanent atk, CombatantStats atkStats,
                                                  int damage, UUID defenderId, Permanent redirectTarget,
-                                                 CombatDamageState state, UUID forcedPlayerTarget) {
+                                                 CombatDamageState state, UUID forcedPlayerTarget,
+                                                 boolean sourceUnblocked) {
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
         if (sourceControllerId != null) {
             state.combatDamageDealerControllers.putIfAbsent(atk, sourceControllerId);
@@ -3347,6 +3362,9 @@ public class CombatDamageService {
                         gameData, sourceControllerId, pwControllerId, true);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
+            damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
+                    gameData, atk.getId(), damage);
+            processSourceRedirectDamage(gameData);
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
@@ -3459,6 +3477,9 @@ public class CombatDamageService {
                         gameData, sourceControllerId, defenderId, true);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
+            damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
+                    gameData, atk.getId(), damage);
+            processSourceRedirectDamage(gameData);
             // Mirror Strike: redirect the chosen attacker's combat damage to its controller.
             damage = damagePreventionService.applyTurnSourceDamageRedirectToController(
                     gameData, defenderId, atk.getId(), damage);
@@ -3588,7 +3609,7 @@ public class CombatDamageService {
                 processEyeForAnEyeReflections(gameData);
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
                 damage = damagePreventionService.applyPlayerNextSourceDamageShield(
-                        gameData, defenderId, atk.getId(), damage, true);
+                        gameData, defenderId, atk.getId(), damage, true, null, sourceUnblocked);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
                 damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, defenderId, true);
                 processEyeForAnEyeReflections(gameData);
@@ -3617,7 +3638,7 @@ public class CombatDamageService {
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
                 damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage, true);
-                damage -= damageSupport.applyDelayingShieldCounterReplacement(gameData, defenderId, damage);
+                damage -= damageSupport.applyDamageToControllerCounterReplacement(gameData, defenderId, damage);
                 damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                         gameData, defenderId, damage, true);
                 if (isGlobalCreaturePreventionLifeGain(gameData, atk)) {
@@ -3785,6 +3806,9 @@ public class CombatDamageService {
         processSourceRedirectDamage(gameData);
         if (damage <= 0) return;
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
+        damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
+                gameData, source.getId(), damage);
+        processSourceRedirectDamage(gameData);
         damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, source.getId(), damage);
         processEyeForAnEyeReflections(gameData);
         // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
@@ -3859,6 +3883,7 @@ public class CombatDamageService {
         if (gameQueryService.dealsCounterDamageToCreatures(gameData, source)) {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(
                     gameData, target, damage, true, source);
+            damagePreventionService.applyDamageHealingReplacement(gameData, target, afterShield);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
                 // Vizier of Remedies reduces the -1/-1 counters; the deathtouch marking below still

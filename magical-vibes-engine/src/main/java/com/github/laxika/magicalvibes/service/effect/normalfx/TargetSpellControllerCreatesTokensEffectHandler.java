@@ -57,7 +57,7 @@ public class TargetSpellControllerCreatesTokensEffectHandler implements NormalEf
             return null;
         }
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getCard().getId().equals(targetCardId)) {
+            if (stackEntry.getTargetableId().equals(targetCardId)) {
                 return stackEntry.getControllerId();
             }
         }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "278")
+@CardRegistration(set = "DDD", collectorNumber = "8")
 public class RavenousBaloth extends Card {
 
     public RavenousBaloth() {

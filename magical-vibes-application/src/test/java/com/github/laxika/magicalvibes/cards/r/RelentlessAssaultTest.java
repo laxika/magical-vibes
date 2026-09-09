@@ -92,6 +92,55 @@ class RelentlessAssaultTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Precombat resolution leaves the original combat after the added combat and main phase")
+    void precombatResolutionPreservesOriginalCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+    }
+
+    @Test
+    @DisplayName("Resolving outside a main phase only untaps attacked creatures")
+    void resolvingOutsideMainPhaseOnlyUntapsAttackedCreatures() {
+        Permanent attackedWarthog = addCreatureReady(player1, new Warthog());
+        attackedWarthog.setAttackedThisTurn(true);
+        attackedWarthog.tap();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.playersWithFlashUntilEndOfTurn.add(player1.getId());
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(attackedWarthog.isTapped()).isFalse();
+        assertThat(gd.additionalCombatMainPhasePairs).isZero();
+    }
+
+    @Test
     @DisplayName("Attacked-this-turn status resets on turn change")
     void attackedThisTurnResetsOnTurnChange() {
         Permanent bear = addCreatureReady(player1, new Warthog());

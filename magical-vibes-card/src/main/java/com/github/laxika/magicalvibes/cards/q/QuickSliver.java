@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "136")
+@CardRegistration(set = "H09", collectorNumber = "10")
 public class QuickSliver extends Card {
 
     public QuickSliver() {

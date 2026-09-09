@@ -193,8 +193,10 @@ public class MultiPermanentChoiceHandlerService {
         UUID playerId = player.getId();
         List<UUID> validIds = multiPermanentChoice.validIds();
         List<UUID> validPlayerIds = multiPermanentChoice.validPlayerIds();
+        List<UUID> validCardIds = multiPermanentChoice.validCardIds();
         Set<UUID> validSelectionIds = new HashSet<>(validIds);
         validSelectionIds.addAll(validPlayerIds);
+        validSelectionIds.addAll(validCardIds);
         int maxCount = multiPermanentChoice.maxCount();
 
         if (permanentIds == null) {
@@ -535,6 +537,8 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
             abilityActivationService.completeActivatedAbilityExileArtifactsCostChoice(
                     gameData, player, exileArtifactsContext, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup ctx) {
+            triggerHandler.handleEtbPlayerTargetGroup(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets ctx) {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {

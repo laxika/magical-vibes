@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "302")
 @CardRegistration(set = "HML", collectorNumber = "88a")
 @CardRegistration(set = "HML", collectorNumber = "88b")
+@CardRegistration(set = "ME1", collectorNumber = "121")
 public class HungryMist extends Card {
 
     public HungryMist() {

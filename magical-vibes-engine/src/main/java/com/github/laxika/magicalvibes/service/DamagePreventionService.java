@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
+import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToControllerShield;
 import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TargetSorceryDamageRedirectShield;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfE
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageHealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
@@ -286,6 +288,26 @@ public class DamagePreventionService {
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
         return applyCreaturePreventionShield(gameData, permanent, damage, false);
+    }
+
+    /** Heals all damage previously marked on a permanent when a positive damage event reaches it. */
+    public void applyDamageHealingReplacement(GameData gameData, Permanent permanent, int damage) {
+        if (permanent == null || damage <= 0) {
+            return;
+        }
+        if (gameQueryService.hasActiveStaticEffect(gameData, permanent, DamageHealingEffect.class)) {
+            permanent.healDamage();
+        }
+    }
+
+    /** Replaces effect-based destruction by removing one shield counter. */
+    public boolean replaceDestructionWithShieldCounter(Permanent permanent) {
+        if (permanent == null || permanent.getCounterCount(CounterType.SHIELD) <= 0) {
+            return false;
+        }
+        permanent.setCounterCount(CounterType.SHIELD,
+                permanent.getCounterCount(CounterType.SHIELD) - 1);
+        return true;
     }
 
     /** Returns whether a permanent replaces damage to itself with +1/+1 counters. */
@@ -1127,6 +1149,13 @@ public class DamagePreventionService {
 
     public int applyPlayerNextSourceDamageShield(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                                   int damage, boolean combatDamage, Card sourceCard) {
+        return applyPlayerNextSourceDamageShield(
+                gameData, playerId, sourcePermanentId, damage, combatDamage, sourceCard, false);
+    }
+
+    public int applyPlayerNextSourceDamageShield(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                                  int damage, boolean combatDamage, Card sourceCard,
+                                                  boolean sourceUnblocked) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
         if (damage <= 0 || playerId == null || sourcePermanentId == null
                 || gameData.playerSourceNextDamageShields.isEmpty()) {
@@ -1138,8 +1167,16 @@ public class DamagePreventionService {
             var shield = it.next();
             if (shield.playerId().equals(playerId)
                     && shieldMatchesSource(gameData, shield, sourcePermanentId, sourceCard)) {
+                if (shield.combatOnly() && !combatDamage) {
+                    continue;
+                }
+                if (shield.unblockedOnly() && !sourceUnblocked) {
+                    continue;
+                }
                 it.remove();
-                int prevented = shield.preventHalfDamage() ? remaining / 2 : remaining;
+                int prevented = shield.preventAllButOne()
+                        ? Math.max(0, remaining - 1)
+                        : shield.preventHalfDamage() ? remaining / 2 : remaining;
                 applyNextSourceShieldRiders(gameData, shield, prevented, sourceCard);
                 remaining -= prevented;
                 if (remaining == 0) {
@@ -1262,7 +1299,7 @@ public class DamagePreventionService {
                     : sourceCard != null
                             ? gameQueryService.getEffectiveCardColors(gameData, sourceCard).contains(CardColor.BLACK)
                             : gameData.stack.stream()
-                            .filter(entry -> entry.getCard().getId().equals(shield.sourceId()))
+                            .filter(entry -> entry.getTargetableId().equals(shield.sourceId()))
                             .anyMatch(entry -> gameQueryService.getEffectiveCardColors(
                                     gameData, entry.getCard()).contains(CardColor.BLACK));
             if (!black) {
@@ -1349,7 +1386,7 @@ public class DamagePreventionService {
                             ? sourceEntry
                             : gameData.stack.stream()
                             .filter(stackEntry -> stackEntry.getCard() != null
-                                    && sourcePermanentId.equals(stackEntry.getCard().getId()))
+                                    && sourcePermanentId.equals(stackEntry.getTargetableId()))
                             .findFirst()
                             .orElse(null);
                     if (matchingEntry != null) {
@@ -1398,6 +1435,35 @@ public class DamagePreventionService {
 
         gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
                 sourceControllerId, damage, source.getCard(), sourceControllerId));
+        return 0;
+    }
+
+    /** Redirects a source's next combat damage to the stored controller of the effect that created the shield. */
+    public int applySourceNextCombatDamageToControllerShield(GameData gameData, UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || sourcePermanentId == null
+                || gameData.sourceNextCombatDamageToControllerShields.isEmpty()) {
+            return damage;
+        }
+
+        SourceNextCombatDamageToControllerShield matchingShield = null;
+        synchronized (gameData.sourceNextCombatDamageToControllerShields) {
+            for (SourceNextCombatDamageToControllerShield shield
+                    : gameData.sourceNextCombatDamageToControllerShields) {
+                if (sourcePermanentId.equals(shield.sourcePermanentId())) {
+                    matchingShield = shield;
+                    break;
+                }
+            }
+            if (matchingShield != null) {
+                gameData.sourceNextCombatDamageToControllerShields.remove(matchingShield);
+            }
+        }
+        if (matchingShield == null || !gameData.playerIds.contains(matchingShield.controllerId())) {
+            return damage;
+        }
+
+        gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                null, sourcePermanentId, damage, matchingShield.controllerId()));
         return 0;
     }
 

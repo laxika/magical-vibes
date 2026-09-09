@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponent
 
 @CardRegistration(set = "FEM", collectorNumber = "99")
 @CardRegistration(set = "FEM", collectorNumber = "142")
+@CardRegistration(set = "ME1", collectorNumber = "179")
 public class RainbowVale extends Card {
 
     public RainbowVale() {

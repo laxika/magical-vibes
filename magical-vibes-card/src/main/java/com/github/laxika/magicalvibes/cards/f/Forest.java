@@ -7,7 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "3ED", collectorNumber = "306")
+@CardRegistration(set = "H09", collectorNumber = "41")
 @CardRegistration(set = "10E", collectorNumber = "380")
+@CardRegistration(set = "MSH", collectorNumber = "285")
+@CardRegistration(set = "MSH", collectorNumber = "286")
+@CardRegistration(set = "MSH", collectorNumber = "295")
+@CardRegistration(set = "MSH", collectorNumber = "296")
 @CardRegistration(set = "DTK", collectorNumber = "262")
 @CardRegistration(set = "DTK", collectorNumber = "263")
 @CardRegistration(set = "DTK", collectorNumber = "264")
@@ -336,13 +341,24 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "TMT", collectorNumber = "309")
 @CardRegistration(set = "TMT", collectorNumber = "314")
 @CardRegistration(set = "TMT", collectorNumber = "319")
+@CardRegistration(set = "ME1", collectorNumber = "193")
+@CardRegistration(set = "ME1", collectorNumber = "194")
+@CardRegistration(set = "ME1", collectorNumber = "195")
 @CardRegistration(set = "DD1", collectorNumber = "28")
 @CardRegistration(set = "DD1", collectorNumber = "29")
 @CardRegistration(set = "DD1", collectorNumber = "30")
 @CardRegistration(set = "DD1", collectorNumber = "31")
+@CardRegistration(set = "DDD", collectorNumber = "28")
+@CardRegistration(set = "DDD", collectorNumber = "29")
+@CardRegistration(set = "DDD", collectorNumber = "30")
+@CardRegistration(set = "DDD", collectorNumber = "31")
 @CardRegistration(set = "3ED", collectorNumber = "305")
 @CardRegistration(set = "DDE", collectorNumber = "70")
 @CardRegistration(set = "DDE", collectorNumber = "71")
+@CardRegistration(set = "DPA", collectorNumber = "110")
+@CardRegistration(set = "DPA", collectorNumber = "111")
+@CardRegistration(set = "DPA", collectorNumber = "112")
+@CardRegistration(set = "DPA", collectorNumber = "113")
 public class Forest extends Card {
 
     public Forest() {

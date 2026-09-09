@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -48,6 +49,16 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PermanentRemovalServiceTest {
+
+    @Test
+    void releasesPhasedOutPermanentsWhenSourceLeavesWithoutExiledCards() {
+        Permanent source = addPermanent(player1Id, createEnchantment("Phasing source"));
+
+        prs.removePermanentToHand(gd, source);
+
+        verify(phasingService).phaseInWhenSourceLeaves(gd, source.getId());
+        assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(source);
+    }
 
     @Test
     void preservesLastControllerForPendingOptionalCreatureTrigger() {
@@ -110,6 +121,9 @@ class PermanentRemovalServiceTest {
 
     @Mock
     private UnattachTriggerSupport unattachTriggerSupport;
+
+    @Mock
+    private PhasingService phasingService;
 
     @InjectMocks
     private PermanentRemovalService prs;
@@ -591,7 +605,8 @@ class PermanentRemovalServiceTest {
             assertThat(gd.getPlayerExiledCards(player2Id))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
+            verify(phasingService).phaseInWhenSourceLeaves(gd, source.getId());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), anySet(), anyList());
             verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player2Id), eq(exiledCard), isNull(), eq(false));
         }
 
@@ -614,7 +629,7 @@ class PermanentRemovalServiceTest {
             assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
             assertThat(gd.playerHands.get(player2Id))
                     .anyMatch(c -> c.getName().equals("Cancel"));
-            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), anySet(), anyList());
         }
 
         @Test
@@ -630,7 +645,7 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, source);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id),
-                    argThat(Permanent::isTapped));
+                    argThat(Permanent::isTapped), anySet(), anyList());
         }
 
         @Test
@@ -651,8 +666,8 @@ class PermanentRemovalServiceTest {
             assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
             assertThat(gd.getPlayerExiledCards(player1Id)).noneMatch(c -> c.getName().equals("Forest"));
             assertThat(gd.getPlayerExiledCards(player2Id)).noneMatch(c -> c.getName().equals("Mountain"));
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class), anySet(), anyList());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), anySet(), anyList());
         }
 
         @Test
@@ -796,7 +811,7 @@ class PermanentRemovalServiceTest {
             assertThat(gd.getPlayerExiledCards(player2Id))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), anySet(), anyList());
         }
 
         @Test
@@ -922,7 +937,7 @@ class PermanentRemovalServiceTest {
             assertThat(gd.getPlayerExiledCards(player2Id))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), anySet(), anyList());
         }
     }
 

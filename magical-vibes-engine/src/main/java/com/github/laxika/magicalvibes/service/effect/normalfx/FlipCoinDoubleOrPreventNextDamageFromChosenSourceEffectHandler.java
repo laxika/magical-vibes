@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinDoubleOrPreventNextDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -13,8 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link FlipCoinDoubleOrPreventNextDamageFromChosenSourceEffect}: offers the permanents the
- * controller controls as damage sources, then hands off to
+ * Resolves {@link FlipCoinDoubleOrPreventNextDamageFromChosenSourceEffect}: offers controlled
+ * permanents and spells on the stack as damage sources, then hands off to
  * {@code PermanentChoiceBattlefieldHandlerService}, which flips the coin and installs the doubling or
  * prevention shield.
  */
@@ -40,6 +41,14 @@ public class FlipCoinDoubleOrPreventNextDamageFromChosenSourceEffectHandler impl
                 validIds.add(perm.getId());
             }
         });
+        for (StackEntry spell : gameData.stack) {
+            if (controllerId.equals(spell.getControllerId())
+                    && spell.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                    && spell.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                    && !validIds.contains(spell.getCard().getId())) {
+                validIds.add(spell.getCard().getId());
+            }
+        }
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
             return;

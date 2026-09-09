@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ErebossTitan.class, Gravedigger.class, GrizzlyBears.class, Murder.class})
 class ErebossTitanTest extends BaseCardTest {
 
     /**
@@ -35,9 +37,10 @@ class ErebossTitanTest extends BaseCardTest {
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities(); // Gravedigger enters
+        harness.handleMultipleCardsChosen(player2,
+                List.of(gd.playerGraveyards.get(player2.getId()).getFirst().getId()));
         harness.passBothPriorities(); // ETB may prompt
         harness.handleMayAbilityChosen(player2, true);
-        harness.handleGraveyardCardChosen(player2, 0); // Grizzly Bears leaves player2's graveyard
 
         harness.passBothPriorities(); // resolve Erebos's Titan's trigger → may prompt
     }
@@ -126,9 +129,10 @@ class ErebossTitanTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1,
+                List.of(gd.playerGraveyards.get(player1.getId()).get(1).getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 1); // Grizzly Bears leaves player1's own graveyard
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Erebos's Titan");

@@ -130,13 +130,17 @@ abstract class HardAiDecisionEngineTestSupport {
     }
 
     protected HardAiDecisionEngine createHardAi(Player aiPlayer) {
+        return createHardAi(aiPlayer, 500);
+    }
+
+    protected HardAiDecisionEngine createHardAi(Player aiPlayer, int maxIterations) {
         FakeConnection aiConn = new FakeConnection("ai-hard-test");
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), aiPlayer.getUsername());
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getBlockLegalityService(), harness.getCombatAttackService(),
                 harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
-        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, 500));
+        ai.setMctsEngine(new MCTSEngine(HeadlessSimulationContext.getSimulator(), 42L, maxIterations));
         return ai;
     }
 

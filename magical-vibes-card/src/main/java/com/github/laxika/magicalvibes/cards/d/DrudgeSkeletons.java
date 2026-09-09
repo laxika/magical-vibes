@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "130")
 @CardRegistration(set = "6ED", collectorNumber = "123")
 @CardRegistration(set = "SUM", collectorNumber = "107")
+@CardRegistration(set = "DDD", collectorNumber = "36")
+@CardRegistration(set = "DPA", collectorNumber = "22")
 public class DrudgeSkeletons extends Card {
 
     public DrudgeSkeletons() {

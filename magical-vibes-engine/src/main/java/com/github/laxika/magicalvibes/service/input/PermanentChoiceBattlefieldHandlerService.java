@@ -410,8 +410,10 @@ public class PermanentChoiceBattlefieldHandlerService {
                 && context.equipmentPermanentIds().contains(equipmentId)
                 && gameQueryService.isCreature(gameData, creature)
                 && equipSupport.attachEquipment(gameData, equipment, creature)) {
-            gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(
-                    context.controllerId(), equipmentId, context.sourceCard()));
+            if (context.unattachAtNextEndStep()) {
+                gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(
+                        context.controllerId(), equipmentId, context.sourceCard()));
+            }
             gameLogService.append(gameData,
                     GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
         }
@@ -1680,6 +1682,28 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handlePreventNextCombatDamageFromUnblockedCreatureChoice(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.PreventNextCombatDamageFromUnblockedCreatureChoice ctx) {
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
+        }
+
+        gameData.playerSourceNextDamageShields.add(
+                PlayerSourceNextDamageShield.nextUnblockedCombatDamageAllButOne(
+                        ctx.controllerId(), permanentId));
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData, GameLog.text("The next time " + chosenSource.getName()
+                + " is unblocked and would deal combat damage to " + playerName
+                + " this turn, all but 1 of that damage is prevented."));
+        log.info("Game {} - {} chose {} for Forcefield's combat-damage shield", gameData.id,
+                playerName, chosenSource.getName());
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     private UUID findDamageSourceController(GameData gameData, UUID sourceId) {
         UUID permanentController = gameQueryService.findPermanentController(gameData, sourceId);
         if (permanentController != null) {
@@ -1688,7 +1712,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         return gameData.stack.stream()
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .filter(entry -> entry.getCard().getId().equals(sourceId))
+                .filter(entry -> entry.getTargetableId().equals(sourceId))
                 .map(StackEntry::getControllerId)
                 .findFirst()
                 .orElse(null);
@@ -1829,7 +1853,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         return gameData.stack.stream()
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .filter(entry -> entry.getCard().getId().equals(sourceId))
+                .filter(entry -> entry.getTargetableId().equals(sourceId))
                 .map(StackEntry::getCard)
                 .findFirst()
                 .orElse(null);
@@ -1842,15 +1866,15 @@ public class PermanentChoiceBattlefieldHandlerService {
      */
     public void handleDoubleOrPreventNextDamageFromSourceChoice(GameData gameData, UUID permanentId,
                                                                 PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, ctx.controllerId());
         boolean wonFlip = result.heads();
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        String sourceName = chosenPermanent.getCard().getName();
+        String sourceName = chosenSource.getName();
         gameLogService.append(gameData, GameLog.text(wonFlip
                 ? playerName + " wins the coin flip for Desperate Gambit"
                         + coinFlipService.replacementDetails(result) + "."

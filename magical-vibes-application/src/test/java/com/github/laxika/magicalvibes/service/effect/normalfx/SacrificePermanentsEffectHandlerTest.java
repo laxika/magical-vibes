@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -65,6 +66,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
  */
 @ExtendWith(MockitoExtension.class)
 class SacrificePermanentsEffectHandlerTest {
+
+    @Test
+    void simultaneousChoicesStartWithTheActivePlayerEvenForASingleLegalCreature() {
+        gd.activePlayerId = player2Id;
+        Permanent first = addPermanent(player1Id, "First creature", CardType.CREATURE);
+        addPermanent(player1Id, "Another creature", CardType.CREATURE);
+        Permanent second = addPermanent(player2Id, "Second creature", CardType.CREATURE);
+        stubCount(1);
+        when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
+
+        handler.resolve(gd, entry(player1Id, null),
+                creatureSac(SacrificeRecipient.EACH_PLAYER).withSimultaneousChoices());
+
+        verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player2Id),
+                eq(List.of(second.getId())), eq(1),
+                argThat(context -> context instanceof MultiPermanentChoiceContext.ForcedSacrifice sacrifice
+                        && sacrifice.accumulatedSacrificeIds().isEmpty()), anyString());
+        verifyNoInteractions(permanentRemovalService);
+        assertThat(gd.playerBattlefields.get(player1Id)).contains(first);
+    }
 
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private GraveyardService graveyardService;

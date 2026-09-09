@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandT
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "LEG", collectorNumber = "185")
+@CardRegistration(set = "ME1", collectorNumber = "117")
 public class Eureka extends Card {
 
     public Eureka() {

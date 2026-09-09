@@ -33,13 +33,13 @@ public class GainLoyaltyAbilitiesOfOtherPlaneswalkersSelfEffectHandler implement
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.getId().equals(context.source().getId())
+                if (permanent.getId().equals(context.sourceId())
                         || !support.matchesStaticFilter(context, permanent, new PermanentIsPlaneswalkerPredicate())) {
                     continue;
                 }
                 for (var ability : permanent.getCard().getActivatedAbilities()) {
                     if (ability.getLoyaltyCost() != null) {
-                        accumulator.addActivatedAbility(ability.withGrantSource(context.source().getId()));
+                        accumulator.addActivatedAbility(ability.withGrantSource(context.sourceId()));
                     }
                 }
             }

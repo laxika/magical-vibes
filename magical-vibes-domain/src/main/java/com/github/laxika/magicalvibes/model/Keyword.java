@@ -26,6 +26,8 @@ public enum Keyword {
     IMPROVISE,
     HARMONIZE,
     HASTE,
+    HEAL,
+    FIGHT,
     RIOT,
     TRAMPLE,
     LIFELINK,

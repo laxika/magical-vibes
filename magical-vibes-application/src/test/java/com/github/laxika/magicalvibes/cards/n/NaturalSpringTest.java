@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NaturalSpring.class, GrizzlyBears.class})
+@CardUsed({BearCub.class, NaturalSpring.class})
 class NaturalSpringTest extends BaseCardTest {
 
     @Test
@@ -70,7 +70,7 @@ class NaturalSpringTest extends BaseCardTest {
     @Test
     @DisplayName("Natural Spring cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new BearCub());
 
         harness.setHand(player1, List.of(new NaturalSpring()));
         harness.addMana(player1, ManaColor.GREEN, 5);
@@ -82,12 +82,14 @@ class NaturalSpringTest extends BaseCardTest {
     @Test
     @DisplayName("Natural Spring goes to graveyard after resolution")
     void goesToGraveyardAfterResolution() {
-        harness.setHand(player1, List.of(new NaturalSpring()));
+        NaturalSpring spring = new NaturalSpring();
+        harness.setHand(player1, List.of(spring));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Natural Spring");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(spring.getId()));
     }
 }

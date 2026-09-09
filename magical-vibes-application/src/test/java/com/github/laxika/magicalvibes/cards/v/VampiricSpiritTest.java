@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(VampiricSpirit.class)
 class VampiricSpiritTest extends BaseCardTest {
 
     @Test
@@ -18,7 +17,7 @@ class VampiricSpiritTest extends BaseCardTest {
         castVampiricSpirit();
         harness.passBothPriorities(); // resolve creature spell
 
-        harness.assertOnBattlefield(player1, "Vampiric Spirit");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }
@@ -29,8 +28,7 @@ class VampiricSpiritTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         castVampiricSpirit();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 4);
         assertThat(gd.stack).isEmpty();
@@ -42,15 +40,12 @@ class VampiricSpiritTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         castVampiricSpirit();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
     private void castVampiricSpirit() {
-        harness.setHand(player1, List.of(new VampiricSpirit()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new VampiricSpirit(), "{2}{B}{B}");
     }
 }

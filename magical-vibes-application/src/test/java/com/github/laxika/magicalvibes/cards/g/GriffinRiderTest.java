@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
 import com.github.laxika.magicalvibes.cards.w.WildGriffin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GriffinRider.class, WildGriffin.class, AlabornTrooper.class})
 class GriffinRiderTest extends BaseCardTest {
 
     @Test
@@ -26,7 +29,7 @@ class GriffinRiderTest extends BaseCardTest {
     @DisplayName("No boost with a non-Griffin creature")
     void noBoostWithNonGriffin() {
         harness.addToBattlefield(player1, new GriffinRider());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AlabornTrooper());
 
         Permanent rider = findPermanent(player1, "Griffin Rider");
         assertThat(gqs.getEffectivePower(gd, rider)).isEqualTo(1);

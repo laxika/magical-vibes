@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.r.RecklessOgre;
+import com.github.laxika.magicalvibes.cards.w.WallOfNets;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -14,13 +16,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Pandemonium.class, HillGiant.class})
+@CardUsed({Pandemonium.class, RecklessOgre.class, WallOfNets.class, HillGiant.class})
 class PandemoniumTest extends BaseCardTest {
 
     private void resolveUntilInputOrEmpty() {
         for (int i = 0; i < 12; i++) {
-            GameData gameData = harness.getGameData();
-            if (gameData.interaction.isAwaitingInput() || gameData.stack.isEmpty()) {
+            if (gd.interaction.isAwaitingInput() || gd.stack.isEmpty()) {
                 return;
             }
             harness.passBothPriorities();
@@ -31,7 +32,7 @@ class PandemoniumTest extends BaseCardTest {
     void enteringCreatureControllerMayHaveItDealItsPowerToAnyTarget() {
         harness.addToBattlefield(player1, new Pandemonium());
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new HillGiant()));
+        harness.setHand(player1, List.of(new RecklessOgre()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -55,10 +56,29 @@ class PandemoniumTest extends BaseCardTest {
     }
 
     @Test
+    void enteringCreatureMayDealItsPowerToAnotherCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WallOfNets());
+        harness.addToBattlefield(player1, new Pandemonium());
+        harness.setHand(player1, List.of(new RecklessOgre()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveUntilInputOrEmpty();
+
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveUntilInputOrEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveUntilInputOrEmpty();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
     void opponentCreatureControllerMakesTheChoice() {
         harness.addToBattlefield(player1, new Pandemonium());
         harness.setLife(player1, 20);
-        harness.setHand(player2, List.of(new HillGiant()));
+        harness.setHand(player2, List.of(new RecklessOgre()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
@@ -87,7 +107,7 @@ class PandemoniumTest extends BaseCardTest {
     void decliningTheMayAbilityDealsNoDamage() {
         harness.addToBattlefield(player1, new Pandemonium());
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new HillGiant()));
+        harness.setHand(player1, List.of(new RecklessOgre()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

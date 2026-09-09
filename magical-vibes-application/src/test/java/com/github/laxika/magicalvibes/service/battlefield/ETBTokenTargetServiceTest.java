@@ -17,6 +17,11 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -44,6 +49,27 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ETBTokenTargetServiceTest {
+
+    @Test
+    void optionalPlayerTargetGroupAllowsTheControllerToBeSelected() {
+        UUID otherPlayer = UUID.randomUUID();
+        gd.orderedPlayerIds.add(otherPlayer);
+        Card card = new Card();
+        card.setName("Player targeting trigger");
+        var effect = new com.github.laxika.magicalvibes.model.effect.LoseLifeEffect(
+                1, com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient.TARGET_PLAYER);
+        card.target(0, 2).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        var pending = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                card, player1Id, List.of(effect), null, List.of(), 0, 0);
+        gd.queueInteraction(pending);
+
+        service.processNextETBTokenMultiTargetTrigger(gd);
+
+        verify(playerInputService).beginMultiPermanentOrPlayerChoice(eq(gd), eq(player1Id),
+                eq(List.of()), eq(List.of(player1Id, otherPlayer)), eq(2),
+                eq(new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbPlayerTargetGroup(pending)),
+                org.mockito.ArgumentMatchers.anyString());
+    }
 
     @Mock private GameQueryService gameQueryService;
     @Mock private GameLogService gameLogService;
@@ -202,6 +228,45 @@ class ETBTokenTargetServiceTest {
         // Group 0 (gated out) is skipped; the controller is prompted for group 1's target instead.
         verify(playerInputService).beginAnyTargetChoice(
                 eq(gd), eq(player1Id), anyList(), eq(List.of(player1Id)), contains("target 2"));
+    }
+
+    @Test
+    @DisplayName("Controlled-by-first-target restricts a later creature group to the chosen player")
+    void controlledByFirstTargetRestrictsLaterGroup() {
+        UUID player2Id = UUID.randomUUID();
+        gd.playerIds.add(player2Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        Permanent ownCreature = new Permanent(new Card());
+        Permanent opponentCreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(ownCreature);
+        gd.playerBattlefields.get(player2Id).add(opponentCreature);
+        when(gameQueryService.isCreature(gd, ownCreature)).thenReturn(true);
+        when(gameQueryService.isCreature(gd, opponentCreature)).thenReturn(true);
+        when(gameQueryService.findPermanentController(gd, ownCreature.getId())).thenReturn(player1Id);
+        when(gameQueryService.findPermanentController(gd, opponentCreature.getId())).thenReturn(player2Id);
+
+        Card card = new Card();
+        card.setName("Cloak and Dagger, Entwined");
+        PlayerPredicateTargetFilter opponentFilter = new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
+        PermanentPredicateTargetFilter creatureFilter = new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(), "Target must be a creature that player controls");
+        var handEffect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
+        var creatureEffect = new ExileTargetPermanentUntilSourceLeavesEffect();
+        card.target(opponentFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, handEffect);
+        card.target(creatureFilter, 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, creatureEffect);
+        card.setMultiTargetConstraint(MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET);
+        gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                card, player1Id, List.of(handEffect, creatureEffect), UUID.randomUUID(),
+                List.of(player2Id), 1, 0, List.of(1)));
+
+        service.processNextETBTokenMultiTargetTrigger(gd);
+
+        verify(playerInputService).beginAnyTargetChoice(
+                eq(gd), eq(player1Id), eq(List.of(opponentCreature.getId())), eq(List.of(player1Id)),
+                contains("target 2"));
     }
 
     @Test

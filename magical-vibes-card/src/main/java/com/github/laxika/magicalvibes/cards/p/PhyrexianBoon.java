@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "58a")
 @CardRegistration(set = "ALL", collectorNumber = "58b")
+@CardRegistration(set = "ME1", collectorNumber = "81")
 public class PhyrexianBoon extends Card {
 
     public PhyrexianBoon() {

@@ -69,6 +69,7 @@ public enum CounterType {
     INTERVENTION,
     ICE,
     FELLOWSHIP,
+    INVASION,
     INCUBATION,
     INFECTION,
     INCARNATION,
@@ -112,6 +113,7 @@ public enum CounterType {
     PETRIFICATION,
     PHYLACTERY,
     PIN,
+    PLAN,
     POINT,
     POLYP,
     PLAGUE,
@@ -160,6 +162,7 @@ public enum CounterType {
     TOWER,
     TIME,
     TRAINING,
+    TRAP,
     TREASURE,
     UNLOCK,
     VALOR,
@@ -169,6 +172,7 @@ public enum CounterType {
     VORTEX,
     VOID,
     WAGE,
+    HASTE,
     DEATHTOUCH,
     DECAYED,
     FLYING,
@@ -185,19 +189,19 @@ public enum CounterType {
 
     public Keyword grantedKeyword() {
         return switch (this) {
+            case HASTE -> Keyword.HASTE;
             case FLYING -> Keyword.FLYING;
             case FIRST_STRIKE -> Keyword.FIRST_STRIKE;
             case DOUBLE_STRIKE -> Keyword.DOUBLE_STRIKE;
             case DEATHTOUCH -> Keyword.DEATHTOUCH;
             case DECAYED -> Keyword.DECAYED;
             case LIFELINK -> Keyword.LIFELINK;
-            case VIGILANCE -> Keyword.VIGILANCE;
             case HEXPROOF -> Keyword.HEXPROOF;
             case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
             case MENACE -> Keyword.MENACE;
             case REACH -> Keyword.REACH;
             case TRAMPLE -> Keyword.TRAMPLE;
-
+            case VIGILANCE -> Keyword.VIGILANCE;
             default -> null;
         };
     }

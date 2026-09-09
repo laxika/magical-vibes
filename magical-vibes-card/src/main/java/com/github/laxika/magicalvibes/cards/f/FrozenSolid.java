@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CSP", collectorNumber = "35")
+@CardRegistration(set = "SCG", collectorNumber = "36")
 public class FrozenSolid extends Card {
 
     public FrozenSolid() {

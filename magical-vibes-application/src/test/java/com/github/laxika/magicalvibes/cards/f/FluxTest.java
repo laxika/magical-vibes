@@ -196,4 +196,31 @@ class FluxTest extends BaseCardTest {
                 .extracting(c -> c.getName())
                 .contains("Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Discards wait until every player has chosen how many cards to discard")
+    void selectedCardsRemainInHandUntilEveryPlayerChooses() {
+        harness.setHand(player1, List.of(new Flux(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.setHand(player2, List.of(new HillGiant()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(c -> c instanceof GrizzlyBears);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(c -> c instanceof GrizzlyBears);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .singleElement()
+                .isInstanceOf(Plains.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+    }
 }

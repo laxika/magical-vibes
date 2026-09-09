@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "POR", collectorNumber = "65")
 @CardRegistration(set = "S99", collectorNumber = "44")
 @CardRegistration(set = "WTH", collectorNumber = "48")
+@CardRegistration(set = "DPA", collectorNumber = "14")
 public class PhantomWarrior extends Card {
 
     public PhantomWarrior() {

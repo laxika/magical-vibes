@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSameNameCardFromGraveyardOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
@@ -658,7 +659,7 @@ public class SpellCastTriggerCollectorService {
         Card spellCard = sc.spellCard();
         if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) return null;
         for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(spellCard.getId())) {
+            if (se.getTargetableId().equals(spellCard.getId())) {
                 return se;
             }
         }
@@ -693,7 +694,7 @@ public class SpellCastTriggerCollectorService {
         // Find the spell on the stack
         StackEntry spellEntry = null;
         for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(sc.spellCard().getId())) {
+            if (se.getTargetableId().equals(sc.spellCard().getId())) {
                 spellEntry = se;
                 break;
             }
@@ -850,6 +851,25 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnOnSpellCastEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleTurnScopedModalOnSpellCast(TriggerMatchContext match,
+            ChooseModeNotYetChosenThisTurnOnSpellCastEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(),
+                match.permanent().getOriginalCard().getId(), match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+
+        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                match.permanent().getCard(), match.controllerId(), new ChooseOneEffect(trigger.options()),
+                match.permanent().getId(), true, false, sc.spellCard().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on spell cast (turn-scoped modal)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
     }
 
     @CollectsTrigger(value = SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect.class,
@@ -1010,7 +1030,7 @@ public class SpellCastTriggerCollectorService {
 
         StackEntry spellEntry = null;
         for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(sc.spellCard().getId())) {
+            if (se.getTargetableId().equals(sc.spellCard().getId())) {
                 spellEntry = se;
                 break;
             }
@@ -2515,7 +2535,7 @@ public class SpellCastTriggerCollectorService {
 
     private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(cardId)) {
+            if (se.getTargetableId().equals(cardId)) {
                 return se;
             }
         }

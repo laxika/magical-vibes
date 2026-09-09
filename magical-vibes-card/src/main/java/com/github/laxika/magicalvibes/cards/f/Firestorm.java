@@ -15,6 +15,6 @@ public class Firestorm extends Card {
         addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
         // Firestorm deals X damage to each of X targets: one X-scaled any-target group,
         // each chosen target taking the full X (not divided).
-        targetX(null, 100).addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new XValue()));
+        targetExactlyX(null, 100).addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new XValue()));
     }
 }

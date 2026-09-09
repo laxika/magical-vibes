@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
 import com.github.laxika.magicalvibes.cards.p.Python;
 import com.github.laxika.magicalvibes.cards.w.WandOfDenial;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,10 +21,8 @@ class UndoTest extends BaseCardTest {
     @Test
     @DisplayName("Returns two target creatures to their owners' hands")
     void returnsTwoTargetCreatures() {
-        harness.addToBattlefield(player1, new Python());
-        harness.addToBattlefield(player2, new PantherWarriors());
-        UUID pythonId = harness.getPermanentId(player1, "Python");
-        UUID pantherWarriorsId = harness.getPermanentId(player2, "Panther Warriors");
+        UUID pythonId = harness.addToBattlefieldAndReturn(player1, new Python()).getId();
+        UUID pantherWarriorsId = harness.addToBattlefieldAndReturn(player2, new PantherWarriors()).getId();
 
         prepareUndo();
         harness.castAndResolveSorcery(player1, 0, List.of(pythonId, pantherWarriorsId));
@@ -35,10 +34,27 @@ class UndoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns targeted creatures to their owners' hands even when controlled by another player")
+    void returnsTargetCreaturesToOwnersHands() {
+        Python ownedByPlayer2 = new Python();
+        ownedByPlayer2.setOwnerId(player2.getId());
+        Permanent controlledPython = harness.addToBattlefieldAndReturn(player1, ownedByPlayer2);
+        Permanent pantherWarriors = harness.addToBattlefieldAndReturn(player2, new PantherWarriors());
+
+        prepareUndo();
+        harness.castAndResolveSorcery(player1, 0, List.of(controlledPython.getId(), pantherWarriors.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Python");
+        harness.assertNotOnBattlefield(player2, "Panther Warriors");
+        harness.assertNotInHand(player1, "Python");
+        harness.assertInHand(player2, "Python");
+        harness.assertInHand(player2, "Panther Warriors");
+    }
+
+    @Test
     @DisplayName("Cannot cast with only one target")
     void cannotCastWithOnlyOneTarget() {
-        harness.addToBattlefield(player1, new Python());
-        UUID pythonId = harness.getPermanentId(player1, "Python");
+        UUID pythonId = harness.addToBattlefieldAndReturn(player1, new Python()).getId();
 
         assertThatThrownBy(() -> castUndo(List.of(pythonId)))
                 .isInstanceOf(IllegalStateException.class);
@@ -47,8 +63,7 @@ class UndoTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot choose the same creature twice")
     void cannotChooseSameCreatureTwice() {
-        harness.addToBattlefield(player1, new Python());
-        UUID pythonId = harness.getPermanentId(player1, "Python");
+        UUID pythonId = harness.addToBattlefieldAndReturn(player1, new Python()).getId();
 
         assertThatThrownBy(() -> castUndo(List.of(pythonId, pythonId)))
                 .isInstanceOf(IllegalStateException.class);
@@ -57,10 +72,8 @@ class UndoTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
-        harness.addToBattlefield(player1, new Python());
-        harness.addToBattlefield(player1, new WandOfDenial());
-        UUID pythonId = harness.getPermanentId(player1, "Python");
-        UUID wandId = harness.getPermanentId(player1, "Wand of Denial");
+        UUID pythonId = harness.addToBattlefieldAndReturn(player1, new Python()).getId();
+        UUID wandId = harness.addToBattlefieldAndReturn(player1, new WandOfDenial()).getId();
 
         assertThatThrownBy(() -> castUndo(List.of(pythonId, wandId)))
                 .isInstanceOf(IllegalStateException.class)
