@@ -1475,6 +1475,9 @@ public class DeathTriggerCollectorService {
     boolean handleArtifactGraveyardControllerConditional(TriggerMatchContext match,
             TriggeringArtifactControllerConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.ArtifactGraveyard ag = (TriggerContext.ArtifactGraveyard) ctx;
+        if (conditional.onlyIfNotSacrificed() && ag.wasSacrificed()) {
+            return false;
+        }
         if (!match.controllerId().equals(ag.artifactControllerId())) {
             return false;
         }

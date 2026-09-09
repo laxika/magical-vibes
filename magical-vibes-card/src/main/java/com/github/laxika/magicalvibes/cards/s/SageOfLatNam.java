@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "64")
 @CardRegistration(set = "8ED", collectorNumber = "97")
+@CardRegistration(set = "ATQ", collectorNumber = "13")
 public class SageOfLatNam extends Card {
 
     public SageOfLatNam() {

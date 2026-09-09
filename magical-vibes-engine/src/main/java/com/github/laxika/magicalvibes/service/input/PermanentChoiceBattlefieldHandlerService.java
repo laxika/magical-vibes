@@ -530,7 +530,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, ctx.permanentToSacrificeId());
         if (toSacrifice != null) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, ctx.permanentToSacrificeId());
-            permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
         }
@@ -621,7 +621,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         UUID sacrificingPlayerId = sacrificeCreature.sacrificingPlayerId();
         Card sacrificedCard = target.getCard();
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , sacrificedCard, "."));
@@ -992,7 +992,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID sacrificingPlayerId = context.sacrificingPlayerId();
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
@@ -1019,7 +1019,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Capture effective power before removing from battlefield (static bonuses still apply)
         int power = gameQueryService.getEffectivePower(gameData, target);
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
@@ -1103,7 +1103,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Capture effective toughness before removing from battlefield (static bonuses still apply)
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
@@ -1322,7 +1322,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Target permanent no longer exists");
         }
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is sacrificed."));
@@ -1344,7 +1344,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             if (sacrifice == null) {
                 throw new IllegalStateException("Target permanent no longer exists");
             }
-            permanentRemovalService.removePermanentToGraveyard(gameData, sacrifice);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sacrifice);
             permanentRemovalService.removeOrphanedAuras(gameData);
             gameLogService.append(gameData, GameLog.cardThen(sacrifice.getCard(), " is sacrificed."));
         }
@@ -1882,7 +1882,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Artifact permanent no longer exists");
         }
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, artifactToSacrifice);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, artifactToSacrifice);
 
         String playerName = gameData.playerIdToName.get(sadd.controllerId());
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , artifactToSacrifice.getCard(), "."));
@@ -1913,7 +1913,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 .findFirst()
                 .orElse(null);
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
@@ -1985,7 +1985,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // negative power counts as 0).
         int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
@@ -2034,7 +2034,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             originalEntry.setSacrificedToughness(sacrificedToughness);
         }
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         gameLogService.append(gameData,
@@ -2125,7 +2125,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         Card sacrificedCard = toSacrifice.getCard();
-        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(
                 gameData, ctx.controllerId(), sacrificedCard);
 
@@ -2266,7 +2266,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen permanent no longer exists");
         }
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         gameLogService.append(gameData,
@@ -2308,7 +2308,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen permanent no longer exists");
         }
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         gameLogService.append(gameData,
@@ -2384,7 +2384,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Capture effective toughness before removing from battlefield (static bonuses still apply)
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
@@ -2416,7 +2416,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Capture effective power before removing from battlefield (static bonuses still apply)
         int power = Math.max(0, gameQueryService.getEffectivePower(gameData, target));
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));

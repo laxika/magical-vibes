@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "SUM", collectorNumber = "36")
+@CardRegistration(set = "ATQ", collectorNumber = "7")
 public class ReversePolarity extends Card {
 
     public ReversePolarity() {

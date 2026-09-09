@@ -2957,6 +2957,10 @@ public class CombatDamageService {
                             gameData, defenderId, preventableDamage);
         }
         processPendingRedirectDamage(gameData);
+        int redirectedArtifactDamage = redirectArtifactCombatDamageToSelf(
+                gameData, state, defenderId, artifactDamage);
+        state.damageToDefendingPlayer -= redirectedArtifactDamage;
+        artifactDamage -= redirectedArtifactDamage;
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
         unpreventable = Math.min(unpreventable, state.damageToDefendingPlayer);
         if (!combatDamageCantBePrevented) {
@@ -3087,6 +3091,29 @@ public class CombatDamageService {
                 }
             }
         }
+    }
+
+    private int redirectArtifactCombatDamageToSelf(GameData gameData, CombatDamageState state,
+                                                    UUID defenderId, int artifactDamage) {
+        if (artifactDamage <= 0 || state.damageToDefendingPlayer <= 0) return 0;
+
+        int remainingDamage = Math.min(artifactDamage, state.damageToDefendingPlayer);
+        int redirected = 0;
+        for (var sourceDamage : state.combatDamageDealtToPlayer.entrySet()) {
+            if (remainingDamage <= 0) break;
+            Permanent source = sourceDamage.getKey();
+            if (!gameQueryService.isArtifact(gameData, source)) continue;
+            int sourceDamageAfterMultiplier = sourceDamage.getValue()
+                    * gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, defenderId);
+            int amount = Math.min(remainingDamage, sourceDamageAfterMultiplier);
+            if (amount <= 0) continue;
+            int notRedirected = permanentRemovalService.redirectPlayerDamageFromMatchingSourceToSelf(
+                    gameData, defenderId, amount, source.getCard().getName(), true, source.getId(), source.getCard());
+            int redirectedFromSource = amount - notRedirected;
+            redirected += redirectedFromSource;
+            remainingDamage -= redirectedFromSource;
+        }
+        return redirected;
     }
 
     /**
@@ -3841,6 +3868,18 @@ public class CombatDamageService {
             return;
         }
         if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, null, source, true)) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
+        if (gameQueryService.isDamagePreventable(gameData, true)
+                && !gameQueryService.damageCantBePreventedFromSource(gameData, source, true)
+                && gameQueryService.isArtifactDamageToEnchantedCreaturePrevented(gameData, target, source, null)) {
+            gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
+        if (gameQueryService.isDamagePreventable(gameData, true)
+                && !gameQueryService.damageCantBePreventedFromSource(gameData, source, true)
+                && gameQueryService.isArtifactDamageToSelfPrevented(gameData, target, source, null)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }

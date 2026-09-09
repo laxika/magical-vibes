@@ -56,7 +56,7 @@ public class SacrificeGrantingEquipmentThenEffectHandler implements NormalEffect
             return;
         }
 
-        if (!permanentRemovalService.removePermanentToGraveyard(gameData, equipment)) {
+        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, equipment)) {
             return;
         }
 

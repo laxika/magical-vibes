@@ -445,6 +445,16 @@ public class DamagePreventionService {
                     gameData, damageSource, permanent, isCombatDamage)) {
                 return 0;
             }
+            if (damageSource != null
+                    && gameQueryService.isArtifactDamageToEnchantedCreaturePrevented(
+                    gameData, permanent, damageSource, null)) {
+                return 0;
+            }
+            if (damageSource != null
+                    && gameQueryService.isArtifactDamageToSelfPrevented(
+                    gameData, permanent, damageSource, null)) {
+                return 0;
+            }
             if (gameQueryService.isCreatureSourceDamageToSelfPrevented(
                     gameData, permanent, null, damageSource, isCombatDamage)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;

@@ -659,7 +659,7 @@ public class MayPenaltyChoiceHandlerService {
 
         // Declined or no valid cards left — sacrifice if still on the battlefield
         if (sourcePermanent != null) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to discard. ", sourceCard, " is sacrificed."));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
@@ -1606,7 +1606,7 @@ public class MayPenaltyChoiceHandlerService {
 
         // Declined or no valid permanents left — sacrifice if still on the battlefield
         if (sourcePermanent != null) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to return a permanent. ", sourceCard, " is sacrificed."));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
@@ -1660,7 +1660,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (sourcePermanent != null) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to return a permanent. ", sourceCard, " is sacrificed."));
         }
@@ -1718,7 +1718,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (sourcePermanent != null) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to sacrifice " + effect.description() + ". ", sourceCard, " is sacrificed."));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
