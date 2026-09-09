@@ -867,6 +867,14 @@ public class Card {
     }
 
     /**
+     * Returns the minimum total number of targets required when this card is cast for an alternate
+     * cost. Most alternate costs do not change targeting, so they use the normal minimum.
+     */
+    public int getMinTargetsWhenCastForAlternateCost() {
+        return getMinTargets();
+    }
+
+    /**
      * Returns the maximum total number of targets allowed.
      */
     public int getMaxTargets() {

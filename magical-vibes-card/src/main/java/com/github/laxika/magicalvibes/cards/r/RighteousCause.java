@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "51")
+@CardRegistration(set = "DDC", collectorNumber = "22")
 public class RighteousCause extends Card {
 
     public RighteousCause() {

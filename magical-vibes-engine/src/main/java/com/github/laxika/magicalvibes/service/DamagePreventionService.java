@@ -2132,9 +2132,13 @@ public class DamagePreventionService {
                                                     boolean combatDamage) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)
                 || targetId == null || sourceColors == null) return false;
+        Set<CardColor> damageSourceColors = gameQueryService.getDamageSourceColors(gameData, sourceColors);
+        if (damageSourceColors.isEmpty()) {
+            return gameData.colorlessDamagePreventionUntilEndOfTurn.contains(targetId);
+        }
         Set<CardColor> preventedColors = gameData.colorDamagePreventionUntilEndOfTurn.get(targetId);
         if (preventedColors == null || preventedColors.isEmpty()) return false;
-        return gameQueryService.getDamageSourceColors(gameData, sourceColors).stream()
+        return damageSourceColors.stream()
                 .anyMatch(preventedColors::contains);
     }
 

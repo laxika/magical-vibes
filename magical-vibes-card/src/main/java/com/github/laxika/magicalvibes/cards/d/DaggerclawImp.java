@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "48")
+@CardRegistration(set = "DDC", collectorNumber = "33")
 public class DaggerclawImp extends Card {
 
     public DaggerclawImp() {

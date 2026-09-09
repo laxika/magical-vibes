@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "150")
+@CardRegistration(set = "DDE", collectorNumber = "7")
 public class PriestOfGix extends Card {
 
     public PriestOfGix() {

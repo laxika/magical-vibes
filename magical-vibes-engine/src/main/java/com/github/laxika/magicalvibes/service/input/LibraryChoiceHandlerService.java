@@ -2410,6 +2410,14 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (libraryRevealChoice.selectedToTop()) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    controllerId, allRevealedCards, true, controllerId,
+                    "Put the selected cards on top of your library and the rest on the bottom in any order.",
+                    cardIds));
+            return;
+        }
+
         if (libraryRevealChoice.recordSelectedCount() && gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionEntry.setEventValue(selectedCards.size());
         }

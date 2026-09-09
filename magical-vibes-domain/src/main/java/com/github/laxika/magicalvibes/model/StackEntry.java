@@ -1159,6 +1159,18 @@ public class StackEntry {
     }
 
     /**
+     * Returns the targets for the target group currently being resolved, or {@code null} when the
+     * current effect is not associated with a target group.
+     *
+     * <p>This is also used when a target-bound wrapper resolves an inner effect: the inner effect
+     * is not present in the card's effect-to-target map, but it still applies to the wrapper's
+     * target group.</p>
+     */
+    public List<UUID> targetsForResolvingEffectGroup() {
+        return resolvingEffectTargetGroup == null ? null : targetsForGroup(resolvingEffectTargetGroup);
+    }
+
+    /**
      * Whether any effect that will actually resolve on this entry is bound to the given target
      * group. A group with no surviving bound effect (a gated-out intervening-if trigger) consumed
      * no targets from the flat {@link #targetIds} list. Returns {@code true} when the card declares

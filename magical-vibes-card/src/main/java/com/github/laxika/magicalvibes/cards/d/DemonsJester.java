@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "42")
+@CardRegistration(set = "DDC", collectorNumber = "38")
 public class DemonsJester extends Card {
 
     public DemonsJester() {
