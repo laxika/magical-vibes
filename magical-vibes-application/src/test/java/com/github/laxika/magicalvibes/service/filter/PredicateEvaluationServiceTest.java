@@ -1075,6 +1075,18 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentIsColorlessPredicate works in static filter evaluation")
+        void colorlessPredicateMatchesInStaticFilterEvaluation() {
+            Permanent colorless = addPermanent(player1Id, createCreature("Ornithopter", 0, 2, null));
+            Permanent colored = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(evaluator.matchesStaticFilter(colorless, new PermanentIsColorlessPredicate(),
+                    FilterContext.of(gd))).isTrue();
+            assertThat(evaluator.matchesStaticFilter(colored, new PermanentIsColorlessPredicate(),
+                    FilterContext.of(gd))).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentIsMulticoloredPredicate matches a two-or-more-colored permanent")
         void multicoloredPredicateMatchesMulticolored() {
             Card gold = createCreature("Gold Hybrid", 2, 2, CardColor.BLACK);

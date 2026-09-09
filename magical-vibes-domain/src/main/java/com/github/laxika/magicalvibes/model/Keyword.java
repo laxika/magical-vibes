@@ -23,6 +23,7 @@ public enum Keyword {
     MENACE,
     INDESTRUCTIBLE,
     CONVOKE,
+    DEVOID,
     IMPROVISE,
     HARMONIZE,
     HASTE,

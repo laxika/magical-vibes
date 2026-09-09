@@ -256,6 +256,7 @@ public class TurnCleanupService {
         gameData.combatDamageRedirectPlayer = null;
         gameData.playerColorDamagePreventionCount.clear();
         gameData.colorDamagePreventionUntilEndOfTurn.clear();
+        gameData.colorlessDamagePreventionUntilEndOfTurn.clear();
         gameData.playerSourceDamagePreventionIds.clear();
         gameData.playerSourceDamagePreventionLifeGainIds.clear();
         gameData.playerSourceNextDamageShields.clear();
@@ -286,6 +287,7 @@ public class TurnCleanupService {
         gameData.playersWithAllPlayerDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersWithDamageFromOpponentCreaturesPrevented.clear();
+        gameData.playersWithCombatDamageFromTargetOpponentCreaturesPrevented.clear();
         gameData.playersWithDamageFromMatchingSourcesPrevented.clear();
         gameData.playerNextDamageFromMatchingSourcesPrevented.clear();
         gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.clear();

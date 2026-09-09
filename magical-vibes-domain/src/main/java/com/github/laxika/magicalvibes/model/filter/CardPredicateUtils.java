@@ -43,6 +43,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardKeywordPredicate p) {
             return "card with " + p.keyword().name().toLowerCase().replace('_', ' ');
         }
+        if (predicate instanceof CardHasAwakenPredicate) {
+            return "card with awaken";
+        }
         if (predicate instanceof CardHasNoAbilitiesPredicate) {
             return "card with no abilities";
         }
@@ -102,6 +105,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardManaValueLessThanSourceLoyaltyPredicate) {
             return "card with mana value less than this planeswalker's loyalty";
+        }
+        if (predicate instanceof CardManaValueParityPredicate p) {
+            return "card with " + p.parity().name().toLowerCase() + " mana value";
         }
         if (predicate instanceof CardMaxManaValuePredicate p) {
             return "card with mana value " + p.maxManaValue() + " or less";

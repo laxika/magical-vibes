@@ -3112,6 +3112,50 @@ public class AbilityActivationService {
         );
     }
 
+    public void handlePutOpponentOwnedExiledCardIntoGraveyardCostChosen(
+            GameData gameData, Player player,
+            PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice choice, UUID cardId) {
+        if (!player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice activeChoice =
+                gameData.interaction.activeInteraction(
+                        PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice.class);
+        if (activeChoice == null || !activeChoice.equals(choice)) {
+            throw new IllegalStateException("Not awaiting an opponent-owned exiled-card cost choice");
+        }
+        if (!choice.validCardIds().contains(cardId)) {
+            throw new IllegalStateException("Invalid exiled-card cost choice");
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, choice.sourcePermanentId());
+        if (source == null) {
+            gameData.interaction.clearAwaitingInput();
+            throw new IllegalStateException("Source permanent is no longer on the battlefield");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        activateAbilityInternal(
+                gameData,
+                player,
+                -1,
+                choice.abilityIndex(),
+                choice.xValue(),
+                choice.targetId(),
+                choice.targetZone(),
+                null,
+                null,
+                choice.targetIds(),
+                choice.damageAssignments(),
+                source,
+                null,
+                null,
+                null,
+                false,
+                null,
+                cardId
+        );
+    }
+
     private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
                                          UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
                                          List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource,
@@ -3827,6 +3871,29 @@ public class AbilityActivationService {
             }
         }
 
+        boolean putOpponentOwnedExiledCardIntoGraveyard = abilityEffects.stream()
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::putsOpponentOwnedExiledCardIntoGraveyard);
+        if (putOpponentOwnedExiledCardIntoGraveyard) {
+            List<UUID> validExiledCardIds = opponentOwnedExiledCardIds(gameData, playerId);
+            if (validExiledCardIds.isEmpty()) {
+                throw new IllegalStateException("No card an opponent owns is in exile");
+            }
+            if (putExiledCardIntoGraveyardCardId == null) {
+                if (validExiledCardIds.size() > 1) {
+                    interactionHandlerRegistry.begin(gameData,
+                            new PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice(
+                                    playerId, permanent.getId(), effectiveIndex, effectiveXValue,
+                                    targetId, targetZone, targetIds, damageAssignments, validExiledCardIds));
+                    return;
+                }
+                putExiledCardIntoGraveyardCardId = validExiledCardIds.getFirst();
+            } else if (!validExiledCardIds.contains(putExiledCardIntoGraveyardCardId)) {
+                throw new IllegalStateException("Selected card is no longer available in exile");
+            }
+        }
+
         HandRevealCost handRevealCost = abilityEffects.stream()
                 .filter(HandRevealCost.class::isInstance)
                 .map(HandRevealCost.class::cast)
@@ -3949,6 +4016,10 @@ public class AbilityActivationService {
         if (putExiledCardIntoGraveyardCost != null) {
             payPutCardExiledWithSourceIntoGraveyardCost(
                     gameData, player, permanent, putExiledCardIntoGraveyardCardId, Zone.EXILE);
+        }
+        if (putOpponentOwnedExiledCardIntoGraveyard) {
+            payPutOpponentOwnedExiledCardIntoGraveyardCost(
+                    gameData, player, putExiledCardIntoGraveyardCardId);
         }
 
         if (handRevealCost != null && revealedHandCardIds != null) {
@@ -5636,6 +5707,14 @@ public class AbilityActivationService {
         if (abilityEffects.stream().anyMatch(PutCardExiledWithSourceIntoGraveyardCost.class::isInstance)
                 && gameData.getCardsExiledByPermanent(permanent.getId()).isEmpty()) {
             throw new IllegalStateException("No card is exiled with this permanent");
+        }
+
+        if (abilityEffects.stream()
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(CostEffect::putsOpponentOwnedExiledCardIntoGraveyard)
+                && opponentOwnedExiledCardIds(gameData, playerId).isEmpty()) {
+            throw new IllegalStateException("No card an opponent owns is in exile");
         }
 
         // Exile-N-cards-from-graveyard cost (e.g. Immortal Coil "Exile two cards from your graveyard")
@@ -7426,6 +7505,37 @@ public class AbilityActivationService {
         graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), exiled.card(), Zone.EXILE);
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " puts ", exiled.card(), " into its owner's graveyard as an activation cost."));
+    }
+
+    private void payPutOpponentOwnedExiledCardIntoGraveyardCost(GameData gameData, Player player,
+                                                                 UUID cardId) {
+        if (cardId == null) {
+            throw new IllegalStateException("Choose a card an opponent owns from exile");
+        }
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        if (exiled == null || !gameData.playerIds.contains(exiled.ownerId())
+                || player.getId().equals(exiled.ownerId())) {
+            throw new IllegalStateException("Card is not owned by an opponent in exile");
+        }
+        if (!gameData.removeFromExile(cardId)) {
+            throw new IllegalStateException("Card is no longer in exile");
+        }
+        graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), exiled.card(), Zone.EXILE);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " puts ", exiled.card(), " into its owner's graveyard as an activation cost."));
+    }
+
+    private List<UUID> opponentOwnedExiledCardIds(GameData gameData, UUID controllerId) {
+        List<UUID> validCardIds = new ArrayList<>();
+        synchronized (gameData.exiledCards) {
+            for (ExiledCardEntry exiled : gameData.exiledCards) {
+                if (gameData.playerIds.contains(exiled.ownerId())
+                        && !controllerId.equals(exiled.ownerId())) {
+                    validCardIds.add(exiled.card().getId());
+                }
+            }
+        }
+        return validCardIds;
     }
 
     /**

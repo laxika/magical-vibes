@@ -76,6 +76,7 @@ public sealed interface DelayedAction permits
         DelayedCombatDamageReflection,
         DelayedBlockerBoost,
         DelayedAttackerBoost,
+        DelayedAttackerKeywordGrant,
         DelayedOpponentAttackerBoost,
         DelayedDestroyCreatureDealingCombatDamageToPlaneswalker,
         DelayedWatchedCreaturesCombatDamage,

@@ -140,6 +140,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCo
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -1937,8 +1938,6 @@ public class SpellCastingService {
         if (castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, adventureCard)
                 || castingPermissionService.isOpponentsChosenColorSpellCastRestricted(
                 gameData, playerId, adventureCard)
-                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
-                gameData, playerId, adventureCard)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(
                 gameData, playerId, adventureCard, 0)
                 || !castingPermissionService.isSpellCastingAllowed(gameData, playerId, adventureCard)
@@ -1962,6 +1961,10 @@ public class SpellCastingService {
         if (adventureCard.getParsedManaCost() != null && adventureCard.getParsedManaCost().hasX()
                 && effectiveXValue < 0) {
             throw new IllegalStateException("X value cannot be negative");
+        }
+        if (castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
+                gameData, playerId, adventureCard, effectiveXValue)) {
+            throw new IllegalStateException("Card is not playable");
         }
 
         List<UUID> declaredTargetIds = targetIds != null ? targetIds : List.of();
@@ -2551,6 +2554,12 @@ public class SpellCastingService {
         if (card == null) {
             throw new IllegalStateException("Card does not have an Adventure face");
         }
+        if (usingAlternateCost) {
+            int declaredTargetCount = targetIds.size() + (targetId == null ? 0 : 1);
+            if (declaredTargetCount < card.getMinTargetsWhenCastForAlternateCost()) {
+                throw new IllegalStateException("Spell requires additional targets when cast for its alternate cost");
+            }
+        }
         gameData.spellColorOverrides.remove(card.getId());
         gameData.spellColorOverridesUntilEndOfTurn.remove(card.getId());
         boolean hasGiftChoice = card.getEffects(EffectSlot.STATIC).stream()
@@ -2679,7 +2688,8 @@ public class SpellCastingService {
                     damageAssignments == null ? Map.of() : damageAssignments, castTimeDividedDamage);
         }
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
-                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
+                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
+                gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -5370,6 +5380,8 @@ public class SpellCastingService {
         payPutCountersOnControlledCreatureOrPayManaCost(gameData, player, card,
                 costs.putCountersOrPayManaCost(), selection.sacrificePermanentId(), preManaPaymentPool);
         resolvedXValue = payExileGraveyardCost(gameData, player, card, costs.exileGraveyardCost(), selection.exileGraveyardCardIndex(), resolvedXValue);
+        payPutOpponentOwnedExiledCardIntoGraveyardCost(gameData, player, card,
+                costs.putOpponentOwnedExiledCardIntoGraveyardCost(), selection.chosenObjectId());
         resolvedXValue = payExileXCardsFromGraveyardCost(gameData, player, card, costs.exileXCardsCost(), selection.exileGraveyardCardIndices(), resolvedXValue);
         payCollectEvidenceCost(gameData, player, card, costs.collectEvidenceCost(),
                 selection.exileGraveyardCardIndices(), collectEvidenceMinimumManaValue);
@@ -5430,6 +5442,27 @@ public class SpellCastingService {
                 .text(".")
                 .build());
         return new ExiledCostPayment(exiledCard.getId(), exiledCard);
+    }
+
+    private void payPutOpponentOwnedExiledCardIntoGraveyardCost(
+            GameData gameData, Player player, Card card,
+            PutOpponentOwnedExiledCardIntoGraveyardCost cost, UUID exiledCardId) {
+        if (cost == null) {
+            return;
+        }
+        ExiledCardEntry exiledCard = additionalSpellCostService
+                .validatePutOpponentOwnedExiledCardIntoGraveyardCost(gameData, player, card, exiledCardId);
+        if (!gameData.removeFromExile(exiledCardId)) {
+            throw new IllegalStateException("Card is no longer in exile");
+        }
+        graveyardService.addCardToGraveyard(gameData, exiledCard.ownerId(), exiledCard.card(), Zone.EXILE);
+        gameLogService.append(gameData, GameLog.builder()
+                .text(player.getUsername() + " puts ")
+                .card(exiledCard.card())
+                .text(" into its owner's graveyard as an additional cost to cast ")
+                .card(card)
+                .text(".")
+                .build());
     }
 
     private BeheldCardPayment payBeholdCost(GameData gameData, Player player, Card card,
@@ -6847,7 +6880,8 @@ public class SpellCastingService {
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
-                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
+                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
+                gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
@@ -7033,6 +7067,7 @@ public class SpellCastingService {
                 || additionalCosts.putCountersOrPayManaCost() != null
                 || additionalCosts.exileGraveyardCost() != null
                 || additionalCosts.exileXCardsCost() != null
+                || additionalCosts.putOpponentOwnedExiledCardIntoGraveyardCost() != null
                 || additionalCosts.discardRandomCost() != null
                 || additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardHand()
                 || additionalCosts.discardXCardsCost() != null
@@ -7967,7 +8002,8 @@ public class SpellCastingService {
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
-                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
+                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
+                gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
@@ -8570,7 +8606,8 @@ public class SpellCastingService {
                 ? 0 : resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
-                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
+                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
+                gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
@@ -8683,7 +8720,6 @@ public class SpellCastingService {
             throw new IllegalStateException("Card can't be cast from the library");
         }
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
-                || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, 0)) {
             throw new IllegalStateException("Card is not playable");
@@ -8691,6 +8727,10 @@ public class SpellCastingService {
 
         int effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, 0);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
+        if (castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
+                gameData, playerId, card, effectiveXValue)) {
+            throw new IllegalStateException("Card is not playable");
+        }
 
         AdditionalSpellCostService.ExtractedCosts additionalCosts = additionalSpellCostService.peek(card);
         if (additionalCosts.any() && additionalCosts.chooseXValueCost() == null) {

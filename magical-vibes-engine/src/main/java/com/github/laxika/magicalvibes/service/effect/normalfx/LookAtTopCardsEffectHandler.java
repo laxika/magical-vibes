@@ -99,6 +99,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         } else if (e.chosenDestination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
             if (e.optional() && e.restDestination() == LookDestination.GRAVEYARD) {
                 resolveMayPutOnTopRestToGraveyard(gameData, entry, lookCount, chooseCount);
+            } else if (e.optional() && e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY
+                    && e.choosePredicate() != null && chooseCount > 1) {
+                resolveMayPutAnyNumberOnTopRestOnBottom(
+                        gameData, entry, e, lookCount, chooseCount);
             } else {
                 resolvePutOneOnTop(gameData, entry, e, lookCount);
             }
@@ -257,7 +261,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 e.recordChosenCount(), e.cloakChosenPermanents(), false,
                 e.battlefieldSelectionFollowUp(), false, remainingToHand || chooseCount > 1, false,
                 e.selectedCardMayGoToHandIfBattlefieldDeclined(), e.battlefieldEntryReplacement(), remainingToHand,
-                chooseTotalManaValueAtMost == Integer.MAX_VALUE ? null : chooseTotalManaValueAtMost));
+                chooseTotalManaValueAtMost == Integer.MAX_VALUE ? null : chooseTotalManaValueAtMost, false));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====
@@ -334,6 +338,32 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .build(),
                 prompt,
                 true));
+    }
+
+    private void resolveMayPutAnyNumberOnTopRestOnBottom(
+            GameData gameData, StackEntry entry, LookAtTopCardsEffect effect,
+            int lookCount, int chooseCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) {
+            return;
+        }
+
+        List<Card> matchingCards = filterEligibleCards(result.topCards(), effect.choosePredicate(),
+                entry.getCard().getId(), gameData, result.controllerId());
+        if (matchingCards.isEmpty()) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    result.controllerId(), result.topCards(), true, result.controllerId(),
+                    "Put these cards on the bottom of your library in any order.", List.of()));
+            return;
+        }
+
+        int maxCount = Math.min(chooseCount, matchingCards.size());
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                result.controllerId(), result.topCards(),
+                matchingCards.stream().map(Card::getId).toList(), maxCount,
+                "You may reveal any number of matching cards from among them and put them on top of your library. "
+                        + "Put the rest on the bottom in any order.", true));
     }
 
     private void resolveOneToGraveyardRestOnTop(GameData gameData, StackEntry entry, int lookCount) {

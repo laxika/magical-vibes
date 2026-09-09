@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
@@ -141,6 +142,7 @@ public class AdditionalSpellCostService {
             PayLifeOrSacrificePermanentCost.class,
             ExileCardFromGraveyardCost.class,
             ExileXCardsFromGraveyardCost.class,
+            PutOpponentOwnedExiledCardIntoGraveyardCost.class,
             CollectEvidenceCost.class,
             ExileNCardsFromGraveyardCost.class,
             DiscardCardTypeCost.class,
@@ -200,6 +202,7 @@ public class AdditionalSpellCostService {
             PayLifeOrPayManaCost payLifeOrPayManaCost,
             ExileCardFromGraveyardCost exileGraveyardCost,
             ExileXCardsFromGraveyardCost exileXCardsCost,
+            PutOpponentOwnedExiledCardIntoGraveyardCost putOpponentOwnedExiledCardIntoGraveyardCost,
             CollectEvidenceCost collectEvidenceCost,
             ExileNCardsFromGraveyardCost exileNCardsCost,
             DiscardCardTypeCost discardCost,
@@ -245,6 +248,7 @@ public class AdditionalSpellCostService {
                     || payLifeOrSacrificePermanentCost != null
                     || discardCardOrSacrificePermanentCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null
+                    || putOpponentOwnedExiledCardIntoGraveyardCost != null
                     || collectEvidenceCost != null || exileNCardsCost != null
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
                     || discardCardOrPayLifeCost != null
@@ -434,6 +438,8 @@ public class AdditionalSpellCostService {
                 removeFirst(effects, PayLifeOrSacrificePermanentCost.class);
         ExileCardFromGraveyardCost exileGraveyardCost = removeFirst(effects, ExileCardFromGraveyardCost.class);
         ExileXCardsFromGraveyardCost exileXCardsCost = removeFirst(effects, ExileXCardsFromGraveyardCost.class);
+        PutOpponentOwnedExiledCardIntoGraveyardCost putOpponentOwnedExiledCardIntoGraveyardCost =
+                removeFirst(effects, PutOpponentOwnedExiledCardIntoGraveyardCost.class);
         CollectEvidenceCost collectEvidenceCost = removeFirst(effects, CollectEvidenceCost.class);
         ExileNCardsFromGraveyardCost exileNCardsCost = removeFirst(effects, ExileNCardsFromGraveyardCost.class);
         DiscardCardTypeCost discardCost = removeFirst(effects, DiscardCardTypeCost.class);
@@ -474,7 +480,8 @@ public class AdditionalSpellCostService {
                 returnPermanentToHand, returnCreature,
                 blightCost, putCounterCost, putCountersOrPayManaCost,
                 payXLife, payLifeCost, payLifeOrPayManaCost, exileGraveyardCost, exileXCardsCost,
-                collectEvidenceCost, exileNCardsCost, discardCost, discardRandomCost,
+                putOpponentOwnedExiledCardIntoGraveyardCost, collectEvidenceCost, exileNCardsCost,
+                discardCost, discardRandomCost,
                 discardOrPay, discardOrPayLife,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
                 chooseXValueCost, beholdCost, beholdSelectionCost, chosenCreatureOrWarpedCardCost,
@@ -710,6 +717,11 @@ public class AdditionalSpellCostService {
                             (cost.requiredType() == null || c.hasType(cost.requiredType())
                                     || (cost.alternateType() != null && c.hasType(cost.alternateType())))
                                     && (cost.requiredSubtype() == null || c.getSubtypes().contains(cost.requiredSubtype())))) return false;
+                }
+                case PutOpponentOwnedExiledCardIntoGraveyardCost ignored -> {
+                    if (gameData.exiledCards.stream().noneMatch(exiled ->
+                            gameData.playerIds.contains(exiled.ownerId())
+                                    && !playerId.equals(exiled.ownerId()))) return false;
                 }
                 case ExileXCardsFromGraveyardCost cost -> {
                     if (graveyard.stream().noneMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
@@ -1127,6 +1139,10 @@ public class AdditionalSpellCostService {
         if (costs.exileGraveyardCost() != null) {
             validateExileGraveyardCost(gameData, player, card, costs.exileGraveyardCost(),
                     selection.exileGraveyardCardIndex());
+        }
+        if (costs.putOpponentOwnedExiledCardIntoGraveyardCost() != null) {
+            validatePutOpponentOwnedExiledCardIntoGraveyardCost(
+                    gameData, player, card, selection.chosenObjectId());
         }
         if (costs.exileXCardsCost() != null) {
             validateExileXCardsFromGraveyardCost(gameData, player, card, costs.exileXCardsCost(),
@@ -2189,6 +2205,22 @@ public class AdditionalSpellCostService {
             String typeName = cost.requiredType().name().toLowerCase()
                     + (cost.alternateType() != null ? " or " + cost.alternateType().name().toLowerCase() : "");
             throw new IllegalStateException("Must exile a " + typeName + " card from your graveyard");
+        }
+        return exiledCard;
+    }
+
+    /** Validates the selected opponent-owned exiled card without mutating anything. */
+    public ExiledCardEntry validatePutOpponentOwnedExiledCardIntoGraveyardCost(
+            GameData gameData, Player player, Card card, UUID exiledCardId) {
+        if (exiledCardId == null) {
+            throw new IllegalStateException("Must put a card an opponent owns from exile into its owner's graveyard to cast "
+                    + card.getName());
+        }
+        ExiledCardEntry exiledCard = gameData.findExiledCard(exiledCardId);
+        if (exiledCard == null || !gameData.playerIds.contains(exiledCard.ownerId())
+                || player.getId().equals(exiledCard.ownerId())) {
+            throw new IllegalStateException("Must put a card an opponent owns from exile into its owner's graveyard to cast "
+                    + card.getName());
         }
         return exiledCard;
     }

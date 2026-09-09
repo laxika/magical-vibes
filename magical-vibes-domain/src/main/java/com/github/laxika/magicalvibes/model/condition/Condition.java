@@ -298,6 +298,7 @@ public sealed interface Condition permits
         TargetPermanentManaValueEqualsControllerUnspentMana,
         TargetPermanentMatches,
         TriggeringPermanentPowerGreaterThanSourcePower,
+        TriggeringPermanentHasSubtype,
         TargetToughnessAtMostControllerGraveyardCount,
         TargetPlayerLifeTotalEquals,
         TargetPlayerLostLifeThisTurn,

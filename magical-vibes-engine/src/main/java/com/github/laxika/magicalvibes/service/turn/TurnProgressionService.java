@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHand
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
@@ -696,6 +697,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(AddManaAtNextMainPhase.class, AddManaAtNextMainPhase::thisTurnOnly);
         gameData.clearDelayedActions(DelayedBlockerBoost.class);
         gameData.clearDelayedActions(DelayedAttackerBoost.class);
+        gameData.clearDelayedActions(DelayedAttackerKeywordGrant.class);
         gameData.clearDelayedActions(DelayedNontokenAttackTokenCreation.class);
         gameData.clearDelayedActions(DelayedAttackTokenCreation.class);
         gameData.clearDelayedActions(DelayedAttackUntap.class);

@@ -124,6 +124,11 @@ public class PermanentChoiceTriggerHandlerService {
             }
         }
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
+        Permanent triggeringPermanent = stt.triggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, stt.triggeringPermanentId());
+        if (triggeringPermanent != null) {
+            entry.setTriggeringCardId(triggeringPermanent.getCard().getId());
+        }
         entry.setSourcePermanentSnapshot(stt.sourcePermanentSnapshot());
         entry.setEventValue(stt.spellManaSpentX());
         if (stt.targetFilter() != null) {

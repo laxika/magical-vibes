@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePred
 import com.github.laxika.magicalvibes.model.filter.CardHasForetellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasAwakenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasManaAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
@@ -54,6 +55,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostPermanentC
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -290,6 +292,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -311,6 +314,8 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class PredicateEvaluationService {
+
+    private static final Pattern AWAKEN_ABILITY_PATTERN = Pattern.compile("(?m)^Awaken\\s+\\d+\\s*\\u2014");
 
     private final GameQueryService gameQueryService;
 
@@ -411,6 +416,8 @@ public class PredicateEvaluationService {
             }
             case CardKeywordPredicate p ->
                     card.getKeywords().contains(p.keyword());
+            case CardHasAwakenPredicate ignored ->
+                    card.getCardText() != null && AWAKEN_ABILITY_PATTERN.matcher(card.getCardText()).find();
             case CardIsSelfPredicate ignored ->
                     sourceCardId != null && card.getId().equals(sourceCardId);
             case CardColorPredicate p ->
@@ -533,6 +540,19 @@ public class PredicateEvaluationService {
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
                 yield sourcePermanent != null
                         && card.getManaValue() < sourcePermanent.getCounterCount(CounterType.LOYALTY);
+            }
+            case CardManaValueParityPredicate p -> {
+                ManaCost manaCost = card.getParsedManaCost();
+                if (xValue == null && manaCost != null && manaCost.hasX()) {
+                    // A spell with X can choose either parity, so playability must not reject it
+                    // before the player announces X.
+                    yield false;
+                }
+                int manaValue = card.getManaValue();
+                if (xValue != null && manaCost != null && manaCost.hasX()) {
+                    manaValue += xValue * Math.max(1, manaCost.getXSymbolCount());
+                }
+                yield p.parity().matches(manaValue);
             }
             case CardMaxManaValuePredicate p ->
                     card.getManaValue() <= p.maxManaValue();
@@ -2239,6 +2259,7 @@ public class PredicateEvaluationService {
                 yield equipped != null && sharesCreatureType(permanent, equipped);
             }
             case PermanentIsLandPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsColorlessPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsMulticoloredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsPlaneswalkerPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsRenownedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
