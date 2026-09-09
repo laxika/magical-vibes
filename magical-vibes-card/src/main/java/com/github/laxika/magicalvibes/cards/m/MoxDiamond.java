@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "138")
 @CardRegistration(set = "TPR", collectorNumber = "228")
+@CardRegistration(set = "V10", collectorNumber = "10")
 public class MoxDiamond extends Card {
 
     public MoxDiamond() {

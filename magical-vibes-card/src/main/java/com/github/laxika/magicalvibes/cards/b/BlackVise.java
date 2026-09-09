@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 @CardRegistration(set = "4ED", collectorNumber = "299")
 @CardRegistration(set = "SUM", collectorNumber = "236")
 @CardRegistration(set = "3ED", collectorNumber = "236")
+@CardRegistration(set = "V10", collectorNumber = "2")
 public class BlackVise extends Card {
 
     public BlackVise() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 @CardRegistration(set = "SUM", collectorNumber = "254")
 @CardRegistration(set = "ME1", collectorNumber = "158")
 @CardRegistration(set = "3ED", collectorNumber = "254")
+@CardRegistration(set = "V10", collectorNumber = "4")
 public class IvoryTower extends Card {
 
     public IvoryTower() {
