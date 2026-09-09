@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BurningCloak.class, Forest.class, GrizzlyBears.class, HillGiant.class})
 class BurningCloakTest extends BaseCardTest {
 
     private void prepare() {
@@ -25,23 +27,18 @@ class BurningCloakTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
     }
 
-    private Permanent battlefieldPermanent(String name) {
-        return findPermanent(player2, name);
-    }
-
     @Test
     @DisplayName("Grants +2/+0 and deals 2 damage to the surviving target")
     void boostsAndDamages() {
         prepare();
-        harness.addToBattlefield(player2, new AirElemental()); // 4/4
+        harness.addToBattlefield(player1, new HillGiant()); // 3/3
 
-        UUID targetId = battlefieldPermanent("Air Elemental").getId();
-        harness.castSorcery(player1, 0, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player1, "Hill Giant");
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
-        Permanent target = battlefieldPermanent("Air Elemental");
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        Permanent target = findPermanent(player1, "Hill Giant");
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 
@@ -51,9 +48,8 @@ class BurningCloakTest extends BaseCardTest {
         prepare();
         harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2, +2/+0 keeps toughness at 2
 
-        UUID targetId = battlefieldPermanent("Grizzly Bears").getId();
-        harness.castSorcery(player1, 0, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -63,19 +59,18 @@ class BurningCloakTest extends BaseCardTest {
     @DisplayName("The +2/+0 wears off at cleanup")
     void boostWearsOff() {
         prepare();
-        harness.addToBattlefield(player2, new AirElemental()); // 4/4
+        harness.addToBattlefield(player2, new HillGiant()); // 3/3
 
-        UUID targetId = battlefieldPermanent("Air Elemental").getId();
-        harness.castSorcery(player1, 0, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent target = battlefieldPermanent("Air Elemental");
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        Permanent target = findPermanent(player2, "Hill Giant");
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
     }
 
     @Test
@@ -84,7 +79,7 @@ class BurningCloakTest extends BaseCardTest {
         prepare();
         harness.addToBattlefield(player2, new Forest());
 
-        UUID landId = battlefieldPermanent("Forest").getId();
+        UUID landId = harness.getPermanentId(player2, "Forest");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, landId))
                 .isInstanceOf(IllegalStateException.class);
     }

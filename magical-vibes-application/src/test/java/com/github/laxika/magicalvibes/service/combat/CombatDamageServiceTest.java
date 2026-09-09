@@ -94,6 +94,7 @@ class CombatDamageServiceTest {
     @Mock private CombatAttackService combatAttackService;
     @Mock private CombatTriggerService combatTriggerService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
     private CombatDamageService combatDamageService;
 
@@ -130,7 +131,7 @@ class CombatDamageServiceTest {
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 gameLogService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class),
+                grantedTriggeredAbilitySupport,
                 lifeSupport,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService.class),
                 combatAttackService, combatTriggerService,
@@ -210,6 +211,12 @@ class CombatDamageServiceTest {
      * controller lookups, redirect, and win condition. Requires stubCombatSetup().
      */
     private void stubDamageResolution() {
+        lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true), any(), anyBoolean()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applySourceNextCombatDamageToControllerShield(
+                eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
         when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(), any(), any()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gameData), anyInt()))
@@ -512,6 +519,29 @@ class CombatDamageServiceTest {
             stubCombatSetup();
             stubDamageResolution();
             stubBlockedCombat();
+        }
+
+        @Test
+        void grantedDamageTriggerSurvivesItsSourceDyingInCombat() {
+            Permanent attacker = addAttacker("Small attacker", 1, 1);
+            Permanent blocker = addBlocker("Large blocker", 2, 4, 0);
+            var effect = new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect(true);
+            when(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    eq(gameData), any(Permanent.class), any(EffectSlot.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(1) == attacker
+                            && invocation.getArgument(2) == EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE
+                            && gameData.playerBattlefields.get(player1Id).contains(attacker)
+                            ? List.of(effect) : List.of());
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            assertThat(gameData.playerBattlefields.get(player1Id)).doesNotContain(attacker);
+            assertThat(gameData.stack).anySatisfy(entry -> {
+                assertThat(entry.getSourcePermanentId()).isEqualTo(attacker.getId());
+                assertThat(entry.getTargetId()).isEqualTo(blocker.getId());
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.isNonTargeting()).isTrue();
+            });
         }
 
         @Test

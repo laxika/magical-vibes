@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -17,9 +20,10 @@ import java.util.Set;
 public class WirewoodHivemaster extends Card {
 
     public WirewoodHivemaster() {
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ELF),
+                        new CardAllOfPredicate(List.of(new CardSubtypePredicate(CardSubtype.ELF),
+                                new CardNotPredicate(new CardIsTokenPredicate()))),
                         new MayEffect(
                                 new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
                                         List.of(CardSubtype.INSECT), Set.of(), Set.of()),

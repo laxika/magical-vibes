@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -30,8 +29,7 @@ class DeathmarkPrelateTest extends BaseCardTest {
 
         addAbilityMana(player1);
         harness.activateAbility(player1, battlefieldIndex(player1, prelate), null, targetId);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, zombie.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(zombie);
         harness.passBothPriorities();
 
         assertThat(prelate.isTapped()).isTrue();

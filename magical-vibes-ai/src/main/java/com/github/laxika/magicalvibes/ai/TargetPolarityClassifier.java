@@ -119,6 +119,10 @@ public class TargetPolarityClassifier {
      * the guard test keeps that set empty for the card pool's spell/ETB surface.
      */
     TargetPolarity classify(GameData gameData, CardEffect effect, UUID aiPlayerId) {
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect modal) {
+            return classifyGroup(gameData, modal.choice().options().stream()
+                    .flatMap(option -> option.effects().stream()).toList(), aiPlayerId);
+        }
         // Wrappers: classify what actually happens to the target. Kicker-style replacements
         // use the base mode only — the AI never kicks (mirrors computeBaseAllowedTargets).
         if (effect instanceof ConditionalEffect conditional) {
@@ -382,10 +386,14 @@ public class TargetPolarityClassifier {
     private static final Map<String, TargetPolarity> FIXED_BY_CLASS_NAME = Map.ofEntries(
             // The target leaves the battlefield (or the board position it holds).
             entry("DestroyEachTargetPermanentEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("DestroyUpToTargetsThenReturnFromGraveyardEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("DestroyTwoTargetCreaturesIfSameColorsEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Blood Frenzy: the pump rides along, but the target still dies at the next end
             // step, so removal outranks the boost's BENEFICIAL and aims at the opponent.
             entry("DestroyTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("DestroyTargetPermanentAtEndStepIfAttackedEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("PhaseOutTargetCreatureUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("PutCountersOnSelfEffect", TargetPolarity.NEUTRAL),
             entry("DestroyTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetCreatureAndAllWithSameNameEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -394,6 +402,7 @@ public class TargetPolarityClassifier {
             entry("ExileTargetPermanentMayPlayUntilNextTurnEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ExileTargetCreatureAndCopyEnchantedCreatureEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnTopOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "83")
+@CardRegistration(set = "DPA", collectorNumber = "40")
 public class BloodmarkMentor extends Card {
 
     public BloodmarkMentor() {

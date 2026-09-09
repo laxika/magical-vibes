@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "ATQ", collectorNumber = "82b")
 @CardRegistration(set = "ATQ", collectorNumber = "82c")
 @CardRegistration(set = "ATQ", collectorNumber = "82d")
+@CardRegistration(set = "V09", collectorNumber = "13")
 public class StripMine extends Card {
 
     public StripMine() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "133")
+@CardRegistration(set = "ME1", collectorNumber = "72")
 public class HyalopterousLemure extends Card {
 
     public HyalopterousLemure() {

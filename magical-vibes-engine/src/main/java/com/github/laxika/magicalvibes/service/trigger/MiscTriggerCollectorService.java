@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -168,6 +169,12 @@ public class MiscTriggerCollectorService {
                 .map(triggeredEffect -> triggeredEffect instanceof DestroyLinkedPermanentEffect destroy
                         ? new DestroyLinkedPermanentEffect(
                                 destroy.cannotBeRegenerated(), match.permanent().getChosenPermanentId())
+                        : triggeredEffect instanceof ReturnCardsExiledWithSourceOnUntapEffect
+                        ? new ReturnCardsExiledWithSourceOnUntapEffect(
+                                match.gameData().exileReturnOnPermanentLeave
+                                        .getOrDefault(match.permanent().getId(), List.of()).stream()
+                                        .map(pending -> pending.card().getId())
+                                        .collect(java.util.stream.Collectors.toSet()))
                         : triggeredEffect)
                 .toList();
 
@@ -1077,6 +1084,31 @@ public class MiscTriggerCollectorService {
             PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
+
+        if (sourceCard.getSpellTargets().stream()
+                .anyMatch(target -> target.getDynamicMaxTargets() != null)) {
+            int lifeGained = ((TriggerContext.LifeGain) ctx).lifeGainedAmount();
+            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    sourceCard,
+                    match.controllerId(),
+                    List.of(effect),
+                    match.permanent().getId(),
+                    List.of(),
+                    0,
+                    0,
+                    List.of(),
+                    0,
+                    List.of(),
+                    false,
+                    null,
+                    null,
+                    lifeGained));
+
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers on life gain (multi-target counter placement)",
+                    gameData.id, sourceCard.getName());
+            return true;
+        }
 
         gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
                 sourceCard,

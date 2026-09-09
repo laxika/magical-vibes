@@ -319,7 +319,12 @@ public class DrawService {
                     maySkipDrawSource.card(),
                     playerId,
                     List.of(new ReplaceSingleDrawEffect(playerId, maySkipDrawSource.kind())),
-                    "Skip this draw with " + maySkipDrawSource.card().getName() + "?"
+                    maySkipDrawSource.kind() == DrawReplacementKind.PARALLEL_THOUGHTS
+                            ? "Replace this draw with " + maySkipDrawSource.card().getName() + "?"
+                            : "Skip this draw with " + maySkipDrawSource.card().getName() + "?",
+                    null,
+                    null,
+                    maySkipDrawSource.sourcePermanentId()
             ));
             return;
         }
@@ -344,7 +349,17 @@ public class DrawService {
             if (pendingPileDraws.isEmpty()) {
                 gameData.pendingNextDrawFromExiledPile.remove(playerId);
             }
-            resolveNextDrawFromExiledPile(gameData, playerId, pileSourceId);
+            resolveDrawFromExiledPile(gameData, playerId, pileSourceId);
+            return;
+        }
+
+        // Ring of Ma'rûf — one queued activation replaces one draw with a card from outside the game.
+        Integer pendingOutsideGame = gameData.pendingNextDrawFromOutsideGame.remove(playerId);
+        if (pendingOutsideGame != null) {
+            if (pendingOutsideGame > 1) {
+                gameData.pendingNextDrawFromOutsideGame.put(playerId, pendingOutsideGame - 1);
+            }
+            resolveNextDrawFromOutsideGame(gameData, playerId);
             return;
         }
 
@@ -916,13 +931,13 @@ public class DrawService {
             if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof MaySkipDrawReplacementEffect replacement) {
-                    return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind());
+                    return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
                 }
             }
             if (gameData.currentStep == TurnStep.DRAW) {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW)) {
                     if (effect instanceof IslandSanctuaryEffect replacement) {
-                        return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind());
+                        return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
                     }
                 }
             }
@@ -930,7 +945,7 @@ public class DrawService {
         return null;
     }
 
-    private record MaySkipDrawSource(Card card, DrawReplacementKind kind) {
+    private record MaySkipDrawSource(Card card, DrawReplacementKind kind, UUID sourcePermanentId) {
     }
 
     private Permanent findUbaMaskSource(GameData gameData) {
@@ -1448,7 +1463,7 @@ public class DrawService {
      * put into its owner's hand instead of the draw. The draw is replaced either way — an empty pile
      * simply means nothing is put into a hand (no card is drawn, no draw triggers fire).
      */
-    private void resolveNextDrawFromExiledPile(GameData gameData, UUID playerId, UUID pileSourceId) {
+    public void resolveDrawFromExiledPile(GameData gameData, UUID playerId, UUID pileSourceId) {
         var top = gameData.topOfExilePile(pileSourceId);
         if (top == null) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
@@ -1463,6 +1478,30 @@ public class DrawService {
                 " from the exiled pile into their hand instead of drawing."));
         log.info("Game {} - {} puts {} from the exiled pile into their hand instead of drawing",
                 gameData.id, ownerName, top.card().getName());
+    }
+
+    /** Ring of Ma'rûf's replaced draw: choose a card from outside the game and put it into hand. */
+    private void resolveNextDrawFromOutsideGame(GameData gameData, UUID playerId) {
+        List<Card> sideboard = gameData.playerSideboards.getOrDefault(playerId, List.of());
+        String playerName = gameData.playerIdToName.get(playerId);
+        if (sideboard.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " has no card outside the game to put into their hand instead of drawing."));
+            return;
+        }
+
+        String prompt = "Choose a card you own from outside the game to put into your hand.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(playerId, new ArrayList<>(sideboard))
+                        .reveals(false)
+                        .canFailToFind(false)
+                        .remainingCount(1)
+                        .destination(LibrarySearchDestination.HAND)
+                        .shuffleAfterSelection(false)
+                        .sourceSideboard(true)
+                        .build(),
+                prompt,
+                false));
     }
 
     private void resolveNextDrawLookAtTop(GameData gameData, UUID playerId, int x) {

@@ -51,6 +51,23 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PlayerInputServiceTest {
 
+    @Test
+    void deferredDiscardSelectionsDoNotOpenDiscardEvents() {
+        gd.eachPlayerRummage.active = true;
+        gd.eachPlayerRummage.deferDiscards = true;
+        gd.playerHands.get(PLAYER1_ID).add(createCreature("First card"));
+        gd.playerHands.get(PLAYER2_ID).add(createCreature("Second card"));
+
+        svc.beginDiscardChoice(gd, PLAYER1_ID, 1);
+        assertThat(gd.discardEventPlayerId).isNull();
+        gd.interaction.clearAwaitingInput();
+        svc.beginDiscardChoice(gd, PLAYER2_ID, 1);
+
+        assertThat(gd.discardEventPlayerId).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(PLAYER2_ID);
+    }
+
     @Mock private CardViewFactory cardViewFactory;
 
     private PlayerInputService svc;
@@ -630,7 +647,7 @@ class PlayerInputServiceTest {
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly(
                     "LAND", "CREATURE", "ENCHANTMENT", "SORCERY", "INSTANT", "ARTIFACT",
-                    "PLANESWALKER", "BATTLE", "KINDRED");
+                    "PLANESWALKER", "BATTLE", "KINDRED", "PLANE", "PHENOMENON");
             assertThat(msg.prompt()).isEqualTo("Choose a card type.");
         }
 

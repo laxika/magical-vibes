@@ -32,7 +32,7 @@ class AphettoExterminatorTest extends BaseCardTest {
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(exterminator));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(target.getId());
+                .containsExactlyInAnyOrder(target.getId(), exterminator.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 

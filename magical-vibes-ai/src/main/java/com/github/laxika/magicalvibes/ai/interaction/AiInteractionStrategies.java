@@ -20,6 +20,7 @@ public final class AiInteractionStrategies {
         register(new AlternateCastXValueChoiceAiStrategy());
         register(new TurnFaceUpXValueChoiceAiStrategy());
         register(new ScryAiStrategy());
+        register(new WorldsWithinWorldsChoiceAiStrategy());
         register(new HandTopBottomChoiceAiStrategy());
         register(new HandBottomExileChoiceAiStrategy());
         register(new EcologicalAppreciationSearchChoiceAiStrategy());
@@ -98,6 +99,7 @@ public final class AiInteractionStrategies {
         register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
+        register(new LibrarySearchDestinationChoiceAiStrategy());
         register(new SearchOutsideGameOrExileCardChoiceAiStrategy());
         register(new ShuffleCardsFromOutsideGameChoiceAiStrategy());
         register(new PermanentChoiceAiStrategy());

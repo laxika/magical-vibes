@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SeasClaim;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,15 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MantaRay.class, Island.class, GrizzlyBears.class, FugitiveWizard.class, Forest.class, SeasClaim.class})
 class MantaRayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificed when controller controls no Islands")
     void sacrificedWhenNoIslands() {
-        harness.setHand(player1, List.of(new MantaRay()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MantaRay(), "{1}{U}{U}");
         harness.passBothPriorities(); // resolve creature -> state trigger fires
         harness.passBothPriorities(); // resolve state trigger -> sacrificed
 
@@ -38,13 +37,40 @@ class MantaRayTest extends BaseCardTest {
     @DisplayName("Survives while controller controls an Island")
     void survivesWithIsland() {
         harness.addToBattlefield(player1, new Island());
-        harness.setHand(player1, List.of(new MantaRay()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MantaRay(), "{1}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Manta Ray");
+    }
+
+    @Test
+    @DisplayName("State-triggered sacrifice still resolves after an Island enters")
+    void stateTriggeredSacrificeIsNotUndoneByIslandEntering() {
+        harness.castFromHand(player1, new MantaRay(), "{1}{U}{U}");
+
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new Island());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Manta Ray");
+        harness.assertInGraveyard(player1, "Manta Ray");
+    }
+
+    @Test
+    @DisplayName("A land that becomes an Island satisfies the Island condition")
+    void landThatBecomesIslandSatisfiesCondition() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player1, List.of(new SeasClaim()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new MantaRay(), "{1}{U}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
         harness.assertOnBattlefield(player1, "Manta Ray");
     }
 
@@ -54,9 +80,9 @@ class MantaRayTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Island());
-        Permanent ray = addRay(player1);
+        Permanent ray = addCreatureReady(player1, new MantaRay());
 
-        declareRayAttack(ray);
+        declareAttackers(List.of(attackerIndex(ray)));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -65,15 +91,9 @@ class MantaRayTest extends BaseCardTest {
     @DisplayName("Cannot attack when defending player controls no Island")
     void cannotAttackWhenDefenderHasNoIsland() {
         harness.addToBattlefield(player1, new Island());
-        Permanent ray = addRay(player1);
+        Permanent ray = addCreatureReady(player1, new MantaRay());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        int index = gd.playerBattlefields.get(player1.getId()).indexOf(ray);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index)))
+        assertThatThrownBy(() -> declareAttackers(List.of(attackerIndex(ray))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -82,12 +102,10 @@ class MantaRayTest extends BaseCardTest {
     void cannotBeBlockedByNonBlueCreature() {
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Island());
-        Permanent ray = addRay(player1);
+        Permanent ray = addCreatureReady(player1, new MantaRay());
         ray.setAttacking(true);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
@@ -102,12 +120,10 @@ class MantaRayTest extends BaseCardTest {
     void canBeBlockedByBlueCreature() {
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Island());
-        Permanent ray = addRay(player1);
+        Permanent ray = addCreatureReady(player1, new MantaRay());
         ray.setAttacking(true);
 
-        Permanent wizard = new Permanent(new FugitiveWizard());
-        wizard.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(wizard);
+        Permanent wizard = addCreatureReady(player2, new FugitiveWizard());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex(wizard), attackerIndex(ray))));
@@ -124,20 +140,4 @@ class MantaRayTest extends BaseCardTest {
         return gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
     }
 
-    private Permanent addRay(Player player) {
-        Permanent perm = new Permanent(new MantaRay());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private void declareRayAttack(Permanent ray) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        int index = gd.playerBattlefields.get(player1.getId()).indexOf(ray);
-        gs.declareAttackers(gd, player1, List.of(index));
-    }
 }

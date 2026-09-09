@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 @CardRegistration(set = "6ED", collectorNumber = "120")
 @CardRegistration(set = "5ED", collectorNumber = "155")
 @CardRegistration(set = "FEM", collectorNumber = "36")
+@CardRegistration(set = "ME1", collectorNumber = "66")
 public class Derelor extends Card {
 
     public Derelor() {

@@ -72,6 +72,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to activate abilities of creatures, with colors chosen from the source creature. */
     CREATURE_COLORS_ABILITIES,
 
+    /** Spendable only to activate abilities of creature sources, with any colors allowed. */
+    CREATURE_ABILITIES,
+
     /**
      * Spendable only to cast creature spells of the type chosen as the source entered
      * (Pillar of Origins, Unclaimed Territory).

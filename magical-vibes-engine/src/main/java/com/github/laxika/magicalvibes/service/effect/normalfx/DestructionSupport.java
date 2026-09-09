@@ -243,6 +243,9 @@ public class DestructionSupport {
             if (indestructible.contains(perm)) {
                 continue;
             }
+            if (damagePreventionService.replaceDestructionWithShieldCounter(perm)) {
+                continue;
+            }
             if (graveyardService.tryReplaceDestruction(gameData, perm, !cannotBeRegenerated)) {
                 continue;
             }

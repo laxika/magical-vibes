@@ -11,31 +11,39 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * "another source".
  */
 public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount,
-                                      boolean targetsPlayer, boolean excludeDamageSource)
+                                      boolean targetsPlayer, boolean excludeDamageSource,
+                                      boolean hasExternalPermanentTarget)
         implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect, EndStepPlayerTargetedEffect {
 
     public PutCountersOnSelfEffect(CounterType counterType) {
-        this(counterType, 1, null, false, false);
+        this(counterType, 1, null, false, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, int count) {
-        this(counterType, count, null, false, false);
+        this(counterType, count, null, false, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, DynamicAmount amount) {
-        this(counterType, 0, amount, false, false);
+        this(counterType, 0, amount, false, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, DynamicAmount amount, boolean targetsPlayer) {
-        this(counterType, 0, amount, targetsPlayer, false);
+        this(counterType, 0, amount, targetsPlayer, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, boolean excludeDamageSource) {
-        this(counterType, 1, null, false, excludeDamageSource);
+        this(counterType, 1, null, false, excludeDamageSource, false);
+    }
+
+    public static PutCountersOnSelfEffect targeted(CounterType counterType) {
+        return new PutCountersOnSelfEffect(counterType, 1, null, false, false, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
+        if (hasExternalPermanentTarget) {
+            return TargetSpec.benign(TargetPredicates.permanent());
+        }
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player())
                 : new TargetSpec(null, false, null, true, 1);
     }

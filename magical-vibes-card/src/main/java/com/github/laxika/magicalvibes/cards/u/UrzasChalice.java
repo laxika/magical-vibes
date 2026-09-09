@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ATQ", collectorNumber = "75")
+@CardRegistration(set = "ME1", collectorNumber = "171")
 public class UrzasChalice extends Card {
 
     public UrzasChalice() {

@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.model.action;
 
 import java.util.UUID;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -50,7 +50,25 @@ public record PendingExileReturn(
         this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
                 additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking,
                 returnToGraveyard, timingControllerId, followUpSourceCard,
-                discardControllerCardsEqualToReturnedToughness, false, 0, Set.of(), null, 0, Map.of());
+                discardControllerCardsEqualToReturnedToughness, false, 0, Set.of(), null, 0,
+                Map.of());
+    }
+
+    public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
+                              TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
+                              boolean onlyOnControllersTurn, boolean grantHaste, boolean returnAttacking,
+                              boolean returnToGraveyard, UUID timingControllerId, Card followUpSourceCard,
+                              boolean discardControllerCardsEqualToReturnedToughness,
+                              boolean plusOnePlusOneCountersOnlyOnCreatures,
+                              int loyaltyCountersOnPlaneswalkers,
+                              Set<UUID> cardsToAttachToPrimary,
+                              CounterType counterTypeOnReturn, int counterAmountOnReturn) {
+        this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking,
+                returnToGraveyard, timingControllerId, followUpSourceCard,
+                discardControllerCardsEqualToReturnedToughness,
+                plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkers,
+                cardsToAttachToPrimary, counterTypeOnReturn, counterAmountOnReturn, Map.of());
     }
 
     public PendingExileReturn {
@@ -160,7 +178,7 @@ public record PendingExileReturn(
                 false, 0, cardsToAttachToPrimary, null, 0, Map.of());
     }
 
-    public static PendingExileReturn withCardsAttachedToPrimaryAndCounters(
+    public static PendingExileReturn withCountersAndCardsAttachedToPrimary(
             Card card, UUID controllerId, boolean returnTapped, List<Card> additionalCards,
             Set<UUID> cardsToAttachToPrimary, Map<CounterType, Integer> countersOnReturn) {
         return new PendingExileReturn(card, controllerId, returnTapped, false, TurnStep.END_STEP, 0,

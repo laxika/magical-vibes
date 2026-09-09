@@ -196,6 +196,18 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    void destroyAndReturnTargetsOpposingPermanents() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+        for (boolean sacrificeAtEndStep : List.of(false, true)) {
+            assertThat(classifier.classify(harness.getGameData(),
+                    new com.github.laxika.magicalvibes.model.effect.DestroyUpToTargetsThenReturnFromGraveyardEffect(
+                            sacrificeAtEndStep), harness.getPlayer2().getId()))
+                    .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
+        }
+    }
+
+    @Test
     void classifiesPositionalBoostsAndBlockingRestrictions() {
         GameTestHarness harness = new GameTestHarness();
         GameData gd = harness.getGameData();

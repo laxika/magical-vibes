@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "118")
+@CardRegistration(set = "H09", collectorNumber = "19")
 public class HomingSliver extends Card {
 
     public HomingSliver() {

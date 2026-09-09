@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffe
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -110,10 +112,21 @@ public class PotentialManaService {
      * is tapped by the activation itself, so its mana can never help pay that cost.
      */
     public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId, UUID excludedPermanentId) {
+        return buildVirtualManaPool(gameData, playerId, excludedPermanentId, false);
+    }
+
+    /** Includes Powerstone mana, which may pay for a special action. */
+    public VirtualManaPool buildVirtualManaPoolForSpecialAction(GameData gameData, UUID playerId) {
+        return buildVirtualManaPool(gameData, playerId, null, true);
+    }
+
+    private VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId, UUID excludedPermanentId,
+                                                 boolean specialAction) {
         VirtualManaPool virtual = new VirtualManaPool();
 
         ManaPool current = gameData.playerManaPools.get(playerId);
         if (current != null) {
+            if (specialAction) virtual.addPowerstoneOnlyColorless(current.getPowerstoneOnlyColorless());
             for (ManaColor color : ManaColor.values()) {
                 virtual.add(color, current.get(color));
                 virtual.addSnowManaTag(color, current.getSnowMana(color));
@@ -195,7 +208,7 @@ public class PotentialManaService {
                     }
                 } else {
                     // Check activated mana abilities (dual lands, pain lands, utility lands)
-                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature, perm, gameData, playerId);
+                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature, perm, gameData, playerId, specialAction);
                 }
             }
         }
@@ -452,6 +465,11 @@ public class PotentialManaService {
      */
     public void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature, Permanent permanent,
                                                        GameData gameData, UUID playerId) {
+        addActivatedManaAbilitiesToVirtualPool(card, virtual, isCreature, permanent, gameData, playerId, false);
+    }
+
+    private void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature, Permanent permanent,
+                                                        GameData gameData, UUID playerId, boolean specialAction) {
         EnumMap<ManaColor, Integer> totalByColor = new EnumMap<>(ManaColor.class);
         EnumMap<ManaColor, Integer> maxPerAbilityByColor = new EnumMap<>(ManaColor.class);
         int totalAdded = 0;
@@ -467,7 +485,7 @@ public class PotentialManaService {
                 continue;
             }
 
-            for (EnumMap<ManaColor, Integer> abilityByColor : manaOptionsFor(ability, permanent, gameData, playerId)) {
+            for (EnumMap<ManaColor, Integer> abilityByColor : manaOptionsFor(ability, permanent, gameData, playerId, specialAction)) {
                 int abilityTotal = 0;
                 for (Map.Entry<ManaColor, Integer> e : abilityByColor.entrySet()) {
                     ManaColor color = e.getKey();
@@ -520,7 +538,7 @@ public class PotentialManaService {
      * bookkeeping collapses the five outcomes back to the single mana it really produces.
      */
     private List<EnumMap<ManaColor, Integer>> manaOptionsFor(ActivatedAbility ability, Permanent permanent,
-                                                             GameData gameData, UUID playerId) {
+                                                             GameData gameData, UUID playerId, boolean specialAction) {
         EnumMap<ManaColor, Integer> fixed = new EnumMap<>(ManaColor.class);
         int anyColorAmount = 0;
         List<EnumMap<ManaColor, Integer>> conditionalOptions = new ArrayList<>();
@@ -531,6 +549,10 @@ public class PotentialManaService {
                     fixed.merge(ManaProductionSupport.effectiveColor(gameData, null, permanent,
                             manaEffect.color()), amount, Integer::sum);
                 }
+            } else if (specialAction && effect instanceof AwardRestrictedManaEffect restricted
+                    && restricted.restriction() instanceof ManaRestriction.Powerstone) {
+                int amount = estimateManaAmount(restricted.amount(), permanent, gameData);
+                if (amount > 0) fixed.merge(restricted.color(), amount, Integer::sum);
             } else if (effect instanceof ManaProducingEffect mana
                     && !mana.estimatedMutuallyExclusiveManaColors().isEmpty()) {
                 DynamicAmount amountDefinition = mana.estimatedManaAmount();

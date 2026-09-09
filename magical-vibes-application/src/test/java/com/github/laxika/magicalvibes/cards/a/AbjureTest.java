@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Abjure.class, FugitiveWizard.class, GrizzlyBears.class, Shock.class})
 class AbjureTest extends BaseCardTest {
 
     @Test
@@ -22,8 +25,7 @@ class AbjureTest extends BaseCardTest {
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        Permanent wizard = new Permanent(new FugitiveWizard());
-        gd.playerBattlefields.get(player2.getId()).add(wizard);
+        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
         harness.setHand(player2, List.of(new Abjure()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
@@ -65,8 +67,7 @@ class AbjureTest extends BaseCardTest {
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        Permanent greenCreature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(greenCreature);
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player2, List.of(new Abjure()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
@@ -76,5 +77,45 @@ class AbjureTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.castInstantWithSacrifice(player2, 0, bears.getId(), greenCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's blue permanent")
+    void cannotSacrificeOpponentsBluePermanent() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        Permanent opponentWizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        harness.setHand(player2, List.of(new Abjure()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() ->
+                harness.castInstantWithSacrifice(player2, 0, bears.getId(), opponentWizard.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters a noncreature spell")
+    void countersNoncreatureSpell() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.setHand(player2, List.of(new Abjure()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstantWithSacrifice(player2, 0, shock.getId(), wizard.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player2, "Abjure");
+        assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Shock"));
     }
 }

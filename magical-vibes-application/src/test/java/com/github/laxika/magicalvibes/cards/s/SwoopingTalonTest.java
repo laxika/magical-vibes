@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,14 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SwoopingTalon.class, GrizzlyBears.class})
+@CardUsed({SwoopingTalon.class, GrizzlyBears.class, GiantSpider.class})
 class SwoopingTalonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Provoke untaps the chosen creature and forces it to block")
     void provokeUntapsAndForcesBlock() {
         Permanent talon = addCreatureReady(player1, new SwoopingTalon());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
         blocker.tap();
 
         declareAttackers(player1, List.of(0));

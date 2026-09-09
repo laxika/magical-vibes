@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.turn.PhasingService;
 
 /**
  * Handles removing permanents from the battlefield and moving them to their destination zones
@@ -88,6 +89,7 @@ public class PermanentRemovalService {
     private final LifeSupport lifeSupport;
     private final PlayerInputService playerInputService;
     private final EffectHandlerRegistry effectHandlerRegistry;
+    private final PhasingService phasingService;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -103,7 +105,8 @@ public class PermanentRemovalService {
                                    UnattachTriggerSupport unattachTriggerSupport,
                                    @Lazy LifeSupport lifeSupport,
                                    @Lazy PlayerInputService playerInputService,
-                                   EffectHandlerRegistry effectHandlerRegistry) {
+                                   EffectHandlerRegistry effectHandlerRegistry,
+                                   PhasingService phasingService) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
@@ -119,6 +122,7 @@ public class PermanentRemovalService {
         this.lifeSupport = lifeSupport;
         this.playerInputService = playerInputService;
         this.effectHandlerRegistry = effectHandlerRegistry;
+        this.phasingService = phasingService;
     }
 
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -460,6 +464,8 @@ public class PermanentRemovalService {
         UUID ownerIdBeforeRemoval = resolvePermanentOwner(gameData, target, controllerIdBeforeRemoval);
         triggerCollectionService.checkControllerCreatureReturnedToHandTriggers(
                 gameData, target, wasCreature, ownerIdBeforeRemoval);
+        triggerCollectionService.checkControllerAnotherNonlandPermanentReturnedToHandTriggers(
+                gameData, target, controllerIdBeforeRemoval);
         triggerCollectionService.checkControllerPermanentReturnedToHandTriggers(gameData, ownerIdBeforeRemoval);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
@@ -917,6 +923,9 @@ public class PermanentRemovalService {
             log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
             return false;
         }
+        if (damagePreventionService.replaceDestructionWithShieldCounter(target)) {
+            return false;
+        }
         if (graveyardService.tryReplaceDestruction(gameData, target, !cannotBeRegenerated)) {
             return false;
         }
@@ -1248,11 +1257,19 @@ public class PermanentRemovalService {
                         gameQueryService.getEffectivePower(gameData, target),
                         gameQueryService.getEffectiveToughness(gameData, target));
                 boolean wasCreature = gameQueryService.isCreature(gameData, target);
+                gameData.updateDelayedControllerSpellCastTriggerSourceSnapshot(
+                        target, gameQueryService.getEffectivePower(gameData, target));
                 boolean wasLand = gameQueryService.isLand(gameData, target);
                 unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
                 for (StackEntry entry : gameData.stack) {
                     if (target.getId().equals(entry.getSourcePermanentId())) {
                         entry.setSourcePermanentSnapshot(new Permanent(target));
+                    }
+                    if (target.getId().equals(entry.getTriggeringPermanentId())
+                            && entry.getEffectsToResolve().stream().anyMatch(effect ->
+                            effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
+                                    && may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)) {
+                        entry.setTriggeringPermanentControllerId(playerId);
                     }
                 }
                 battlefield.remove(target);
@@ -1893,6 +1910,7 @@ public class PermanentRemovalService {
         if (pendingReturns == null) {
             triggerCollectionService.processDelayedExileReturnCounterTriggers(
                     gameData, removedPermanent.getId(), List.of(), List.of());
+            phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
             return;
         }
 
@@ -1902,30 +1920,35 @@ public class PermanentRemovalService {
         }
         triggerCollectionService.processDelayedExileReturnCounterTriggers(
                 gameData, removedPermanent.getId(), pendingReturns, returnedPermanentIds);
+        phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
     }
 
-    /** Returns cards linked to a source when an effect causes that source's return event. */
-    public void returnExileReturnsForSource(GameData gameData, UUID sourcePermanentId) {
-        if (sourcePermanentId == null) {
+    /** Resolves only the pending returns captured by one source-untap trigger. */
+    public void returnExileReturnsOnSourceEvent(GameData gameData, UUID sourcePermanentId,
+                                                Set<UUID> primaryCardIds) {
+        List<PendingExileReturn> pendingReturns =
+                gameData.exileReturnOnPermanentLeave.get(sourcePermanentId);
+        if (pendingReturns == null || primaryCardIds.isEmpty()) {
             return;
         }
-        List<PendingExileReturn> pendingReturns = gameData.exileReturnOnPermanentLeave.remove(sourcePermanentId);
-        if (pendingReturns == null) {
-            return;
+        List<PendingExileReturn> captured = new ArrayList<>();
+        pendingReturns.removeIf(pending -> {
+            if (primaryCardIds.contains(pending.card().getId())) {
+                captured.add(pending);
+                return true;
+            }
+            return false;
+        });
+        if (pendingReturns.isEmpty()) {
+            gameData.exileReturnOnPermanentLeave.remove(sourcePermanentId, pendingReturns);
         }
-        for (PendingExileReturn pending : pendingReturns) {
+        for (PendingExileReturn pending : captured) {
             returnPendingExiledCard(gameData, sourcePermanentId, pending);
         }
     }
 
     private UUID returnPendingExiledCard(GameData gameData, UUID sourcePermanentId,
                                          PendingExileReturn pending) {
-        if (!pending.additionalCards().isEmpty()
-                || !pending.cardsToAttachToPrimary().isEmpty()
-                || !pending.countersOnReturn().isEmpty()) {
-            return returnPendingExiledCards(gameData, sourcePermanentId, pending);
-        }
-
         Card exiledCard = pending.card();
         UUID ownerId = pending.controllerId();
 
@@ -1938,7 +1961,6 @@ public class PermanentRemovalService {
             return null;
         }
 
-        // Remove card from exile zone
         if (gameData.removeFromExile(exiledCard.getId())) {
             String playerName = gameData.playerIdToName.get(ownerId);
 
@@ -1955,18 +1977,7 @@ public class PermanentRemovalService {
                         GameLog.cardThen(exiledCard, " returns to " + playerName + "'s hand."));
                 log.info("Game {} - {} returns to hand from exile (source left battlefield)", gameData.id, exiledCard.getName());
             } else {
-                // Return as a new permanent on the battlefield, tapped iff requested (e.g. Realm Razer)
-                Permanent perm = new Permanent(exiledCard);
-                perm.setEnteredFromExile(true);
-                if (pending.returnTapped()) {
-                    perm.tap();
-                }
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
-                gameLogService.append(gameData,
-                        GameLog.cardThen(exiledCard, " returns to the battlefield under " + playerName + "'s control."));
-                log.info("Game {} - {} returns from exile (source left battlefield)", gameData.id, exiledCard.getName());
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, exiledCard, null, false);
-                return perm.getId();
+                return returnExiledCardsToBattlefield(gameData, ownerId, pending, exiledCard);
             }
         } else {
             log.info("Game {} - Exiled card {} no longer in exile zone, return skipped", gameData.id, exiledCard.getName());
@@ -1974,66 +1985,117 @@ public class PermanentRemovalService {
         return null;
     }
 
-    private UUID returnPendingExiledCards(GameData gameData, UUID sourcePermanentId,
-                                          PendingExileReturn pending) {
-        Card primaryCard = pending.card();
-        if (!gameData.removeFromExile(primaryCard.getId())) {
-            log.info("Game {} - Exiled card {} no longer available for linked return",
-                    gameData.id, primaryCard.getName());
-            return null;
-        }
-
-        UUID primaryControllerId = pending.controllerId();
+    private UUID returnExiledCardsToBattlefield(GameData gameData, UUID ownerId,
+                                                PendingExileReturn pending, Card exiledCard) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
-        Permanent primary = new Permanent(primaryCard);
-        primary.setEnteredFromExile(true);
-        if (pending.returnTapped()) {
-            primary.tap();
-        }
-        for (Map.Entry<CounterType, Integer> counter : pending.countersOnReturn().entrySet()) {
-            int placed = gameQueryService.replaceCounters(gameData, primary, primaryControllerId,
-                    counter.getKey(), counter.getValue());
-            if (placed > 0) {
-                primary.setCounterCount(counter.getKey(), placed);
-            }
-        }
-        battlefieldEntryService.putPermanentOntoBattlefield(
-                gameData, primaryControllerId, primary, enterTappedTypes, simultaneouslyEntered);
-        simultaneouslyEntered.add(primary);
-        gameLogService.append(gameData, GameLog.cardThen(primaryCard,
-                " returns to the battlefield under "
-                        + gameData.playerIdToName.get(primaryControllerId) + "'s control."));
-        battlefieldEntryService.handleCreatureEnteredBattlefield(
-                gameData, primaryControllerId, primaryCard, null, false);
+        List<Permanent> returnedPermanents = new ArrayList<>();
+        List<UUID> returnedControllerIds = new ArrayList<>();
+        List<Card> cards = new ArrayList<>();
+        cards.add(exiledCard);
+        cards.addAll(pending.additionalCards());
+        Permanent primaryPermanent = null;
 
-        for (Card additionalCard : pending.additionalCards()) {
-            boolean attachToPrimary = pending.cardsToAttachToPrimary().contains(additionalCard.getId());
-            UUID additionalControllerId = additionalCard.getOwnerId() != null
-                    ? additionalCard.getOwnerId() : primaryControllerId;
-            if (attachToPrimary && !auraAttachmentService.canEnchant(
-                    gameData, additionalCard, additionalControllerId, primary)) {
+        for (Card card : cards) {
+            boolean primary = card.getId().equals(pending.card().getId());
+            boolean attachToPrimary = primaryPermanent != null
+                    && pending.cardsToAttachToPrimary().contains(card.getId());
+            UUID cardOwnerId = ownerOfExiledCard(gameData, card, ownerId);
+            if (attachToPrimary
+                    && !auraAttachmentService.canEnchant(gameData, card, cardOwnerId,
+                    primaryPermanent)) {
+                log.info("Game {} - {} stays exiled because it cannot enchant the returned {}",
+                        gameData.id, card.getName(), primaryPermanent.getCard().getName());
                 continue;
             }
-            if (!gameData.removeFromExile(additionalCard.getId())) {
+            if (!primary && pending.cardsToAttachToPrimary().contains(card.getId())
+                    && primaryPermanent == null) {
+                continue;
+            }
+            if (!primary && !gameData.removeFromExile(card.getId())) {
                 continue;
             }
 
-            Permanent additional = new Permanent(additionalCard);
-            additional.setEnteredFromExile(true);
-            if (attachToPrimary) {
-                additional.setAttachedTo(primary.getId());
+            Permanent permanent = new Permanent(card);
+            permanent.setEnteredFromExile(true);
+            if (pending.returnTapped()) {
+                permanent.tap();
             }
+            applyPendingReturnCounters(gameData, ownerId, pending, permanent, primary);
+            if (pending.grantHaste()) {
+                permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+            }
+            if (primary) {
+                primaryPermanent = permanent;
+            } else if (attachToPrimary) {
+                permanent.setAttachedTo(primaryPermanent.getId());
+            }
+
+            UUID controllerId = attachToPrimary ? cardOwnerId : ownerId;
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, additionalControllerId, additional,
-                    enterTappedTypes, simultaneouslyEntered);
-            simultaneouslyEntered.add(additional);
-            gameLogService.append(gameData, GameLog.cardThen(additionalCard,
-                    " returns to the battlefield under "
-                            + gameData.playerIdToName.get(additionalControllerId) + "'s control."));
-            battlefieldEntryService.handleCreatureEnteredBattlefield(
-                    gameData, additionalControllerId, additionalCard, null, false);
+                    gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+            simultaneouslyEntered.add(permanent);
+            returnedPermanents.add(permanent);
+            returnedControllerIds.add(controllerId);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(card, " returns to the battlefield under "
+                            + gameData.playerIdToName.get(controllerId) + "'s control."));
+            log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(),
+                    gameData.playerIdToName.get(controllerId));
         }
-        return primary.getId();
+
+        for (int i = 0; i < returnedPermanents.size(); i++) {
+            Card card = returnedPermanents.get(i).getCard();
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, returnedControllerIds.get(i), card, null, false);
+        }
+        if (primaryPermanent != null && !pending.cardsToAttachToPrimary().isEmpty()) {
+            creatureControlService.recomputeControl(gameData, primaryPermanent);
+        }
+        return primaryPermanent == null ? null : primaryPermanent.getId();
+    }
+
+    private void applyPendingReturnCounters(GameData gameData, UUID ownerId,
+                                            PendingExileReturn pending, Permanent permanent,
+                                            boolean primary) {
+        if (pending.plusOnePlusOneCounters() > 0
+                && (!pending.plusOnePlusOneCountersOnlyOnCreatures()
+                || permanent.getCard().hasType(CardType.CREATURE))
+                && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent, ownerId)) {
+            int counters = gameQueryService.doublePlusOnePlusOneCounters(
+                    gameData, permanent, ownerId, pending.plusOnePlusOneCounters());
+            if (counters > 0) {
+                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
+            }
+        }
+        if (permanent.getCard().hasType(CardType.PLANESWALKER)
+                && permanent.getCard().getLoyalty() != null) {
+            int loyalty = gameQueryService.replaceCounters(gameData, ownerId,
+                    CounterType.LOYALTY, permanent.getCard().getLoyalty()
+                            + pending.loyaltyCountersOnPlaneswalkers(), permanent.getCard().hasType(CardType.CREATURE));
+            permanent.setCounterCount(CounterType.LOYALTY, loyalty);
+        }
+        if (pending.counterTypeOnReturn() != null && pending.counterAmountOnReturn() > 0) {
+            int counters = gameQueryService.replaceCounters(gameData, permanent, ownerId,
+                    pending.counterTypeOnReturn(), pending.counterAmountOnReturn());
+            if (counters > 0) {
+                permanent.setCounterCount(pending.counterTypeOnReturn(), counters);
+            }
+        }
+        if (primary) {
+            for (Map.Entry<CounterType, Integer> counter : pending.countersOnReturn().entrySet()) {
+                int counters = gameQueryService.replaceCounters(gameData, permanent, ownerId,
+                        counter.getKey(), counter.getValue());
+                if (counters > 0) {
+                    permanent.setCounterCount(counter.getKey(), counters);
+                }
+            }
+        }
+    }
+
+    private UUID ownerOfExiledCard(GameData gameData, Card card, UUID fallback) {
+        ExiledCardEntry exiledEntry = gameData.findExiledCard(card.getId());
+        return exiledEntry == null ? (card.getOwnerId() == null ? fallback : card.getOwnerId())
+                : exiledEntry.ownerId();
     }
 }

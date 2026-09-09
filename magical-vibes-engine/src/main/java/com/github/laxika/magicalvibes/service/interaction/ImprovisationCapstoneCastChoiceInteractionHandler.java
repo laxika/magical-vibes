@@ -38,6 +38,24 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
                              PendingInteraction.ImprovisationCapstoneCastChoice interaction,
                              InteractionAnswer answer) {
         List<UUID> cardIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
+        if (cardIds.size() > interaction.maxCount()
+                || new HashSet<>(cardIds).size() != cardIds.size()
+                || !interaction.validCardIds().containsAll(cardIds)
+                || cardIds.stream().anyMatch(id -> gameData.findExiledCard(id) == null)) {
+            throw new IllegalStateException("Choose distinct cards from the offered exiled cards");
+        }
+        if (interaction.castAsCopies()) {
+            gameData.interaction.clearAwaitingInput();
+            Set<UUID> chosenIds = new HashSet<>(cardIds);
+            for (UUID copyId : interaction.validCardIds()) {
+                if (!chosenIds.contains(copyId)) {
+                    gameData.removeFromExile(copyId);
+                }
+            }
+            exileFreeCastQueueSupport.castChosenCopiesWithoutPaying(gameData, player.getId(), cardIds);
+            return;
+        }
+
         PendingInteraction.PortentOfCalamityState portentState =
                 gameData.pollPendingInteraction(PendingInteraction.PortentOfCalamityState.class);
         if (portentState != null) {

@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoldenBear;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,30 +17,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AbyssalNightstalker.class, Forest.class, GoldenBear.class})
 class AbyssalNightstalkerTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent atk = new Permanent(new AbyssalNightstalker());
-        atk.setSummoningSick(false);
-        atk.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atk);
-        return atk;
+        return addCreatureReady(player1, new AbyssalNightstalker());
     }
 
     @Test
     @DisplayName("Unblocked attacker makes the defending player discard a card")
     void unblockedForcesDiscard() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
+        harness.setHand(player2, new ArrayList<>(List.of(new GoldenBear(), new Forest())));
         addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-
-        // Advance into the declare-blockers step (the defender has no blockers), which fires the
-        // "attacks and isn't blocked" trigger onto the stack, then resolve it.
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
 
         // The defending player chooses which card to discard.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -50,26 +41,21 @@ class AbyssalNightstalkerTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Golden Bear");
     }
 
     @Test
     @DisplayName("Blocked attacker does not make the defending player discard")
     void blockedNoDiscard() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
+        harness.setHand(player2, new ArrayList<>(List.of(new GoldenBear(), new Forest())));
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new GoldenBear());
 
         addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareAttackers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
@@ -81,12 +67,8 @@ class AbyssalNightstalkerTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>());
         addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));

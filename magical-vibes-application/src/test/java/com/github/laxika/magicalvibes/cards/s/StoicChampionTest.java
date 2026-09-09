@@ -66,6 +66,7 @@ class StoicChampionTest extends BaseCardTest {
         assertThat(champion.getPowerModifier()).isEqualTo(4);
         assertThat(champion.getToughnessModifier()).isEqualTo(4);
 
+        resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

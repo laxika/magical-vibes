@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlD
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "THS", collectorNumber = "199")
+@CardRegistration(set = "CP1", collectorNumber = "5")
 public class ProphetOfKruphix extends Card {
 
     public ProphetOfKruphix() {

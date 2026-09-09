@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/** Resolves the source-linked exile used by Tawnos's Coffin. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -40,90 +41,70 @@ public class ExileTargetCreatureAndAurasUntilSourceLeavesEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent target = entry.getTargetId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
 
-        UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry);
-        boolean sourceOnBattlefield = sourcePermanentId != null
-                && gameQueryService.findPermanentById(gameData, sourcePermanentId) != null;
-        UUID exileSourcePermanentId = sourceOnBattlefield ? sourcePermanentId : null;
-        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), targetControllerId);
-        List<Card> creatureCards = new ArrayList<>(target.cardsLeavingBattlefield());
-        if (creatureCards.isEmpty()) {
+        boolean targetIsToken = target.getCard().isToken();
+        Map<CounterType, Integer> counters = new EnumMap<>(target.getCounters());
+        List<Card> targetCards = target.cardsLeavingBattlefield();
+        if (targetCards.isEmpty()) {
             return;
         }
 
-        Map<CounterType, Integer> counters = snapshotCounters(target);
-        List<Permanent> attachedAuras = new ArrayList<>();
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            if (target.getId().equals(permanent.getAttachedTo()) && permanent.getCard().isAura()) {
-                attachedAuras.add(permanent);
+        List<Card> additionalCards = new ArrayList<>(targetCards.subList(1, targetCards.size()));
+        Set<UUID> cardsToAttach = new LinkedHashSet<>();
+        List<Permanent> attachedAuras = attachedAuras(gameData, target.getId());
+        for (Permanent aura : attachedAuras) {
+            List<Card> auraCards = aura.cardsLeavingBattlefield();
+            if (auraCards.isEmpty()) {
+                continue;
+            }
+            UUID trackingSourceId = targetIsToken ? null : sourcePermanentId;
+            if (!permanentRemovalService.removePermanentToExile(gameData, aura, trackingSourceId)) {
+                continue;
+            }
+            additionalCards.addAll(auraCards);
+            if (!targetIsToken) {
+                auraCards.stream().map(Card::getId).forEach(cardsToAttach::add);
+            }
+        }
+
+        if (!permanentRemovalService.removePermanentToExile(
+                gameData, target, targetIsToken ? null : sourcePermanentId)) {
+            return;
+        }
+
+        if (!targetIsToken && sourcePermanentId != null) {
+            UUID ownerId = ownerOf(gameData, targetCards.getFirst(), target.getCard().getOwnerId());
+            gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
+                    PendingExileReturn.withCountersAndCardsAttachedToPrimary(
+                            targetCards.getFirst(), ownerId, true, additionalCards,
+                            cardsToAttach, counters));
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        gameLogService.append(gameData,
+                GameLog.cardTextCard(targetCards.getFirst(), " is exiled by ", entry.getCard(), "."));
+        log.info("Game {} - {} exiles {} and its attached Auras",
+                gameData.id, entry.getCard().getName(), targetCards.getFirst().getName());
+    }
+
+    private List<Permanent> attachedAuras(GameData gameData, UUID targetId) {
+        List<Permanent> result = new ArrayList<>();
+        gameData.forEachPermanent((ignored, permanent) -> {
+            if (targetId.equals(permanent.getAttachedTo()) && permanent.getCard().isAura()) {
+                result.add(permanent);
             }
         });
-
-        List<Card> auraCards = new ArrayList<>();
-        Set<UUID> cardsToAttach = new LinkedHashSet<>();
-        for (Permanent aura : attachedAuras) {
-            List<Card> leavingCards = aura.cardsLeavingBattlefield();
-            if (leavingCards.isEmpty()
-                    || !permanentRemovalService.removePermanentToExile(
-                    gameData, aura, exileSourcePermanentId)) {
-                continue;
-            }
-            auraCards.addAll(leavingCards);
-            leavingCards.stream().map(Card::getId).forEach(cardsToAttach::add);
-        }
-
-        if (!permanentRemovalService.removePermanentToExile(gameData, target, exileSourcePermanentId)) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            return;
-        }
-
-        Card primaryCard = creatureCards.getFirst();
-        if (sourceOnBattlefield && !primaryCard.isToken()) {
-            List<Card> additionalCards = new ArrayList<>(creatureCards.subList(1, creatureCards.size()));
-            additionalCards.addAll(auraCards);
-            gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
-                    PendingExileReturn.withCardsAttachedToPrimaryAndCounters(
-                            primaryCard, ownerId, true, additionalCards, cardsToAttach, counters));
-        }
-
-        gameLogService.append(gameData, GameLog.cardTextCard(
-                primaryCard, " is exiled by ", entry.getCard(), "."));
-        log.info("Game {} - {} exiles {} and its attached Auras until it leaves or untaps",
-                gameData.id, entry.getCard().getName(), primaryCard.getName());
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        return result;
     }
 
-    private UUID resolveSourcePermanentId(GameData gameData, StackEntry entry) {
-        if (entry.getSourcePermanentId() != null) {
-            return entry.getSourcePermanentId();
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-        if (battlefield == null) {
-            return null;
-        }
-        return battlefield.stream()
-                .filter(permanent -> permanent.getCard() == entry.getCard())
-                .map(Permanent::getId)
-                .findFirst()
-                .orElse(null);
-    }
-
-    private Map<CounterType, Integer> snapshotCounters(Permanent permanent) {
-        Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
-        for (CounterType counterType : CounterType.values()) {
-            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
-                continue;
-            }
-            int count = permanent.getCounterCount(counterType);
-            if (count > 0) {
-                counters.put(counterType, count);
-            }
-        }
-        return counters;
+    private UUID ownerOf(GameData gameData, Card card, UUID fallback) {
+        var exiledEntry = gameData.findExiledCard(card.getId());
+        return exiledEntry == null ? fallback : exiledEntry.ownerId();
     }
 }

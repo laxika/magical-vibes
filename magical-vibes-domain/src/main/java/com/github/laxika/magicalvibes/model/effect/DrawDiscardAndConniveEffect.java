@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *
  * @param amount number of cards to draw and discard
  * @param targetPermanent whether the counter is applied to this effect's targeted permanent
+ * @param useEnteringPermanentReference whether the counter is applied to the permanent that
+ *                                      caused an enter-the-battlefield trigger
  */
-public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent)
+public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent, boolean useEnteringPermanentReference)
         implements CardDrawingEffect, CombatDamageTriggerContextEffect {
 
     public DrawDiscardAndConniveEffect(DynamicAmount amount) {
@@ -25,6 +27,14 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
         this(new Fixed(1), false);
     }
 
+    public DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent) {
+        this(amount, targetPermanent, false);
+    }
+
+    public static DrawDiscardAndConniveEffect forEnteringPermanent() {
+        return new DrawDiscardAndConniveEffect(new Fixed(1), false, true);
+    }
+
     @Override
     public DynamicAmount drawnCardAmount() {
         return amount;
@@ -35,6 +45,11 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
         return targetPermanent
                 ? TargetSpec.benign(TargetPredicates.creature())
                 : new TargetSpec(null, false, null, true, 1);
+    }
+
+    @Override
+    public boolean usesEnteringPermanentReference() {
+        return useEnteringPermanentReference;
     }
 
     @Override

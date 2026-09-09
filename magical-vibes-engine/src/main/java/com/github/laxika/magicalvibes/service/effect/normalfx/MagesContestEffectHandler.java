@@ -109,7 +109,7 @@ public class MagesContestEffectHandler implements NormalEffectHandlerBean {
             return null;
         }
         return gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getCard().getId().equals(targetCardId))
+                .filter(stackEntry -> stackEntry.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
     }

@@ -50,6 +50,21 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class TurnCleanupServiceTest {
 
+    @Test
+    void cleanupExpiresBlockRestrictionsButPreservesUpcomingUntapRestrictions() {
+        var blocking = new com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(
+                null, new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate(), "creatures");
+        var untapping = new com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect(
+                com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET_PLAYERS_PERMANENTS, null, 1, true);
+        gd.matchingCreatureBlockRestrictionsThisTurn.put(player1Id, new ArrayList<>(List.of(blocking)));
+        gd.matchingPermanentUntapRestrictions.put(player1Id, new ArrayList<>(List.of(untapping)));
+
+        sut.resetEndOfTurnModifiers(gd);
+
+        assertThat(gd.matchingCreatureBlockRestrictionsThisTurn).isEmpty();
+        assertThat(gd.matchingPermanentUntapRestrictions.get(player1Id)).containsExactly(untapping);
+    }
+
     @Mock
     private CreatureControlService creatureControlService;
 

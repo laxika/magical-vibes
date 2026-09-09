@@ -47,7 +47,7 @@ public class EachOpponentOfTriggeringPlayerMayDrawCardEffectHandler implements N
         UUID triggeringCardId = entry.getTriggeringCardId();
         if (triggeringCardId != null) {
             for (StackEntry stackEntry : gameData.stack) {
-                if (stackEntry.getCard().getId().equals(triggeringCardId)) {
+                if (stackEntry.getTargetableId().equals(triggeringCardId)) {
                     return stackEntry.getControllerId();
                 }
             }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "44")
+@CardRegistration(set = "ME1", collectorNumber = "83")
 public class ThrullChampion extends Card {
 
     public ThrullChampion() {

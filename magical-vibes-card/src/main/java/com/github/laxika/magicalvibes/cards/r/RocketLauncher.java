@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "272")
 @CardRegistration(set = "ATQ", collectorNumber = "63")
+@CardRegistration(set = "3ED", collectorNumber = "272")
 public class RocketLauncher extends Card {
 
     public RocketLauncher() {

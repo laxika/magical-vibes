@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "320")
 @CardRegistration(set = "7ED", collectorNumber = "323")
 @CardRegistration(set = "ATQ", collectorNumber = "77")
+@CardRegistration(set = "DPA", collectorNumber = "96")
 public class WallOfSpears extends Card {
 }

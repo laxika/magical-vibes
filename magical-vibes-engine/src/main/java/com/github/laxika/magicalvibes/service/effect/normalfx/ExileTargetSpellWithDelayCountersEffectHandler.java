@@ -45,7 +45,7 @@ public class ExileTargetSpellWithDelayCountersEffectHandler implements NormalEff
         if (counters <= 0) return;
 
         StackEntry target = gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .filter(se -> se.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
         if (target == null) {

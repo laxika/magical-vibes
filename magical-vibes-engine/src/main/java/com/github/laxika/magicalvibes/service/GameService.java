@@ -14,10 +14,12 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
@@ -68,6 +70,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 public class GameService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -173,6 +179,40 @@ public class GameService {
             throw failure;
         }
         return true;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanarAbilityService planarAbilities;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
+
+    public void activatePlanarAbility(GameData gameData, Player player, UUID sourceId, int index,
+                                      Integer x, UUID targetId, com.github.laxika.magicalvibes.model.Zone zone) {
+        Player actor = player;
+        if (runAsActionIfNeeded(gameData, () -> activatePlanarAbility(gameData, actor, sourceId, index, x, targetId, zone))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
+            planarAbilities.activate(gameData, player.getId(), sourceId, index, x == null ? 0 : x, targetId, zone);
+            stateBasedActionService.performStateBasedActions(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+        }
+    }
+
+    public void rollPlanarDie(GameData gameData, Player player) {
+        Player actor = player;
+        if (runAsActionIfNeeded(gameData, () -> rollPlanarDie(gameData, actor))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            planechaseService.rollSpecialAction(gameData, player.getId());
+            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+            stateBasedActionService.performStateBasedActions(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+        }
     }
 
     /**
@@ -1324,10 +1364,19 @@ public class GameService {
                 spellCastingService.validateMorphAdditionalCost(
                         gameData, player, morphAdditionalCost, additionalCostPermanentIds);
             }
+            SacrificePermanentsCost morphSacrificeCost = permanent.getCard().getMorphSacrificeCost();
+            if (!manifestedOrCloaked && morphSacrificeCost != null) {
+                spellCastingService.validateMorphSacrificeCost(
+                        gameData, player, morphSacrificeCost, additionalCostPermanentIds);
+            }
             DiscardCardTypeCost morphDiscardCost = permanent.getCard().getMorphDiscardCost();
             if (morphDiscardCost != null) {
                 spellCastingService.validateMorphDiscardCost(
                         gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
+            }
+            LifeCastingCost morphLifeCost = permanent.getCard().getMorphLifeCost();
+            if (!manifestedOrCloaked && morphLifeCost != null) {
+                spellCastingService.validateMorphLifeCost(gameData, player, morphLifeCost);
             }
             RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
             if (!manifestedOrCloaked && morphRevealCost != null) {
@@ -1349,11 +1398,21 @@ public class GameService {
                         player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
             } else if (morphDiscardCost == null) {
                 ManaCost cost = new ManaCost(faceUpCost);
+                int morphCostModifier = 0;
                 DynamicAmount morphCostReduction = permanent.getCard().getMorphCostReduction();
                 if (!manifestedOrCloaked && morphCostReduction != null && amountEvaluationService != null) {
                     int reduction = amountEvaluationService.evaluate(gameData, morphCostReduction,
                             AmountContext.forCasting(player.getId()));
-                    cost = cost.reducedBy(new ManaCost("{" + reduction + "}"));
+                    morphCostModifier -= reduction;
+                }
+                if (!manifestedOrCloaked && castingCostService != null) {
+                    morphCostModifier += castingCostService.getMorphCostModifier(
+                            gameData, player.getId(), permanent.getCard());
+                }
+                if (morphCostModifier > 0) {
+                    cost = cost.increasedBy(new ManaCost("{" + morphCostModifier + "}"));
+                } else if (morphCostModifier < 0) {
+                    cost = cost.reducedBy(new ManaCost("{" + -morphCostModifier + "}"));
                 }
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 if (pool == null) {
@@ -1399,9 +1458,16 @@ public class GameService {
                 spellCastingService.payMorphAdditionalCost(
                         gameData, player, permanent.getCard(), morphAdditionalCost, additionalCostPermanentIds);
             }
+            if (!manifestedOrCloaked && morphSacrificeCost != null) {
+                spellCastingService.payMorphSacrificeCost(
+                        gameData, player, permanent.getCard(), morphSacrificeCost, additionalCostPermanentIds);
+            }
             if (morphDiscardCost != null) {
                 spellCastingService.payMorphDiscardCost(
                         gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
+            }
+            if (!manifestedOrCloaked && morphLifeCost != null) {
+                spellCastingService.payMorphLifeCost(gameData, player, permanent.getCard(), morphLifeCost);
             }
             finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true);
         }
@@ -1522,7 +1588,8 @@ public class GameService {
                 gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
                         permanent.getCard(), controllerId, effects, spellFilter, includeAbilities,
                         permanent.getId()));
-            } else if (targetsPlayer || targetsPermanent) {
+            } else if (targetsPlayer || targetsPermanent
+                    || effects.stream().anyMatch(permanent.getCard()::hasEffectTargetIndex)) {
                 boolean multiTarget = permanent.getCard().getSpellTargets().size() > 1
                         || permanent.getCard().getSpellTargets().stream()
                         .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0

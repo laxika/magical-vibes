@@ -36,8 +36,8 @@ class ArtifactBlastTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target a creature spell")
-    void cannotTargetCreatureSpell() {
+    @DisplayName("Cannot target a nonartifact creature spell")
+    void cannotTargetNonartifactCreatureSpell() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);

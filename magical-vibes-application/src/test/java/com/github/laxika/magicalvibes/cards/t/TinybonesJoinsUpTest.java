@@ -16,14 +16,44 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TinybonesJoinsUpTest extends BaseCardTest {
 
     @Test
+    void canChooseNoPlayers() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new TinybonesJoinsUp(), "{B}");
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void legendaryCreatureCanMakeBothPlayersMillAndLoseLife() {
+        harness.addToBattlefield(player1, new TinybonesJoinsUp());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.castFromHand(player1, new TymaretTheMurderKing(), "{B}{R}");
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     void entersAndMakesAChosenPlayerDiscard() {
         GrizzlyBears discarded = new GrizzlyBears();
         harness.setHand(player2, List.of(discarded));
         harness.castFromHand(player1, new TinybonesJoinsUp(), "{B}");
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -51,7 +81,7 @@ class TinybonesJoinsUpTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);

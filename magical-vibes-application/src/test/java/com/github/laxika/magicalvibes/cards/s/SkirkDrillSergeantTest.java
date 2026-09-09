@@ -84,6 +84,7 @@ class SkirkDrillSergeantTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the payment leaves the library unchanged")
     void decliningPaymentLeavesLibraryUnchanged() {
+        addShockMana(player1);
         harness.addToBattlefield(player1, new SkirkDrillSergeant());
         harness.addToBattlefield(player2, new GoblinMountaineer());
         Card topGoblin = new GoblinMountaineer();

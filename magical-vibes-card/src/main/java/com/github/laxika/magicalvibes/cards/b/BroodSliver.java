@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LGN", collectorNumber = "120")
+@CardRegistration(set = "H09", collectorNumber = "22")
 public class BroodSliver extends Card {
 
     public BroodSliver() {
