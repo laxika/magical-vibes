@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Hurricane.class, WindSpirit.class, BalduvianBears.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({Hurricane.class, WindSpirit.class, BalduvianBears.class})
 class HurricaneTest extends BaseCardTest {
 
     @Test

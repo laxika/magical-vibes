@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,13 +10,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AncientCraving.class})
 class AncientCravingTest extends BaseCardTest {
 
     private void cast() {
         harness.setHand(player1, List.of(new AncientCraving()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     @Test
@@ -38,5 +39,19 @@ class AncientCravingTest extends BaseCardTest {
         cast();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Only affects its controller")
+    void onlyAffectsItsController() {
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+        int opponentDeckBefore = gd.playerDecks.get(player2.getId()).size();
+        harness.setLife(player2, 20);
+
+        cast();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentDeckBefore);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

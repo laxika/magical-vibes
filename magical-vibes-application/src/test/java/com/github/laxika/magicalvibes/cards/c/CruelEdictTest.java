@@ -1,33 +1,33 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
+import com.github.laxika.magicalvibes.cards.b.BearCub;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CruelEdict.class, AlabornTrooper.class, BearCub.class, Plains.class})
 class CruelEdictTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Cruel Edict targeting opponent puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new CruelEdict()));
+        CruelEdict edict = new CruelEdict();
+        harness.setHand(player1, List.of(edict));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castSorcery(player1, 0, player2.getId());
@@ -36,17 +36,14 @@ class CruelEdictTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Cruel Edict");
+        assertThat(entry.getCard()).isSameAs(edict);
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
-
-    // ===== Resolving =====
 
     @Test
     @DisplayName("Opponent with one creature sacrifices it automatically")
     void opponentWithOneCreatureSacrificesAutomatically() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(creature);
+        Permanent bearCub = harness.addToBattlefieldAndReturn(player2, new BearCub());
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -54,17 +51,15 @@ class CruelEdictTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bearCub);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bearCub.getCard());
     }
 
     @Test
     @DisplayName("Opponent with multiple creatures is prompted to choose")
     void opponentWithMultipleCreaturesChooses() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        Permanent giant = new Permanent(new GiantSpider());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(giant);
+        Permanent bearCub = harness.addToBattlefieldAndReturn(player2, new BearCub());
+        Permanent trooper = harness.addToBattlefieldAndReturn(player2, new AlabornTrooper());
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -76,15 +71,15 @@ class CruelEdictTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrder(bearCub.getId(), trooper.getId());
     }
 
     @Test
     @DisplayName("Opponent chooses which creature to sacrifice")
     void opponentChoosesCreatureToSacrifice() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        Permanent giant = new Permanent(new GiantSpider());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(giant);
+        Permanent bearCub = harness.addToBattlefieldAndReturn(player2, new BearCub());
+        Permanent trooper = harness.addToBattlefieldAndReturn(player2, new AlabornTrooper());
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -92,12 +87,26 @@ class CruelEdictTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        // Player 2 chooses to sacrifice Grizzly Bears
-        harness.handlePermanentChosen(player2, bears.getId());
+        harness.handlePermanentChosen(player2, bearCub.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Giant Spider");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bearCub).contains(trooper);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bearCub.getCard());
+    }
+
+    @Test
+    @DisplayName("Noncreature permanents are not eligible for sacrifice")
+    void noncreaturePermanentsAreNotSacrificed() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Permanent bearCub = harness.addToBattlefieldAndReturn(player2, new BearCub());
+
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(plains).doesNotContain(bearCub);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bearCub.getCard());
     }
 
     @Test
@@ -109,18 +118,17 @@ class CruelEdictTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no creatures to sacrifice"));
+        assertThat(gameLogContains("no creatures to sacrifice")).isTrue();
     }
 
     @Test
     @DisplayName("Cruel Edict goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(creature);
+        harness.addToBattlefieldAndReturn(player2, new BearCub());
+        CruelEdict edict = new CruelEdict();
 
-        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.setHand(player1, List.of(edict));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castSorcery(player1, 0, player2.getId());
@@ -128,7 +136,17 @@ class CruelEdictTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Cruel Edict");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(edict);
+    }
+
+    @Test
+    @DisplayName("Cruel Edict cannot target its caster")
+    void cannotTargetItsCaster() {
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
 

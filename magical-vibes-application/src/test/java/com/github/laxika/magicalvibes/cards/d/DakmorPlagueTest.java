@@ -1,24 +1,22 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArmoredGriffin;
+import com.github.laxika.magicalvibes.cards.b.BearCub;
+import com.github.laxika.magicalvibes.cards.p.PlatedWurm;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DakmorPlague.class, ArmoredGriffin.class, BearCub.class, PlatedWurm.class})
 class DakmorPlagueTest extends BaseCardTest {
 
     private void castDakmorPlague() {
-        harness.setHand(player1, List.of(new DakmorPlague()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DakmorPlague(), "{3}{B}{B}");
         harness.passBothPriorities();
     }
 
@@ -37,13 +35,23 @@ class DakmorPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("Dakmor Plague kills creatures with 3 or less toughness but not tougher ones")
     void killsSmallCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GiantSpider());
+        harness.addToBattlefield(player1, new BearCub());
+        harness.addToBattlefield(player2, new PlatedWurm());
 
         castDakmorPlague();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertNotOnBattlefield(player1, "Bear Cub");
+        harness.assertOnBattlefield(player2, "Plated Wurm");
+    }
+
+    @Test
+    @DisplayName("Dakmor Plague kills creatures with exactly 3 toughness")
+    void killsCreaturesWithExactlyThreeToughness() {
+        harness.addToBattlefield(player2, new ArmoredGriffin());
+
+        castDakmorPlague();
+
+        harness.assertNotOnBattlefield(player2, "Armored Griffin");
     }
 
     @Test

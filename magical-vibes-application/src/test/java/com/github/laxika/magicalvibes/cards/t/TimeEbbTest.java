@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,25 +19,29 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TimeEbb.class, Forest.class, GrizzlyBears.class})
 class TimeEbbTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Time Ebb targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.addToBattlefield(player2, creature);
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        harness.setHand(player1, List.of(new TimeEbb()));
+        TimeEbb timeEbb = new TimeEbb();
+        harness.setHand(player1, List.of(timeEbb));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, targetId);
+        harness.castSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
-        assertThat(entry.getCard().getName()).isEqualTo("Time Ebb");
+        assertThat(entry.getCard()).isSameAs(timeEbb);
         assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getCard()).isNotSameAs(creature);
     }
 
     @Test
@@ -49,14 +54,15 @@ class TimeEbbTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, landId))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, landId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Resolving Time Ebb puts target creature on top of its owner's library")
     void resolvingPutsTargetCreatureOnTopOfOwnersLibrary() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.addToBattlefield(player2, creature);
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
@@ -64,8 +70,7 @@ class TimeEbbTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -73,7 +78,7 @@ class TimeEbbTest extends BaseCardTest {
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
-        assertThat(deck.getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(deck.getFirst()).isSameAs(creature);
         harness.assertInGraveyard(player1, "Time Ebb");
     }
 
@@ -88,7 +93,7 @@ class TimeEbbTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, targetId);
+        harness.castSorcery(player1, 0, targetId);
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 

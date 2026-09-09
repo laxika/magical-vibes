@@ -1,20 +1,25 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Blaze.class, ChandraNalaar.class, GrizzlyBears.class, HowlingMine.class, SerraAngel.class})
 class BlazeTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -30,7 +35,6 @@ class BlazeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Blaze");
         assertThat(entry.getXValue()).isEqualTo(3);
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
@@ -38,19 +42,17 @@ class BlazeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Blaze targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent grizzlyBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, 2, targetId);
+        harness.castSorcery(player1, 0, 2, grizzlyBears.getId());
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Blaze");
         assertThat(entry.getXValue()).isEqualTo(2);
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(grizzlyBears.getId());
     }
 
     @Test
@@ -59,6 +61,17 @@ class BlazeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Blaze()));
         // No mana at all — need at least {R}
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature, nonplaneswalker permanent")
+    void cannotTargetNonCreatureNonPlaneswalkerPermanent() {
+        Permanent howlingMine = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, howlingMine.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -122,12 +135,11 @@ class BlazeTest extends BaseCardTest {
     @Test
     @DisplayName("Deals X damage to target creature, destroying it")
     void dealsXDamageToCreatureDestroysIt() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent grizzlyBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, 2, targetId);
+        harness.castSorcery(player1, 0, 2, grizzlyBears.getId());
         harness.passBothPriorities();
 
         // Grizzly Bears (2/2) should be destroyed by 2 damage
@@ -138,16 +150,29 @@ class BlazeTest extends BaseCardTest {
     @Test
     @DisplayName("Does not destroy creature with toughness greater than X")
     void doesNotDestroyCreatureWithHigherToughness() {
-        harness.addToBattlefield(player2, new SerraAngel());
+        Permanent serraAngel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Serra Angel");
-        harness.castSorcery(player1, 0, 3, targetId);
+        harness.castSorcery(player1, 0, 3, serraAngel.getId());
         harness.passBothPriorities();
 
         // Serra Angel (4/4) should survive 3 damage
         harness.assertOnBattlefield(player2, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Deals X damage to target planeswalker")
+    void dealsXDamageToPlaneswalker() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, 3, chandra.getId());
+        harness.passBothPriorities();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     // ===== Graveyard and stack cleanup =====

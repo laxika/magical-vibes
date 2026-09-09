@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OgreArsonist.class, Forest.class, OgreWarrior.class})
 class OgreArsonistTest extends BaseCardTest {
 
     @Test
@@ -25,7 +27,7 @@ class OgreArsonistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         UUID landId = harness.getPermanentId(player2, "Forest");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, landId, null);
+        harness.castCreature(player1, 0, landId);
 
         harness.passBothPriorities(); // creature resolves → ETB on stack
         harness.passBothPriorities(); // ETB resolves
@@ -44,7 +46,7 @@ class OgreArsonistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         UUID landId = harness.getPermanentId(player2, "Forest");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, landId, null);
+        harness.castCreature(player1, 0, landId);
 
         harness.passBothPriorities(); // creature resolves → ETB on stack
 
@@ -60,14 +62,13 @@ class OgreArsonistTest extends BaseCardTest {
     @DisplayName("Only lands are legal targets for the ETB")
     void onlyLandsAreLegalTargets() {
         harness.addToBattlefield(player2, new Forest());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new OgreWarrior());
         harness.setHand(player1, List.of(new OgreArsonist()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Ogre Warrior");
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-                        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, bearsId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("land");
     }
@@ -82,6 +83,31 @@ class OgreArsonistTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Ogre Arsonist");
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("ETB fizzles if the target land leaves before resolution")
+    void etbFizzlesIfTargetLandLeavesBeforeResolution() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new OgreArsonist()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        UUID landId = harness.getPermanentId(player2, "Forest");
+        harness.castCreature(player1, 0, landId);
+
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 }

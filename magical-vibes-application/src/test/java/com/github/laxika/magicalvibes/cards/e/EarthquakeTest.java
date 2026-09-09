@@ -45,9 +45,7 @@ class EarthquakeTest extends BaseCardTest {
     void earthquakeResolvesDealsXDamageToPlayers() {
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         GameData gd = harness.getGameData();
 
@@ -63,11 +61,23 @@ class EarthquakeTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castSorcery(player1, 0, 2);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Earthquake deals X damage to each non-flying creature")
+    void earthquakeDealsXDamageToEachNonFlyingCreature() {
+        var ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        var opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThat(ownBears.getMarkedDamage()).isEqualTo(1);
+        assertThat(opposingBears.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -77,9 +87,7 @@ class EarthquakeTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         harness.assertOnBattlefield(player2, "Scryb Sprites");
     }
@@ -89,11 +97,7 @@ class EarthquakeTest extends BaseCardTest {
     void earthquakeWithXZeroDealsNoDamage() {
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
-
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
@@ -116,9 +120,7 @@ class EarthquakeTest extends BaseCardTest {
         harness.setLife(player1, 3);
         harness.setHand(player1, List.of(new Earthquake()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         GameData gd = harness.getGameData();
 

@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(TemporalManipulation.class)
 class TemporalManipulationTest extends BaseCardTest {
 
     /** Stops auto-pass at PRECOMBAT_MAIN for both players so turns advance one at a time. */
@@ -30,13 +30,13 @@ class TemporalManipulationTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void cast() {
-        harness.setHand(player1, List.of(new TemporalManipulation()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
+    private TemporalManipulation cast() {
+        TemporalManipulation card = new TemporalManipulation();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, card, "{3}{U}{U}");
         harness.passBothPriorities();
+        return card;
     }
 
     @Test
@@ -80,11 +80,11 @@ class TemporalManipulationTest extends BaseCardTest {
     @Test
     @DisplayName("Temporal Manipulation goes to the graveyard after resolution")
     void goesToGraveyardAfterResolution() {
-        cast();
+        TemporalManipulation card = cast();
 
         GameData g = harness.getGameData();
         assertThat(g.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Temporal Manipulation"));
+                .contains(card);
         assertThat(g.stack).isEmpty();
     }
 }
