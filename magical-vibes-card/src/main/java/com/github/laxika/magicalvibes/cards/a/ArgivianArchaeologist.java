@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "ATQ", collectorNumber = "1")
+@CardRegistration(set = "ATQ", collectorNumber = "94")
 @CardRegistration(set = "ME1", collectorNumber = "3")
 public class ArgivianArchaeologist extends Card {
 

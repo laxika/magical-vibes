@@ -1622,6 +1622,7 @@ public class LibraryChoiceHandlerService {
             if (selectedCardFollowUp.useSelectedCardManaValue()) {
                 gameData.pendingEffectResolutionEntry.setEventValue(chosenCard.getManaValue());
             }
+            gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCard);
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
                     List.of(selectedCardFollowUp.effect()));

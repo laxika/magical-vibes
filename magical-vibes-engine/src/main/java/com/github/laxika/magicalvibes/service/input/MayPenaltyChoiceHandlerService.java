@@ -33,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessExilesGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessGetsPoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsOrPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
@@ -744,7 +743,7 @@ public class MayPenaltyChoiceHandlerService {
 
         // Declined or no valid cards left — sacrifice if still on the battlefield
         if (sourcePermanent != null) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to discard. ", sourceCard, " is sacrificed."));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
@@ -1691,7 +1690,7 @@ public class MayPenaltyChoiceHandlerService {
 
         // Declined or no valid permanents left — sacrifice if still on the battlefield
         if (sourcePermanent != null) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to return a permanent. ", sourceCard, " is sacrificed."));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
@@ -1745,7 +1744,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (sourcePermanent != null) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to return a permanent. ", sourceCard, " is sacrificed."));
         }
@@ -1803,7 +1802,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (sourcePermanent != null) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to sacrifice " + effect.description() + ". ", sourceCard, " is sacrificed."));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());

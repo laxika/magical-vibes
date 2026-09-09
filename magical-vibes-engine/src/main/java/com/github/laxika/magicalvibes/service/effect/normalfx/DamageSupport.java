@@ -434,6 +434,20 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
+        if (!targetDamageUnpreventable
+                && gameQueryService.isArtifactDamageToEnchantedCreaturePrevented(
+                gameData, target, effectiveDamageSource,
+                effectiveDamageSource == null && entry != null ? entry.getEffectiveDamageSourceCard() : null)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
+        if (!targetDamageUnpreventable
+                && gameQueryService.isArtifactDamageToSelfPrevented(
+                gameData, target, effectiveDamageSource,
+                effectiveDamageSource == null && entry != null ? entry.getEffectiveDamageSourceCard() : null)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
         int damage = damagePreventionService.applyCreaturePreventionShield(
                 gameData, target, rawDamage, false, effectiveDamageSource);
         // Djeru, With Eyes Open: "If a source would deal damage to a planeswalker you control, prevent
@@ -1410,7 +1424,7 @@ public class DamageSupport {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                    gameData, playerId, effectiveDamage, cardName, false, entry.getSourcePermanentId());
+                    gameData, playerId, effectiveDamage, cardName, false, entry.getSourcePermanentId(), source);
 
             // Battletide Alchemist: the controller prevents up to (Clerics they control) of this source's damage.
             int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, playerId, effectiveDamage);

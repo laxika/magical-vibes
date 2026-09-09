@@ -73,6 +73,8 @@ import com.github.laxika.magicalvibes.model.effect.RainOfGoreEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToCreaturesYouControlEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledSourceCreatureDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurnedFaceUpEffect;
@@ -236,6 +238,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -2800,10 +2803,65 @@ public class GameQueryService {
                 .anyMatch(GameQueryService::isOpponentAbilityRestriction);
     }
 
+    public boolean cantBeTargetedByAbilityFromCardType(GameData gameData, Permanent target,
+                                                        Card sourceCard, UUID sourcePermanentId,
+                                                        UUID sourceControllerId, CardType sourceCardType) {
+        if (!sourceHasCardType(gameData, sourceCard, sourcePermanentId, sourceControllerId, sourceCardType)) {
+            return false;
+        }
+        UUID targetControllerId = findPermanentController(gameData, target.getId());
+        if (!target.isLosesAllAbilitiesUntilEndOfTurn()
+                && !computeStaticBonus(gameData, target).losesAllAbilities()
+                && target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> isAbilityCardTypeRestriction(
+                        effect, sourceCardType, targetControllerId, sourceControllerId))) {
+            return true;
+        }
+        return computeStaticBonus(gameData, target).grantedEffects().stream()
+                .anyMatch(effect -> isAbilityCardTypeRestriction(
+                        effect, sourceCardType, targetControllerId, sourceControllerId));
+    }
+
+    private boolean sourceHasCardType(GameData gameData, Card sourceCard, UUID sourcePermanentId,
+                                      UUID sourceControllerId, CardType sourceCardType) {
+        Permanent sourcePermanent = sourcePermanentId == null
+                ? findPermanentByCardId(gameData, sourceCard == null ? null : sourceCard.getId())
+                : findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanent != null) {
+            return hasEffectiveCardType(sourcePermanent, computeStaticBonus(gameData, sourcePermanent), sourceCardType);
+        }
+        return sourceCard != null && cardHasType(sourceCard, sourceCardType, gameData, sourceControllerId);
+    }
+
+    private static boolean isAbilityCardTypeRestriction(CardEffect effect, CardType sourceCardType,
+                                                        UUID targetControllerId, UUID sourceControllerId) {
+        return effect instanceof TargetingRestrictionEffect restriction
+                && restriction.kind() == TargetingSourceKind.ABILITIES
+                && restriction.sourceCardTypes().contains(sourceCardType)
+                && (!restriction.opponentOnly()
+                || targetControllerId == null
+                || sourceControllerId == null
+                || !targetControllerId.equals(sourceControllerId));
+    }
+
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        if (cardId == null) return null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (cardId.equals(permanent.getCard().getId())) return permanent;
+            }
+        }
+        return null;
+    }
+
     private static boolean isOpponentAbilityRestriction(CardEffect effect) {
         return effect instanceof TargetingRestrictionEffect r
                 && r.kind() == TargetingSourceKind.ABILITIES
-                && r.mode() == TargetColorMode.ANY;
+                && r.mode() == TargetColorMode.ANY
+                && r.opponentOnly()
+                && r.sourceCardTypes().isEmpty();
     }
 
     /**
@@ -5406,6 +5464,30 @@ public class GameQueryService {
     }
 
     /**
+     * Evaluates a static effect's source predicate against a damage source. Permanent predicates
+     * apply to battlefield sources; the artifact predicate also covers a non-permanent artifact
+     * card source, matching the engine's artifact-source checks for damage prevention.
+     */
+    public boolean matchesDamageSourcePredicate(GameData gameData, StackEntry entry, Card sourceCard,
+                                                Permanent explicitSource, PermanentPredicate predicate) {
+        if (predicate == null) return true;
+        Permanent source = explicitSource;
+        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
+            source = findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        if (source != null) {
+            return predicateEvaluationService.matchesPermanentPredicate(gameData, source, predicate);
+        }
+        if (predicate instanceof PermanentIsArtifactPredicate) {
+            Card effectiveSourceCard = sourceCard != null
+                    ? sourceCard
+                    : entry == null ? null : entry.getEffectiveDamageSourceCard();
+            return effectiveSourceCard != null && effectiveSourceCard.hasType(CardType.ARTIFACT);
+        }
+        return false;
+    }
+
+    /**
      * Uncle Istvan: whether damage from a creature source to {@code target} is prevented by the target's
      * own {@link PreventDamageToSelfFromCreaturesEffect}. True only while damage is preventable, the target
      * carries the effect, and the damage source is a creature. Combat damage is handled directly in
@@ -6881,6 +6963,24 @@ public class GameQueryService {
      */
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
         return hasAuraWithEffect(gameData, creature, effectClass::isInstance);
+    }
+
+    public boolean isArtifactDamageToEnchantedCreaturePrevented(GameData gameData, Permanent creature,
+                                                                 Permanent source, Card sourceCard) {
+        boolean artifactSource = source != null
+                ? isArtifact(gameData, source)
+                : sourceCard != null && sourceCard.hasType(CardType.ARTIFACT);
+        return artifactSource
+                && hasAuraWithEffect(gameData, creature, PreventArtifactDamageToEnchantedCreatureEffect.class);
+    }
+
+    public boolean isArtifactDamageToSelfPrevented(GameData gameData, Permanent permanent,
+                                                    Permanent source, Card sourceCard) {
+        boolean artifactSource = source != null
+                ? isArtifact(gameData, source)
+                : sourceCard != null && sourceCard.hasType(CardType.ARTIFACT);
+        return artifactSource
+                && hasActiveStaticEffect(gameData, permanent, PreventArtifactDamageToSelfEffect.class);
     }
 
     /**

@@ -58,7 +58,7 @@ public class SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffectHa
             return;
         }
 
-        if (!permanentRemovalService.removePermanentToGraveyard(gameData, targetPermanent)) {
+        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, targetPermanent)) {
             return;
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(
