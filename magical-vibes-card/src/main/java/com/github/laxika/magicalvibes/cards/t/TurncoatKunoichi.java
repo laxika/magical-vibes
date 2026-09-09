@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMT", collectorNumber = "26")
+@CardRegistration(set = "TMT", collectorNumber = "260")
 public class TurncoatKunoichi extends Card {
 
     public TurncoatKunoichi() {

@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "15")
+@CardRegistration(set = "TMT", collectorNumber = "211")
+@CardRegistration(set = "TMT", collectorNumber = "281")
+@CardRegistration(set = "TMT", collectorNumber = "291")
 public class LeonardoCuttingEdge extends Card {
 
     public LeonardoCuttingEdge() {

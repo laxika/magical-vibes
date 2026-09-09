@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +29,7 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
 
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     @Autowired
     @Lazy
     private GraveyardService graveyardService;
@@ -55,9 +56,10 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
 
         gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
 
-        if (topCard.hasType(CardType.CREATURE)) {
-            RevealTopCardCreatureToBattlefieldElseGraveyardEffect fx =
-                    (RevealTopCardCreatureToBattlefieldElseGraveyardEffect) effect;
+        RevealTopCardCreatureToBattlefieldElseGraveyardEffect fx =
+                (RevealTopCardCreatureToBattlefieldElseGraveyardEffect) effect;
+        if (predicateEvaluationService.matchesCardPredicate(
+                topCard, fx.predicate(), entry.getCard().getId(), gameData, controllerId)) {
             Permanent perm = new Permanent(topCard);
             if (fx.grantHaste()) {
                 perm.getGrantedKeywords().add(Keyword.HASTE);

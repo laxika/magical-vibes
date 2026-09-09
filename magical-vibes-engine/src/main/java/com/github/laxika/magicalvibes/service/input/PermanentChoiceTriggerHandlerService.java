@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDama
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -69,8 +71,8 @@ public class PermanentChoiceTriggerHandlerService {
     private final CreatureControlService creatureControlService;
     private final LeastToughnessDamageSupport leastToughnessDamageSupport;
     private final PermanentControlSupport permanentControlSupport;
-    private final TokenCopySupport tokenCopySupport;
     private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
+    private final TokenCopySupport tokenCopySupport;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
 
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
@@ -127,6 +129,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
         entry.setSourcePermanentSnapshot(stt.sourcePermanentSnapshot());
+        entry.setSourcePlanarObject(stt.planarSource());
         entry.setEventValue(stt.spellManaSpentX());
         if (stt.targetFilter() != null) {
             entry.setTargetFilter(stt.targetFilter());
@@ -294,8 +297,9 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleSelfTriggeredAbility(GameData gameData, UUID targetId,
                                             PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
-        boolean declined = hasOptionalSingleTarget(slt.sourceCard(), slt.effects())
-                && gameData.playerIdToName.containsKey(targetId)
+        boolean isPlayerTarget = targetId != null && gameData.playerIdToName.containsKey(targetId);
+        boolean declined = (slt.optionalTarget() || hasOptionalSingleTarget(slt.sourceCard(), slt.effects()))
+                && isPlayerTarget
                 && targetId.equals(slt.controllerId());
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -844,7 +848,7 @@ public class PermanentChoiceTriggerHandlerService {
         StackEntry spellOnStack = null;
         if (!declined && target == null && !isPlayerTarget) {
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(permanentId)) {
+                if (se.getTargetableId().equals(permanentId)) {
                     spellOnStack = se;
                     break;
                 }
@@ -972,7 +976,10 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleAttackTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.AttackTriggerTarget att) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);
-        if (target != null || isPlayerTarget) {
+        boolean declined = hasOptionalSingleTarget(att.sourceCard(), att.effects())
+                && isPlayerTarget
+                && permanentId.equals(att.controllerId());
+        if ((target != null || isPlayerTarget) && !declined) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     att.sourceCard(),
@@ -1008,6 +1015,25 @@ public class PermanentChoiceTriggerHandlerService {
             
             gameLogService.append(gameData, GameLog.builder().card(att.sourceCard()).text("'s ability targets " + targetName + ".").build());
             log.info("Game {} - {} attack trigger targets {}", gameData.id, att.sourceCard().getName(), targetName);
+        } else if (declined) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    att.sourceCard(),
+                    att.controllerId(),
+                    att.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(att.effects()),
+                    null,
+                    att.sourcePermanentId());
+            Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
+            if (source != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(source));
+            }
+            if (att.attackedTargetId() != null) {
+                entry.setAttackedTargetId(att.attackedTargetId());
+            }
+            pushTriggeredEntry(gameData, entry);
+            gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability targets nothing."));
+            log.info("Game {} - {} attack trigger declined targeting", gameData.id, att.sourceCard().getName());
         } else {
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} attack trigger target no longer exists", gameData.id, att.sourceCard().getName());
@@ -1061,7 +1087,7 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleCreateTokenCopiesAttacking(GameData gameData, UUID attackTargetId,
-                                                 PermanentChoiceContext.CreateTokenCopiesAttacking context) {
+                                                  PermanentChoiceContext.CreateTokenCopiesAttacking context) {
         List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
         chosenTargets.add(attackTargetId);
 
@@ -1125,15 +1151,19 @@ public class PermanentChoiceTriggerHandlerService {
 
     private void beginCreateTokenCopiesAttackingTargetChoice(
             GameData gameData, PermanentChoiceContext.CreateTokenCopiesAttacking context) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, context.controllerId());
-        List<UUID> planeswalkerIds = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(context.controllerId()))
+                .toList();
+        List<UUID> planeswalkerIds = opponentIds.stream()
+                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
                 .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
 
         gameData.interaction.setPermanentChoiceContext(context);
-        playerInputService.beginAnyTargetChoice(gameData, context.controllerId(), planeswalkerIds,
-                List.of(opponentId), "Choose the player or planeswalker for the next token to attack.");
+        playerInputService.beginAnyTargetChoice(
+                gameData, context.controllerId(), planeswalkerIds, opponentIds,
+                "Choose the player or planeswalker for the token to attack.");
     }
 
     public void handleExileReturnAttackTarget(GameData gameData, UUID attackTargetId,
@@ -1175,6 +1205,10 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setTargetId(permanentId);
             }
             entry.setTriggeringPermanentId(ett.enteringPermanentId());
+            if (ett.enteringPermanentId() != null) {
+                entry.setTriggeringPermanentControllerId(
+                        gameQueryService.findPermanentController(gameData, ett.enteringPermanentId()));
+            }
             if (ett.sourceIsEnteringPermanent() && sourcePermanentId != null) {
                 Permanent enteringPermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (enteringPermanent != null) {
@@ -1797,7 +1831,7 @@ public class PermanentChoiceTriggerHandlerService {
         Zone targetZone = targetPermanent == null ? Zone.STACK : null;
         if (targetPermanent == null) {
             for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(cardId)) {
+                if (se.getTargetableId().equals(cardId)) {
                     targetName = se.getCard().getName();
                     break;
                 }
@@ -1880,7 +1914,8 @@ public class PermanentChoiceTriggerHandlerService {
                 etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
                 updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes), etbMtt.xValue(),
                 etbMtt.repeatedAdditionalCosts(),
-                etbMtt.resumePendingMayResolution(), etbMtt.triggeringCardId()));
+                etbMtt.resumePendingMayResolution(), etbMtt.triggeringCardId(),
+                etbMtt.triggeringPermanentId(), etbMtt.eventValue()));
 
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 
@@ -1958,6 +1993,7 @@ public class PermanentChoiceTriggerHandlerService {
                      etbTtt.sourcePermanentId()
              );
         }
+        entry.setXValue(etbTtt.xValue());
         if (etbTtt.targetFilter() != null && !spellTarget) {
             entry.setTargetFilter(etbTtt.targetFilter());
         }
@@ -2035,21 +2071,30 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleEndStepTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EndStepTriggerTarget est) {
+        boolean declined = hasOptionalSingleTarget(est.sourceCard(), est.effects())
+                && gameData.playerIdToName.containsKey(permanentId)
+                && permanentId.equals(est.controllerId());
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 est.sourceCard(),
                 est.controllerId(),
                 est.sourceCard().getName() + "'s end step ability",
                 new ArrayList<>(est.effects()),
-                permanentId,
+                declined ? null : permanentId,
                 est.sourcePermanentId()
         );
         pushTriggeredEntry(gameData, entry);
 
-        String targetName = getTargetDisplayName(gameData, permanentId);
-        
-        gameLogService.append(gameData, GameLog.builder().card(est.sourceCard()).text("'s ability targets " + targetName + ".").build());
-        log.info("Game {} - {} end-step trigger targets {}", gameData.id, est.sourceCard().getName(), targetName);
+        if (declined) {
+            gameLogService.append(gameData, GameLog.builder().card(est.sourceCard())
+                    .text("'s ability targets nothing.").build());
+            log.info("Game {} - {} end-step trigger declined targeting", gameData.id, est.sourceCard().getName());
+        } else {
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            gameLogService.append(gameData, GameLog.builder().card(est.sourceCard())
+                    .text("'s ability targets " + targetName + ".").build());
+            log.info("Game {} - {} end-step trigger targets {}", gameData.id, est.sourceCard().getName(), targetName);
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             turnProgressionService.processNextEndStepTriggerTarget(gameData);
@@ -2066,15 +2111,8 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleUpkeepPermanentTargetTrigger(GameData gameData, UUID chosenId,
             PermanentChoiceContext.UpkeepPermanentTargetTrigger uptt) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                uptt.sourceCard(),
-                uptt.controllerId(),
-                uptt.sourceCard().getName() + "'s upkeep ability",
-                new ArrayList<>(uptt.effects()),
-                chosenId,
-                uptt.sourcePermanentId()
-        );
+        StackEntry entry = upkeepTargetEntry(gameData, uptt.sourceCard(), uptt.controllerId(),
+                uptt.effects(), chosenId, uptt.sourcePermanentId());
         if (uptt.choosingPlayerId() != null) {
             entry.setActivePlayerId(uptt.choosingPlayerId());
         }
@@ -2092,14 +2130,8 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleUpkeepOptionalPermanentTarget(GameData gameData, List<UUID> chosenIds,
             MultiPermanentChoiceContext.UpkeepOptionalPermanentTarget context) {
         UUID chosenId = chosenIds.isEmpty() ? null : chosenIds.getFirst();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(),
-                context.controllerId(),
-                context.sourceCard().getName() + "'s upkeep ability",
-                new ArrayList<>(context.effects()),
-                chosenId,
-                context.sourcePermanentId());
+        StackEntry entry = upkeepTargetEntry(gameData, context.sourceCard(), context.controllerId(),
+                context.effects(), chosenId, context.sourcePermanentId());
         pushTriggeredEntry(gameData, entry);
 
         if (chosenId == null) {
@@ -2111,6 +2143,33 @@ public class PermanentChoiceTriggerHandlerService {
                     GameLog.builder().card(context.sourceCard()).text("'s ability targets " + targetName + ".").build());
         }
         continueUpkeepPermanentTargetProcessing(gameData);
+    }
+
+    private StackEntry upkeepTargetEntry(GameData gameData, Card sourceCard, UUID controllerId,
+                                         List<CardEffect> effects, UUID chosenId, UUID sourcePermanentId) {
+        Card graveyardCard = chosenId == null
+                ? null : gameQueryService.findCardInGraveyardById(gameData, chosenId);
+        if (graveyardCard != null && effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(
+                        com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.GRAVEYARD_CARD))) {
+            return new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    controllerId,
+                    sourceCard.getName() + "'s upkeep ability",
+                    new ArrayList<>(effects),
+                    chosenId,
+                    Zone.GRAVEYARD,
+                    sourcePermanentId);
+        }
+        return new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s upkeep ability",
+                new ArrayList<>(effects),
+                chosenId,
+                sourcePermanentId);
     }
 
     private void continueUpkeepPermanentTargetProcessing(GameData gameData) {
@@ -2491,7 +2550,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (playerName != null) return playerName;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetId)) return se.getCard().getName();
+            if (se.getTargetableId().equals(targetId)) return se.getDescription();
         }
 
         for (UUID pid : gameData.orderedPlayerIds) {

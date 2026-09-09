@@ -300,6 +300,7 @@ public class TurnProgressionService {
                             combatControllerName, combatPlayerName);
                 }
                 gameData.cardsPutIntoGraveyardThisCombat.clear();
+                gameData.declaredAttackerIdsThisCombat.clear();
                 gameData.forEachPermanent((playerId, p) -> {
                     p.setAttackedThisCombat(false);
                     p.setBlockedThisCombat(false);
@@ -475,11 +476,13 @@ public class TurnProgressionService {
         Long extraTurnSequence = null;
         boolean currentTurnIsExtraTurn = false;
         boolean skipUntapStep = false;
+        boolean powerUpAbilitiesDisabled = false;
         boolean damageCantBePrevented = false;
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
             currentTurnIsExtraTurn = true;
             skipUntapStep = Boolean.TRUE.equals(gameData.extraTurnSkipsUntap.pollFirst());
+            powerUpAbilitiesDisabled = Boolean.TRUE.equals(gameData.extraTurnPowerUpAbilitiesDisabled.pollFirst());
             damageCantBePrevented = Boolean.TRUE.equals(gameData.extraTurnDamageCantBePrevented.pollFirst());
             extraTurnSequence = gameData.extraTurnSequences.isEmpty()
                     ? null : gameData.extraTurnSequences.pollFirst();
@@ -493,6 +496,8 @@ public class TurnProgressionService {
                 String skippedName = gameData.playerIdToName.get(nextActive);
                 gameLogService.append(gameData, GameLog.text(skippedName + " skips their extra turn."));
                 log.info("Game {} - {} skips their extra turn", gameData.id, skippedName);
+                gameData.currentTurnIsExtraTurn = false;
+                gameData.powerUpAbilitiesCantBeActivatedThisTurn = false;
                 advanceTurn(gameData, false);
                 return;
             }
@@ -515,12 +520,14 @@ public class TurnProgressionService {
             log.info("Game {} - {} skips their turn", gameData.id, skippedName);
             // Advance turn order past the skipped player so the next selection is correct.
             gameData.activePlayerId = nextActive;
+            if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
             advanceTurn(gameData, false);
             return;
         }
 
         String nextActiveName = gameData.playerIdToName.get(nextActive);
         gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
+        gameData.powerUpAbilitiesCantBeActivatedThisTurn = powerUpAbilitiesDisabled;
         gameData.damageCantBePreventedThisTurn = damageCantBePrevented;
         gameData.currentExtraTurnSequence = extraTurnSequence;
 
@@ -539,6 +546,12 @@ public class TurnProgressionService {
         }
 
         gameData.activePlayerId = nextActive;
+        gameData.turnStartTimestamp = gameData.timestampCounter + 1;
+        if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
+        if (gameData.skipCombatPhasesNextTurn.remove(nextActive)) {
+            gameData.skippedStepOrPhasesThisTurn.computeIfAbsent(nextActive, id -> new HashSet<>())
+                    .add(SkipStepOrPhaseKind.COMBAT_PHASE);
+        }
 
         // Check for pending Taunt on the new active player: promote it to an active this-turn requirement
         gameData.tauntedThisTurn.clear();
@@ -608,12 +621,15 @@ public class TurnProgressionService {
                 gameData.permanentsEnteredBattlefieldLastTurn.put(playerId, new ArrayList<>(entered)));
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.faceDownCreaturesEnteredBattlefieldThisTurn.clear();
+        gameData.faceDownPermanentsEnteredBattlefieldThisTurn.clear();
+        gameData.playersWhoTurnedPermanentsFaceUpThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
         gameData.crimeCandidatesThisTurn.clear();
         gameData.clearSpellsCastFromHandThisTurn();
         gameData.controllerNoncombatDamageBonusThisTurn.clear();
         gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.playersWhoInvestigatedThisTurn.clear();
+        gameData.playersWhoVenturedIntoDungeonThisTurn.clear();
         gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
         gameData.sacrificedPermanentCountThisTurn.clear();
         gameData.playersWhoSurveilledThisTurn.clear();
@@ -622,6 +638,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
+        gameData.permanentsWithCountersPutByPlayerThisTurn.clear();
         gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.clear();
         gameData.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn.clear();
         gameData.permanentWithOilCounterPutIntoGraveyardThisTurn = false;
@@ -647,6 +664,7 @@ public class TurnProgressionService {
         }
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
+        gameData.playersWhoActivatedEquipAbilityThisTurn.clear();
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
@@ -665,7 +683,9 @@ public class TurnProgressionService {
         gameData.creatureLeftBattlefieldCountThisTurn.clear();
         gameData.nonlandPermanentLeftBattlefieldThisTurn = false;
         gameData.creatureDeathCountThisTurn.clear();
+        gameData.creatureNamesDiedThisTurn.clear();
         gameData.creaturesPutIntoOwnGraveyardThisTurnCount.clear();
+        gameData.nontokenCreaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
@@ -747,6 +767,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
+        gameData.creatureTapCountsThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();
@@ -814,6 +835,7 @@ public class TurnProgressionService {
                 shield -> nextActive.equals(shield.protectedPlayerId()));
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
+        gameData.playersCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.cardsRevealedInHandUntilOwnerNextTurn.values().removeIf(nextActive::equals);

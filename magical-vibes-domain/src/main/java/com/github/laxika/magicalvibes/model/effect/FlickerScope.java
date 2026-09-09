@@ -11,6 +11,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@code CONTROLLERS_PERMANENTS} — every permanent matching the effect's filter that the
  *       effect's own controller controls, with no target at all (Legion's Initiative). All of them
  *       return together as one delayed action, so they re-enter simultaneously.</li>
+ *   <li>{@code ALL_PLAYERS_PERMANENTS} — every permanent matching the effect's filter on every
+ *       battlefield, with no target at all.</li>
  *   <li>{@code ENCHANTED_CREATURE_AND_AURAS} - the permanent attached to the source Aura and all
  *       Auras attached to it (Flickerform).</li>
  * </ul>
@@ -20,5 +22,6 @@ public enum FlickerScope {
     SELF,
     TARGET_PLAYERS_PERMANENTS,
     CONTROLLERS_PERMANENTS,
+    ALL_PLAYERS_PERMANENTS,
     ENCHANTED_CREATURE_AND_AURAS
 }

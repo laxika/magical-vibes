@@ -10,5 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "105")
 @CardRegistration(set = "4ED", collectorNumber = "113")
 @CardRegistration(set = "SUM", collectorNumber = "90")
+@CardRegistration(set = "3ED", collectorNumber = "90")
 public class WallOfAir extends Card {
 }

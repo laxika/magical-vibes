@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OTJ", collectorNumber = "34")
+@CardRegistration(set = "MSH", collectorNumber = "39")
 public class TakeUpTheShield extends Card {
 
     public TakeUpTheShield() {

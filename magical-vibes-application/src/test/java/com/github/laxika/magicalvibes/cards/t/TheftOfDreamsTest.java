@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,8 +19,7 @@ class TheftOfDreamsTest extends BaseCardTest {
 
     private void castTheftOfDreams() {
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private Permanent addTapped(GrizzlyBears bears) {
@@ -33,7 +31,7 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Draws one card per tapped creature the opponent controls")
     void drawsPerTappedCreature() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         addTapped(new GrizzlyBears());
         addTapped(new GrizzlyBears());
         // Untapped creature is not counted.
@@ -48,7 +46,7 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Only the opponent's tapped creatures are counted, not the caster's")
     void ignoresCastersTappedCreatures() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         own.tap();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -62,7 +60,7 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped non-creature permanents are not counted")
     void ignoresTappedNonCreatures() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         addTapped(new GrizzlyBears());
         // A tapped land is not a creature and must not be counted.
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -92,11 +90,26 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target yourself")
     void cannotTargetSelf() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("Counts only creatures that are tapped as the spell resolves")
+    void countsTappedCreaturesAtResolution() {
+        harness.setHand(player1, List.of(new TheftOfDreams()));
+        Permanent creature = addTapped(new GrizzlyBears());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+        creature.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
     }
 }

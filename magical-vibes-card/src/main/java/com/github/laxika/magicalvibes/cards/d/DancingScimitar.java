@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "292")
 @CardRegistration(set = "6ED", collectorNumber = "279")
 @CardRegistration(set = "SUM", collectorNumber = "243")
+@CardRegistration(set = "3ED", collectorNumber = "243")
 public class DancingScimitar extends Card {
 }

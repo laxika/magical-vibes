@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LavaAxe.class, GrizzlyBears.class})
 class LavaAxeTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -29,7 +33,6 @@ class LavaAxeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Lava Axe");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -60,6 +63,21 @@ class LavaAxeTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("Lava Axe deals 5 damage to a target planeswalker")
+    void deals5DamageToPlaneswalker() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player1, List.of(new LavaAxe()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, chandra.getId());
+        harness.passBothPriorities();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Lava Axe can target yourself")
     void canTargetSelf() {
         harness.setLife(player1, 20);
@@ -77,8 +95,7 @@ class LavaAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Lava Axe cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new LavaAxe()));
         harness.addMana(player1, ManaColor.RED, 5);

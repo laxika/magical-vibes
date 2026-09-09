@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "129")
+@CardRegistration(set = "PHUK", collectorNumber = "38")
+@CardRegistration(set = "PHUK", collectorNumber = "39")
 public class NezumiGraverobber extends Card {
 
     public NezumiGraverobber() {

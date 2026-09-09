@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "FEM", collectorNumber = "16c")
 @CardRegistration(set = "FEM", collectorNumber = "134")
 @CardRegistration(set = "FEM", collectorNumber = "163")
+@CardRegistration(set = "ME1", collectorNumber = "22")
 public class OrderOfLeitbur extends Card {
 
     public OrderOfLeitbur() {

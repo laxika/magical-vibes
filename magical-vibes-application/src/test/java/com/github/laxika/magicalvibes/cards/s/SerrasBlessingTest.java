@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SerrasBlessing.class, GrizzlyBears.class, Serenity.class})
 class SerrasBlessingTest extends BaseCardTest {
 
     @Test
@@ -27,6 +29,24 @@ class SerrasBlessingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SerrasBlessing());
 
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering under your control also gain vigilance")
+    void creaturesEnteringLaterGainVigilance() {
+        harness.addToBattlefield(player1, new SerrasBlessing());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Noncreature permanents do not gain vigilance")
+    void noncreaturePermanentsDoNotGainVigilance() {
+        Permanent serenity = harness.addToBattlefieldAndReturn(player1, new Serenity());
+        harness.addToBattlefield(player1, new SerrasBlessing());
+
+        assertThat(gqs.hasKeyword(gd, serenity, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test

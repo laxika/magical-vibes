@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMT", collectorNumber = "2")
+@CardRegistration(set = "TMT", collectorNumber = "258")
 public class AgentBishopManInBlack extends Card {
 
     public AgentBishopManInBlack() {

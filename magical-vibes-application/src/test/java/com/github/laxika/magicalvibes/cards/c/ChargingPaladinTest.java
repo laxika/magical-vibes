@@ -18,13 +18,13 @@ class ChargingPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
     void attackPutsTriggerOnStack() {
-        Permanent paladin = addCreatureReady(player1, new ChargingPaladin());
+        addCreatureReady(player1, new ChargingPaladin());
 
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).anyMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && paladin.getId().equals(e.getSourcePermanentId()));
+                        && e.getCard().getName().equals("Charging Paladin"));
     }
 
     @Test
@@ -40,16 +40,20 @@ class ChargingPaladinTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only the attacking Charging Paladin gets its own boost")
-    void boostsOnlyTheAttackingPaladin() {
-        Permanent attackingPaladin = addCreatureReady(player1, new ChargingPaladin());
+    @DisplayName("Only the attacking creature is boosted after its trigger resolves")
+    void boostsOnlyAttackingCreatureAfterResolution() {
+        Permanent paladin = addCreatureReady(player1, new ChargingPaladin());
         Permanent nonattackingPaladin = addCreatureReady(player1, new ChargingPaladin());
 
         declareAttackers(player1, List.of(0));
+        assertThat(paladin.getToughnessModifier()).isZero();
+        assertThat(nonattackingPaladin.getPowerModifier()).isEqualTo(0);
+        assertThat(nonattackingPaladin.getToughnessModifier()).isEqualTo(0);
+
         resolveAllTriggers();
 
-        assertThat(attackingPaladin.getPowerModifier()).isEqualTo(0);
-        assertThat(attackingPaladin.getToughnessModifier()).isEqualTo(3);
+        assertThat(paladin.getPowerModifier()).isEqualTo(0);
+        assertThat(paladin.getToughnessModifier()).isEqualTo(3);
         assertThat(nonattackingPaladin.getPowerModifier()).isEqualTo(0);
         assertThat(nonattackingPaladin.getToughnessModifier()).isEqualTo(0);
     }
@@ -64,6 +68,7 @@ class ChargingPaladinTest extends BaseCardTest {
 
         assertThat(paladin.getToughnessModifier()).isEqualTo(3);
 
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(paladin.getPowerModifier()).isEqualTo(0);

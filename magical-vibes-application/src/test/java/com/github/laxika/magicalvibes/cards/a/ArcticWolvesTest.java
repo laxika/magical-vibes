@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ArcticWolves.class)
 class ArcticWolvesTest extends BaseCardTest {
 
     @Test
@@ -25,8 +27,7 @@ class ArcticWolvesTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve the creature spell
-        harness.passBothPriorities(); // resolve the enters trigger
+        resolveAllTriggers();
 
         // Cast one card out of hand, drew one back.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -46,6 +47,39 @@ class ArcticWolvesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wolves);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep costs two mana for each age counter")
+    void cumulativeUpkeepCostScalesWithAgeCounters() {
+        Permanent wolves = harness.addToBattlefieldAndReturn(player1, new ArcticWolves());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(wolves.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wolves);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during its controller's upkeep")
+    void triggersOnlyDuringControllersUpkeep() {
+        Permanent wolves = harness.addToBattlefieldAndReturn(player1, new ArcticWolves());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(wolves.getCounterCount(CounterType.AGE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wolves);
     }
 

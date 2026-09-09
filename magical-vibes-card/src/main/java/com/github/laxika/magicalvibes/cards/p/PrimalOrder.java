@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "318")
 @CardRegistration(set = "HML", collectorNumber = "92")
+@CardRegistration(set = "ME1", collectorNumber = "125")
 public class PrimalOrder extends Card {
 
     public PrimalOrder() {

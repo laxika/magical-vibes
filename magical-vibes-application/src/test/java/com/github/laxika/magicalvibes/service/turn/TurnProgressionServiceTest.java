@@ -102,6 +102,21 @@ class TurnProgressionServiceTest {
         }
     }
 
+    @Test
+    void skipsAllCombatsOnlyDuringAffectedNextTurn() {
+        gd.skipCombatPhasesNextTurn.add(player2Id);
+        turnProgressionService.advanceTurn(gd);
+        assertThat(gd.skipCombatPhasesNextTurn).isEmpty();
+
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+        turnProgressionService.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+
+        gd.additionalCombatMainPhasePairs = 1;
+        turnProgressionService.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+    }
+
     private PendingMayAbility newMayAbility() {
         return new PendingMayAbility(new Card(), player1Id, null, "Test may ability");
     }
@@ -577,6 +592,29 @@ class TurnProgressionServiceTest {
     @Nested
     @DisplayName("advanceTurn")
     class AdvanceTurn {
+
+        @Test
+        void extraTurnRestrictionsStayWithTheirQueuedTurn() {
+            gd.queueExtraTurnFirst(player1Id, false, false, true);
+            gd.queueExtraTurnFirst(player1Id, false, true);
+            gd.queueExtraTurnFirst(player1Id, false);
+
+            turnProgressionService.advanceTurn(gd);
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
+            assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+
+            turnProgressionService.advanceTurn(gd);
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
+            assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+
+            turnProgressionService.advanceTurn(gd);
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isTrue();
+            assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+
+            turnProgressionService.advanceTurn(gd);
+            assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
+            assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        }
 
         @Test
         @DisplayName("Switches active player to the other player")

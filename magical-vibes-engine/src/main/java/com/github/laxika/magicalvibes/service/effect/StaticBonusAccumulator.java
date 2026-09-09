@@ -42,6 +42,7 @@ public class StaticBonusAccumulator {
     private Integer baseToughnessOverride;
     private boolean losesAllAbilities;
     private boolean losesAllNonManaAbilities;
+    private boolean turnFaceUpPrevented;
     private int devotionBonus;
     /**
      * While {@code true}, layer 5/6 outputs (colors, keywords, keyword removals, ability loss,
@@ -267,6 +268,14 @@ public class StaticBonusAccumulator {
         this.losesAllNonManaAbilities = losesAllNonManaAbilities;
     }
 
+    public boolean isTurnFaceUpPrevented() {
+        return turnFaceUpPrevented;
+    }
+
+    public void setTurnFaceUpPrevented(boolean turnFaceUpPrevented) {
+        this.turnFaceUpPrevented = turnFaceUpPrevented;
+    }
+
     /**
      * Builds a {@link StaticBonus} from this accumulator's state.
      *
@@ -282,7 +291,7 @@ public class StaticBonusAccumulator {
                 subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, removedKeywords,
                 basePTOverridden, basePowerOverride != null ? basePowerOverride : 0,
                 baseToughnessOverride != null ? baseToughnessOverride : 0, losesAllAbilities,
-                losesAllNonManaAbilities, false, name);
+                losesAllNonManaAbilities, false, name, turnFaceUpPrevented);
     }
 }
 

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 @CardRegistration(set = "P02", collectorNumber = "134")
 @CardRegistration(set = "TMP", collectorNumber = "239")
 @CardRegistration(set = "S99", collectorNumber = "134")
+@CardRegistration(set = "DPA", collectorNumber = "75")
 public class NaturalSpring extends Card {
 
     public NaturalSpring() {

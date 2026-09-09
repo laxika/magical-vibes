@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "87")
+@CardRegistration(set = "TMT", collectorNumber = "207")
 public class CaseyJonesJuryRigJusticiar extends Card {
 
     public CaseyJonesJuryRigJusticiar() {

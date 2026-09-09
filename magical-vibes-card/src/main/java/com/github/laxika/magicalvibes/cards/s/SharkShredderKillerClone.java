@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "73")
+@CardRegistration(set = "TMT", collectorNumber = "268")
+@CardRegistration(set = "TMT", collectorNumber = "320")
 public class SharkShredderKillerClone extends Card {
 
     public SharkShredderKillerClone() {

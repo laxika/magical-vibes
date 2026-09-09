@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GameData;
+
+import java.util.UUID;
+
 /**
  * Capability interface for static effects, controlled by a player, that change an
  * opponent's maximum hand size.
@@ -18,4 +22,12 @@ public interface OpponentMaxHandSizeEffect extends CardEffect {
      * @return the maximum hand size after applying this effect
      */
     int applyToMaximumHandSize(int currentMax);
+
+    /**
+     * Applies this effect when the source controller and current game state are available.
+     * Fixed-value effects use the default implementation.
+     */
+    default int applyToMaximumHandSize(int currentMax, GameData gameData, UUID sourceControllerId) {
+        return applyToMaximumHandSize(currentMax);
+    }
 }

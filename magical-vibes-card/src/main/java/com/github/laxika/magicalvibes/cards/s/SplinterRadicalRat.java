@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "169")
+@CardRegistration(set = "TMT", collectorNumber = "251")
 public class SplinterRadicalRat extends Card {
 
     public SplinterRadicalRat() {

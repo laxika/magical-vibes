@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "134")
+@CardRegistration(set = "TMT", collectorNumber = "274")
 public class TransdimensionalBovine extends Card {
 
     public TransdimensionalBovine() {

@@ -78,7 +78,7 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
         String triggeringName = null;
         if (effect.triggeringCardId() != null) {
             for (StackEntry stackEntry : gameData.stack) {
-                if (stackEntry.getCard().getId().equals(effect.triggeringCardId())) {
+                if (stackEntry.getTargetableId().equals(effect.triggeringCardId())) {
                     triggeringName = stackEntry.getCard().getName();
                     break;
                 }

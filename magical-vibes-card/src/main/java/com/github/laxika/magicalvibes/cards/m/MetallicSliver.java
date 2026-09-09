@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "TMP", collectorNumber = "297")
 @CardRegistration(set = "TPR", collectorNumber = "226")
+@CardRegistration(set = "H09", collectorNumber = "1")
 public class MetallicSliver extends Card {
 
     public MetallicSliver() {

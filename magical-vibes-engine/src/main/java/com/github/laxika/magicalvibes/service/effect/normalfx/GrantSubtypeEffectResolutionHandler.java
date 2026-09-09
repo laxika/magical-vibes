@@ -28,13 +28,19 @@ public class GrantSubtypeEffectResolutionHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         GrantSubtypeEffect grant = (GrantSubtypeEffect) effect;
-        if (grant.scope() != GrantScope.TARGET) {
+        if (grant.scope() != GrantScope.TARGET && grant.scope() != GrantScope.SELF) {
             return;
         }
 
-        List<UUID> targetIds = entry.targetsForEffect(grant);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
+        List<UUID> targetIds;
+        if (grant.scope() == GrantScope.SELF) {
+            targetIds = entry.getSourcePermanentId() == null
+                    ? List.of() : List.of(entry.getSourcePermanentId());
+        } else {
+            targetIds = entry.targetsForEffect(grant);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
         }
         for (UUID targetId : targetIds) {
             if (gameQueryService.findPermanentById(gameData, targetId) == null) {

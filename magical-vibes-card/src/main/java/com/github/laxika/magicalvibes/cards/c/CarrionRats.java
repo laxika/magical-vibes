@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "54")
+@CardRegistration(set = "PHUK", collectorNumber = "40")
+@CardRegistration(set = "PHUK", collectorNumber = "41")
+@CardRegistration(set = "PHUK", collectorNumber = "53")
 public class CarrionRats extends Card {
 
     public CarrionRats() {

@@ -11,6 +11,10 @@ public interface SpellCastingAbilityGrantingEffect extends CardEffect {
 
     Keyword grantedAbility();
 
+    default int abilityValue() {
+        return 0;
+    }
+
     /** Restricts the grant to spells cast from one zone; null means every source zone. */
     default Zone sourceZone() {
         return null;

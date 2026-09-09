@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 @CardRegistration(set = "5ED", collectorNumber = "158")
 @CardRegistration(set = "4ED", collectorNumber = "135")
 @CardRegistration(set = "SUM", collectorNumber = "109")
+@CardRegistration(set = "ME1", collectorNumber = "68")
+@CardRegistration(set = "3ED", collectorNumber = "109")
 public class ErgRaiders extends Card {
 
     public ErgRaiders() {

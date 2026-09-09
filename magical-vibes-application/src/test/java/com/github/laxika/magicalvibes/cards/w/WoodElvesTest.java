@@ -50,6 +50,8 @@ class WoodElvesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() == forest
                         && !p.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

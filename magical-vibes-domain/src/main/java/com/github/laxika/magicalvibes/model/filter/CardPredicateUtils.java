@@ -37,11 +37,17 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasSourceChosenSubtypePredicate p) {
             return p.creatureOnly() ? "creature card of the chosen type" : "card of the chosen type";
         }
+        if (predicate instanceof CardSharesCreatureTypeWithSourcePredicate) {
+            return "card sharing a creature type with this creature";
+        }
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
         }
         if (predicate instanceof CardKeywordPredicate p) {
             return "card with " + p.keyword().name().toLowerCase().replace('_', ' ');
+        }
+        if (predicate instanceof CardDoesNotShareNameWithControlledRoomPredicate) {
+            return "card that doesn't share a name with an unlocked door of a Room you control";
         }
         if (predicate instanceof CardHasNoAbilitiesPredicate) {
             return "card with no abilities";
@@ -70,6 +76,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
         }
+        if (predicate instanceof CardHasXInManaCostPredicate) {
+            return "card with {X} in its mana cost";
+        }
         if (predicate instanceof CardHasAdventurePredicate) {
             return "card with Adventure";
         }
@@ -84,6 +93,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardColorPredicate p) {
             return p.color().name().toLowerCase();
+        }
+        if (predicate instanceof CardHasColorManaSymbolPredicate p) {
+            return "card with a " + p.color().name().toLowerCase() + " mana symbol";
         }
         if (predicate instanceof CardIsMulticoloredPredicate) {
             return "multicolored card";
@@ -129,6 +141,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardNamedPredicate p) {
             return "card named " + p.cardName();
+        }
+        if (predicate instanceof CardNameStartsWithPredicate p) {
+            return "card whose name starts with " + p.prefix();
         }
         if (predicate instanceof CardNotPredicate p) {
             String inner = describeFilter(p.predicate());

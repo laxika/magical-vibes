@@ -47,7 +47,7 @@ public class CopySupport {
                 source.getEntryType(),
                 copyCard,
                 controllerId,
-                "Copy of " + source.getCard().getName(),
+                "Copy of " + source.getDescription(),
                 new ArrayList<>(source.getEffectsToResolve()),
                 source.getXValue(),
                 targetId,
@@ -58,6 +58,7 @@ public class CopySupport {
                 source.getTargetIds() != null ? new ArrayList<>(source.getTargetIds()) : null
         );
         copy.setCopy(true);
+        copy.setSourcePlanarObject(source.getSourcePlanarObject() == null ? null : source.getSourcePlanarObject().copy());
         copy.setKicked(source.isKicked());
         copy.setTargetFilters(source.getTargetFilters());
         copy.getGrantedKeywordsOnEntry().addAll(source.getGrantedKeywordsOnEntry());
@@ -100,6 +101,9 @@ public class CopySupport {
         copy.setCardText(original.getCardText());
         copy.setPower(original.getPower());
         copy.setToughness(original.getToughness());
+        if (original.getRoomDoorManaCosts().size() == 2) {
+            copy.setRoomDoorManaCosts(original.getRoomDoorManaCosts());
+        }
         Set<Keyword> copiedKeywords = original.getKeywords().isEmpty()
                 ? EnumSet.noneOf(Keyword.class)
                 : EnumSet.copyOf(original.getKeywords());

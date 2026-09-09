@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneCounterToArtifactOrCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlayerCounterEffect;
@@ -52,6 +53,9 @@ import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -62,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
@@ -70,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -78,6 +84,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -117,6 +124,60 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
+
+    @Test
+    void faceDownCreatureLosesItsPrintedUnblockability() {
+        Card card = createCreatureWithStaticEffect("Unblockable", 2, 2, CardColor.BLUE, new CantBeBlockedEffect());
+        Permanent creature = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(creature);
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
+        creature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
+    }
+
+    @Test
+    void permanentAbilityDamageUsesLifelinkIncludingLastKnownSource() {
+        Permanent source = addPermanent(player1Id,
+                createCreatureWithKeywords("Lifelink creature", 3, 3, CardColor.WHITE, Set.of(Keyword.LIFELINK)));
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
+                "Damage ability", List.of(), player2Id, source.getId());
+
+        assertThat(gqs.shouldControllerSpellHaveLifelink(gd, entry)).isTrue();
+
+        entry.setSourcePermanentSnapshot(new Permanent(source));
+        gd.playerBattlefields.get(player1Id).remove(source);
+        assertThat(gqs.shouldControllerSpellHaveLifelink(gd, entry)).isTrue();
+    }
+
+    @Test
+    void attackingPlaneswalkerDoesNotCountAsAttackingItsController() {
+        Permanent planeswalker = new Permanent(createPlaneswalker("Walker"));
+        gd.playerBattlefields.get(player2Id).add(planeswalker);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2, CardColor.GREEN));
+        gd.playerBattlefields.get(player1Id).add(attacker);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(planeswalker.getId());
+        assertThat(gqs.isPlayerBeingAttacked(gd, player2Id)).isFalse();
+        attacker.setAttackTarget(player2Id);
+        assertThat(gqs.isPlayerBeingAttacked(gd, player2Id)).isTrue();
+    }
+
+    @Test
+    void conditionalExtraLandPlaysRequireTheirConditionAndApplyOnlyToTheirController() {
+        var condition = new com.github.laxika.magicalvibes.model.condition.ControllerTurn();
+        Card card = new Card();
+        card.addEffect(EffectSlot.STATIC, new ConditionalEffect(condition,
+                new com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect(1)));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(false);
+        assertThat(gqs.getConditionalAdditionalLandPlays(gd, player1Id)).isZero();
+        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(true);
+        assertThat(gqs.getConditionalAdditionalLandPlays(gd, player1Id)).isEqualTo(1);
+        assertThat(gqs.getConditionalAdditionalLandPlays(gd, player2Id)).isZero();
+        gd.playerBattlefields.get(player1Id).clear();
+        assertThat(gqs.getConditionalAdditionalLandPlays(gd, player1Id)).isZero();
+    }
 
     @Test
     void urzaLandTypesAreNotCreatureTypes() {
@@ -1437,6 +1498,21 @@ class GameQueryServiceTest {
             assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(-3);
             assertThat(gqs.getEffectiveCombatDamage(gd, perm)).isEqualTo(0);
         }
+
+        @Test
+        @DisplayName("honors a toughness-assignment effect granted by a floating static effect")
+        void honorsGrantedToughnessAssignmentEffect() {
+            Permanent perm = addPermanent(player1Id,
+                    createCreature("Wimpy Dinosaur", 1, 5, CardColor.GREEN));
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "Test Grant", null, player1Id,
+                    new GrantEffectEffect(new AssignCombatDamageWithToughnessEffect(
+                            GrantScope.SELF, new PermanentToughnessGreaterThanPowerPredicate()),
+                            GrantScope.TARGET),
+                    perm.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+
+            assertThat(gqs.getEffectiveCombatDamage(gd, perm)).isEqualTo(5);
+        }
     }
 
     // ===== getPowerBasedDamage =====
@@ -1926,6 +2002,25 @@ class GameQueryServiceTest {
             assertThat(gqs.isUncounterable(gd, creature)).isTrue();
             assertThat(gqs.isUncounterable(gd, enchantment)).isTrue();
             assertThat(gqs.isUncounterable(gd, instant)).isFalse();
+        }
+
+        @Test
+        @DisplayName("global predicate-restricted protection applies to matching spells from any controller")
+        void globalPredicateRestrictedProtection() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Root Sliver", 2, 2, CardColor.GREEN,
+                    new SpellsCantBeCounteredEffect(new CardSubtypePredicate(CardSubtype.SLIVER))));
+            Card sliver = createCreatureWithSubtypes("Metallic Sliver", 1, 1, null,
+                    List.of(CardSubtype.SLIVER));
+            Card nonSliver = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN,
+                    List.of(CardSubtype.BEAR));
+            gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, sliver, player2Id,
+                    "Metallic Sliver", new ArrayList<>()));
+            gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, nonSliver, player2Id,
+                    "Grizzly Bears", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, sliver)).isTrue();
+            assertThat(gqs.isUncounterable(gd, nonSliver)).isFalse();
         }
 
         @Test

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -495,7 +497,7 @@ public abstract class AiDecisionEngine {
 
     protected boolean tryPlayLand(GameData gameData) {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(aiPlayer.getId(), 0);
-        if (landsPlayed >= gameData.getMaxLandsThisTurn(aiPlayer.getId())) {
+        if (landsPlayed >= (gameData.getMaxLandsThisTurn(aiPlayer.getId()) + gameQueryService.getConditionalAdditionalLandPlays(gameData, aiPlayer.getId()))) {
             return false;
         }
 
@@ -2422,23 +2424,29 @@ public abstract class AiDecisionEngine {
                 .map(BeholdAndExileCost.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (cost == null) {
+        boolean chooseCreatureOrRevealCreatureCard = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(ChooseCreatureOrRevealCreatureCardCost.class::isInstance);
+        if (cost == null && !chooseCreatureOrRevealCreatureCard) {
             return new BeholdSelection(null, null);
         }
 
-        PermanentPredicate permanentFilter = new PermanentHasSubtypePredicate(cost.subtype());
+        PermanentPredicate permanentFilter = cost == null ? null : new PermanentHasSubtypePredicate(cost.subtype());
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of())) {
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, permanentFilter)) {
+            if (chooseCreatureOrRevealCreatureCard
+                    ? gameQueryService.isCreature(gameData, permanent)
+                    : predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, permanentFilter)) {
                 return new BeholdSelection(permanent.getId(), null);
             }
         }
 
-        CardSubtypePredicate cardFilter = new CardSubtypePredicate(cost.subtype());
+        CardSubtypePredicate cardFilter = cost == null ? null : new CardSubtypePredicate(cost.subtype());
         List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
         for (int i = 0; i < hand.size(); i++) {
             Card candidate = hand.get(i);
             if (!candidate.getId().equals(card.getId())
-                    && predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId())) {
+                    && (chooseCreatureOrRevealCreatureCard
+                    ? candidate.hasType(CardType.CREATURE)
+                    : predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId()))) {
                 return new BeholdSelection(null, i);
             }
         }
@@ -2696,10 +2704,15 @@ public abstract class AiDecisionEngine {
                     .count());
         }
         if (xScaledToHandEffect != null) {
-            maxX = Math.min(maxX, (int) graveyard.stream()
+            var matchingCards = graveyard.stream()
                     .filter(c -> predicateEvaluationService.matchesCardPredicate(
                             c, xScaledToHandEffect.filter(), card.getId()))
-                    .count());
+                    .toList();
+            int matchingCount = card.getMultiTargetConstraint()
+                    == com.github.laxika.magicalvibes.model.MultiTargetConstraint.DIFFERENT_MANA_VALUES
+                    ? (int) matchingCards.stream().map(Card::getManaValue).distinct().count()
+                    : matchingCards.size();
+            maxX = Math.min(maxX, matchingCount);
         }
         if (exactXGraveyardChoice != null) {
             maxX = Math.min(maxX,
@@ -2893,6 +2906,7 @@ public abstract class AiDecisionEngine {
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
+                    || effect instanceof TeamworkCost
                     || effect instanceof WaterbendCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
@@ -3005,6 +3019,24 @@ public abstract class AiDecisionEngine {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == fixed.value() ? chosen : List.of();
+            }
+            if (effect instanceof TeamworkCost cost) {
+                int totalPower = 0;
+                List<UUID> chosen = new ArrayList<>();
+                List<Permanent> candidates = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .sorted(Comparator.comparingInt(
+                                (Permanent p) -> gameQueryService.getEffectivePower(gameData, p)).reversed())
+                        .toList();
+                for (Permanent candidate : candidates) {
+                    chosen.add(candidate.getId());
+                    totalPower += gameQueryService.getEffectivePower(gameData, candidate);
+                    if (totalPower >= cost.requiredPower()) {
+                        return chosen;
+                    }
+                }
+                return List.of();
             }
             if (effect instanceof WaterbendCost cost) {
                 return battlefield.stream()
@@ -3335,7 +3367,7 @@ public abstract class AiDecisionEngine {
                     if (validModes.size() == coe.choicesRequired()) {
                         int[] modeIndices = validModes.stream().mapToInt(Integer::intValue).toArray();
                         int modeEncoding = coe.modesMayRepeat()
-                                ? ChooseOneEffect.encodeRepeatedModeSelection(coe.options().size(), modeIndices)
+                                ? coe.encodeRepeatedSelection(modeIndices)
                                 : ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices);
                         return new ModalCastPlan(
                                 modeEncoding,

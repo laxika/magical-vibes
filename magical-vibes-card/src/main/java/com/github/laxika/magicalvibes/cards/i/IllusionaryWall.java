@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "78")
+@CardRegistration(set = "ME1", collectorNumber = "39")
 public class IllusionaryWall extends Card {
 
     public IllusionaryWall() {

@@ -23,9 +23,26 @@ class AngelicBlessingTest extends BaseCardTest {
     @DisplayName("Resolving Angelic Blessing gives the target creature +3/+3 and flying")
     void resolvesWithBoostAndFlying() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new AngelicBlessing()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Angelic Blessing can target an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AngelicBlessing()));
+        giveMana();
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
@@ -39,12 +56,9 @@ class AngelicBlessingTest extends BaseCardTest {
     void effectsWearOffAtEndOfTurn() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new AngelicBlessing()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        giveMana();
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
-        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
-
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -55,27 +69,11 @@ class AngelicBlessingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Angelic Blessing can target an opponent's creature")
-    void targetsOpponentsCreature() {
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new AngelicBlessing()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castAndResolveSorcery(player1, 0, target.getId());
-
-        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
-        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
-    }
-
-    @Test
     @DisplayName("Angelic Blessing cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
         harness.setHand(player1, List.of(new AngelicBlessing()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        giveMana();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, plains.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -83,21 +81,25 @@ class AngelicBlessingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Angelic Blessing has no effect if its target leaves before resolution")
-    void targetLeavingBeforeResolution() {
+    @DisplayName("Angelic Blessing fizzles if its target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new AngelicBlessing()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        giveMana();
 
         harness.castSorcery(player1, 0, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(target);
-
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    private void giveMana() {
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 }

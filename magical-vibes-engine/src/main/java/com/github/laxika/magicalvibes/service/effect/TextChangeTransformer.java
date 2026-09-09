@@ -268,7 +268,7 @@ public final class TextChangeTransformer {
                 PermanentPredicate filter = apply(boost.filter(), substitution);
                 yield filter == boost.filter() ? boost
                         : new DynamicStaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(),
-                        boost.scope(), filter);
+                        boost.scope(), filter, boost.amountsFromTarget());
             }
             case GrantKeywordEffect grant -> {
                 Set<Keyword> keywords = replaceLandwalk(grant.keywords(), substitution);

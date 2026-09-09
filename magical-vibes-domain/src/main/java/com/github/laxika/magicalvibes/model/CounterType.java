@@ -38,6 +38,7 @@ public enum CounterType {
     ECHO,
     EMBER,
     ELIXIR,
+    ENLIGHTENED,
     EON,
     EYEBALL,
     FADE,
@@ -57,6 +58,7 @@ public enum CounterType {
     GLYPH,
     GOLD,
     GROWTH,
+    HARMONY,
     INGENUITY,
     HEALING,
     HATCHLING,
@@ -67,6 +69,7 @@ public enum CounterType {
     INTERVENTION,
     ICE,
     FELLOWSHIP,
+    INVASION,
     INCUBATION,
     INFECTION,
     INCARNATION,
@@ -92,6 +95,7 @@ public enum CounterType {
     MINING,
     MUSIC,
     NET,
+    NEST,
     MUSTER,
     MINUS_ONE_MINUS_ONE,
     MINUS_ONE_MINUS_ZERO,
@@ -109,13 +113,16 @@ public enum CounterType {
     PETRIFICATION,
     PHYLACTERY,
     PIN,
+    PLAN,
     POINT,
     POLYP,
     PLAGUE,
     PRESSURE,
     PREY,
+    POSSESSION,
     PUPA,
     QUEST,
+    REV,
     REVIVAL,
     REJECTION,
     RITUAL,
@@ -155,6 +162,7 @@ public enum CounterType {
     TOWER,
     TIME,
     TRAINING,
+    TRAP,
     TREASURE,
     UNLOCK,
     VALOR,
@@ -162,7 +170,9 @@ public enum CounterType {
     VERSE,
     VITALITY,
     VORTEX,
+    VOID,
     WAGE,
+    HASTE,
     DEATHTOUCH,
     DECAYED,
     FLYING,
@@ -179,19 +189,19 @@ public enum CounterType {
 
     public Keyword grantedKeyword() {
         return switch (this) {
+            case HASTE -> Keyword.HASTE;
             case FLYING -> Keyword.FLYING;
             case FIRST_STRIKE -> Keyword.FIRST_STRIKE;
             case DOUBLE_STRIKE -> Keyword.DOUBLE_STRIKE;
             case DEATHTOUCH -> Keyword.DEATHTOUCH;
             case DECAYED -> Keyword.DECAYED;
             case LIFELINK -> Keyword.LIFELINK;
-            case VIGILANCE -> Keyword.VIGILANCE;
             case HEXPROOF -> Keyword.HEXPROOF;
             case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
             case MENACE -> Keyword.MENACE;
             case REACH -> Keyword.REACH;
             case TRAMPLE -> Keyword.TRAMPLE;
-
+            case VIGILANCE -> Keyword.VIGILANCE;
             default -> null;
         };
     }

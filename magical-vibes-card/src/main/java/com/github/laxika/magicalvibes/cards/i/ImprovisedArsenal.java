@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "92")
+@CardRegistration(set = "TMT", collectorNumber = "270")
 public class ImprovisedArsenal extends Card {
 
     public ImprovisedArsenal() {

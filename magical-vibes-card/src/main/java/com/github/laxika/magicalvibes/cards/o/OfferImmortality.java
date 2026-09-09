@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "102")
+@CardRegistration(set = "FDN", collectorNumber = "525")
 public class OfferImmortality extends Card {
 
     public OfferImmortality() {

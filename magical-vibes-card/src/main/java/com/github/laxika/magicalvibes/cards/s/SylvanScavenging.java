@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "113")
+@CardRegistration(set = "FDN", collectorNumber = "342")
+@CardRegistration(set = "FDN", collectorNumber = "403")
+@CardRegistration(set = "FDN", collectorNumber = "475")
 public class SylvanScavenging extends Card {
 
     public SylvanScavenging() {
