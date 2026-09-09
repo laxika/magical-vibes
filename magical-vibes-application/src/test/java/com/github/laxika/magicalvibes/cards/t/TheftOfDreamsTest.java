@@ -98,4 +98,19 @@ class TheftOfDreamsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
     }
+
+    @Test
+    @DisplayName("Counts the target's tapped creatures when the spell resolves")
+    void ignoresCreatureUntappedBeforeResolution() {
+        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        Permanent bears = addTapped(new GoblinPiker());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+        bears.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+    }
 }
