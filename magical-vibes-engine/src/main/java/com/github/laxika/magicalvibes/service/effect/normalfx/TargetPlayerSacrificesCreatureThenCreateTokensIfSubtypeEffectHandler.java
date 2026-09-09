@@ -104,7 +104,7 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandle
         boolean hadSubtype = predicateEvaluationService.matchesPermanentPredicate(
                 gameData, creature, new PermanentHasSubtypePredicate(requiredSubtype));
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , creature.getCard(), "."));

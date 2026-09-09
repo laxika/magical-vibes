@@ -59,7 +59,7 @@ public class TargetPlayerSacrificesRandomPermanentsUntilLandEffectHandler implem
             Permanent chosen = battlefield.get(ThreadLocalRandom.current().nextInt(battlefield.size()));
             repeat = !gameQueryService.isLand(gameData, chosen);
 
-            if (!permanentRemovalService.removePermanentToGraveyard(gameData, chosen)) {
+            if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, chosen)) {
                 return;
             }
             triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, targetPlayerId, chosen.getCard());

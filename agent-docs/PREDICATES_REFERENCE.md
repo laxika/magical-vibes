@@ -390,6 +390,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardManaValueLessThanSourcePowerPredicate` | `()` | a card whose mana value is strictly less than the source permanent's effective power; needs `GameData` and `sourceCardId` |
 | `CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate` | `()` | a card whose mana value is <= the number of permanent cards in the perspective player's graveyard; used by Squirming Emergence |
 | `CardManaValueLessThanSourceLoyaltyPredicate` | `()` | a card whose mana value is less than the source planeswalker's loyalty; needs `GameData` and `sourceCardId` (Nahiri, the Unforgiving) |
+| `CardManaValueParityPredicate` | `(ManaValueParity parity)` | a card whose mana value is odd or even; when evaluating an X spell at cast time, the chosen X is included, while an unannounced X remains potentially playable |
 | `CardToughnessLessThanSourceToughnessPredicate` | `()` | a creature card whose printed toughness is less than the source permanent's effective toughness; needs `GameData` and `sourceCardId` (Thunderkin Awakener) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is at most the source permanent's effective power; needs `GameData` and `sourceCardId` (Arcane Proxy) |
 | `CardMaxManaValuePredicate` | `(int maxManaValue)` | a card with mana value ≤ N (e.g. Teshar's "mana value 3 or less" graveyard filter) |
@@ -405,6 +406,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardHasSourceChosenCardTypePredicate` | `()` | a card with a card type chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful with global spell taxes |
 | `CardHasSourceChosenSubtypePredicate` | `()` | a creature card carrying the creature subtype chosen by the source permanent; Changeling matches every creature type. Needs the `GameData` overload and the source card ID |
 | `CardKeywordPredicate` | `(Keyword)` | a card with the named keyword, including `MUTATE` for creature cards with a mutate ability |
+| `CardHasAwakenPredicate` | `()` | a card with an Awaken ability word (`Awaken N—…`); Scryfall reports Awaken as a keyword, but the engine identifies it from the oracle text because it is not a rules keyword |
 | `CardIsAuraEnchantCreaturePredicate` | `()` | an Aura card whose enchant ability restricts it to creatures ("enchant creature", "enchant creature you control", …). An Aura's enchant restriction is its spell target filter, so this looks for a `PermanentIsCreaturePredicate` in that filter (directly or inside a `PermanentAllOfPredicate`); Auras that enchant players, lands, artifacts, or any permanent never match. Use as a `GrantFlashToCardTypeEffect` filter (Rootwater Shaman) |
 | `CardHasFlashbackPredicate` | `()` | a card that has a flashback casting option (Runic Repetition's "target exiled card with flashback") |
 | `CardHasAdventurePredicate` | `()` | a card that has an Adventure casting option (Memory Theft's exiled-card follow-up) |

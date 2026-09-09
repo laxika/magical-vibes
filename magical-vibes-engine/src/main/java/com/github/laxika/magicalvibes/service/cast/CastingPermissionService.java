@@ -580,6 +580,15 @@ public class CastingPermissionService {
      */
     public boolean isOpponentsSpellMatchingPredicateRestricted(GameData gameData, UUID castingPlayerId,
                                                                  Card card) {
+        return isOpponentsSpellMatchingPredicateRestricted(gameData, castingPlayerId, card, null);
+    }
+
+    /**
+     * Static card-predicate restrictions with an optional chosen X value. The chosen value is
+     * needed for predicates based on a spell's mana value, such as odd/even restrictions.
+     */
+    public boolean isOpponentsSpellMatchingPredicateRestricted(GameData gameData, UUID castingPlayerId,
+                                                                 Card card, Integer chosenX) {
         for (UUID pid : gameData.orderedPlayerIds) {
             if (pid.equals(castingPlayerId)) continue;
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
@@ -588,7 +597,8 @@ public class CastingPermissionService {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
                             && predicateEvaluationService.matchesCardPredicate(
-                            card, restriction.predicate(), perm.getCard().getId(), gameData, castingPlayerId)) {
+                            card, restriction.predicate(), perm.getCard().getId(), gameData, castingPlayerId,
+                            null, null, chosenX)) {
                         return true;
                     }
                 }
@@ -599,7 +609,8 @@ public class CastingPermissionService {
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
                         && predicateEvaluationService.matchesCardPredicate(
-                        card, restriction.predicate(), emblem.sourceCard().getId(), gameData, castingPlayerId)) {
+                        card, restriction.predicate(), emblem.sourceCard().getId(), gameData, castingPlayerId,
+                        null, null, chosenX)) {
                     return true;
                 }
             }

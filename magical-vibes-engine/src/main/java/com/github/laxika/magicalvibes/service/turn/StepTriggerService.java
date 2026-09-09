@@ -4108,7 +4108,7 @@ public class StepTriggerService {
 
                 int toughness = Math.max(0, gameQueryService.getEffectiveToughness(gameData, permanent));
                 UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-                if (!permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
                     continue;
                 }
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(
@@ -4156,7 +4156,7 @@ public class StepTriggerService {
                 }
 
                 UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-                if (!permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
                     continue;
                 }
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(

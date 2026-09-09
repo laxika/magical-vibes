@@ -143,4 +143,10 @@ public record TargetingRestrictionEffect(
         return new TargetingRestrictionEffect(
                 TargetingSourceKind.SPELLS, true, Set.of(), TargetColorMode.ANY, cardTypes);
     }
+
+    /** Abilities from sources of the given card types can't target this permanent. */
+    public static TargetingRestrictionEffect fromAbilitySourceCardTypes(Set<CardType> cardTypes) {
+        return new TargetingRestrictionEffect(
+                TargetingSourceKind.ABILITIES, false, Set.of(), TargetColorMode.ANY, false, cardTypes);
+    }
 }

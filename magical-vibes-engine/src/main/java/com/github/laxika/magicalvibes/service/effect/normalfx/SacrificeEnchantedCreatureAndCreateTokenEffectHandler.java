@@ -62,7 +62,7 @@ public class SacrificeEnchantedCreatureAndCreateTokenEffectHandler implements No
                 log.info("Game {} - {} sacrificed by {}", gameData.id,
                         enchantedCreature.getCard().getName(), entry.getCard().getName());
 
-                permanentRemovalService.removePermanentToGraveyard(gameData, enchantedCreature);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchantedCreature);
                 permanentRemovalService.removeOrphanedAuras(gameData);
 
                 // Create token for the aura's controller

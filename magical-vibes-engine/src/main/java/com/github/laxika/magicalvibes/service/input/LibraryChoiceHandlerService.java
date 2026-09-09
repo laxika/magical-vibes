@@ -1622,6 +1622,7 @@ public class LibraryChoiceHandlerService {
             if (selectedCardFollowUp.useSelectedCardManaValue()) {
                 gameData.pendingEffectResolutionEntry.setEventValue(chosenCard.getManaValue());
             }
+            gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCard);
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
                     List.of(selectedCardFollowUp.effect()));
@@ -2406,6 +2407,14 @@ public class LibraryChoiceHandlerService {
         if (libraryRevealChoice.selectLandsAfterHand()) {
             handleHandSelectionThenLandSelection(gameData, controllerId, playerName,
                     selectedCards, remainingCards);
+            return;
+        }
+
+        if (libraryRevealChoice.selectedToTop()) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    controllerId, allRevealedCards, true, controllerId,
+                    "Put the selected cards on top of your library and the rest on the bottom in any order.",
+                    cardIds));
             return;
         }
 

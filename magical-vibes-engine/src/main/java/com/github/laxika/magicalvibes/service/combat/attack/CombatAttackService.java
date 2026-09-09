@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
 import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
@@ -1997,6 +1998,7 @@ public class CombatAttackService {
         }
 
         processDelayedAttackerBoostTriggers(gameData, battlefield, attackerIndices);
+        processDelayedAttackerKeywordGrantTriggers(gameData, battlefield, attackerIndices);
         processDelayedNontokenAttackTokenTriggers(gameData, battlefield, attackerIndices);
         processDelayedAttackTokenCreationTriggers(gameData, playerId, attackerIndices);
         processDelayedAttackUntapTriggers(gameData, playerId, attackerIndices);
@@ -2101,6 +2103,41 @@ public class CombatAttackService {
                         " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
                 log.info("Game {} - {} delayed attacker boost fires for {}",
                         gameData.id, boost.sourceCard().getName(), attacker.getCard().getName());
+            }
+        }
+    }
+
+    /**
+     * Delayed attack triggers that grant keywords until end of turn. One stack entry is created
+     * for each attacker and each registered grant.
+     */
+    private void processDelayedAttackerKeywordGrantTriggers(GameData gameData,
+                                                              List<Permanent> battlefield,
+                                                              List<Integer> attackerIndices) {
+        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedAttackerKeywordGrant.class)) {
+            return;
+        }
+        for (DelayedAttackerKeywordGrant grant
+                : gameData.getDelayedActions(DelayedAttackerKeywordGrant.class)) {
+            for (int idx : attackerIndices) {
+                Permanent attacker = battlefield.get(idx);
+                StackEntry se = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        grant.sourceCard(),
+                        grant.controllerId(),
+                        grant.sourceCard().getName() + "'s delayed trigger",
+                        List.of(new GrantKeywordEffect(
+                                grant.keywords(), GrantScope.TARGET, null,
+                                GrantDuration.END_OF_TURN, null)),
+                        attacker.getId(),
+                        (UUID) null);
+                se.setNonTargeting(true);
+                gameData.stack.add(se);
+                gameLogService.append(gameData, GameLog.cardTextCard(
+                        grant.sourceCard(), " — ", attacker.getCard(),
+                        " gains " + grant.keywords() + " until end of turn."));
+                log.info("Game {} - {} delayed attacker keyword grant fires for {}",
+                        gameData.id, grant.sourceCard().getName(), attacker.getCard().getName());
             }
         }
     }

@@ -241,7 +241,9 @@ public class DiscardTriggerCollectorService {
                     gameQueryService.findPermanentController(gameData, match.permanent().getId()), damage);
             if (damage <= 0) return true;
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
-            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
+            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    gameData, discardingPlayerId, effectiveDamage, cardName, false,
+                    match.permanent().getId(), sourceCard);
             effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                     gameData, discardingPlayerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -40,6 +41,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -1038,6 +1041,32 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — GrantKeywordEffect")
+    class LifeGainGrantKeyword {
+
+        @Test
+        @DisplayName("puts keyword-grant trigger on the stack")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Kalastria Nightwatch");
+            var effect = new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF);
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getDescription()).contains("Kalastria Nightwatch");
+            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
         }
     }
 

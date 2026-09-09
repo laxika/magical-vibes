@@ -52,7 +52,7 @@ public class SacrificeTargetArtifactCreatureThenMaySearchLibraryForNoncreatureAr
         }
 
         String targetControllerName = gameData.playerIdToName.get(targetControllerId);
-        if (!permanentRemovalService.removePermanentToGraveyard(gameData, target)) {
+        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, target)) {
             return;
         }
 
