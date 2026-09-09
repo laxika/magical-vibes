@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.d.DevoutHarpist;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TickingGnomes.class, DevoutHarpist.class})
 class TickingGnomesTest extends BaseCardTest {
 
     @Test
@@ -32,12 +32,13 @@ class TickingGnomesTest extends BaseCardTest {
     @DisplayName("The activated ability can target a creature")
     void dealsDamageToCreature() {
         harness.addToBattlefield(player1, new TickingGnomes());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new DevoutHarpist());
 
-        harness.activateAbility(player1, 0, null, findPermanent(player2, "Llanowar Elves").getId());
+        harness.activateAbility(player1, 0, null, findPermanent(player2, "Devout Harpist").getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Devout Harpist");
+        harness.assertInGraveyard(player2, "Devout Harpist");
     }
 
     @Test
@@ -66,16 +67,26 @@ class TickingGnomesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Ticking Gnomes");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
         advanceToUpkeep(player1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Ticking Gnomes");
     }
 
+    @Test
+    @DisplayName("Echo does not trigger during the opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveGnomes();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Ticking Gnomes");
+    }
+
     private void castAndResolveGnomes() {
-        harness.setHand(player1, List.of(new TickingGnomes()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TickingGnomes(), "{3}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

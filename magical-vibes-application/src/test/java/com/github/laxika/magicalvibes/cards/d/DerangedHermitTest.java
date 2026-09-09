@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DerangedHermit.class, GiantCockroach.class})
 class DerangedHermitTest extends BaseCardTest {
 
     @Test
@@ -38,14 +40,30 @@ class DerangedHermitTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DerangedHermit());
         Permanent ownSquirrel = harness.addToBattlefieldAndReturn(player1, squirrelToken());
         Permanent opponentSquirrel = harness.addToBattlefieldAndReturn(player2, squirrelToken());
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent nonSquirrel = harness.addToBattlefieldAndReturn(player2, new GiantCockroach());
 
         assertThat(gqs.getEffectivePower(gd, ownSquirrel)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownSquirrel)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, opponentSquirrel)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentSquirrel)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonSquirrel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nonSquirrel)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Squirrels lose Deranged Hermit's bonus when it leaves the battlefield")
+    void squirrelBonusEndsWhenHermitLeavesBattlefield() {
+        castAndResolveHermit();
+
+        Permanent hermit = findPermanent(player1, "Deranged Hermit");
+        List<Permanent> squirrels = squirrelTokens(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, hermit));
+
+        for (Permanent squirrel : squirrels) {
+            assertThat(gqs.getEffectivePower(gd, squirrel)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, squirrel)).isEqualTo(1);
+        }
     }
 
     @Test
@@ -82,11 +100,7 @@ class DerangedHermitTest extends BaseCardTest {
     }
 
     private void castAndResolveHermit() {
-        harness.setHand(player1, List.of(new DerangedHermit()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DerangedHermit(), "{3}{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Deranged Hermit");

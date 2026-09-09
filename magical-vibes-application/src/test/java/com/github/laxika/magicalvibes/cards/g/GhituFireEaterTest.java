@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BouncingBeebles;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GhituFireEater.class, BouncingBeebles.class})
 class GhituFireEaterTest extends BaseCardTest {
 
     @Test
@@ -43,13 +44,13 @@ class GhituFireEaterTest extends BaseCardTest {
     @DisplayName("Deals 2 damage to target creature, killing a 2/2")
     void dealsPowerDamageToCreature() {
         addReadyFireEater(player1);
-        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BouncingBeebles());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(BouncingBeebles.class::isInstance);
     }
 
     @Test
@@ -79,10 +80,6 @@ class GhituFireEaterTest extends BaseCardTest {
     }
 
     private Permanent addReadyFireEater(Player player) {
-        GhituFireEater card = new GhituFireEater();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GhituFireEater());
     }
 }
