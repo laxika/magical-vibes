@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEff
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "STH", collectorNumber = "134")
+@CardRegistration(set = "H09", collectorNumber = "26")
 public class Heartstone extends Card {
 
     public Heartstone() {

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TolarianSerpent;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SawtoothOgre.class, StripedBears.class, TolarianSerpent.class})
 class SawtoothOgreTest extends BaseCardTest {
 
     @Test
@@ -21,26 +22,26 @@ class SawtoothOgreTest extends BaseCardTest {
     void becomesBlockedDamagesBlocker() {
         Permanent ogre = addCreatureReady(player1, new SawtoothOgre());
         ogre.setAttacking(true);
-        Permanent spider = addCreatureReady(player2, new GiantSpider()); // 2/4
+        Permanent blocker = addCreatureReady(player2, new StripedBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the becomes-blocked trigger
 
         assertThat(gd.getDelayedActions(DealDamageToPermanentAtEndOfCombat.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()) && a.damage() == 1);
-        assertThat(spider.getMarkedDamage()).isZero();
+                .anyMatch(a -> a.permanentId().equals(blocker.getId()) && a.damage() == 1);
+        assertThat(blocker.getMarkedDamage()).isZero();
 
         leaveEndOfCombat();
 
-        assertThat(spider.getMarkedDamage()).isEqualTo(1);
-        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Striped Bears");
     }
 
     @Test
     @DisplayName("When Sawtooth Ogre blocks, the attacker is dealt 1 damage at end of combat")
     void blocksDamagesAttacker() {
-        Permanent attacker = addCreatureReady(player1, new GiantSpider()); // 2/4
+        Permanent attacker = addCreatureReady(player1, new StripedBears());
         attacker.setAttacking(true);
         addCreatureReady(player2, new SawtoothOgre());
 
@@ -61,35 +62,55 @@ class SawtoothOgreTest extends BaseCardTest {
     void damagesEachBlocker() {
         Permanent ogre = addCreatureReady(player1, new SawtoothOgre());
         ogre.setAttacking(true);
-        Permanent spider = addCreatureReady(player2, new GiantSpider()); // 2/4
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears()); // 2/2
+        Permanent firstBlocker = addCreatureReady(player2, new StripedBears());
+        Permanent secondBlocker = addCreatureReady(player2, new StripedBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // one trigger per blocker
+        resolveAllTriggers();
 
         assertThat(gd.getDelayedActions(DealDamageToPermanentAtEndOfCombat.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()))
-                .anyMatch(a -> a.permanentId().equals(bears.getId()));
+                .anyMatch(a -> a.permanentId().equals(firstBlocker.getId()))
+                .anyMatch(a -> a.permanentId().equals(secondBlocker.getId()));
+
+        leaveEndOfCombat();
+
+        assertThat(firstBlocker.getMarkedDamage()).isEqualTo(1);
+        assertThat(secondBlocker.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Nothing is scheduled when Sawtooth Ogre neither blocks nor is blocked")
     void noDamageOutsideCombat() {
         addCreatureReady(player1, new SawtoothOgre());
-        Permanent spider = addCreatureReady(player2, new GiantSpider());
+        Permanent blocker = addCreatureReady(player2, new StripedBears());
 
         leaveEndOfCombat();
 
         assertThat(gd.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)).isFalse();
-        assertThat(spider.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The delayed damage still resolves if Sawtooth Ogre leaves during combat")
+    void delayedDamageSurvivesSourceLeaving() {
+        Permanent ogre = addCreatureReady(player1, new SawtoothOgre());
+        ogre.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new TolarianSerpent());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities(); // resolve the becomes-blocked trigger
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player1, "Sawtooth Ogre");
+        assertThat(blocker.getMarkedDamage()).isEqualTo(4);
     }
 
     private void leaveEndOfCombat() {
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
     }
 }

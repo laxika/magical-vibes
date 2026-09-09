@@ -21,7 +21,6 @@ class LoneWolfTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
         Permanent blocker = addCreatureReady(player2, new BloatedToad());
-
         loneWolf.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
@@ -42,7 +41,6 @@ class LoneWolfTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
         Permanent blocker = addCreatureReady(player2, new BloatedToad());
-
         loneWolf.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
@@ -52,7 +50,7 @@ class LoneWolfTest extends BaseCardTest {
         // Assign both damage to blocker instead of defending player
         harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2));
 
-        // Bloated Toad (2/2) takes 2 damage and dies
+        // Bloated Toad (2/2) takes 2 damage → dies
         harness.assertNotOnBattlefield(player2, "Bloated Toad");
         harness.assertInGraveyard(player2, "Bloated Toad");
         // Life unchanged since damage went to blocker
@@ -60,20 +58,31 @@ class LoneWolfTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Lone Wolf cannot split combat damage between its blocker and the player")
-    void cannotSplitDamageBetweenBlockerAndPlayer() {
+    @DisplayName("Unblocked Lone Wolf deals combat damage to defending player normally")
+    void unblockedLoneWolfDealsCombatDamageNormally() {
+        harness.setLife(player2, 20);
+        Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
+        loneWolf.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Blocked Lone Wolf cannot split damage between blocker and defending player")
+    void blockedLoneWolfCannotSplitDamageBetweenBlockerAndDefendingPlayer() {
         harness.setLife(player2, 20);
         Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
         Permanent blocker = addCreatureReady(player2, new BloatedToad());
-
         loneWolf.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
-        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0,
-                Map.of(blocker.getId(), 1, player2.getId(), 1)))
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(blocker.getId(), 1, player2.getId(), 1)))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

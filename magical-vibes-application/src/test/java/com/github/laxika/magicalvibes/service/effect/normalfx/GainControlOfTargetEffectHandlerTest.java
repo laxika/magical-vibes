@@ -351,7 +351,6 @@ class GainControlOfTargetEffectHandlerTest {
             GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD);
             StackEntry entry = entryWithTargetAndSource(card, player1Id, List.of(effect), target.getId(), sourceId);
 
-            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(null);
 
             handler.resolve(gd, entry, effect);
@@ -371,7 +370,6 @@ class GainControlOfTargetEffectHandlerTest {
             GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD);
             StackEntry entry = entryWithTargetAndSource(card, player1Id, List.of(effect), target.getId(), source.getId());
 
-            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
             when(gameQueryService.findPermanentController(gd, source.getId())).thenReturn(player2Id);
 

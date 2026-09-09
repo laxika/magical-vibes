@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TMT", collectorNumber = "36")
+@CardRegistration(set = "TMT", collectorNumber = "216")
+@CardRegistration(set = "TMT", collectorNumber = "302")
 public class DonatelloMutantMechanic extends Card {
 
     public DonatelloMutantMechanic() {

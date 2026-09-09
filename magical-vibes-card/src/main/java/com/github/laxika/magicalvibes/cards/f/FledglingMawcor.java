@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "63")
+@CardRegistration(set = "DD2", collectorNumber = "10")
 public class FledglingMawcor extends Card {
 
     public FledglingMawcor() {

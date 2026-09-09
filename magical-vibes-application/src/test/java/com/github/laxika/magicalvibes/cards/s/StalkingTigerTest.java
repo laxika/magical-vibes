@@ -50,6 +50,20 @@ class StalkingTigerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Stalking Tiger can remain unblocked")
+    void canRemainUnblocked() {
+        Permanent attacker = addCreatureReady(player1, new StalkingTiger());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
     @DisplayName("Each Stalking Tiger can be blocked by one creature")
     void eachAttackerCanBeBlockedByOneCreature() {
         Permanent firstAttacker = addCreatureReady(player1, new StalkingTiger());

@@ -38,7 +38,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         var e = (GainControlOfTargetEffect) effect;
         switch (e.duration()) {
             case PERMANENT -> resolvePermanent(gameData, entry, e);
-            case END_OF_TURN -> resolveEndOfTurn(gameData, entry, e);
+            case END_OF_TURN, UNTIL_END_OF_YOUR_NEXT_TURN -> resolveTemporary(gameData, entry, e);
             case WHILE_SOURCE_ON_BATTLEFIELD -> resolveWhileSource(gameData, entry, e, true, false);
             case WHILE_SOURCE_TAPPED -> resolveWhileSource(gameData, entry, e, true, true);
             case WHILE_SOURCE_REMAINS -> resolveWhileSource(gameData, entry, e, false, false);
@@ -66,7 +66,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    private void resolveEndOfTurn(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
+    private void resolveTemporary(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
         List<UUID> targetIds = entry.targetsForEffect(e);
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
@@ -90,9 +90,6 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
 
     private void resolveWhileSource(GameData gameData, StackEntry entry, GainControlOfTargetEffect e,
                                     boolean requireSourceController, boolean requireSourceTapped) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) return;
-
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) return;
 
@@ -120,13 +117,22 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                e, e.duration().toEffectDuration(), sourcePermanentId, entry.getCard().getName());
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) continue;
 
-        // Merieke Ri Berit: "destroy that creature" fires after the control effect has already been
-        // expired (source left or untapped), so the stolen permanent is remembered on the source.
-        if (e.linkStolenPermanentToSource()) {
-            source.setChosenPermanentId(target.getId());
+            creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
+                    e, e.duration().toEffectDuration(), sourcePermanentId, entry.getCard().getName());
+
+            // Merieke Ri Berit: "destroy that creature" fires after the control effect has already been
+            // expired (source left or untapped), so the stolen permanent is remembered on the source.
+            if (e.linkStolenPermanentToSource()) {
+                source.setChosenPermanentId(target.getId());
+            }
         }
     }
 }

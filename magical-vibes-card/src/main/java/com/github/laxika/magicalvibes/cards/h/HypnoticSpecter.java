@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "100")
 @CardRegistration(set = "9ED", collectorNumber = "141")
 @CardRegistration(set = "4ED", collectorNumber = "142")
+@CardRegistration(set = "3ED", collectorNumber = "115")
 @CardRegistration(set = "ATH", collectorNumber = "24")
 @CardRegistration(set = "SUM", collectorNumber = "115")
 public class HypnoticSpecter extends Card {

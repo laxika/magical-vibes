@@ -107,7 +107,7 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
             }
         }
 
-        graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
+        int returnedCount = graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
                 entry.getTargetCardIdsForEffect(effect),
                 (graveyard, card) -> {
                     UUID graveyardOwnerId = findGraveyardOwner(gameData, graveyard, card);
@@ -118,6 +118,9 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
                             gameData, graveyardOwnerId, handOwnerId, card);
                 },
                 " returns ", " from graveyard to hand.");
+        if (e.recordsReturnedCount()) {
+            entry.setEventValue(returnedCount);
+        }
     }
 
     private void resolveOpponentChoice(GameData gameData, StackEntry entry,

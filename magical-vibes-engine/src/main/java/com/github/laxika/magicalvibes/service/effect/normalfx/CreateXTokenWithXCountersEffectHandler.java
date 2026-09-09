@@ -31,8 +31,14 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateXTokenWithXCountersEffect) effect;
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         int counterAmount = amountEvaluationService.evaluate(
-                gameData, e.counterAmount(), AmountContext.forStackEntry(entry, null));
+                gameData, e.counterAmount(), AmountContext.forStackEntry(entry, source));
         if (counterAmount < 0) {
             return;
         }

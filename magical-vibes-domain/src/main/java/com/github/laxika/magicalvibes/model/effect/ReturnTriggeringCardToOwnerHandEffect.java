@@ -12,9 +12,9 @@ import java.util.UUID;
  *
  * <p>Card definitions use the no-arg ctor; both fields are bound at trigger time. {@code dyingCardId}
  * is bound via {@link DyingCreatureCardAwareEffect} in the ally-creature-dies path, and the
- * any-permanent-graveyard collector bakes both ids directly.
+ * other trigger collectors bake both ids directly.
  *
- * @param dyingCardId the card ID of the permanent that died ({@code null} in the card definition)
+ * @param dyingCardId the card ID to return ({@code null} in the card definition)
  * @param handOwnerId the player whose graveyard is searched and whose hand receives the card;
  *                    {@code null} means the ability controller (Enduring Renewal's "your hand")
  */

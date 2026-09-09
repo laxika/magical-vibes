@@ -40,7 +40,7 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
 
         StackEntry targetEntry = null;
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getCard().getId().equals(targetCardId)
+            if (stackEntry.getTargetableId().equals(targetCardId)
                     && Set.of(StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY)
                     .contains(stackEntry.getEntryType())) {
                 targetEntry = stackEntry;
@@ -51,14 +51,14 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
             log.info("Game {} - Copy target ability no longer on stack", gameData.id);
             return;
         }
-        if (targetEntry.getCard().isCantBeCopied()) {
+        if (targetEntry.getCard() != null && targetEntry.getCard().isCantBeCopied()) {
             log.info("Game {} - Target ability cannot be copied", gameData.id);
             return;
         }
 
         UUID copyControllerId = entry.getControllerId();
         for (int i = 0; i < entry.getXValue(); i++) {
-            Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
+            Card copyCard = targetEntry.getCard() == null ? null : copySupport.createCopyCard(targetEntry.getCard());
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
             copyEntry.setTargetFilter(targetEntry.getTargetFilter());
@@ -74,9 +74,8 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
 
             copySupport.addCopyToStack(gameData, copyEntry);
 
-            gameLogService.append(gameData, GameLog.textCardText(
-                    "A copy of ", targetEntry.getCard(), "'s ability is created."));
-            log.info("Game {} - copy of {}'s ability created", gameData.id, targetEntry.getCard().getName());
+            gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
+            log.info("Game {} - copy of {}'s ability created", gameData.id, targetEntry.getDescription());
 
             boolean singleTarget = targetEntry.getTargetId() != null
                     && (targetEntry.getTargetIds() == null || targetEntry.getTargetIds().size() <= 1)
@@ -87,8 +86,8 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
                         copyControllerId,
                         List.of(new CopyAbilityRetargetEffect()),
                         "Choose a new target for the copy of "
-                                + targetEntry.getCard().getName() + "'s ability?",
-                        copyCard.getId());
+                                + targetEntry.getDescription() + "'s ability?",
+                        copyEntry.getTargetableId());
                 gameData.pendingMayAbilities.addFirst(retargetAbility);
             }
         }

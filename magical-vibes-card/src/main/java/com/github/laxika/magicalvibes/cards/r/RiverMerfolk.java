@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "24")
 @CardRegistration(set = "FEM", collectorNumber = "144")
+@CardRegistration(set = "ME1", collectorNumber = "47")
 public class RiverMerfolk extends Card {
 
     public RiverMerfolk() {

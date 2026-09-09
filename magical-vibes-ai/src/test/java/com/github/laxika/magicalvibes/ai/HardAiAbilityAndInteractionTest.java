@@ -1225,7 +1225,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI sacs fodder to Viscera Seer for Scry before Wrath of God resolves")
     void sacrificesToVisceraSeerBeforeBoardWipe() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        pinLibrariesAndHands();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -1248,8 +1249,6 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
         gd.playerBattlefields.get(player1.getId()).add(ornithopter);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        harness.setHand(player1, List.of());
-
         ai.handleEvent(AiDecisionKind.GAME_STATE);
         if (gd.interaction.isAwaitingInput()) {
             ai.handleEvent(AiDecisionKind.INTERACTION);
@@ -1270,7 +1269,8 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @Test
     @DisplayName("Hard AI does not sac a healthy flyer to Viscera Seer for Scry with empty stack")
     void doesNotSacrificeToVisceraSeerWithEmptyStack() {
-        HardAiDecisionEngine ai = createHardAi(player1);
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        pinLibrariesAndHands();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
@@ -1286,8 +1286,6 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
         ornithopter.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(seer);
         gd.playerBattlefields.get(player1.getId()).add(ornithopter);
-
-        harness.setHand(player1, List.of());
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 

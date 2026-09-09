@@ -119,7 +119,7 @@ public class StaticEffectSupport {
         }
         if (scope == GrantScope.SELF_AND_PAIRED) {
             UUID pairedId = context.source().getPairedWithId();
-            return context.target().getId().equals(context.source().getId())
+            return context.target().getId().equals(context.sourceId())
                     || (pairedId != null && context.target().getId().equals(pairedId));
         }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
@@ -134,7 +134,7 @@ public class StaticEffectSupport {
                 || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
             if ((scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_CREATURES)
-                    && context.target().getId().equals(context.source().getId())) {
+                    && context.target().getId().equals(context.sourceId())) {
                 return false;
             }
             boolean ownCheck = scope == GrantScope.ALL_CREATURES
@@ -174,14 +174,22 @@ public class StaticEffectSupport {
 
     public boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
         if (permanent.isFaceDown()) return true;
-        if (permanent.getCard().hasType(CardType.CREATURE)) return true;
+        CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
+        if (activeState != null && activeState.hasCardType(CardType.CREATURE)) return true;
+        if (activeState == null && permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
-        if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
-        if (gameData != null && permanent.getCard().hasType(CardType.LAND)
+        boolean artifact = activeState != null
+                ? activeState.hasCardType(CardType.ARTIFACT)
+                : permanent.getCard().hasType(CardType.ARTIFACT);
+        if (hasAnimateArtifacts && artifact) return true;
+        boolean land = activeState != null
+                ? activeState.hasCardType(CardType.LAND)
+                : permanent.getCard().hasType(CardType.LAND);
+        if (gameData != null && land
                 && matchesAnimateLand(gameData, permanent)) return true;
         if (gameData != null && gameQueryService.isAnimatedByStarfield(gameData, permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
@@ -214,7 +222,7 @@ public class StaticEffectSupport {
                         ? 1
                         : (boost.scalingCounterOnTarget()
                                 ? context.target().getCounterCount(boost.scalingCounter())
-                                : context.source().getCounterCount(boost.scalingCounter()));
+                                : context.sourceCounterCount(boost.scalingCounter()));
                 accumulator.addPower(boost.powerBoost() * multiplier);
                 accumulator.addToughness(boost.toughnessBoost() * multiplier);
                 accumulator.addKeywords(boost.grantedKeywords());
@@ -240,7 +248,7 @@ public class StaticEffectSupport {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
                     || grant.scope() == GrantScope.ALL_OWN_CREATURES
                     || grant.scope() == GrantScope.OWN_PERMANENTS) {
-                accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
+                accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
             }
         } else if (wrapped instanceof GrantColorEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
@@ -324,7 +332,7 @@ public class StaticEffectSupport {
      */
     private static FilterContext filterContextOf(StaticEffectContext context) {
         return FilterContext.of(context.gameData())
-                .withSourceCardId(context.source().getCard().getId())
+                .withSourceCardId(context.sourceCard().getId())
                 .withSourceControllerId(context.sourceControllerId())
                 .withSourcePermanentSnapshot(context.source());
     }

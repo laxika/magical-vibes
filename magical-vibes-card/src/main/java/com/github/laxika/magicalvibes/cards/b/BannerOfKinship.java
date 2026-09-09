@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "127")
+@CardRegistration(set = "FDN", collectorNumber = "352")
+@CardRegistration(set = "FDN", collectorNumber = "413")
+@CardRegistration(set = "FDN", collectorNumber = "484")
 public class BannerOfKinship extends Card {
 
     public BannerOfKinship() {

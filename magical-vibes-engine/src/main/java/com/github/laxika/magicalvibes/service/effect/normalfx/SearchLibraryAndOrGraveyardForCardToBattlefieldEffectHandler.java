@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -103,11 +104,16 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
         pool.addAll(graveyardMatches);
         pool.addAll(handMatches);
         UUID attachToPermanentId = effect.attachToSource() ? entry.getSourcePermanentId() : null;
+        CounterType enterWithCounterType = effect.enterWithCounters() == null
+                ? null : effect.enterWithCounters().type();
+        int enterWithCounterCount = effect.enterWithCounters() == null ? 0
+                : amountEvaluationService.evaluate(gameData, effect.enterWithCounters().count(),
+                AmountContext.forStackEntry(entry, null));
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.SearchLibraryAndOrGraveyardChoice(
                 controllerId, pool, new HashSet<>(libraryMatches.stream().map(Card::getId).toList()),
-                new HashSet<>(handMatches.stream().map(Card::getId).toList()),
+                new HashSet<>(handMatches.stream().map(Card::getId).toList()), new HashSet<>(),
                 librarySearchAllowed, description, LibrarySearchDestination.BATTLEFIELD,
-                attachToPermanentId));
+                attachToPermanentId, enterWithCounterType, enterWithCounterCount));
         gameLogService.append(gameData, GameLog.text(playerName + " searches their library and/or graveyard."));
         log.info("Game {} - {} searches library and/or graveyard for a card to battlefield", gameData.id, playerName);
     }

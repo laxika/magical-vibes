@@ -46,6 +46,30 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class CombatBlockServiceTest extends BaseCardTest {
 
+    @Test
+    @com.github.laxika.magicalvibes.testutil.CardUsed({
+            com.github.laxika.magicalvibes.cards.j.JabarisBanner.class, GrizzlyBears.class, HillGiant.class})
+    void separateFlankingGrantsEachReduceTheBlocker() {
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JabarisBanner());
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JabarisBanner());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+        enterDeclareBlockers();
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(defenderIndex(blocker), attackerIndex(attacker))));
+        resolveAllTriggers();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(1);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+    }
+
     private CombatBlockService service() {
         return GameTestEngineContext.get().getBean(CombatBlockService.class);
     }

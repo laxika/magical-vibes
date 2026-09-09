@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,13 +13,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PlantElemental.class, Forest.class})
 class PlantElementalTest extends BaseCardTest {
-
-    private long forestsControlledBy(UUID playerId) {
-        return gd.playerBattlefields.get(playerId).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .count();
-    }
 
     private void castPlantElemental() {
         harness.setHand(player1, List.of(new PlantElemental()));
@@ -61,7 +57,21 @@ class PlantElementalTest extends BaseCardTest {
 
         // The lone Forest is sacrificed without a further choice; Plant Elemental stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(forestsControlledBy(player1.getId())).isEqualTo(0);
+        assertThat(countPermanents(player1, "Forest")).isZero();
+        harness.assertOnBattlefield(player1, "Plant Elemental");
+    }
+
+    @Test
+    @DisplayName("Accepting can sacrifice a tapped Forest")
+    void acceptWithTappedForest() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.tapPermanent(player1, 0);
+        castPlantElemental();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countPermanents(player1, "Forest")).isZero();
         harness.assertOnBattlefield(player1, "Plant Elemental");
     }
 
@@ -85,7 +95,7 @@ class PlantElementalTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, forestIds);
 
         // One Forest sacrificed, one remains; Plant Elemental stays.
-        assertThat(forestsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Plant Elemental");
     }
 
@@ -99,7 +109,7 @@ class PlantElementalTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Plant Elemental");
         harness.assertInGraveyard(player1, "Plant Elemental");
-        assertThat(forestsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
     }
 
     @Test
@@ -111,6 +121,6 @@ class PlantElementalTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Plant Elemental");
         harness.assertInGraveyard(player1, "Plant Elemental");
-        assertThat(forestsControlledBy(player2.getId())).isEqualTo(1);
+        assertThat(countPermanents(player2, "Forest")).isEqualTo(1);
     }
 }

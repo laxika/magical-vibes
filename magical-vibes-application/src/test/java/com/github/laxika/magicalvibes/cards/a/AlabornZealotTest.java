@@ -3,10 +3,9 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,31 +13,24 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AlabornZealot.class, AlabornTrooper.class})
 class AlabornZealotTest extends BaseCardTest {
 
     private Permanent addZealotBlocker() {
-        Permanent zealotPerm = new Permanent(new AlabornZealot());
-        zealotPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(zealotPerm);
-        return zealotPerm;
+        return addCreatureReady(player2, new AlabornZealot());
     }
 
     private Permanent addAttacker(int power, int toughness) {
-        GrizzlyBears creature = new GrizzlyBears();
+        AlabornTrooper creature = new AlabornTrooper();
         creature.setPower(power);
         creature.setToughness(toughness);
-        Permanent atkPerm = new Permanent(creature);
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, creature);
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         return atkPerm;
     }
 
     private void declareZealotBlock() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
 
@@ -53,6 +45,7 @@ class AlabornZealotTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(entry.isNonTargeting()).isTrue();
         assertThat(entry.getTargetId()).isEqualTo(atkPerm.getId());
         assertThat(entry.getSourcePermanentId()).isEqualTo(zealotPerm.getId());
     }
@@ -66,9 +59,9 @@ class AlabornZealotTest extends BaseCardTest {
         declareZealotBlock();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Alaborn Trooper");
         harness.assertInGraveyard(player2, "Alaborn Zealot");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Alaborn Trooper");
         harness.assertNotOnBattlefield(player2, "Alaborn Zealot");
     }
 
@@ -82,15 +75,41 @@ class AlabornZealotTest extends BaseCardTest {
         declareZealotBlock();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The trigger still destroys the attacker if Alaborn Zealot leaves before resolution")
+    void triggerDestroysAttackerIfZealotLeavesBeforeResolution() {
+        Permanent zealotPerm = addZealotBlocker();
+        addAttacker(2, 2);
+
+        declareZealotBlock();
+        gd.playerBattlefields.get(player2.getId()).remove(zealotPerm);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Alaborn Trooper");
+        harness.assertNotOnBattlefield(player1, "Alaborn Trooper");
+    }
+
+    @Test
+    @DisplayName("The trigger still destroys Alaborn Zealot if the attacker leaves before resolution")
+    void triggerDestroysZealotIfAttackerLeavesBeforeResolution() {
+        addZealotBlocker();
+        Permanent attacker = addAttacker(2, 2);
+
+        declareZealotBlock();
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Alaborn Zealot");
+        harness.assertNotOnBattlefield(player2, "Alaborn Zealot");
     }
 
     @Test
     @DisplayName("A normal creature blocking does not push any trigger onto the stack")
     void normalCreatureDoesNotTriggerOnBlock() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new AlabornTrooper());
         addAttacker(2, 2);
 
         declareZealotBlock();

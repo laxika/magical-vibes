@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "FEM", collectorNumber = "34b")
 @CardRegistration(set = "FEM", collectorNumber = "34c")
 @CardRegistration(set = "FEM", collectorNumber = "34d")
+@CardRegistration(set = "ME1", collectorNumber = "59")
 public class BasalThrull extends Card {
 
     public BasalThrull() {

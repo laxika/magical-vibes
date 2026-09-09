@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "87")
+@CardRegistration(set = "ME1", collectorNumber = "42")
 public class MysticRemora extends Card {
 
     public MysticRemora() {

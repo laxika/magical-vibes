@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "111")
+@CardRegistration(set = "FDN", collectorNumber = "339")
+@CardRegistration(set = "FDN", collectorNumber = "401")
+@CardRegistration(set = "FDN", collectorNumber = "473")
 public class QuilledGreatwurm extends Card {
 
     public QuilledGreatwurm() {

@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
+import com.github.laxika.magicalvibes.cards.d.DeathcoilWurm;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Wildfire.class, AlabornTrooper.class, DeathcoilWurm.class, Forest.class, Mountain.class})
 class WildfireTest extends BaseCardTest {
 
     private void addLands(int count) {
@@ -28,9 +29,7 @@ class WildfireTest extends BaseCardTest {
     }
 
     private void castWildfire() {
-        harness.setHand(player1, List.of(new Wildfire()));
-        harness.addMana(player1, ManaColor.RED, 6);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Wildfire(), "{4}{R}{R}");
         harness.passBothPriorities();
     }
 
@@ -72,14 +71,12 @@ class WildfireTest extends BaseCardTest {
         for (int i = 0; i < 4; i++) {
             harness.addToBattlefield(player1, new Mountain());
         }
-        for (int i = 0; i < 5; i++) {
+        harness.addToBattlefield(player2, new Mountain());
+        for (int i = 0; i < 4; i++) {
             harness.addToBattlefield(player2, new Forest());
         }
 
-        harness.setHand(player1, List.of(new Wildfire()));
-        harness.addMana(player1, ManaColor.RED, 6);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        castWildfire();
 
         GameData gd = harness.getGameData();
         PendingInteraction.MultiPermanentChoice choice =
@@ -91,26 +88,28 @@ class WildfireTest extends BaseCardTest {
 
         List<UUID> toSacrifice = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Forest"))
-                .limit(4)
                 .map(Permanent::getId)
                 .toList();
         harness.handleMultiplePermanentsChosen(player2, toSacrifice);
 
         assertThat(landCount(player2)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Mountain");
     }
 
     @Test
     @DisplayName("Deals 4 damage to each creature, killing small creatures and sparing large ones")
     void dealsFourDamageToEachCreature() {
         addLands(4);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new AvatarOfMight());
+        harness.addToBattlefield(player1, new AlabornTrooper());
+        harness.addToBattlefield(player2, new AlabornTrooper());
+        harness.addToBattlefield(player2, new DeathcoilWurm());
 
         castWildfire();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Avatar of Might");
+        harness.assertNotOnBattlefield(player1, "Alaborn Trooper");
+        harness.assertNotOnBattlefield(player2, "Alaborn Trooper");
+        harness.assertOnBattlefield(player2, "Deathcoil Wurm");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

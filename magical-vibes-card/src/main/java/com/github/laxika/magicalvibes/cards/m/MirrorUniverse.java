@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "287")
+@CardRegistration(set = "ME1", collectorNumber = "159")
 public class MirrorUniverse extends Card {
 
     public MirrorUniverse() {

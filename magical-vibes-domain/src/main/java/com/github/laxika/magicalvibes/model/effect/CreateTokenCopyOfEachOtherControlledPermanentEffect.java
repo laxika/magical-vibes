@@ -7,6 +7,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * supplied filter, excluding the source permanent. Matching permanents are captured before any
  * tokens are created, so the new tokens are not copied by the same effect.
  */
-public record CreateTokenCopyOfEachOtherControlledPermanentEffect(PermanentPredicate filter)
+public record CreateTokenCopyOfEachOtherControlledPermanentEffect(
+        PermanentPredicate filter, CreateTokenCopyOfTargetPermanentEffect copyEffect)
         implements CardEffect {
+
+    public CreateTokenCopyOfEachOtherControlledPermanentEffect(PermanentPredicate filter) {
+        this(filter, new CreateTokenCopyOfTargetPermanentEffect());
+    }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "44")
+@CardRegistration(set = "DDC", collectorNumber = "41")
 public class CacklingImp extends Card {
 
     public CacklingImp() {

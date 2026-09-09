@@ -178,7 +178,7 @@ public class ExileCastTargetSupport {
 
         if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {
             for (var stackEntry : gameData.stack) {
-                UUID targetId = stackEntry.getCard().getId();
+                UUID targetId = stackEntry.getTargetableId();
                 if (targetLegalityService.checkSpellTargetOnStack(
                         gameData, targetId, card.getTargetFilter(), controllerId).isEmpty()) {
                     validTargets.add(targetId);

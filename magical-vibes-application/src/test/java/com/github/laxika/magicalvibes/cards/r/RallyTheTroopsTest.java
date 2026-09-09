@@ -1,19 +1,19 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RallyTheTroops.class, AlabornTrooper.class, Plains.class})
 class RallyTheTroopsTest extends BaseCardTest {
 
     @Test
@@ -23,29 +23,28 @@ class RallyTheTroopsTest extends BaseCardTest {
         addAttackerTargeting(player1, player2);
         Permanent tapped1 = tappedCreature(player2);
         Permanent tapped2 = tappedCreature(player2);
-        harness.setHand(player2, List.of(new RallyTheTroops()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
+        Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new Plains());
+        tappedLand.tap();
+        Permanent opponentCreature = tappedCreature(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new RallyTheTroops(), "{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(tapped1.isTapped()).isFalse();
         assertThat(tapped2.isTapped()).isFalse();
+        assertThat(tappedLand.isTapped()).isTrue();
+        assertThat(opponentCreature.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Cannot cast during declare attackers if not attacked")
     void cannotCastWhenNotAttacked() {
         harness.forceActivePlayer(player1);
-        addAttackerTargeting(player1, player1);
-        tappedCreature(player2);
-        harness.setHand(player2, List.of(new RallyTheTroops()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player2, new RallyTheTroops(), "{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -55,30 +54,23 @@ class RallyTheTroopsTest extends BaseCardTest {
     void cannotCastOutsideDeclareAttackers() {
         harness.forceActivePlayer(player1);
         addAttackerTargeting(player1, player2);
-        tappedCreature(player2);
-        harness.setHand(player2, List.of(new RallyTheTroops()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player2, new RallyTheTroops(), "{W}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
 
     private Permanent addAttackerTargeting(Player attackerController, Player defender) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(attackerController, new AlabornTrooper());
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(attackerController.getId()).add(perm);
         return perm;
     }
 
     private Permanent tappedCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new AlabornTrooper());
         perm.tap();
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

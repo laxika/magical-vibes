@@ -178,6 +178,7 @@ public class CombatService {
     public void clearCombatState(GameData gameData) {
         gameData.forEachBattlefield((playerId, battlefield) ->
                 battlefield.forEach(Permanent::clearCombatState));
+        gameData.declaredAttackerIdsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatDamagePendingIndices.clear();
         gameData.combatDamageBlockerAssignments.clear();

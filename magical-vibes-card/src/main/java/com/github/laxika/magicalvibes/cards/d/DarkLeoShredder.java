@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TMT", collectorNumber = "142")
+@CardRegistration(set = "TMT", collectorNumber = "220")
+@CardRegistration(set = "TMT", collectorNumber = "289")
+@CardRegistration(set = "TMT", collectorNumber = "299")
 public class DarkLeoShredder extends Card {
 
     public DarkLeoShredder() {

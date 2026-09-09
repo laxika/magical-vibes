@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestO
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "112")
+@CardRegistration(set = "FDN", collectorNumber = "341")
+@CardRegistration(set = "FDN", collectorNumber = "402")
+@CardRegistration(set = "FDN", collectorNumber = "474")
 public class SpinnerOfSouls extends Card {
 
     public SpinnerOfSouls() {

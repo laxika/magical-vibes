@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "126")
 @CardRegistration(set = "TPR", collectorNumber = "206")
+@CardRegistration(set = "H09", collectorNumber = "13")
 public class AcidicSliver extends Card {
 
     public AcidicSliver() {

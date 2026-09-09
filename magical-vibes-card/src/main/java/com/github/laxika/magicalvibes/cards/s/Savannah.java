@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "SUM", collectorNumber = "285")
+@CardRegistration(set = "3ED", collectorNumber = "285")
 public class Savannah extends Card {
 
     public Savannah() {

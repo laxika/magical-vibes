@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "216")
+@CardRegistration(set = "ME1", collectorNumber = "141")
 public class AdunOakenshield extends Card {
 
     public AdunOakenshield() {

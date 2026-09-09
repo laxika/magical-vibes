@@ -193,8 +193,10 @@ public class MultiPermanentChoiceHandlerService {
         UUID playerId = player.getId();
         List<UUID> validIds = multiPermanentChoice.validIds();
         List<UUID> validPlayerIds = multiPermanentChoice.validPlayerIds();
+        List<UUID> validCardIds = multiPermanentChoice.validCardIds();
         Set<UUID> validSelectionIds = new HashSet<>(validIds);
         validSelectionIds.addAll(validPlayerIds);
+        validSelectionIds.addAll(validCardIds);
         int maxCount = multiPermanentChoice.maxCount();
 
         if (permanentIds == null) {
@@ -237,6 +239,12 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand choice
+                && choice.requiredCount() > 0
+                && permanentIds.size() != choice.requiredCount()) {
+            throw new IllegalStateException("Exactly " + choice.requiredCount()
+                    + " permanents must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsPermanent
                 && permanentIds.size() != 1) {
@@ -529,6 +537,8 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
             abilityActivationService.completeActivatedAbilityExileArtifactsCostChoice(
                     gameData, player, exileArtifactsContext, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup ctx) {
+            triggerHandler.handleEtbPlayerTargetGroup(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets ctx) {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {
@@ -1716,7 +1726,9 @@ public class MultiPermanentChoiceHandlerService {
         CardEffect branch = sacrificed == context.requiredCount()
                 ? context.sacrificedEffect()
                 : context.elseEffect();
-        entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(branch));
+        if (branch != null) {
+            entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(branch));
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
