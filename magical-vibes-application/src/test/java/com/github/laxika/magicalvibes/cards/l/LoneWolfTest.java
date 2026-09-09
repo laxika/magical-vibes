@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.b.BearCub;
+import com.github.laxika.magicalvibes.cards.b.BloatedToad;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +12,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LoneWolf.class, BearCub.class})
+@CardUsed({LoneWolf.class, BloatedToad.class})
 class LoneWolfTest extends BaseCardTest {
 
     @Test
@@ -20,7 +20,7 @@ class LoneWolfTest extends BaseCardTest {
     void blockedLoneWolfAssignsDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
         Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
-        Permanent blocker = addCreatureReady(player2, new BearCub());
+        Permanent blocker = addCreatureReady(player2, new BloatedToad());
         loneWolf.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
@@ -32,7 +32,7 @@ class LoneWolfTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         // Blocker survives since no damage was assigned to it
-        harness.assertOnBattlefield(player2, "Bear Cub");
+        harness.assertOnBattlefield(player2, "Bloated Toad");
     }
 
     @Test
@@ -40,7 +40,7 @@ class LoneWolfTest extends BaseCardTest {
     void blockedLoneWolfAssignsDamageToBlocker() {
         harness.setLife(player2, 20);
         Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
-        Permanent blocker = addCreatureReady(player2, new BearCub());
+        Permanent blocker = addCreatureReady(player2, new BloatedToad());
         loneWolf.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
@@ -50,9 +50,9 @@ class LoneWolfTest extends BaseCardTest {
         // Assign both damage to blocker instead of defending player
         harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2));
 
-        // Bear Cub (2/2) takes 2 damage → dies
-        harness.assertNotOnBattlefield(player2, "Bear Cub");
-        harness.assertInGraveyard(player2, "Bear Cub");
+        // Bloated Toad (2/2) takes 2 damage → dies
+        harness.assertNotOnBattlefield(player2, "Bloated Toad");
+        harness.assertInGraveyard(player2, "Bloated Toad");
         // Life unchanged since damage went to blocker
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -74,7 +74,7 @@ class LoneWolfTest extends BaseCardTest {
     void blockedLoneWolfCannotSplitDamageBetweenBlockerAndDefendingPlayer() {
         harness.setLife(player2, 20);
         Permanent loneWolf = addCreatureReady(player1, new LoneWolf());
-        Permanent blocker = addCreatureReady(player2, new BearCub());
+        Permanent blocker = addCreatureReady(player2, new BloatedToad());
         loneWolf.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);

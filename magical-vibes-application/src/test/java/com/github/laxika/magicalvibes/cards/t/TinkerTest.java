@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MyrRetriever;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.Crawlspace;
+import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.g.GrimMonolith;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Tinker.class, Crawlspace.class, GiantCockroach.class, GrimMonolith.class})
 class TinkerTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class TinkerTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.assertNotOnBattlefield(player1, artifact.getCard().getName());
-        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Grim Monolith");
     }
 
     @Test
@@ -40,7 +40,7 @@ class TinkerTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards())
                 .allMatch(c -> c.hasType(CardType.ARTIFACT))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+                .noneMatch(c -> c.getName().equals("Giant Cockroach"));
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
         assertThat(search.params().canFailToFind()).isTrue();
     }
@@ -51,14 +51,28 @@ class TinkerTest extends BaseCardTest {
         castTinker();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Myr Retriever"));
+                .anyMatch(p -> p.getCard().getName().equals("Crawlspace"));
         assertThat(gd.playerDecks.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Myr Retriever"));
+                .noneMatch(c -> c.getName().equals("Crawlspace"));
         harness.assertInGraveyard(player1, "Tinker");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can fail to find an artifact and still finish resolving")
+    void canFailToFindArtifact() {
+        castTinker();
+        harness.setLibrary(player1, List.of(new GiantCockroach()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Tinker");
+        harness.assertNotOnBattlefield(player1, "Crawlspace");
     }
 
     @Test
@@ -75,8 +89,7 @@ class TinkerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice a nonartifact permanent")
     void cannotSacrificeNonartifactPermanent() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
 
         harness.setHand(player1, List.of(new Tinker()));
         addTinkerMana();
@@ -85,17 +98,26 @@ class TinkerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot sacrifice an artifact controlled by the opponent")
+    void cannotSacrificeOpponentsArtifact() {
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new GrimMonolith());
+
+        harness.setHand(player1, List.of(new Tinker()));
+        addTinkerMana();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, opponentArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent castTinker() {
-        Permanent artifact = new Permanent(new Ornithopter());
-        gd.playerBattlefields.get(player1.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GrimMonolith());
 
         harness.setHand(player1, List.of(new Tinker()));
         addTinkerMana();
         harness.castSorceryWithSacrifice(player1, 0, artifact.getId());
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new MyrRetriever(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Crawlspace(), new GiantCockroach()));
         return artifact;
     }
 

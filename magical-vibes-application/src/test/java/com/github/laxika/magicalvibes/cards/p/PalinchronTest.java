@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.t.TreetopVillage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Palinchron.class, TreetopVillage.class, GiantCockroach.class})
 class PalinchronTest extends BaseCardTest {
 
     @Test
@@ -48,7 +50,7 @@ class PalinchronTest extends BaseCardTest {
     @DisplayName("Palinchron does not offer non-land permanents to untap")
     void doesNotOfferNonLands() {
         Permanent land = addTappedLands(player2, 1).getFirst();
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantCockroach());
         creature.tap();
 
         castPalinchron();
@@ -57,6 +59,24 @@ class PalinchronTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactly(land.getId());
+    }
+
+    @Test
+    @DisplayName("Palinchron may untap fewer than seven lands")
+    void mayUntapFewerThanSevenLands() {
+        Permanent land = addTappedLands(player1, 1).getFirst();
+
+        castPalinchron();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -73,10 +93,7 @@ class PalinchronTest extends BaseCardTest {
     }
 
     private void castPalinchron() {
-        harness.setHand(player1, List.of(new Palinchron()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Palinchron(), "{5}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -84,7 +101,7 @@ class PalinchronTest extends BaseCardTest {
     private List<Permanent> addTappedLands(Player player, int count) {
         List<Permanent> lands = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            Permanent land = harness.addToBattlefieldAndReturn(player, new Forest());
+            Permanent land = harness.addToBattlefieldAndReturn(player, new TreetopVillage());
             land.tap();
             lands.add(land);
         }

@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "MIR", collectorNumber = "181")
 @CardRegistration(set = "8ED", collectorNumber = "193")
 @CardRegistration(set = "6ED", collectorNumber = "188")
+@CardRegistration(set = "PD2", collectorNumber = "23")
 public class HammerOfBogardan extends Card {
 
     public HammerOfBogardan() {
