@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PegasusStampede.class, Forest.class})
 class PegasusStampedeTest extends BaseCardTest {
 
     @Test
@@ -23,12 +28,35 @@ class PegasusStampedeTest extends BaseCardTest {
         cast(false, land);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
-        Permanent token = findPermanentByName(player1, "Pegasus");
+        Permanent token = findPermanent(player1, "Pegasus");
         assertThat(token.getEffectivePower()).isEqualTo(1);
         assertThat(token.getEffectiveToughness()).isEqualTo(1);
         assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
-        assertThat(graveyardNames(player1)).containsExactly("Pegasus Stampede");
+        harness.assertInGraveyard(player1, "Pegasus Stampede");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can decline buyback without controlling a land")
+    void canDeclineBuybackWithoutLand() {
+        harness.castFromHand(player1, new PegasusStampede(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Pegasus Stampede");
+        assertThat(findPermanents(player1, "Pegasus")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Creates a white Pegasus creature token")
+    void createsWhitePegasusCreatureToken() {
+        Permanent land = addLand(player1);
+        cast(false, land);
+
+        Permanent token = findPermanent(player1, "Pegasus");
+        assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.PEGASUS);
     }
 
     @Test
@@ -38,13 +66,14 @@ class PegasusStampedeTest extends BaseCardTest {
         cast(true, land);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(land::equals);
-        assertThat(findPermanentByName(player1, "Pegasus")).satisfies(token -> {
+        assertThat(findPermanent(player1, "Pegasus")).satisfies(token -> {
             assertThat(token.getEffectivePower()).isEqualTo(1);
             assertThat(token.getEffectiveToughness()).isEqualTo(1);
             assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
         });
-        assertThat(handNames(player1)).containsExactly("Pegasus Stampede");
-        assertThat(graveyardNames(player1)).doesNotContain("Pegasus Stampede");
+        harness.assertInHand(player1, "Pegasus Stampede");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertNotInGraveyard(player1, "Pegasus Stampede");
     }
 
     @Test
@@ -57,17 +86,31 @@ class PegasusStampedeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Buyback cannot sacrifice a land controlled by another player")
+    void buybackRequiresLandControlledByCaster() {
+        Permanent opponentLand = addLand(player2);
+        harness.setHand(player1, List.of(new PegasusStampede()));
+        addManaForSpell(player1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrificeAndBuyback(
+                player1, 0, opponentLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Pegasus Stampede");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
     private Permanent addLand(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private void cast(boolean buyback, Permanent land) {
-        harness.setHand(player1, List.of(new PegasusStampede()));
-        addManaForSpell(player1);
         if (buyback) {
+            harness.setHand(player1, List.of(new PegasusStampede()));
+            addManaForSpell(player1);
             harness.castSorceryWithSacrificeAndBuyback(player1, 0, land.getId());
         } else {
-            harness.castSorcery(player1, 0, 0);
+            harness.castFromHand(player1, new PegasusStampede(), "{1}{W}");
         }
         harness.passBothPriorities();
     }
@@ -77,18 +120,4 @@ class PegasusStampedeTest extends BaseCardTest {
         harness.addMana(player, ManaColor.COLORLESS, 1);
     }
 
-    private Permanent findPermanentByName(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow();
-    }
-
-    private List<String> handNames(Player player) {
-        return gd.playerHands.get(player.getId()).stream().map(card -> card.getName()).toList();
-    }
-
-    private List<String> graveyardNames(Player player) {
-        return gd.playerGraveyards.get(player.getId()).stream().map(card -> card.getName()).toList();
-    }
 }

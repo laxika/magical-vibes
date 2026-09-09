@@ -1972,7 +1972,7 @@ class TargetLegalityServiceTest {
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
 
             verify(targetValidationService).checkEffectTargets(eq(List.of(effect)),
-                    org.mockito.ArgumentMatchers.argThat(context -> player2Id.equals(context.defendingPlayerId())));
+                    org.mockito.ArgumentMatchers.argThat(context -> player2Id.equals(context.defendingPlayerId())), eq(false));
         }
 
         @Test

@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "103")
+@CardRegistration(set = "TMT", collectorNumber = "213")
+@CardRegistration(set = "TMT", collectorNumber = "287")
+@CardRegistration(set = "TMT", collectorNumber = "297")
 public class RaphaelTheNightwatcher extends Card {
 
     public RaphaelTheNightwatcher() {

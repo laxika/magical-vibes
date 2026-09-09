@@ -50,7 +50,7 @@ class MundaAmbushLeaderTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 3, 1)));
 
         assertThat(gd.playerDecks.get(player1.getId()))
-                .containsExactly(secondAlly, firstAlly, secondNonAlly, firstNonAlly, untouched);
+                .containsExactly(secondAlly, untouched, firstAlly, secondNonAlly, firstNonAlly);
     }
 
     @Test
@@ -77,7 +77,7 @@ class MundaAmbushLeaderTest extends BaseCardTest {
     void nonAllyEntryDoesNotTrigger() {
         harness.addToBattlefield(player1, new MundaAmbushLeader());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

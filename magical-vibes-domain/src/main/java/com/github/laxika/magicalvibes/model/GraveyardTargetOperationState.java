@@ -37,6 +37,8 @@ public class GraveyardTargetOperationState {
      * Scarab Feast). Enforced in {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}.
      */
     public boolean singleGraveyard;
+    /** Evaluated aggregate mana-value limit for an ETB graveyard return choice, when present. */
+    public Integer totalManaValueCap;
     /** In-progress cumulative-upkeep payments, one single-graveyard choice per age counter. */
     public CumulativeUpkeepPaymentContext cumulativeUpkeepPayment;
     /** In-progress payment that moves a fixed number of cards from the controller's graveyard. */

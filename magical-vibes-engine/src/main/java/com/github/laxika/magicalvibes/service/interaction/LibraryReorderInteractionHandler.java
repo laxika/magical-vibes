@@ -28,6 +28,9 @@ import java.util.UUID;
 @Component
 public class LibraryReorderInteractionHandler implements InteractionHandler<PendingInteraction.LibraryReorder> {
 
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechase;
     private final GameLogService gameLogService;
     private final WarpWorldService warpWorldService;
     private final InputCompletionService inputCompletionService;
@@ -84,6 +87,14 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
             if (!seen.add(idx)) {
                 throw new IllegalStateException("Duplicate card index: " + idx);
             }
+        }
+
+        if (interaction.planar()) {
+            var departing = List.copyOf(gameData.planechase.faceUp);
+            gameData.interaction.clearAwaitingInput();
+            planechase.finishPlaneswalk(gameData, cardOrder.stream().map(departing::get).toList());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
         // Apply the reorder: replace top N cards of deck with the reordered ones

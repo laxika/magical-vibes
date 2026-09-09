@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMT", collectorNumber = "166")
+@CardRegistration(set = "TMT", collectorNumber = "249")
 public class RaphLeoSiblingRivals extends Card {
 
     public RaphLeoSiblingRivals() {

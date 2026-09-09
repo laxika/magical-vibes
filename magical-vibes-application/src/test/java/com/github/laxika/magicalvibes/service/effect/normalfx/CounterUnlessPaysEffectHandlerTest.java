@@ -193,7 +193,7 @@ class CounterUnlessPaysEffectHandlerTest {
                 counterUnlessPaysHandler.resolve(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Llanowar Elves"));
-                verify(graveyardService).addCardToGraveyard(gd, player1Id, elves);
+                verify(graveyardService).addCardToGraveyardFromSpell(gd, player1Id, elves, player1Id);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Llanowar Elves is countered.")));
             }
 
@@ -221,7 +221,7 @@ class CounterUnlessPaysEffectHandlerTest {
                 PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
                 assertThat(ability.controllerId()).isEqualTo(player1Id);
                 assertThat(ability.targetCardId()).isEqualTo(elves.getId());
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             }
 
             @Test
@@ -254,7 +254,7 @@ class CounterUnlessPaysEffectHandlerTest {
 
                 counterUnlessPaysHandler.resolve(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
                 assertThat(gd.pendingMayAbilities).isEmpty();
             }
 
@@ -275,7 +275,7 @@ class CounterUnlessPaysEffectHandlerTest {
                 counterUnlessPaysHandler.resolve(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
                 assertThat(gd.stack).contains(elvesEntry);
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
                 assertThat(gd.pendingMayAbilities).isEmpty();
             }
 
@@ -296,7 +296,7 @@ class CounterUnlessPaysEffectHandlerTest {
                 counterUnlessPaysHandler.resolve(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Llanowar Elves"));
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             }
 
             @Test
@@ -307,7 +307,7 @@ class CounterUnlessPaysEffectHandlerTest {
 
                 counterUnlessPaysHandler.resolve(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
                 assertThat(gd.pendingMayAbilities).isEmpty();
             }
 

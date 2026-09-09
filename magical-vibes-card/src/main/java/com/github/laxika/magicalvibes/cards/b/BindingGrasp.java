@@ -16,6 +16,7 @@ import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "74")
 @CardRegistration(set = "ICE", collectorNumber = "60")
+@CardRegistration(set = "CST", collectorNumber = "60")
 public class BindingGrasp extends Card {
 
     public BindingGrasp() {

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TMT", collectorNumber = "108")
+@CardRegistration(set = "TMT", collectorNumber = "208")
 public class SlashReptileRampager extends Card {
 
     public SlashReptileRampager() {

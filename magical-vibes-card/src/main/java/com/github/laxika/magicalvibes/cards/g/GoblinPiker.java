@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "140")
 @CardRegistration(set = "M11", collectorNumber = "142")
 @CardRegistration(set = "M12", collectorNumber = "141")
+@CardRegistration(set = "DPA", collectorNumber = "45")
 public class GoblinPiker extends Card {
 }

@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -194,7 +195,14 @@ public class CombatTriggerService {
                             boolean needsTarget = effectsForStack.stream()
                                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                             if (needsTarget) {
-                                if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
+                                if (perm.getCard().isAura() && perm.getCard().getSpellTargets().size() > 1
+                                        && effectsForStack.stream().noneMatch(effect ->
+                                        perm.getCard().getEffectTargetIndex(effect) >= 0)) {
+                                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                            List.of(), 1, 0, List.of(0), 0, List.of(), false, null,
+                                            creature.getId()));
+                                } else if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                                     perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),

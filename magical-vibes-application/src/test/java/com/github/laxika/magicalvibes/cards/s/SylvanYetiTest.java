@@ -1,25 +1,25 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BearCub;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SylvanYeti.class, BearCub.class, Forest.class})
 class SylvanYetiTest extends BaseCardTest {
 
     @Test
     @DisplayName("Power equals the number of cards in controller's hand; toughness stays 4")
     void powerEqualsHandSize() {
-        Permanent yeti = addYetiReady(player1);
-        gd.playerHands.get(player1.getId()).clear();
-
-        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
+        Permanent yeti = addCreatureReady(player1, new SylvanYeti());
+        harness.setHand(player1, List.of(new BearCub(), new BearCub(), new BearCub()));
 
         assertThat(gqs.getEffectivePower(gd, yeti)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, yeti)).isEqualTo(4);
@@ -28,8 +28,8 @@ class SylvanYetiTest extends BaseCardTest {
     @Test
     @DisplayName("Power is 0 with an empty hand; toughness stays 4")
     void powerZeroWithEmptyHand() {
-        Permanent yeti = addYetiReady(player1);
-        gd.playerHands.get(player1.getId()).clear();
+        Permanent yeti = addCreatureReady(player1, new SylvanYeti());
+        harness.setHand(player1, List.of());
 
         assertThat(gqs.getEffectivePower(gd, yeti)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, yeti)).isEqualTo(4);
@@ -38,34 +38,32 @@ class SylvanYetiTest extends BaseCardTest {
     @Test
     @DisplayName("Power updates dynamically as hand size changes")
     void powerUpdatesDynamically() {
-        Permanent yeti = addYetiReady(player1);
-        gd.playerHands.get(player1.getId()).clear();
+        Permanent yeti = addCreatureReady(player1, new SylvanYeti());
+        harness.setHand(player1, List.of());
 
-        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
+        harness.setHand(player1, List.of(new BearCub()));
         assertThat(gqs.getEffectivePower(gd, yeti)).isEqualTo(1);
 
-        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
+        harness.setHand(player1, List.of(new BearCub(), new BearCub()));
         assertThat(gqs.getEffectivePower(gd, yeti)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Power counts only controller's hand, not opponent's")
     void countsOnlyControllerHand() {
-        Permanent yeti = addYetiReady(player1);
-        gd.playerHands.get(player1.getId()).clear();
-        gd.playerHands.get(player2.getId()).clear();
-
-        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
-        gd.playerHands.get(player2.getId()).add(new GrizzlyBears());
+        Permanent yeti = addCreatureReady(player1, new SylvanYeti());
+        harness.setHand(player1, List.of(new BearCub()));
+        harness.setHand(player2, List.of(new BearCub(), new BearCub()));
 
         assertThat(gqs.getEffectivePower(gd, yeti)).isEqualTo(1);
     }
 
-    private Permanent addYetiReady(Player player) {
-        Permanent permanent = new Permanent(new SylvanYeti());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Power counts noncreature cards in controller's hand")
+    void countsNoncreatureCardsInHand() {
+        Permanent yeti = addCreatureReady(player1, new SylvanYeti());
+        harness.setHand(player1, List.of(new Forest(), new BearCub()));
+
+        assertThat(gqs.getEffectivePower(gd, yeti)).isEqualTo(2);
     }
 }

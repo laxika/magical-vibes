@@ -38,6 +38,7 @@ class ConduitOfRuinTest extends BaseCardTest {
         castConduit(eligible, colored, tooSmall);
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
         assertThat(gameData.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);

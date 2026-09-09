@@ -34,7 +34,7 @@ class LanternScoutTest extends BaseCardTest {
     void nonAllyEntryDoesNotTrigger() {
         Permanent scout = harness.addToBattlefieldAndReturn(player1, new LanternScout());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

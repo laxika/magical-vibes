@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "191")
+@CardRegistration(set = "VOW", collectorNumber = "196")
 public class DawnhartDisciple extends Card {
 
     public DawnhartDisciple() {

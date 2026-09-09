@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "100")
+@CardRegistration(set = "OM1", collectorNumber = "110")
 public class EzekielSimsSpiderTotem extends Card {
 
     public EzekielSimsSpiderTotem() {

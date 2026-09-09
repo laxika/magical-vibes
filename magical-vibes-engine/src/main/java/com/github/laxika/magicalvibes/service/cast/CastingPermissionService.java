@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithIceCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWithCroakCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyManaTypeCastEffect;
@@ -453,6 +454,7 @@ public class CastingPermissionService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
         return bf.stream().anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                .map(effect -> staticEffectConditionResolver.resolve(gameData, perm, playerId, effect))
                 .anyMatch(effectType::isInstance));
     }
 
@@ -736,6 +738,12 @@ public class CastingPermissionService {
             }
             forbidden.addAll(e.getValue());
         }
+        gameData.playersCantCastNamedSpellsUntilControllerNextTurn.values().forEach(restrictions -> {
+            Set<String> names = restrictions.get(castingPlayerId);
+            if (names != null) {
+                forbidden.addAll(names);
+            }
+        });
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.values()
                 .forEach(forbidden::addAll);
         return forbidden;
@@ -868,8 +876,17 @@ public class CastingPermissionService {
                 || hasFlashGrantForCard(gameData, playerId, card)
                 || grantsItselfFlashTiming(card)
                 || hasMetFlashCastCondition(gameData, playerId, card)
-                || hasAvailableFlashAlternateCast(gameData, playerId, card);
+                || hasAvailableFlashAlternateCast(gameData, playerId, card)
+                || hasSneakTiming(gameData, playerId, card);
         return isInstantSpeed || sorceryTiming;
+    }
+
+    private boolean hasSneakTiming(GameData gameData, UUID playerId, Card card) {
+        return playerId.equals(gameData.activePlayerId)
+                && gameData.currentStep == TurnStep.DECLARE_BLOCKERS
+                && card.getCastingOption(AlternateHandCast.class)
+                .map(AlternateHandCast::sneak)
+                .orElse(false);
     }
 
     private boolean isSorcerySpeedOnlyForPlayer(GameData gameData, UUID playerId) {
@@ -905,7 +922,8 @@ public class CastingPermissionService {
      */
     public boolean flashTimingRequiresAlternateCast(GameData gameData, UUID playerId, Card card) {
         if (sorceryTimingAvailable(gameData, playerId)) return false;
-        if (!hasAvailableFlashAlternateCast(gameData, playerId, card)) return false;
+        if (!hasAvailableFlashAlternateCast(gameData, playerId, card)
+                && !hasSneakTiming(gameData, playerId, card)) return false;
         return !card.hasType(CardType.INSTANT)
                 && !card.getKeywords().contains(Keyword.FLASH)
                 && !hasFlashGrantForCard(gameData, playerId, card)
@@ -1076,7 +1094,8 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof GrantFlashToCardTypeEffect grant
+                    CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, ownerId, effect);
+                    if (resolved instanceof GrantFlashToCardTypeEffect grant
                             && (grant.appliesToAllPlayers() || ownerId.equals(playerId))
                             && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                         return true;
@@ -1183,7 +1202,7 @@ public class CastingPermissionService {
                 && playerId.equals(gameData.activePlayerId)
                 && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
-                && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0) < gameData.getMaxLandsThisTurn(playerId)
+                && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0) < (gameData.getMaxLandsThisTurn(playerId) + gameQueryService.getConditionalAdditionalLandPlays(gameData, playerId))
                 && gameData.stack.isEmpty()
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 && !isLandPlayRestricted(gameData, playerId)
@@ -1192,8 +1211,22 @@ public class CastingPermissionService {
     }
 
     public boolean canPlayLandFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
-        return canPlayLandsFromTopOfLibrary(gameData, playerId)
-                && canPlayLandNow(gameData, playerId, card);
+        if (!card.hasType(CardType.LAND)) {
+            return false;
+        }
+        UUID libraryOwnerId = findLibraryTopOwner(gameData, playerId);
+        if (libraryOwnerId == null) {
+            return false;
+        }
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+        if (deck == null || deck.isEmpty() || !deck.getFirst().getId().equals(card.getId())) {
+            return false;
+        }
+        boolean permission = libraryOwnerId.equals(playerId)
+                ? canPlayLandsFromTopOfLibrary(gameData, playerId)
+                    || hasLibraryTopCardFreePlayPermission(gameData, playerId, card)
+                : hasLibraryTopPermission(gameData, playerId, libraryOwnerId);
+        return permission && canPlayLandNow(gameData, playerId, card);
     }
 
     /**
@@ -1545,6 +1578,42 @@ public class CastingPermissionService {
         return card.getId().equals(gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId));
     }
 
+    /** Returns whether the caster may use the specified opponent's current library top. */
+    public boolean hasLibraryTopPermission(GameData gameData, UUID castingPlayerId, UUID libraryOwnerId) {
+        return gameData.libraryTopCardPermissionsUntilEndOfTurn.stream()
+                .anyMatch(permission -> permission.castingPlayerId().equals(castingPlayerId)
+                        && permission.libraryOwnerId().equals(libraryOwnerId));
+    }
+
+    /** Returns the library whose top card is exposed to the player, preferring temporary access grants. */
+    public UUID findLibraryTopOwner(GameData gameData, UUID playerId) {
+        for (UUID libraryOwnerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(libraryOwnerId)
+                    || !hasLibraryTopPermission(gameData, playerId, libraryOwnerId)) {
+                continue;
+            }
+            List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+            if (deck != null && !deck.isEmpty()) {
+                return libraryOwnerId;
+            }
+        }
+        List<Card> ownDeck = gameData.playerDecks.get(playerId);
+        return ownDeck != null && !ownDeck.isEmpty() ? playerId : null;
+    }
+
+    private boolean hasLibraryTopPermissionForCard(GameData gameData, UUID castingPlayerId, Card card) {
+        for (GameData.LibraryTopCardPermission permission : gameData.libraryTopCardPermissionsUntilEndOfTurn) {
+            if (!permission.castingPlayerId().equals(castingPlayerId)) {
+                continue;
+            }
+            List<Card> deck = gameData.playerDecks.get(permission.libraryOwnerId());
+            if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Returns whether the current top card may be played for life until end of turn. */
     public boolean hasLibraryTopCardLifePlayPermission(GameData gameData, UUID playerId, Card card) {
         List<Card> deck = gameData.playerDecks.get(playerId);
@@ -1558,6 +1627,9 @@ public class CastingPermissionService {
         if (!card.hasType(CardType.LAND)
                 && (hasLibraryTopCardFreePlayPermission(gameData, playerId, card)
                 || hasLibraryTopCardLifePlayPermission(gameData, playerId, card))) {
+            return true;
+        }
+        if (!card.hasType(CardType.LAND) && hasLibraryTopPermissionForCard(gameData, playerId, card)) {
             return true;
         }
         if (!card.hasType(CardType.LAND)
@@ -1698,6 +1770,9 @@ public class CastingPermissionService {
      * spend mana of any type to cast spells sharing one of this card's types (e.g. creature spells).
      */
     public boolean canSpendAnyManaTypeToCast(GameData gameData, UUID playerId, Card card) {
+        if (hasLibraryTopPermissionForCard(gameData, playerId, card)) {
+            return true;
+        }
         if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
             return true;
         }
@@ -1736,8 +1811,8 @@ public class CastingPermissionService {
     }
 
     /**
-     * Returns the set of exiled card IDs that the player can cast via
-     * {@link AllowCastFromCardsExiledWithSourceEffect} on their permanents.
+     * Returns the set of exiled card IDs that the player can play or cast via static permissions
+     * on their permanents.
      */
     public Set<UUID> getCastableExiledCardIds(GameData gameData, UUID playerId) {
         Set<UUID> castableIds = new HashSet<>();
@@ -1749,6 +1824,11 @@ public class CastingPermissionService {
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
             if (hasIceCounterPermission(gameData, playerId, entry.card().getId(), false)) {
+                castableIds.add(entry.card().getId());
+            }
+        }
+        for (ExiledCardEntry entry : gameData.exiledCards) {
+            if (hasCroakCounterPermission(gameData, playerId, entry.card().getId())) {
                 castableIds.add(entry.card().getId());
             }
         }
@@ -1839,6 +1919,7 @@ public class CastingPermissionService {
         if (findTemporaryExileCastPermission(gameData, playerId, entry, false) != null) return true;
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) return true;
         if (hasIceCounterPermission(gameData, playerId, cardId, false)) return true;
+        if (hasCroakCounterPermission(gameData, playerId, cardId)) return true;
         if (hasCollectionCounterPermission(gameData, playerId, cardId, false)) return true;
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
@@ -1850,6 +1931,27 @@ public class CastingPermissionService {
                                 && canAccessExiledEntry(
                                 perm, sourceControllerId, permission, entry, playerId)
                                 && applies(permission, gameData, playerId, perm, entry))) return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasManaValueLifeAlternativeFromExiledWithSource(GameData gameData,
+                                                                    UUID playerId, UUID cardId) {
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null || entry.card().hasType(CardType.LAND)) return false;
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                if (!perm.getId().equals(entry.sourcePermanentId())) continue;
+                if (activeExileCastPermissions(gameData, perm, sourceControllerId)
+                        .anyMatch(permission -> permission.payLifeEqualToManaValue()
+                                && canAccessExiledEntry(
+                                perm, sourceControllerId, permission, entry, playerId)
+                                && applies(permission, gameData, playerId, perm, entry))) {
+                    return true;
+                }
             }
         }
         return false;
@@ -2241,6 +2343,13 @@ public class CastingPermissionService {
                         .filter(AllowCastFromCardsExiledWithIceCountersEffect.class::isInstance)
                         .map(AllowCastFromCardsExiledWithIceCountersEffect.class::cast)
                         .anyMatch(permission -> !anyManaTypeRequired || permission.anyManaType()));
+    }
+
+    private boolean hasCroakCounterPermission(GameData gameData, UUID playerId, UUID cardId) {
+        if (!gameData.exiledCardsWithCroakCounters.contains(cardId)) return false;
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null || !playerId.equals(entry.ownerId())) return false;
+        return controlsStatic(gameData, playerId, AllowPlayAndCastCardsExiledWithCroakCountersEffect.class);
     }
 
     private boolean canAccessExiledEntry(Permanent source, UUID sourceControllerId,

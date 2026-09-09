@@ -51,6 +51,23 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PlayerInputServiceTest {
 
+    @Test
+    void deferredDiscardSelectionsDoNotOpenDiscardEvents() {
+        gd.eachPlayerRummage.active = true;
+        gd.eachPlayerRummage.deferDiscards = true;
+        gd.playerHands.get(PLAYER1_ID).add(createCreature("First card"));
+        gd.playerHands.get(PLAYER2_ID).add(createCreature("Second card"));
+
+        svc.beginDiscardChoice(gd, PLAYER1_ID, 1);
+        assertThat(gd.discardEventPlayerId).isNull();
+        gd.interaction.clearAwaitingInput();
+        svc.beginDiscardChoice(gd, PLAYER2_ID, 1);
+
+        assertThat(gd.discardEventPlayerId).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(PLAYER2_ID);
+    }
+
     @Mock private CardViewFactory cardViewFactory;
 
     private PlayerInputService svc;
@@ -630,7 +647,7 @@ class PlayerInputServiceTest {
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly(
                     "LAND", "CREATURE", "ENCHANTMENT", "SORCERY", "INSTANT", "ARTIFACT",
-                    "PLANESWALKER", "BATTLE", "KINDRED");
+                    "PLANESWALKER", "BATTLE", "KINDRED", "PLANE", "PHENOMENON");
             assertThat(msg.prompt()).isEqualTo("Choose a card type.");
         }
 
@@ -791,6 +808,41 @@ class PlayerInputServiceTest {
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Bear");
             assertThat(msg.options()).doesNotContain("Golem");
+        }
+
+        @Test
+        void landNameChoicePreservesPlayZone() {
+            Card land = createCard("Forest", CardType.LAND);
+            gd.playerHands.get(PLAYER1_ID).add(land);
+
+            svc.beginCardNameChoice(gd, PLAYER1_ID, land, List.of(), false, false, null,
+                    CardType.LAND, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD);
+
+            var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            var context = (ChoiceContext.CardNameChoice) choice.context();
+            assertThat(context.landPlayZone()).isEqualTo(com.github.laxika.magicalvibes.model.Zone.GRAVEYARD);
+            assertThat(choice.options()).contains("Forest");
+        }
+
+        @Test
+        @DisplayName("Restricts names to cards with the required type")
+        void restrictsNamesToRequiredType() {
+            Card land = createCard("Forest", CardType.LAND);
+            Card creature = createCreature("Bear");
+            Card sourceCard = createCreature("Source");
+
+            gd.playerHands.get(PLAYER1_ID).add(land);
+            gd.playerHands.get(PLAYER1_ID).add(creature);
+
+            svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of(), false, false, null, CardType.LAND);
+
+            InteractionPromptMessage msg = projectedPrompt();
+            assertThat(msg.options()).contains("Forest");
+            assertThat(msg.options()).doesNotContain("Bear");
+            assertThat(msg.prompt()).isEqualTo("Choose a land card name.");
+            ChoiceContext.CardNameChoice ctx =
+                    (ChoiceContext.CardNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.requiredType()).isEqualTo(CardType.LAND);
         }
 
         @Test

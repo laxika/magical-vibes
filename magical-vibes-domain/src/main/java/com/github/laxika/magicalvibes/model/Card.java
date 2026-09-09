@@ -26,7 +26,9 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -34,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -206,6 +209,10 @@ public class Card {
     /** True when this card's face is chosen while it is played from a zone, rather than transformed. */
     private boolean modalDoubleFaced;
     private List<CastingOption> castingOptions = new ArrayList<>();
+    /** Mana costs of the two Room doors, in door order, when this card is a Room. */
+    private List<String> roomDoorManaCosts = List.of();
+    /** The Room door chosen while this card was cast, carried to its entering permanent. */
+    private Integer selectedRoomDoor;
     /** Morph's face-up cost; the face-down cast uses the standard {3} alternate cost. */
     private String morphCost;
     /** Optional dynamic generic reduction applied to the morph/disguise face-up cost. */
@@ -214,8 +221,12 @@ public class Card {
     private RevealCardsFromHandCastingCost morphRevealCost;
     /** Optional permanent-return component of a morph face-up cost. */
     private ReturnPermanentsCost morphAdditionalCost;
+    /** Optional permanent-sacrifice component of a morph face-up cost. */
+    private SacrificePermanentsCost morphSacrificeCost;
     /** Optional discard component of a morph face-up cost. */
     private DiscardCardTypeCost morphDiscardCost;
+    /** Optional life component of a morph face-up cost. */
+    private LifeCastingCost morphLifeCost;
     /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
     private SpellCastTimingRestriction spellCastTimingRestriction;
     /**
@@ -352,11 +363,15 @@ public class Card {
         this.backFaceCard = source.backFaceCard;
         this.modalDoubleFaced = source.modalDoubleFaced;
         this.castingOptions = new ArrayList<>(source.castingOptions);
+        this.roomDoorManaCosts = List.copyOf(source.roomDoorManaCosts);
+        this.selectedRoomDoor = source.selectedRoomDoor;
         this.morphCost = source.morphCost;
         this.morphCostReduction = source.morphCostReduction;
         this.morphRevealCost = source.morphRevealCost;
         this.morphAdditionalCost = source.morphAdditionalCost;
+        this.morphSacrificeCost = source.morphSacrificeCost;
         this.morphDiscardCost = source.morphDiscardCost;
+        this.morphLifeCost = source.morphLifeCost;
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
@@ -435,11 +450,15 @@ public class Card {
         this.castTimeTargetFilter = face.castTimeTargetFilter;
         this.watermark = face.watermark;
         this.castingOptions = new ArrayList<>(face.castingOptions);
+        this.roomDoorManaCosts = List.copyOf(face.roomDoorManaCosts);
+        this.selectedRoomDoor = face.selectedRoomDoor;
         this.morphCost = face.morphCost;
         this.morphCostReduction = face.morphCostReduction;
         this.morphRevealCost = face.morphRevealCost;
         this.morphAdditionalCost = face.morphAdditionalCost;
+        this.morphSacrificeCost = face.morphSacrificeCost;
         this.morphDiscardCost = face.morphDiscardCost;
+        this.morphLifeCost = face.morphLifeCost;
         this.spellCastTimingRestriction = face.spellCastTimingRestriction;
         this.castCondition = face.castCondition;
         this.flashCastCondition = face.flashCastCondition;
@@ -660,6 +679,7 @@ public class Card {
             }
             case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case SacrificePermanentThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
+            case SacrificeSelfThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
             case MayPayManaEffect e -> {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
@@ -667,6 +687,12 @@ public class Card {
             case MayPayTapPermanentsEffect e -> {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
+            }
+            case RollD20Effect e -> {
+                if (e.zeroOrLess() != null) registerEffectTargetIndex(e.zeroOrLess(), targetIndex);
+                if (e.oneToNine() != null) registerEffectTargetIndex(e.oneToNine(), targetIndex);
+                if (e.tenToNineteen() != null) registerEffectTargetIndex(e.tenToNineteen(), targetIndex);
+                if (e.twenty() != null) registerEffectTargetIndex(e.twenty(), targetIndex);
             }
             // SequenceEffect splices its steps into the resolution list; each step must keep the
             // sequence's target group (fuse halves that bundle multi-step one-target instructions).
@@ -695,6 +721,7 @@ public class Card {
             case TriggeringPermanentConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringArtifactControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringPermanentControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case TriggeringRoomDoorConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             default -> { }
         }
     }
@@ -1058,6 +1085,23 @@ public class Card {
         castingOptions.add(option);
     }
 
+    public void setRoomDoorManaCosts(List<String> roomDoorManaCosts) {
+        assertMutable();
+        if (roomDoorManaCosts == null || roomDoorManaCosts.size() != 2
+                || roomDoorManaCosts.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("A Room must have exactly two door mana costs");
+        }
+        this.roomDoorManaCosts = List.copyOf(roomDoorManaCosts);
+    }
+
+    public void setSelectedRoomDoor(int selectedRoomDoor) {
+        assertMutable();
+        if (selectedRoomDoor < 0 || selectedRoomDoor >= roomDoorManaCosts.size()) {
+            throw new IllegalArgumentException("Invalid Room door index: " + selectedRoomDoor);
+        }
+        this.selectedRoomDoor = selectedRoomDoor;
+    }
+
     /** Adds a prototype alternate cast with its alternate color and base power/toughness. */
     public void addPrototype(String manaCost, CardColor color, int power, int toughness) {
         assertMutable();
@@ -1070,6 +1114,10 @@ public class Card {
         this.morphCost = morphCost;
         this.morphCostReduction = null;
         this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
+        this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1080,7 +1128,9 @@ public class Card {
         this.morphCostReduction = morphCostReduction;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1091,7 +1141,9 @@ public class Card {
         this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(
                 new ManaCastingCost("{3}"),
                 new RevealCardsFromHandCastingCost(revealPredicate, revealLabel))));
@@ -1101,9 +1153,25 @@ public class Card {
     public void addMorph(String morphCost, ReturnPermanentsCost additionalCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = additionalCost;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = null;
+        this.morphLifeCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds morph whose face-up cost includes sacrificing matching permanents. */
+    public void addMorph(String morphCost, SacrificePermanentsCost additionalCost) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphCostReduction = null;
+        this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
+        this.morphSacrificeCost = additionalCost;
+        this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1111,9 +1179,25 @@ public class Card {
     public void addMorph(String morphCost, DiscardCardTypeCost additionalCost) {
         assertMutable();
         this.morphCost = morphCost;
+        this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = additionalCost;
+        this.morphLifeCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds morph whose face-up cost includes a life payment. */
+    public void addMorph(String morphCost, LifeCastingCost additionalCost) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphCostReduction = null;
+        this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
+        this.morphDiscardCost = null;
+        this.morphLifeCost = additionalCost;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1124,7 +1208,9 @@ public class Card {
         this.morphCostReduction = null;
         this.morphRevealCost = new RevealCardsFromHandCastingCost(revealPredicate, revealLabel);
         this.morphAdditionalCost = null;
+        this.morphSacrificeCost = null;
         this.morphDiscardCost = null;
+        this.morphLifeCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 

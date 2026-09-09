@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "30")
+@CardRegistration(set = "FDN", collectorNumber = "304")
+@CardRegistration(set = "FDN", collectorNumber = "372")
+@CardRegistration(set = "FDN", collectorNumber = "450")
 public class ArchmageOfRunes extends Card {
 
     private static final CardAnyOfPredicate INSTANT_OR_SORCERY = new CardAnyOfPredicate(

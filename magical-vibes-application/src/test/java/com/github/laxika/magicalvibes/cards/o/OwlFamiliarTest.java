@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OwlFamiliar.class, Forest.class})
 class OwlFamiliarTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB draws a card, then discards a card (net hand size unchanged)")
     void etbDrawThenDiscard() {
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         castOwlFamiliar();
 
         harness.passBothPriorities(); // resolve creature spell
@@ -41,9 +42,33 @@ class OwlFamiliarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB lets the controller discard a pre-existing card after drawing")
+    void etbDrawsBeforeChoosingDiscard() {
+        harness.setHand(player1, List.of(new OwlFamiliar(), new Forest()));
+        harness.setLibrary(player1, List.of(new OwlFamiliar()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertInHand(player1, "Owl Familiar");
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Owl Familiar");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Creature enters the battlefield")
     void creatureEntersBattlefield() {
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         castOwlFamiliar();
         harness.passBothPriorities(); // resolve creature spell
 
@@ -51,14 +76,6 @@ class OwlFamiliarTest extends BaseCardTest {
     }
 
     private void castOwlFamiliar() {
-        harness.setHand(player1, List.of(new OwlFamiliar()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
-    }
-
-    private void setDeck(com.github.laxika.magicalvibes.model.Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+        harness.castFromHand(player1, new OwlFamiliar(), "{1}{U}");
     }
 }

@@ -35,7 +35,7 @@ public class EachPlayerPaysAnyManaForTokensEffectHandler implements NormalEffect
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
-    private final DestructionSupport destructionSupport;
+    private final PermanentControlSupport permanentControlSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -127,8 +127,8 @@ public class EachPlayerPaysAnyManaForTokensEffectHandler implements NormalEffect
         EachPlayerPayManaState state = gameData.eachPlayerPayMana;
         for (UUID playerId : state.order) {
             int count = state.manaPaid.getOrDefault(playerId, 0);
-            for (int i = 0; i < count; i++) {
-                destructionSupport.createTokenForPlayer(gameData, playerId, effect.token(), cardName,
+            if (count > 0) {
+                permanentControlSupport.applyCreateToken(gameData, playerId, effect.token(), count,
                         state.sourceSetCode);
             }
         }
@@ -144,6 +144,6 @@ public class EachPlayerPaysAnyManaForTokensEffectHandler implements NormalEffect
 
     /** Generic-payable mana in the pool right now — mirrors what {@code pay} can drain. */
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
+        return pool.getTotal();
     }
 }

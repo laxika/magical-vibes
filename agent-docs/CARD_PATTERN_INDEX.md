@@ -20,6 +20,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 
 | Pattern keyword | File |
 |----------------|------|
+| d20, roll a d20, graveyard target ETB | CARD_PATTERNS_CREATURES_ETB.md |
 | land, basic, pain, check, fast, manland | CARD_PATTERNS_LANDS_SPELLS.md |
 | burn, damage, shock, bolt, X burn | CARD_PATTERNS_LANDS_SPELLS.md |
 | pump, boost, giant growth, overrun | CARD_PATTERNS_LANDS_SPELLS.md |
@@ -36,12 +37,14 @@ This index has been split into smaller files for faster lookup. Each file is und
 | vanilla, no abilities, empty body | CARD_PATTERNS_CREATURES_ETB.md |
 | keyword creature, flying, haste, infect | CARD_PATTERNS_CREATURES_ETB.md |
 | first matching spell cast each turn costs less | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| enchantment spell and Room unlock cost reduction | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | ETB, enters the battlefield | CARD_PATTERNS_CREATURES_ETB.md |
 | airbend, exile target nonland permanent for a {2} cast | CARD_PATTERNS_CREATURES_ETB.md |
 | airbend all other creatures, opponents can't cast from outside hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | kicker, alternate casting cost | CARD_PATTERNS_CREATURES_ETB.md |
 | buyback, return spell to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | attack trigger, death trigger, upkeep trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| +1/+1 counter placement trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | beginning-of-combat random counter trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | face-down permanent turns face up | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | suspect a creature / clear suspected creatures | `SuspectEffect(GrantScope.TARGET)` + `UnsuspectAllCreaturesEffect`; for optional non-targeted selection use `MayEffect(SuspectChosenOtherCreatureEffect())` |
@@ -62,6 +65,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | vehicle, crew | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | equipment, equip, living weapon | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | activated ability, tap ability, sacrifice ability | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
+| base power from target creature, indefinitely | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | mana ability, mana dork | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | planeswalker, loyalty | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | saga, chapter, lore counter | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
@@ -75,6 +79,7 @@ When implementing a card, use these as the **best** test file to read for each c
 |---------|-------------------|-----|
 | Aura with static boost (+X/+Y or -X/-Y) | `SensoryDeprivationTest.java` | Covers casting, resolution, stat check, removal, fizzle, targeting |
 | Aura lockdown (can't attack/block) | `PacifismTest.java` | Covers combat restriction + removal |
+| Targeted temporary static combat tax | `WhipgrassEntanglerTest.java` | Covers dynamic attack/block payment and cleanup duration |
 | Simple burn spell | `ShockTest.java` | Covers creature + player targeting + fizzle |
 | Non-targeted pump | `ChargeTest.java` | Covers boost + opponent unaffected + cleanup reset |
 | ETB creature (non-targeted) | `AngelOfMercyTest.java` | Covers ETB trigger resolution |
@@ -86,3 +91,4 @@ When implementing a card, use these as the **best** test file to read for each c
 | Lord/anthem | `GloriousAnthemTest.java` | Covers static boost + removal |
 | Vanilla creature | (no test needed) | Empty body, no engine logic |
 | Tapped artifact token with its own targeted ETB and produced-mana trigger | `r/RoxanneStarfallSavant.java` | Use the full `CreateTokenEffect` constructor for non-creature token state, put the damage ability in `ON_ENTER_BATTLEFIELD`, and put the dynamic mana rider in `ON_SELF_TAPPED_FOR_MANA` |
+| ETB creates an Equipment token and attaches it to the source | `u/USAgentJohnWalker.java` | Use `CreateTokenAndAttachToSourceEffect(CreateTokenEffect.ofArtifactToken(...).withTokenEffects(Map.of(STATIC, new StaticBoostEffect(...))))`; put the token's `EquipActivatedAbility` in its token ability list |

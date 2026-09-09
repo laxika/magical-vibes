@@ -32,7 +32,7 @@ public class DealDamageToTriggeringSpellControllerEffectHandler implements Norma
         var triggeringCardId = entry.getTriggeringCardId();
         if (triggeringControllerId == null && triggeringCardId != null) {
             for (StackEntry stackEntry : gameData.stack) {
-                if (stackEntry.getCard().getId().equals(triggeringCardId)) {
+                if (stackEntry.getTargetableId().equals(triggeringCardId)) {
                     triggeringControllerId = stackEntry.getControllerId();
                     break;
                 }

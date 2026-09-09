@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "DRK", collectorNumber = "111")
+@CardRegistration(set = "ME1", collectorNumber = "167")
 public class StoneCalendar extends Card {
 
     public StoneCalendar() {

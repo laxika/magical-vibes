@@ -58,6 +58,27 @@ import static org.mockito.Mockito.mock;
  */
 class PendingInteractionContractTest {
 
+    @Test
+    void libraryRevealRefinementsPreserveSelectionDestination() {
+        UUID playerId = UUID.randomUUID();
+        UUID cardId = UUID.randomUUID();
+        var predicate = new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(
+                com.github.laxika.magicalvibes.model.CardType.CREATURE);
+        var effect = new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1);
+        var choice = new PendingInteraction.LibraryRevealChoice(
+                playerId, List.of(), List.of(cardId), 1, "Choose a card", true)
+                .withSelectedCardsToBattlefieldType(com.github.laxika.magicalvibes.model.CardType.CREATURE)
+                .withSelectedCardFollowUp(predicate, effect);
+
+        assertThat(choice.selectedToTop()).isTrue();
+        assertThat(choice.selectedCardsToBattlefieldType())
+                .isEqualTo(com.github.laxika.magicalvibes.model.CardType.CREATURE);
+        assertThat(choice.selectedCardPredicate()).isEqualTo(predicate);
+        assertThat(choice.effectIfSelectedCardMatches()).isEqualTo(effect);
+        assertThat(choice.validCardIds()).containsExactly(cardId);
+    }
+
+
     /** Records that only wait in the queue and are serviced by beginning a promptable kind. */
     private static final Set<Class<?>> QUEUE_ONLY_CARRIERS = Set.of(
             PermanentChoiceContext.class,

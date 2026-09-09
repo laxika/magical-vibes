@@ -65,7 +65,10 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
         // Combat-damage triggers also use targetId for the damaged player, so the graveyard card
         // target must take precedence when both target fields are present.
         if (e.targetGraveyard() && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
-            UUID targetCardId = entry.getTargetCardIds().getFirst();
+            UUID targetCardId = entry.getTargetCardIdsForEffect(effect).stream().findFirst().orElse(null);
+            if (targetCardId == null) {
+                return;
+            }
             graveyardReturnSupport.resolvePreTargetedById(gameData, entry, e, controllerId, sourceCardId, targetCardId);
             return;
         }

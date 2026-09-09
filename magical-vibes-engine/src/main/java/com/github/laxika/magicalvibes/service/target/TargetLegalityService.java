@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -86,6 +87,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanMa
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
@@ -303,7 +305,7 @@ public class TargetLegalityService {
             if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
                     && returnEffect.hasTotalManaValueCap()) {
                 validateTotalManaValueGraveyardTargets(gameData, playerId, returnEffect, targetCardIds,
-                        sourceCardId);
+                        sourceCardId, xValue);
                 return;
             }
         }
@@ -348,6 +350,13 @@ public class TargetLegalityService {
                         if (graveyardOwnerId != null && !graveyardOwnerId.equals(playerId)) {
                             throw new IllegalStateException("Target must be in your graveyard");
                         }
+                    }
+                    UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                    if (returnEffect.targetPutIntoGraveyardFromAnywhereThisTurn()
+                            && (graveyardOwnerId == null
+                            || !gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of()).contains(cardId))) {
+                        throw new IllegalStateException("Target must be a card put into a graveyard this turn");
                     }
                 }
                 break;
@@ -646,7 +655,7 @@ public class TargetLegalityService {
     private void validateTotalManaValueGraveyardTargets(
             GameData gameData, UUID playerId,
             ReturnTargetCardsFromGraveyardToBattlefieldEffect effect,
-            List<UUID> targetCardIds, UUID sourceCardId) {
+            List<UUID> targetCardIds, UUID sourceCardId, Integer xValue) {
         if (!targetCardIds.isEmpty() && !gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
             throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");
         }
@@ -657,6 +666,11 @@ public class TargetLegalityService {
             throw new IllegalStateException("Too many target cards selected");
         }
 
+        int maxTotalManaValue = effect.dynamicMaxTotalManaValue() == null
+                ? effect.maxTotalManaValue()
+                : Math.max(0, amountEvaluationService.evaluate(gameData,
+                        effect.dynamicMaxTotalManaValue(),
+                        new AmountContext(playerId, null, null, xValue == null ? 0 : xValue, 0)));
         int totalManaValue = 0;
         for (UUID cardId : targetCardIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
@@ -678,9 +692,9 @@ public class TargetLegalityService {
                         + CardPredicateUtils.describeFilter(effect.filter()));
             }
             totalManaValue += card.getManaValue();
-            if (totalManaValue > effect.maxTotalManaValue()) {
+            if (totalManaValue > maxTotalManaValue) {
                 throw new IllegalStateException("Target cards' total mana value cannot exceed "
-                        + effect.maxTotalManaValue());
+                        + maxTotalManaValue);
             }
         }
     }
@@ -1093,7 +1107,16 @@ public class TargetLegalityService {
                                        boolean needsTarget, int xValue, boolean kicked,
                                        boolean giftPromised) {
         checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
-                needsTarget, xValue, kicked, false, giftPromised)
+                needsTarget, xValue, kicked, false, giftPromised, false)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
+    public void validateSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                       UUID targetId, Zone targetZone, UUID controllerId,
+                                       boolean needsTarget, int xValue, boolean kicked,
+                                       boolean giftPromised, boolean teamworkCostPaid) {
+        checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
+                needsTarget, xValue, kicked, false, giftPromised, teamworkCostPaid)
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
@@ -1107,7 +1130,15 @@ public class TargetLegalityService {
                                        UUID controllerId, boolean needsTarget, int xValue, boolean kicked,
                                        boolean giftPromised) {
         checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
-                controllerId, needsTarget, xValue, kicked, false, giftPromised)
+                controllerId, needsTarget, xValue, kicked, false, giftPromised, false)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
+    public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
+                                       UUID controllerId, boolean needsTarget, int xValue, boolean kicked,
+                                       boolean giftPromised, boolean teamworkCostPaid) {
+        checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
+                controllerId, needsTarget, xValue, kicked, false, giftPromised, teamworkCostPaid)
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
@@ -1135,7 +1166,7 @@ public class TargetLegalityService {
                                                  UUID targetId, Zone targetZone, UUID controllerId,
                                                  boolean needsTarget, int xValue) {
         return checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
-                needsTarget, xValue, false, false);
+                needsTarget, xValue, false, false, false, false);
     }
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
@@ -1148,7 +1179,7 @@ public class TargetLegalityService {
                                                  UUID targetId, Zone targetZone, UUID controllerId,
                                                  boolean needsTarget, int xValue, boolean kicked) {
         return checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
-                needsTarget, xValue, kicked, false);
+                needsTarget, xValue, kicked, false, false, false);
     }
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
@@ -1156,14 +1187,16 @@ public class TargetLegalityService {
                                                  boolean needsTarget, int xValue, boolean kicked,
                                                  boolean castForMadnessCost) {
         return checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
-                needsTarget, xValue, kicked, castForMadnessCost, false);
+                needsTarget, xValue, kicked, castForMadnessCost, false, false);
     }
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
                                                  UUID targetId, Zone targetZone, UUID controllerId,
                                                  boolean needsTarget, int xValue, boolean kicked,
-                                                 boolean castForMadnessCost, boolean giftPromised) {
-        TargetFilter effectiveTargetFilter = targetFilterForCast(card.getTargetFilter(), kicked, giftPromised);
+                                                 boolean castForMadnessCost, boolean giftPromised,
+                                                 boolean teamworkCostPaid) {
+        TargetFilter effectiveTargetFilter = targetFilterForCast(
+                card.getTargetFilter(), kicked, giftPromised, teamworkCostPaid);
         if (effectiveTargetFilter instanceof StackEntryPredicateTargetFilter) {
             return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter,
                     controllerId, null, xValue, kicked);
@@ -2183,6 +2216,10 @@ public class TargetLegalityService {
             validateAtMostOneCreatureAndOneLand(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.DIFFERENT_MANA_VALUES) {
+            validateDifferentManaValues(gameData, targetIds);
+            return;
+        }
         if (constraint == MultiTargetConstraint.SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST) {
             validateSameCreatureOrLandTypeAsFirstAuraHost(gameData, targetIds);
             return;
@@ -2228,7 +2265,8 @@ public class TargetLegalityService {
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
-                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND -> {
+                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
+                         DIFFERENT_MANA_VALUES -> {
                         // Handled by early returns above.
                     }
                 }
@@ -2253,6 +2291,16 @@ public class TargetLegalityService {
             }
             if (card.hasType(CardType.SORCERY) && ++sorceryCount > 1) {
                 throw new IllegalStateException("You cannot choose more than one sorcery card");
+            }
+        }
+    }
+
+    private void validateDifferentManaValues(GameData gameData, List<UUID> targetIds) {
+        Set<Integer> manaValues = new HashSet<>();
+        for (UUID targetId : targetIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, targetId);
+            if (card != null && !manaValues.add(card.getManaValue())) {
+                throw new IllegalStateException("Chosen cards must have different mana values");
             }
         }
     }
@@ -2609,10 +2657,11 @@ public class TargetLegalityService {
                         || declaredTargetPositionTargetsSpell(gameData, entry, i))
                         && (isSpellOnStack(gameData, targetId)
                         || filterAdmitsAbilityTarget(
-                                targetFilterForCast(targetFilter, entry.isKicked(), entry.isGiftPromised()),
+                                targetFilterForCast(targetFilter, entry.isKicked(), entry.isGiftPromised(),
+                                        entry.isTeamworkCostPaid()),
                                 false))) {
                     TargetFilter effectiveTargetFilter = targetFilterForCast(
-                            targetFilter, entry.isKicked(), entry.isGiftPromised());
+                            targetFilter, entry.isKicked(), entry.isGiftPromised(), entry.isTeamworkCostPaid());
                     if (effectiveTargetFilter instanceof PermanentPredicateTargetFilter
                             || effectiveTargetFilter instanceof ControlledPermanentPredicateTargetFilter
                             || effectiveTargetFilter instanceof OwnedPermanentPredicateTargetFilter) {
@@ -2684,7 +2733,7 @@ public class TargetLegalityService {
         if (entry.getTargetId() == null && entry.getTargetZone() == Zone.STACK
                 && !entry.getTargetIds().isEmpty()) {
             boolean anyStillOnStack = entry.getTargetIds().stream()
-                    .anyMatch(id -> gameData.stack.stream().anyMatch(se -> se.getCard().getId().equals(id)));
+                    .anyMatch(id -> gameData.stack.stream().anyMatch(se -> se.getTargetableId().equals(id)));
             return !anyStillOnStack;
         }
 
@@ -2693,7 +2742,7 @@ public class TargetLegalityService {
         if (entry.getTargetId() != null && entry.getTargetZone() == Zone.STACK
                 && !entry.getTargetIds().isEmpty()) {
             boolean spellTargetLegal = gameData.stack.stream()
-                    .anyMatch(se -> se.getCard().getId().equals(entry.getTargetId()));
+                    .anyMatch(se -> se.getTargetableId().equals(entry.getTargetId()));
             boolean anyPermanentTargetLegal = entry.getTargetIds().stream()
                     .anyMatch(id -> gameQueryService.findPermanentById(gameData, id) != null
                             || gameData.playerIds.contains(id));
@@ -2712,7 +2761,7 @@ public class TargetLegalityService {
                             exileTargetEffects,
                             new TargetValidationContext(gameData, entry.getTargetId(), Zone.EXILE,
                                     entry.getCard(), entry.getXValue(), entry.getControllerId(),
-                                    entry.getSourcePermanentSnapshot())).isPresent();
+                                    entry.getSourcePermanentSnapshot()), entry.isTeamworkCostPaid()).isPresent();
                 }
             } else if (entry.getTargetZone() == Zone.GRAVEYARD) {
                 targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId()) == null;
@@ -2725,10 +2774,10 @@ public class TargetLegalityService {
                             new TargetValidationContext(gameData, entry.getTargetId(), Zone.GRAVEYARD,
                                     entry.getCard(), entry.getXValue(), entry.getControllerId(),
                                     entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                                    entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry))).isPresent();
+                                    entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)), entry.isTeamworkCostPaid()).isPresent();
                 }
             } else if (entry.getTargetZone() == Zone.STACK) {
-                targetFizzled = gameData.stack.stream().noneMatch(se -> se.getCard().getId().equals(entry.getTargetId()));
+                targetFizzled = gameData.stack.stream().noneMatch(se -> se.getTargetableId().equals(entry.getTargetId()));
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetId())) {
@@ -2783,7 +2832,8 @@ public class TargetLegalityService {
                         // unaffected — their effects are always bound to their target group.
                         TargetFilter effectiveTargetFilter = primaryTargetFilter(entry);
                         effectiveTargetFilter = targetFilterForCast(
-                                effectiveTargetFilter, entry.isKicked(), entry.isGiftPromised());
+                                effectiveTargetFilter, entry.isKicked(), entry.isGiftPromised(),
+                                entry.isTeamworkCostPaid());
                         if (effectiveTargetFilter != null) {
                             try {
                                 predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,
@@ -2803,7 +2853,7 @@ public class TargetLegalityService {
                                 new TargetValidationContext(gameData, entry.getTargetId(), entry.getTargetZone(),
                                         entry.getCard(), entry.getXValue(), entry.getControllerId(),
                                         entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                                        entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry))).isPresent()) {
+                                        entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)), entry.isTeamworkCostPaid()).isPresent()) {
                             targetFizzled = true;
                         }
                     }
@@ -2910,51 +2960,92 @@ public class TargetLegalityService {
 
     private boolean isTargetCardLegalOnResolution(GameData gameData, StackEntry entry, UUID cardId) {
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-        if (card == null) {
+        if (card != null) {
+            List<ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect> chosenTypeEffects =
+                    entry.getEffectsToResolve().stream()
+                            .filter(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::isInstance)
+                            .map(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::cast)
+                            .toList();
+            if (!chosenTypeEffects.isEmpty()) {
+                CardSubtype chosenCreatureType = entry.getChosenCreatureType();
+                UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                return chosenCreatureType != null
+                        && entry.getControllerId().equals(graveyardOwnerId)
+                        && chosenTypeEffects.stream().anyMatch(effect -> predicateEvaluationService.matchesCardPredicate(
+                        card, effect.filter(chosenCreatureType), entry.getCard().getId(), gameData, graveyardOwnerId));
+            }
+
+            List<CardEffect> declarativeGraveyardEffects = entry.getEffectsToResolve().stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .toList();
+            if (!declarativeGraveyardEffects.isEmpty()) {
+                return declarativeGraveyardEffects.stream().anyMatch(effect ->
+                        targetValidationService.checkEffectTargets(
+                                List.of(effect),
+                                new TargetValidationContext(gameData, cardId, Zone.GRAVEYARD,
+                                        entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                                        entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
+                                        entry.getTriggeringPermanentPowerAtTrigger()), entry.isTeamworkCostPaid())
+                                .isEmpty());
+            }
+
+            SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect = entry.getEffectsToResolve().stream()
+                    .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
+                    .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (effect == null) {
+                return true;
+            }
+
+            return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
+                    .anyMatch(graveyardCard -> graveyardCard.getId().equals(cardId))
+                    && predicateEvaluationService.matchesCardPredicate(
+                    card, effect.returnFilter(), entry.getCard().getId());
+        }
+
+        Permanent permanent = findPermanentByCardId(gameData, cardId);
+        if (permanent == null) {
             return false;
         }
 
-        List<ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect> chosenTypeEffects =
-                entry.getEffectsToResolve().stream()
-                        .filter(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::isInstance)
-                        .map(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::cast)
-                        .toList();
-        if (!chosenTypeEffects.isEmpty()) {
-            CardSubtype chosenCreatureType = entry.getChosenCreatureType();
-            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-            return chosenCreatureType != null
-                    && entry.getControllerId().equals(graveyardOwnerId)
-                    && chosenTypeEffects.stream().anyMatch(effect -> predicateEvaluationService.matchesCardPredicate(
-                    card, effect.filter(chosenCreatureType), entry.getCard().getId(), gameData, graveyardOwnerId));
-        }
+        return entry.getEffectsToResolve().stream()
+                .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
+                .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
+                .anyMatch(effect -> isMixedZoneBattlefieldTargetLegal(gameData, entry, permanent, effect));
+    }
 
-        List<CardEffect> declarativeGraveyardEffects = entry.getEffectsToResolve().stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                .toList();
-        if (!declarativeGraveyardEffects.isEmpty()) {
-            return declarativeGraveyardEffects.stream().anyMatch(effect ->
-                    targetValidationService.checkEffectTargets(
-                            List.of(effect),
-                            new TargetValidationContext(gameData, cardId, Zone.GRAVEYARD,
-                                    entry.getCard(), entry.getXValue(), entry.getControllerId(),
-                                    entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                                    entry.getTriggeringPermanentPowerAtTrigger()))
-                            .isEmpty());
+    private boolean isMixedZoneBattlefieldTargetLegal(GameData gameData, StackEntry entry,
+                                                       Permanent permanent,
+                                                       BattlefieldAndGraveyardCardChoosingEffect effect) {
+        if (effect.mixedZoneExcludesSourcePermanent()
+                && permanent.getId().equals(entry.getSourcePermanentId())) {
+            return false;
         }
-
-        SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect = entry.getEffectsToResolve().stream()
-                .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
-                .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
-                .findFirst()
-                .orElse(null);
-        if (effect == null) {
-            return true;
+        PermanentPredicate predicate = effect.mixedZoneBattlefieldPredicate();
+        if (predicate == null) {
+            if (!gameQueryService.isCreature(gameData, permanent)) {
+                return false;
+            }
+        } else if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate)) {
+            return false;
         }
+        return isBattlefieldTargetLegalOnResolution(gameData, entry, permanent.getId(), null);
+    }
 
-        return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
-                .anyMatch(graveyardCard -> graveyardCard.getId().equals(cardId))
-                && predicateEvaluationService.matchesCardPredicate(
-                        card, effect.returnFilter(), entry.getCard().getId());
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(cardId)) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
     }
 
     public boolean isPrimaryTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId) {
@@ -2969,7 +3060,7 @@ public class TargetLegalityService {
                     exileTargetEffects,
                     new TargetValidationContext(gameData, targetId, Zone.EXILE,
                             entry.getCard(), entry.getXValue(), entry.getControllerId(),
-                            entry.getSourcePermanentSnapshot())).isEmpty();
+                            entry.getSourcePermanentSnapshot()), entry.isTeamworkCostPaid()).isEmpty();
         }
         if (entry.getTargetZone() == Zone.GRAVEYARD) {
             if (gameQueryService.findCardInGraveyardById(gameData, targetId) == null) {
@@ -2983,12 +3074,12 @@ public class TargetLegalityService {
                     new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD,
                             entry.getCard(), entry.getXValue(), entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                            entry.getTriggeringPermanentPowerAtTrigger())).isEmpty();
+                            entry.getTriggeringPermanentPowerAtTrigger()), entry.isTeamworkCostPaid()).isEmpty();
         }
         if (entry.getTargetZone() == Zone.STACK) {
             TargetFilter primaryFilter = primaryTargetFilter(entry);
             TargetFilter effectiveTargetFilter = primaryFilter instanceof StackEntryPredicateTargetFilter
-                    ? targetFilterForCast(primaryFilter, entry.isKicked(), entry.isGiftPromised())
+                    ? targetFilterForCast(primaryFilter, entry.isKicked(), entry.isGiftPromised(), entry.isTeamworkCostPaid())
                     : null;
             return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter, entry.getControllerId(),
                     entry.getSourcePermanentSnapshot(), entry.getXValue(), false).isEmpty();
@@ -2998,7 +3089,8 @@ public class TargetLegalityService {
 
     private boolean isBattlefieldTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId,
                                                           TargetFilter targetFilter) {
-        targetFilter = targetFilterForCast(targetFilter, entry.isKicked(), entry.isGiftPromised());
+        targetFilter = targetFilterForCast(targetFilter, entry.isKicked(), entry.isGiftPromised(),
+                entry.isTeamworkCostPaid());
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             if (!gameData.playerIds.contains(targetId)) {
@@ -3077,7 +3169,8 @@ public class TargetLegalityService {
                 && targetValidationService.checkEffectTargets(entry.getEffectsToResolve(),
                 new TargetValidationContext(gameData, targetId, entry.getTargetZone(), entry.getCard(), entry.getXValue(),
                         entry.getControllerId(), entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                        entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)))
+                        entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)),
+                        entry.isTeamworkCostPaid())
                 .isPresent()) {
             return false;
         }
@@ -3085,14 +3178,20 @@ public class TargetLegalityService {
     }
 
     private TargetFilter targetFilterForKickedCast(TargetFilter targetFilter, boolean kicked) {
-        return targetFilterForCast(targetFilter, kicked, false);
+        return targetFilterForCast(targetFilter, kicked, false, false);
     }
 
     private TargetFilter targetFilterForCast(TargetFilter targetFilter, boolean kicked,
                                              boolean giftPromised) {
+        return targetFilterForCast(targetFilter, kicked, giftPromised, false);
+    }
+
+    private TargetFilter targetFilterForCast(TargetFilter targetFilter, boolean kicked,
+                                             boolean giftPromised, boolean teamworkCostPaid) {
         if (targetFilter instanceof PermanentPredicateTargetFilter filter) {
             return new PermanentPredicateTargetFilter(
-                    filter.predicateFor(kicked, giftPromised), filter.errorMessageFor(giftPromised));
+                    filter.predicateFor(kicked, giftPromised, teamworkCostPaid),
+                    filter.errorMessageFor(giftPromised, teamworkCostPaid));
         }
         if (targetFilter instanceof StackEntryPredicateTargetFilter filter) {
             return new StackEntryPredicateTargetFilter(
@@ -3807,7 +3906,7 @@ public class TargetLegalityService {
 
     private StackEntry findSpellOnStack(GameData gameData, UUID targetId) {
         return gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetId)
+                .filter(se -> se.getTargetableId().equals(targetId)
                         && se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                         && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY)
                 .findFirst()
@@ -3816,7 +3915,7 @@ public class TargetLegalityService {
 
     StackEntry findAnyEntryOnStack(GameData gameData, UUID targetId) {
         return gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetId))
+                .filter(se -> se.getTargetableId().equals(targetId))
                 .findFirst()
                 .orElse(null);
     }
@@ -3897,11 +3996,17 @@ public class TargetLegalityService {
 
     public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate,
                                               UUID controllerId, Permanent source) {
-        return matchesStackEntryPredicate(gameData, stackEntry, predicate, controllerId, source, null);
+        return matchesStackEntryPredicate(gameData, stackEntry, predicate, controllerId, source, null, null);
     }
 
     public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate,
                                               UUID controllerId, Permanent source, Integer xValue) {
+        return matchesStackEntryPredicate(gameData, stackEntry, predicate, controllerId, source, xValue, null);
+    }
+
+    public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate,
+                                              UUID controllerId, Permanent source, Integer xValue,
+                                              Integer sourcePowerAtLastKnown) {
         if (predicate instanceof StackEntryTruePredicate) {
             return true;
         }
@@ -3960,7 +4065,7 @@ public class TargetLegalityService {
                     && stackEntry.getCard().getParsedManaCost().hasX();
         }
         if (predicate instanceof StackEntryIsNthSpellCastThisTurnPredicate nthSpell) {
-            return gameData.getSpellCastOrdinalThisTurn(stackEntry.getCard().getId()) == nthSpell.spellNumber();
+            return gameData.getSpellCastOrdinalThisTurn(stackEntry.getTargetableId()) == nthSpell.spellNumber();
         }
         if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
             return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
@@ -3993,6 +4098,15 @@ public class TargetLegalityService {
             }
             int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
             return manaValue == gameQueryService.getEffectivePower(gameData, source);
+        }
+        if (predicate instanceof StackEntryManaValueAtMostSourcePowerPredicate) {
+            if (source == null) {
+                return false;
+            }
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int sourcePower = sourcePowerAtLastKnown != null
+                    ? sourcePowerAtLastKnown : gameQueryService.getEffectivePower(gameData, source);
+            return manaValue <= sourcePower;
         }
         if (predicate instanceof StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate) {
             if (source == null) {
@@ -4038,7 +4152,7 @@ public class TargetLegalityService {
             if (source == null || stackEntry.getCard() == null) {
                 return false;
             }
-            UUID candidateCardId = stackEntry.getCard().getId();
+            UUID candidateCardId = stackEntry.getTargetableId();
             for (StackEntry ability : gameData.stack) {
                 if ((ability.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && ability.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
@@ -4087,7 +4201,8 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryAnyOfPredicate anyOfPredicate) {
             for (StackEntryPredicate nested : anyOfPredicate.predicates()) {
-                if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source, xValue)) {
+                if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source, xValue,
+                        sourcePowerAtLastKnown)) {
                     return true;
                 }
             }
@@ -4095,14 +4210,16 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryAllOfPredicate allOfPredicate) {
             for (StackEntryPredicate nested : allOfPredicate.predicates()) {
-                if (!matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source, xValue)) {
+                if (!matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source, xValue,
+                        sourcePowerAtLastKnown)) {
                     return false;
                 }
             }
             return true;
         }
         if (predicate instanceof StackEntryNotPredicate notPredicate) {
-            return !matchesStackEntryPredicate(gameData, stackEntry, notPredicate.predicate(), controllerId, source, xValue);
+            return !matchesStackEntryPredicate(gameData, stackEntry, notPredicate.predicate(), controllerId, source,
+                    xValue, sourcePowerAtLastKnown);
         }
         return false;
     }

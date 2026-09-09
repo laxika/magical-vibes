@@ -146,7 +146,22 @@ class DiscardTriggerCollectorServiceTest {
         });
     }
 
-    // ===== Helpers =====
+    @Test
+    void cyclingQueuesKeywordGrantForItsSource() {
+        Permanent source = createPermanent("Cycling observer");
+        var effect = new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF);
+        var context = new TriggerContext.Cycle(player2Id, createCard("Cycled card"));
+
+        boolean collected = registry.dispatch(
+                match(source, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CYCLES, effect, context);
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        });
+    }
 
     private static Card createCard(String name) {
         Card card = new Card();

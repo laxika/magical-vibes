@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
 import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StoneRain.class, Mountain.class, GrizzlyBears.class, CityOfBrass.class})
+@CardUsed({StoneRain.class, Mountain.class, AlabornTrooper.class, CityOfBrass.class})
 class StoneRainTest extends BaseCardTest {
 
     @Test
@@ -103,12 +103,22 @@ class StoneRainTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with Stone Rain")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AlabornTrooper());
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Alaborn Trooper");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a player with Stone Rain")
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

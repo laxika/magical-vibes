@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "183")
+@CardRegistration(set = "OM1", collectorNumber = "183")
 public class SavageMansion extends Card {
 
     public SavageMansion() {

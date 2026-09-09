@@ -39,8 +39,8 @@ public class ReturnTriumphant extends Card {
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(creatureCard)
                         .targetGraveyard(true)
-                        .build());
-        addEffect(EffectSlot.SPELL, new CreateTokenAttachedToReturnedPermanentEffect(youngHeroRoleToken()));
+                        .build())
+                .addEffect(EffectSlot.SPELL, new CreateTokenAttachedToReturnedPermanentEffect(youngHeroRoleToken()));
     }
 
     private static CreateTokenEffect youngHeroRoleToken() {

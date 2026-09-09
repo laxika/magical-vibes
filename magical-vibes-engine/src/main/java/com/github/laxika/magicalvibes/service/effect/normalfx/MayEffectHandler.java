@@ -63,8 +63,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                     ? null
                     : gameQueryService.findPermanentController(gameData, targetId);
             case TARGET_SPELL_CONTROLLER -> findTargetSpellControllerId(gameData, targetId);
-            case TRIGGERING_PERMANENT_CONTROLLER -> entry.getTriggeringPermanentControllerId() != null
-                    ? entry.getTriggeringPermanentControllerId() : targetId;
+            case TRIGGERING_PERMANENT_CONTROLLER -> findTriggeringPermanentControllerId(gameData, entry, targetId);
             case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> targetId == null
                     ? null
                     : gameData.playerIds.contains(targetId)
@@ -105,7 +104,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 e.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER ? entry.getActivePlayerId() : null,
                 defendingPlayerChoice ? choicePlayerId : null,
                 entry.getSourcePermanentSnapshot(),
-                null,
+                entry.getTriggeringPermanentControllerId(),
                 entry.getTriggeringCardId(),
                 entry.getEventValue(),
                 entry.getTriggeringPermanentId(),
@@ -126,12 +125,23 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 && choicePlayerId.equals(gameQueryService.findPermanentController(gameData, enchantedId));
     }
 
+    private UUID findTriggeringPermanentControllerId(GameData gameData, StackEntry entry, UUID fallback) {
+        if (entry.getTriggeringPermanentId() != null) {
+            UUID liveControllerId = gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
+            if (liveControllerId != null) {
+                return liveControllerId;
+            }
+        }
+        return entry.getTriggeringPermanentControllerId() != null
+                ? entry.getTriggeringPermanentControllerId() : fallback;
+    }
+
     private UUID findTargetSpellControllerId(GameData gameData, UUID targetCardId) {
         if (targetCardId == null) {
             return null;
         }
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getCard().getId().equals(targetCardId)) {
+            if (stackEntry.getTargetableId().equals(targetCardId)) {
                 return stackEntry.getControllerId();
             }
         }

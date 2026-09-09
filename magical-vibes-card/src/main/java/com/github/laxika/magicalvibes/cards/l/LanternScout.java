@@ -16,6 +16,6 @@ public class LanternScout extends Card {
     public LanternScout() {
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES)));
+                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES)));
     }
 }

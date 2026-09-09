@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredic
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "84")
+@CardRegistration(set = "CST", collectorNumber = "14")
 public class Mistfolk extends Card {
 
     public Mistfolk() {

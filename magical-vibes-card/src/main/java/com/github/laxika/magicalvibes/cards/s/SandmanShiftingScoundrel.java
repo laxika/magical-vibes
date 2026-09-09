@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "112")
 @CardRegistration(set = "SPM", collectorNumber = "266")
+@CardRegistration(set = "OM1", collectorNumber = "113")
 public class SandmanShiftingScoundrel extends Card {
 
     public SandmanShiftingScoundrel() {

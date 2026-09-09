@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ErraticPortal;
+import com.github.laxika.magicalvibes.cards.g.Grollub;
+import com.github.laxika.magicalvibes.cards.t.ThopterSquadron;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,33 +18,32 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CursedFlesh.class, CrashingBoars.class, Grollub.class, ErraticPortal.class,
+        ThopterSquadron.class})
 class CursedFleshTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature gets -1/-1 and fear")
     void enchantedCreatureGetsMinusOneMinusOneAndFear() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrashingBoars());
 
         harness.setHand(player1, List.of(new CursedFlesh()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FEAR)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isTrue();
     }
 
     @Test
     @DisplayName("Creature with Cursed Flesh cannot be blocked by a normal creature")
     void cannotBeBlockedByNormalCreature() {
-        Permanent attacker = enchantedAttackingCreature();
+        enchantedAttackingCreature();
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new CrashingBoars());
 
         prepareDeclareBlockers();
 
@@ -57,9 +58,21 @@ class CursedFleshTest extends BaseCardTest {
     void canBeBlockedByBlackCreature() {
         enchantedAttackingCreature();
 
-        Permanent blocker = new Permanent(new DrossCrocodile());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new Grollub());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creature with Cursed Flesh can be blocked by an artifact creature")
+    void canBeBlockedByArtifactCreature() {
+        enchantedAttackingCreature();
+
+        Permanent blocker = addCreatureReady(player2, new ThopterSquadron());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -70,34 +83,28 @@ class CursedFleshTest extends BaseCardTest {
     @Test
     @DisplayName("Removing Cursed Flesh restores the creature")
     void effectsStopWhenRemoved() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = addCreatureReady(player1, new CrashingBoars());
 
-        Permanent aura = new Permanent(new CursedFlesh());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new CursedFlesh());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isTrue();
 
         gd.playerBattlefields.get(player2.getId()).remove(aura);
 
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isFalse();
     }
 
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ErraticPortal());
         harness.setHand(player1, List.of(new CursedFlesh()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -105,14 +112,11 @@ class CursedFleshTest extends BaseCardTest {
     }
 
     private Permanent enchantedAttackingCreature() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new CrashingBoars());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent aura = new Permanent(new CursedFlesh());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CursedFlesh());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         return attacker;
     }

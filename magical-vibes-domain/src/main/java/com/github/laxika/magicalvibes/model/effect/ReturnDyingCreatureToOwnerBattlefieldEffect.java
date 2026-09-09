@@ -16,18 +16,27 @@ public record ReturnDyingCreatureToOwnerBattlefieldEffect(
         CounterType enterWithCounter,
         int enterWithCounterCount,
         CardSubtype grantSubtype,
-        Set<Keyword> grantKeywords
+        Set<Keyword> grantKeywords,
+        boolean enterTapped
 ) implements CardEffect, DyingCreatureCardAwareEffect {
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect() {
-        this(null, null, 0, null, Set.of());
+        this(null, null, 0, null, Set.of(), false);
     }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType enterWithCounter,
                                                        int enterWithCounterCount,
                                                        CardSubtype grantSubtype,
                                                        Set<Keyword> grantKeywords) {
-        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords);
+        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, false);
+    }
+
+    public ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType enterWithCounter,
+                                                       int enterWithCounterCount,
+                                                       CardSubtype grantSubtype,
+                                                       Set<Keyword> grantKeywords,
+                                                       boolean enterTapped) {
+        this(null, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, enterTapped);
     }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect {
@@ -37,6 +46,6 @@ public record ReturnDyingCreatureToOwnerBattlefieldEffect(
     @Override
     public CardEffect boundToDyingCard(UUID dyingCardId) {
         return new ReturnDyingCreatureToOwnerBattlefieldEffect(
-                dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords);
+                dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords, enterTapped);
     }
 }

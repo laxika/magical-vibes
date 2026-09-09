@@ -20,6 +20,7 @@ public class ExileControllerLibraryEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId());
+        ExileControllerLibraryEffect exileEffect = (ExileControllerLibraryEffect) effect;
+        libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId(), exileEffect.faceDown());
     }
 }

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "5ED", collectorNumber = "339")
 @CardRegistration(set = "4ED", collectorNumber = "285")
 @CardRegistration(set = "SUM", collectorNumber = "227")
+@CardRegistration(set = "ME1", collectorNumber = "137")
+@CardRegistration(set = "3ED", collectorNumber = "227")
 public class Wanderlust extends Card {
 
     public Wanderlust() {

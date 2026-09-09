@@ -54,14 +54,14 @@ class SereneStewardTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A life gain with no creature target does not create a trigger")
-    void noCreatureTargetSkipsTrigger() {
-        harness.addToBattlefield(player1, new SereneSteward());
+    @DisplayName("The Steward can target itself when it is the only creature")
+    void onlyCreatureCanTargetItself() {
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new SereneSteward());
 
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(steward.getId());
     }
 }

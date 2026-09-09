@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.d.DragonFodder;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LiegeOfTheHollows;
+import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,33 +16,34 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InfernalTribute.class, LiegeOfTheHollows.class, RedwoodTreefolk.class})
 class InfernalTributeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a nontoken permanent draws a card")
     void sacrificeDrawsACard() {
         harness.addToBattlefield(player1, new InfernalTribute());
-        harness.addToBattlefield(player1, new Forest());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new RedwoodTreefolk());
+        harness.setLibrary(player1, List.of(new RedwoodTreefolk(), new RedwoodTreefolk()));
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Forest"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Redwood Treefolk"));
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        harness.assertNotOnBattlefield(player1, "Forest");
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Redwood Treefolk");
+        harness.assertNotOnBattlefield(player1, "Redwood Treefolk");
+        harness.assertInGraveyard(player1, "Redwood Treefolk");
     }
 
     @Test
     @DisplayName("Infernal Tribute itself may be sacrificed to its own ability")
     void canSacrificeItself() {
         harness.addToBattlefield(player1, new InfernalTribute());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new RedwoodTreefolk(), new RedwoodTreefolk()));
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
@@ -51,7 +52,7 @@ class InfernalTributeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Redwood Treefolk");
         harness.assertNotOnBattlefield(player1, "Infernal Tribute");
         harness.assertInGraveyard(player1, "Infernal Tribute");
     }
@@ -62,26 +63,30 @@ class InfernalTributeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new InfernalTribute());
-        harness.setHand(player1, List.of(new DragonFodder()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-
-        harness.addToBattlefield(player1, new Forest());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new LiegeOfTheHollows());
+        harness.addToBattlefield(player1, new RedwoodTreefolk());
+        harness.setLibrary(player1, List.of(new RedwoodTreefolk(), new RedwoodTreefolk()));
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Liege of the Hollows"));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.passBothPriorities();
 
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        List<Permanent> squirrels = findPermanents(player1, "Squirrel");
+        assertThat(squirrels).hasSize(1);
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        List<Permanent> goblins = findPermanents(player1, "Goblin");
-        assertThat(goblins).hasSize(2);
         assertThat(choice.validPermanentIds())
-                .doesNotContain(goblins.get(0).getId(), goblins.get(1).getId())
-                .contains(harness.getPermanentId(player1, "Forest"),
+                .doesNotContain(squirrels.getFirst().getId())
+                .contains(
                         harness.getPermanentId(player1, "Infernal Tribute"));
     }
 
@@ -89,9 +94,7 @@ class InfernalTributeTest extends BaseCardTest {
     @DisplayName("Ability cannot be activated without paying the mana cost")
     void cannotActivateWithoutMana() {
         harness.addToBattlefield(player1, new InfernalTribute());
-        harness.addToBattlefield(player1, new Forest());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new RedwoodTreefolk());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 

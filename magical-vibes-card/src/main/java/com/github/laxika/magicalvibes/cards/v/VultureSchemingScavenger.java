@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "158")
+@CardRegistration(set = "OM1", collectorNumber = "152")
 public class VultureSchemingScavenger extends Card {
 
     public VultureSchemingScavenger() {

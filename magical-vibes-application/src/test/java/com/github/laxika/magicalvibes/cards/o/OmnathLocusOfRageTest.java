@@ -42,6 +42,7 @@ class OmnathLocusOfRageTest extends BaseCardTest {
         Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         elemental.setMarkedDamage(4);
         harness.runStateBasedActions();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -68,6 +69,7 @@ class OmnathLocusOfRageTest extends BaseCardTest {
         Permanent omnath = harness.addToBattlefieldAndReturn(player1, new OmnathLocusOfRage());
         omnath.setMarkedDamage(5);
         harness.runStateBasedActions();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());

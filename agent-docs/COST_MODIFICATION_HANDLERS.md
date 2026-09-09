@@ -102,6 +102,8 @@ new record. Its optional source-zone set restricts which cast sources match; Pat
 `CardTypePredicate(CREATURE)` and `SELF` scope; the boolean enables the plot-from-hand-only restriction.
 `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (Semblance Anvil) keeps its own handler because
 it compares against the imprinted card rather than a predicate.
+`ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect` (Cemetery Prowler) also keeps its own
+handler because it counts distinct card types across all cards exiled with its source permanent.
 
 **Exception — target-gated reductions.** `ReduceOwnCastCostIfTargetingPermanentEffect` (whose
 `controlledByCaster` flag covers both "targets a matching permanent" and "targets one you control"),
@@ -115,7 +117,9 @@ permanent target matches; the spell-self form continues to inspect its first tar
 
 `ReduceOwnCastCostIfTargetingGraveyardCardEffect` is the corresponding target-gated record for a
 graveyard card. Its `CardPredicate` is evaluated against the chosen first graveyard target in the
-same `CastingCostService.computeTargetBasedCostReduction` path.
+same `CastingCostService.computeTargetBasedCostReduction` path. The spell-self form checks the
+effect's zero-based `targetIndex` (defaulting to the first target), while a battlefield-carried
+effect continues to reduce once when any chosen permanent target matches.
 
 Target-gated increases use the parallel `TargetBasedCastCostIncreaseEffect` interface and
 `IncreaseOwnCastCostIfTargetingPermanentEffect` record. Their surcharge is evaluated against the
@@ -136,6 +140,10 @@ override `modifyForetellCost` for the generic action cost and
 `allowsForetellDuringAnyTurn` for a source-controller timing permission; ordinary spell-cost
 modifiers do not affect foretell.
 
+Room-door unlock-cost modifiers use the same battlefield handler registry. A handler may override
+`modifyRoomUnlockCost` for the generic mana component of a Room door's unlock cost; ordinary
+spell-cost modifiers do not affect Room-door unlocks. `CastingCostService.getRoomUnlockCost` is
+the shared path for previews and payment.
 ## Alternate-cost reductions
 
 Effects that reduce a named alternate cost, rather than a spell's normal mana cost, use the
@@ -180,6 +188,9 @@ another player's dash costs.
 - `cast/costmod/ForetellCostReductionEffectHandler.java` — battlefield handler for
   `ForetellCostReductionEffect(int, boolean)`; contributes through the foretell action-cost and
   any-player-turn channels for the source controller.
+- `cast/costmod/ReduceRoomUnlockCostEffectHandler.java` — battlefield handler for
+  `ReduceRoomUnlockCostEffect(int)`; contributes only through the generic Room-door unlock-cost
+  channel for the source controller (Inquisitive Glimmer, `DSK`).
 - `cast/costmod/ReduceCastCostForChosenNameSpellsEffectHandler.java` — battlefield handler for
   `ReduceCastCostForChosenNameSpellsEffect(int amount)`; applies only to the source controller's spells
   whose name equals the source permanent's `chosenName` (Council of the Absolute, {2}). Its own record

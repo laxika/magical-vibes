@@ -261,7 +261,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 e.recordChosenCount(), e.cloakChosenPermanents(), false,
                 e.battlefieldSelectionFollowUp(), false, remainingToHand || chooseCount > 1, false,
                 e.selectedCardMayGoToHandIfBattlefieldDeclined(), e.battlefieldEntryReplacement(), remainingToHand,
-                chooseTotalManaValueAtMost == Integer.MAX_VALUE ? null : chooseTotalManaValueAtMost, false));
+                chooseTotalManaValueAtMost == Integer.MAX_VALUE ? null : chooseTotalManaValueAtMost));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====
@@ -553,7 +553,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     e.payLifePerSelectedCard() > 0
                             ? e.payLifePerSelectedCard() : e.loseLifePerSelectedCard(),
                     null, max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), false,
-                    false, e.payLifePerSelectedCard() > 0, null, false, false));
+                    false, e.payLifePerSelectedCard() > 0, null, false, false).withSelectedCardFollowUp(e.selectedCardPredicate(), e.effectIfSelectedCardMatches()));
             return;
         }
 
@@ -702,7 +702,14 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<Card> remainingCards = new ArrayList<>(topCards);
         remainingCards.removeAll(eligibleCards);
         if (!remainingCards.isEmpty()) {
-            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, remainingCards);
+            if (randomRemaining) {
+                java.util.Collections.shuffle(remainingCards);
+                gameData.playerDecks.get(controllerId).addAll(remainingCards);
+                gameLogService.append(gameData, GameLog.text(playerName
+                        + " puts the rest on the bottom of their library in a random order."));
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, remainingCards);
+            }
         }
     }
 

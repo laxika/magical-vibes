@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "FDN", collectorNumber = "132")
+@CardRegistration(set = "FDN", collectorNumber = "354")
+@CardRegistration(set = "FDN", collectorNumber = "415")
+@CardRegistration(set = "FDN", collectorNumber = "486")
 public class ScrawlingCrawler extends Card {
 
     public ScrawlingCrawler() {

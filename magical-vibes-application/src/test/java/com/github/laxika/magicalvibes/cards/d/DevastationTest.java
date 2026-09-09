@@ -1,20 +1,18 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Devastation.class, Forest.class, GolemsHeart.class, GrizzlyBears.class, Island.class, Mountain.class})
 class DevastationTest extends BaseCardTest {
 
     @Test
@@ -24,13 +22,10 @@ class DevastationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new Island());
-        harness.setHand(player1, List.of(new Devastation()));
-        harness.addMana(player1, ManaColor.RED, 7);
+        harness.castFromHand(player1, new Devastation(), "{5}{R}{R}");
 
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -45,13 +40,10 @@ class DevastationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GolemsHeart());
-        harness.setHand(player1, List.of(new Devastation()));
-        harness.addMana(player1, ManaColor.RED, 7);
+        harness.castFromHand(player1, new Devastation(), "{5}{R}{R}");
 
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // The land and creature are destroyed, but the artifact survives.
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .singleElement()

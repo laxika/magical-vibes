@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +12,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GiftOfEstates.class, Forest.class, Plains.class, GrizzlyBears.class})
 class GiftOfEstatesTest extends BaseCardTest {
 
     @Test
     @DisplayName("When an opponent controls more lands, resolving presents only Plains cards")
     void opponentControlsMoreLandsPresentsPlains() {
         setupAndCast();
-        givePlayerLands(player2, 1);
-        setupLibrary();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Plains(), new Plains(), new Plains(), new GrizzlyBears()));
 
         harness.passBothPriorities();
 
@@ -34,25 +33,77 @@ class GiftOfEstatesTest extends BaseCardTest {
     @DisplayName("Chosen Plains cards go to hand")
     void chosenPlainsGoToHand() {
         setupAndCast();
-        givePlayerLands(player2, 1);
-        setupLibrary();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Plains(), new Plains(), new Plains(), new GrizzlyBears()));
 
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         harness.assertInHand(player1, "Plains");
     }
 
     @Test
+    @DisplayName("The search may find no Plains cards when the player chooses none")
+    void mayChooseNoPlains() {
+        setupAndCast();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
+
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.assertNotInHand(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("No library search interaction is offered when no Plains card is available")
+    void noSearchWhenLibraryHasNoPlains() {
+        setupAndCast();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertNotInHand(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The search may put up to three Plains cards into hand")
+    void mayChooseUpToThreePlains() {
+        setupAndCast();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(
+                new Plains(), new Plains(), new Plains(), new Plains(), new GrizzlyBears()));
+
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("When you control at least as many lands, no search happens")
     void noSearchWhenNotFewerLands() {
         setupAndCast();
-        givePlayerLands(player1, 1);
-        givePlayerLands(player2, 1);
-        setupLibrary();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Plains(), new Plains(), new Plains(), new GrizzlyBears()));
 
         harness.passBothPriorities();
 
@@ -61,20 +112,6 @@ class GiftOfEstatesTest extends BaseCardTest {
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new GiftOfEstates()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castSorcery(player1, 0, 0);
-    }
-
-    private void givePlayerLands(com.github.laxika.magicalvibes.model.Player player, int count) {
-        for (int i = 0; i < count; i++) {
-            harness.addToBattlefield(player, new Forest());
-        }
-    }
-
-    private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Plains(), new Plains(), new GrizzlyBears()));
+        harness.castFromHand(player1, new GiftOfEstates(), "{1}{W}");
     }
 }

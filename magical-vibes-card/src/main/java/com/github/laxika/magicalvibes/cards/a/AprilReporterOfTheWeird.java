@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "30")
+@CardRegistration(set = "TMT", collectorNumber = "206")
 public class AprilReporterOfTheWeird extends Card {
 
     public AprilReporterOfTheWeird() {

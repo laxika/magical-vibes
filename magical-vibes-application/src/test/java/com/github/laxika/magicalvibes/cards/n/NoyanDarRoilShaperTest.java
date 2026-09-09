@@ -72,6 +72,7 @@ class NoyanDarRoilShaperTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);

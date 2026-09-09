@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.PlanechaseView;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
@@ -20,5 +21,17 @@ public record JoinGame(UUID id, String gameName, GameStatus status,
                        List<TurnStep> autoStopSteps, List<Integer> lifeTotals, List<Integer> poisonCounters,
                        List<Integer> energyCounters,
                        List<StackEntryView> stack, List<List<CardView>> graveyards,
+                       List<Integer> speeds, DayNight dayNight, PlanechaseView planechase) {
+    public JoinGame(UUID id, String gameName, GameStatus status,
+                       List<String> playerNames, List<UUID> playerIds, List<GameLogEntryView> gameLog,
+                       TurnStep currentStep, UUID activePlayerId, int turnNumber, UUID priorityPlayerId,
+                       List<CardView> hand, int mulliganCount, List<Integer> deckSizes, List<Integer> handSizes,
+                       List<List<PermanentView>> battlefields, Map<String, Integer> manaPool,
+                       List<TurnStep> autoStopSteps, List<Integer> lifeTotals, List<Integer> poisonCounters,
+                       List<Integer> energyCounters,
+                       List<StackEntryView> stack, List<List<CardView>> graveyards,
                        List<Integer> speeds, DayNight dayNight) {
+        this(id, gameName, status, playerNames, playerIds, gameLog, currentStep, activePlayerId, turnNumber, priorityPlayerId, hand, mulliganCount, deckSizes, handSizes, battlefields, manaPool, autoStopSteps, lifeTotals, poisonCounters, energyCounters, stack, graveyards, speeds, dayNight, null);
+    }
+
 }

@@ -92,7 +92,12 @@ class BrutalExpulsionTest extends BaseCardTest {
     private void cast(int[] modes, List<UUID> targetIds) {
         harness.setHand(player1, List.of(new BrutalExpulsion()));
         addBrutalExpulsionMana(player1);
-        harness.castModalInstantWithModes(player1, 0, 1, 2, modes, targetIds);
+        if (java.util.Arrays.stream(modes).anyMatch(mode -> mode == 0)) {
+            harness.castModalInstantWithModes(player1, 0, 1, 2, modes,
+                    targetIds.getFirst(), targetIds.subList(1, targetIds.size()));
+        } else {
+            harness.castModalInstantWithModes(player1, 0, 1, 2, modes, targetIds);
+        }
         harness.passBothPriorities();
     }
 

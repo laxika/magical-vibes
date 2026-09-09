@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "198")
 @CardRegistration(set = "FEM", collectorNumber = "45")
+@CardRegistration(set = "ME1", collectorNumber = "84")
 public class ThrullRetainer extends Card {
 
     public ThrullRetainer() {

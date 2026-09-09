@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "222")
+@CardRegistration(set = "AFR", collectorNumber = "240")
 public class BagOfHolding extends Card {
 
     public BagOfHolding() {

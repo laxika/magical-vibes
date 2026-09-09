@@ -1,27 +1,24 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MerfolkLooter.class, Forest.class, GrizzlyBears.class, Mountain.class})
 class MerfolkLooterTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -29,27 +26,30 @@ class MerfolkLooterTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Merfolk Looter puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new MerfolkLooter()));
+        MerfolkLooter card = new MerfolkLooter();
+        harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Merfolk Looter");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
     }
 
     @Test
     @DisplayName("Resolving puts Merfolk Looter onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new MerfolkLooter()));
+        MerfolkLooter card = new MerfolkLooter();
+        harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Merfolk Looter");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == card);
     }
 
     @Test
@@ -66,13 +66,17 @@ class MerfolkLooterTest extends BaseCardTest {
     @Test
     @DisplayName("Enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new MerfolkLooter()));
+        MerfolkLooter card = new MerfolkLooter();
+        harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = findPermanent(player1, "Merfolk Looter");
+        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() == card)
+                .findFirst()
+                .orElseThrow();
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
@@ -81,23 +85,23 @@ class MerfolkLooterTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
-        addReadyLooter(player1);
+        Permanent looter = addCreatureReady(player1, new MerfolkLooter());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Merfolk Looter");
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(looter.getId());
     }
 
     @Test
     @DisplayName("Activating ability taps Merfolk Looter")
     void activatingTapsLooter() {
-        Permanent looter = addReadyLooter(player1);
+        Permanent looter = addCreatureReady(player1, new MerfolkLooter());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -107,10 +111,10 @@ class MerfolkLooterTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate when tapped")
     void cannotActivateWhenTapped() {
-        Permanent looter = addReadyLooter(player1);
+        Permanent looter = addCreatureReady(player1, new MerfolkLooter());
         looter.tap();
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -120,12 +124,10 @@ class MerfolkLooterTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        MerfolkLooter card = new MerfolkLooter();
-        Permanent looter = new Permanent(card);
+        Permanent looter = harness.addToBattlefieldAndReturn(player1, new MerfolkLooter());
         looter.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(looter);
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -136,9 +138,9 @@ class MerfolkLooterTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving draws a card then prompts for discard")
     void resolvingDrawsThenPromptsForDiscard() {
-        addReadyLooter(player1);
+        addCreatureReady(player1, new MerfolkLooter());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -148,16 +150,17 @@ class MerfolkLooterTest extends BaseCardTest {
         // Should be awaiting discard
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("draws a card"));
+        assertThat(gameLogContains("draws a card")).isTrue();
     }
 
     @Test
     @DisplayName("Completing discard moves card to graveyard and hand size stays the same")
     void completingDiscardMovesToGraveyard() {
-        addReadyLooter(player1);
+        addCreatureReady(player1, new MerfolkLooter());
         GrizzlyBears bears = new GrizzlyBears();
+        Forest drawnCard = new Forest();
         harness.setHand(player1, List.of(bears));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(drawnCard));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -166,22 +169,22 @@ class MerfolkLooterTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Hand should have 1 card (the Forest drawn)
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         // Graveyard should have the discarded card
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears);
         // No longer awaiting input
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
+        assertThat(gameLogContains("discards")).isTrue();
     }
 
     @Test
     @DisplayName("Can choose to discard the drawn card instead")
     void canDiscardTheDrawnCard() {
-        addReadyLooter(player1);
+        addCreatureReady(player1, new MerfolkLooter());
         GrizzlyBears bears = new GrizzlyBears();
+        Forest drawnCard = new Forest();
         harness.setHand(player1, List.of(bears));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(drawnCard));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -189,18 +192,16 @@ class MerfolkLooterTest extends BaseCardTest {
         // Hand has [GrizzlyBears, Forest], discard the Forest at index 1
         harness.handleCardChosen(player1, 1);
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
-        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawnCard);
     }
 
     @Test
     @DisplayName("Looting with empty deck still prompts discard if hand has cards")
     void lootingWithEmptyDeckStillDiscardsIfHandHasCards() {
-        addReadyLooter(player1);
+        addCreatureReady(player1, new MerfolkLooter());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        // Empty deck - clear it
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -209,30 +210,50 @@ class MerfolkLooterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         // Should still be awaiting discard
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to draw"));
+        assertThat(gameLogContains("no cards to draw")).isTrue();
     }
 
     @Test
     @DisplayName("Looting with empty deck and empty hand skips discard")
     void lootingWithEmptyDeckAndEmptyHandSkipsDiscard() {
-        addReadyLooter(player1);
-        harness.setHand(player1, new ArrayList<>());
-        gd.playerDecks.get(player1.getId()).clear();
+        addCreatureReady(player1, new MerfolkLooter());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         // No card drawn, hand still empty - discard should be skipped
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
+        assertThat(gameLogContains("no cards to discard")).isTrue();
+    }
+
+    @Test
+    @DisplayName("With an empty starting hand, discards the card it drew")
+    void discardsDrawnCardWhenStartingHandIsEmpty() {
+        addCreatureReady(player1, new MerfolkLooter());
+        Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawnCard);
     }
 
     @Test
     @DisplayName("Net card count stays the same after full loot cycle")
     void netCardCountStaysSame() {
-        addReadyLooter(player1);
+        addCreatureReady(player1, new MerfolkLooter());
         harness.setHand(player1, List.of(new GrizzlyBears(), new Forest()));
-        setDeck(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new Mountain()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -251,10 +272,8 @@ class MerfolkLooterTest extends BaseCardTest {
     void dealsOneDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = new Permanent(new MerfolkLooter());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new MerfolkLooter());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -264,19 +283,5 @@ class MerfolkLooterTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
-    // ===== Helpers =====
-
-    private Permanent addReadyLooter(Player player) {
-        MerfolkLooter card = new MerfolkLooter();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
 }
 

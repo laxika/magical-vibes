@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,11 +18,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EverbarkShaman.class, Forest.class, GrizzlyBears.class, Island.class, RowanTreefolk.class})
 class EverbarkShamanTest extends BaseCardTest {
 
     private Permanent setup(List<Card> graveyard) {
-        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new EverbarkShaman());
-        shaman.setSummoningSick(false);
+        Permanent shaman = addCreatureReady(player1, new EverbarkShaman());
         harness.setGraveyard(player1, graveyard);
         return shaman;
     }
@@ -31,9 +32,7 @@ class EverbarkShamanTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Forest(), new Forest(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Island(), new GrizzlyBears()));
     }
 
     @Test

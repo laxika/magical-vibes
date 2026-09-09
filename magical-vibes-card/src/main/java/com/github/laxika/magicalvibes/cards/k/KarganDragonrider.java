@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M19", collectorNumber = "297")
+@CardRegistration(set = "FDN", collectorNumber = "541")
 public class KarganDragonrider extends Card {
 
     public KarganDragonrider() {

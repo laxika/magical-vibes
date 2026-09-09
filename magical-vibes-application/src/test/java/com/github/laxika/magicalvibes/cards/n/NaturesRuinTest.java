@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
+@CardUsed({NaturesRuin.class, Forest.class, GrizzlyBears.class, HillGiant.class})
 class NaturesRuinTest extends BaseCardTest {
 
     @Test
@@ -16,10 +16,8 @@ class NaturesRuinTest extends BaseCardTest {
     void destroysGreenCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new NaturesRuin()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castFromHand(player1, new NaturesRuin(), "{2}{B}");
 
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -32,13 +30,22 @@ class NaturesRuinTest extends BaseCardTest {
     @DisplayName("Leaves non-green creatures untouched")
     void leavesNonGreenCreatures() {
         harness.addToBattlefield(player1, new HillGiant());
-        harness.setHand(player1, List.of(new NaturesRuin()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castFromHand(player1, new NaturesRuin(), "{2}{B}");
 
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Leaves noncreature permanents untouched")
+    void leavesNoncreaturePermanents() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new NaturesRuin(), "{2}{B}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -46,10 +53,8 @@ class NaturesRuinTest extends BaseCardTest {
     void destroysOnlyGreenAmongMixed() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new HillGiant());
-        harness.setHand(player1, List.of(new NaturesRuin()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castFromHand(player1, new NaturesRuin(), "{2}{B}");
 
-        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
