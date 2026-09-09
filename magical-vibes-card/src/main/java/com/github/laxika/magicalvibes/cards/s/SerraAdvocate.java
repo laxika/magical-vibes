@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "41")
 @CardRegistration(set = "UDS", collectorNumber = "19")
+@CardRegistration(set = "DDC", collectorNumber = "7")
 public class SerraAdvocate extends Card {
 
     public SerraAdvocate() {

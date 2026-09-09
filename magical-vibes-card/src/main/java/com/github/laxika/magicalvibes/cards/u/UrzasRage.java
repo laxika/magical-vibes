@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "178")
+@CardRegistration(set = "DDE", collectorNumber = "36")
 public class UrzasRage extends Card {
 
     public UrzasRage() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "2")
 @CardRegistration(set = "TPR", collectorNumber = "2")
+@CardRegistration(set = "DDC", collectorNumber = "6")
 public class AngelicProtector extends Card {
 
     public AngelicProtector() {
