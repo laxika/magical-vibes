@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.g.GrimMonolith;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +15,29 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Cessation.class, GiantCockroach.class, GrimMonolith.class})
 class CessationTest extends BaseCardTest {
+    @Test
+    void returnsToOwnersHandWhenControlledByOpponent() {
+        Cessation card = new Cessation();
+        card.setOwnerId(player1.getId());
+        Permanent cessation = new Permanent(card);
+        gd.playerBattlefields.get(player2.getId()).add(cessation);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cessation));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()).stream()
+                .filter(handCard -> handCard.getId().equals(card.getId()))
+                .toList()).containsExactly(card);
+        assertThat(gd.playerHands.get(player2.getId()).stream()
+                .noneMatch(handCard -> handCard.getId().equals(card.getId()))).isTrue();
+    }
 
     @Test
     @DisplayName("Cessation attaches to a creature and prevents it from attacking")
     void attachesAndPreventsAttacking() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GiantCockroach());
         harness.setHand(player1, List.of(new Cessation()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -30,12 +47,7 @@ class CessationTest extends BaseCardTest {
         Permanent cessation = findPermanent(player1, "Cessation");
         assertThat(cessation.getAttachedTo()).isEqualTo(creature.getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -43,18 +55,15 @@ class CessationTest extends BaseCardTest {
     @Test
     @DisplayName("Cessation does not prevent the enchanted creature from blocking")
     void enchantedCreatureCanBlock() {
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GiantCockroach());
         Permanent cessation = new Permanent(new Cessation());
         cessation.setAttachedTo(blocker.getId());
         gd.playerBattlefields.get(player1.getId()).add(cessation);
 
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GiantCockroach());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
@@ -64,7 +73,7 @@ class CessationTest extends BaseCardTest {
     @Test
     @DisplayName("Cessation returns to its owner's hand when put into a graveyard from the battlefield")
     void returnsToHandAfterLeavingBattlefieldForGraveyard() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GiantCockroach());
         Permanent cessation = new Permanent(new Cessation());
         cessation.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(cessation);
@@ -80,7 +89,7 @@ class CessationTest extends BaseCardTest {
     @Test
     @DisplayName("Cessation cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GrimMonolith());
         harness.setHand(player1, List.of(new Cessation()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -89,9 +98,20 @@ class CessationTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+    @Test
+    void returnsWhenEnchantedCreatureLeavesBattlefield() {
+        Permanent creature = addCreatureReady(player1, new GiantCockroach());
+        Permanent cessation = new Permanent(new Cessation());
+        cessation.setAttachedTo(creature.getId());
+        gd.playerBattlefields.get(player1.getId()).add(cessation);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, cessation.getCard().getName());
+        harness.assertNotInGraveyard(player1, cessation.getCard().getName());
+        harness.assertNotOnBattlefield(player1, cessation.getCard().getName());
     }
 }
