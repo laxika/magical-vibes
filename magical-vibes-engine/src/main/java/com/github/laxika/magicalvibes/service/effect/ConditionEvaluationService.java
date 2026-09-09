@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTar
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
+import com.github.laxika.magicalvibes.model.condition.SourceIsBlocked;
 import com.github.laxika.magicalvibes.model.condition.SourceBlocksWithAtLeastAndOnlyMatchingBlockers;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
@@ -1359,6 +1360,11 @@ public class ConditionEvaluationService {
             case SourceIsAttacking ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isAttacking();
+            }
+            case SourceIsBlocked ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isAttacking()
+                        && (source.isBlockedWithoutBlockers() || countBlockersOfSource(gameData, ctx) > 0);
             }
             case SourceIsAttackingOrBlocking ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);

@@ -99,6 +99,25 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class TargetLegalityServiceTest {
+    @Test
+    void playerLifeComparisonIsRecheckedWhenATriggerResolves() {
+        Card source = new Card();
+        source.setName("Life comparison");
+        var damage = new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(1,
+                com.github.laxika.magicalvibes.model.effect.DamageRecipient.TARGET_PLAYER);
+        var entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player1Id,
+                "Life comparison", List.of(damage), player2Id, (UUID) null);
+        entry.setTargetFilter(new com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter(
+                new com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate(),
+                "Target must have more life"));
+        gd.playerLifeTotals.put(player1Id, 10);
+        gd.playerLifeTotals.put(player2Id, 11);
+        assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+
+        gd.playerLifeTotals.put(player2Id, 10);
+
+        assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
+    }
 
     @Mock
     private GameQueryService gameQueryService;

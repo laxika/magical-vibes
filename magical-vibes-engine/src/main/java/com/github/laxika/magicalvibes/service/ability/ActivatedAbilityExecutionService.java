@@ -149,6 +149,18 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ActivatedAbilityExecutionService {
+    private final com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry effectHandlerRegistry;
+
+    /** Performs a paid special action immediately, without activation triggers or a stack entry. */
+    public void performSpecialAction(GameData gameData, Player player, Permanent source, ActivatedAbility action) {
+        StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(), player.getId(),
+                action.getDescription(), action.getEffects(), null, source.getId());
+        for (CardEffect effect : action.getEffects()) {
+            effectHandlerRegistry.getHandler(effect).resolve(gameData, entry, effect);
+        }
+        gameData.priorityPassedBy.clear();
+        stateBasedActionService.performStateBasedActions(gameData);
+    }
 
     private final DamagePreventionService damagePreventionService;
     private final DrawService drawService;

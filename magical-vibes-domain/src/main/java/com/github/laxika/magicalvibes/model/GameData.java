@@ -859,6 +859,8 @@ public class GameData {
     /** Whether the current upkeep step was inserted after the turn's first upkeep. */
     public boolean currentUpkeepIsAdditional;
     public int additionalCombatMainPhasePairs;
+    /** The ordinary phase to resume after the inserted combat/main phase pairs. */
+    public TurnStep additionalCombatMainPhasePairsReturnStep;
     /** Additional combat phases with NO additional main phase (e.g. Finest Hour), queued after the
      *  current combat phase and consumed when leaving END_OF_COMBAT. Reset at the start of each turn. */
     public int additionalCombatPhasesOnly;
@@ -4581,6 +4583,7 @@ public class GameData {
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
         copy.cardEnteringGraveyardByCycling = this.cardEnteringGraveyardByCycling;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
+        copy.additionalCombatMainPhasePairsReturnStep = this.additionalCombatMainPhasePairsReturnStep;
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
         copy.onlyLandCreaturesCanAttackThisCombat = this.onlyLandCreaturesCanAttackThisCombat;
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;

@@ -2225,7 +2225,7 @@ public class GameQueryService {
         if (battlefield == null) return 0;
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().hasType(CardType.LAND)) {
+            if (isLand(gameData, permanent)) {
                 count++;
             }
         }

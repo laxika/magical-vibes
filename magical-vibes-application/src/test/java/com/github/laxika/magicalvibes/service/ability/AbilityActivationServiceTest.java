@@ -164,6 +164,20 @@ class AbilityActivationServiceTest {
     }
 
     @Test
+    void beforeAttackersRestrictionDoesNotReopenInLaterCombat() {
+        Card card = createArtifactWithTimingRestriction(ActivationTimingRestriction.ONLY_BEFORE_ATTACKERS_DECLARED);
+        Permanent permanent = addReadyPermanent(player1Id, card);
+        gameData.activePlayerId = player1Id;
+        gameData.currentStep = TurnStep.BEGINNING_OF_COMBAT;
+        gameData.combatPhasesThisTurn = 2;
+        when(gameQueryService.computeStaticBonus(gameData, permanent)).thenReturn(EMPTY_BONUS);
+
+        assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers");
+    }
+
+    @Test
     void drawStepPaymentRemovesOnlyOneIdenticalObligation() {
         Card source = new Card();
         LoseLifeAtNextDrawStepUnlessPays obligation =
@@ -2150,8 +2164,8 @@ class AbilityActivationServiceTest {
         }
 
         @Test
-        @DisplayName("Returns false for null ability index")
-        void falseForNullAbilityIndex() {
+        @DisplayName("A null ability index selects the first ability")
+        void nullAbilityIndexSelectsFirstAbility() {
             Card card = new Card();
             card.setName("Rock");
             card.setType(CardType.ARTIFACT);
@@ -2159,9 +2173,10 @@ class AbilityActivationServiceTest {
             card.addActivatedAbility(new ActivatedAbility(
                     true, null, List.of(new AwardManaEffect(ManaColor.COLORLESS, 1)), "{T}: Add {C}."
             ));
-            addReadyPermanent(player1Id, card);
+            Permanent permanent = addReadyPermanent(player1Id, card);
+            when(gameQueryService.computeStaticBonus(gameData, permanent)).thenReturn(EMPTY_BONUS);
 
-            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, null)).isFalse();
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, null)).isTrue();
         }
 
         @Test

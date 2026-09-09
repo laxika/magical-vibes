@@ -1555,7 +1555,7 @@ public class AmountEvaluationService {
         if (battlefield == null) return 0;
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().hasType(CardType.LAND)) {
+            if (gameQueryService.isLand(gameData, permanent)) {
                 count++;
             }
         }
@@ -2180,6 +2180,8 @@ public class AmountEvaluationService {
             case CONTROLLER -> playerId.equals(ctx.controllerId());
             case OPPONENTS -> !playerId.equals(ctx.controllerId());
             case ANY_PLAYER -> true;
+            case CHOSEN_PLAYER -> ctx.sourcePermanent() != null
+                    && playerId.equals(ctx.sourcePermanent().getRememberedTargetPlayerId());
             // The target channel carries the target player's id for player-targeting effects.
             case TARGET_PLAYER -> playerId.equals(targetPlayerId(gameData, ctx));
             case DEFENDING_PLAYER -> playerId.equals(defendingPlayerId(gameData, ctx));

@@ -166,6 +166,10 @@ public class TurnProgressionService {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatMainPhasePairs--;
             additionalCombatPhase = true;
+        } else if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN
+                && gameData.additionalCombatMainPhasePairsReturnStep != null) {
+            next = gameData.additionalCombatMainPhasePairsReturnStep;
+            gameData.additionalCombatMainPhasePairsReturnStep = null;
         }
 
         if ((gameData.currentStep == TurnStep.PRECOMBAT_MAIN
@@ -784,6 +788,7 @@ public class TurnProgressionService {
         gameData.playersAffectedByMeliraPoisonReplacementThisTurn.clear();
         gameData.creatureTriggeringEffectOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
+        gameData.additionalCombatMainPhasePairsReturnStep = null;
         gameData.additionalCombatPhasesOnly = 0;
         gameData.onlyLandCreaturesCanAttackThisCombat = false;
         gameData.additionalCombatPhasesAfterMain = 0;

@@ -2105,7 +2105,11 @@ public class TriggerCollectionService {
                     || !perm.getAttachedTo().equals(source.getId())) {
                 return;
             }
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER)) {
+            List<CardEffect> attachedEffects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            if (!ownerId.equals(damagedPlayerId)) {
+                attachedEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+            }
+            for (CardEffect effect : attachedEffects) {
                 // Attached triggers are controlled by the Aura/Equipment's controller.
                 UUID attachedControllerId = gameData.findControllerOf(perm);
                 if (attachedControllerId == null) continue;
@@ -2124,6 +2128,20 @@ public class TriggerCollectionService {
                 return;
             }
             toQueue = conditional.wrapped();
+        }
+
+        CardEffect damageEffect = toQueue instanceof MayEffect may ? may.wrapped() : toQueue;
+        if (damageEffect instanceof com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect destroy) {
+            if (damageDealt >= destroy.minimumDamage()) {
+                CardEffect targeted = destroy.forDamagedPlayer(damagedPlayerId);
+                if (toQueue instanceof MayEffect may) {
+                    targeted = new MayEffect(targeted, may.prompt(), may.elseEffect(), may.choicePlayer());
+                }
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        source.getCard(), controllerId, List.of(targeted),
+                        source.getId(), controllerId, damagedPlayerId));
+            }
+            return;
         }
 
         if (toQueue instanceof MayEffect may) {
@@ -11138,6 +11156,9 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(playingPlayerId)) {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_PLAYS_LAND, ctx);
+                if (!perm.getOriginalCard().getId().equals(landCard.getId())) {
+                    dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_PLAYS_ANOTHER_LAND, ctx);
+                }
             } else {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_PLAYS_LAND, ctx);
             }

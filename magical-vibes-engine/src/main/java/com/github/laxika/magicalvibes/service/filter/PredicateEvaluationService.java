@@ -104,6 +104,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControll
 import com.github.laxika.magicalvibes.model.filter.PermanentCastForWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
@@ -1565,6 +1566,9 @@ public class PredicateEvaluationService {
                 List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
                 yield controllerBattlefield != null && controllerBattlefield.contains(permanent);
             }
+            case PermanentControlledByPlayerPredicate p ->
+                    gameData != null && p.playerId() != null
+                            && p.playerId().equals(gameData.findControllerOf(permanent));
             case PermanentControlledByActivePlayerPredicate ignored -> {
                 if (gameData == null || gameData.activePlayerId == null) {
                     yield false;

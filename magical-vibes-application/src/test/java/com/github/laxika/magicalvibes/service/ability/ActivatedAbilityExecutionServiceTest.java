@@ -95,6 +95,24 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class ActivatedAbilityExecutionServiceTest {
+    @Mock private com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry effectHandlerRegistry;
+
+    @Test
+    void specialActionRunsItsEffectWithoutUsingTheStack() {
+        Permanent source = addReadyPermanent(player1Id, createCard("Special action", CardType.ENCHANTMENT));
+        var effect = new com.github.laxika.magicalvibes.model.effect.LicidEndEffect();
+        var action = new ActivatedAbility(false, "{1}", List.of(effect), "End effect");
+        when(effectHandlerRegistry.getHandler(effect)).thenReturn((data, entry, resolved) -> source.tap());
+
+        gameData.priorityPassedBy.add(player2Id);
+        service.performSpecialAction(gameData, player1, source, action);
+        assertThat(gameData.priorityPassedBy).isEmpty();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gameData.stack).isEmpty();
+        verify(stateBasedActionService).performStateBasedActions(gameData);
+        org.mockito.Mockito.verifyNoInteractions(triggerCollectionService);
+    }
 
     @Mock private DamagePreventionService damagePreventionService;
     @Mock private DrawService drawService;

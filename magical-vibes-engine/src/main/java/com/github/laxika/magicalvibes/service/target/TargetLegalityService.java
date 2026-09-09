@@ -4486,12 +4486,6 @@ public class TargetLegalityService {
     private boolean matchesPlayerPredicateAtResolution(GameData gameData, UUID controllerId,
                                                         UUID targetPlayerId, PlayerPredicate predicate,
                                                         UUID sourcePermanentId) {
-        if (predicate instanceof PlayerHasMoreLifeThanControllerPredicate) {
-            return controllerId != null && !controllerId.equals(targetPlayerId);
-        }
-        if (predicate instanceof PlayerControlsMoreCreaturesThanControllerPredicate) {
-            return controllerId != null && !controllerId.equals(targetPlayerId);
-        }
         if (predicate instanceof PlayerHasMoreCardsInHandThanControllerPredicate handPredicate) {
             if (controllerId == null || controllerId.equals(targetPlayerId)) {
                 return false;

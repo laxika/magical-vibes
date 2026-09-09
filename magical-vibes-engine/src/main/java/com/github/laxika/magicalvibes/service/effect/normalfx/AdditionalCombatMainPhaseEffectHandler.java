@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginn
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -28,6 +29,15 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
         var e = (AdditionalCombatMainPhaseEffect) effect;
         if (e.count() <= 0) {
             return;
+        }
+        boolean mainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        if (e.onlyDuringMainPhase() && !mainPhase) {
+            return;
+        }
+        if (mainPhase && gameData.additionalCombatMainPhasePairsReturnStep == null) {
+            gameData.additionalCombatMainPhasePairsReturnStep = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                    ? TurnStep.BEGINNING_OF_COMBAT : TurnStep.END_STEP;
         }
 
         gameData.additionalCombatMainPhasePairs += e.count();
