@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DST", collectorNumber = "141")
+@CardRegistration(set = "TD2", collectorNumber = "69")
 public class SpawningPit extends Card {
 
     public SpawningPit() {

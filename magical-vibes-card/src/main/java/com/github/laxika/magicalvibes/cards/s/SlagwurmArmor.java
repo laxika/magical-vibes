@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "243")
+@CardRegistration(set = "TD2", collectorNumber = "21")
 public class SlagwurmArmor extends Card {
 
     public SlagwurmArmor() {

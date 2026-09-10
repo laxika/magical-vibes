@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "145")
+@CardRegistration(set = "TD2", collectorNumber = "66")
 public class InnocentBlood extends Card {
 
     public InnocentBlood() {

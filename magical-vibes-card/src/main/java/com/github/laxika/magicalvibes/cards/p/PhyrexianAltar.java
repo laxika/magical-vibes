@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "306")
+@CardRegistration(set = "TD2", collectorNumber = "71")
 public class PhyrexianAltar extends Card {
 
     public PhyrexianAltar() {

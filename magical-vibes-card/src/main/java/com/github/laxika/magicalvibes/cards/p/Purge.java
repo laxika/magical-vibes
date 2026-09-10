@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DST", collectorNumber = "12")
+@CardRegistration(set = "TD2", collectorNumber = "28")
 public class Purge extends Card {
 
     public Purge() {

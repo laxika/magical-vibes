@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "MRD", collectorNumber = "278")
+@CardRegistration(set = "TD2", collectorNumber = "36")
 public class AncientDen extends Card {
 
     public AncientDen() {

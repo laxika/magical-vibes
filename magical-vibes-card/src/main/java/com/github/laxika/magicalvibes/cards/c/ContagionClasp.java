@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "144")
+@CardRegistration(set = "TD2", collectorNumber = "67")
 public class ContagionClasp extends Card {
 
     public ContagionClasp() {
