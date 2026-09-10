@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MountedArchers.class, TrainedArmodon.class, WindDrake.class})
 class MountedArchersTest extends BaseCardTest {
 
     @Test
@@ -46,10 +50,7 @@ class MountedArchersTest extends BaseCardTest {
 
         activate(archers);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(blockerIdx, 0),
@@ -57,6 +58,21 @@ class MountedArchersTest extends BaseCardTest {
         ));
 
         assertThat(archers.getBlockingTargets()).containsExactlyInAnyOrder(0, 1);
+    }
+
+    @Test
+    @DisplayName("Reach lets Mounted Archers block a creature with flying")
+    void blocksFlyingCreature() {
+        Permanent archers = addArchers();
+        Permanent attacker = addFlyingAttacker();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(archers);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(archers.getBlockingTargets()).containsExactly(attackerIdx);
     }
 
     @Test
@@ -73,10 +89,7 @@ class MountedArchersTest extends BaseCardTest {
     }
 
     private Permanent addArchers() {
-        Permanent perm = new Permanent(new MountedArchers());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player2, new MountedArchers());
     }
 
     private void activate(Permanent archers) {
@@ -87,11 +100,17 @@ class MountedArchersTest extends BaseCardTest {
     }
 
     private Permanent addAttacker() {
-        Permanent atk = new Permanent(new GrizzlyBears());
-        atk.setSummoningSick(false);
+        return addAttacker(new TrainedArmodon());
+    }
+
+    private Permanent addFlyingAttacker() {
+        return addAttacker(new WindDrake());
+    }
+
+    private Permanent addAttacker(Card card) {
+        Permanent atk = addCreatureReady(player1, card);
         atk.setAttacking(true);
         atk.setAttackTarget(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(atk);
         return atk;
     }
 }

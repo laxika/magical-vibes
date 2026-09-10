@@ -211,6 +211,16 @@ public class MultiPermanentChoiceHandlerService {
         if (permanentIds.size() > maxCount) {
             throw new IllegalStateException("Too many permanents selected: " + permanentIds.size() + " > " + maxCount);
         }
+        if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.FadeAwayKeep keep) {
+            var pool = new com.github.laxika.magicalvibes.model.ManaPool(gameData.playerManaPools.get(playerId));
+            var cost = new com.github.laxika.magicalvibes.model.ManaCost(keep.manaCost());
+            for (int i = 0; i < permanentIds.size(); i++) {
+                if (!cost.canPay(pool)) {
+                    throw new IllegalStateException("Not enough mana to pay for the selected creatures");
+                }
+                cost.pay(pool);
+            }
+        }
 
         Set<UUID> uniqueIds = new HashSet<>(permanentIds);
         if (uniqueIds.size() != permanentIds.size()) {

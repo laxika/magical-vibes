@@ -2280,11 +2280,11 @@ class StepTriggerServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
             when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(4);
-            when(permanentRemovalService.removePermanentToGraveyard(gd, target)).thenReturn(true);
+            when(permanentRemovalService.sacrificePermanentToGraveyard(gd, target)).thenReturn(true);
 
             sut.handleEndStepTriggers(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, target);
+            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, target);
             verify(lifeSupport).applyGainLife(
                     gd, player1Id, 4, "Spinal Embrace", sourceCard,
                     StackEntryType.TRIGGERED_ABILITY, player1Id);
@@ -2302,11 +2302,11 @@ class StepTriggerServiceTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
-            when(permanentRemovalService.removePermanentToGraveyard(gd, target)).thenReturn(true);
+            when(permanentRemovalService.sacrificePermanentToGraveyard(gd, target)).thenReturn(true);
 
             sut.handleEndStepTriggers(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, target);
+            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, target);
             assertThat(gd.getDelayedActions(DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost.class))
                     .isEmpty();
         }

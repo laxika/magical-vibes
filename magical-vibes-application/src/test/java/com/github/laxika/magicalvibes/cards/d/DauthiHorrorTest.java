@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DauthiHorror.class, SoltariFootSoldier.class, DauthiGhoul.class, MoggFanatic.class})
 class DauthiHorrorTest extends BaseCardTest {
 
     @Test
@@ -38,26 +39,19 @@ class DauthiHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("Shadow stops a creature without shadow from blocking Dauthi Horror")
     void cannotBeBlockedByCreatureWithoutShadow() {
-        Permanent blockerPerm = setUpCombat(new GrizzlyBears());
+        Permanent blockerPerm = setUpCombat(new MoggFanatic());
 
         assertThatThrownBy(() -> declareBlock(blockerPerm))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent setUpCombat(com.github.laxika.magicalvibes.model.Card blocker) {
-        Permanent blockerPerm = new Permanent(blocker);
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, blocker);
 
-        Permanent atkPerm = new Permanent(new DauthiHorror());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new DauthiHorror());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         return blockerPerm;
     }

@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.g.GhostTown;
+import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Harrow.class, Forest.class, GhostTown.class, MetallicSliver.class, Mountain.class, Plains.class})
 class HarrowTest extends BaseCardTest {
 
     @Test
@@ -42,7 +43,7 @@ class HarrowTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+                .noneMatch(c -> c.getName().equals("Ghost Town"));
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
         assertThat(search.params().canFailToFind()).isTrue();
     }
@@ -54,8 +55,8 @@ class HarrowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 2);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -68,13 +69,43 @@ class HarrowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May choose only one basic land")
+    void mayChooseOnlyOneBasicLand() {
+        castHarrow();
+        harness.passBothPriorities();
+
+        int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With no basic lands, search puts nothing onto the battlefield")
+    void noBasicLandsToFind() {
+        castHarrow();
+        harness.setLibrary(player1, List.of(new GhostTown(), new MetallicSliver()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Harrow");
+    }
+
+    @Test
     @DisplayName("Player may fail to find")
     void canFailToFind() {
         castHarrow();
         harness.passBothPriorities();
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -94,7 +125,7 @@ class HarrowTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice a non-land permanent")
     void cannotSacrificeNonLand() {
-        Permanent creature = new Permanent(new LlanowarElves());
+        Permanent creature = new Permanent(new MetallicSliver());
         gd.playerBattlefields.get(player1.getId()).add(creature);
 
         harness.setHand(player1, List.of(new Harrow()));
@@ -105,16 +136,13 @@ class HarrowTest extends BaseCardTest {
     }
 
     private Permanent castHarrow() {
-        Permanent land = new Permanent(new com.github.laxika.magicalvibes.cards.m.Mountain());
-        gd.playerBattlefields.get(player1.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
 
         harness.setHand(player1, List.of(new Harrow()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castInstantWithSacrifice(player1, 0, null, land.getId());
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new GhostTown()));
         return land;
     }
 }

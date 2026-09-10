@@ -58,10 +58,13 @@ public class StateTriggerService {
 
     /**
      * Evaluates a state trigger's condition: a {@code sourcePredicate} goes through the
-     * layer-aware predicate evaluator (so static keyword/color/type grants count), otherwise the
-     * free-form {@link com.github.laxika.magicalvibes.model.effect.StateTriggerPredicate} runs.
+     * layer-aware predicate evaluator (so static keyword/color/type grants count). A supplied
+     * free-form {@link com.github.laxika.magicalvibes.model.effect.StateTriggerPredicate} must also pass.
      */
     private boolean conditionMet(GameData gameData, StateTriggerEffect trigger, Permanent perm, UUID controllerId) {
+        if (trigger.predicate() != null && !trigger.predicate().test(gameData, perm, controllerId)) {
+            return false;
+        }
         if (trigger.sourcePredicate() != null) {
             return predicateEvaluationService.matchesPermanentPredicate(perm, trigger.sourcePredicate(),
                     FilterContext.of(gameData)
@@ -90,7 +93,7 @@ public class StateTriggerService {
             }
             return true;
         }
-        return trigger.predicate().test(gameData, perm, controllerId);
+        return trigger.predicate() != null;
     }
 
     /**

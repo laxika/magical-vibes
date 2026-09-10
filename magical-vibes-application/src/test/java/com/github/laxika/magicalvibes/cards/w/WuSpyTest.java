@@ -1,28 +1,28 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WuSpy.class, Island.class, Forest.class})
 class WuSpyTest extends BaseCardTest {
 
     private void castWuSpy(UUID targetPlayerId) {
-        harness.setHand(player1, new ArrayList<>(List.of(new WuSpy())));
+        harness.setHand(player1, List.of(new WuSpy()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
+        harness.castCreature(player1, 0, targetPlayerId);
     }
 
     @Test
@@ -30,9 +30,7 @@ class WuSpyTest extends BaseCardTest {
     void putsChosenIntoGraveyardOtherStaysOnTop() {
         Card top = new Island();
         Card second = new Forest();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(top, second));
+        harness.setLibrary(player2, List.of(top, second));
 
         castWuSpy(player2.getId());
         harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
@@ -41,7 +39,7 @@ class WuSpyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Put the top card (Island) into the graveyard; Forest stays on top.
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(top.getId()));
@@ -56,16 +54,14 @@ class WuSpyTest extends BaseCardTest {
     void canTargetSelf() {
         Card top = new Island();
         Card second = new Forest();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(top, second));
+        harness.setLibrary(player1, List.of(top, second));
 
         castWuSpy(player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(second.getId()));
@@ -75,16 +71,14 @@ class WuSpyTest extends BaseCardTest {
     @DisplayName("Looks at only the available card when the library has fewer than two")
     void looksAtOnlyAvailableCard() {
         Card only = new Island();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.add(only);
+        harness.setLibrary(player2, List.of(only));
 
         castWuSpy(player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(only.getId()));
@@ -94,7 +88,7 @@ class WuSpyTest extends BaseCardTest {
     @Test
     @DisplayName("Empty library does nothing")
     void emptyLibraryDoesNothing() {
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         castWuSpy(player2.getId());
         harness.passBothPriorities();

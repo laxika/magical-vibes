@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SlaughterPriestOfMogis.class, CruelEdict.class, GrizzlyBears.class, GloriousAnthem.class})
+@CardUsed({SlaughterPriestOfMogis.class, DiabolicEdict.class, GrizzlyBears.class, GloriousAnthem.class})
 class SlaughterPriestOfMogisTest extends BaseCardTest {
 
     @Test
@@ -117,8 +117,8 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
     }
 }

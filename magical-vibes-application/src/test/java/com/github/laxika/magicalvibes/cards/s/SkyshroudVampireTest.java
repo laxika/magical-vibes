@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.f.FightingDrake;
+import com.github.laxika.magicalvibes.cards.l.LightningBlast;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,19 +15,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkyshroudVampire.class, FightingDrake.class, LightningBlast.class})
 class SkyshroudVampireTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding a creature card gives Skyshroud Vampire +2/+2")
     void discardCreatureBoosts() {
-        Permanent vampire = addVampire(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Permanent vampire = addCreatureReady(player1, new SkyshroudVampire());
+        harness.setHand(player1, List.of(new FightingDrake()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Fighting Drake");
         assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(5);
     }
@@ -35,8 +36,8 @@ class SkyshroudVampireTest extends BaseCardTest {
     @Test
     @DisplayName("Only creature cards are valid for the discard cost")
     void onlyCreatureCardsAreValid() {
-        addVampire(player1);
-        harness.setHand(player1, List.of(new LightningBolt(), new GrizzlyBears()));
+        addCreatureReady(player1, new SkyshroudVampire());
+        harness.setHand(player1, List.of(new LightningBlast(), new FightingDrake()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -48,8 +49,8 @@ class SkyshroudVampireTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without a creature card in hand")
     void cannotActivateWithoutCreatureCard() {
-        addVampire(player1);
-        harness.setHand(player1, List.of(new LightningBolt()));
+        addCreatureReady(player1, new SkyshroudVampire());
+        harness.setHand(player1, List.of(new LightningBlast()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -58,8 +59,8 @@ class SkyshroudVampireTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOff() {
-        Permanent vampire = addVampire(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Permanent vampire = addCreatureReady(player1, new SkyshroudVampire());
+        harness.setHand(player1, List.of(new FightingDrake()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -76,8 +77,8 @@ class SkyshroudVampireTest extends BaseCardTest {
     @Test
     @DisplayName("The ability can be activated multiple times and the boosts stack")
     void boostsStack() {
-        Permanent vampire = addVampire(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        Permanent vampire = addCreatureReady(player1, new SkyshroudVampire());
+        harness.setHand(player1, List.of(new FightingDrake(), new FightingDrake()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -91,10 +92,19 @@ class SkyshroudVampireTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(7);
     }
 
-    private Permanent addVampire(Player player) {
-        Permanent perm = new Permanent(new SkyshroudVampire());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("The ability can be activated while Skyshroud Vampire is tapped")
+    void abilityDoesNotRequireTapping() {
+        Permanent vampire = addCreatureReady(player1, new SkyshroudVampire());
+        vampire.tap();
+        harness.setHand(player1, List.of(new FightingDrake()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(vampire.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(5);
     }
 }

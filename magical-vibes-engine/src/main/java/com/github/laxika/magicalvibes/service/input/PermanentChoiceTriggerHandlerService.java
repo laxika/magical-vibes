@@ -1332,6 +1332,7 @@ public class PermanentChoiceTriggerHandlerService {
                 upt.sourcePermanentId()
         );
         entry.setActivePlayerId(upt.choosingPlayerId());
+        entry.setTargetFilter(upt.targetFilter());
         pushTriggeredEntry(gameData, entry);
 
         String playerName = gameData.playerIdToName.get(playerId);

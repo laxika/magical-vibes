@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RavagesOfWar;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ImperialSeal.class, Island.class, RavagesOfWar.class, Swamp.class})
 class ImperialSealTest extends BaseCardTest {
 
     @Test
@@ -25,10 +25,13 @@ class ImperialSealTest extends BaseCardTest {
         cast();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .hasSize(3);
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).hasSize(3);
+        assertThat(search.params().reveals()).isFalse();
+        assertThat(search.params().canFailToFind()).isFalse();
+        assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.TOP_OF_LIBRARY);
     }
 
     @Test
@@ -39,15 +42,41 @@ class ImperialSealTest extends BaseCardTest {
         cast();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
-        String chosenName = offered.get(1).getName();
+        Card chosenCard = offered.get(1);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        assertThat(deck.getFirst().getName()).isEqualTo(chosenName);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(deck.getFirst().getId()).isEqualTo(chosenCard.getId());
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Life loss happens after the library choice")
+    void lifeLossHappensAfterLibraryChoice() {
+        harness.setLife(player1, 20);
+        setupLibrary();
+        cast();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("An empty library still causes the 2-life loss")
+    void emptyLibraryStillLosesLife() {
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of());
+        cast();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -57,20 +86,15 @@ class ImperialSealTest extends BaseCardTest {
         cast();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThatThrownBy(() -> gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1)))
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private void cast() {
-        harness.setHand(player1, List.of(new ImperialSeal()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ImperialSeal(), "{B}");
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new DiabolicTutor(), new GrizzlyBears(), new Island()));
+        harness.setLibrary(player1, List.of(new Island(), new Swamp(), new RavagesOfWar()));
     }
 }

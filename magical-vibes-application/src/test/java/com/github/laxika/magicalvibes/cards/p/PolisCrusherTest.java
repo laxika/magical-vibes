@@ -41,13 +41,13 @@ class PolisCrusherTest extends BaseCardTest {
         assertThat(crusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         crusher.setAttacking(true);
         resolveCombat();
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(enchantment.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Test Enchantment");
         assertThat(gd.interaction.activeInteraction()).isNull();

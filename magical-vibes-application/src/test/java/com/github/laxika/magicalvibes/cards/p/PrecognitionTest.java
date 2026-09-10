@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.c.CanyonWildcat;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,10 +16,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Precognition.class, CanyonWildcat.class, LowlandGiant.class, Forest.class})
 class PrecognitionTest extends BaseCardTest {
 
     private void setOpponentLibrary() {
-        harness.setLibrary(player2, new ArrayList<>(List.of(new GrizzlyBears(), new HillGiant(), new Forest())));
+        harness.setLibrary(player2, new ArrayList<>(List.of(new CanyonWildcat(), new LowlandGiant(), new Forest())));
     }
 
     private List<String> opponentLibraryNames() {
@@ -39,7 +41,25 @@ class PrecognitionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(opponentLibraryNames()).containsExactly("Hill Giant", "Forest", "Grizzly Bears");
+        assertThat(opponentLibraryNames()).containsExactly("Lowland Giant", "Forest", "Canyon Wildcat");
+    }
+
+    @Test
+    @DisplayName("Looks at the opponent's current top card when the ability resolves")
+    void usesCurrentTopCardAtResolution() {
+        harness.addToBattlefield(player1, new Precognition());
+        setOpponentLibrary();
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setLibrary(player2, new ArrayList<>(List.of(new LowlandGiant(), new Forest())));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(opponentLibraryNames()).containsExactly("Forest", "Lowland Giant");
     }
 
     @Test
@@ -56,7 +76,7 @@ class PrecognitionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(opponentLibraryNames()).containsExactly("Grizzly Bears", "Hill Giant", "Forest");
+        assertThat(opponentLibraryNames()).containsExactly("Canyon Wildcat", "Lowland Giant", "Forest");
     }
 
     @Test
@@ -83,7 +103,7 @@ class PrecognitionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(opponentLibraryNames()).containsExactly("Grizzly Bears", "Hill Giant", "Forest");
+        assertThat(opponentLibraryNames()).containsExactly("Canyon Wildcat", "Lowland Giant", "Forest");
     }
 
     @Test

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import java.util.UUID;
 
 public interface CardEffect {
+    /** Whether paying for this effect is a special action that does not use the stack. */
+    default boolean isSpecialAction() { return false; }
 
     /** Whether this pending choice must finish before the next card of a draw instruction. */
     default boolean pausesDrawInstruction() { return false; }

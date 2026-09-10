@@ -18,8 +18,9 @@ class SkyshroudWarBeastTest extends BaseCardTest {
     @Test
     @DisplayName("Power and toughness are zero when the opponent controls no nonbasic lands")
     void isZeroZeroWithNoOpponentNonbasicLands() {
-        Permanent warBeast = addCreatureReady(player1, new SkyshroudWarBeast());
         harness.addToBattlefield(player2, new Forest());
+
+        Permanent warBeast = harness.enterBattlefieldAndReturn(player1, new SkyshroudWarBeast());
 
         assertThat(gqs.getEffectivePower(gd, warBeast)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, warBeast)).isZero();
@@ -28,11 +29,12 @@ class SkyshroudWarBeastTest extends BaseCardTest {
     @Test
     @DisplayName("Power and toughness equal the opponent's nonbasic land count")
     void powerAndToughnessCountOpponentNonbasicLands() {
-        Permanent warBeast = addCreatureReady(player1, new SkyshroudWarBeast());
         harness.addToBattlefield(player2, new AdarkarWastes());
         harness.addToBattlefield(player2, new AdarkarWastes());
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player1, new AdarkarWastes());
+
+        Permanent warBeast = harness.enterBattlefieldAndReturn(player1, new SkyshroudWarBeast());
 
         assertThat(gqs.getEffectivePower(gd, warBeast)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, warBeast)).isEqualTo(2);
@@ -41,8 +43,9 @@ class SkyshroudWarBeastTest extends BaseCardTest {
     @Test
     @DisplayName("Power and toughness update as the opponent's nonbasic lands change")
     void updatesDynamically() {
-        Permanent warBeast = addCreatureReady(player1, new SkyshroudWarBeast());
         Permanent firstLand = harness.addToBattlefieldAndReturn(player2, new AdarkarWastes());
+
+        Permanent warBeast = harness.enterBattlefieldAndReturn(player1, new SkyshroudWarBeast());
 
         assertThat(gqs.getEffectivePower(gd, warBeast)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, warBeast)).isEqualTo(1);
@@ -57,12 +60,13 @@ class SkyshroudWarBeastTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen opponent remains fixed after control of Skyshroud War Beast changes")
     void chosenOpponentRemainsAfterControlChange() {
-        Permanent warBeast = addCreatureReady(player1, new SkyshroudWarBeast());
         harness.addToBattlefield(player2, new AdarkarWastes());
         harness.addToBattlefield(player2, new AdarkarWastes());
         harness.addToBattlefield(player1, new AdarkarWastes());
         Permanent licid = addCreatureReady(player2, new DominatingLicid());
         harness.addMana(player2, ManaColor.BLUE, 3);
+
+        Permanent warBeast = harness.enterBattlefieldAndReturn(player1, new SkyshroudWarBeast());
 
         assertThat(gqs.getEffectivePower(gd, warBeast)).isEqualTo(2);
 

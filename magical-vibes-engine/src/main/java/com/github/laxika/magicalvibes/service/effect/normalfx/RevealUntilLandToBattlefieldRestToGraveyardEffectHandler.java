@@ -66,9 +66,10 @@ public class RevealUntilLandToBattlefieldRestToGraveyardEffectHandler implements
 
         if (foundLand != null) {
             revealedCards.remove(foundLand);
-            Permanent permanent = new Permanent(foundLand);
+            Permanent permanent = new Permanent(foundLand, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(foundLand, playerName));
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, foundLand, null, false);
         } else {
             gameLogService.append(gameData, GameLog.text(
                     playerName + " reveals their entire library - no land card was found."));

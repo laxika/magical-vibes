@@ -81,6 +81,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * battlefield by an effect.
      */
     ON_CONTROLLER_PLAYS_LAND,
+    /** Triggers when the controller plays a land other than the source permanent. */
+    ON_CONTROLLER_PLAYS_ANOTHER_LAND,
     /**
      * "Whenever an opponent plays a land" — the opponent-side mirror of
      * {@link #ON_CONTROLLER_PLAYS_LAND}: fired at the actual land-play sites only, NOT when a land
