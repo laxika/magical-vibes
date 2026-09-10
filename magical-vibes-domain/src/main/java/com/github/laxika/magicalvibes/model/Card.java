@@ -1338,7 +1338,12 @@ public class Card {
      * <em>other</em> creatures and is a different effect entirely.
      */
     public void addUnearth(String cost) {
-        addGraveyardActivatedAbility(new ActivatedAbility(false, cost,
+        addGraveyardActivatedAbility(unearthAbility(cost));
+    }
+
+    /** Builds the unearth graveyard-activated ability for {@code cost}. */
+    public static ActivatedAbility unearthAbility(String cost) {
+        return new ActivatedAbility(false, cost,
                 List.of(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardIsSelfPredicate())
@@ -1349,7 +1354,7 @@ public class Card {
                         .unearth(true)
                         .build()),
                 "Unearth " + cost,
-                ActivationTimingRestriction.SORCERY_SPEED));
+                ActivationTimingRestriction.SORCERY_SPEED);
     }
 
     /**

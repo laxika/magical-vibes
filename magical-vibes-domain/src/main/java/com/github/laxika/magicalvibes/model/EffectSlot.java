@@ -199,6 +199,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_DISCARDED,
     ON_SELF_DISCARDED_BY_OPPONENT,
     ON_ANY_PLAYER_TAPS_LAND,
+    /** Triggers whenever any player taps any permanent for mana. */
+    ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA,
     /** "Whenever you tap a creature for mana"; checked on the tapping player's battlefield. */
     ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
     /** "Whenever you tap a nonland permanent for mana"; checked on the tapping player's battlefield. */
@@ -325,6 +327,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
     ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers whenever a nonblack card is put into any player's graveyard from anywhere. */
+    ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a creature card the controller owns is put into their graveyard from anywhere
      *  (battlefield, hand, library, stack, exile). Fires on permanents the graveyard owner controls.
      *  Uses the card's printed types (not battlefield creature-ness), so tokens never trigger and a

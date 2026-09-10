@@ -976,14 +976,28 @@ public class GameQueryService {
         List<ActivatedAbility> result = new ArrayList<>();
         if (graveyardCardsHaveLostAllAbilities(gameData)) return result;
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
-        if (bf == null) return result;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GraveyardAbilityGrantingEffect g) {
-                    if (!g.appliesTo(card)) continue;
-                    ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
-                    if (granted != null) {
-                        result.add(granted);
+        if (bf != null) {
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GraveyardAbilityGrantingEffect g) {
+                        if (!g.appliesTo(card)) continue;
+                        ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
+                        if (granted != null) {
+                            result.add(granted);
+                        }
+                    }
+                }
+            }
+        }
+        if (gameData.planechase != null && Objects.equals(gameData.planechase.controllerId, ownerId)) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GraveyardAbilityGrantingEffect g) {
+                        if (!g.appliesTo(card)) continue;
+                        ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
+                        if (granted != null) {
+                            result.add(granted);
+                        }
                     }
                 }
             }
@@ -3772,6 +3786,16 @@ public class GameQueryService {
         for (List<Permanent> bf : gameData.playerBattlefields.values()) {
             for (Permanent p : bf) {
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
+                            && acdt.scope() == GrantScope.ALL_CREATURES) {
+                        return true;
+                    }
+                }
+            }
+        }
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
                             && acdt.scope() == GrantScope.ALL_CREATURES) {
                         return true;
@@ -7427,9 +7451,10 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the global damage multiplier based on {@link GlobalDamageMultiplyingEffect} permanents
-     * on the battlefield (e.g. Furnace of Rath). Each instance multiplies by its factor, and multiple
-     * instances stack multiplicatively (e.g. two Furnaces = 4x damage).
+     * Returns the global damage multiplier based on {@link GlobalDamageMultiplyingEffect} static
+     * effects on the battlefield and face-up planar cards (e.g. Furnace of Rath). Each instance
+     * multiplies by its factor, and multiple instances stack multiplicatively (e.g. two Furnaces =
+     * 4x damage).
      */
     private int getDamageMultiplier(GameData gameData) {
         int[] multiplier = {1};
@@ -7440,6 +7465,15 @@ public class GameQueryService {
                 }
             }
         });
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GlobalDamageMultiplyingEffect multiplyingEffect) {
+                        multiplier[0] *= multiplyingEffect.damageMultiplierFactor();
+                    }
+                }
+            }
+        }
         return multiplier[0];
     }
 

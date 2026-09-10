@@ -18,6 +18,9 @@ Rolling the die by special action requires the active player's main phase, prior
 - `EffectDuration.UNTIL_PLANESWALK` expires on a planeswalk.
 - `PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED`, and `ENCOUNTER_TRIGGERED` provide planar event slots. Reuse ordinary effects inside them.
 - Upkeep, draw-step and end-step slots are collected from face-up planar objects for the planar controller. Panopticon reuses `DrawCardEffect` for its arrival, draw-step and chaos abilities.
+- Draw-trigger slots on face-up planar objects can watch either the planar controller's or an opponent's actual draw; `RevealEachDrawEffect` uses this for Sea of Sand and preserves the drawing player as trigger context.
+- `RevealTopPlanarCardsAndTriggerChaosEffect` reveals from the shared planar deck, queues the revealed chaos abilities, and reuses `LibraryReorder` to put the revealed cards on the deck bottom in the controller's chosen order.
+- Land-entry slots are collected from face-up planar objects for both the planar controller's lands and opponents' lands; `CreateTokenForTriggeringPlayerEffect` can use the entering land's controller.
 - Targeted planar triggers enter the existing trigger-target interaction with a source snapshot. Phenomena wait while their triggered abilities are on the stack or awaiting target selection. Once those abilities leave the stack, state-based actions planeswalk onward, including after a countered encounter.
 
 `StackEntry.sourcePlanarObject` carries source information through resolution and copying. Planar abilities have independent `getTargetableId()` values even when several abilities share a source. Source-less entries have a nullable card view. Target selection and counter/copy handlers must use the stack targetable identity instead of assuming every entry has a card.

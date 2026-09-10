@@ -56,6 +56,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -2175,6 +2177,17 @@ class GameQueryServiceTest {
         @DisplayName("doubles damage with one Furnace of Rath")
         void returnsTwoWithOneFurnace() {
             addPermanent(player1Id, createEnchantmentWithStaticEffect("Furnace of Rath", new DoubleDamageEffect()));
+
+            assertThat(gqs.applyDamageMultiplier(gd, 3)).isEqualTo(6);
+        }
+
+        @Test
+        @DisplayName("doubles damage with a face-up planar card")
+        void returnsTwoWithOneFaceUpPlane() {
+            gd.planechase = new PlanechaseState();
+            gd.planechase.faceUp.add(new PlanarObject(
+                    createEnchantmentWithStaticEffect("Stronghold Furnace", new DoubleDamageEffect()),
+                    gd.nextTimestamp()));
 
             assertThat(gqs.applyDamageMultiplier(gd, 3)).isEqualTo(6);
         }

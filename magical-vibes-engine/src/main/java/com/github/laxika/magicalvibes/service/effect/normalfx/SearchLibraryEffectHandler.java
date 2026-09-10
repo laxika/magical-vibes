@@ -77,8 +77,11 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
                            LibrarySearchFollowUp followUp, Integer totalManaValueBound) {
-        UUID controllerId = effect.searchPlayer() == LibrarySearchPlayer.ACTIVE_PLAYER
-                ? entry.getActivePlayerId() : entry.getControllerId();
+        UUID controllerId = switch (effect.searchPlayer()) {
+            case ACTIVE_PLAYER -> entry.getActivePlayerId();
+            case TRIGGERING_PERMANENT_CONTROLLER -> entry.getTriggeringPermanentControllerId();
+            case CONTROLLER -> entry.getControllerId();
+        };
         if (controllerId == null) return;
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) {
             insertNoCardFollowUp(gameData, entry, followUp);

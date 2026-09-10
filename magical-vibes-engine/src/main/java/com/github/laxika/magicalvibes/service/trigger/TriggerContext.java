@@ -171,6 +171,16 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for global triggers that watch any permanent being tapped for mana. */
+    record PermanentTapForMana(UUID tappingPlayerId, UUID tappedPermanentId,
+                               Set<ManaColor> producedManaTypes) implements TriggerContext {
+        public PermanentTapForMana {
+            if (producedManaTypes != null) {
+                producedManaTypes = Set.copyOf(producedManaTypes);
+            }
+        }
+    }
+
     /** Context for a creature's mana ability resolving, including the mana it produced. */
     record ManaAbilityResolved(UUID activatingPlayerId, int manaProduced) implements TriggerContext {}
 

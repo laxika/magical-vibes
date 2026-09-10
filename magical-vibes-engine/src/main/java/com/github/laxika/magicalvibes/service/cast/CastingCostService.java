@@ -148,6 +148,18 @@ public class CastingCostService {
                 }
             }
         }
+        if (gameData.planechase != null) {
+            UUID controllerId = gameData.planechase.controllerId;
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(effect);
+                    if (handler != null) {
+                        modifiers.add(new CollectedCostModifier(handler, effect,
+                                new CostModificationSource(null, controllerId)));
+                    }
+                }
+            }
+        }
         synchronized (gameData.floatingEffects) {
             for (var floating : gameData.floatingEffects) {
                 CostModificationHandlerBean handler =

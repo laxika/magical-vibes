@@ -3716,7 +3716,8 @@ public class GameData {
      * ({@code additionalLandsThisTurn}), plus one for each {@link EachPlayerPlaysAdditionalLandEffect}
      * static permanent on any battlefield (Storm Cauldron — symmetric, benefits every player), plus
      * the {@code amount} of each {@link PlaysAdditionalLandEachTurnEffect} static permanent the player
-     * themselves controls (The Gitrog Monster / Azusa, Lost but Seeking — controller-only).
+     * themselves controls (The Gitrog Monster / Azusa, Lost but Seeking — controller-only). Face-up
+     * planar cards are command-zone sources, so their land-play static effects are included as well.
      */
     public int getMaxLandsThisTurn(UUID playerId) {
         long extraFromStatics = 0;
@@ -3728,6 +3729,19 @@ public class GameData {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
                     } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional && pid.equals(playerId)) {
+                        extraFromStatics = Math.min(Integer.MAX_VALUE,
+                                extraFromStatics + additional.amount());
+                    }
+                }
+            }
+        }
+        if (planechase != null) {
+            for (var planar : planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
+                        extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
+                    } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional
+                            && playerId.equals(planechase.controllerId)) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE,
                                 extraFromStatics + additional.amount());
                     }
@@ -4277,6 +4291,35 @@ public class GameData {
                 null,
                 choicePlayerId,
                 sourcePermanentSnapshot
+        ));
+    }
+
+    /** Queues a may ability while retaining the controller of the permanent that caused the trigger. */
+    public void queueMayAbilityForPlayer(Card sourceCard, UUID controllerId, MayEffect may,
+                                         UUID targetCardId, UUID sourcePermanentId, UUID choicePlayerId,
+                                         Permanent sourcePermanentSnapshot, UUID sourceControllerId,
+                                         UUID triggeringPermanentId) {
+        pendingMayAbilities.add(new PendingMayAbility(
+                sourceCard,
+                controllerId,
+                new ArrayList<>(List.of(may.wrapped())),
+                sourceCard.getName() + " - " + may.prompt(),
+                targetCardId,
+                null,
+                sourcePermanentId,
+                null,
+                0,
+                0,
+                null,
+                null,
+                choicePlayerId,
+                sourcePermanentSnapshot,
+                sourceControllerId,
+                null,
+                0,
+                triggeringPermanentId,
+                null,
+                null
         ));
     }
 
@@ -5307,6 +5350,8 @@ public class GameData {
         // --- Deques ---
         this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
                 pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
+                        ? trigger.copyPlanarSnapshot()
+                        : pending instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger trigger
                         ? trigger.copyPlanarSnapshot() : pending));
         copy.extraTurns.addAll(this.extraTurns);
         copy.extraTurnSkipsUntap.addAll(this.extraTurnSkipsUntap);

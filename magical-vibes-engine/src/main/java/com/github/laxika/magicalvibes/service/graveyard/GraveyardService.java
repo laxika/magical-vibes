@@ -649,6 +649,7 @@ public class GraveyardService {
         }
         if (!card.isToken()) {
             triggerCollectionService.checkCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            triggerCollectionService.checkNonblackCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         }
         if (!card.isToken() && card.hasType(CardType.CREATURE)) {
             triggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);

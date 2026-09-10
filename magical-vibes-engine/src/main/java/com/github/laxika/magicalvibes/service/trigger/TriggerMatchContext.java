@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 
 import java.util.UUID;
 
@@ -25,16 +26,28 @@ public record TriggerMatchContext(
         UUID controllerId,
         CardEffect rawEffect,
         Card sourceCard,
+        PlanarObject sourcePlanarObject,
         boolean markSourceOncePerTurnOnAcceptance
 ) {
 
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId,
             CardEffect rawEffect) {
-        this(gameData, permanent, controllerId, rawEffect, permanent != null ? permanent.getCard() : null, false);
+        this(gameData, permanent, controllerId, rawEffect, permanent != null ? permanent.getCard() : null, null, false);
     }
 
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId,
             CardEffect rawEffect, Card sourceCard) {
-        this(gameData, permanent, controllerId, rawEffect, sourceCard, false);
+        this(gameData, permanent, controllerId, rawEffect, sourceCard, null, false);
+    }
+
+    public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId,
+            CardEffect rawEffect, Card sourceCard, boolean markSourceOncePerTurnOnAcceptance) {
+        this(gameData, permanent, controllerId, rawEffect, sourceCard, null,
+                markSourceOncePerTurnOnAcceptance);
+    }
+
+    public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId,
+            CardEffect rawEffect, Card sourceCard, PlanarObject sourcePlanarObject) {
+        this(gameData, permanent, controllerId, rawEffect, sourceCard, sourcePlanarObject, false);
     }
 }

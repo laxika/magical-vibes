@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
@@ -395,10 +396,7 @@ public class AmountEvaluationService {
             case ColorManaSymbolsInHand c ->
                     countColorManaSymbolsInHand(gameData, c, ctx);
             case CountersOnSource c ->
-                    ctx.sourcePermanent() == null ? 0
-                            : c.counterType() == CounterType.ANY
-                            ? ctx.sourcePermanent().getTotalCounterCount()
-                            : ctx.sourcePermanent().getCounterCount(c.counterType());
+                    countersOnSource(gameData, c, ctx);
             case AllCountersOnSource ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getTotalCounterCount();
             case TotalCountersOnSource ignored ->
@@ -1385,6 +1383,37 @@ public class AmountEvaluationService {
     private int countCountersOnLinkedPermanent(GameData gameData, CountersOnLinkedPermanent count) {
         Permanent linked = gameQueryService.findPermanentById(gameData, count.linkedPermanentId());
         return linked == null ? 0 : linked.getCounterCount(count.counterType());
+    }
+
+    private int countersOnSource(GameData gameData, CountersOnSource count, AmountContext ctx) {
+        if (ctx.sourcePermanent() != null) {
+            return count.counterType() == CounterType.ANY
+                    ? ctx.sourcePermanent().getTotalCounterCount()
+                    : ctx.sourcePermanent().getCounterCount(count.counterType());
+        }
+
+        PlanarObject source = sourcePlanarObject(gameData, ctx);
+        if (source == null) {
+            return 0;
+        }
+        return count.counterType() == CounterType.ANY
+                ? source.getCounters().values().stream().mapToInt(Integer::intValue).sum()
+                : source.getCounters().getOrDefault(count.counterType(), 0);
+    }
+
+    private PlanarObject sourcePlanarObject(GameData gameData, AmountContext ctx) {
+        if (ctx.stackEntry() == null || ctx.stackEntry().getSourcePlanarObject() == null) {
+            return null;
+        }
+
+        PlanarObject snapshot = ctx.stackEntry().getSourcePlanarObject();
+        if (gameData.planechase == null) {
+            return snapshot;
+        }
+        return gameData.planechase.faceUp.stream()
+                .filter(object -> object.getId().equals(snapshot.getId()))
+                .findFirst()
+                .orElse(snapshot);
     }
 
     private int countCountersOnTargetPermanent(GameData gameData, CountersOnTargetPermanent count,

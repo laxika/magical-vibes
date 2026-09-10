@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.planar.*;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.planar.*;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.*;
@@ -23,6 +24,7 @@ class PanopticonTest extends BaseCardTest {
         planar = new PlanechaseService(die, gqs,
                 GameTestEngineContext.get().getBean(GameLogService.class),
                 GameTestEngineContext.get().getBean(TriggerCollectionService.class),
+                GameTestEngineContext.get().getBean(ConditionEvaluationService.class),
                 GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.cards.CardCatalog.class));
         planar.initializeDeck(gd);
         gd.startingPlayerId = player1.getId();

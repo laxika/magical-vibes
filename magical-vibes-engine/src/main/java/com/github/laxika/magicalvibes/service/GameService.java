@@ -210,6 +210,10 @@ public class GameService {
             requirePriority(gameData, player);
             planechaseService.rollSpecialAction(gameData, player.getId());
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            }
             stateBasedActionService.performStateBasedActions(gameData);
             mutationCoordinator.invalidateAllPlayerViews(gameData);
         }

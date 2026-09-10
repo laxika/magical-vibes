@@ -460,6 +460,16 @@ public class GameViewProjectionFactory {
         // LookAtTopCardOfOwnLibraryEffect / AllowCastFromTopOfLibraryEffect and temporary
         // top-library permissions = private, only visible to the controller.
         Set<UUID> revealedPlayerIds = new HashSet<>();
+        if (data.planechase != null) {
+            for (var planar : data.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed
+                            && topCardRevealed.allPlayers()) {
+                        revealedPlayerIds.addAll(data.orderedPlayerIds);
+                    }
+                }
+            }
+        }
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> deck = data.playerDecks.get(pid);
             if (pid.equals(viewerId)

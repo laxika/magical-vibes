@@ -413,12 +413,15 @@ public class UntapStepService {
     }
 
     /**
-     * Returns {@code true} if any permanent (any controller) carries a
+     * Returns {@code true} if any permanent (any controller) or face-up planar card carries a
      * {@link PlayersSkipUntapStepEffect}. While true, each player's untap step is skipped entirely
      * (no phasing, no untapping) — see {@link #untapPermanents} with {@code skipUntapStep=true}.
      */
     public boolean playersSkipUntapStepApplies(GameData gameData) {
-        return gameData.anyPermanentMatches(p ->
+        boolean planarEffectApplies = gameData.planechase != null && gameData.planechase.faceUp.stream()
+                .anyMatch(object -> object.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof PlayersSkipUntapStepEffect));
+        return planarEffectApplies || gameData.anyPermanentMatches(p ->
                 !gameQueryService.hasLostAllAbilities(gameData, p)
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof PlayersSkipUntapStepEffect));

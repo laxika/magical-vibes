@@ -715,6 +715,10 @@ public class ActivatedAbilityExecutionService {
                 }
             }
             if (ability.isRequiresTap()) {
+                triggerCollectionService.checkAnyPlayerTapsPermanentForManaTriggers(
+                        gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
+            }
+            if (ability.isRequiresTap()) {
                 triggerCollectionService.checkNonlandPermanentTapForManaTriggers(
                         gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
             }

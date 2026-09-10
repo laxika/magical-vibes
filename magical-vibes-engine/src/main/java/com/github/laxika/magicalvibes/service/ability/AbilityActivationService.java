@@ -519,6 +519,8 @@ public class AbilityActivationService {
             triggerCollectionService.checkManaAbilityResolutionTriggers(
                     gameData, permanent, playerId, manaPool.getTotalAllMana() - totalManaBefore);
         }
+        triggerCollectionService.checkAnyPlayerTapsPermanentForManaTriggers(
+                gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
         triggerCollectionService.checkNonlandPermanentTapForManaTriggers(
                 gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);

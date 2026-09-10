@@ -151,7 +151,8 @@ public class AnimationSupport {
         for (UUID targetId : targetIds) {
             switch (effect.duration()) {
                 case UNTIL_YOUR_NEXT_TURN -> animateOneUntilNextTurn(gameData, entry, effect, targetId);
-                case WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, UNTIL_CONTROLLERS_NEXT_UPKEEP ->
+                case WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, UNTIL_CONTROLLERS_NEXT_UPKEEP,
+                        UNTIL_PLANESWALK ->
                         animateOneWithFloatingDuration(gameData, entry, effect, targetId);
                 default -> animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
             }
@@ -261,7 +262,8 @@ public class AnimationSupport {
     private void animateOneWithFloatingDuration(GameData gameData, StackEntry entry,
                                              AnimatePermanentsEffect effect, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || entry.getSourcePermanentId() == null) {
+        if (target == null || (entry.getSourcePermanentId() == null
+                && effect.duration() != EffectDuration.UNTIL_PLANESWALK)) {
             return;
         }
 
@@ -297,8 +299,11 @@ public class AnimationSupport {
                     target.getId(), null, null, duration, 0));
         }
 
-        String durationText = duration == EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP
-                ? "until your next upkeep" : "for as long as " + entry.getCard().getName() + " remains tapped";
+        String durationText = switch (duration) {
+            case UNTIL_CONTROLLERS_NEXT_UPKEEP -> "until your next upkeep";
+            case UNTIL_PLANESWALK -> "until planeswalk";
+            default -> "for as long as " + entry.getCard().getName() + " remains tapped";
+        };
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
         log.info("Game {} - {} becomes a {}/{} creature ({})",

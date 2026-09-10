@@ -32,7 +32,7 @@ public class PutHandOnBottomOfLibraryAndDrawEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID playerId = entry.getTargetId();
+        UUID playerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
         String sourceName = entry.getCard().getName();

@@ -1280,7 +1280,9 @@ public class TriggeredAbilityQueueService {
                 gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
                 if (targets.validTargets().isEmpty()) continue;
                 gameData.interaction.setPermanentChoiceContext(pending);
-                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                UUID choosingPlayerId = pending.choosingPlayerId() != null
+                        ? pending.choosingPlayerId() : pending.controllerId();
+                playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId,
                         targets.validTargets().stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
                         targets.validTargets().stream().filter(gameData.playerIds::contains).toList(),
                         pending.sourceCard().getName() + "'s ability: choose a target.");
