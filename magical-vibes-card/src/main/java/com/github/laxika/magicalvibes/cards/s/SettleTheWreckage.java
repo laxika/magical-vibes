@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "34")
+@CardRegistration(set = "HOB", collectorNumber = "26")
 public class SettleTheWreckage extends Card {
 
     public SettleTheWreckage() {

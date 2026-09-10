@@ -934,6 +934,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever the controller of this card proliferates while this card is in that
      *  player's graveyard. */
     GRAVEYARD_ON_CONTROLLER_PROLIFERATES,
+    /** Triggers whenever one or more +1/+1 counters are put on a creature controlled by this card's
+     *  owner while this card is in that player's graveyard. */
+    GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE,
     /** Triggers whenever one or more cards are put into exile during this permanent controller's turn. */
     ON_CONTROLLER_CARDS_EXILED_DURING_TURN,
     /** Triggers whenever one or more creature cards leave the controller's graveyard. */
@@ -974,6 +977,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}
      *  and {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    /** Triggers whenever a creature controlled by the same player becomes the target of a spell
+     * controlled by an opponent. Activated and triggered abilities do not trigger this slot. */
+    ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL,
     /** Triggers whenever a creature or creature spell controlled by the same player becomes the
      *  target of a spell or ability controlled by an opponent. Fires on all permanents with this
      *  slot on that player's battlefield. Checked in {@code TriggerCollectionService}. */

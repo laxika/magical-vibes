@@ -714,7 +714,7 @@ public class GameViewProjectionFactory {
             }
 
             if (card.hasType(CardType.LAND)) {
-                if (isActivePlayer && isMainPhase && landsPlayed < (gameData.getMaxLandsThisTurn(playerId) + gameQueryService.getConditionalAdditionalLandPlays(gameData, playerId)) && stackEmpty
+                if (isActivePlayer && isMainPhase && landsPlayed < gameQueryService.getMaxLandsThisTurn(gameData, playerId) && stackEmpty
                         && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                         && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                         && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
@@ -733,6 +733,13 @@ public class GameViewProjectionFactory {
             if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) continue;
+
+            boolean canAffordManaValueLifeAlternative =
+                    castingPermissionService.hasExilePlayForLifeEqualToManaValuePermission(
+                            gameData, playerId, card.getId())
+                            && gameData.getLife(playerId) >= card.getManaValue()
+                            && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                            && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                 boolean canPayManaValueLifeAlternative = !foretellPermission
@@ -796,7 +803,7 @@ public class GameViewProjectionFactory {
                                     >= cost.getManaValue() + additionalCost;
                         }
                     }
-                    if (playWithoutPaying || canAfford) {
+                    if (playWithoutPaying || canAfford || canAffordManaValueLifeAlternative) {
                         playable.add(cardViewFactory.create(card));
                     } else if (castingPermissionService.hasWaterbendCastFromExiledWithSourcePermission(
                             gameData, playerId, card.getId())

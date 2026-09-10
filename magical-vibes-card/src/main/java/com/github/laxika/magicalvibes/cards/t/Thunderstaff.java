@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "153")
+@CardRegistration(set = "TD2", collectorNumber = "31")
 public class Thunderstaff extends Card {
 
     public Thunderstaff() {

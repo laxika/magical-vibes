@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "MBS", collectorNumber = "121")
+@CardRegistration(set = "TD2", collectorNumber = "63")
 public class PhyrexianJuggernaut extends Card {
 
     public PhyrexianJuggernaut() {

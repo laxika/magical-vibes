@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
 
 @CardRegistration(set = "5DN", collectorNumber = "150")
+@CardRegistration(set = "TD2", collectorNumber = "11")
 public class SilentArbiter extends Card {
 
     public SilentArbiter() {

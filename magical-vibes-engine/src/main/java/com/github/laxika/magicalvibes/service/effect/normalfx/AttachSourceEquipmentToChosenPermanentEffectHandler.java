@@ -42,7 +42,7 @@ public class AttachSourceEquipmentToChosenPermanentEffectHandler implements Norm
             return;
         }
 
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                " is attached to the manifested creature."));
+        gameLogService.append(gameData,
+                GameLog.cardThen(entry.getCard(), " is now attached to " + target.getCard().getName() + "."));
     }
 }

@@ -22,9 +22,18 @@ public class PermanentsEnterTappedThisTurnEffectHandler implements NormalEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.allPermanentsEnterTappedThisTurn = true;
+        var e = (PermanentsEnterTappedThisTurnEffect) effect;
+        if (e.filter() == null) {
+            gameData.allPermanentsEnterTappedThisTurn = true;
+        } else {
+            gameData.permanentEnterTappedFiltersThisTurn
+                    .computeIfAbsent(entry.getControllerId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                    .add(e.filter());
+        }
 
-        String logEntry = "Permanents enter tapped this turn.";
+        String logEntry = e.filter() == null
+                ? "Permanents enter tapped this turn."
+                : "Matching permanents you control enter tapped this turn.";
         gameLogService.append(gameData, GameLog.text(logEntry));
     }
 }

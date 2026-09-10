@@ -493,6 +493,40 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleAddManaOfTypeProducedByLand(TriggerMatchContext match,
+            AddManaOfTypeProducedByTappedPermanentEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        if (!match.controllerId().equals(lt.tappingPlayerId())) return false;
+
+        if (lt.producedColors().isEmpty()
+                && match.gameData().interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    lt.tappingPlayerId(),
+                    match.permanent().getCard().getName() + "'s mana ability",
+                    new ArrayList<>(List.of((CardEffect) trigger)),
+                    null,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            match.gameData().pendingManaAbilityTriggers.add(entry);
+            return true;
+        }
+
+        ManaColor requiredColor = trigger.requiredColor();
+        if (requiredColor == null || !lt.producedColors().contains(requiredColor)) {
+            return false;
+        }
+
+        match.gameData().playerManaPools.get(lt.tappingPlayerId()).add(requiredColor);
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                        + " adds 1 additional " + requiredColor.name().toLowerCase() + " mana."));
+        return true;
+    }
+
     @CollectsTrigger(value = TappedSnowLandDoesntUntapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleTappedSnowLandDoesntUntap(TriggerMatchContext match,
             TappedSnowLandDoesntUntapEffect trigger, TriggerContext ctx) {

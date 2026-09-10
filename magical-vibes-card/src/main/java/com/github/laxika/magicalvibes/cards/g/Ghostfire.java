@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "115")
+@CardRegistration(set = "DDG", collectorNumber = "69")
 public class Ghostfire extends Card {
 
     public Ghostfire() {

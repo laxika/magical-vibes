@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "146")
+@CardRegistration(set = "PD3", collectorNumber = "21")
 public class LastRites extends Card {
 
     public LastRites() {

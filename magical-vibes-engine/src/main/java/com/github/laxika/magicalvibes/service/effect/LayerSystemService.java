@@ -151,11 +151,7 @@ public class LayerSystemService {
             CardSubtype.MOUNTAIN, CardSubtype.PLAINS);
 
     /** Land types represented in the {@code CardSubtype} enum. */
-    private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.of(
-            CardSubtype.SWAMP, CardSubtype.ISLAND, CardSubtype.FOREST,
-            CardSubtype.MOUNTAIN, CardSubtype.PLAINS, CardSubtype.DESERT,
-            CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.URZAS,
-            CardSubtype.MINE, CardSubtype.POWER_PLANT, CardSubtype.TOWER);
+    private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.copyOf(CardSubtype.landTypes());
 
     private static final ThreadLocal<Pass> ACTIVE_PASS = new ThreadLocal<>();
 
@@ -734,6 +730,7 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isAttacking() ? 1 : 0);
         flags = flags << 1 | (p.isBlocking() ? 1 : 0);
         h = mix(h, flags);
+        h = mix(h, p.getAttacksThisTurn());
         for (UUID blockingTargetId : p.getBlockingTargetIds()) {
             h = mix(h, blockingTargetId.hashCode());
         }

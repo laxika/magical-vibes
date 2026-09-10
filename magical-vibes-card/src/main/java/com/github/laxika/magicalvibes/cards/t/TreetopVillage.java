@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "10E", collectorNumber = "361")
 @CardRegistration(set = "ULG", collectorNumber = "143")
 @CardRegistration(set = "DDD", collectorNumber = "27")
+@CardRegistration(set = "DDG", collectorNumber = "38")
 public class TreetopVillage extends Card {
 
     public TreetopVillage() {

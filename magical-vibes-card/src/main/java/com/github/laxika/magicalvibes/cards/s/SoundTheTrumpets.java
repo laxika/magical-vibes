@@ -1,0 +1,33 @@
+package com.github.laxika.magicalvibes.cards.s;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
+
+@CardRegistration(set = "HOB", collectorNumber = "55")
+public class SoundTheTrumpets extends Card {
+
+    public SoundTheTrumpets() {
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                new TargetSpellMatches(new StackEntryMaxManaValuePredicate(2)),
+                SequenceEffect.of(
+                        new DrawCardEffect(1),
+                        new DiscardCardThenEffect(
+                                null,
+                                CreateTokenEffect.whiteSoldier(1),
+                                "a card",
+                                new CardNotPredicate(new CardTypePredicate(CardType.LAND))))));
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+    }
+}

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "60")
 @CardRegistration(set = "TSB", collectorNumber = "43")
+@CardRegistration(set = "PD3", collectorNumber = "3")
 public class FacelessButcher extends Card {
 
     public FacelessButcher() {

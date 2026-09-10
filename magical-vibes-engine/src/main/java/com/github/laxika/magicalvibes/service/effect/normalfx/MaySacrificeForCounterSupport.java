@@ -69,6 +69,12 @@ public class MaySacrificeForCounterSupport {
     /** Sacrifices {@code permanentId} and puts one counter of {@code counterType} on the source. */
     public void sacrificeThenAddCounter(GameData gameData, UUID controllerId, UUID permanentId,
                                         UUID sourcePermanentId, CounterType counterType) {
+        sacrificeThenAddCounters(gameData, controllerId, permanentId, sourcePermanentId, counterType, 1);
+    }
+
+    /** Sacrifices a permanent and puts {@code count} counters of {@code counterType} on the source. */
+    public void sacrificeThenAddCounters(GameData gameData, UUID controllerId, UUID permanentId,
+                                         UUID sourcePermanentId, CounterType counterType, int count) {
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
         if (toSacrifice == null) {
             return;
@@ -78,11 +84,24 @@ public class MaySacrificeForCounterSupport {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source != null) {
             if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, count);
             } else {
-                permanentCounterSupport.placeCounterOnPermanent(gameData, null, source, counterType, 1);
+                permanentCounterSupport.placeCounterOnPermanent(gameData, null, source, counterType, count);
             }
         }
+    }
+
+    /** Captures the sacrificed permanent's effective power, then puts that many counters on the source. */
+    public void sacrificeThenAddCountersEqualToPower(GameData gameData, UUID controllerId,
+                                                      UUID permanentId, UUID sourcePermanentId,
+                                                      CounterType counterType) {
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+        if (toSacrifice == null) {
+            return;
+        }
+        int count = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
+        sacrificeThenAddCounters(gameData, controllerId, permanentId, sourcePermanentId,
+                counterType, count);
     }
 
     /** Removes one counter of {@code counterType} from the source, if it has one. */

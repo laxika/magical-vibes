@@ -832,6 +832,7 @@ public class MiscTriggerCollectorService {
     // ── ON_OPPONENT_LOSES_LIFE ─────────────────────────────────────────
 
     @CollectsTrigger(value = MillOpponentOnLifeLossEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
+    @CollectsTrigger(value = MillOpponentOnLifeLossEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleMillOnLifeLoss(TriggerMatchContext match,
             MillOpponentOnLifeLossEffect trigger, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;

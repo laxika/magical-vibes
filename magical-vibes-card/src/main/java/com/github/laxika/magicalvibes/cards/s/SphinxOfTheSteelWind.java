@@ -9,6 +9,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ARB", collectorNumber = "110")
+@CardRegistration(set = "PD3", collectorNumber = "9")
 public class SphinxOfTheSteelWind extends Card {
 
     public SphinxOfTheSteelWind() {
