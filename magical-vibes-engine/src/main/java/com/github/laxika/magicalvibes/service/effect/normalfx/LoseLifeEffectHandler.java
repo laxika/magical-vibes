@@ -176,8 +176,9 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             if (e.exemptIfControls() != null && controlsMatching(gameData, playerId, e.exemptIfControls())) {
                 continue;
             }
+            int lifeBefore = gameData.getLife(playerId);
             lifeSupport.applyLifeLoss(gameData, playerId, amount, sourceName);
-            totalLifeLost += amount * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            totalLifeLost += Math.max(0, lifeBefore - gameData.getLife(playerId));
         }
 
         if (controllerGainsLifeLost(gameData, entry, e) && totalLifeLost > 0) {

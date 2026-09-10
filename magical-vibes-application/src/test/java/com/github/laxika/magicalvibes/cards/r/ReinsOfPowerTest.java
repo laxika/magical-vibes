@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HammerheadShark;
+import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ReinsOfPower.class, HammerheadShark.class, VolrathsStronghold.class})
 class ReinsOfPowerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Untaps and exchanges all creatures with the target opponent, granting haste")
     void untapsExchangesAndGrantsHaste() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HammerheadShark());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HammerheadShark());
         ownCreature.tap();
         opposingCreature.tap();
 
@@ -36,24 +38,28 @@ class ReinsOfPowerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not exchange noncreatures")
-    void doesNotExchangeNoncreatures() {
-        Permanent ownLand = new Permanent(new Forest());
+    @DisplayName("Does not untap or exchange noncreatures")
+    void doesNotUntapOrExchangeNoncreatures() {
+        Permanent ownLand = new Permanent(new VolrathsStronghold());
         gd.playerBattlefields.get(player1.getId()).add(ownLand);
-        Permanent opposingLand = new Permanent(new Forest());
+        Permanent opposingLand = new Permanent(new VolrathsStronghold());
         gd.playerBattlefields.get(player2.getId()).add(opposingLand);
+        ownLand.tap();
+        opposingLand.tap();
 
         castReins(player2.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownLand);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingLand);
+        assertThat(ownLand.isTapped()).isTrue();
+        assertThat(opposingLand.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Control and haste expire at cleanup")
     void controlAndHasteExpireAtCleanup() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HammerheadShark());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HammerheadShark());
 
         castReins(player2.getId());
 

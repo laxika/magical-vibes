@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "71")
+@CardRegistration(set = "BFZ", collectorNumber = "110")
 public class DutifulReturn extends Card {
 
     public DutifulReturn() {

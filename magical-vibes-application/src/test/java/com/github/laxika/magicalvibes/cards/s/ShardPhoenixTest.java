@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShardPhoenix.class, YouthfulKnight.class, SkyshroudFalcon.class})
 class ShardPhoenixTest extends BaseCardTest {
 
     // ===== Sacrifice ability =====
@@ -40,26 +42,29 @@ class ShardPhoenixTest extends BaseCardTest {
         @DisplayName("Deals 2 damage to each creature without flying")
         void killsNonFlyingCreatures() {
             harness.addToBattlefield(player1, new ShardPhoenix());
-            harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2 no flying
+            harness.addToBattlefield(player1, new YouthfulKnight()); // 2/1 no flying
+            harness.addToBattlefield(player2, new YouthfulKnight());
 
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
 
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player1, "Youthful Knight");
+            harness.assertInGraveyard(player1, "Youthful Knight");
+            harness.assertNotOnBattlefield(player2, "Youthful Knight");
+            harness.assertInGraveyard(player2, "Youthful Knight");
         }
 
         @Test
         @DisplayName("Flying creatures are not damaged")
         void doesNotDamageFlyingCreatures() {
             harness.addToBattlefield(player1, new ShardPhoenix());
-            harness.addToBattlefield(player2, new SuntailHawk()); // 1/1 flying
+            harness.addToBattlefield(player2, new SkyshroudFalcon()); // 1/1 flying
 
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
 
             // 1/1 flyer survives because it is not dealt damage
-            harness.assertOnBattlefield(player2, "Suntail Hawk");
+            harness.assertOnBattlefield(player2, "Skyshroud Falcon");
         }
 
         @Test
@@ -71,7 +76,7 @@ class ShardPhoenixTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
 
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            harness.assertLife(player2, 20);
         }
     }
 
@@ -90,10 +95,26 @@ class ShardPhoenixTest extends BaseCardTest {
             harness.forceStep(TurnStep.UPKEEP);
 
             harness.activateGraveyardAbility(player1, 0);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
             harness.passBothPriorities();
 
             harness.assertInHand(player1, "Shard Phoenix");
             harness.assertNotInGraveyard(player1, "Shard Phoenix");
+        }
+
+        @Test
+        @DisplayName("Returns only the activated Shard Phoenix when multiple copies are in the graveyard")
+        void returnsOnlyActivatedCopy() {
+            harness.setGraveyard(player1, List.of(new ShardPhoenix(), new ShardPhoenix()));
+            harness.addMana(player1, ManaColor.RED, 3);
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.UPKEEP);
+
+            harness.activateGraveyardAbility(player1, 0);
+            harness.passBothPriorities();
+
+            harness.assertInHand(player1, "Shard Phoenix");
+            harness.assertInGraveyard(player1, "Shard Phoenix");
         }
 
         @Test
@@ -127,6 +148,18 @@ class ShardPhoenixTest extends BaseCardTest {
         void cannotActivateWithoutMana() {
             harness.setGraveyard(player1, List.of(new ShardPhoenix()));
             harness.addMana(player1, ManaColor.RED, 2); // not enough
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.UPKEEP);
+
+            assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Cannot activate with three colorless mana")
+        void cannotActivateWithColorlessMana() {
+            harness.setGraveyard(player1, List.of(new ShardPhoenix()));
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.UPKEEP);
 

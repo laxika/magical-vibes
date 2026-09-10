@@ -572,7 +572,26 @@ class PermanentRemovalServiceTest {
 
             verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
                     gd, player1Id, player1Id, artifact.getCard().getManaValue(),
-                    Map.of(CounterType.CHARGE, 2));
+                    Map.of(CounterType.CHARGE, 2), false);
+        }
+
+        @Test
+        @DisplayName("Artifact graveyard triggers retain whether the artifact was sacrificed")
+        void artifactGraveyardTriggerRecordsSacrifice() {
+            Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
+            artifact.setCounterCount(CounterType.CHARGE, 2);
+            when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
+            when(gameQueryService.isArtifact(artifact)).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false)))
+                    .thenReturn(true);
+
+            assertThat(prs.sacrificePermanentToGraveyard(gd, artifact)).isTrue();
+
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(artifact);
+            verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
+                    gd, player1Id, player1Id, artifact.getCard().getManaValue(),
+                    Map.of(CounterType.CHARGE, 2), true);
         }
 
         @Test
@@ -1172,6 +1191,8 @@ class PermanentRemovalServiceTest {
                     .thenReturn(null);
             when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 3, false)).thenReturn(3);
             when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(8);
+            when(gameQueryService.matchesDamageSourcePredicate(gd, null, null, null, null))
+                    .thenReturn(true);
 
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 3, "Lightning Bolt");
 

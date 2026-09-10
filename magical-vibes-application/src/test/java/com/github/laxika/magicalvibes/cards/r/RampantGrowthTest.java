@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.c.CrystalVein;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,16 +16,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RampantGrowth.class, Plains.class, Forest.class, Island.class, CrystalVein.class})
+@CardUsed({RampantGrowth.class, Plains.class, Forest.class, Island.class, RootwaterDepths.class})
 class RampantGrowthTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Rampant Growth puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new RampantGrowth()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RampantGrowth(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
@@ -111,16 +106,14 @@ class RampantGrowthTest extends BaseCardTest {
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new RampantGrowth()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RampantGrowth(), "{1}{G}");
     }
 
     private List<Card> setupLibrary() {
         Card plains = new Plains();
         Card forest = new Forest();
         Card island = new Island();
-        harness.setLibrary(player1, List.of(plains, forest, island, new CrystalVein(), new RampantGrowth()));
+        harness.setLibrary(player1, List.of(plains, forest, island, new RootwaterDepths(), new RampantGrowth()));
         return List.of(plains, forest, island);
     }
 }

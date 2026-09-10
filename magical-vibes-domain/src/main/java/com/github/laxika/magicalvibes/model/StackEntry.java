@@ -281,7 +281,7 @@ public class StackEntry {
     @Setter private Integer chosenPermanentPowerAtLastKnown;
     /** Last-known effective toughness of a permanent chosen for stationing. */
     @Setter private Integer chosenPermanentToughnessAtLastKnown;
-    /** Card chosen from exile for a creature-or-warped-card cost. */
+    /** Card chosen from exile for a creature-or-warped-card cost or a library-search follow-up. */
     @Setter private Card chosenObjectCard;
     /** Permanents placed onto the battlefield by the preceding library search. */
     @Setter private List<UUID> searchedPermanentIds = List.of();
@@ -1156,6 +1156,18 @@ public class StackEntry {
 
     public void setResolvingEffectTargetGroup(Integer targetGroup) {
         this.resolvingEffectTargetGroup = targetGroup;
+    }
+
+    /**
+     * Returns the targets for the target group currently being resolved, or {@code null} when the
+     * current effect is not associated with a target group.
+     *
+     * <p>This is also used when a target-bound wrapper resolves an inner effect: the inner effect
+     * is not present in the card's effect-to-target map, but it still applies to the wrapper's
+     * target group.</p>
+     */
+    public List<UUID> targetsForResolvingEffectGroup() {
+        return resolvingEffectTargetGroup == null ? null : targetsForGroup(resolvingEffectTargetGroup);
     }
 
     /**

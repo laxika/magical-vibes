@@ -17,6 +17,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DominatingLicidTest extends BaseCardTest {
 
     @Test
+    void canEndTheEffectAfterTheLicidLosesItsAbilities() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player2, new SabertoothWyvern());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+        licid.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(licid.getAttachedTo()).isNull();
+        assertThat(gqs.isCreature(gd, licid)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Ability attaches the Licid to a creature and takes control of it")
     void abilityTurnsLicidIntoControlAura() {
         Permanent licid = addReadyLicid(player1);

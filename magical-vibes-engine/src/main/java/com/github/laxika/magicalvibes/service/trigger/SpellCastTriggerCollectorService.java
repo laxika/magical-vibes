@@ -2351,6 +2351,7 @@ public class SpellCastTriggerCollectorService {
                     List.of()
             );
             entry.setTriggeringCardId(spellCard.getId());
+            entry.setNonTargeting(true);
             match.gameData().stack.add(entry);
         } else if (needsTargeting) {
             // "You may pay {C}. If you do, [targeted effect]" (Malachite Talisman): the target is chosen

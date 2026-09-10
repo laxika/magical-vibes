@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,65 +18,56 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShadowRift.class, HornedTurtle.class, Island.class})
 class ShadowRiftTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Shadow Rift gives the target shadow and draws a card")
     void grantsShadowAndDraws() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HornedTurtle());
         harness.setHand(player1, List.of(new ShadowRift()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player1, "Horned Turtle");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.hasKeyword(Keyword.SHADOW)).isTrue();
+        Permanent turtle = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(turtle.hasKeyword(Keyword.SHADOW)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test
     @DisplayName("Shadow wears off at end of turn")
     void shadowWearsOff() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HornedTurtle());
         harness.setHand(player1, List.of(new ShadowRift()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player1, "Horned Turtle");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.hasKeyword(Keyword.SHADOW)).isFalse();
+        Permanent turtle = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(turtle.hasKeyword(Keyword.SHADOW)).isFalse();
     }
 
     @Test
     @DisplayName("A creature without shadow cannot block an attacker given shadow")
     void creatureWithoutShadowCannotBlockShadowAttacker() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new HornedTurtle());
+        addCreatureReady(player2, new HornedTurtle());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).getFirst().setSummoningSick(false);
 
         harness.setHand(player1, List.of(new ShadowRift()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -84,27 +77,31 @@ class ShadowRiftTest extends BaseCardTest {
     @Test
     @DisplayName("A creature given shadow cannot block an attacker without shadow")
     void shadowBlockerCannotBlockNonShadowAttacker() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new HornedTurtle());
         attacker.setAttacking(true);
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new HornedTurtle());
 
         harness.setHand(player2, List.of(new ShadowRift()));
-        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new HornedTurtle()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shadow");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new ShadowRift()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, island.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 }

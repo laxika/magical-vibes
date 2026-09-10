@@ -85,7 +85,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
         }
 
         // Sacrifice the enchanted permanent.
-        permanentRemovalService.removePermanentToGraveyard(gameData, enchanted);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted);
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", enchanted.getCard(), "."));
 

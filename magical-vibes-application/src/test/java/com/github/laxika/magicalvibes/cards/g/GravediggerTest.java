@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.r.RaiseDead;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,35 +19,30 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Gravedigger.class, GrizzlyBears.class, HillGiant.class, RaiseDead.class})
+@CardUsed({Gravedigger.class, TrainedArmodon.class, LowlandGiant.class, Shatter.class})
 class GravediggerTest extends BaseCardTest {
 
-    /** Casts Gravedigger and leaves its creature spell on the stack. */
     private void castGravedigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new Gravedigger(), "{3}{B}");
     }
 
-    private void chooseTarget(int validTargetIndex) {
+    private void castAndChooseTarget(Card target) {
         castGravedigger();
         harness.passBothPriorities();
 
-        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).hasSizeGreaterThan(validTargetIndex);
-
-        harness.handleMultipleCardsChosen(player1, List.of(choice.validCardIds().get(validTargetIndex)));
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
-    private void castAndAcceptMay() {
-        castAndAcceptMay(0);
-    }
-
-    private void castAndAcceptMay(int validTargetIndex) {
-        chooseTarget(validTargetIndex);
+    private void castAndAcceptMay(Card target) {
+        castAndChooseTarget(target);
         harness.handleMayAbilityChosen(player1, true);
     }
 
@@ -61,6 +58,8 @@ class GravediggerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast Gravedigger without enough mana")
     void cannotCastWithoutMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Gravedigger()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -75,95 +74,119 @@ class GravediggerTest extends BaseCardTest {
         castGravedigger();
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Gravedigger");
     }
 
     @Test
-    @DisplayName("Resolving Gravedigger prompts for the graveyard target before the may choice")
-    void resolvingPromptsForGraveyardTarget() {
-        GrizzlyBears target = new GrizzlyBears();
+    @DisplayName("Gravedigger chooses its target before asking whether to return it")
+    void choosesTargetBeforeMayDecision() {
+        TrainedArmodon target = new TrainedArmodon();
         harness.setGraveyard(player1, List.of(target));
-
         castGravedigger();
         harness.passBothPriorities();
 
-        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).containsExactly(target.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertInGraveyard(player1, "Trained Armodon");
     }
 
     @Test
-    @DisplayName("Accepting the may ability returns the selected creature to hand")
-    void acceptingMayReturnsSelectedCreature() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        chooseTarget(0);
+    @DisplayName("Accepting the may ability returns the targeted creature to hand")
+    void acceptingMayReturnsTargetToHand() {
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target));
+        castAndAcceptMay(target);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Trained Armodon");
+        harness.assertNotInGraveyard(player1, "Trained Armodon");
     }
 
     @Test
-    @DisplayName("Declining the may ability does not put anything on the stack")
+    @DisplayName("Declining the may ability leaves the targeted creature in the graveyard")
     void decliningMaySkipsAbility() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target));
+        castAndChooseTarget(target);
 
-        chooseTarget(0);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Gravedigger");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Trained Armodon");
     }
 
     @Test
-    @DisplayName("Returns a creature from the graveyard to hand")
+    @DisplayName("Returns the selected creature from the graveyard to hand")
     void returnsCreatureFromGraveyardToHand() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        castAndAcceptMay();
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target));
+        castAndAcceptMay(target);
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Trained Armodon");
+        harness.assertNotInGraveyard(player1, "Trained Armodon");
         assertThat(gd.gameLog)
                 .extracting(GameLogEntry::plainText)
-                .contains("Alice returns Grizzly Bears from graveyard to hand.");
+                .contains("Alice returns Trained Armodon from graveyard to hand.");
     }
 
     @Test
-    @DisplayName("Player can decline the may ability after choosing a target")
-    void playerCanDeclineMayAbility() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        chooseTarget(0);
+    @DisplayName("Target selection is mandatory even though the return is optional")
+    void targetSelectionCannotBeDeclined() {
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target));
+        castGravedigger();
+        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must choose 1 cards");
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Trained Armodon");
     }
 
     @Test
-    @DisplayName("Choosing a specific creature when multiple are in the graveyard")
+    @DisplayName("Choosing a specific creature when multiple creatures are in the graveyard")
     void choosesSpecificCreatureFromGraveyard() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HillGiant()));
-        castAndAcceptMay(1);
+        TrainedArmodon first = new TrainedArmodon();
+        LowlandGiant second = new LowlandGiant();
+        harness.setGraveyard(player1, List.of(first, second));
+        castGravedigger();
+        harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Hill Giant");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Hill Giant");
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(first.getId(), second.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Lowland Giant");
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertNotInGraveyard(player1, "Lowland Giant");
     }
 
     @Test
-    @DisplayName("ETB is not put on the stack if the graveyard is empty")
-    void noTriggerWithEmptyGraveyard() {
+    @DisplayName("No trigger is put on the stack when the graveyard is empty")
+    void noEffectWithEmptyGraveyard() {
         castGravedigger();
         harness.passBothPriorities();
 
@@ -173,58 +196,78 @@ class GravediggerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB is not put on the stack if the graveyard has no creature cards")
-    void noTriggerWithOnlyNonCreaturesInGraveyard() {
-        harness.setGraveyard(player1, List.of(new RaiseDead()));
+    @DisplayName("No trigger is put on the stack when the graveyard has only noncreatures")
+    void noEffectWithOnlyNonCreaturesInGraveyard() {
+        harness.setGraveyard(player1, List.of(new Shatter()));
         castGravedigger();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Raise Dead");
+        harness.assertInGraveyard(player1, "Shatter");
     }
 
     @Test
-    @DisplayName("Cannot choose a non-creature card as the graveyard target")
+    @DisplayName("Cannot choose a noncreature card from the graveyard")
     void cannotChooseNonCreatureFromGraveyard() {
-        RaiseDead nonCreature = new RaiseDead();
-        GrizzlyBears creature = new GrizzlyBears();
+        Shatter nonCreature = new Shatter();
+        TrainedArmodon creature = new TrainedArmodon();
         harness.setGraveyard(player1, List.of(nonCreature, creature));
         castGravedigger();
         harness.passBothPriorities();
 
-        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).containsExactly(creature.getId());
-        int logSizeBefore = gd.gameLog.size();
 
+        int logSizeBefore = gd.gameLog.size();
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(nonCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid card");
         assertThat(gd.gameLog).hasSize(logSizeBefore);
+
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("A creature in the opponent's graveyard is not a legal target")
+    void onlyTargetsOwnGraveyard() {
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player2, List.of(target));
+        castGravedigger();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Trained Armodon");
     }
 
     @Test
     @DisplayName("Opponent cannot choose the controller's graveyard target")
     void opponentCannotChoose() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target));
         castGravedigger();
         harness.passBothPriorities();
 
-        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice).isNotNull();
-        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(choice.validCardIds().getFirst())))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not your turn to choose");
+
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
     }
 
     @Test
     @DisplayName("Stack is empty after full resolution")
     void stackIsEmptyAfterFullResolution() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        castAndAcceptMay();
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target));
+        castAndAcceptMay(target);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -232,8 +275,9 @@ class GravediggerTest extends BaseCardTest {
     @Test
     @DisplayName("Gravedigger remains on the battlefield after returning a creature")
     void gravediggerRemainsOnBattlefield() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        castAndAcceptMay();
+        TrainedArmodon target = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target));
+        castAndAcceptMay(target);
 
         harness.assertOnBattlefield(player1, "Gravedigger");
     }

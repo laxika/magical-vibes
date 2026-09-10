@@ -80,7 +80,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
             if (creature != null) {
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), " is sacrificed (equipment with sacrifice-on-unattach became unattached)."));
                 log.info("Game {} - {} sacrificed due to equipment unattach", gameData.id, creature.getCard().getName());
-                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }

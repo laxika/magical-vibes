@@ -867,6 +867,16 @@ public class Card {
     }
 
     /**
+     * Returns an additional minimum target count imposed by an alternate cost, such as awaken.
+     * Normal spell targeting is validated against the prepared spell effects. Target declarations
+     * on this card may instead belong to triggered abilities or disappear when cast face down or
+     * overloaded, so they must not impose a blanket cast-time minimum here.
+     */
+    public int getMinTargetsWhenCastForAlternateCost() {
+        return 0;
+    }
+
+    /**
      * Returns the maximum total number of targets allowed.
      */
     public int getMaxTargets() {

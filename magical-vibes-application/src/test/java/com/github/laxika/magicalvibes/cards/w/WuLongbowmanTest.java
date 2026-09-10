@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +11,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WuLongbowman.class, WuInfantry.class})
 class WuLongbowmanTest extends BaseCardTest {
 
     @Test
@@ -30,13 +31,13 @@ class WuLongbowmanTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
         setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new WuInfantry());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.getPermanentId(player2, "Wu Infantry");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Wu Infantry");
     }
 
     @Test
@@ -62,8 +63,7 @@ class WuLongbowmanTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate during an opponent's turn")
     void cannotActivateOnOpponentTurn() {
-        harness.addToBattlefield(player1, new WuLongbowman());
-        findPermanent(player1, "Wu Longbowman").setSummoningSick(false);
+        addCreatureReady(player1, new WuLongbowman());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -72,9 +72,20 @@ class WuLongbowmanTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
-    private void setupOnMyTurn(TurnStep step) {
+    @Test
+    @DisplayName("Cannot activate while it has summoning sickness")
+    void cannotActivateWhileSummoningSick() {
         harness.addToBattlefield(player1, new WuLongbowman());
-        findPermanent(player1, "Wu Longbowman").setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    private void setupOnMyTurn(TurnStep step) {
+        addCreatureReady(player1, new WuLongbowman());
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
     }

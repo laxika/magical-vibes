@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "60")
+@CardRegistration(set = "DDE", collectorNumber = "12")
 public class PhyrexianDefiler extends Card {
 
     public PhyrexianDefiler() {

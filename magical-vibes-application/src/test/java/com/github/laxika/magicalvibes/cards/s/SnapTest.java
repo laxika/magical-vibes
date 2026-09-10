@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Snap.class, GrizzlyBears.class, Island.class, LlanowarElves.class})
 class SnapTest extends BaseCardTest {
 
     @Test
@@ -64,6 +66,26 @@ class SnapTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fizzles without untapping lands when the target leaves before resolution")
+    void fizzlesWithoutUntappingLandsWhenTargetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
+        land.tap();
+
+        harness.setHand(player1, List.of(new Snap()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Snap");
     }
 
     @Test

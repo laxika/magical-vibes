@@ -31,7 +31,34 @@ import static org.assertj.core.api.Assertions.assertThat;
  * here rather than only surfacing as a wrong list of offered blockers deep inside
  * {@code CombatBlockService.getBlockableCreatureIndices} or the AI's blocker search.
  */
+@CardUsed({
+        AesthirGlider.class,
+        Forest.class,
+        GrizzlyBears.class,
+        LeoninScimitar.class,
+        LightOfDay.class,
+        MaraudingBoneslasher.class,
+        MasakoTheHumorless.class,
+        Pacifism.class,
+        ScatheZombies.class,
+        TrainingDrone.class
+})
 class BlockLegalityServiceTest extends BaseCardTest {
+    @Test
+    void globalBlockRestrictionStopsWhenItsSourceLosesAbilities() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new LightOfDay());
+        var card = new com.github.laxika.magicalvibes.model.Card();
+        card.setType(com.github.laxika.magicalvibes.model.CardType.CREATURE);
+        card.setColor(com.github.laxika.magicalvibes.model.CardColor.BLACK);
+        card.setPower(2);
+        card.setToughness(2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, card);
+        assertThat(bls.canBlock(gd, creature)).isFalse();
+
+        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        assertThat(bls.canBlock(gd, creature)).isTrue();
+    }
 
     @Test
     @DisplayName("An untapped creature can block")
@@ -107,7 +134,6 @@ class BlockLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(AesthirGlider.class)
     @DisplayName("A face-down creature does not have its printed can't-block restriction")
     void faceDownCreatureCanBlockDespitePrintedRestriction() {
         Permanent glider = addCreatureReady(player2, new AesthirGlider());

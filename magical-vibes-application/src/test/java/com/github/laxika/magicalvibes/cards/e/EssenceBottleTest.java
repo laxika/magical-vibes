@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(EssenceBottle.class)
 class EssenceBottleTest extends BaseCardTest {
 
     @Test
@@ -55,6 +57,25 @@ class EssenceBottleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Second ability removes only elixir counters")
+    void secondAbilityLeavesOtherCounterTypes() {
+        Permanent bottle = addReadyBottle(player1);
+        bottle.setCounterCount(CounterType.ELIXIR, 2);
+        bottle.setCounterCount(CounterType.CHARGE, 1);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(bottle.getCounterCount(CounterType.ELIXIR)).isZero();
+        assertThat(bottle.getCounterCount(CounterType.CHARGE)).isOne();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 4);
+        assertThat(bottle.getCounterCount(CounterType.CHARGE)).isOne();
+    }
+
+    @Test
     @DisplayName("Both abilities require tapping — a tapped bottle cannot activate")
     void tappedBottleCannotActivate() {
         Permanent bottle = addReadyBottle(player1);
@@ -78,9 +99,8 @@ class EssenceBottleTest extends BaseCardTest {
     }
 
     private Permanent addReadyBottle(Player player) {
-        Permanent perm = new Permanent(new EssenceBottle());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new EssenceBottle());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

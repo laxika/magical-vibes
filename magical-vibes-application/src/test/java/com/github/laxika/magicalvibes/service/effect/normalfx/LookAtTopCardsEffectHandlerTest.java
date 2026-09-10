@@ -133,6 +133,20 @@ class LookAtTopCardsEffectHandlerTest {
     class RestOnBottom {
 
         @Test
+    void lookingAtASingleCardMovesItToHandWithoutPubliclyNamingIt() {
+        Card hidden = createCard("Private card");
+        gd.playerDecks.get(player1Id).add(hidden);
+        LookAtTopCardsEffect effect = new LookAtTopCardsEffect(new Fixed(2), new Fixed(1),
+                null, LookDestination.BOTTOM_OF_LIBRARY, false);
+
+        handler.resolve(gd, entryFor("Private look", effect), effect);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(hidden);
+        verify(gameLogService, never()).append(eq(gd),
+                argThat((GameLogEntry entry) -> entry.plainText().contains("Private card")));
+    }
+
+    @Test
         @DisplayName("Empty library logs and stops")
         void emptyLibraryLogs() {
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(2));

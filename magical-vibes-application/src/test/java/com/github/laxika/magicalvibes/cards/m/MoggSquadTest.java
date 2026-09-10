@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CursedScroll;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MoggSquad.class, CursedScroll.class})
 class MoggSquadTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,8 @@ class MoggSquadTest extends BaseCardTest {
     @DisplayName("Mogg Squad shrinks for each other creature you control")
     void shrinksForOwnCreatures() {
         Permanent squad = addMoggSquad(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addMoggSquad(player1);
+        addMoggSquad(player1);
 
         assertThat(gqs.getEffectivePower(gd, squad)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, squad)).isEqualTo(1);
@@ -35,7 +37,7 @@ class MoggSquadTest extends BaseCardTest {
     @DisplayName("Mogg Squad shrinks for creatures any player controls")
     void shrinksForOpponentCreatures() {
         Permanent squad = addMoggSquad(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addMoggSquad(player2);
 
         assertThat(gqs.getEffectivePower(gd, squad)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, squad)).isEqualTo(2);
@@ -55,21 +57,28 @@ class MoggSquadTest extends BaseCardTest {
     @DisplayName("Mogg Squad grows back when other creatures leave the battlefield")
     void updatesWhenCreaturesLeave() {
         Permanent squad = addMoggSquad(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent other = addMoggSquad(player1);
 
         assertThat(gqs.getEffectivePower(gd, squad)).isEqualTo(2);
 
-        gd.playerBattlefields.get(player1.getId()).removeIf(
-                p -> p.getCard().getName().equals("Grizzly Bears"));
+        gd.playerBattlefields.get(player1.getId()).remove(other);
+
+        assertThat(gqs.getEffectivePower(gd, squad)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, squad)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Mogg Squad ignores noncreature permanents")
+    void ignoresNoncreatures() {
+        Permanent squad = addMoggSquad(player1);
+        harness.addToBattlefield(player1, new CursedScroll());
+        harness.addToBattlefield(player2, new CursedScroll());
 
         assertThat(gqs.getEffectivePower(gd, squad)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, squad)).isEqualTo(3);
     }
 
     private Permanent addMoggSquad(Player player) {
-        Permanent permanent = new Permanent(new MoggSquad());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new MoggSquad());
     }
 }

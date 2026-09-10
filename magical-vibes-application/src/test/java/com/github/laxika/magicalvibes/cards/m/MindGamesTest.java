@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MindGames.class, AngelsFeather.class, Forest.class, GrizzlyBears.class, Pacifism.class})
 class MindGamesTest extends BaseCardTest {
 
     @Test
@@ -27,13 +29,24 @@ class MindGamesTest extends BaseCardTest {
         for (Permanent target : List.of(artifact, creature, land)) {
             harness.setHand(player1, List.of(new MindGames()));
             harness.addMana(player1, ManaColor.BLUE, 1);
-            harness.castInstant(player1, 0, target.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, target.getId());
         }
 
         assertThat(artifact.isTapped()).isTrue();
         assertThat(creature.isTapped()).isTrue();
         assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target a permanent controlled by the caster")
+    void canTargetOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MindGames()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isTrue();
     }
 
     @Test

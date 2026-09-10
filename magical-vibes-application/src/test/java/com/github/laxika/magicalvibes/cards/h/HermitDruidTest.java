@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.e.EvolvingWilds;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HermitDruid.class, Forest.class, Shock.class, VolrathsStronghold.class})
 class HermitDruidTest extends BaseCardTest {
 
     @Test
@@ -27,12 +27,9 @@ class HermitDruidTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         Card shock = new Shock();
-        Card bears = new GrizzlyBears();
         Card forest = new Forest();
         Card leftover = new Shock();
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(shock, bears, forest, leftover));
+        harness.setLibrary(player1, List.of(shock, forest, leftover));
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -41,7 +38,7 @@ class HermitDruidTest extends BaseCardTest {
 
         assertThat(druid.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1).contains(forest);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock, bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(leftover);
     }
 
@@ -51,17 +48,15 @@ class HermitDruidTest extends BaseCardTest {
         addReadyDruid(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        Card wilds = new EvolvingWilds();
+        Card stronghold = new VolrathsStronghold();
         Card forest = new Forest();
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(wilds, forest));
+        harness.setLibrary(player1, List.of(stronghold, forest));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(wilds);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(stronghold);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -72,10 +67,8 @@ class HermitDruidTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         Card shock = new Shock();
-        Card bears = new GrizzlyBears();
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(shock, bears));
+        Card secondShock = new Shock();
+        harness.setLibrary(player1, List.of(shock, secondShock));
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -83,7 +76,7 @@ class HermitDruidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock, bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock, secondShock);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -93,8 +86,7 @@ class HermitDruidTest extends BaseCardTest {
         addReadyDruid(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int gyBefore = gd.playerGraveyards.get(player1.getId()).size();
 
@@ -127,10 +119,18 @@ class HermitDruidTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent druid = addReadyDruid(player1);
+        druid.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadyDruid(Player player) {
-        Permanent perm = new Permanent(new HermitDruid());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HermitDruid());
     }
 }

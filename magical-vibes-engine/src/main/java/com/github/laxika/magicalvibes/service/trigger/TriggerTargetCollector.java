@@ -344,6 +344,10 @@ public class TriggerTargetCollector {
                         continue;
                     }
 
+                    if (targetLegalityService.checkTriggeredPermanentTargetableReason(
+                            gameData, p, sourceCard, controllerId).isPresent()) {
+                        continue;
+                    }
                     validTargets.add(p.getId());
                 }
             }

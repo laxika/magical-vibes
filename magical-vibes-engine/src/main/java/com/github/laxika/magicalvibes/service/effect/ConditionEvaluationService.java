@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTar
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
+import com.github.laxika.magicalvibes.model.condition.SourceIsBlocked;
 import com.github.laxika.magicalvibes.model.condition.SourceBlocksWithAtLeastAndOnlyMatchingBlockers;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
@@ -352,6 +353,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaVal
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueEqualsControllerUnspentMana;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellManaSpentLessThanManaValue;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellManaValueAtMostGreatestControlledPermanentManaValue;
@@ -1310,6 +1312,14 @@ public class ConditionEvaluationService {
                         : gameQueryService.getEffectivePower(gameData, triggeringPermanent);
                 yield triggeringPower > gameQueryService.getEffectivePower(gameData, source);
             }
+            case TriggeringPermanentHasSubtype c -> {
+                Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                yield triggeringPermanent != null
+                        ? gameQueryService.hasEffectiveSubtype(gameData, triggeringPermanent, c.subtype())
+                        : ctx.triggeringCard() != null
+                        && ctx.triggeringCard().getSubtypes().contains(c.subtype());
+            }
             case SourceCounterCountParity c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 int counterCount = source == null
@@ -1350,6 +1360,11 @@ public class ConditionEvaluationService {
             case SourceIsAttacking ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isAttacking();
+            }
+            case SourceIsBlocked ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isAttacking()
+                        && (source.isBlockedWithoutBlockers() || countBlockersOfSource(gameData, ctx) > 0);
             }
             case SourceIsAttackingOrBlocking ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
@@ -1918,7 +1933,8 @@ public class ConditionEvaluationService {
         // (e.g. Gisela's "own and control Gisela and Bruna" intervening-if).
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceControllerId(ctx.controllerId())
-                .withSourcePermanentSnapshot(ctx.sourcePermanent());
+                .withSourcePermanentSnapshot(ctx.sourcePermanent())
+                .withXValue(ctx.xValue());
         if (ctx.sourceCard() != null) {
             filterContext = filterContext.withSourceCardId(ctx.sourceCard().getId());
         } else if (ctx.sourcePermanent() != null) {

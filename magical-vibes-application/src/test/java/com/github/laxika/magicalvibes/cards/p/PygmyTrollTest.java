@@ -58,7 +58,8 @@ class PygmyTrollTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
-        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
 
         assertThat(troll.getPowerModifier()).isEqualTo(2);
         assertThat(troll.getToughnessModifier()).isEqualTo(2);

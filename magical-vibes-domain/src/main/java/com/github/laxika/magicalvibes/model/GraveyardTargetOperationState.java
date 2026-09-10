@@ -79,6 +79,8 @@ public class GraveyardTargetOperationState {
     public boolean sourceAlternateCostAtTrigger;
     /** Effective power of an attack-trigger source, captured before graveyard target selection. */
     public Integer triggeringPermanentPowerAtTrigger;
+    /** Permanent that caused a triggered ability, retained through graveyard target selection. */
+    public UUID triggeringPermanentId;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */
     public String chapterName;
     /**
@@ -191,6 +193,8 @@ public class GraveyardTargetOperationState {
      * {@code BattlefieldEntryService.handleCreatureEnteredBattlefield}.
      */
     public AsEntersGraveyardExileContext asEntersExile;
+    /** As-enters choice that moves two opponent-owned exiled cards to their owners' graveyards. */
+    public AsEntersOpponentExileToGraveyardContext asEntersOpponentExileToGraveyard;
     public MilledCreatureReturnContext milledCreatureReturn;
     public MilledCreaturesToHandContext milledCreaturesToHand;
 
@@ -208,6 +212,16 @@ public class GraveyardTargetOperationState {
                                              int countersPerCard) {
             this(enteringPermanentId, controllerId, card, targetId, wasCastFromHand, etbMode,
                     xValue, kicked, targetIds, countersPerCard, List.of());
+        }
+    }
+
+    /** Entry context needed to resume Ulamog's Despoiler after its exile choice. */
+    public record AsEntersOpponentExileToGraveyardContext(UUID enteringPermanentId, UUID controllerId,
+                                                           Card card, UUID targetId, boolean wasCastFromHand,
+                                                           int etbMode, int xValue, boolean kicked,
+                                                           List<UUID> targetIds, int counterCount) {
+        public AsEntersOpponentExileToGraveyardContext {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
         }
     }
 

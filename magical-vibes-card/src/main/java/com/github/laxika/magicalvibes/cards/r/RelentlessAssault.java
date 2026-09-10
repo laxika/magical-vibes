@@ -22,6 +22,6 @@ public class RelentlessAssault extends Card {
 
     public RelentlessAssault() {
         addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES));
-        addEffect(EffectSlot.SPELL, new AdditionalCombatMainPhaseEffect(1));
+        addEffect(EffectSlot.SPELL, new AdditionalCombatMainPhaseEffect(1, null, true));
     }
 }

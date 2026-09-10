@@ -39,6 +39,7 @@ class ScrivenerTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(forbid.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Forbid");
         harness.assertInGraveyard(player1, "Allay");
@@ -53,8 +54,9 @@ class ScrivenerTest extends BaseCardTest {
 
         castScrivener();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(forbid.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Forbid");
         harness.assertNotInHand(player1, "Forbid");
@@ -98,8 +100,8 @@ class ScrivenerTest extends BaseCardTest {
 
         castScrivener();
 
-        harness.setGraveyard(player1, List.of());
         harness.handleMultipleCardsChosen(player1, List.of(forbid.getId()));
+        harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertNotInHand(player1, "Forbid");

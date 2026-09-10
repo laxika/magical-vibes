@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GhituSlinger.class, GiantCockroach.class})
 class GhituSlingerTest extends BaseCardTest {
 
     @Test
@@ -22,14 +24,13 @@ class GhituSlingerTest extends BaseCardTest {
 
     @Test
     void entersAndDealsTwoDamageToTargetCreature() {
-        GrizzlyBears card = new GrizzlyBears();
-        card.setToughness(1);
+        GiantCockroach card = new GiantCockroach();
         Permanent creature = harness.addToBattlefieldAndReturn(player2, card);
 
         castAndResolveGhituSlinger(creature.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Giant Cockroach");
+        harness.assertInGraveyard(player2, "Giant Cockroach");
     }
 
     @Test
@@ -44,6 +45,17 @@ class GhituSlingerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Ghitu Slinger");
         harness.assertInGraveyard(player1, "Ghitu Slinger");
+    }
+
+    @Test
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveGhituSlinger(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Ghitu Slinger");
     }
 
     @Test

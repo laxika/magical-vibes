@@ -1,39 +1,36 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.a.AboutFace;
+import com.github.laxika.magicalvibes.cards.g.GhituFireEater;
+import com.github.laxika.magicalvibes.cards.g.GraniteGrip;
+import com.github.laxika.magicalvibes.cards.s.ShivanPhoenix;
+import com.github.laxika.magicalvibes.cards.s.Snap;
+import com.github.laxika.magicalvibes.cards.v.VigilantDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WeatherseedFaeries.class, GhituFireEater.class, ShivanPhoenix.class, VigilantDrake.class,
+        AboutFace.class, Snap.class, GraniteGrip.class})
 class WeatherseedFaeriesTest extends BaseCardTest {
 
     @Test
     @DisplayName("A red creature cannot block Weatherseed Faeries")
     void redCreatureCannotBlock() {
-        Permanent faeries = addReady(player1, new WeatherseedFaeries());
+        Permanent faeries = addCreatureReady(player1, new WeatherseedFaeries());
         faeries.setAttacking(true);
-        Permanent blocker = addReady(player2, createCreature("Red Creature", 2, 2, CardColor.RED, Keyword.FLYING));
+        addCreatureReady(player2, new ShivanPhoenix());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -41,66 +38,90 @@ class WeatherseedFaeriesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A blue creature can block Weatherseed Faeries")
+    void blueCreatureCanBlock() {
+        Permanent faeries = addCreatureReady(player1, new WeatherseedFaeries());
+        faeries.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new VigilantDrake());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Weatherseed Faeries takes no combat damage from a red creature")
     void takesNoCombatDamageFromRedCreature() {
-        Permanent attacker = addReady(player2, createCreature("Red Creature", 3, 3, CardColor.RED));
+        Permanent attacker = addCreatureReady(player2, new GhituFireEater());
         attacker.setAttacking(true);
-        Permanent faeries = addReady(player1, new WeatherseedFaeries());
+        Permanent faeries = addCreatureReady(player1, new WeatherseedFaeries());
         faeries.setBlocking(true);
         faeries.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat(player2);
 
-        harness.passBothPriorities();
+        assertThat(faeries.getMarkedDamage()).isZero();
+    }
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getMarkedDamage()).isZero();
+    @Test
+    @DisplayName("Weatherseed Faeries takes combat damage from a blue creature")
+    void takesCombatDamageFromBlueCreature() {
+        Permanent attacker = addCreatureReady(player2, new VigilantDrake());
+        attacker.setAttacking(true);
+        Permanent faeries = addCreatureReady(player1, new WeatherseedFaeries());
+        faeries.setBlocking(true);
+        faeries.addBlockingTarget(0);
+
+        resolveCombat(player2);
+
+        harness.assertNotOnBattlefield(player1, "Weatherseed Faeries");
+        harness.assertInGraveyard(player1, "Weatherseed Faeries");
     }
 
     @Test
     @DisplayName("Weatherseed Faeries cannot be targeted by a red instant")
     void cannotBeTargetedByRedInstant() {
-        Permanent faeries = addReady(player2, new WeatherseedFaeries());
-        addReady(player2, createCreature("Green Creature", 2, 2, CardColor.GREEN));
+        Permanent faeries = addCreatureReady(player2, new WeatherseedFaeries());
+        addCreatureReady(player2, new GhituFireEater());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Red Bolt", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new AboutFace()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, faeries.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, faeries.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("A blue instant can target Weatherseed Faeries")
+    void canBeTargetedByBlueInstant() {
+        Permanent faeries = addCreatureReady(player2, new WeatherseedFaeries());
+
+        harness.setHand(player1, List.of(new Snap()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, faeries.getId());
+
+        harness.assertNotOnBattlefield(player2, "Weatherseed Faeries");
+        harness.assertInHand(player2, "Weatherseed Faeries");
     }
 
-    private static Card createCreature(String name, int power, int toughness, CardColor color, Keyword... keywords) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        if (keywords.length > 0) {
-            card.setKeywords(Set.of(keywords));
-        }
-        return card;
+    @Test
+    @DisplayName("A red Aura cannot enchant Weatherseed Faeries")
+    void cannotBeEnchantedByRedAura() {
+        Permanent faeries = addCreatureReady(player2, new WeatherseedFaeries());
+        addCreatureReady(player2, new GhituFireEater());
+
+        harness.setHand(player1, List.of(new GraniteGrip()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, faeries.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
     }
 
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 }

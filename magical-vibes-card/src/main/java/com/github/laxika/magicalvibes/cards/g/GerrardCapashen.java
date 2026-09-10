@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "11")
+@CardRegistration(set = "DDE", collectorNumber = "46")
 public class GerrardCapashen extends Card {
 
     public GerrardCapashen() {
