@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "134")
 @CardRegistration(set = "BRB", collectorNumber = "24")
+@CardRegistration(set = "PD3", collectorNumber = "17")
 public class Exhume extends Card {
 
     public Exhume() {

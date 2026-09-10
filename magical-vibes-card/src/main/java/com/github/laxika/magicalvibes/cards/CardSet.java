@@ -180,7 +180,8 @@ public enum CardSet {
     SET_CP2("CP2"),
     SET_CP3("CP3"),
     SET_PHUK("PHUK"),
-    SET_PD2("PD2");
+    SET_PD2("PD2"),
+    SET_PD3("PD3");
 
     @Getter
     private final String code;
