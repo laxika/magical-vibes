@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.d.DarkwatchElves;
+import com.github.laxika.magicalvibes.cards.p.PlagueBeetle;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,18 +13,18 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThornwindFaeries.class, PlagueBeetle.class, DarkwatchElves.class})
 class ThornwindFaeriesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage to target player")
     void deals1DamageToPlayer() {
         harness.setLife(player2, 20);
-        Permanent faeries = addReadyFaeries(player1);
+        Permanent faeries = addCreatureReady(player1, new ThornwindFaeries());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(faeries.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -34,36 +33,34 @@ class ThornwindFaeriesTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
-        addReadyFaeries(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        addCreatureReady(player1, new ThornwindFaeries());
+        harness.addToBattlefield(player2, new PlagueBeetle());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.getPermanentId(player2, "Plague Beetle");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Plague Beetle");
+        harness.assertInGraveyard(player2, "Plague Beetle");
     }
 
     @Test
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
-        addReadyFaeries(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new ThornwindFaeries());
+        harness.addToBattlefield(player2, new DarkwatchElves());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Darkwatch Elves");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Darkwatch Elves");
     }
 
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        ThornwindFaeries card = new ThornwindFaeries();
-        Permanent faeries = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(faeries);
+        harness.addToBattlefield(player1, new ThornwindFaeries());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -73,7 +70,7 @@ class ThornwindFaeriesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent faeries = addReadyFaeries(player1);
+        Permanent faeries = addCreatureReady(player1, new ThornwindFaeries());
         faeries.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -81,11 +78,18 @@ class ThornwindFaeriesTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    private Permanent addReadyFaeries(Player player) {
-        ThornwindFaeries card = new ThornwindFaeries();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Fizzles if the target creature leaves before resolution")
+    void fizzlesIfTargetCreatureLeavesBeforeResolution() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new ThornwindFaeries());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarkwatchElves());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

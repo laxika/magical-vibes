@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "168")
+@CardRegistration(set = "HOP", collectorNumber = "40")
 public class ShepherdOfRot extends Card {
 
     public ShepherdOfRot() {

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "168")
+@CardRegistration(set = "ME2", collectorNumber = "114")
 public class WitheringWisps extends Card {
 
     public WitheringWisps() {

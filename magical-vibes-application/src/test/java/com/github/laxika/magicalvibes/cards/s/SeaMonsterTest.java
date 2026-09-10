@@ -1,25 +1,22 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeaMonster.class, Island.class})
 class SeaMonsterTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -35,7 +32,7 @@ class SeaMonsterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Sea Monster");
+        assertThat(entry.getCard()).isInstanceOf(SeaMonster.class);
     }
 
     @Test
@@ -48,7 +45,9 @@ class SeaMonsterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Sea Monster");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard())
+                .isInstanceOf(SeaMonster.class);
     }
 
     @Test
@@ -60,7 +59,7 @@ class SeaMonsterTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = findPermanent(player1, "Sea Monster");
+        Permanent perm = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(perm.isSummoningSick()).isTrue();
     }
 
@@ -72,16 +71,9 @@ class SeaMonsterTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player2, new Island());
 
-        Permanent seaPerm = new Permanent(new SeaMonster());
-        seaPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(seaPerm);
+        addCreatureReady(player1, new SeaMonster());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         // Combat auto-advances; verify attack went through by checking damage dealt
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
@@ -90,39 +82,30 @@ class SeaMonsterTest extends BaseCardTest {
     @Test
     @DisplayName("Sea Monster cannot attack when defending player does not control an Island")
     void cannotAttackWhenDefenderDoesNotControlIsland() {
-        Permanent seaPerm = new Permanent(new SeaMonster());
-        seaPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(seaPerm);
+        addCreatureReady(player1, new SeaMonster());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+    @Test
+    @DisplayName("Sea Monster cannot attack when only its controller controls an Island")
+    void cannotAttackWhenOnlyAttackerControlsIsland() {
+        addCreatureReady(player1, new SeaMonster());
+        harness.addToBattlefield(player1, new Island());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Sea Monster cannot attack if defender controls only a changeling creature")
+    @CardUsed(AvianChangeling.class)
     void cannotAttackWhenDefenderOnlyControlsChangelingCreature() {
-        Card changeling = new Card();
-        changeling.setName("Test Changeling");
-        changeling.setType(CardType.CREATURE);
-        changeling.setSubtypes(List.of(CardSubtype.SHAPESHIFTER));
-        changeling.setKeywords(Set.of(Keyword.CHANGELING));
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(changeling));
+        harness.addToBattlefield(player2, new AvianChangeling());
+        addCreatureReady(player1, new SeaMonster());
 
-        Permanent seaPerm = new Permanent(new SeaMonster());
-        seaPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(seaPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -133,15 +116,9 @@ class SeaMonsterTest extends BaseCardTest {
     void dealsSixDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent seaPerm = new Permanent(new SeaMonster());
-        seaPerm.setSummoningSick(false);
+        Permanent seaPerm = addCreatureReady(player1, new SeaMonster());
         seaPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(seaPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }

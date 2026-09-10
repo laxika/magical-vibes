@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "56")
+@CardRegistration(set = "HOP", collectorNumber = "13")
 public class SarcomiteMyr extends Card {
 
     public SarcomiteMyr() {

@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "16")
 @CardRegistration(set = "4ED", collectorNumber = "13")
 @CardRegistration(set = "5DN", collectorNumber = "8")
+@CardRegistration(set = "ATQ", collectorNumber = "4")
 public class CircleOfProtectionArtifacts extends Card {
 
     public CircleOfProtectionArtifacts() {

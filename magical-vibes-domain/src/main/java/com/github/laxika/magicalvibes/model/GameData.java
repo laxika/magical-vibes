@@ -859,6 +859,8 @@ public class GameData {
     /** Whether the current upkeep step was inserted after the turn's first upkeep. */
     public boolean currentUpkeepIsAdditional;
     public int additionalCombatMainPhasePairs;
+    /** The ordinary phase to resume after the inserted combat/main phase pairs. */
+    public TurnStep additionalCombatMainPhasePairsReturnStep;
     /** Additional combat phases with NO additional main phase (e.g. Finest Hour), queued after the
      *  current combat phase and consumed when leaving END_OF_COMBAT. Reset at the start of each turn. */
     public int additionalCombatPhasesOnly;
@@ -2221,6 +2223,17 @@ public class GameData {
     // Oracle en-Vec — "the chosen creatures attack if able, and other creatures can't attack"
     /** Delayed: affectedPlayerId -> the creature IDs that player chose, consumed when their turn begins. */
     public final Map<UUID, Set<UUID>> chosenAttackersNextTurn = new ConcurrentHashMap<>();
+    public final Map<UUID, Set<UUID>> chosenAttackersToDestroyNextTurn = new ConcurrentHashMap<>();
+
+    public void restrictAttackersNextTurn(UUID playerId, Set<UUID> chosen) {
+        chosenAttackersNextTurn.merge(playerId, Set.copyOf(chosen), (previous, current) -> {
+            Set<UUID> allowed = new java.util.HashSet<>(previous);
+            allowed.retainAll(current);
+            return Set.copyOf(allowed);
+        });
+        chosenAttackersToDestroyNextTurn.computeIfAbsent(playerId, ignored -> new java.util.HashSet<>())
+                .addAll(chosen);
+    }
     /** Active this turn: affectedPlayerId -> the only creatures allowed to attack (all others can't). */
     public final Map<UUID, Set<UUID>> chosenAttackersThisTurn = new ConcurrentHashMap<>();
 
@@ -3721,7 +3734,8 @@ public class GameData {
      * ({@code additionalLandsThisTurn}), plus one for each {@link EachPlayerPlaysAdditionalLandEffect}
      * static permanent on any battlefield (Storm Cauldron — symmetric, benefits every player), plus
      * the {@code amount} of each {@link PlaysAdditionalLandEachTurnEffect} static permanent the player
-     * themselves controls (The Gitrog Monster / Azusa, Lost but Seeking — controller-only).
+     * themselves controls (The Gitrog Monster / Azusa, Lost but Seeking — controller-only). Face-up
+     * planar cards are command-zone sources, so their land-play static effects are included as well.
      */
     public int getMaxLandsThisTurn(UUID playerId) {
         long extraFromStatics = 0;
@@ -3733,6 +3747,19 @@ public class GameData {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
                     } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional && pid.equals(playerId)) {
+                        extraFromStatics = Math.min(Integer.MAX_VALUE,
+                                extraFromStatics + additional.amount());
+                    }
+                }
+            }
+        }
+        if (planechase != null) {
+            for (var planar : planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
+                        extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
+                    } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional
+                            && playerId.equals(planechase.controllerId)) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE,
                                 extraFromStatics + additional.amount());
                     }
@@ -4285,6 +4312,35 @@ public class GameData {
         ));
     }
 
+    /** Queues a may ability while retaining the controller of the permanent that caused the trigger. */
+    public void queueMayAbilityForPlayer(Card sourceCard, UUID controllerId, MayEffect may,
+                                         UUID targetCardId, UUID sourcePermanentId, UUID choicePlayerId,
+                                         Permanent sourcePermanentSnapshot, UUID sourceControllerId,
+                                         UUID triggeringPermanentId) {
+        pendingMayAbilities.add(new PendingMayAbility(
+                sourceCard,
+                controllerId,
+                new ArrayList<>(List.of(may.wrapped())),
+                sourceCard.getName() + " - " + may.prompt(),
+                targetCardId,
+                null,
+                sourcePermanentId,
+                null,
+                0,
+                0,
+                null,
+                null,
+                choicePlayerId,
+                sourcePermanentSnapshot,
+                sourceControllerId,
+                null,
+                0,
+                triggeringPermanentId,
+                null,
+                null
+        ));
+    }
+
     /**
      * Puts a resolution-time May ability on the stack while preserving the combat target that
      * defines a non-targeting defending-player effect.
@@ -4581,6 +4637,7 @@ public class GameData {
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
         copy.cardEnteringGraveyardByCycling = this.cardEnteringGraveyardByCycling;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
+        copy.additionalCombatMainPhasePairsReturnStep = this.additionalCombatMainPhasePairsReturnStep;
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
         copy.onlyLandCreaturesCanAttackThisCombat = this.onlyLandCreaturesCanAttackThisCombat;
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
@@ -5319,6 +5376,8 @@ public class GameData {
         // --- Deques ---
         this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
                 pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
+                        ? trigger.copyPlanarSnapshot()
+                        : pending instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger trigger
                         ? trigger.copyPlanarSnapshot() : pending));
         copy.extraTurns.addAll(this.extraTurns);
         copy.extraTurnSkipsUntap.addAll(this.extraTurnSkipsUntap);
@@ -5515,6 +5574,8 @@ public class GameData {
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
         copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);
         this.chosenAttackersNextTurn.forEach((playerId, ids) -> copy.chosenAttackersNextTurn.put(playerId, Set.copyOf(ids)));
+        this.chosenAttackersToDestroyNextTurn.forEach((playerId, ids) ->
+                copy.chosenAttackersToDestroyNextTurn.put(playerId, new java.util.HashSet<>(ids)));
         this.chosenAttackersThisTurn.forEach((playerId, ids) -> copy.chosenAttackersThisTurn.put(playerId, Set.copyOf(ids)));
         this.attackableCreaturesThisTurn.forEach((playerId, ids) -> copy.attackableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
         this.creaturesAbleToAttackAtDeclareAttackersThisTurn.forEach((playerId, ids) ->

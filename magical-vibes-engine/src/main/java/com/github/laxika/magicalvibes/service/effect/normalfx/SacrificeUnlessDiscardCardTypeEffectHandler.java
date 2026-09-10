@@ -70,7 +70,7 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
         if (validCardCount < e.discardCount()) {
             if (sourcePermanent != null) {
                 // Not enough valid cards to discard — sacrifice immediately
-                permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
                 
                 gameLogService.append(gameData, GameLog.builder().text(playerName + " does not have enough " + typeName + "s to discard. ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (fewer than {} {}s to discard)", gameData.id, sourceCard.getName(), e.discardCount(), typeName);

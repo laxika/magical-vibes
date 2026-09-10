@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M11", collectorNumber = "134")
+@CardRegistration(set = "DDI", collectorNumber = "60")
 public class EarthServant extends Card {
 
     public EarthServant() {

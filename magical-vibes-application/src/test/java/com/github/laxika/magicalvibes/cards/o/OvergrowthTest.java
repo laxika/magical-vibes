@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Piracy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Overgrowth.class, Forest.class})
 class OvergrowthTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Overgrowth puts it on the stack")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new Overgrowth()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -32,31 +32,29 @@ class OvergrowthTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Overgrowth");
         assertThat(entry.getTargetId()).isEqualTo(forest.getId());
     }
 
     @Test
     @DisplayName("Resolving Overgrowth attaches it to target land")
     void resolvingAttachesToTargetLand() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
-        harness.setHand(player1, List.of(new Overgrowth()));
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Overgrowth overgrowth = new Overgrowth();
+        harness.setHand(player1, List.of(overgrowth));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castEnchantment(player1, 0, forest.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Overgrowth")
+                .anyMatch(p -> p.getCard() == overgrowth
                         && forest.getId().equals(p.getAttachedTo()));
     }
 
     @Test
     @DisplayName("Tapping enchanted Forest adds {G}{G} in addition to normal land mana")
     void enchantedLandAddsExtraMana() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent aura = new Permanent(new Overgrowth());
         aura.setAttachedTo(forest.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
@@ -69,9 +67,8 @@ class OvergrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Only enchanted land gets Overgrowth bonus")
     void onlyEnchantedLandGetsBonus() {
+        Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player1, new Forest());
-        Permanent firstForest = gd.playerBattlefields.get(player1.getId()).get(0);
         Permanent aura = new Permanent(new Overgrowth());
         aura.setAttachedTo(firstForest.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
@@ -85,8 +82,7 @@ class OvergrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Controller of enchanted land gets bonus mana even if aura is controlled by opponent")
     void enchantedLandControllerGetsBonus() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent opponentsForest = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent opponentsForest = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent aura = new Permanent(new Overgrowth());
         aura.setAttachedTo(opponentsForest.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
@@ -98,10 +94,29 @@ class OvergrowthTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Piracy.class)
+    @DisplayName("Foreign land tap gives Overgrowth's bonus to the enchanted land's controller")
+    void foreignLandTapBenefitsEnchantedLandController() {
+        Permanent opponentsForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent aura = new Permanent(new Overgrowth());
+        aura.setAttachedTo(opponentsForest.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.setHand(player1, List.of(new Piracy()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.tapForeignLandForMana(player1, opponentsForest.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Overgrowth bonus stops when aura leaves battlefield")
     void bonusStopsWhenAuraLeavesBattlefield() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent aura = new Permanent(new Overgrowth());
         aura.setAttachedTo(forest.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
@@ -113,11 +128,11 @@ class OvergrowthTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GrizzlyBears.class)
     @DisplayName("Cannot cast Overgrowth targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Overgrowth()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 

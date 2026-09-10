@@ -128,7 +128,7 @@ public class TurnCleanupService {
         }
         for (Permanent permanent : doomed) {
             permanent.setSacrificeAtNextCleanup(false);
-            permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

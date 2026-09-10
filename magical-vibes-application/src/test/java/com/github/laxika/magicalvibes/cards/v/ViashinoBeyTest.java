@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,31 +12,28 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ViashinoBey.class, GiantCockroach.class})
 class ViashinoBeyTest extends BaseCardTest {
 
-    private void beginDeclareAttackers(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-    }
+    @Test
+    @DisplayName("Viashino Bey does not force its controller's creatures to attack when it stays back")
+    void ownCreaturesAreNotForcedWhenBeyStaysBack() {
+        Permanent bey = addCreatureReady(player1, new ViashinoBey());
+        Permanent cockroach = addCreatureReady(player1, new GiantCockroach());
 
-    private Permanent addReadyCreature(Player owner, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(owner.getId()).add(permanent);
-        return permanent;
+        declareAttackers(List.of());
+
+        assertThat(bey.isAttacking()).isFalse();
+        assertThat(cockroach.isAttacking()).isFalse();
     }
 
     @Test
-    @DisplayName("Viashino Bey forces all creatures its controller controls to attack")
-    void ownCreaturesMustAttack() {
-        harness.addToBattlefield(player1, new ViashinoBey());
-        addReadyCreature(player1, new GrizzlyBears());
+    @DisplayName("When Viashino Bey attacks, all other able creatures its controller controls must attack")
+    void ownCreaturesMustAttackWhenBeyAttacks() {
+        addCreatureReady(player1, new ViashinoBey());
+        addCreatureReady(player1, new GiantCockroach());
 
-        beginDeclareAttackers(player1);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -46,12 +42,10 @@ class ViashinoBeyTest extends BaseCardTest {
     @DisplayName("Viashino Bey does not force an opponent's creatures to attack")
     void opponentsCreaturesAreNotForced() {
         harness.addToBattlefield(player1, new ViashinoBey());
-        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent cockroach = addCreatureReady(player2, new GiantCockroach());
 
-        beginDeclareAttackers(player2);
+        declareAttackers(player2, List.of());
 
-        gs.declareAttackers(gd, player2, List.of());
-
-        assertThat(bears.isAttacking()).isFalse();
+        assertThat(cockroach.isAttacking()).isFalse();
     }
 }

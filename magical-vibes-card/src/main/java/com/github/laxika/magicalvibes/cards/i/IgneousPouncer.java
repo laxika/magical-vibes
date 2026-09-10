@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "40")
+@CardRegistration(set = "DDH", collectorNumber = "57")
 public class IgneousPouncer extends Card {
 
     public IgneousPouncer() {

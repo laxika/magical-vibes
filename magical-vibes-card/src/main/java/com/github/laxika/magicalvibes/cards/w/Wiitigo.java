@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "276")
+@CardRegistration(set = "ME2", collectorNumber = "186")
 public class Wiitigo extends Card {
 
     public Wiitigo() {

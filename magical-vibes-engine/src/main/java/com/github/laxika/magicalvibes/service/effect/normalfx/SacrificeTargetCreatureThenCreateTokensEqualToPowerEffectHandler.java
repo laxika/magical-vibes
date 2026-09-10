@@ -51,7 +51,7 @@ public class SacrificeTargetCreatureThenCreateTokensEqualToPowerEffectHandler im
         UUID controllerId = gameData.findControllerOf(target);
         int power = gameQueryService.getEffectivePower(gameData, target);
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));

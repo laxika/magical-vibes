@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,21 +14,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RavenFamiliar.class, GiantCockroach.class})
 class RavenFamiliarTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB puts one of the top three cards into hand and bottoms the rest in order")
     void etbPicksOneAndBottomOrdersTheRest() {
-        Card top = new GrizzlyBears();
-        Card second = new LlanowarElves();
-        Card third = new GrizzlyBears();
-        Card untouched = new LlanowarElves();
+        Card top = new GiantCockroach();
+        Card second = new GiantCockroach();
+        Card third = new GiantCockroach();
+        Card untouched = new GiantCockroach();
         harness.setLibrary(player1, List.of(top, second, third, untouched));
-        harness.setHand(player1, List.of(new RavenFamiliar()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RavenFamiliar(), "{2}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -53,18 +50,68 @@ class RavenFamiliarTest extends BaseCardTest {
     @Test
     @DisplayName("ETB takes the only available card when the library has fewer than three")
     void etbUsesAvailableCardsOnly() {
-        Card only = new GrizzlyBears();
+        Card only = new GiantCockroach();
         harness.setLibrary(player1, List.of(only));
-        harness.setHand(player1, List.of(new RavenFamiliar()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RavenFamiliar(), "{2}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(only);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining echo sacrifices Raven Familiar at its next upkeep")
+    void decliningEchoSacrificesRavenFamiliarAtNextUpkeep() {
+        castAndResolveRavenFamiliar();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Raven Familiar");
+        harness.assertInGraveyard(player1, "Raven Familiar");
+    }
+
+    @Test
+    @DisplayName("Paying echo keeps Raven Familiar and echo does not trigger again")
+    void payingEchoKeepsRavenFamiliarAndEchoDoesNotTriggerAgain() {
+        castAndResolveRavenFamiliar();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Raven Familiar");
+
+        advanceToUpkeep(player1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Raven Familiar");
+    }
+
+    @Test
+    @DisplayName("Echo does not trigger during an opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveRavenFamiliar();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Raven Familiar");
+    }
+
+    private void castAndResolveRavenFamiliar() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new RavenFamiliar(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Raven Familiar");
     }
 }

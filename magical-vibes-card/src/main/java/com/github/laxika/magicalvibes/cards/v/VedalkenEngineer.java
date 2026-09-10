@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "35")
+@CardRegistration(set = "HOP", collectorNumber = "15")
 public class VedalkenEngineer extends Card {
 
     public VedalkenEngineer() {

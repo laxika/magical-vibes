@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
- * Put one or more counters of the specified type on this permanent. The count is either a fixed
+ * Put one or more counters of the specified type on this source object. The count is either a fixed
  * {@code count} or, when {@code amount} is non-null, a {@link DynamicAmount} resolved at
  * resolution time (e.g. {@code XValue} for "{X}: Put X tower counters on this enchantment").
+ * For a planar ability, the source object is the face-up {@code PlanarObject} rather than a
+ * battlefield permanent.
  * The optional damage-source exclusion is used by outbound damage triggers whose wording says
  * "another source".
  */

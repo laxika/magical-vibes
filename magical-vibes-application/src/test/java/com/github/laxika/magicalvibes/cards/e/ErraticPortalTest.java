@@ -63,14 +63,14 @@ class ErraticPortalTest extends BaseCardTest {
 
     @Test
     @DisplayName("A target controller without {1} cannot keep the creature")
-    void targetControllerWithoutManaCreatureReturnsAutomatically() {
+    void targetControllerWithoutManaCannotPayToKeepCreature() {
         addPortal();
         Permanent target = addCreatureReady(player2, new CrashingBoars());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activate(target);
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.handleMayAbilityChosen(player2, true);
         harness.assertNotOnBattlefield(player2, "Crashing Boars");
         harness.assertInHand(player2, "Crashing Boars");
     }

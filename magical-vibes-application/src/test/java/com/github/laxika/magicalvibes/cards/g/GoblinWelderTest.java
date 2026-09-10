@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.d.DarksteelJuggernaut;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinWelder.class, GrimMonolith.class})
 class GoblinWelderTest extends BaseCardTest {
 
     @Test
@@ -19,8 +20,8 @@ class GoblinWelderTest extends BaseCardTest {
     void exchangesArtifacts() {
         Permanent welder = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
         welder.setSummoningSick(false);
-        Permanent battlefieldArtifact = harness.addToBattlefieldAndReturn(player1, new DarksteelJuggernaut());
-        Card graveyardArtifact = new DarksteelJuggernaut();
+        Permanent battlefieldArtifact = harness.addToBattlefieldAndReturn(player1, new GrimMonolith());
+        Card graveyardArtifact = new GrimMonolith();
         harness.setGraveyard(player1, List.of(graveyardArtifact));
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
@@ -38,8 +39,8 @@ class GoblinWelderTest extends BaseCardTest {
     void exchangesAnOpponentsArtifacts() {
         Permanent welder = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
         welder.setSummoningSick(false);
-        Permanent battlefieldArtifact = harness.addToBattlefieldAndReturn(player2, new DarksteelJuggernaut());
-        Card graveyardArtifact = new DarksteelJuggernaut();
+        Permanent battlefieldArtifact = harness.addToBattlefieldAndReturn(player2, new GrimMonolith());
+        Card graveyardArtifact = new GrimMonolith();
         harness.setGraveyard(player2, List.of(graveyardArtifact));
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
@@ -57,8 +58,8 @@ class GoblinWelderTest extends BaseCardTest {
     void requiresMatchingArtifactControllerAndGraveyardOwner() {
         Permanent welder = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
         welder.setSummoningSick(false);
-        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new DarksteelJuggernaut());
-        Card graveyardArtifact = new DarksteelJuggernaut();
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new GrimMonolith());
+        Card graveyardArtifact = new GrimMonolith();
         harness.setGraveyard(player1, List.of(graveyardArtifact));
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
@@ -71,8 +72,8 @@ class GoblinWelderTest extends BaseCardTest {
     void doesNothingWhenBattlefieldTargetLeaves() {
         Permanent welder = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
         welder.setSummoningSick(false);
-        Permanent battlefieldArtifact = harness.addToBattlefieldAndReturn(player1, new DarksteelJuggernaut());
-        Card graveyardArtifact = new DarksteelJuggernaut();
+        Permanent battlefieldArtifact = harness.addToBattlefieldAndReturn(player1, new GrimMonolith());
+        Card graveyardArtifact = new GrimMonolith();
         harness.setGraveyard(player1, List.of(graveyardArtifact));
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
@@ -84,5 +85,41 @@ class GoblinWelderTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().getId().equals(graveyardArtifact.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(graveyardArtifact.getId()));
+    }
+
+    @Test
+    @DisplayName("Does nothing when the graveyard target is no longer legal")
+    void doesNothingWhenGraveyardTargetLeaves() {
+        Permanent welder = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
+        welder.setSummoningSick(false);
+        Permanent battlefieldArtifact = harness.addToBattlefieldAndReturn(player1, new GrimMonolith());
+        Card graveyardArtifact = new GrimMonolith();
+        harness.setGraveyard(player1, List.of(graveyardArtifact));
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(battlefieldArtifact.getId(), graveyardArtifact.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(graveyardArtifact);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(battlefieldArtifact.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(graveyardArtifact.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(battlefieldArtifact.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot target a non-artifact card in a graveyard")
+    void cannotTargetNonArtifactCardInGraveyard() {
+        Permanent welder = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
+        welder.setSummoningSick(false);
+        Permanent battlefieldArtifact = harness.addToBattlefieldAndReturn(player1, new GrimMonolith());
+        Card nonArtifactCard = new GoblinWelder();
+        harness.setGraveyard(player1, List.of(nonArtifactCard));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(battlefieldArtifact.getId(), nonArtifactCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

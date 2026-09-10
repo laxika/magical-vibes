@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "293")
+@CardRegistration(set = "DDH", collectorNumber = "71")
 public class SpiteMalice extends Card {
 
     public SpiteMalice() {

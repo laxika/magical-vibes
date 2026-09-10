@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "225")
+@CardRegistration(set = "DDI", collectorNumber = "37")
 public class SoaringSeacliff extends Card {
 
     public SoaringSeacliff() {

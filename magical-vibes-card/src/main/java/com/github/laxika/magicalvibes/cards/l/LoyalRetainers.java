@@ -24,6 +24,7 @@ public class LoyalRetainers extends Card {
                 null,
                 List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .targetGraveyard(true)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardSupertypePredicate(CardSupertype.LEGENDARY))))

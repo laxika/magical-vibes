@@ -1,30 +1,38 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.h.HonorGuard;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LancersEnKor.class, Shock.class, HonorGuard.class})
 class LancersEnKorTest extends BaseCardTest {
 
     @Test
     @DisplayName("The free ability redirects damage to a creature you control")
     void redirectsDamageToControlledCreature() {
-        Permanent lancers = addReadyPermanent(player1, new LancersEnKor());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
-        Permanent destination = addReadyStats(player1, 3, 3);
+        Permanent lancers = addCreatureReady(player1, new LancersEnKor());
+        Permanent destination = addCreatureReady(player1, new LancersEnKor());
+        Permanent attacker = addCreatureReady(player2, new HonorGuard());
 
         harness.activateAbility(player1, indexOf(player1, lancers), null, destination.getId());
         harness.passBothPriorities();
 
-        harness.activateAbility(player1, indexOf(player1, pyromancer), null, lancers.getId());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(indexOf(player1, lancers), indexOf(player2, attacker))));
         harness.passBothPriorities();
 
         assertThat(lancers.getMarkedDamage()).isEqualTo(0);
@@ -32,19 +40,17 @@ class LancersEnKorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only the next 1 damage is redirected")
-    void redirectsOnlyOneDamage() {
-        Permanent lancers = addReadyPermanent(player1, new LancersEnKor());
-        Permanent firstPyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
-        Permanent secondPyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
-        Permanent destination = addReadyStats(player1, 3, 3);
+    @DisplayName("Only one damage from a two-damage event is redirected")
+    void redirectsOnlyOneDamageFromLargerEvent() {
+        Permanent lancers = addCreatureReady(player1, new LancersEnKor());
+        Permanent destination = addCreatureReady(player1, new LancersEnKor());
 
         harness.activateAbility(player1, indexOf(player1, lancers), null, destination.getId());
         harness.passBothPriorities();
 
-        harness.activateAbility(player1, indexOf(player1, firstPyromancer), null, lancers.getId());
-        harness.passBothPriorities();
-        harness.activateAbility(player1, indexOf(player1, secondPyromancer), null, lancers.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, lancers.getId());
         harness.passBothPriorities();
 
         assertThat(destination.getMarkedDamage()).isEqualTo(1);
@@ -54,26 +60,22 @@ class LancersEnKorTest extends BaseCardTest {
     @Test
     @DisplayName("The ability cannot target an opponent's creature")
     void cannotTargetOpponentsCreature() {
-        Permanent lancers = addReadyPermanent(player1, new LancersEnKor());
-        Permanent opponentCreature = addReadyStats(player2, 3, 3);
+        Permanent lancers = addCreatureReady(player1, new LancersEnKor());
+        Permanent opponentCreature = addCreatureReady(player2, new LancersEnKor());
 
         assertThatThrownBy(() ->
                 harness.activateAbility(player1, indexOf(player1, lancers), null, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    @DisplayName("The ability cannot target a player")
+    void cannotTargetPlayer() {
+        Permanent lancers = addCreatureReady(player1, new LancersEnKor());
 
-    private Permanent addReadyStats(Player player, int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
-        card.setPower(power);
-        card.setToughness(toughness);
-        return addReadyPermanent(player, card);
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, indexOf(player1, lancers), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private int indexOf(Player player, Permanent perm) {

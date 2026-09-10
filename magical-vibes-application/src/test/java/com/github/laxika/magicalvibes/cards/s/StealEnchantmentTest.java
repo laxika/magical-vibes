@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Demystify;
+import com.github.laxika.magicalvibes.cards.f.FightingDrake;
+import com.github.laxika.magicalvibes.cards.f.FlickeringWard;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StealEnchantment.class, Demystify.class, FlickeringWard.class, FountainOfYouth.class,
+        FightingDrake.class, GloriousAnthem.class, GrizzlyBears.class})
 class StealEnchantmentTest extends BaseCardTest {
 
     @Test
@@ -121,5 +126,30 @@ class StealEnchantmentTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an enchantment");
+    }
+
+    @Test
+    @DisplayName("Can target an Aura enchantment")
+    void canTargetAuraEnchantment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FightingDrake());
+        Permanent ward = harness.addToBattlefieldAndReturn(player2, new FlickeringWard());
+        ward.setAttachedTo(creature.getId());
+
+        StealEnchantment stealEnchantment = new StealEnchantment();
+        harness.setHand(player1, List.of(stealEnchantment));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, ward.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(ward.getId())
+                        && p.isAttached()
+                        && p.getAttachedTo().equals(creature.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(ward.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(stealEnchantment.getId())
+                        && p.isAttached()
+                        && p.getAttachedTo().equals(ward.getId()));
     }
 }

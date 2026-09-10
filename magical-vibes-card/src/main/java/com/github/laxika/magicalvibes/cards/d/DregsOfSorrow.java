@@ -22,9 +22,7 @@ public class DregsOfSorrow extends Card {
 
     public DregsOfSorrow() {
         // Destroy X target nonblack creatures. Draw X cards.
-        // Single X-scaled target group: the number of nonblack creatures targeted is
-        // bounded by X at cast time, and every chosen target is destroyed.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))

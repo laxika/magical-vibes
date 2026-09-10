@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwar
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -1495,6 +1494,9 @@ public class DeathTriggerCollectorService {
     boolean handleArtifactGraveyardControllerConditional(TriggerMatchContext match,
             TriggeringArtifactControllerConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.ArtifactGraveyard ag = (TriggerContext.ArtifactGraveyard) ctx;
+        if (conditional.onlyIfNotSacrificed() && ag.wasSacrificed()) {
+            return false;
+        }
         if (!match.controllerId().equals(ag.artifactControllerId())) {
             return false;
         }
@@ -1822,6 +1824,20 @@ public class DeathTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (opponent permanent put into graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect.class,
+            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleCreaturePutIntoOwnerGraveyardToLibrary(TriggerMatchContext match,
+            com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect effect,
+            TriggerContext ctx) {
+        var death = (TriggerContext.AnyPermanentGraveyard) ctx;
+        match.gameData().enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(), match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect.boundToDyingCard(death.dyingCard().getId()))),
+                null, match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 

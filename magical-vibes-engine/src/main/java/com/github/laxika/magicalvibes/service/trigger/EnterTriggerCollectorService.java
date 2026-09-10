@@ -740,7 +740,7 @@ public class EnterTriggerCollectorService {
     })
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        Card sourceCard = match.permanent().getCard();
+        Card sourceCard = match.sourceCard();
         if (!mayInterveningIfIsMet(match, may)) {
             return false;
         }
@@ -767,10 +767,21 @@ public class EnterTriggerCollectorService {
                 && pe.defaultTargetPlayerId() == null);
         if (needsTargetChoice) {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                        sourceCard, match.controllerId(), new ArrayList<>(List.of(may)),
-                        sourceIsEnteringPermanent ? enteringPermanentId : match.permanent().getId(),
-                        enteringPermanentId, sourceIsEnteringPermanent));
+                if (match.sourcePlanarObject() != null) {
+                    Permanent enteringPermanent = gameQueryService.findPermanentById(
+                            match.gameData(), enteringPermanentId);
+                    match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            sourceCard, match.controllerId(), new ArrayList<>(List.of(may)), false, null,
+                            0, enteringPermanentId,
+                            enteringPermanent == null ? null : new Permanent(enteringPermanent), false,
+                            enteringPermanentId, null, pe.enteringControllerId(),
+                            match.sourcePlanarObject().copy()));
+                } else {
+                    match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                            sourceCard, match.controllerId(), new ArrayList<>(List.of(may)),
+                            sourceIsEnteringPermanent ? enteringPermanentId : match.permanent().getId(),
+                            enteringPermanentId, sourceIsEnteringPermanent));
+                }
             }
             logTriggered(match);
             return true;
@@ -835,17 +846,31 @@ public class EnterTriggerCollectorService {
             return true;
         }
 
-        Card sourceCard = match.permanent().getCard();
+        Card sourceCard = match.sourceCard();
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().queueMayAbilityForPlayer(
-                    sourceCard,
-                    match.controllerId(),
-                    may,
-                    null,
-                    enteringPermanentId,
-                    pe.enteringControllerId(),
-                    new Permanent(enteringPermanent)
-            );
+            if (match.sourcePlanarObject() != null) {
+                match.gameData().queueMayAbilityForPlayer(
+                        sourceCard,
+                        match.controllerId(),
+                        may,
+                        null,
+                        null,
+                        pe.enteringControllerId(),
+                        null,
+                        pe.enteringControllerId(),
+                        enteringPermanentId
+                );
+            } else {
+                match.gameData().queueMayAbilityForPlayer(
+                        sourceCard,
+                        match.controllerId(),
+                        may,
+                        null,
+                        enteringPermanentId,
+                        pe.enteringControllerId(),
+                        new Permanent(enteringPermanent)
+                );
+            }
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect for entering controller)",
@@ -1276,16 +1301,20 @@ public class EnterTriggerCollectorService {
             // The creature already left the battlefield; nothing to copy.
             return true;
         }
-        Card sourceCard = match.permanent().getCard();
+        Card sourceCard = match.sourceCard();
+        UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(effect)),
                     enteringPermanentId,
-                    match.permanent().getId()));
+                    sourcePermanentId);
+            entry.setSourcePlanarObject(match.sourcePlanarObject() == null
+                    ? null : match.sourcePlanarObject().copy());
+            match.gameData().stack.add(entry);
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (create token copy of entering creature)",
@@ -1311,7 +1340,9 @@ public class EnterTriggerCollectorService {
             // The creature already left the battlefield; nothing to copy.
             return true;
         }
-        enqueue(match, new BecomeCopyOfEnteringCreatureEffect(enteringPermanentId),
+        Permanent entering = gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        enqueue(match, new BecomeCopyOfEnteringCreatureEffect(enteringPermanentId,
+                        entering == null ? null : new Permanent(entering)),
                 match.permanent().getId(), pe.perEffectTriggerCount());
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (become a copy of it)",
@@ -1863,7 +1894,7 @@ public class EnterTriggerCollectorService {
     }
 
     private void logTriggered(TriggerMatchContext match) {
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.sourceCard()));
     }
 
     private static boolean isTargeting(CardEffect effect) {

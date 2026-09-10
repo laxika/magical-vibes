@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "223")
+@CardRegistration(set = "HOP", collectorNumber = "92")
 public class RaziaBorosArchangel extends Card {
 
     public RaziaBorosArchangel() {

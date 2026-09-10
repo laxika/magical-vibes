@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AlabornTrooper.class, Exhaustion.class, Forest.class, JayemdaeTome.class})
+@CardUsed({Exhaustion.class, Forest.class, ForestBear.class, JayemdaeTome.class})
 class ExhaustionTest extends BaseCardTest {
 
     @Nested
@@ -28,14 +26,14 @@ class ExhaustionTest extends BaseCardTest {
         @Test
         @DisplayName("Prevents creatures from untapping without tapping them on resolution")
         void setsSkipUntapOnCreatures() {
-            harness.addToBattlefield(player2, new AlabornTrooper());
+            harness.addToBattlefield(player2, new ForestBear());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
 
             castAndResolveExhaustion(player2.getId());
 
             assertThat(bears.isTapped()).isFalse();
             bears.tap();
-            advanceToNextTurn(player1);
+            advanceToUpkeep(player2);
             assertThat(bears.isTapped()).isTrue();
         }
 
@@ -48,7 +46,7 @@ class ExhaustionTest extends BaseCardTest {
             castAndResolveExhaustion(player2.getId());
 
             forest.tap();
-            advanceToNextTurn(player1);
+            advanceToUpkeep(player2);
             assertThat(forest.isTapped()).isTrue();
         }
 
@@ -57,13 +55,13 @@ class ExhaustionTest extends BaseCardTest {
         void affectsPermanentsEnteringAfterResolution() {
             castAndResolveExhaustion(player2.getId());
 
-            Permanent bears = harness.enterBattlefieldAndReturn(player2, new AlabornTrooper());
+            Permanent bears = harness.enterBattlefieldAndReturn(player2, new ForestBear());
             Permanent forest = harness.enterBattlefieldAndReturn(player2, new Forest());
             bears.setSummoningSick(false);
             bears.tap();
             forest.tap();
 
-            advanceToNextTurn(player1);
+            advanceToUpkeep(player2);
 
             assertThat(bears.isTapped()).isTrue();
             assertThat(forest.isTapped()).isTrue();
@@ -83,13 +81,34 @@ class ExhaustionTest extends BaseCardTest {
         @Test
         @DisplayName("Does not affect caster's permanents")
         void doesNotAffectCasterPermanents() {
-            harness.addToBattlefield(player1, new AlabornTrooper());
-            harness.addToBattlefield(player2, new AlabornTrooper());
+            harness.addToBattlefield(player1, new ForestBear());
+            harness.addToBattlefield(player2, new ForestBear());
             Permanent casterCreature = gd.playerBattlefields.get(player1.getId()).getFirst();
 
             castAndResolveExhaustion(player2.getId());
 
             assertThat(casterCreature.getSkipUntapCount()).isZero();
+        }
+
+        @Test
+        @DisplayName("Does not prevent a permanent from untapping after it changes controller")
+        void doesNotAffectPermanentAfterControlChange() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new ForestBear());
+            bears.setSummoningSick(false);
+            bears.tap();
+
+            castAndResolveExhaustion(player2.getId());
+
+            harness.inMutationScope(() -> {
+                gd.playerBattlefields.get(player2.getId()).remove(bears);
+                gd.playerBattlefields.get(player1.getId()).add(bears);
+                bears.recordControlChange();
+                bears.setSummoningSick(true);
+            });
+
+            advanceToUpkeep(player1);
+
+            assertThat(bears.isTapped()).isFalse();
         }
 
         @Test
@@ -111,7 +130,7 @@ class ExhaustionTest extends BaseCardTest {
         @Test
         @DisplayName("Tapped creatures and lands do not untap during the next untap step")
         void tappedPermanentsDoNotUntap() {
-            harness.addToBattlefield(player2, new AlabornTrooper());
+            harness.addToBattlefield(player2, new ForestBear());
             harness.addToBattlefield(player2, new Forest());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).get(0);
             Permanent forest = gd.playerBattlefields.get(player2.getId()).get(1);
@@ -121,7 +140,7 @@ class ExhaustionTest extends BaseCardTest {
 
             castAndResolveExhaustion(player2.getId());
 
-            advanceToNextTurn(player1);
+            advanceToUpkeep(player2);
 
             assertThat(bears.isTapped()).isTrue();
             assertThat(forest.isTapped()).isTrue();
@@ -130,18 +149,18 @@ class ExhaustionTest extends BaseCardTest {
         @Test
         @DisplayName("Affected permanents untap normally on the turn after")
         void permanentsUntapOnFollowingTurn() {
-            harness.addToBattlefield(player2, new AlabornTrooper());
+            harness.addToBattlefield(player2, new ForestBear());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
             bears.setSummoningSick(false);
             bears.tap();
 
             castAndResolveExhaustion(player2.getId());
 
-            advanceToNextTurn(player1);
+            advanceToUpkeep(player2);
             assertThat(bears.isTapped()).isTrue();
 
-            advanceToNextTurn(player2);
-            advanceToNextTurn(player1);
+            advanceToUpkeep(player1);
+            advanceToUpkeep(player2);
             assertThat(bears.isTapped()).isFalse();
         }
     }
@@ -153,12 +172,4 @@ class ExhaustionTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        Player nextActivePlayer = currentActivePlayer.getId().equals(player1.getId()) ? player2 : player1;
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
-    }
 }

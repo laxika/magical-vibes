@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "167")
@@ -20,8 +20,8 @@ public class SwarmOfRats extends Card {
 
     public SwarmOfRats() {
         // Swarm of Rats's power (printed *) is equal to the number of Rats you control, including itself.
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.RAT), CountScope.CONTROLLER),
-                new Fixed(0)));
+                new Fixed(1)));
     }
 }

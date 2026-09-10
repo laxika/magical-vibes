@@ -12,7 +12,7 @@ public class ZhangLiaoHeroOfHefei extends Card {
     public ZhangLiaoHeroOfHefei() {
         // Whenever this creature deals damage to an opponent, that player (the damaged opponent)
         // discards a card. The engine routes TARGET_PLAYER discards on this slot to the damaged player.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false));
     }
 }

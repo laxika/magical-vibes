@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BouncingBeebles;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WheelOfTorture.class, BouncingBeebles.class, IvoryMask.class})
 class WheelOfTortureTest extends BaseCardTest {
 
     @Test
@@ -28,7 +31,7 @@ class WheelOfTortureTest extends BaseCardTest {
     @DisplayName("Opponent's upkeep with one card deals 2 damage")
     void oneCardDealsTwo() {
         harness.addToBattlefield(player1, new WheelOfTorture());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new BouncingBeebles()));
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player2);
@@ -41,7 +44,7 @@ class WheelOfTortureTest extends BaseCardTest {
     @DisplayName("Opponent's upkeep with three cards deals no damage")
     void threeCardsDealsNothing() {
         harness.addToBattlefield(player1, new WheelOfTorture());
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new BouncingBeebles(), new BouncingBeebles(), new BouncingBeebles()));
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player2);
@@ -55,8 +58,8 @@ class WheelOfTortureTest extends BaseCardTest {
     void fullHandFlooredAtZero() {
         harness.addToBattlefield(player1, new WheelOfTorture());
         harness.setHand(player2, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears()));
+                new BouncingBeebles(), new BouncingBeebles(), new BouncingBeebles(),
+                new BouncingBeebles(), new BouncingBeebles()));
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player2);
@@ -76,5 +79,31 @@ class WheelOfTortureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore);
+    }
+
+    @Test
+    void usesHandSizeAtResolution() {
+        harness.addToBattlefield(player1, new WheelOfTorture());
+        harness.setHand(player2, List.of(new BouncingBeebles()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.setHand(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    void shroudDoesNotStopTheNonTargetingTrigger() {
+        harness.addToBattlefield(player1, new WheelOfTorture());
+        harness.addToBattlefield(player2, new IvoryMask());
+        harness.setHand(player2, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
     }
 }

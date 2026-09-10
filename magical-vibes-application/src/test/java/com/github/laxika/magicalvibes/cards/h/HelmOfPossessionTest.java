@@ -1,26 +1,29 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HelmOfPossession.class, CanopySpider.class})
 class HelmOfPossessionTest extends BaseCardTest {
 
     @Test
     @DisplayName("{2}, {T}, Sacrifice a creature: gains control of target creature and stays tapped")
     void gainsControlWhileTapped() {
         Permanent helm = addHelm(player1);
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
-        Permanent stolen = addCreatureReady(player2, new GrizzlyBears());
+        Permanent fodder = addCreatureReady(player1, new CanopySpider());
+        Permanent stolen = addCreatureReady(player2, new CanopySpider());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         activateHelm(helm, stolen);
@@ -37,8 +40,8 @@ class HelmOfPossessionTest extends BaseCardTest {
     @DisplayName("Control is lost when the Helm untaps during its controller's untap step")
     void controlLostWhenHelmUntaps() {
         Permanent helm = addHelm(player1);
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent stolen = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new CanopySpider());
+        Permanent stolen = addCreatureReady(player2, new CanopySpider());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         activateHelm(helm, stolen);
@@ -59,8 +62,8 @@ class HelmOfPossessionTest extends BaseCardTest {
     @DisplayName("Choosing not to untap the Helm retains control across the untap step")
     void keepingTappedRetainsControl() {
         Permanent helm = addHelm(player1);
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent stolen = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new CanopySpider());
+        Permanent stolen = addCreatureReady(player2, new CanopySpider());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         activateHelm(helm, stolen);
@@ -76,8 +79,8 @@ class HelmOfPossessionTest extends BaseCardTest {
     @DisplayName("Control is lost when the Helm leaves the battlefield")
     void controlLostWhenHelmLeaves() {
         Permanent helm = addHelm(player1);
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent stolen = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new CanopySpider());
+        Permanent stolen = addCreatureReady(player2, new CanopySpider());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         activateHelm(helm, stolen);
@@ -88,6 +91,42 @@ class HelmOfPossessionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(stolen.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(stolen.getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent helm = addHelm(player1);
+        Permanent fodder = addCreatureReady(player1, new CanopySpider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(helm), null, helm.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fodder);
+        assertThat(helm.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability has no effect if Helm of Possession changes controllers before resolution")
+    void doesNothingIfHelmChangesControllersBeforeResolution() {
+        Permanent helm = addHelm(player1);
+        Permanent fodder = addCreatureReady(player1, new CanopySpider());
+        Permanent target = addCreatureReady(player2, new CanopySpider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int helmIndex = gd.playerBattlefields.get(player1.getId()).indexOf(helm);
+        harness.activateAbility(player1, helmIndex, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(helm);
+        gd.playerBattlefields.get(player2.getId()).add(helm);
+        helm.recordControlChange();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(fodder.getCard().getId()));
     }
 
     private Permanent addHelm(Player player) {
@@ -109,9 +148,8 @@ class HelmOfPossessionTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
@@ -120,9 +158,8 @@ class HelmOfPossessionTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

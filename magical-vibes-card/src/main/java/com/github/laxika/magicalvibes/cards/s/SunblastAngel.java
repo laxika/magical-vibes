@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "22")
+@CardRegistration(set = "DDI", collectorNumber = "21")
 public class SunblastAngel extends Card {
 
     public SunblastAngel() {

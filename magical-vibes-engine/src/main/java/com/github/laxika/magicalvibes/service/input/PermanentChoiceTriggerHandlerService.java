@@ -1332,6 +1332,7 @@ public class PermanentChoiceTriggerHandlerService {
                 upt.sourcePermanentId()
         );
         entry.setActivePlayerId(upt.choosingPlayerId());
+        entry.setTargetFilter(upt.targetFilter());
         pushTriggeredEntry(gameData, entry);
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -1920,7 +1921,7 @@ public class PermanentChoiceTriggerHandlerService {
                 updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes), etbMtt.xValue(),
                 etbMtt.repeatedAdditionalCosts(),
                 etbMtt.resumePendingMayResolution(), etbMtt.triggeringCardId(),
-                etbMtt.triggeringPermanentId(), etbMtt.eventValue()));
+                etbMtt.triggeringPermanentId(), etbMtt.eventValue(), etbMtt.planarSource()));
 
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 
@@ -1973,7 +1974,7 @@ public class PermanentChoiceTriggerHandlerService {
                 chosen, pending.currentGroupIndex(), pending.chosenInCurrentGroup() + targets.size(),
                 pending.groupSizes(), pending.xValue(), pending.repeatedAdditionalCosts(),
                 pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                pending.triggeringPermanentId(), pending.eventValue());
+                pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource());
         handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), completedGroup);
     }
 

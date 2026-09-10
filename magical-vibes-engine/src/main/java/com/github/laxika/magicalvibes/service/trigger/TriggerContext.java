@@ -171,6 +171,16 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for global triggers that watch any permanent being tapped for mana. */
+    record PermanentTapForMana(UUID tappingPlayerId, UUID tappedPermanentId,
+                               Set<ManaColor> producedManaTypes) implements TriggerContext {
+        public PermanentTapForMana {
+            if (producedManaTypes != null) {
+                producedManaTypes = Set.copyOf(producedManaTypes);
+            }
+        }
+    }
+
     /** Context for a creature's mana ability resolving, including the mana it produced. */
     record ManaAbilityResolved(UUID activatingPlayerId, int manaProduced) implements TriggerContext {}
 
@@ -523,7 +533,8 @@ public sealed interface TriggerContext {
                              UUID artifactControllerId,
                              Card artifactCard,
                              int artifactManaValue,
-                             Map<CounterType, Integer> artifactCounters) implements TriggerContext {
+                             Map<CounterType, Integer> artifactCounters,
+                             boolean wasSacrificed) implements TriggerContext {
 
         public ArtifactGraveyard {
             artifactCounters = Map.copyOf(artifactCounters);
@@ -541,6 +552,13 @@ public sealed interface TriggerContext {
         public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId,
                                  Card artifactCard, int artifactManaValue) {
             this(graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue, Map.of());
+        }
+
+        public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId,
+                                 Card artifactCard, int artifactManaValue,
+                                 Map<CounterType, Integer> artifactCounters) {
+            this(graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue,
+                    artifactCounters, false);
         }
     }
 

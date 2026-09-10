@@ -56,6 +56,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -124,6 +126,17 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
+    @Test
+    void landCountUsesCurrentPermanentTypes() {
+        Permanent creature = addPermanent(player1Id, createCreature("Changed land", 2, 2, CardColor.GREEN));
+        GameQueryService query = org.mockito.Mockito.spy(gqs);
+        org.mockito.Mockito.doReturn(true).when(query).isLand(gd, creature);
+
+        assertThat(query.controlsMoreLandsThan(gd, player1Id, player2Id)).isTrue();
+
+        org.mockito.Mockito.doReturn(false).when(query).isLand(gd, creature);
+        assertThat(query.controlsMoreLandsThan(gd, player1Id, player2Id)).isFalse();
+    }
 
     @Test
     void faceDownCreatureLosesItsPrintedUnblockability() {
@@ -2175,6 +2188,17 @@ class GameQueryServiceTest {
         @DisplayName("doubles damage with one Furnace of Rath")
         void returnsTwoWithOneFurnace() {
             addPermanent(player1Id, createEnchantmentWithStaticEffect("Furnace of Rath", new DoubleDamageEffect()));
+
+            assertThat(gqs.applyDamageMultiplier(gd, 3)).isEqualTo(6);
+        }
+
+        @Test
+        @DisplayName("doubles damage with a face-up planar card")
+        void returnsTwoWithOneFaceUpPlane() {
+            gd.planechase = new PlanechaseState();
+            gd.planechase.faceUp.add(new PlanarObject(
+                    createEnchantmentWithStaticEffect("Stronghold Furnace", new DoubleDamageEffect()),
+                    gd.nextTimestamp()));
 
             assertThat(gqs.applyDamageMultiplier(gd, 3)).isEqualTo(6);
         }

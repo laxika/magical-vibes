@@ -60,6 +60,7 @@ class CardFreezeTest {
     void runtimeCopyIsMutableAndIndependent() {
         Card original = new Card();
         original.setName("Modal Spell");
+        original.setMinimumXValue(1);
         original.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
         original.freeze();
 
@@ -67,6 +68,7 @@ class CardFreezeTest {
 
         assertThat(copy.getId()).isEqualTo(original.getId());
         assertThat(copy.getName()).isEqualTo("Modal Spell");
+        assertThat(copy.getMinimumXValue()).isEqualTo(1);
         assertThat(copy.getEffects(EffectSlot.SPELL)).hasSize(1);
 
         // Copy is mutable and its mutations don't reach the original
@@ -94,6 +96,6 @@ class CardFreezeTest {
         assertThat(instanceFields)
                 .as("Card's instance field count changed — copy the new field in Card(Card source) "
                         + "and update this expected count")
-                .isEqualTo(63);
+                .isEqualTo(64);
     }
 }

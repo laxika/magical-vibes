@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SOM", collectorNumber = "48")
 @CardRegistration(set = "5DN", collectorNumber = "39")
 @CardRegistration(set = "TD2", collectorNumber = "9")
+@CardRegistration(set = "DDF", collectorNumber = "49")
 public class TrinketMage extends Card {
 
     public TrinketMage() {

@@ -311,7 +311,7 @@ public class ETBTokenTargetService {
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue()));
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
                 continue;
             }
 
@@ -329,7 +329,7 @@ public class ETBTokenTargetService {
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue()));
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
                 continue;
             }
 
@@ -447,7 +447,7 @@ public class ETBTokenTargetService {
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
                         pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue()));
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
                 continue;
             }
 
@@ -609,6 +609,9 @@ public class ETBTokenTargetService {
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
         etbEntry.setEventValue(pending.eventValue());
         etbEntry.setTriggeringCardId(pending.triggeringCardId());
+        if (pending.planarSource() != null) {
+            etbEntry.setSourcePlanarObject(pending.planarSource().copy());
+        }
         if (pending.triggeringPermanentId() != null && card.isAura()) {
             etbEntry.setTargetId(pending.triggeringPermanentId());
         }

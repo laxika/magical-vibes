@@ -11,6 +11,6 @@ public class WeiNightRaiders extends Card {
 
     public WeiNightRaiders() {
         // Whenever this creature deals damage to an opponent, that player discards a card.
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
     }
 }

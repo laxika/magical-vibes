@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PygmyPyrosaur.class, GiantCockroach.class})
 class PygmyPyrosaurTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating {R} gives +1/+0 until end of turn")
     void activatingAbilityBoosts() {
-        Permanent pyrosaur = addReadyPyrosaur(player1);
+        Permanent pyrosaur = addCreatureReady(player1, new PygmyPyrosaur());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -33,7 +34,7 @@ class PygmyPyrosaurTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate multiple times — each gives +1/+0")
     void canActivateMultipleTimes() {
-        Permanent pyrosaur = addReadyPyrosaur(player1);
+        Permanent pyrosaur = addCreatureReady(player1, new PygmyPyrosaur());
         harness.addMana(player1, ManaColor.RED, 3);
 
         for (int i = 0; i < 3; i++) {
@@ -48,7 +49,7 @@ class PygmyPyrosaurTest extends BaseCardTest {
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        Permanent pyrosaur = addReadyPyrosaur(player1);
+        Permanent pyrosaur = addCreatureReady(player1, new PygmyPyrosaur());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -67,27 +68,29 @@ class PygmyPyrosaurTest extends BaseCardTest {
     @Test
     @DisplayName("Pygmy Pyrosaur cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent pyrosaur = addReadyPyrosaur(player2);
+        addCreatureReady(player2, new PygmyPyrosaur());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GiantCockroach());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
     }
 
-    private Permanent addReadyPyrosaur(Player player) {
-        Permanent perm = new Permanent(new PygmyPyrosaur());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Can activate while tapped because the ability has no tap cost")
+    void abilityDoesNotRequireTapping() {
+        Permanent pyrosaur = addCreatureReady(player1, new PygmyPyrosaur());
+        pyrosaur.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(pyrosaur.getPowerModifier()).isEqualTo(1);
+        assertThat(pyrosaur.isTapped()).isTrue();
     }
 }

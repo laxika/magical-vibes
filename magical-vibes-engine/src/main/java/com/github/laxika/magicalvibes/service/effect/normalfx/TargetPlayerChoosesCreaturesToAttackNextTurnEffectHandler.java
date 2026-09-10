@@ -56,7 +56,7 @@ public class TargetPlayerChoosesCreaturesToAttackNextTurnEffectHandler implement
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         if (creatureIds.isEmpty()) {
-            gameData.chosenAttackersNextTurn.put(targetPlayerId, Set.of());
+            gameData.restrictAttackersNextTurn(targetPlayerId, Set.of());
             gameLogService.append(gameData, GameLog.text(
                     playerName + " has no creatures to choose; no creature can attack during their next turn."));
             log.info("Game {} - {} chose no creatures (none available) for the next-turn attack requirement",

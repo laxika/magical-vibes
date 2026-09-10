@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "8")
 @CardRegistration(set = "ICE", collectorNumber = "4")
+@CardRegistration(set = "ME2", collectorNumber = "4")
 public class ArmorOfFaith extends Card {
 
     public ArmorOfFaith() {

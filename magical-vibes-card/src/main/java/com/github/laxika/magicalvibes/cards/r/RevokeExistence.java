@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "SOM", collectorNumber = "18")
 @CardRegistration(set = "BNG", collectorNumber = "25")
 @CardRegistration(set = "THB", collectorNumber = "34")
+@CardRegistration(set = "DDI", collectorNumber = "26")
 public class RevokeExistence extends Card {
 
     public RevokeExistence() {

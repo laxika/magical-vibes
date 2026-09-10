@@ -312,7 +312,7 @@ public class DestructionSupport {
 
     public void sacrificeAndLog(GameData gameData, Permanent creature, UUID playerId) {
         Card sacrificedCard = creature.getCard();
-        permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
         gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
@@ -406,9 +406,7 @@ public class DestructionSupport {
         }
 
         if (matching.size() <= count) {
-            for (Permanent perm : matching) {
-                tryDestroyAndLog(gameData, perm, sourceName);
-            }
+            destroyBatch(gameData, matching, sourceName, false);
             permanentRemovalService.removeOrphanedAuras(gameData);
             return false;
         }
@@ -433,7 +431,8 @@ public class DestructionSupport {
         }
 
         int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
-        effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+        effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                gameData, playerId, effectiveDamage, cardName, false, null, sourceCard);
         effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                 gameData, playerId, effectiveDamage);
 
@@ -907,7 +906,7 @@ public class DestructionSupport {
         if (!entry.getControllerId().equals(currentControllerId)) {
             return;
         }
-        if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+        if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
             triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
             gameLogService.append(gameData, GameLog.isSacrificed(self.getCard()));
             permanentRemovalService.removeOrphanedAuras(gameData);
@@ -1068,7 +1067,7 @@ public class DestructionSupport {
             for (UUID permId : pileToSacrifice) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
-                    if (permanentRemovalService.removePermanentToGraveyard(gameData, perm)) {
+                    if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, perm)) {
                         gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
                     }
                 }

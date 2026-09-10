@@ -1032,6 +1032,11 @@ public class TargetLegalityService {
                             + " can't be the target of abilities opponents control");
                 }
             }
+            if (target != null && gameQueryService.cantBeTargetedByAbilityFromCardType(
+                    gameData, target, sourceCard, null, playerId, CardType.ARTIFACT)) {
+                throw new IllegalStateException(target.getCard().getName()
+                        + " can't be the target of abilities from artifact sources");
+            }
         }
 
         // Hexproof from color (blocks opponent's abilities of the specified color)
@@ -1472,6 +1477,10 @@ public class TargetLegalityService {
         UUID candidateController = gameQueryService.findPermanentController(gameData, candidate.getId());
         if (gameQueryService.cantBeTargetOfOpponentAbilities(gameData, candidate)
                 && candidateController != null && !candidateController.equals(playerId)) {
+            return false;
+        }
+        if (gameQueryService.cantBeTargetedByAbilityFromCardType(
+                gameData, candidate, sourceCard, null, playerId, CardType.ARTIFACT)) {
             return false;
         }
         if (hexproofFromColorReason(gameData, candidate, sourceCard, playerId) != null
@@ -2708,9 +2717,12 @@ public class TargetLegalityService {
                 }
             }
             if (multiTargetConstraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
-                    && targetLegal.length > 0 && targetLegal[0]) {
-                UUID requiredControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.getFirst());
-                for (int i = 1; i < declaredTargetIds.size(); i++) {
+                    && targetLegal.length > 0) {
+                UUID requiredControllerId = entry.getRequiredTargetControllerId();
+                if (requiredControllerId == null) {
+                    requiredControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.getFirst());
+                }
+                for (int i = 0; i < declaredTargetIds.size(); i++) {
                     UUID targetControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i));
                     if (targetLegal[i] && !java.util.Objects.equals(requiredControllerId, targetControllerId)) {
                         targetLegal[i] = false;
@@ -2777,7 +2789,7 @@ public class TargetLegalityService {
                                     entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)), entry.isTeamworkCostPaid()).isPresent();
                 }
             } else if (entry.getTargetZone() == Zone.STACK) {
-                targetFizzled = gameData.stack.stream().noneMatch(se -> se.getTargetableId().equals(entry.getTargetId()));
+                targetFizzled = !isPrimaryTargetLegalOnResolution(gameData, entry, entry.getTargetId());
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetId())) {
@@ -2812,7 +2824,9 @@ public class TargetLegalityService {
                     }
                     if (!targetFizzled
                             && (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)) {
-                        targetFizzled = isBlockedByOpponentAbilityRestriction(gameData, targetPerm, entry.getControllerId());
+                        targetFizzled = isBlockedByAbilityTargetingRestriction(
+                                gameData, targetPerm, entry.getControllerId(), entry.getCard(),
+                                entry.getSourcePermanentId());
                     }
                     if (!targetFizzled) {
                         targetFizzled = isSpellProtected(gameData, targetPerm, entry);
@@ -3077,12 +3091,26 @@ public class TargetLegalityService {
                             entry.getTriggeringPermanentPowerAtTrigger()), entry.isTeamworkCostPaid()).isEmpty();
         }
         if (entry.getTargetZone() == Zone.STACK) {
+            StackEntry target = findAnyEntryOnStack(gameData, targetId);
+            if (target == null) {
+                return false;
+            }
             TargetFilter primaryFilter = primaryTargetFilter(entry);
             TargetFilter effectiveTargetFilter = primaryFilter instanceof StackEntryPredicateTargetFilter
                     ? targetFilterForCast(primaryFilter, entry.isKicked(), entry.isGiftPromised(), entry.isTeamworkCostPaid())
                     : null;
-            return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter, entry.getControllerId(),
-                    entry.getSourcePermanentSnapshot(), entry.getXValue(), false).isEmpty();
+            // The target was already selected legally. Generated triggers can refer to an
+            // ability without carrying the spell-only filters used during target selection.
+            if (!(effectiveTargetFilter instanceof StackEntryPredicateTargetFilter filter)) {
+                return true;
+            }
+            if (filter.predicate() instanceof StackEntrySharesNameWithCardExiledWithSourcePredicate
+                    && entry.getExiledCostCardSnapshot() != null) {
+                // Paying the cost removed this card from exile; use the card actually paid.
+                return entry.getExiledCostCardSnapshot().getName().equals(target.getCard().getName());
+            }
+            return matchesStackEntryPredicate(gameData, target, filter.predicate(), entry.getControllerId(),
+                    entry.getSourcePermanentSnapshot(), entry.getXValue());
         }
         return isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, primaryTargetFilter(entry));
     }
@@ -3141,7 +3169,8 @@ public class TargetLegalityService {
         }
         if ((entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
-                && isBlockedByOpponentAbilityRestriction(gameData, target, entry.getControllerId())) {
+                && isBlockedByAbilityTargetingRestriction(
+                gameData, target, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId())) {
             return false;
         }
         if (isProtectedFromSource(gameData, target, entry) || isSpellProtected(gameData, target, entry)
@@ -3465,12 +3494,15 @@ public class TargetLegalityService {
         return null;
     }
 
-    private boolean isBlockedByOpponentAbilityRestriction(GameData gameData, Permanent target, UUID sourcePlayerId) {
+    private boolean isBlockedByAbilityTargetingRestriction(GameData gameData, Permanent target,
+                                                           UUID sourcePlayerId, Card sourceCard,
+                                                           UUID sourcePermanentId) {
         if (gameQueryService.cantBeTargetOfOpponentAbilities(gameData, target)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-            return targetController != null && !targetController.equals(sourcePlayerId);
+            if (targetController != null && !targetController.equals(sourcePlayerId)) return true;
         }
-        return false;
+        return gameQueryService.cantBeTargetedByAbilityFromCardType(
+                gameData, target, sourceCard, sourcePermanentId, sourcePlayerId, CardType.ARTIFACT);
     }
 
     private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {
@@ -4471,11 +4503,10 @@ public class TargetLegalityService {
     private boolean matchesPlayerPredicateAtResolution(GameData gameData, UUID controllerId,
                                                         UUID targetPlayerId, PlayerPredicate predicate,
                                                         UUID sourcePermanentId) {
-        if (predicate instanceof PlayerHasMoreLifeThanControllerPredicate) {
-            return controllerId != null && !controllerId.equals(targetPlayerId);
-        }
-        if (predicate instanceof PlayerControlsMoreCreaturesThanControllerPredicate) {
-            return controllerId != null && !controllerId.equals(targetPlayerId);
+        if (predicate instanceof PlayerHasMoreLifeThanControllerPredicate lifePredicate) {
+            return controllerId != null && targetPlayerId != null && !controllerId.equals(targetPlayerId)
+                    && (!lifePredicate.recheckAtResolution()
+                    || gameData.getLife(targetPlayerId) > gameData.getLife(controllerId));
         }
         if (predicate instanceof PlayerHasMoreCardsInHandThanControllerPredicate handPredicate) {
             if (controllerId == null || controllerId.equals(targetPlayerId)) {

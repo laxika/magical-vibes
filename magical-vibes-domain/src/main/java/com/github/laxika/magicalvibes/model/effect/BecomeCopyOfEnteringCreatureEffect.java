@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.Permanent;
 
 /**
  * Triggered effect: the source permanent becomes a copy of a creature that just entered the
@@ -11,7 +12,11 @@ import java.util.UUID;
  * @param enteringPermanentId the battlefield id of the creature that entered (null in the card
  *                            definition, filled in at trigger time)
  */
-public record BecomeCopyOfEnteringCreatureEffect(UUID enteringPermanentId) implements CardEffect {
+public record BecomeCopyOfEnteringCreatureEffect(UUID enteringPermanentId, Permanent enteringSnapshot) implements CardEffect {
+
+    public BecomeCopyOfEnteringCreatureEffect(UUID enteringPermanentId) {
+        this(enteringPermanentId, null);
+    }
 
     public BecomeCopyOfEnteringCreatureEffect() {
         this(null);
