@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "104")
+@CardRegistration(set = "DDG", collectorNumber = "59")
 public class KilnmouthDragon extends Card {
 
     public KilnmouthDragon() {

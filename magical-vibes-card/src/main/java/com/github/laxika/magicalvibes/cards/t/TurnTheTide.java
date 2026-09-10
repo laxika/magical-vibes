@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "MBS", collectorNumber = "35")
+@CardRegistration(set = "TD2", collectorNumber = "30")
 public class TurnTheTide extends Card {
 
     public TurnTheTide() {
