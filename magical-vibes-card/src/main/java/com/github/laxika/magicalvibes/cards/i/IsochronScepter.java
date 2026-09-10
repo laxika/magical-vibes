@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "188")
 @CardRegistration(set = "V10", collectorNumber = "3")
+@CardRegistration(set = "DDJ", collectorNumber = "16")
 public class IsochronScepter extends Card {
 
     public IsochronScepter() {

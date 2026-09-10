@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DredgeEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "169")
+@CardRegistration(set = "DDJ", collectorNumber = "79")
 public class DakmorSalvage extends Card {
 
     public DakmorSalvage() {

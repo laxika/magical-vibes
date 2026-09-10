@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "95")
+@CardRegistration(set = "DDJ", collectorNumber = "53")
 public class PutridLeech extends Card {
 
     public PutridLeech() {

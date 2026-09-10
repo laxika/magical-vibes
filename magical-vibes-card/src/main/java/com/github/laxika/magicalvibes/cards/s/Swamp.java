@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ONS", collectorNumber = "340")
+@CardRegistration(set = "DDJ", collectorNumber = "85")
 @CardRegistration(set = "DDE", collectorNumber = "33")
 @CardRegistration(set = "DDE", collectorNumber = "34")
 @CardRegistration(set = "DPA", collectorNumber = "104")
@@ -387,6 +388,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DPA", collectorNumber = "102")
 @CardRegistration(set = "DDH", collectorNumber = "77")
 @CardRegistration(set = "DDH", collectorNumber = "78")
+@CardRegistration(set = "DDJ", collectorNumber = "83")
+@CardRegistration(set = "DDJ", collectorNumber = "84")
+@CardRegistration(set = "DDJ", collectorNumber = "86")
 public class Swamp extends Card {
 
     public Swamp() {

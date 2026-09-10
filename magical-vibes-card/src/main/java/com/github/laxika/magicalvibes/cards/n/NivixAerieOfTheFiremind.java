@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "160")
+@CardRegistration(set = "DDJ", collectorNumber = "36")
 public class NivixAerieOfTheFiremind extends Card {
 
     public NivixAerieOfTheFiremind() {

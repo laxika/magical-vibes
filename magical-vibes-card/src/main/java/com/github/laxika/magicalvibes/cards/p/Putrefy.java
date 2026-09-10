@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "93")
 @CardRegistration(set = "RAV", collectorNumber = "221")
+@CardRegistration(set = "DDJ", collectorNumber = "71")
 public class Putrefy extends Card {
 
     public Putrefy() {

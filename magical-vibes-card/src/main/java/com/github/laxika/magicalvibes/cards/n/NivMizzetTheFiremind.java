@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "DRB", collectorNumber = "11")
 @CardRegistration(set = "GPT", collectorNumber = "123")
+@CardRegistration(set = "DDJ", collectorNumber = "1")
 public class NivMizzetTheFiremind extends Card {
 
     public NivMizzetTheFiremind() {
