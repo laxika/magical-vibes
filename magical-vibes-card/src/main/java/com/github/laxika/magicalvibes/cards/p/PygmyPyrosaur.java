@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "208")
 @CardRegistration(set = "ULG", collectorNumber = "87")
+@CardRegistration(set = "DDI", collectorNumber = "46")
 public class PygmyPyrosaur extends Card {
 
     public PygmyPyrosaur() {

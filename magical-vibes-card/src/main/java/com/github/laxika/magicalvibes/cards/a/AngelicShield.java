@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "228")
+@CardRegistration(set = "DDI", collectorNumber = "27")
 public class AngelicShield extends Card {
 
     public AngelicShield() {
