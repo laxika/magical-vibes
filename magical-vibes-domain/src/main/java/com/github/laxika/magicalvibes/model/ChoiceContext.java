@@ -78,6 +78,38 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record SingleColorSubtypeSpellOrAbilityManaChoice(UUID playerId, int amount,
+                                                       CardSubtype subtype, boolean fromCreature,
+                                                       UUID sourcePermanentId, UUID recipientPlayerId,
+                                                       boolean fromSnowSource, boolean fromCaveSource)
+            implements ChoiceContext {
+
+        public SingleColorSubtypeSpellOrAbilityManaChoice(UUID playerId, int amount,
+                                                            CardSubtype subtype, boolean fromCreature) {
+            this(playerId, amount, subtype, fromCreature, null, null, false, false);
+        }
+
+        public SingleColorSubtypeSpellOrAbilityManaChoice withSourcePermanentId(UUID sourcePermanentId) {
+            return new SingleColorSubtypeSpellOrAbilityManaChoice(playerId, amount, subtype, fromCreature,
+                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource);
+        }
+
+        public SingleColorSubtypeSpellOrAbilityManaChoice withRecipientPlayerId(UUID recipientPlayerId) {
+            return new SingleColorSubtypeSpellOrAbilityManaChoice(playerId, amount, subtype, fromCreature,
+                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource);
+        }
+
+        public SingleColorSubtypeSpellOrAbilityManaChoice withSnowSource(boolean fromSnowSource) {
+            return new SingleColorSubtypeSpellOrAbilityManaChoice(playerId, amount, subtype, fromCreature,
+                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource);
+        }
+
+        public SingleColorSubtypeSpellOrAbilityManaChoice withCaveSource(boolean fromCaveSource) {
+            return new SingleColorSubtypeSpellOrAbilityManaChoice(playerId, amount, subtype, fromCreature,
+                    sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource);
+        }
+    }
+
     record RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
                                      List<ManaColor> fixedColorOptions,
                                      ManaRestriction restriction, boolean sameColor) implements ChoiceContext {

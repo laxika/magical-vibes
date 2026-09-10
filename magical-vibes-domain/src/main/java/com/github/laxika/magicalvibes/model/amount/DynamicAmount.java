@@ -103,6 +103,7 @@ public sealed interface DynamicAmount permits
         GreatestCreatureCountAmongPlayers,
         GreatestManaValueAmongCardsExiledWithSource,
         GreatestManaValueAmongCardsInGraveyard,
+        GraveyardsAtLeast,
         GreatestCreatureTypeCountAmongControlled,
         GreatestPowerAmongCardsInGraveyard,
         GreatestPowerAmongControlled,

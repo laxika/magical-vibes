@@ -98,6 +98,7 @@ public sealed interface Condition permits
         ControllerWasNotDealtCombatDamageSinceLastTurn,
         ControllerHadNoCardsInHandAtTurnStart,
         ControllerHasCityBlessing,
+        ControllerHasEnduringStory,
         ControllerHasCompletedDungeon,
         ControllerDealtDamageByAtLeastCreaturesThisTurn,
         ControllerDrewAtLeastCardsThisTurn,

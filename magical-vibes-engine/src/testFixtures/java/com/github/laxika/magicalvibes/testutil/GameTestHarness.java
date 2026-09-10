@@ -653,6 +653,13 @@ public class GameTestHarness {
         gameService.playAdventureCard(gameData, player, cardIndex, 0, targetId, List.of());
     }
 
+    public void castAdventure(Player player, int cardIndex, UUID sacrificePermanentId,
+                               List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, 0, null,
+                targetIds != null ? targetIds : List.of(), null, sacrificePermanentId);
+    }
+
     public void castAdventureFromGraveyard(Player player, int graveyardCardIndex) {
         ensurePriority(player);
         gameService.playAdventureCardFromGraveyard(gameData, player, graveyardCardIndex, 0, null,

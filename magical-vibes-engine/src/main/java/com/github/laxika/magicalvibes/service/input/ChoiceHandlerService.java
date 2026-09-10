@@ -231,6 +231,12 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice ctx) {
+            handleSingleColorSubtypeSpellOrAbilityManaChosen(gameData, player, colorName, ctx,
+                    colorChoice.options());
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.RestrictedManaColorChoice ctx) {
             handleRestrictedManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
             return;
@@ -1369,6 +1375,56 @@ public class ChoiceHandlerService {
 
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSingleColorSubtypeSpellOrAbilityManaChosen(
+            GameData gameData, Player player, String colorName,
+            ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice ctx,
+            List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor chosenColor = ManaColor.valueOf(colorName);
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosenColor);
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        UUID manaRecipientId = ctx.recipientPlayerId() != null ? ctx.recipientPlayerId() : ctx.playerId();
+        ManaPool manaPool = gameData.playerManaPools.get(manaRecipientId);
+        manaPool.addSubtypeSpellOrAbilityMana(ctx.subtype(), manaColor, ctx.amount());
+        if (ctx.fromSnowSource()) {
+            manaPool.addSnowManaTag(manaColor, ctx.amount());
+        }
+        if (ctx.fromCaveSource()) {
+            manaPool.addCaveManaTag(manaColor, ctx.amount());
+        }
+
+        if (ctx.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+            if (source != null) {
+                CardColor sourceChosenColor = CardColor.valueOf(chosenColor.name());
+                source.getTransientColors().clear();
+                source.getTransientColors().add(sourceChosenColor);
+                source.setColorOverridden(true);
+                gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                        source.getCard().getName(), null, ctx.playerId(),
+                        new GrantColorUntilEndOfTurnEffect(sourceChosenColor), source.getId(), null, null,
+                        EffectDuration.UNTIL_END_OF_TURN, 0));
+            }
+        }
+
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana (" + ctx.subtype().getDisplayName()
+                + " spells or abilities only)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

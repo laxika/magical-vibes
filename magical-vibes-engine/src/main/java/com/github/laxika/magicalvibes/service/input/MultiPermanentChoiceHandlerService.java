@@ -650,6 +650,8 @@ public class MultiPermanentChoiceHandlerService {
             handleOwnPermanentCounterPlacement(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayer ctx) {
             handleOwnPermanentCounterPlacementByPlayer(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayerWithChosenReference ctx) {
+            handleOwnPermanentCounterPlacementByPlayerWithChosenReference(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OpponentCreatureCounterPlacement ctx) {
             handleOpponentCreatureCounterPlacement(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference ctx) {
@@ -2006,6 +2008,23 @@ public class MultiPermanentChoiceHandlerService {
         if (!permanentIds.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
             if (target != null) {
+                StackEntry placementEntry = new StackEntry(gameData.pendingEffectResolutionEntry);
+                placementEntry.setControllerId(context.placingPlayerId());
+                permanentCounterSupport.placeCounterOnPermanent(gameData, placementEntry, target,
+                        context.counterType(), context.count());
+            }
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleOwnPermanentCounterPlacementByPlayerWithChosenReference(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayerWithChosenReference context) {
+        if (!permanentIds.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null) {
+                gameData.pendingEffectResolutionEntry.setChosenPermanentId(target.getId());
                 StackEntry placementEntry = new StackEntry(gameData.pendingEffectResolutionEntry);
                 placementEntry.setControllerId(context.placingPlayerId());
                 permanentCounterSupport.placeCounterOnPermanent(gameData, placementEntry, target,

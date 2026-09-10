@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "140")
+@CardRegistration(set = "TD2", collectorNumber = "25")
 public class NeurokStealthsuit extends Card {
 
     public NeurokStealthsuit() {

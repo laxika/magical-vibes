@@ -7546,7 +7546,8 @@ public class AbilityActivationService {
             if (!cost.isEligible(gameData, playerId, card)) {
                 continue;
             }
-            if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null)) {
+            if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(
+                    card, cost.predicate(), null, gameData, playerId)) {
                 validIndices.add(i);
             }
         }

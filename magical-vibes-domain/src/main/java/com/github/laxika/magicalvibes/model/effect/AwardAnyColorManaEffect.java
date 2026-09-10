@@ -134,7 +134,9 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     }
 
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype) {
-        this(new Fixed(amount), restriction, subtype, false, false, false, false, false, false, Set.of(), false);
+        this(new Fixed(amount), restriction, subtype, false, false, false, false,
+                restriction == ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY,
+                false, Set.of(), false);
     }
 
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, Set<CardSubtype> spellOnlySubtypes) {
@@ -151,13 +153,22 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype,
                                    boolean sourceBecomesProducedColorUntilEndOfTurn) {
         this(new Fixed(amount), restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
-                false, false, false, false, false, Set.of(), false);
+                false, false, false, restriction == ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY,
+                false, Set.of(), false);
     }
 
     public AwardAnyColorManaEffect(DynamicAmount amount, ManaSpendRestriction restriction, CardSubtype subtype,
                                    boolean sourceBecomesProducedColorUntilEndOfTurn) {
         this(amount, restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
-                false, false, false, false, false, Set.of(), false);
+                false, false, false, restriction == ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY,
+                false, Set.of(), false);
+    }
+
+    public AwardAnyColorManaEffect(DynamicAmount amount, ManaSpendRestriction restriction, CardSubtype subtype,
+                                   boolean sourceBecomesProducedColorUntilEndOfTurn,
+                                   boolean anyColorCombination) {
+        this(amount, restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
+                false, false, false, anyColorCombination, false, Set.of(), false);
     }
 
     /** Targeted "target player adds mana" form with a dynamic amount. */

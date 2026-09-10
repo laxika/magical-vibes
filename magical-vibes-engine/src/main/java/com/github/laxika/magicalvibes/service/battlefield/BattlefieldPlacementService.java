@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.StoriedEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EnchantedPlayerCreaturesEnterTappedEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -105,6 +106,7 @@ public class BattlefieldPlacementService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final EntryReplacementHandlerRegistry entryReplacementHandlerRegistry;
     private AscendEffectHandler ascendEffectHandler;
+    private StoriedEffectHandler storiedEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAllPermanentsAsEntersEffectHandler sacrificeAllPermanentsAsEntersEffectHandler;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
@@ -168,6 +170,11 @@ public class BattlefieldPlacementService {
     @Autowired
     void setAscendEffectHandler(@Lazy AscendEffectHandler handler) {
         this.ascendEffectHandler = handler;
+    }
+
+    @Autowired
+    void setStoriedEffectHandler(@Lazy StoriedEffectHandler handler) {
+        this.storiedEffectHandler = handler;
     }
 
     @Autowired
@@ -288,6 +295,9 @@ public class BattlefieldPlacementService {
         }
         if (ascendEffectHandler != null) {
             ascendEffectHandler.checkPermanentAscend(gameData, controllerId);
+        }
+        if (storiedEffectHandler != null) {
+            storiedEffectHandler.checkPermanentStoried(gameData, controllerId);
         }
         int countersPlacedOnEntry = counterCountAfterEntry - counterCountBeforeEntry;
         if (countersPlacedOnEntry > 0) {

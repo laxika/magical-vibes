@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityAdditionalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
+import com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1032,8 +1033,12 @@ public class CastingCostService {
             return false;
         }
         return battlefield.stream()
+                .filter(permanent -> !permanent.isFaceDown()
+                        && !gameQueryService.hasLostAllAbilities(gameData, permanent))
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
-                .anyMatch(FreeEquipEffect.class::isInstance);
+                .anyMatch(effect -> effect instanceof FreeEquipEffect
+                        && (!(effect instanceof FreeEquipWhileEnduringStoryEffect)
+                        || gameData.playersWithEnduringStory.contains(activatingPlayerId)));
     }
 
     /**
