@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 // First strike and Lifelink are keyword abilities auto-loaded from Scryfall and handled by the combat services.
 @CardRegistration(set = "LRW", collectorNumber = "28")
+@CardRegistration(set = "DDG", collectorNumber = "5")
 public class KnightOfMeadowgrain extends Card {
 }

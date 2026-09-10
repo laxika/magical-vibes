@@ -269,6 +269,7 @@ public class TurnCleanupService {
         gameData.combatDamageExemptPredicate = null;
         gameData.combatDamageExemptControllerId = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
+        gameData.permanentEnterTappedFiltersThisTurn.clear();
         gameData.additionalEnterCountersThisTurn.clear();
         gameData.skippedStepOrPhasesThisTurn.clear();
         gameData.matchingCreatureBlockRestrictionsThisTurn.clear();
@@ -462,6 +463,7 @@ public class TurnCleanupService {
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayWithoutPayingManaCost.remove(cardId);
         }

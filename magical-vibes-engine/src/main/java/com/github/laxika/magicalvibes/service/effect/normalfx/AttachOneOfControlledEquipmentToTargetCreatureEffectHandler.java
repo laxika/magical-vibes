@@ -36,6 +36,8 @@ public class AttachOneOfControlledEquipmentToTargetCreatureEffectHandler impleme
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        AttachOneOfControlledEquipmentToTargetCreatureEffect attachEffect =
+                (AttachOneOfControlledEquipmentToTargetCreatureEffect) effect;
         Permanent creature = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (creature == null || !gameQueryService.isCreature(gameData, creature)) {
             return;
@@ -48,14 +50,15 @@ public class AttachOneOfControlledEquipmentToTargetCreatureEffectHandler impleme
         if (legalEquipmentIds.size() > 1) {
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.AttachControlledEquipmentToTargetCreature(
-                            creature.getId(), entry.getControllerId(), entry.getCard(), legalEquipmentIds));
+                            creature.getId(), entry.getControllerId(), entry.getCard(), legalEquipmentIds,
+                            attachEffect.unattachAtNextEndStep()));
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), legalEquipmentIds,
                     entry.getCard().getName() + " - Choose an Equipment to attach.");
             return;
         }
 
         attachAndSchedule(gameData, entry.getControllerId(), entry.getCard(),
-                legalEquipmentIds.getFirst(), creature);
+                legalEquipmentIds.getFirst(), creature, attachEffect.unattachAtNextEndStep());
     }
 
     private List<UUID> controlledEquipmentIds(GameData gameData, UUID controllerId, Permanent creature) {
@@ -70,13 +73,15 @@ public class AttachOneOfControlledEquipmentToTargetCreatureEffectHandler impleme
     }
 
     void attachAndSchedule(GameData gameData, UUID controllerId, Card sourceCard,
-                           UUID equipmentId, Permanent creature) {
+                           UUID equipmentId, Permanent creature, boolean unattachAtNextEndStep) {
         Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
         if (equipment == null || !equipSupport.attachEquipment(gameData, equipment, creature)) {
             return;
         }
 
-        gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(controllerId, equipmentId, sourceCard));
+        if (unattachAtNextEndStep) {
+            gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(controllerId, equipmentId, sourceCard));
+        }
         gameLogService.append(gameData,
                 GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
     }

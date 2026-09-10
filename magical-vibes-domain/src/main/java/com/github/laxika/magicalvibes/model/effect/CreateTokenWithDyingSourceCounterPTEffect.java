@@ -1,9 +1,56 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+
+import java.util.Map;
+
 /**
- * Death trigger that creates one token whose power and toughness equal the total number of
- * counters on the dying source.
+ * Creates a token whose base power and toughness equal the dying creature's selected counter count.
+ * A null counter type counts all counter types.
+ * The death trigger pipeline binds the dying permanent's counter snapshot before resolution.
  */
-public record CreateTokenWithDyingSourceCounterPTEffect(CreateTokenEffect tokenTemplate)
-        implements CardEffect {
+public record CreateTokenWithDyingSourceCounterPTEffect(
+        CreateTokenEffect tokenTemplate,
+        CounterType counterType,
+        Map<CounterType, Integer> counters
+) implements CardEffect, DyingCreatureCountersAwareEffect, TokenCreatingEffect {
+
+    public CreateTokenWithDyingSourceCounterPTEffect {
+        counters = Map.copyOf(counters);
+    }
+
+    public CreateTokenWithDyingSourceCounterPTEffect(CreateTokenEffect tokenTemplate) {
+        this(tokenTemplate, null, Map.of());
+    }
+
+    public CreateTokenWithDyingSourceCounterPTEffect(CreateTokenEffect tokenTemplate, CounterType counterType) {
+        this(tokenTemplate, counterType, Map.of());
+    }
+
+    @Override
+    public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
+        return new CreateTokenWithDyingSourceCounterPTEffect(tokenTemplate, counterType, counters);
+    }
+
+    @Override
+    public DynamicAmount tokenAmount() {
+        return tokenTemplate.amount();
+    }
+
+    @Override
+    public CardType tokenType() {
+        return tokenTemplate.primaryType();
+    }
+
+    @Override
+    public int tokenPower() {
+        return tokenTemplate.tokenPower();
+    }
+
+    @Override
+    public int tokenToughness() {
+        return tokenTemplate.tokenToughness();
+    }
 }

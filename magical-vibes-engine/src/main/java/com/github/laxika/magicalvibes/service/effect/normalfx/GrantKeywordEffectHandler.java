@@ -230,7 +230,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (grant.scope() == GrantScope.ALL_CREATURES) {
+        if (grant.scope() == GrantScope.ALL_CREATURES
+                || grant.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                     .withSourceControllerId(entry.getControllerId())
@@ -309,6 +310,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         }
 
         for (UUID id : ids) {
+            if (sourceLinked(grant.duration())
+                    && (entry.getSourcePermanentId() == null
+                    || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
+                continue;
+            }
             Permanent target = gameQueryService.findPermanentById(gameData, id);
             if (target == null) {
                 continue; // Partially resolves — skip removed targets
@@ -327,7 +333,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             // abilities" or keyword removal survives it (and vice versa). The legacy bucket is
             // still written for direct Permanent.hasKeyword callers; the layered pass seeds it
             // and then replays this grant at its real timestamp.
-            // WHILE_SOURCE_ON_BATTLEFIELD grants live only as floating effects: the legacy
+            // Source-linked grants live only as floating effects: the legacy
             // buckets are both cleared by turn cleanup, which would silently end the grant.
             Set<Keyword> grantableKeywords = grantableKeywords(gameData, target, grant.keywords());
             if (grantableKeywords.isEmpty()) {
@@ -335,7 +341,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             }
             addLegacyBucket(target, grant.duration(), grantableKeywords);
             GrantKeywordEffect resolvedGrant = new GrantKeywordEffect(grantableKeywords, grant.scope(), grant.filter(), grant.duration(), grant.grantCondition());
-            UUID floatingSourceId = grant.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+            UUID floatingSourceId = sourceLinked(grant.duration())
                     ? entry.getSourcePermanentId()
                     : null;
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
@@ -391,7 +397,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             }
 
             addLegacyBucket(permanent, grant.duration(), grantableKeywords);
-            UUID floatingSourceId = grant.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+            UUID floatingSourceId = sourceLinked(grant.duration())
                     ? entry.getSourcePermanentId()
                     : null;
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
@@ -461,18 +467,24 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
             case UNTIL_YOUR_NEXT_UPKEEP -> EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
             case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+            case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
             case INDEFINITE -> EffectDuration.PERMANENT;
             case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
         };
     }
 
     private void addLegacyBucket(Permanent permanent, GrantDuration duration, Set<Keyword> keywords) {
-        if (duration != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+        if (!sourceLinked(duration)
                 && duration != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP
                 && duration != GrantDuration.UNTIL_END_OF_COMBAT) {
             keywords.stream().filter(keyword -> keyword != Keyword.FLANKING)
                     .forEach(bucketFor(permanent, duration)::add);
         }
+    }
+
+    private boolean sourceLinked(GrantDuration duration) {
+        return duration == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                || duration == GrantDuration.WHILE_SOURCE_REMAINS;
     }
 
     private Set<Keyword> bucketFor(Permanent permanent, GrantDuration duration) {
@@ -495,6 +507,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
             case UNTIL_YOUR_NEXT_UPKEEP -> "until your next upkeep";
             case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as you control its source";
+            case WHILE_SOURCE_REMAINS -> "for as long as its source remains on the battlefield";
             case INDEFINITE -> "indefinitely";
             case END_OF_TURN -> "until end of turn";
         };

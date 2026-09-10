@@ -106,6 +106,7 @@ public enum CardSet {
     SET_AFR("AFR"),
     SET_ARB("ARB"),
     SET_HOU("HOU"),
+    SET_HOB("HOB"),
     SET_KTK("KTK"),
     SET_FRF("FRF"),
     SET_DTK("DTK"),
@@ -181,14 +182,17 @@ public enum CardSet {
     SET_DDD("DDD"),
     SET_DDE("DDE"),
     SET_DDF("DDF"),
+    SET_DDG("DDG"),
     SET_DDH("DDH"),
     SET_DDI("DDI"),
     SET_DPA("DPA"),
+    SET_TD2("TD2"),
     SET_CP1("CP1"),
     SET_CP2("CP2"),
     SET_CP3("CP3"),
     SET_PHUK("PHUK"),
-    SET_PD2("PD2");
+    SET_PD2("PD2"),
+    SET_PD3("PD3");
 
     @Getter
     private final String code;

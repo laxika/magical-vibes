@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "130")
+@CardRegistration(set = "PD3", collectorNumber = "22")
+@CardRegistration(set = "TD2", collectorNumber = "75")
 public class DiabolicServitude extends Card {
 
     public DiabolicServitude() {

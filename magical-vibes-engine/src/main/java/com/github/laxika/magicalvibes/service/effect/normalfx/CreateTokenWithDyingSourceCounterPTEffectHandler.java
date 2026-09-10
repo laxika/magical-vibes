@@ -3,16 +3,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCounterPTEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/** Resolves a token whose base power and toughness were snapshotted from a dying creature's counters. */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenWithDyingSourceCounterPTEffectHandler implements NormalEffectHandlerBean {
 
-    private final PermanentControlSupport permanentControlSupport;
+    private final CreateTokenEffectHandler createTokenEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -21,10 +21,11 @@ public class CreateTokenWithDyingSourceCounterPTEffectHandler implements NormalE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        int counters = Math.max(0, entry.getEventValue());
-        CreateTokenEffect template = ((CreateTokenWithDyingSourceCounterPTEffect) effect).tokenTemplate();
-        CreateTokenEffect resolved = template.withPowerToughness(counters, counters);
-        entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
-                gameData, entry.getControllerId(), resolved, entry.getCard().getSetCode()));
+        var create = (CreateTokenWithDyingSourceCounterPTEffect) effect;
+        int counters = create.counterType() == null
+                ? create.counters().values().stream().mapToInt(Integer::intValue).sum()
+                : create.counters().getOrDefault(create.counterType(), 0);
+        createTokenEffectHandler.resolve(gameData, entry,
+                create.tokenTemplate().withPowerToughness(counters, counters));
     }
 }

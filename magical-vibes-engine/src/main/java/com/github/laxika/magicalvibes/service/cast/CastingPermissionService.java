@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstMatchingSpellFlashGrant;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantMayhemToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalLandPlayRestrictionEffect;
@@ -1138,6 +1139,16 @@ public class CastingPermissionService {
             for (Permanent perm : battlefield) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, ownerId, effect);
+                    if (resolved instanceof FirstMatchingSpellFlashGrant grant
+                            && !gameQueryService.hasLostAllAbilities(gameData, perm)
+                            && ownerId.equals(playerId)
+                            && predicateEvaluationService.matchesCardPredicate(
+                            card, grant.predicate(), perm.getCard().getId(), gameData, playerId)
+                            && gameData.getSpellsCastThisTurn(playerId).stream().noneMatch(previousSpell ->
+                            predicateEvaluationService.matchesCardPredicate(
+                                    previousSpell, grant.predicate(), perm.getCard().getId(), gameData, playerId))) {
+                        return true;
+                    }
                     if (resolved instanceof GrantFlashToCardTypeEffect grant
                             && !gameQueryService.hasLostAllAbilities(gameData, perm)
                             && (grant.appliesToAllPlayers() || ownerId.equals(playerId))
@@ -1246,7 +1257,7 @@ public class CastingPermissionService {
                 && playerId.equals(gameData.activePlayerId)
                 && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
-                && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0) < (gameData.getMaxLandsThisTurn(playerId) + gameQueryService.getConditionalAdditionalLandPlays(gameData, playerId))
+                && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0) < gameQueryService.getMaxLandsThisTurn(gameData, playerId)
                 && gameData.stack.isEmpty()
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 && !isLandPlayRestricted(gameData, playerId)
@@ -1972,6 +1983,13 @@ public class CastingPermissionService {
         Condition condition = gameData.exilePlayPermissionConditions.get(cardId);
         return condition == null || conditionEvaluationService.isMet(
                 gameData, condition, ConditionContext.forCasting(playerId));
+    }
+
+    /** Returns whether the player's temporary exile permission also offers the mana-value life alternative. */
+    public boolean hasExilePlayForLifeEqualToManaValuePermission(
+            GameData gameData, UUID playerId, UUID cardId) {
+        return gameData.exilePlayForLifeEqualToManaValue.contains(cardId)
+                && hasExilePlayPermission(gameData, playerId, cardId);
     }
 
     public boolean hasCastFromExiledWithSourcePermission(GameData gameData, UUID playerId, UUID cardId) {

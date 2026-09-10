@@ -283,7 +283,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         List<Card> matchingCards = e.choosePredicate() == null
                 ? topCards
-                : filterEligibleCards(topCards, e.choosePredicate(), entry.getCard().getId(), gameData, controllerId);
+                : filterEligibleCards(topCards, e.choosePredicate(), entry, gameData, controllerId);
         if (matchingCards.isEmpty()) {
             if (e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM) {
                 bottomInRandomOrder(gameData, controllerId, playerName, topCards);
@@ -350,7 +350,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> matchingCards = filterEligibleCards(result.topCards(), effect.choosePredicate(),
-                entry.getCard().getId(), gameData, result.controllerId());
+                entry, gameData, result.controllerId());
         if (matchingCards.isEmpty()) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
                     result.controllerId(), result.topCards(), true, result.controllerId(),
@@ -478,7 +478,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> matchingCards = filterEligibleCards(topCards, e.choosePredicate(),
-                entry.getCard().getId(), gameData, controllerId).stream()
+                entry, gameData, controllerId).stream()
                 .filter(card -> card.getManaValue() <= chooseManaValueAtMost)
                 .toList();
         if (matchingCards.isEmpty()) {
@@ -676,7 +676,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             List<Card> topCards, String playerName, LookAtTopCardsEffect e, int chooseCount,
             boolean randomRemaining) {
         List<Card> eligibleCards = filterEligibleCards(topCards, e.choosePredicate(),
-                entry.getCard().getId(), gameData, controllerId);
+                entry, gameData, controllerId);
 
         if (eligibleCards.size() > chooseCount) {
             List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
@@ -745,7 +745,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> eligibleCards = filterEligibleCards(topCards, handChoicePredicate,
-                entry.getCard().getId(), gameData, controllerId);
+                entry, gameData, controllerId);
 
         if (eligibleCards.isEmpty()) {
             for (Card card : topCards) {
@@ -864,11 +864,12 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private List<Card> filterEligibleCards(List<Card> topCards, CardPredicate predicate,
-            UUID sourceCardId, GameData gameData, UUID controllerId) {
+            StackEntry entry, GameData gameData, UUID controllerId) {
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : topCards) {
             if (predicateEvaluationService.matchesCardPredicate(
-                    card, predicate, sourceCardId, gameData, controllerId)) {
+                    card, predicate, entry.getCard().getId(), gameData, controllerId,
+                    entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot())) {
                 eligibleCards.add(card);
             }
         }

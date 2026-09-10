@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "83")
 @CardRegistration(set = "DPA", collectorNumber = "40")
+@CardRegistration(set = "DDG", collectorNumber = "50")
 public class BloodmarkMentor extends Card {
 
     public BloodmarkMentor() {

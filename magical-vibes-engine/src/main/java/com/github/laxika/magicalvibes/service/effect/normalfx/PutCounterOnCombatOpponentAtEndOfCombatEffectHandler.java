@@ -66,7 +66,8 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
 
         gameData.queueDelayedAction(new PutCounterOnPermanentAtEndOfCombat(
                 targetId, counterEffect.counterType(), counterEffect.amount(), counterEffect.alsoTap(),
-                counterEffect.alsoTap() ? entry.getSourcePermanentId() : null));
+                null, counterEffect.alsoTap() ? entry.getSourcePermanentId() : null,
+                entry.getControllerId()));
         String tapSuffix = counterEffect.alsoTap() ? " and become tapped" : "";
         gameLogService.append(gameData, GameLog.builder().card(target.getCard())
                 .text(" will get " + counterEffect.amount() + " counter(s)" + tapSuffix + " at end of combat.")

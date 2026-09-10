@@ -130,7 +130,8 @@ public class DamageTriggerCollectorService {
                 (TriggerContext.CreatureDealsDamageToPlaneswalker) ctx;
         Permanent watcher = match.permanent();
         if (watcher == null || damageContext.damageSource() == null || damageContext.damage() <= 0
-                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())) return false;
+                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())
+                || (trigger.combatDamageOnly() && !damageContext.combatDamage())) return false;
         if (trigger.predicate() != null
                 && !predicateEvaluationService.matchesPermanentPredicate(
                 damageContext.damageSource(), trigger.predicate(), FilterContext.of(match.gameData())

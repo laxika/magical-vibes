@@ -181,6 +181,8 @@ public class ActivatedAbility {
      * {@link #withNinjutsu()}.
      */
     private boolean ninjutsuAbility;
+    /** Optional additional predicate for the unblocked attacker returned by a ninjutsu-like ability. */
+    private PermanentPredicate ninjutsuAttackerPredicate;
     /** Whether this hand-activated ability leaves its source card in hand as part of its cost. */
     private boolean sourceStaysInHand;
     /** Whether this ability can be activated only while its source card is in exile. */
@@ -326,6 +328,7 @@ public class ActivatedAbility {
         copy.exilesSourceFromHand = this.exilesSourceFromHand;
         copy.revealsSourceFromHand = this.revealsSourceFromHand;
         copy.ninjutsuAbility = this.ninjutsuAbility;
+        copy.ninjutsuAttackerPredicate = this.ninjutsuAttackerPredicate;
         copy.sourceStaysInHand = this.sourceStaysInHand;
         copy.suspendsSourceFromHand = this.suspendsSourceFromHand;
         copy.suspendTimeCounters = this.suspendTimeCounters;
@@ -448,6 +451,14 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withNinjutsu() {
         this.ninjutsuAbility = true;
+        this.ninjutsuAttackerPredicate = null;
+        return this;
+    }
+
+    /** Marks this ability as ninjutsu-like and narrows which unblocked attacker may be returned. */
+    public ActivatedAbility withNinjutsu(PermanentPredicate attackerPredicate) {
+        this.ninjutsuAbility = true;
+        this.ninjutsuAttackerPredicate = attackerPredicate;
         return this;
     }
 

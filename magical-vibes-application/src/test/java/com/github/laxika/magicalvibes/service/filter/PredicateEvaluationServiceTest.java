@@ -20,9 +20,11 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -35,6 +37,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasKickerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsDoubleFacedPredicate;
@@ -42,6 +45,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -62,6 +66,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePr
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastForWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -355,6 +360,20 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        void matchesCardsWithKickerEffect() {
+            Card kickerCard = new Card();
+            kickerCard.addEffect(EffectSlot.STATIC, new KickerEffect("{1}{G}"));
+            Card multikickerCard = new Card();
+            multikickerCard.addEffect(EffectSlot.SPELL,
+                    RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
+            Card ordinary = new Card();
+
+            assertThat(evaluator.matchesCardPredicate(kickerCard, new CardHasKickerPredicate(), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(multikickerCard, new CardHasKickerPredicate(), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(ordinary, new CardHasKickerPredicate(), null)).isFalse();
+        }
+
+        @Test
         void matchesCardsWithMorphAbility() {
             Card morph = createCreature("Morph Creature", 2, 2, CardColor.BLUE);
             morph.addMorph("{2}{U}");
@@ -390,6 +409,24 @@ class PredicateEvaluationServiceTest {
                     .isTrue();
             assertThat(evaluator.matchesCardPredicate(tooExpensive, predicate, sourceCard.getId(), gd, player1Id))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("CardManaValueAtMostControlledLandsPredicate counts the perspective player's lands")
+        void cardManaValueAtMostControlledLandsPredicateMatches() {
+            addPermanent(player1Id, createLand("Forest"));
+            Card oneMana = createCreature("One Mana", 1, 1, CardColor.GREEN);
+            Card twoMana = createCreature("Two Mana", 2, 2, CardColor.GREEN);
+            oneMana.setManaCost("{1}");
+            twoMana.setManaCost("{2}");
+            CardManaValueAtMostControlledLandsPredicate predicate =
+                    new CardManaValueAtMostControlledLandsPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(oneMana, predicate, null, gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id)).isFalse();
+
+            addPermanent(player1Id, createLand("Swamp"));
+            assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id)).isTrue();
         }
 
         @Test
@@ -2695,6 +2732,37 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(
                     attacker, new PermanentBlockedBySourceThisTurnPredicate(), context)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("PermanentBlockedThisTurnPredicate")
+    class BlockedThisTurn {
+
+        @Test
+        @DisplayName("Matches a blocker after combat state is cleared")
+        void matchesBlockerAfterCombat() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            Permanent blocker = addPermanent(player2Id, createCreature("Blocker", 2, 2, CardColor.WHITE));
+
+            gd.combatOpponentIdsBlockedByThisTurn.put(blocker.getId(), Set.of(attacker.getId()));
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    gd, blocker, new PermanentBlockedThisTurnPredicate())).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(
+                    gd, attacker, new PermanentBlockedThisTurnPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("Rejects a creature that was blocked but did not block")
+        void rejectsCreatureThatWasBlocked() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            Permanent blocker = addPermanent(player2Id, createCreature("Blocker", 2, 2, CardColor.WHITE));
+
+            gd.combatBlockOpponentIdsThisTurn.put(attacker.getId(), Set.of(blocker.getId()));
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    gd, attacker, new PermanentBlockedThisTurnPredicate())).isFalse();
         }
     }
 
