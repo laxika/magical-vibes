@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VerdantTouch.class, Forest.class, TrainedArmodon.class})
 class VerdantTouchTest extends BaseCardTest {
 
     @Test
@@ -28,7 +29,7 @@ class VerdantTouchTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
-        assertThat(land.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gqs.isLand(gd, land)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -37,6 +38,32 @@ class VerdantTouchTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
+        assertThat(gqs.isLand(gd, land)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Verdant Touch can target an opponent's land")
+    void animatesOpponentsLand() {
+        Permanent land = addLand(player2);
+
+        castVerdantTouch(land);
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
+        assertThat(gqs.isLand(gd, land)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A land animated by Verdant Touch retains its mana ability")
+    void animatedLandRetainsManaAbility() {
+        Permanent land = addLand(player1);
+        land.setSummoningSick(false);
+
+        castVerdantTouch(land);
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test
@@ -73,8 +100,7 @@ class VerdantTouchTest extends BaseCardTest {
     @Test
     @DisplayName("Verdant Touch cannot target a nonland permanent")
     void cannotTargetNonLand() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
         harness.setHand(player1, List.of(new VerdantTouch()));
         addManaForSpell(player1);
 
@@ -83,17 +109,14 @@ class VerdantTouchTest extends BaseCardTest {
     }
 
     private Permanent addLand(Player player) {
-        Permanent land = new Permanent(new Forest());
-        gd.playerBattlefields.get(player.getId()).add(land);
-        return land;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private void castVerdantTouch(Permanent target) {
         harness.setHand(player1, List.of(new VerdantTouch()));
         addManaForSpell(player1);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void addManaForSpell(Player player) {

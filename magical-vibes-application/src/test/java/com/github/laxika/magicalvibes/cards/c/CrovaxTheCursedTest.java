@@ -1,30 +1,22 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CrovaxTheCursed.class, CravenGiant.class})
 class CrovaxTheCursedTest extends BaseCardTest {
-
-    private Permanent crovax(Player owner) {
-        UUID id = harness.getPermanentId(owner, "Crovax the Cursed");
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst().orElseThrow();
-    }
 
     @Test
     @DisplayName("Crovax enters with four +1/+1 counters")
@@ -37,7 +29,7 @@ class CrovaxTheCursedTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent source = crovax(player1);
+        Permanent source = findPermanent(player1, "Crovax the Cursed");
 
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
@@ -48,7 +40,7 @@ class CrovaxTheCursedTest extends BaseCardTest {
     @DisplayName("Declining the upkeep sacrifice removes a +1/+1 counter")
     void declineRemovesCounter() {
         Permanent source = addReadyCrovax();
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CravenGiant());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -57,23 +49,54 @@ class CrovaxTheCursedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Craven Giant");
     }
 
     @Test
     @DisplayName("Sacrificing a creature puts a +1/+1 counter on Crovax")
     void sacrificeAddsCounter() {
         Permanent source = addReadyCrovax();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new CravenGiant());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, giant.getId());
 
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Craven Giant");
+    }
+
+    @Test
+    @DisplayName("Crovax may sacrifice itself for its upkeep ability")
+    void canSacrificeItself() {
+        addReadyCrovax();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Crovax the Cursed");
+        harness.assertInGraveyard(player1, "Crovax the Cursed");
+    }
+
+    @Test
+    @DisplayName("Removing Crovax's last counter causes it to die")
+    void removingLastCounterCausesDeath() {
+        Permanent source = addReadyCrovax();
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Crovax the Cursed");
+        harness.assertInGraveyard(player1, "Crovax the Cursed");
     }
 
     @Test
