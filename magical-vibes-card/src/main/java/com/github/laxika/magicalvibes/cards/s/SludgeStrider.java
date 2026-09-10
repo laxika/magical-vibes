@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "126")
+@CardRegistration(set = "HOP", collectorNumber = "95")
 public class SludgeStrider extends Card {
 
     public SludgeStrider() {

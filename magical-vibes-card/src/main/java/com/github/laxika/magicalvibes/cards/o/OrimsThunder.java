@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "15")
+@CardRegistration(set = "HOP", collectorNumber = "5")
 public class OrimsThunder extends Card {
 
     public OrimsThunder() {

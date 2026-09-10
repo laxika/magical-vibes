@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 
 @CardRegistration(set = "CON", collectorNumber = "51")
+@CardRegistration(set = "HOP", collectorNumber = "39")
 public class RottingRats extends Card {
 
     public RottingRats() {

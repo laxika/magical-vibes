@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "133")
+@CardRegistration(set = "HOP", collectorNumber = "98")
 public class BattlegateMimic extends Card {
 
     public BattlegateMimic() {
