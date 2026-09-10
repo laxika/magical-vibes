@@ -120,6 +120,7 @@ class CostEffectClassificationTest {
             "ChooseCreatureTypeCost",
             "ExileCardFromGraveyardCost",
             "ExileXCardsFromGraveyardCost",
+            "PutOpponentOwnedExiledCardIntoGraveyardCost",
             "CollectEvidenceCost",
             "ExileNCardsFromGraveyardCost",
             "ExileNCardsFromGraveyardOrPayManaCost",

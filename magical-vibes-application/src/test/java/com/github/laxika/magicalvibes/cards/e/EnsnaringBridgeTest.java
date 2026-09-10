@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(EnsnaringBridge.class)
 class EnsnaringBridgeTest extends BaseCardTest {
 
     private Permanent addCreature(Player controller, int power) {
@@ -47,13 +48,8 @@ class EnsnaringBridgeTest extends BaseCardTest {
         setHandSize(player1, 2);
         Permanent attacker = addCreature(player1, 3);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(index)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -65,13 +61,8 @@ class EnsnaringBridgeTest extends BaseCardTest {
         Permanent attacker = addCreature(player1, 2);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        gs.declareAttackers(gd, player1, List.of(index));
+        declareAttackers(player1, List.of(index));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -85,13 +76,8 @@ class EnsnaringBridgeTest extends BaseCardTest {
         setHandSize(player2, 7);
         Permanent attacker = addCreature(player2, 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
         int index = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(index)))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(index)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -103,13 +89,8 @@ class EnsnaringBridgeTest extends BaseCardTest {
         Permanent attacker = addCreature(player1, 3);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        gs.declareAttackers(gd, player1, List.of(index));
+        declareAttackers(player1, List.of(index));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }

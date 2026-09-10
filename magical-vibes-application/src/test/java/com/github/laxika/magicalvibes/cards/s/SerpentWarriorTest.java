@@ -14,10 +14,10 @@ class SerpentWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack")
     void resolvingCreaturePutsEtbOnStack() {
-        castSerpentWarrior();
+        harness.castFromHand(player1, new SerpentWarrior(), "{2}{B}");
         harness.passBothPriorities(); // resolve creature spell
 
-        harness.assertOnBattlefield(player1, "Serpent Warrior");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }
@@ -27,7 +27,7 @@ class SerpentWarriorTest extends BaseCardTest {
     void etbLoses3Life() {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        castSerpentWarrior();
+        harness.castFromHand(player1, new SerpentWarrior(), "{2}{B}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB
 
@@ -36,18 +36,16 @@ class SerpentWarriorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not affect the opponent's life")
-    void etbDoesNotAffectOpponentsLife() {
-        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+    @DisplayName("ETB does not cause an opponent to lose life")
+    void etbOnlyAffectsController() {
+        int player1LifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int player2LifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        castSerpentWarrior();
+        harness.castFromHand(player1, new SerpentWarrior(), "{2}{B}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB
 
-        harness.assertLife(player2, opponentLifeBefore);
-    }
-
-    private void castSerpentWarrior() {
-        harness.castFromHand(player1, new SerpentWarrior(), "{2}{B}");
+        harness.assertLife(player1, player1LifeBefore - 3);
+        harness.assertLife(player2, player2LifeBefore);
     }
 }

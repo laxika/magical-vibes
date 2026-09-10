@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.w.WuInfantry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,43 +14,42 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZhugeJinWuStrategist.class, WuInfantry.class, Island.class})
 class ZhugeJinWuStrategistTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target creature becomes unblockable when the ability resolves")
     void makesTargetUnblockable() {
         setupZhugeJinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Wu Infantry");
 
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.isCantBeBlocked()).isTrue();
+        Permanent infantry = findPermanent(player1, "Wu Infantry");
+        assertThat(infantry.isCantBeBlocked()).isTrue();
     }
 
     @Test
     @DisplayName("Unblockable wears off at cleanup")
     void unblockableWearsOff() {
         setupZhugeJinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Wu Infantry");
 
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.CLEANUP);
 
-        Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.isCantBeBlocked()).isFalse();
+        Permanent infantry = findPermanent(player1, "Wu Infantry");
+        assertThat(infantry.isCantBeBlocked()).isFalse();
     }
 
     @Test
     @DisplayName("Taps Zhuge Jin when the ability is activated")
     void tapsOnActivation() {
         setupZhugeJinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Wu Infantry");
 
         harness.activateAbility(player1, 0, null, targetId);
 
@@ -59,7 +60,7 @@ class ZhugeJinWuStrategistTest extends BaseCardTest {
     @DisplayName("Can activate during the beginning of combat, before attackers are declared")
     void canActivateBeforeAttackers() {
         setupZhugeJinOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Wu Infantry");
 
         harness.activateAbility(player1, 0, null, targetId);
 
@@ -70,7 +71,7 @@ class ZhugeJinWuStrategistTest extends BaseCardTest {
     @DisplayName("Cannot activate once attackers have been declared")
     void cannotActivateAfterAttackersDeclared() {
         setupZhugeJinOnMyTurn(TurnStep.DECLARE_ATTACKERS);
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Wu Infantry");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
@@ -80,23 +81,32 @@ class ZhugeJinWuStrategistTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate during an opponent's turn")
     void cannotActivateOnOpponentTurn() {
-        harness.addToBattlefield(player1, new ZhugeJinWuStrategist());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        findPermanent(player1, "Zhuge Jin, Wu Strategist").setSummoningSick(false);
+        addCreatureReady(player1, new ZhugeJinWuStrategist());
+        harness.addToBattlefield(player1, new WuInfantry());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Wu Infantry");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your turn");
     }
 
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        setupZhugeJinOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, island.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Zhuge Jin, Wu Strategist").isTapped()).isFalse();
+    }
+
     private void setupZhugeJinOnMyTurn(TurnStep step) {
-        harness.addToBattlefield(player1, new ZhugeJinWuStrategist());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        findPermanent(player1, "Zhuge Jin, Wu Strategist").setSummoningSick(false);
+        addCreatureReady(player1, new ZhugeJinWuStrategist());
+        harness.addToBattlefield(player1, new WuInfantry());
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
     }

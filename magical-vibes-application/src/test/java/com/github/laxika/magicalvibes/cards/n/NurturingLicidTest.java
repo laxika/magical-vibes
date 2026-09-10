@@ -1,22 +1,26 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NurturingLicid.class, LowlandGiant.class, Forest.class})
 class NurturingLicidTest extends BaseCardTest {
 
     @Test
     @DisplayName("Licid ability attaches it to the target creature as an Aura")
     void abilityTurnsLicidIntoAttachedAura() {
         Permanent licid = addReadyLicid(player1);
-        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent host = addCreatureReady(player1, new LowlandGiant());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, host.getId());
@@ -28,10 +32,38 @@ class NurturingLicidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Licid ability can attach to an opponent's creature")
+    void attachesToOpponentCreature() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player2, new LowlandGiant());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(licid.getCard().isAura()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Licid ability cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+        assertThat(licid.getCard().isAura()).isFalse();
+        assertThat(licid.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("While attached, the regenerate ability shields the enchanted creature")
     void regeneratesEnchantedCreature() {
         addReadyLicid(player1);
-        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent host = addCreatureReady(player1, new LowlandGiant());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, host.getId());
@@ -47,14 +79,16 @@ class NurturingLicidTest extends BaseCardTest {
     @DisplayName("The regenerate ability survives becoming an Aura but the Licid ability does not")
     void keepsRegenerateAbilityLosesLicidAbility() {
         Permanent licid = addReadyLicid(player1);
-        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent host = addCreatureReady(player1, new LowlandGiant());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, host.getId());
         harness.passBothPriorities();
 
-        assertThat(licid.getCard().getActivatedAbilities()).hasSize(2);
-        assertThat(licid.getCard().getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, host.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -73,7 +107,7 @@ class NurturingLicidTest extends BaseCardTest {
     @DisplayName("Paying the end cost detaches the Licid and turns it back into a creature")
     void endCostRevertsLicidToCreature() {
         Permanent licid = addReadyLicid(player1);
-        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent host = addCreatureReady(player1, new LowlandGiant());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, host.getId());
@@ -87,10 +121,39 @@ class NurturingLicidTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, licid)).isTrue();
     }
 
+    @Test
+    @DisplayName("Targeting the Licid itself puts the resulting self-enchanting Aura into its owner's graveyard")
+    void selfTargetIsPutIntoGraveyard() {
+        Permanent licid = addReadyLicid(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, licid.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Nurturing Licid");
+        harness.assertInGraveyard(player1, "Nurturing Licid");
+    }
+
+    @Test
+    @DisplayName("Paying the end cost reverts the Aura immediately")
+    void endCostIsImmediate() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new LowlandGiant());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(licid.getAttachedTo()).isNull();
+        assertThat(licid.getCard().isAura()).isFalse();
+        assertThat(gqs.isCreature(gd, licid)).isTrue();
+    }
+
     private Permanent addReadyLicid(Player player) {
-        Permanent perm = new Permanent(new NurturingLicid());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new NurturingLicid());
     }
 }

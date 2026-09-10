@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "303")
 @CardRegistration(set = "CHR", collectorNumber = "101")
 @CardRegistration(set = "ATH", collectorNumber = "68")
+@CardRegistration(set = "ATQ", collectorNumber = "54")
 public class JalumTome extends Card {
 
     public JalumTome() {

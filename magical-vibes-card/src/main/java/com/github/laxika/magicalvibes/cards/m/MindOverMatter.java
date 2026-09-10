@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -22,7 +23,7 @@ public class MindOverMatter extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new TapOrUntapTargetPermanentEffect()
+                        new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap the target permanent?")
                 ),
                 "Discard a card: You may tap or untap target artifact, creature, or land.",
                 new PermanentPredicateTargetFilter(

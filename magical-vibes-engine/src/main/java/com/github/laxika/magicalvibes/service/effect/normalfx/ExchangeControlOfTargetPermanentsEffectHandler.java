@@ -207,7 +207,7 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         if (!exchange.sacrificeSourceIfNoExchange() || source == null) {
             return;
         }
-        if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {
+        if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, source)) {
             triggerCollectionService.checkAllyPermanentSacrificedTriggers(
                     gameData, entry.getControllerId(), source.getCard());
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is sacrificed."));

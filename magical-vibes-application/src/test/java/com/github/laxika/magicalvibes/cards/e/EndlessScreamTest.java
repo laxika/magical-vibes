@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CursedScroll;
+import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EndlessScream.class, MoggFanatic.class, CursedScroll.class})
 class EndlessScreamTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,7 @@ class EndlessScreamTest extends BaseCardTest {
     void entersWithXCountersAndBoosts() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
 
         harness.setHand(player1, List.of(new EndlessScream()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -35,8 +36,8 @@ class EndlessScreamTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Endless Scream");
         assertThat(aura.getCounterCount(CounterType.SCREAM)).isEqualTo(3);
         assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -44,50 +45,45 @@ class EndlessScreamTest extends BaseCardTest {
     void zeroCountersGivesNoBoost() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
 
         harness.setHand(player1, List.of(new EndlessScream()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         Permanent aura = findPermanent(player1, "Endless Scream");
         assertThat(aura.getCounterCount(CounterType.SCREAM)).isEqualTo(0);
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Creature returns to base power when Endless Scream leaves the battlefield")
     void boostStopsWhenRemoved() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
 
-        Permanent aura = new Permanent(new EndlessScream());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EndlessScream());
         aura.setCounterCount(CounterType.SCREAM, 4);
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Endless Scream can enchant a creature an opponent controls")
     void canEnchantOpponentCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new MoggFanatic());
 
-        Permanent aura = new Permanent(new EndlessScream());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EndlessScream());
         aura.setCounterCount(CounterType.SCREAM, 2);
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -95,14 +91,12 @@ class EndlessScreamTest extends BaseCardTest {
     void cannotTargetNonCreature() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CursedScroll());
 
         harness.setHand(player1, List.of(new EndlessScream()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, artifact.getId(), null))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -112,8 +106,7 @@ class EndlessScreamTest extends BaseCardTest {
     void fizzlesIfTargetRemoved() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
 
         harness.setHand(player1, List.of(new EndlessScream()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

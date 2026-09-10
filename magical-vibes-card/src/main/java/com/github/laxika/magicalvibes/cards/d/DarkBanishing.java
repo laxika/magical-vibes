@@ -24,6 +24,7 @@ import java.util.Set;
 @CardRegistration(set = "TPR", collectorNumber = "92")
 @CardRegistration(set = "CST", collectorNumber = "23")
 @CardRegistration(set = "ME2", collectorNumber = "84")
+@CardRegistration(set = "DDC", collectorNumber = "50")
 public class DarkBanishing extends Card {
 
     public DarkBanishing() {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BayouDragonfly;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChargingRhino.class, GrizzlyBears.class})
+@CardUsed({ChargingRhino.class, BayouDragonfly.class})
 class ChargingRhinoTest extends BaseCardTest {
 
     @Test
@@ -22,7 +22,7 @@ class ChargingRhinoTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new ChargingRhino());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BayouDragonfly());
 
         prepareDeclareBlockers();
 
@@ -37,8 +37,8 @@ class ChargingRhinoTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new ChargingRhino());
         attacker.setAttacking(true);
 
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new BayouDragonfly());
+        addCreatureReady(player2, new BayouDragonfly());
 
         prepareDeclareBlockers();
 
@@ -51,15 +51,37 @@ class ChargingRhinoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Charging Rhino can be blocked by one creature")
+    void eachAttackerCanBeBlockedByOneCreature() {
+        Permanent firstAttacker = addCreatureReady(player1, new ChargingRhino());
+        firstAttacker.setAttacking(true);
+        Permanent secondAttacker = addCreatureReady(player1, new ChargingRhino());
+        secondAttacker.setAttacking(true);
+
+        Permanent firstBlocker = addCreatureReady(player2, new BayouDragonfly());
+        Permanent secondBlocker = addCreatureReady(player2, new BayouDragonfly());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1)
+        ));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Charging Rhino's block limit applies only to Charging Rhino")
     void blockLimitAppliesOnlyToChargingRhino() {
         Permanent rhino = addCreatureReady(player1, new ChargingRhino());
         rhino.setAttacking(true);
-        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherAttacker = addCreatureReady(player1, new BayouDragonfly());
         otherAttacker.setAttacking(true);
 
-        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent firstBlocker = addCreatureReady(player2, new BayouDragonfly());
+        Permanent secondBlocker = addCreatureReady(player2, new BayouDragonfly());
 
         prepareDeclareBlockers();
 

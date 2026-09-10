@@ -467,6 +467,16 @@ public class DamagePreventionService {
                     gameData, damageSource, permanent, isCombatDamage)) {
                 return 0;
             }
+            if (damageSource != null
+                    && gameQueryService.isArtifactDamageToEnchantedCreaturePrevented(
+                    gameData, permanent, damageSource, null)) {
+                return 0;
+            }
+            if (damageSource != null
+                    && gameQueryService.isArtifactDamageToSelfPrevented(
+                    gameData, permanent, damageSource, null)) {
+                return 0;
+            }
             if (gameQueryService.isCreatureSourceDamageToSelfPrevented(
                     gameData, permanent, null, damageSource, isCombatDamage)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
@@ -1652,6 +1662,11 @@ public class DamagePreventionService {
                 it.remove();
                 continue;
             }
+            if (shield.isUnlimited() && !gameData.playerIds.contains(shield.redirectTargetId())
+                    && !gameQueryService.isCreature(gameData,
+                    gameQueryService.findPermanentById(gameData, shield.redirectTargetId()))) {
+                continue;
+            }
 
             if (shield.isNextEvent()) {
                 // Next-event (Jade Monolith, Mirrorwood Treefolk): redirect all of this one damage event,
@@ -2122,9 +2137,13 @@ public class DamagePreventionService {
                                                     boolean combatDamage) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)
                 || targetId == null || sourceColors == null) return false;
+        Set<CardColor> damageSourceColors = gameQueryService.getDamageSourceColors(gameData, sourceColors);
+        if (damageSourceColors.isEmpty()) {
+            return gameData.colorlessDamagePreventionUntilEndOfTurn.contains(targetId);
+        }
         Set<CardColor> preventedColors = gameData.colorDamagePreventionUntilEndOfTurn.get(targetId);
         if (preventedColors == null || preventedColors.isEmpty()) return false;
-        return gameQueryService.getDamageSourceColors(gameData, sourceColors).stream()
+        return damageSourceColors.stream()
                 .anyMatch(preventedColors::contains);
     }
 

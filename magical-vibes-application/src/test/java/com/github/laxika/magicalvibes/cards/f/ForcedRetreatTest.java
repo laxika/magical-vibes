@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ForcedRetreat.class, Forest.class, ForestBear.class})
 class ForcedRetreatTest extends BaseCardTest {
 
     @Test
@@ -36,8 +38,8 @@ class ForcedRetreatTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Forced Retreat puts target creature on top of its owner's library")
     void resolvingPutsTargetCreatureOnTopOfOwnersLibrary() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new ForestBear());
+        UUID targetId = harness.getPermanentId(player2, "Forest Bear");
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
         harness.setHand(player1, List.of(new ForcedRetreat()));
@@ -48,20 +50,20 @@ class ForcedRetreatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Forest Bear");
+        harness.assertNotInGraveyard(player2, "Forest Bear");
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck).hasSize(deckSizeBefore + 1);
-        assertThat(deck.getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(deck.getFirst().getName()).isEqualTo("Forest Bear");
         harness.assertInGraveyard(player1, "Forced Retreat");
     }
 
     @Test
     @DisplayName("Forced Retreat fizzles if the target is removed before resolution")
     void fizzlesIfTargetRemovedBeforeResolution() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new ForestBear());
+        UUID targetId = harness.getPermanentId(player2, "Forest Bear");
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
         harness.setHand(player1, List.of(new ForcedRetreat()));

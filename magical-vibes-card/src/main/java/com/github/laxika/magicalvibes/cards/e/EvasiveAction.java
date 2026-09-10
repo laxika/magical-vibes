@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "23")
+@CardRegistration(set = "DDE", collectorNumber = "50")
 public class EvasiveAction extends Card {
 
     public EvasiveAction() {

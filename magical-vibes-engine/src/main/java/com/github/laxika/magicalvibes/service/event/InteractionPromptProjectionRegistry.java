@@ -93,6 +93,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectExileInstantOrSorcerySpellCostChoice);
         register(PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice.class,
                 this::projectPutCardExiledWithSourceIntoGraveyardCostChoice);
+        register(PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice.class,
+                this::projectPutOpponentOwnedExiledCardIntoGraveyardCostChoice);
         register(PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
                 this::projectBrilliantUltimatumPileSeparationChoice);
         register(PendingInteraction.BrilliantUltimatumPileChoice.class,
@@ -222,6 +224,12 @@ public class InteractionPromptProjectionRegistry {
                 this::projectShuffleCardsFromOutsideGameChoice);
         register(PendingInteraction.FaceUpExiledCardChoice.class,
                 this::projectFaceUpExiledCardChoice);
+        register(PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice.class,
+                this::projectOpponentOwnedExiledCardToGraveyardChoice);
+        register(PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice.class,
+                this::projectTwoOpponentOwnedExiledCardsToGraveyardChoice);
+        register(PendingInteraction.OblivionSowerLandChoice.class,
+                this::projectOblivionSowerLandChoice);
         register(PendingInteraction.ETBExiledCardTargetChoice.class,
                 this::projectETBExiledCardTargetChoice);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
@@ -468,6 +476,16 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
                 "Choose a card exiled with this permanent to put into its owner's graveyard as an activation cost.");
+    }
+
+    private InteractionPromptMessage projectPutOpponentOwnedExiledCardIntoGraveyardCostChoice(
+            GameData gameData,
+            PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a card an opponent owns from exile to put into that player's graveyard as an activation cost.");
     }
 
     private InteractionPromptMessage projectBrilliantUltimatumPileSeparationChoice(
@@ -1317,6 +1335,33 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "You may put a face-up exiled card they own into their graveyard.");
+    }
+
+    private InteractionPromptMessage projectOpponentOwnedExiledCardToGraveyardChoice(
+            GameData gameData, PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "You may put a card an opponent owns from exile into that player's graveyard.");
+    }
+
+    private InteractionPromptMessage projectTwoOpponentOwnedExiledCardsToGraveyardChoice(
+            GameData gameData, PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                2,
+                "You may put two cards your opponents own from exile into their owners' graveyards.");
+    }
+
+    private InteractionPromptMessage projectOblivionSowerLandChoice(
+            GameData gameData, PendingInteraction.OblivionSowerLandChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                interaction.validCardIds().size(),
+                "You may put any number of land cards they own from exile onto the battlefield.");
     }
 
     private InteractionPromptMessage projectETBExiledCardTargetChoice(

@@ -65,7 +65,7 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
 
         if (!hasValidPermanent) {
             if (sourcePermanent != null) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
                 
                 gameLogService.append(gameData, GameLog.builder().text(playerName + " controls no " + typeName + "s. ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (no {}s to return)", gameData.id, sourceCard.getName(), typeName);

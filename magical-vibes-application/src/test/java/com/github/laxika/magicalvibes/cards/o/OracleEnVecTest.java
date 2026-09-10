@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Capsize;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OracleEnVec.class, TrainedArmodon.class, Capsize.class})
 class OracleEnVecTest extends BaseCardTest {
 
     private Permanent addReadyOracle() {
@@ -28,7 +32,7 @@ class OracleEnVecTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
     }
 
     private void runEndStep() {
@@ -48,14 +52,27 @@ class OracleEnVecTest extends BaseCardTest {
     @DisplayName("Activating asks the targeted opponent to choose; the chosen creatures are registered for their next turn")
     void chosenCreaturesRegisteredForNextTurn() {
         addReadyOracle();
-        Permanent chosen = addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
+        addCreatureReady(player2, new TrainedArmodon());
 
         activateOracle();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
 
         assertThat(gd.chosenAttackersNextTurn).containsEntry(player2.getId(), Set.of(chosen.getId()));
+    }
+
+    @Test
+    @DisplayName("The opponent may choose zero creatures even when creatures are available")
+    void choosingNoCreaturesRegistersEmptySelection() {
+        addReadyOracle();
+        addCreatureReady(player2, new TrainedArmodon());
+
+        activateOracle();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+
+        assertThat(gd.chosenAttackersNextTurn).containsEntry(player2.getId(), Set.of());
     }
 
     @Test
@@ -72,7 +89,7 @@ class OracleEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("The restriction activates when the chooser's turn begins and the pending entry is consumed")
     void activatesOnChoosersTurn() {
-        Permanent chosen = addCreatureReady(player2, new GrizzlyBears());
+        Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
         gd.chosenAttackersNextTurn.put(player2.getId(), Set.of(chosen.getId()));
 
         advanceTurn();
@@ -85,8 +102,8 @@ class OracleEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("A chosen creature attacks if able while the others can't attack at all")
     void chosenMustAttackOthersCant() {
-        Permanent chosen = addCreatureReady(player2, new GrizzlyBears());
-        Permanent unchosen = addCreatureReady(player2, new GrizzlyBears());
+        Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
+        Permanent unchosen = addCreatureReady(player2, new TrainedArmodon());
         gd.chosenAttackersThisTurn.put(player2.getId(), Set.of(chosen.getId()));
 
         beginDeclareAttackersFor(player2);
@@ -102,7 +119,7 @@ class OracleEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing no creatures locks every creature out of attacking that turn")
     void emptySelectionLocksAllAttackers() {
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new TrainedArmodon());
         gd.chosenAttackersThisTurn.put(player2.getId(), Set.of());
 
         beginDeclareAttackersFor(player2);
@@ -113,7 +130,7 @@ class OracleEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("A chosen creature that didn't attack is destroyed at that turn's end step")
     void chosenCreatureThatDidNotAttackIsDestroyed() {
-        Permanent chosen = addCreatureReady(player2, new GrizzlyBears());
+        Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
         gd.chosenAttackersNextTurn.put(player2.getId(), Set.of(chosen.getId()));
 
         advanceTurn();
@@ -126,14 +143,41 @@ class OracleEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("A chosen creature that attacked survives the end step")
     void chosenCreatureThatAttackedSurvives() {
-        Permanent chosen = addCreatureReady(player2, new GrizzlyBears());
+        Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
         gd.chosenAttackersNextTurn.put(player2.getId(), Set.of(chosen.getId()));
 
         advanceTurn();
-        chosen.setAttackedThisTurn(true);
+        declareAttackers(player2, List.of(0));
         runEndStep();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen);
+    }
+
+    @Test
+    @DisplayName("The end-step destruction can be responded to before it resolves")
+    void endStepDestructionCanBeRespondedTo() {
+        addReadyOracle();
+        Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
+
+        activateOracle();
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+        advanceTurn();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleEndStepTriggers(gd));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Capsize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, chosen.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(chosen);
+        harness.assertInHand(player2, "Trained Armodon");
     }
 
     @Test
@@ -143,5 +187,41 @@ class OracleEnVecTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated during the opponent's turn")
+    void cannotActivateDuringOpponentsTurn() {
+        addReadyOracle();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("during your turn");
+    }
+
+    @Test
+    @DisplayName("Separate resolved abilities preserve both choices for the same next turn")
+    void separateAbilitiesPreserveBothChoices() {
+        addReadyOracle();
+        addReadyOracle();
+        Permanent firstChosen = addCreatureReady(player2, new TrainedArmodon());
+        Permanent secondChosen = addCreatureReady(player2, new TrainedArmodon());
+
+        activateOracle();
+        harness.handleMultiplePermanentsChosen(player2, List.of(firstChosen.getId()));
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(secondChosen.getId()));
+
+        advanceTurn();
+        runEndStep();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .doesNotContain(firstChosen, secondChosen);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .contains(firstChosen.getCard(), secondChosen.getCard());
     }
 }

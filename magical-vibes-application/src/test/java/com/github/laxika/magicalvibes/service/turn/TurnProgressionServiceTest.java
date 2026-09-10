@@ -103,6 +103,17 @@ class TurnProgressionServiceTest {
     }
 
     @Test
+    void resumesOriginalCombatAfterTheInsertedMainPhase() {
+        gd.currentStep = TurnStep.POSTCOMBAT_MAIN;
+        gd.additionalCombatMainPhasePairsReturnStep = TurnStep.BEGINNING_OF_COMBAT;
+
+        turnProgressionService.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.additionalCombatMainPhasePairsReturnStep).isNull();
+    }
+
+    @Test
     void skipsAllCombatsOnlyDuringAffectedNextTurn() {
         gd.skipCombatPhasesNextTurn.add(player2Id);
         turnProgressionService.advanceTurn(gd);

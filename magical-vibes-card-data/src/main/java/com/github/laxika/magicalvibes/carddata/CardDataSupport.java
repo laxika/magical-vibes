@@ -58,6 +58,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Menace", Keyword.MENACE);
         KEYWORD_MAP.put("Indestructible", Keyword.INDESTRUCTIBLE);
         KEYWORD_MAP.put("Convoke", Keyword.CONVOKE);
+        KEYWORD_MAP.put("Devoid", Keyword.DEVOID);
         KEYWORD_MAP.put("Improvise", Keyword.IMPROVISE);
         KEYWORD_MAP.put("Harmonize", Keyword.HARMONIZE);
         KEYWORD_MAP.put("Haste", Keyword.HASTE);
@@ -89,7 +90,6 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
         KEYWORD_MAP.put("Bargain", Keyword.BARGAIN);
         KEYWORD_MAP.put("Converge", Keyword.CONVERGE);
-        KEYWORD_MAP.put("Devoid", Keyword.DEVOID);
         KEYWORD_MAP.put("Undying", Keyword.UNDYING);
         KEYWORD_MAP.put("Persist", Keyword.PERSIST);
         KEYWORD_MAP.put("Increment", Keyword.INCREMENT);

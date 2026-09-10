@@ -88,7 +88,7 @@ public record PendingExileReturn(
                 additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking, returnToGraveyard,
                 timingControllerId, followUpSourceCard, discardControllerCardsEqualToReturnedToughness,
                 plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkers,
-                Set.of(), null, 0);
+                Set.of(), null, 0, Map.of());
     }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
@@ -103,7 +103,7 @@ public record PendingExileReturn(
                 additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking, returnToGraveyard,
                 timingControllerId, followUpSourceCard, discardControllerCardsEqualToReturnedToughness,
                 plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkers,
-                Set.of(), counterTypeOnReturn, counterAmountOnReturn);
+                Set.of(), counterTypeOnReturn, counterAmountOnReturn, Map.of());
     }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
@@ -168,14 +168,14 @@ public record PendingExileReturn(
         return new PendingExileReturn(card, controllerId, returnTapped, false, returnStep,
                 plusOnePlusOneCounters, additionalCards, false, false, false, false,
                 null, null, false, plusOnePlusOneCountersOnlyOnCreatures,
-                loyaltyCountersOnPlaneswalkers, Set.of(), null, 0);
+                loyaltyCountersOnPlaneswalkers, Set.of(), null, 0, Map.of());
     }
 
     public static PendingExileReturn withCardsAttachedToPrimary(
             Card card, UUID controllerId, List<Card> additionalCards, Set<UUID> cardsToAttachToPrimary) {
         return new PendingExileReturn(card, controllerId, false, false, TurnStep.END_STEP, 0,
                 additionalCards, false, false, false, false, null, null, false,
-                false, 0, cardsToAttachToPrimary, null, 0);
+                false, 0, cardsToAttachToPrimary, null, 0, Map.of());
     }
 
     public static PendingExileReturn withCountersAndCardsAttachedToPrimary(

@@ -24,11 +24,11 @@ class DawningPuristTest extends BaseCardTest {
         Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
 
         resolveCombat();
-        harness.passBothPriorities();
 
+        harness.handlePermanentChosen(player1, anthem.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultiplePermanentsChosen(player1, List.of(anthem.getId()));
 
         harness.assertNotOnBattlefield(player2, "Glorious Anthem");
         harness.assertInGraveyard(player2, "Glorious Anthem");
@@ -41,6 +41,7 @@ class DawningPuristTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GloriousAnthem());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Glorious Anthem"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -56,10 +57,7 @@ class DawningPuristTest extends BaseCardTest {
         Permanent enemyCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         resolveCombat();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(enemyAnthem.getId())
                 .doesNotContain(ownAnthem.getId(), enemyCreature.getId());
     }

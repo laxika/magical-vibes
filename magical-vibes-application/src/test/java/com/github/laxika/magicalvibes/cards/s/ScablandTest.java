@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Scabland.class)
 class ScablandTest extends BaseCardTest {
 
     @Test
@@ -25,7 +27,7 @@ class ScablandTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findPermanent(player1, "Scabland").isTapped()).isTrue();
     }
@@ -81,6 +83,20 @@ class ScablandTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The colored ability damages only its controller")
+    void coloredAbilityDamagesOnlyController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addScablandReady(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Cannot activate a second mana ability while tapped")
     void cannotActivateWhileTapped() {
         addScablandReady(player1);
@@ -93,9 +109,8 @@ class ScablandTest extends BaseCardTest {
     }
 
     private Permanent addScablandReady(Player player) {
-        Permanent perm = new Permanent(new Scabland());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Scabland());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

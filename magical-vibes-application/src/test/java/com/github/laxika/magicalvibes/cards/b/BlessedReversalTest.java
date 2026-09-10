@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlessedReversal.class, GrizzlyBears.class})
+@CardUsed({BlessedReversal.class, GiantCockroach.class})
 class BlessedReversalTest extends BaseCardTest {
 
     @Test
@@ -89,8 +89,19 @@ class BlessedReversalTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Counts creatures attacking you when the spell resolves")
+    void countsAttackersAtResolution() {
+        Permanent attacker = addAttacker(player2, player1.getId());
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new BlessedReversal(), "{1}{W}");
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
     private Permanent addAttacker(Player player, UUID attackTarget) {
-        Permanent perm = addCreatureReady(player, new GrizzlyBears());
+        Permanent perm = addCreatureReady(player, new GiantCockroach());
         perm.setAttacking(true);
         perm.setAttackTarget(attackTarget);
         return perm;

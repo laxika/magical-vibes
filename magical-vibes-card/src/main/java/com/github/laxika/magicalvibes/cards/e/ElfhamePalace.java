@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "324")
 @CardRegistration(set = "INV", collectorNumber = "322")
+@CardRegistration(set = "DDE", collectorNumber = "64")
 public class ElfhamePalace extends Card {
 
     public ElfhamePalace() {

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.s.SpinedWurm;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HonorGuard.class, SpinedWurm.class})
 class HonorGuardTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -25,7 +26,8 @@ class HonorGuardTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Honor Guard puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new HonorGuard()));
+        HonorGuard guard = new HonorGuard();
+        harness.setHand(player1, List.of(guard));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
@@ -33,19 +35,21 @@ class HonorGuardTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Honor Guard");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(guard);
     }
 
     @Test
     @DisplayName("Resolving Honor Guard puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
-        harness.setHand(player1, List.of(new HonorGuard()));
+        HonorGuard guard = new HonorGuard();
+        harness.setHand(player1, List.of(guard));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Honor Guard");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == guard);
     }
 
     // ===== Activate ability =====
@@ -62,7 +66,7 @@ class HonorGuardTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Honor Guard");
+        assertThat(entry.getCard()).isSameAs(guardPerm.getCard());
         assertThat(entry.getTargetId()).isEqualTo(guardPerm.getId());
     }
 
@@ -127,7 +131,7 @@ class HonorGuardTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Honor Guard");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(guardPerm.getCard());
     }
 
     @Test
@@ -143,7 +147,7 @@ class HonorGuardTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Honor Guard");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
     }
 
     @Test
@@ -213,12 +217,20 @@ class HonorGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate ability with only nonwhite mana")
+    void cannotActivateWithOnlyNonWhiteMana() {
+        addHonorGuardReady(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
     @DisplayName("Cannot activate ability on permanent with no ability")
     void cannotActivateOnPermanentWithNoAbility() {
-        com.github.laxika.magicalvibes.cards.g.GrizzlyBears bear = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
-        Permanent bearPerm = new Permanent(bear);
-        bearPerm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(bearPerm);
+        addCreatureReady(player1, new SpinedWurm());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -234,8 +246,7 @@ class HonorGuardTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("activates Honor Guard's ability"));
+        assertThat(gameLogContains("activates")).isTrue();
     }
 
     @Test
@@ -247,18 +258,13 @@ class HonorGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gets +0/+1"));
+        assertThat(gameLogContains("gets +0/+1")).isTrue();
     }
 
     // ===== Helper methods =====
 
     private Permanent addHonorGuardReady(Player player) {
-        HonorGuard card = new HonorGuard();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HonorGuard());
     }
 }
 

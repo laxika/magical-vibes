@@ -35,10 +35,17 @@ public class MoveCountersFromAllCreaturesToSourceEffectHandler implements Normal
 
         MoveCountersFromAllCreaturesToSourceEffect move =
                 (MoveCountersFromAllCreaturesToSourceEffect) effect;
+        if (gameQueryService.cantHaveCounters(gameData, source)
+                || (move.counterType() == com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE
+                && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source))
+                || (move.counterType() == com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE
+                && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source))) {
+            return;
+        }
         int total = 0;
         for (var battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : new ArrayList<>(battlefield)) {
-                if (!gameQueryService.isCreature(gameData, permanent)) {
+                if (permanent.getId().equals(source.getId()) || !gameQueryService.isCreature(gameData, permanent)) {
                     continue;
                 }
                 int count = permanent.getCounterCount(move.counterType());

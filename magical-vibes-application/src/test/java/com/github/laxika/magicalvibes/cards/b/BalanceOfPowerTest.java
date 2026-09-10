@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,13 +12,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BalanceOfPower.class, Forest.class, GrizzlyBears.class})
+@CardUsed({BalanceOfPower.class, Forest.class})
 class BalanceOfPowerTest extends BaseCardTest {
 
     private void castBalanceOfPower() {
         harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -28,7 +26,7 @@ class BalanceOfPowerTest extends BaseCardTest {
         // Balance of Power is on the stack while resolving, so the caster's hand is empty.
         harness.setHand(player1, List.of(new BalanceOfPower()));
         harness.setHand(player2, List.of(
-                new Forest(), new GrizzlyBears(), new GrizzlyBears()));
+                new Forest(), new Forest(), new Forest()));
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         castBalanceOfPower();
@@ -78,6 +76,22 @@ class BalanceOfPowerTest extends BaseCardTest {
 
         // Opponent 1, controller 3 -> draw 0.
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Counts hand sizes when the spell resolves")
+    void countsHandSizesAtResolution() {
+        harness.setHand(player1, List.of(new BalanceOfPower()));
+        harness.setHand(player2, List.of(new Forest()));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        // The target had one card when cast but three when the spell resolved.
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
     }
 
     @Test

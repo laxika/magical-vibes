@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.d.DisciplesOfTheInferno;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SouthernElephant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,11 +18,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blaze.class, ChandraNalaar.class, GrizzlyBears.class, HowlingMine.class, SerraAngel.class})
+@CardUsed({Blaze.class, ForestBear.class, SouthernElephant.class, Plains.class})
 class BlazeTest extends BaseCardTest {
 
     @Test
@@ -43,36 +44,26 @@ class BlazeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Blaze targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsOnStack() {
-        Permanent grizzlyBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ForestBear());
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, 2, grizzlyBears.getId());
+        UUID targetId = creature.getId();
+        harness.castSorcery(player1, 0, 2, targetId);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getXValue()).isEqualTo(2);
-        assertThat(entry.getTargetId()).isEqualTo(grizzlyBears.getId());
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
     @Test
     @DisplayName("Cannot cast without enough mana for base cost")
     void cannotCastWithoutBaseMana() {
         harness.setHand(player1, List.of(new Blaze()));
-        // No mana at all â€” need at least {R}
+        // No mana at all — need at least {R}
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, player2.getId()))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    @DisplayName("Cannot target a noncreature, nonplaneswalker permanent")
-    void cannotTargetNonCreatureNonPlaneswalkerPermanent() {
-        Permanent howlingMine = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
-        harness.setHand(player1, List.of(new Blaze()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, howlingMine.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -84,8 +75,7 @@ class BlazeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -97,8 +87,7 @@ class BlazeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 5, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 5, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -110,8 +99,7 @@ class BlazeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.setLife(player1, 20);
 
-        harness.castSorcery(player1, 0, 3, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
@@ -123,8 +111,7 @@ class BlazeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -132,70 +119,45 @@ class BlazeTest extends BaseCardTest {
     @Test
     @DisplayName("Deals X damage to target creature, destroying it")
     void dealsXDamageToCreatureDestroysIt() {
-        Permanent grizzlyBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ForestBear());
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, 2, grizzlyBears.getId());
-        harness.passBothPriorities();
+        UUID targetId = creature.getId();
+        harness.castAndResolveSorcery(player1, 0, 2, targetId);
 
-        // Grizzly Bears (2/2) should be destroyed by 2 damage
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Forest Bear (2/2) should be destroyed by 2 damage
+        harness.assertNotOnBattlefield(player2, "Forest Bear");
+        harness.assertInGraveyard(player2, "Forest Bear");
     }
 
     @Test
     @DisplayName("Does not destroy creature with toughness greater than X")
     void doesNotDestroyCreatureWithHigherToughness() {
-        Permanent serraAngel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SouthernElephant());
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 3, serraAngel.getId());
-        harness.passBothPriorities();
+        UUID targetId = creature.getId();
+        harness.castAndResolveSorcery(player1, 0, 3, targetId);
 
-        // Serra Angel (4/4) should survive 3 damage
-        harness.assertOnBattlefield(player2, "Serra Angel");
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+        // Southern Elephant (3/4) should survive 3 damage
+        harness.assertOnBattlefield(player2, "Southern Elephant");
     }
 
+    @CardUsed({ChandraHopesBeacon.class})
     @Test
     @DisplayName("Deals X damage to target planeswalker")
     void dealsXDamageToPlaneswalker() {
-        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
-        chandra.setCounterCount(CounterType.LOYALTY, 5);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraHopesBeacon());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 3, chandra.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, planeswalker.getId());
 
-        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Blaze goes to graveyard after resolution")
-    void goesToGraveyardAfterResolution() {
-        harness.setHand(player1, List.of(new Blaze()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.setLife(player2, 20);
-
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
-
-        harness.assertInGraveyard(player1, "Blaze");
-    }
-
-    @Test
-    @DisplayName("Stack is empty after resolution")
-    void stackIsEmptyAfterResolution() {
-        harness.setHand(player1, List.of(new Blaze()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.setLife(player2, 20);
-
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
-
-        assertThat(gd.stack).isEmpty();
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     @CardUsed({DisciplesOfTheInferno.class, InvasionOfRegatha.class})
@@ -212,7 +174,6 @@ class BlazeTest extends BaseCardTest {
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
     }
 
-    @CardUsed({Plains.class})
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
@@ -226,5 +187,42 @@ class BlazeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(blaze);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+    }
+
+    @Test
+    @DisplayName("Blaze goes to graveyard after resolution")
+    void goesToGraveyardAfterResolution() {
+        Blaze blaze = new Blaze();
+        harness.setHand(player1, List.of(blaze));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(blaze);
+    }
+
+    @Test
+    @DisplayName("Stack is empty after resolution")
+    void stackIsEmptyAfterResolution() {
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @CardUsed(HowlingMine.class)
+    @Test
+    @DisplayName("Cannot target a noncreature, nonplaneswalker permanent")
+    void cannotTargetNonCreatureNonPlaneswalkerPermanent() {
+        Permanent howlingMine = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, howlingMine.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

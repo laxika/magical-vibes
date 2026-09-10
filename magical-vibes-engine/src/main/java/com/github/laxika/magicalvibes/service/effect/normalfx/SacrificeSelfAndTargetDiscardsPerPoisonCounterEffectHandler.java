@@ -44,7 +44,7 @@ public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler impleme
             return;
         }
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, source);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, source);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));
 
         int poisonCounters = gameData.playerPoisonCounters.getOrDefault(targetPlayerId, 0);

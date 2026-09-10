@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(VerdantForce.class)
 class VerdantForceTest extends BaseCardTest {
+
+    private List<Permanent> saprolingTokens(Player player) {
+        return findPermanents(player, "Saproling").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+    }
 
     // ===== Triggering during controller's upkeep =====
 
@@ -24,10 +33,7 @@ class VerdantForceTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        List<Permanent> tokens = battlefield.stream()
-                .filter(p -> p.getCard().isToken())
-                .toList();
+        List<Permanent> tokens = saprolingTokens(player1);
 
         assertThat(tokens).hasSize(1);
         Permanent saproling = tokens.getFirst();
@@ -50,12 +56,8 @@ class VerdantForceTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Token should be on player1's battlefield (the controller), not player2's
-        List<Permanent> p1Tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().isToken())
-                .toList();
-        List<Permanent> p2Tokens = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().isToken())
-                .toList();
+        List<Permanent> p1Tokens = saprolingTokens(player1);
+        List<Permanent> p2Tokens = saprolingTokens(player2);
 
         assertThat(p1Tokens).hasSize(1);
         assertThat(p1Tokens.getFirst().getCard().getName()).isEqualTo("Saproling");
@@ -77,9 +79,7 @@ class VerdantForceTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve trigger
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().isToken())
-                .toList();
+        List<Permanent> tokens = saprolingTokens(player1);
 
         assertThat(tokens).hasSize(2);
     }
@@ -93,12 +93,9 @@ class VerdantForceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VerdantForce());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities(); // resolve first trigger
-        harness.passBothPriorities(); // resolve second trigger
+        resolveAllTriggers();
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().isToken())
-                .toList();
+        List<Permanent> tokens = saprolingTokens(player1);
 
         assertThat(tokens).hasSize(2);
     }

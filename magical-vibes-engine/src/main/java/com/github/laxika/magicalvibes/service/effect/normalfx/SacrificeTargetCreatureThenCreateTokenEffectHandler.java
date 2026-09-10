@@ -40,7 +40,7 @@ public class SacrificeTargetCreatureThenCreateTokenEffectHandler implements Norm
         }
 
         UUID controllerId = gameData.findControllerOf(target);
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(controllerId) + " sacrifices ", target.getCard(), "."));
         log.info("Game {} - {} sacrifices {} for {}", gameData.id,

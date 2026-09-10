@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TrygonPredator.class, FountainOfYouth.class, Cindervines.class, GrizzlyBears.class})
@@ -28,19 +26,18 @@ class TrygonPredatorTest extends BaseCardTest {
         Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.validIds()).containsExactlyInAnyOrder(enemyArtifact.getId(), enemyEnchantment.getId())
                 .doesNotContain(ownArtifact.getId(), enemyCreature.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(enemyEnchantment.getId()));
+        harness.handlePermanentChosen(player1, enemyEnchantment.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Cindervines");
         harness.assertInGraveyard(player2, "Cindervines");
@@ -52,9 +49,10 @@ class TrygonPredatorTest extends BaseCardTest {
     void decliningTriggerDestroysNothing() {
         Permanent predator = addCreatureReady(player1, new TrygonPredator());
         predator.setAttacking(true);
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

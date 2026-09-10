@@ -9,21 +9,23 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MasterDecoy.class, LowlandGiant.class, Forest.class})
 class MasterDecoyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingTargetingCreaturePutsOnStack() {
         addReadyDecoy(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new LowlandGiant());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -39,7 +41,7 @@ class MasterDecoyTest extends BaseCardTest {
     @DisplayName("Activating ability taps Master Decoy")
     void activatingTapsDecoy() {
         Permanent decoy = addReadyDecoy(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new LowlandGiant());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -51,7 +53,7 @@ class MasterDecoyTest extends BaseCardTest {
     @DisplayName("Resolving ability taps target creature")
     void resolvingTapsTargetCreature() {
         addReadyDecoy(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new LowlandGiant());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -64,13 +66,28 @@ class MasterDecoyTest extends BaseCardTest {
     @DisplayName("Can tap own creature")
     void canTapOwnCreature() {
         addReadyDecoy(player1);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new LowlandGiant());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
         harness.passBothPriorities();
 
         assertThat(ownCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target an already tapped creature")
+    void canTargetAlreadyTappedCreature() {
+        addReadyDecoy(player1);
+        Permanent target = addCreatureReady(player2, new LowlandGiant());
+        target.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -89,7 +106,7 @@ class MasterDecoyTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyDecoy(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new LowlandGiant());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -99,12 +116,10 @@ class MasterDecoyTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the turn it enters (summoning sickness)")
     void cannotActivateWhileSummoningSick() {
-        MasterDecoy card = new MasterDecoy();
-        Permanent decoy = new Permanent(card);
+        Permanent decoy = harness.addToBattlefieldAndReturn(player1, new MasterDecoy());
         decoy.setSummoningSick(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(decoy);
 
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new LowlandGiant());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -115,7 +130,7 @@ class MasterDecoyTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyDecoy(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new LowlandGiant());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -131,17 +146,10 @@ class MasterDecoyTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyDecoy(Player player) {
-        MasterDecoy card = new MasterDecoy();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new MasterDecoy());
     }
 
     private Permanent addReadyLand(Player player) {
-        Forest card = new Forest();
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHand
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
@@ -165,6 +166,10 @@ public class TurnProgressionService {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatMainPhasePairs--;
             additionalCombatPhase = true;
+        } else if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN
+                && gameData.additionalCombatMainPhasePairsReturnStep != null) {
+            next = gameData.additionalCombatMainPhasePairsReturnStep;
+            gameData.additionalCombatMainPhasePairsReturnStep = null;
         }
 
         if ((gameData.currentStep == TurnStep.PRECOMBAT_MAIN
@@ -720,6 +725,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(AddManaAtNextMainPhase.class, AddManaAtNextMainPhase::thisTurnOnly);
         gameData.clearDelayedActions(DelayedBlockerBoost.class);
         gameData.clearDelayedActions(DelayedAttackerBoost.class);
+        gameData.clearDelayedActions(DelayedAttackerKeywordGrant.class);
         gameData.clearDelayedActions(DelayedNontokenAttackTokenCreation.class);
         gameData.clearDelayedActions(DelayedAttackTokenCreation.class);
         gameData.clearDelayedActions(DelayedAttackUntap.class);
@@ -782,6 +788,7 @@ public class TurnProgressionService {
         gameData.playersAffectedByMeliraPoisonReplacementThisTurn.clear();
         gameData.creatureTriggeringEffectOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
+        gameData.additionalCombatMainPhasePairsReturnStep = null;
         gameData.additionalCombatPhasesOnly = 0;
         gameData.onlyLandCreaturesCanAttackThisCombat = false;
         gameData.additionalCombatPhasesAfterMain = 0;
