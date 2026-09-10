@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "146")
+@CardRegistration(set = "TD2", collectorNumber = "20")
 public class Bonesplitter extends Card {
 
     public Bonesplitter() {

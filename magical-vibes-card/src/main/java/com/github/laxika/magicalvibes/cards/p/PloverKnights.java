@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
  * Both keywords are loaded from Scryfall; no card-specific engine logic.
  */
 @CardRegistration(set = "LRW", collectorNumber = "35")
+@CardRegistration(set = "DDG", collectorNumber = "20")
 public class PloverKnights extends Card {
 }

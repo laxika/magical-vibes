@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "75")
+@CardRegistration(set = "DDG", collectorNumber = "56")
 public class VoraciousDragon extends Card {
 
     public VoraciousDragon() {
