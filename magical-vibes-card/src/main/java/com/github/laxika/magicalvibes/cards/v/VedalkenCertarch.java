@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "52")
+@CardRegistration(set = "TD2", collectorNumber = "5")
 public class VedalkenCertarch extends Card {
 
     public VedalkenCertarch() {

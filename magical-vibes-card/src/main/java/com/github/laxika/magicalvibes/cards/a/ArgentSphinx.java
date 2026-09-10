@@ -9,6 +9,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "28")
+@CardRegistration(set = "TD2", collectorNumber = "13")
 public class ArgentSphinx extends Card {
 
     public ArgentSphinx() {

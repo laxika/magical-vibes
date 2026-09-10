@@ -492,6 +492,8 @@ public class CombatService {
                         }
                         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
                     }
+                    permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                            gameData, perm, action.amount(), action.placingPlayerId());
                 }
             }
             if (action.alsoTap()) {

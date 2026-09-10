@@ -59,7 +59,7 @@ public class AwardManaOfChosenColorEffectHandler implements NormalEffectHandlerB
         if (source != null && entry.getSourcePermanentId() != null
                 && gameQueryService.isLand(gameData, source)) {
             triggerCollectionService.checkLandTapTriggers(gameData, entry.getControllerId(),
-                    entry.getSourcePermanentId());
+                    entry.getSourcePermanentId(), java.util.Set.of(manaColor));
         }
 
         UUID controllerId = entry.getControllerId();

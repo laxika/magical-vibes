@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCos
 
     private final SacrificePermanentsSequenceCost cost;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
     private final PermanentSacrificeAction sacrificeAction;
     private final List<UUID> chosenSoFar;
     private final UUID sourcePermanentId;
@@ -39,7 +41,7 @@ public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCos
                                                  PredicateEvaluationService predicateEvaluationService,
                                                  PermanentSacrificeAction sacrificeAction,
                                                  List<UUID> chosenSoFar) {
-        this(cost, predicateEvaluationService, sacrificeAction, chosenSoFar, null);
+        this(cost, predicateEvaluationService, null, sacrificeAction, chosenSoFar, null);
     }
 
     public SequencePermanentSacrificeCostHandler(SacrificePermanentsSequenceCost cost,
@@ -47,8 +49,18 @@ public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCos
                                                  PermanentSacrificeAction sacrificeAction,
                                                  List<UUID> chosenSoFar,
                                                  UUID sourcePermanentId) {
+        this(cost, predicateEvaluationService, null, sacrificeAction, chosenSoFar, sourcePermanentId);
+    }
+
+    public SequencePermanentSacrificeCostHandler(SacrificePermanentsSequenceCost cost,
+                                                 PredicateEvaluationService predicateEvaluationService,
+                                                 GameQueryService gameQueryService,
+                                                 PermanentSacrificeAction sacrificeAction,
+                                                 List<UUID> chosenSoFar,
+                                                 UUID sourcePermanentId) {
         this.cost = cost;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.gameQueryService = gameQueryService;
         this.sacrificeAction = sacrificeAction;
         this.chosenSoFar = new ArrayList<>(chosenSoFar == null ? List.of() : chosenSoFar);
         this.sourcePermanentId = sourcePermanentId;
@@ -139,6 +151,8 @@ public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCos
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> !chosenSoFar.contains(p.getId()))
+                .filter(p -> gameQueryService == null
+                        || gameQueryService.canSacrificePermanentForCosts(gameData, p))
                 .toList();
     }
 

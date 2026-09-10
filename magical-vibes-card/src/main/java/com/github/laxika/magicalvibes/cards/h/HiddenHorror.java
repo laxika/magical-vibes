@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "P02", collectorNumber = "75")
 @CardRegistration(set = "6ED", collectorNumber = "137")
 @CardRegistration(set = "WTH", collectorNumber = "72")
+@CardRegistration(set = "PD3", collectorNumber = "2")
 public class HiddenHorror extends Card {
 
     public HiddenHorror() {

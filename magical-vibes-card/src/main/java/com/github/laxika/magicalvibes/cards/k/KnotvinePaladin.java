@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "71")
+@CardRegistration(set = "DDG", collectorNumber = "10")
 public class KnotvinePaladin extends Card {
 
     public KnotvinePaladin() {

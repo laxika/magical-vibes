@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "148")
+@CardRegistration(set = "DDG", collectorNumber = "57")
 @CardRegistration(set = "HOP", collectorNumber = "49")
 public class BogardanRager extends Card {
 

@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "M11", collectorNumber = "156")
 @CardRegistration(set = "M14", collectorNumber = "153")
 @CardRegistration(set = "USG", collectorNumber = "216")
+@CardRegistration(set = "DDG", collectorNumber = "74")
 public class ShivsEmbrace extends Card {
 
     public ShivsEmbrace() {

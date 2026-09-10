@@ -36,6 +36,9 @@ public enum GrantDuration {
      */
     WHILE_SOURCE_ON_BATTLEFIELD,
 
+    /** Lasts for as long as the source permanent remains on the battlefield, regardless of control. */
+    WHILE_SOURCE_REMAINS,
+
     /**
      * No stated duration, so the grant lasts until the end of the game (CR 611.2a) — Nature's Blessing's
      * "that creature gains banding, first strike, or trample". Stamped as an

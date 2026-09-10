@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "165")
+@CardRegistration(set = "TD2", collectorNumber = "17")
 public class Duplicant extends Card {
 
     public Duplicant() {

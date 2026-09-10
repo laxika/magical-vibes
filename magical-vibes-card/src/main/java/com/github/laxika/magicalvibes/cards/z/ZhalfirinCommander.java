@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "49")
 @CardRegistration(set = "TSB", collectorNumber = "18")
+@CardRegistration(set = "DDG", collectorNumber = "13")
 public class ZhalfirinCommander extends Card {
 
     private static final PermanentAllOfPredicate KNIGHT_CREATURE = new PermanentAllOfPredicate(List.of(

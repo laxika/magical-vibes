@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEnd
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WWK", collectorNumber = "142")
+@CardRegistration(set = "DDG", collectorNumber = "36")
 public class SejiriSteppe extends Card {
 
     public SejiriSteppe() {

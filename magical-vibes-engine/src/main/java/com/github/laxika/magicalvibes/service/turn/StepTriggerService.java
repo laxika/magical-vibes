@@ -509,7 +509,8 @@ public class StepTriggerService {
         if (gameData.hasDelayedAction(DelayedCreateTokenAtNextUpkeep.class)) {
             List<DelayedCreateTokenAtNextUpkeep> pendingTokens = gameData.drainDelayedActions(
                     DelayedCreateTokenAtNextUpkeep.class,
-                    action -> action.controllerId().equals(gameData.activePlayerId));
+                    action -> action.anyPlayerNextUpkeep()
+                            || action.controllerId().equals(gameData.activePlayerId));
             for (DelayedCreateTokenAtNextUpkeep action : pendingTokens) {
                 int amount = amountEvaluationService.evaluate(gameData, action.tokenEffect().amount(),
                         new AmountContext(action.controllerId(), null, null, 0, 0));
