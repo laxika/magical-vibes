@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Mawcor.class, GrizzlyBears.class, Island.class, LlanowarElves.class})
 class MawcorTest extends BaseCardTest {
 
     @Test
@@ -59,9 +62,7 @@ class MawcorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Mawcor card = new Mawcor();
-        Permanent mawcor = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(mawcor);
+        harness.addToBattlefield(player1, new Mawcor());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -79,11 +80,34 @@ class MawcorTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Cannot target a land")
+    void cannotTargetLand() {
+        addReadyMawcor(player1);
+        harness.addToBattlefield(player2, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player2, "Island")))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability fizzles if target creature is removed before resolution")
+    void fizzlesIfTargetCreatureRemoved() {
+        addReadyMawcor(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.activateAbility(player1, 0, null, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
     private Permanent addReadyMawcor(Player player) {
-        Mawcor card = new Mawcor();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Mawcor());
     }
 }

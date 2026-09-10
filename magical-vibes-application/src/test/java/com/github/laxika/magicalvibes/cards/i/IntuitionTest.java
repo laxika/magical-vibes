@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Intuition.class, TrainedArmodon.class})
 class IntuitionTest extends BaseCardTest {
 
     @Test
@@ -93,13 +96,43 @@ class IntuitionTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("An empty library is still shuffled")
+    void emptyLibraryStillShuffles() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @CardUsed(ObNixilisUnshackled.class)
+    @DisplayName("Searching triggers an opponent's search ability")
+    void searchTriggersOpponentSearchAbilities() {
+        setupAndCast();
+        List<Card> library = setLibrary(3);
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.setLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, library.stream().map(Card::getId).toList());
+        harness.handleMultipleCardsChosen(player2, List.of(library.get(0).getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+    }
+
+    @Test
     @DisplayName("A single-card library needs no opponent choice — that card goes to hand")
     void singleCardLibraryNeedsNoChoice() {
         setupAndCast();
-        Card only = new RagingGoblin();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(only);
+        Card only = new TrainedArmodon();
+        harness.setLibrary(player1, List.of(only));
 
         harness.passBothPriorities();
 
@@ -117,11 +150,9 @@ class IntuitionTest extends BaseCardTest {
     private List<Card> setLibrary(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new GrizzlyBears());
+            cards.add(new TrainedArmodon());
         }
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
         return cards;
     }
 }

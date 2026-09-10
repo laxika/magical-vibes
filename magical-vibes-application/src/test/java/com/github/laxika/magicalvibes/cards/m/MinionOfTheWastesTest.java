@@ -1,17 +1,22 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MinionOfTheWastes.class, HornedTurtle.class})
 class MinionOfTheWastesTest extends BaseCardTest {
 
     private void cast(String lifePaid) {
@@ -55,10 +60,8 @@ class MinionOfTheWastesTest extends BaseCardTest {
 
         cast("0");
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Minion of the Wastes"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Minion of the Wastes"));
+        harness.assertNotOnBattlefield(player1, "Minion of the Wastes");
+        harness.assertInGraveyard(player1, "Minion of the Wastes");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
@@ -71,5 +74,32 @@ class MinionOfTheWastesTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("0", "1", "2", "3", "4");
+    }
+
+    @Test
+    @DisplayName("Trample assigns excess combat damage after lethal damage to its blocker")
+    void trampleDealsExcessCombatDamage() {
+        harness.setLife(player2, 20);
+
+        cast("5");
+        Permanent minion = findPermanent(player1, "Minion of the Wastes");
+        minion.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new HornedTurtle());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 4,
+                player2.getId(), 1
+        ));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertNotOnBattlefield(player2, "Horned Turtle");
+        harness.assertOnBattlefield(player1, "Minion of the Wastes");
+        assertThat(gqs.getEffectivePower(gd, minion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, minion)).isEqualTo(5);
     }
 }

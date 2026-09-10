@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LotusPetal;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Recycle.class, Forest.class, Mountain.class, LotusPetal.class})
 class RecycleTest extends BaseCardTest {
 
     @Test
@@ -41,12 +41,11 @@ class RecycleTest extends BaseCardTest {
     @DisplayName("Casting a spell draws a card")
     void castingSpellDraws() {
         harness.addToBattlefield(player1, new Recycle());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, new ArrayList<>(List.of(new LotusPetal())));
 
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castCreature(player1, 0);
+        harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
@@ -80,12 +79,11 @@ class RecycleTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, new ArrayList<>(List.of(new Opt())));
-        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.setHand(player2, new ArrayList<>(List.of(new LotusPetal())));
 
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.castInstant(player2, 0);
+        harness.castArtifact(player2, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
@@ -99,7 +97,7 @@ class RecycleTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new Forest(), new Mountain()
+                new Forest(), new Forest(), new Mountain(), new Mountain()
         )));
 
         gs.advanceStep(gd);
@@ -117,7 +115,7 @@ class RecycleTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Mountain()
         )));
 

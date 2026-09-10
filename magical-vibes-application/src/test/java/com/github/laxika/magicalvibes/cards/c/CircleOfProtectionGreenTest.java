@@ -1,9 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
@@ -21,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionGreen.class, BalduvianBears.class, ZuranSpellcaster.class, Hurricane.class, GrizzlyBears.class, MerfolkOfThePearlTrident.class})
+@CardUsed({CircleOfProtectionGreen.class, BalduvianBears.class, ZuranSpellcaster.class, Hurricane.class,
+        CentaurArcher.class})
 class CircleOfProtectionGreenTest extends BaseCardTest {
 
     @Test
@@ -52,6 +49,22 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).contains(greenSource.getId()).doesNotContain(nonGreenSource.getId());
+    }
+
+    @Test
+    @DisplayName("Multicolored sources with green in their colors are valid choices")
+    void multicoloredGreenSourceIsValidChoice() {
+        addReadyCircle(player1);
+        Permanent redGreenSource = addCreatureReady(player2, new CentaurArcher());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(redGreenSource.getId());
     }
 
     @Test
@@ -122,7 +135,7 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("No permanents on the battlefield"));
+        assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
     @Test

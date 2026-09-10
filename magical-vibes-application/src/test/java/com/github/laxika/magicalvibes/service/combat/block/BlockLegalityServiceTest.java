@@ -31,6 +31,18 @@ import static org.assertj.core.api.Assertions.assertThat;
  * here rather than only surfacing as a wrong list of offered blockers deep inside
  * {@code CombatBlockService.getBlockableCreatureIndices} or the AI's blocker search.
  */
+@CardUsed({
+        AesthirGlider.class,
+        Forest.class,
+        GrizzlyBears.class,
+        LeoninScimitar.class,
+        LightOfDay.class,
+        MaraudingBoneslasher.class,
+        MasakoTheHumorless.class,
+        Pacifism.class,
+        ScatheZombies.class,
+        TrainingDrone.class
+})
 class BlockLegalityServiceTest extends BaseCardTest {
 
     @Test
@@ -107,7 +119,6 @@ class BlockLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(AesthirGlider.class)
     @DisplayName("A face-down creature does not have its printed can't-block restriction")
     void faceDownCreatureCanBlockDespitePrintedRestriction() {
         Permanent glider = addCreatureReady(player2, new AesthirGlider());

@@ -1,17 +1,20 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
+import com.github.laxika.magicalvibes.cards.p.PreyUpon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,6 +25,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BellowingFiend.class, GrizzlyBears.class, HillGiant.class, InvasionOfInnistrad.class,
+        LilianaVess.class, PreyUpon.class})
 class BellowingFiendTest extends BaseCardTest {
 
     @Test
@@ -30,18 +35,15 @@ class BellowingFiendTest extends BaseCardTest {
         Permanent fiend = addCreatureReady(player1, new BellowingFiend());
         fiend.setAttacking(true);
         harness.setLife(player1, 20);
-        harness.setLife(player2, 20);
+        harness.setLife(player2, 30);
 
         blockAttacker(player2, new GrizzlyBears(), 0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage — Fiend deals 3 to the blocker
-        harness.passBothPriorities(); // resolve the triggered ability
+        resolveCombat();
+        resolveAllTriggers();
 
         // 3 damage to the blocker's controller (player2) and 3 damage to Bellowing Fiend's controller (player1).
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(27);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
 
@@ -53,10 +55,7 @@ class BellowingFiendTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // unblocked — 3 combat damage to player2, no creature damaged
+        resolveCombat();
 
         // Only combat damage to the face; the trigger never fires, so player1 loses no life.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -74,15 +73,52 @@ class BellowingFiendTest extends BaseCardTest {
 
         blockAttacker(player2, new GrizzlyBears(), 1); // block the Grizzly Bears (attacker index 1)
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage — Grizzly Bears deals 2 to the blocker
-        harness.passBothPriorities();
+        resolveCombat();
 
         // The Fiend is not the damage source, so neither player takes the punisher damage.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Triggers on noncombat damage to a creature")
+    void triggersOnNoncombatDamageToCreature() {
+        Permanent fiend = addCreatureReady(player1, new BellowingFiend());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 30);
+        harness.setHand(player1, List.of(new PreyUpon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, List.of(fiend.getId(), target.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(27);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Resolves its trigger even when combat damage kills it")
+    void triggerResolvesAfterSourceDies() {
+        Permanent fiend = addCreatureReady(player1, new BellowingFiend());
+        fiend.setAttacking(true);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        blockAttacker(player2, new HillGiant(), 0);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Bellowing Fiend"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Hill Giant"));
     }
 
     /**

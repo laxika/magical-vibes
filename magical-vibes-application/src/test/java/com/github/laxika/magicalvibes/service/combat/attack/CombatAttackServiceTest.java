@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.j.JackalFamiliar;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.k.KeldonBerserker;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
+import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
@@ -260,12 +261,13 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({MagneticWeb.class, MetallicSliver.class})
         @DisplayName("Counter-bearer requirements follow the selected attacker group")
         void counterBearerRequirementFollowsSelectedAttackerGroup() {
             harness.addToBattlefield(player1, new MagneticWeb());
-            Permanent first = addCreatureReady(player1, new GrizzlyBears());
-            Permanent second = addCreatureReady(player1, new GrizzlyBears());
-            Permanent unrelated = addCreatureReady(player1, new GrizzlyBears());
+            Permanent first = addCreatureReady(player1, new MetallicSliver());
+            Permanent second = addCreatureReady(player1, new MetallicSliver());
+            Permanent unrelated = addCreatureReady(player1, new MetallicSliver());
             first.setCounterCount(CounterType.MAGNET, 1);
             second.setCounterCount(CounterType.MAGNET, 1);
 
