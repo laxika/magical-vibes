@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "13")
+@CardRegistration(set = "DDH", collectorNumber = "5")
 public class LoamLion extends Card {
 
     public LoamLion() {

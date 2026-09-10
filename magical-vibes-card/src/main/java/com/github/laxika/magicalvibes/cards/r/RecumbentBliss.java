@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "13")
+@CardRegistration(set = "DDH", collectorNumber = "26")
 public class RecumbentBliss extends Card {
 
     public RecumbentBliss() {

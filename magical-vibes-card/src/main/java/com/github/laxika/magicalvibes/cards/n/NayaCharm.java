@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "180")
+@CardRegistration(set = "DDH", collectorNumber = "29")
 public class NayaCharm extends Card {
 
     public NayaCharm() {

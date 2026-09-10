@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "67")
+@CardRegistration(set = "DDH", collectorNumber = "43")
 public class SurveillingSprite extends Card {
 
     public SurveillingSprite() {

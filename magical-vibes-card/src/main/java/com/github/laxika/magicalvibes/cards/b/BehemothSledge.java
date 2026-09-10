@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ARB", collectorNumber = "65")
+@CardRegistration(set = "DDH", collectorNumber = "28")
 public class BehemothSledge extends Card {
 
     public BehemothSledge() {

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "299")
 @CardRegistration(set = "ICE", collectorNumber = "322")
 @CardRegistration(set = "MRD", collectorNumber = "186")
+@CardRegistration(set = "DDH", collectorNumber = "64")
 public class IcyManipulator extends Card {
 
     public IcyManipulator() {

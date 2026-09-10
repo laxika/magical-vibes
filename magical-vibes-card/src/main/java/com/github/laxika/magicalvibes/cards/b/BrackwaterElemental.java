@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 
 
 @CardRegistration(set = "CON", collectorNumber = "21")
+@CardRegistration(set = "DDH", collectorNumber = "46")
 public class BrackwaterElemental extends Card {
 
     public BrackwaterElemental() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "199")
+@CardRegistration(set = "DDH", collectorNumber = "14")
 public class Briarhorn extends Card {
 
     public Briarhorn() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "201")
+@CardRegistration(set = "DDH", collectorNumber = "49")
 public class DimirCutpurse extends Card {
 
     public DimirCutpurse() {
