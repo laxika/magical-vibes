@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.m.MuckRats;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.b.BrilliantPlan;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.StrategicPlanning;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,13 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Coercion.class, MuckRats.class, Swamp.class})
+@CardUsed({Coercion.class, BrilliantPlan.class, StrategicPlanning.class, Forest.class})
 class CoercionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Caster chooses a card from opponent's hand and it is discarded")
     void choosingCardDiscardsIt() {
-        harness.setHand(player2, List.of(new MuckRats(), new Swamp()));
+        harness.setHand(player2, List.of(new BrilliantPlan(), new StrategicPlanning()));
 
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -38,15 +39,15 @@ class CoercionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertInGraveyard(player2, "Muck Rats");
+        harness.assertInGraveyard(player2, "Brilliant Plan");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        harness.assertInHand(player2, "Swamp");
+        assertThat(gd.playerHands.get(player2.getId()).get(0).getName()).isEqualTo("Strategic Planning");
     }
 
     @Test
     @DisplayName("Any card type is a valid choice, including lands")
     void landsAreValidChoices() {
-        harness.setHand(player2, List.of(new MuckRats(), new Swamp()));
+        harness.setHand(player2, List.of(new BrilliantPlan(), new Forest()));
 
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -58,8 +59,8 @@ class CoercionTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 1);
 
-        harness.assertInGraveyard(player2, "Swamp");
-        harness.assertInHand(player2, "Muck Rats");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInHand(player2, "Brilliant Plan");
     }
 
     @Test

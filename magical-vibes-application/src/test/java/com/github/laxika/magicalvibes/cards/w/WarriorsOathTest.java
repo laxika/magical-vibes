@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WarriorsOath.class, PlatinumAngel.class})
 class WarriorsOathTest extends BaseCardTest {
 
     /** Stops auto-pass at PRECOMBAT_MAIN for both players so turns advance one at a time. */
@@ -30,11 +31,9 @@ class WarriorsOathTest extends BaseCardTest {
     }
 
     private void castWarriorsOath() {
-        harness.setHand(player1, List.of(new WarriorsOath()));
-        harness.addMana(player1, ManaColor.RED, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WarriorsOath(), "{R}{R}");
         harness.passBothPriorities();
     }
 
@@ -105,5 +104,35 @@ class WarriorsOathTest extends BaseCardTest {
 
         // Can't-lose: the trigger resolves but the player stays in the game.
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Each delayed loss waits for the extra turn created by its own spell")
+    void delayedLossesTrackTheirOwnExtraTurns() {
+        enableAutoStop();
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        castWarriorsOath();
+        castWarriorsOath();
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(2);
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd); // -> first extra turn's END_STEP
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd); // -> second extra turn's END_STEP
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 }

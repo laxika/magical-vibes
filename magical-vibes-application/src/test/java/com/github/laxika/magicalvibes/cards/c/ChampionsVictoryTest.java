@@ -1,29 +1,31 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlertShuInfantry;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlertShuInfantry.class, ChampionsVictory.class})
 class ChampionsVictoryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns target attacking creature to its owner's hand")
     void returnsAttacker() {
-        harness.forceActivePlayer(player1);
-        Permanent a1 = addAttackerTargeting(player1, player2);
+        Permanent a1 = addCreatureReady(player1, new AlertShuInfantry());
         harness.setHand(player2, List.of(new ChampionsVictory()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        declareAttackers(player1, List.of(0));
 
         harness.castInstant(player2, 0, List.of(a1.getId()));
         harness.passBothPriorities();
@@ -31,19 +33,17 @@ class ChampionsVictoryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()))
-                .filteredOn(c -> c.getName().equals("Grizzly Bears"))
-                .hasSize(1);
+                .contains(a1.getCard());
     }
 
     @Test
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttacker() {
-        harness.forceActivePlayer(player1);
-        addAttackerTargeting(player1, player2);
-        Permanent idle = idleCreature(player2);
+        addCreatureReady(player1, new AlertShuInfantry());
+        Permanent idle = addCreatureReady(player2, new AlertShuInfantry());
         harness.setHand(player2, List.of(new ChampionsVictory()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        declareAttackers(player1, List.of(0));
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, List.of(idle.getId())))
                 .isInstanceOf(IllegalStateException.class);
@@ -52,10 +52,10 @@ class ChampionsVictoryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast outside the declare attackers step")
     void cannotCastOutsideDeclareAttackers() {
-        harness.forceActivePlayer(player1);
-        Permanent a1 = addAttackerTargeting(player1, player2);
+        Permanent a1 = addCreatureReady(player1, new AlertShuInfantry());
         harness.setHand(player2, List.of(new ChampionsVictory()));
         harness.addMana(player2, ManaColor.BLUE, 1);
+        declareAttackers(player1, List.of(0));
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, List.of(a1.getId())))
@@ -63,19 +63,39 @@ class ChampionsVictoryTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    private Permanent addAttackerTargeting(Player attackerController, Player defender) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        perm.setAttacking(true);
-        perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(attackerController.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Does not return a creature that stops attacking before resolution")
+    void doesNotReturnCreatureThatStopsAttackingBeforeResolution() {
+        Permanent attacker = addCreatureReady(player1, new AlertShuInfantry());
+        harness.setHand(player2, List.of(new ChampionsVictory()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        declareAttackers(player1, List.of(0));
+
+        harness.castInstant(player2, 0, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(attacker.getCard());
     }
 
-    private Permanent idleCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("Cannot cast when only a planeswalker is attacked")
+    void cannotCastWhenOnlyPlaneswalkerIsAttacked() {
+        Permanent attacker = addCreatureReady(player1, new AlertShuInfantry());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player2, List.of(new ChampionsVictory()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId()));
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 }
