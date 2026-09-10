@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "204")
+@CardRegistration(set = "ME2", collectorNumber = "136")
 public class Mudslide extends Card {
 
     public Mudslide() {

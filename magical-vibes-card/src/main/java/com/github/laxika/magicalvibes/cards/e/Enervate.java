@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "84")
 @CardRegistration(set = "ICE", collectorNumber = "67")
+@CardRegistration(set = "ME2", collectorNumber = "47")
 public class Enervate extends Card {
 
     public Enervate() {

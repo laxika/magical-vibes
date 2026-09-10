@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "ICE", collectorNumber = "39")
 @CardRegistration(set = "5ED", collectorNumber = "45")
+@CardRegistration(set = "ME2", collectorNumber = "23")
 public class KjeldoranSkycaptain extends Card {
 
     public KjeldoranSkycaptain() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "5ED", collectorNumber = "62")
 @CardRegistration(set = "ICE", collectorNumber = "52")
+@CardRegistration(set = "ME2", collectorNumber = "35")
 public class ShieldBearer extends Card {
 
     public ShieldBearer() {

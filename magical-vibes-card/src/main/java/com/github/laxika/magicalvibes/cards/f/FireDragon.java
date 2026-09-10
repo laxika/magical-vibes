@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "POR", collectorNumber = "125")
+@CardRegistration(set = "ME2", collectorNumber = "125")
 public class FireDragon extends Card {
 
     public FireDragon() {

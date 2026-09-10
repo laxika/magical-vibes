@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "109")
+@CardRegistration(set = "ME2", collectorNumber = "218")
 public class Roterothopter extends Card {
 
     public Roterothopter() {

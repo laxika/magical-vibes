@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "73")
+@CardRegistration(set = "ME2", collectorNumber = "49")
 public class Iceberg extends Card {
 
     public Iceberg() {

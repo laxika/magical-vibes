@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "73")
 @CardRegistration(set = "FEM", collectorNumber = "153")
+@CardRegistration(set = "ME2", collectorNumber = "177")
 public class SporeFlower extends Card {
 
     public SporeFlower() {

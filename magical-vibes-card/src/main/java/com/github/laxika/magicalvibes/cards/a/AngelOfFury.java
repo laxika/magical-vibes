@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoL
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "7")
+@CardRegistration(set = "ME2", collectorNumber = "2")
 public class AngelOfFury extends Card {
 
     public AngelOfFury() {

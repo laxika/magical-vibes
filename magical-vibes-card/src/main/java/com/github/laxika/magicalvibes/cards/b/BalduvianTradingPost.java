@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "137")
+@CardRegistration(set = "ME2", collectorNumber = "226")
 public class BalduvianTradingPost extends Card {
 
     public BalduvianTradingPost() {

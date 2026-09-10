@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ICE", collectorNumber = "291")
+@CardRegistration(set = "ME2", collectorNumber = "194")
 public class Fumarole extends Card {
 
     public Fumarole() {

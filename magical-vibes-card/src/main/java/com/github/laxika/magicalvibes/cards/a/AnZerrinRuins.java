@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "64")
+@CardRegistration(set = "ME2", collectorNumber = "117")
 public class AnZerrinRuins extends Card {
 
     public AnZerrinRuins() {

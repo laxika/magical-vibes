@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "47")
+@CardRegistration(set = "ME2", collectorNumber = "88")
 public class Dystopia extends Card {
 
     public Dystopia() {

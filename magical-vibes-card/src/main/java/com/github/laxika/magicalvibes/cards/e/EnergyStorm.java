@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "24")
+@CardRegistration(set = "ME2", collectorNumber = "11")
 public class EnergyStorm extends Card {
 
     public EnergyStorm() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "172")
 @CardRegistration(set = "ICE", collectorNumber = "140")
+@CardRegistration(set = "ME2", collectorNumber = "100")
 public class KrovikanFetish extends Card {
 
     public KrovikanFetish() {

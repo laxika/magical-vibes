@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ICE", collectorNumber = "55")
+@CardRegistration(set = "ME2", collectorNumber = "38")
 public class Warning extends Card {
 
     public Warning() {

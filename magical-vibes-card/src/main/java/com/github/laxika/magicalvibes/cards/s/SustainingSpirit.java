@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 
 @CardRegistration(set = "ALL", collectorNumber = "18")
+@CardRegistration(set = "ME2", collectorNumber = "36")
 public class SustainingSpirit extends Card {
 
     public SustainingSpirit() {

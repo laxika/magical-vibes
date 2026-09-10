@@ -10,6 +10,7 @@ import java.util.Set;
 
 @CardRegistration(set = "HML", collectorNumber = "53")
 @CardRegistration(set = "ATH", collectorNumber = "25")
+@CardRegistration(set = "ME2", collectorNumber = "95")
 public class IhsansShade extends Card {
 
     public IhsansShade() {

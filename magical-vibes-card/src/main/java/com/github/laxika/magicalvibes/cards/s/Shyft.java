@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsIndefinitel
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "96")
+@CardRegistration(set = "ME2", collectorNumber = "66")
 public class Shyft extends Card {
 
     public Shyft() {

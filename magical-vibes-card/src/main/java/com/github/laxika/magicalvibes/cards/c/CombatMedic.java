@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "FEM", collectorNumber = "133")
 @CardRegistration(set = "FEM", collectorNumber = "135")
 @CardRegistration(set = "FEM", collectorNumber = "136")
+@CardRegistration(set = "ME2", collectorNumber = "9")
 public class CombatMedic extends Card {
 
     public CombatMedic() {

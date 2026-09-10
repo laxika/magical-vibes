@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "6")
+@CardRegistration(set = "ME2", collectorNumber = "20")
 public class JuniperOrderAdvocate extends Card {
 
     public JuniperOrderAdvocate() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "17")
+@CardRegistration(set = "ME2", collectorNumber = "45")
 public class DeepSpawn extends Card {
 
     public DeepSpawn() {

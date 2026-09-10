@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "ICE", collectorNumber = "305")
+@CardRegistration(set = "ME2", collectorNumber = "199")
 public class WingsOfAesthir extends Card {
 
     public WingsOfAesthir() {

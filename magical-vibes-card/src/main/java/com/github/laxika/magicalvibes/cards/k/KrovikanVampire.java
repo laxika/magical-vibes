@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamagedCreaturesThatDiedUnderControlEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "141")
+@CardRegistration(set = "ME2", collectorNumber = "102")
 public class KrovikanVampire extends Card {
 
     public KrovikanVampire() {

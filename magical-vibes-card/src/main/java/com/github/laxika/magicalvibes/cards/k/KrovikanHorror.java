@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "53")
+@CardRegistration(set = "ME2", collectorNumber = "101")
 public class KrovikanHorror extends Card {
 
     public KrovikanHorror() {

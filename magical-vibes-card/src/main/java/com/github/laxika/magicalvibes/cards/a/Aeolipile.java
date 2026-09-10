@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "81")
+@CardRegistration(set = "ME2", collectorNumber = "202")
 public class Aeolipile extends Card {
 
     public Aeolipile() {

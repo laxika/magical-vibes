@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "326")
+@CardRegistration(set = "ME2", collectorNumber = "212")
 public class JeweledAmulet extends Card {
 
     public JeweledAmulet() {

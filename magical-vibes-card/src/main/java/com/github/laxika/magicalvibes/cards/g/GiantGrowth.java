@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 @CardRegistration(set = "3ED", collectorNumber = "199")
 @CardRegistration(set = "DDD", collectorNumber = "14")
 @CardRegistration(set = "DPA", collectorNumber = "66")
+@CardRegistration(set = "ME2", collectorNumber = "167")
 public class GiantGrowth extends Card {
 
     public GiantGrowth() {

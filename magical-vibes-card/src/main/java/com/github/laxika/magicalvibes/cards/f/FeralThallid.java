@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "69")
+@CardRegistration(set = "ME2", collectorNumber = "161")
 public class FeralThallid extends Card {
 
     public FeralThallid() {

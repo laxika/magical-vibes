@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "68")
+@CardRegistration(set = "ME2", collectorNumber = "121")
 public class Burnout extends Card {
 
     public Burnout() {

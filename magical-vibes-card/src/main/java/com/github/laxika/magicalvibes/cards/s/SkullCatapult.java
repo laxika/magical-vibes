@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "ICE", collectorNumber = "336")
 @CardRegistration(set = "6ED", collectorNumber = "310")
 @CardRegistration(set = "5ED", collectorNumber = "399")
+@CardRegistration(set = "ME2", collectorNumber = "219")
 public class SkullCatapult extends Card {
 
     public SkullCatapult() {

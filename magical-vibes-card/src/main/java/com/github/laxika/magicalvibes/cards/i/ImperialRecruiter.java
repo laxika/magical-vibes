@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "113")
+@CardRegistration(set = "ME2", collectorNumber = "130")
 public class ImperialRecruiter extends Card {
 
     public ImperialRecruiter() {

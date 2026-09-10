@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "54")
+@CardRegistration(set = "ME2", collectorNumber = "69")
 public class TemporalManipulation extends Card {
 
     public TemporalManipulation() {

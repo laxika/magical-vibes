@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "34")
 @CardRegistration(set = "CST", collectorNumber = "34")
+@CardRegistration(set = "ME2", collectorNumber = "21")
 public class KjeldoranEliteGuard extends Card {
 
     public KjeldoranEliteGuard() {

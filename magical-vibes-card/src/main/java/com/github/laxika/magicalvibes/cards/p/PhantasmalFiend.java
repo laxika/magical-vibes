@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "ALL", collectorNumber = "57b")
 @CardRegistration(set = "DKM", collectorNumber = "8a")
 @CardRegistration(set = "DKM", collectorNumber = "8b")
+@CardRegistration(set = "ME2", collectorNumber = "108")
 public class PhantasmalFiend extends Card {
 
     public PhantasmalFiend() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "278")
+@CardRegistration(set = "ME2", collectorNumber = "188")
 public class WoollyMammoths extends Card {
 
     public WoollyMammoths() {

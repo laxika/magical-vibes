@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "339")
+@CardRegistration(set = "ME2", collectorNumber = "222")
 public class SoldeviSimulacrum extends Card {
 
     public SoldeviSimulacrum() {

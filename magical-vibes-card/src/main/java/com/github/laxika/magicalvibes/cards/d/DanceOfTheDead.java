@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "118")
+@CardRegistration(set = "ME2", collectorNumber = "83")
 public class DanceOfTheDead extends Card {
 
     public DanceOfTheDead() {

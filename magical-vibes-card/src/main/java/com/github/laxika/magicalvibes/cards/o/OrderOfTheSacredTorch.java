@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "6ED", collectorNumber = "32")
 @CardRegistration(set = "5ED", collectorNumber = "48")
 @CardRegistration(set = "ICE", collectorNumber = "45")
+@CardRegistration(set = "ME2", collectorNumber = "25")
 public class OrderOfTheSacredTorch extends Card {
 
     public OrderOfTheSacredTorch() {

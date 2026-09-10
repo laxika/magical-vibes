@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "117")
+@CardRegistration(set = "ME2", collectorNumber = "203")
 public class AshnodsCylix extends Card {
 
     public AshnodsCylix() {

@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "36")
 @CardRegistration(set = "FEM", collectorNumber = "11")
 @CardRegistration(set = "FEM", collectorNumber = "155")
+@CardRegistration(set = "ME2", collectorNumber = "16")
 public class IcatianPhalanx extends Card {
 }

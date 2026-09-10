@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "5")
+@CardRegistration(set = "ME2", collectorNumber = "19")
 public class IvoryGargoyle extends Card {
 
     public IvoryGargoyle() {

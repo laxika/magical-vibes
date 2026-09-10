@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "110")
+@CardRegistration(set = "ME2", collectorNumber = "196")
 public class NaturesBlessing extends Card {
 
     public NaturesBlessing() {

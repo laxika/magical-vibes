@@ -13,6 +13,7 @@ import java.util.List;
  * {T}: This creature deals 2 damage to target creature.
  */
 @CardRegistration(set = "ICE", collectorNumber = "303")
+@CardRegistration(set = "ME2", collectorNumber = "198")
 public class StormSpirit extends Card {
 
     public StormSpirit() {

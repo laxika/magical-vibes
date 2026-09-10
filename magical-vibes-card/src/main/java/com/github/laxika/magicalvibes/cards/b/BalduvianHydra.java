@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "173")
+@CardRegistration(set = "ME2", collectorNumber = "118")
 public class BalduvianHydra extends Card {
 
     public BalduvianHydra() {

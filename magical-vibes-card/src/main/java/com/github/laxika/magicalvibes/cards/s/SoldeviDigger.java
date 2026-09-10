@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTopCardOfGraveyardOnBottom
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "131")
+@CardRegistration(set = "ME2", collectorNumber = "221")
 public class SoldeviDigger extends Card {
 
     public SoldeviDigger() {

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ICE", collectorNumber = "58")
+@CardRegistration(set = "ME2", collectorNumber = "40")
 public class BalduvianConjurer extends Card {
 
     public BalduvianConjurer() {

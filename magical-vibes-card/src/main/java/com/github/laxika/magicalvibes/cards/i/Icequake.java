@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
  * Destroy target land. If that land was a snow land, Icequake deals 1 damage to that land's controller.
  */
 @CardRegistration(set = "ICE", collectorNumber = "134")
+@CardRegistration(set = "ME2", collectorNumber = "94")
 public class Icequake extends Card {
 
     public Icequake() {

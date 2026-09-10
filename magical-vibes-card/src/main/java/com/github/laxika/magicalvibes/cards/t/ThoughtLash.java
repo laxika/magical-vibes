@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "39")
+@CardRegistration(set = "ME2", collectorNumber = "70")
 public class ThoughtLash extends Card {
 
     public ThoughtLash() {

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "126")
 @CardRegistration(set = "DKM", collectorNumber = "5")
+@CardRegistration(set = "ME2", collectorNumber = "90")
 public class FoulFamiliar extends Card {
 
     public FoulFamiliar() {

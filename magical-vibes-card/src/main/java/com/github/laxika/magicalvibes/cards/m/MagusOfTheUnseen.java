@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "82")
 @CardRegistration(set = "5ED", collectorNumber = "102")
+@CardRegistration(set = "ME2", collectorNumber = "53")
 public class MagusOfTheUnseen extends Card {
 
     public MagusOfTheUnseen() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "17")
+@CardRegistration(set = "ME2", collectorNumber = "27")
 public class RavagesOfWar extends Card {
 
     public RavagesOfWar() {

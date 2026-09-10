@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "P02", collectorNumber = "45")
+@CardRegistration(set = "ME2", collectorNumber = "64")
 public class SeaDrake extends Card {
 
     public SeaDrake() {

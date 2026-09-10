@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "160")
+@CardRegistration(set = "ME2", collectorNumber = "110")
 public class SongsOfTheDamned extends Card {
 
     public SongsOfTheDamned() {

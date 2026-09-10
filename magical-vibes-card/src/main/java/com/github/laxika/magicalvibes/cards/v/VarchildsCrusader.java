@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "82a")
 @CardRegistration(set = "ALL", collectorNumber = "82b")
+@CardRegistration(set = "ME2", collectorNumber = "152")
 public class VarchildsCrusader extends Card {
 
     public VarchildsCrusader() {

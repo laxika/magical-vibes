@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "190")
+@CardRegistration(set = "ME2", collectorNumber = "128")
 public class GoblinSkiPatrol extends Card {
 
     public GoblinSkiPatrol() {

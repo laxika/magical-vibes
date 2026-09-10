@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "316")
+@CardRegistration(set = "ME2", collectorNumber = "206")
 public class DespoticScepter extends Card {
 
     public DespoticScepter() {

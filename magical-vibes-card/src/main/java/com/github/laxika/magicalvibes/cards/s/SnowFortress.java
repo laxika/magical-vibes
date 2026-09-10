@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "337")
+@CardRegistration(set = "ME2", collectorNumber = "220")
 public class SnowFortress extends Card {
 
     public SnowFortress() {

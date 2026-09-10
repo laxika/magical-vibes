@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "FEM", collectorNumber = "41b")
 @CardRegistration(set = "FEM", collectorNumber = "41c")
 @CardRegistration(set = "FEM", collectorNumber = "121")
+@CardRegistration(set = "ME2", collectorNumber = "106")
 public class Necrite extends Card {
 
     public Necrite() {

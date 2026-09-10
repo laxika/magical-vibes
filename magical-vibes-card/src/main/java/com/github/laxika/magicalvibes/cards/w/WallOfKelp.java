@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HML", collectorNumber = "40")
+@CardRegistration(set = "ME2", collectorNumber = "74")
 public class WallOfKelp extends Card {
 
     public WallOfKelp() {

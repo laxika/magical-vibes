@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FEM", collectorNumber = "78")
+@CardRegistration(set = "ME2", collectorNumber = "182")
 public class TheloniteDruid extends Card {
 
     public TheloniteDruid() {

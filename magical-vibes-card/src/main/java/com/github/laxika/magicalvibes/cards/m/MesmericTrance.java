@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "83")
+@CardRegistration(set = "ME2", collectorNumber = "55")
 public class MesmericTrance extends Card {
 
     public MesmericTrance() {

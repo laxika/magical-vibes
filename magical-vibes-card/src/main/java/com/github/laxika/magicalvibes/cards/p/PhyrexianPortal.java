@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "126")
+@CardRegistration(set = "ME2", collectorNumber = "217")
 public class PhyrexianPortal extends Card {
 
     public PhyrexianPortal() {

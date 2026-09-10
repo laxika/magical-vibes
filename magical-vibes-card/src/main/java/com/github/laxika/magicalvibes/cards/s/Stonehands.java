@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "219")
+@CardRegistration(set = "ME2", collectorNumber = "151")
 public class Stonehands extends Card {
 
     public Stonehands() {

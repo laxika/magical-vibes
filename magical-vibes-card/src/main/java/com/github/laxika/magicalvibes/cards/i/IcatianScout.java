@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "FEM", collectorNumber = "158")
 @CardRegistration(set = "FEM", collectorNumber = "159")
 @CardRegistration(set = "FEM", collectorNumber = "160")
+@CardRegistration(set = "ME2", collectorNumber = "17")
 public class IcatianScout extends Card {
 
     public IcatianScout() {

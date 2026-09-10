@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "37")
+@CardRegistration(set = "ME2", collectorNumber = "89")
 public class EbonPraetor extends Card {
 
     public EbonPraetor() {

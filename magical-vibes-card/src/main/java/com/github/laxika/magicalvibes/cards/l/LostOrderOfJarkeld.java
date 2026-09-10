@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "43")
+@CardRegistration(set = "ME2", collectorNumber = "24")
 public class LostOrderOfJarkeld extends Card {
 
     public LostOrderOfJarkeld() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
  * Destroy target land. If that land was a snow land, you gain 1 life.
  */
 @CardRegistration(set = "ICE", collectorNumber = "268")
+@CardRegistration(set = "ME2", collectorNumber = "183")
 public class Thermokarst extends Card {
 
     public Thermokarst() {

@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "404")
 @CardRegistration(set = "ICE", collectorNumber = "342")
+@CardRegistration(set = "ME2", collectorNumber = "223")
 public class TimeBomb extends Card {
 
     public TimeBomb() {

@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "FEM", collectorNumber = "33b")
 @CardRegistration(set = "FEM", collectorNumber = "33c")
 @CardRegistration(set = "FEM", collectorNumber = "33d")
+@CardRegistration(set = "ME2", collectorNumber = "77")
 public class ArmorThrull extends Card {
 
     public ArmorThrull() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "285")
+@CardRegistration(set = "ME2", collectorNumber = "192")
 public class Earthlink extends Card {
 
     public Earthlink() {

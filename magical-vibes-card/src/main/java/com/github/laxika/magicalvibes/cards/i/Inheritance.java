@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "ALL", collectorNumber = "4")
+@CardRegistration(set = "ME2", collectorNumber = "18")
 public class Inheritance extends Card {
 
     public Inheritance() {

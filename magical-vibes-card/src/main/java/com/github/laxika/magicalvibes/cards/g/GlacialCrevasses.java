@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "187")
+@CardRegistration(set = "ME2", collectorNumber = "127")
 public class GlacialCrevasses extends Card {
 
     public GlacialCrevasses() {

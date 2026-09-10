@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "49")
 @CardRegistration(set = "ICE", collectorNumber = "46")
 @CardRegistration(set = "ATH", collectorNumber = "9")
+@CardRegistration(set = "ME2", collectorNumber = "26")
 public class OrderOfTheWhiteShield extends Card {
 
     public OrderOfTheWhiteShield() {

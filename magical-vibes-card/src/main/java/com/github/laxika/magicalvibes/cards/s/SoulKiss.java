@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "162")
+@CardRegistration(set = "ME2", collectorNumber = "112")
 public class SoulKiss extends Card {
 
     public SoulKiss() {
