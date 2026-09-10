@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SecondChance.class})
 class SecondChanceTest extends BaseCardTest {
 
     @Test
@@ -19,6 +21,19 @@ class SecondChanceTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Second Chance");
         assertThat(gd.extraTurns).containsExactly(player1.getId());
+    }
+
+    @Test
+    void lifeIncreaseBeforeResolutionStopsAbility() {
+        harness.addToBattlefield(player1, new SecondChance());
+        harness.setLife(player1, 5);
+
+        advanceToUpkeep(player1);
+        harness.setLife(player1, 6);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.extraTurns).isEmpty();
     }
 
     @Test

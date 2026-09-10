@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "392")
 @CardRegistration(set = "CHR", collectorNumber = "104")
+@CardRegistration(set = "ATQ", collectorNumber = "58")
 public class ObeliskOfUndoing extends Card {
 
     public ObeliskOfUndoing() {

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.amount.LandsEnteredBattlefieldThisTu
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
@@ -130,6 +132,23 @@ class BattlefieldPlacementServiceTest {
             Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered) {
         target.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
                 enterTappedTypes, simultaneouslyEntered, 0, false, List.of()));
+    }
+
+    @Test
+    void remembersTheOpponentAsThePermanentEnters() {
+        UUID opponentId = UUID.randomUUID();
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(opponentId);
+        Card card = new Card();
+        card.setName("Opponent choice");
+        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect());
+        Permanent entering = new Permanent(card);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, entering);
+
+        assertThat(entering.getRememberedTargetPlayerId()).isEqualTo(opponentId);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -876,5 +895,24 @@ class BattlefieldPlacementServiceTest {
 
             assertThat(battlefield).containsExactly(first, excluded, thrower);
         }
+    }
+
+    @Test
+    @DisplayName("Conditional enters-tapped replacement uses the spell's X value")
+    void conditionalEntersTappedUsesSpellXValue() {
+        Card card = new Card();
+        card.setName("X-dependent Permanent");
+        card.setType(CardType.ARTIFACT);
+        card.addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+                new NotCondition(new SpellXAtLeast(3)), new EntersTappedEffect()));
+
+        Permanent enteringAtTwo = new Permanent(card);
+        putPermanentOntoBattlefield(service, gd, player1Id, enteringAtTwo, 2, false);
+
+        Permanent enteringAtThree = new Permanent(card);
+        putPermanentOntoBattlefield(service, gd, player1Id, enteringAtThree, 3, false);
+
+        assertThat(enteringAtTwo.isTapped()).isTrue();
+        assertThat(enteringAtThree.isTapped()).isFalse();
     }
 }

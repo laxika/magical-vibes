@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "80")
+@CardRegistration(set = "PD2", collectorNumber = "11")
 public class VulshokSorcerer extends Card {
 
     public VulshokSorcerer() {

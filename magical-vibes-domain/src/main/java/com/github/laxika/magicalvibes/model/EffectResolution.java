@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -121,6 +122,16 @@ public final class EffectResolution {
      */
     public static List<CardEffect> resolveEffects(List<CardEffect> rawEffects, Boolean kicked,
                                                   Boolean overloaded, Integer modeIndex) {
+        return resolveEffects(rawEffects, kicked, overloaded, modeIndex, null);
+    }
+
+    /**
+     * Resolves a raw effect list while also selecting the branch of a Teamwork replacement whose
+     * target restriction depends on whether the additional cost was paid.
+     */
+    public static List<CardEffect> resolveEffects(List<CardEffect> rawEffects, Boolean kicked,
+                                                  Boolean overloaded, Integer modeIndex,
+                                                  Boolean teamworkCostPaid) {
         List<CardEffect> resolved = new ArrayList<>(rawEffects.size());
         for (CardEffect effect : rawEffects) {
             if (effect instanceof ConditionalReplacementEffect cre
@@ -129,6 +140,9 @@ public final class EffectResolution {
             } else if (effect instanceof ConditionalReplacementEffect cre
                     && cre.condition() instanceof Kicked && kicked != null) {
                 resolved.add(kicked ? cre.upgradedEffect() : cre.baseEffect());
+            } else if (effect instanceof ConditionalReplacementEffect cre
+                    && cre.condition() instanceof TeamworkCostPaid && teamworkCostPaid != null) {
+                resolved.add(teamworkCostPaid ? cre.upgradedEffect() : cre.baseEffect());
             } else if (effect instanceof ConditionalEffect ce
                     && ce.condition() instanceof Kicked && kicked != null) {
                 if (kicked) {
@@ -138,13 +152,13 @@ public final class EffectResolution {
                 if (coe.choicesRequired() == 1 && coe.choicesMax() == 1) {
                     List<ChooseOneEffect.ChooseOneOption> options = coe.options();
                     if (modeIndex >= 0 && modeIndex < options.size()) {
-                        resolved.addAll(options.get(modeIndex).effects());
+                        resolved.addAll(options.get(modeIndex).effectsForSelection());
                     } else {
                         resolved.add(effect);
                     }
                 } else if (modeIndex < 0) {
                     for (int chosenModeIndex : coe.decodeModeIndices(modeIndex)) {
-                        resolved.addAll(coe.options().get(chosenModeIndex).effects());
+                        resolved.addAll(coe.options().get(chosenModeIndex).effectsForSelection());
                     }
                 } else {
                     resolved.add(effect);

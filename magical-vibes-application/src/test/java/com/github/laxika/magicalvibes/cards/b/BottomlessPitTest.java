@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.FoulImp;
+import com.github.laxika.magicalvibes.cards.f.FoulImp;
 import com.github.laxika.magicalvibes.cards.w.WallOfSouls;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;

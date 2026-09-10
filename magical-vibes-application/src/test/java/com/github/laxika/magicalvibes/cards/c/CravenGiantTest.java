@@ -23,7 +23,7 @@ class CravenGiantTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new HonorGuard());
         attacker.setAttacking(true);
 
-        prepareDeclareBlockers();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

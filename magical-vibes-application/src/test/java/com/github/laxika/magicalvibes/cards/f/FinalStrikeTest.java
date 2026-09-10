@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FinalStrike.class, ChandraBoldPyromancer.class, GrizzlyBears.class, RagingGoblin.class})
 class FinalStrikeTest extends BaseCardTest {
 
     private void addManaForFinalStrike() {
@@ -26,8 +28,7 @@ class FinalStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting sacrifices a creature and stores its power in xValue")
     void castingSacrificesCreatureAndStoresPower() {
-        Permanent sacrifice = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new FinalStrike()));
         addManaForFinalStrike();
@@ -46,8 +47,7 @@ class FinalStrikeTest extends BaseCardTest {
     @DisplayName("Deals damage equal to the sacrificed creature's power to target opponent")
     void dealsDamageToOpponent() {
         harness.setLife(player2, 20);
-        Permanent sacrifice = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new FinalStrike()));
         addManaForFinalStrike();
@@ -62,9 +62,8 @@ class FinalStrikeTest extends BaseCardTest {
     @DisplayName("Damage scales with the sacrificed creature's power including counters")
     void damageIncludesCounters() {
         harness.setLife(player2, 20);
-        Permanent sacrifice = new Permanent(new GrizzlyBears()); // 2/2
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         sacrifice.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // becomes 5/5
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
 
         harness.setHand(player1, List.of(new FinalStrike()));
         addManaForFinalStrike();
@@ -89,8 +88,7 @@ class FinalStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target yourself — only an opponent")
     void cannotTargetSelf() {
-        Permanent sacrifice = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new FinalStrike()));
         addManaForFinalStrike();
@@ -102,10 +100,8 @@ class FinalStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an opponent's creature — only opponent or planeswalker")
     void cannotTargetCreature() {
-        Permanent sacrifice = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
-        Permanent creature = new Permanent(new AirElemental());
-        gd.playerBattlefields.get(player2.getId()).add(creature);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new FinalStrike()));
         addManaForFinalStrike();
@@ -115,11 +111,26 @@ class FinalStrikeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deals damage equal to the sacrificed creature's power to target opponent's planeswalker")
+    void dealsDamageToOpponentsPlaneswalker() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraBoldPyromancer());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+
+        harness.setHand(player1, List.of(new FinalStrike()));
+        addManaForFinalStrike();
+
+        harness.castSorceryWithSacrifice(player1, 0, planeswalker.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("A 1-power sacrificed creature deals 1 damage")
     void oneDamageFromOnePowerCreature() {
         harness.setLife(player2, 20);
-        Permanent sacrifice = new Permanent(new RagingGoblin()); // 1/1
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
 
         harness.setHand(player1, List.of(new FinalStrike()));
         addManaForFinalStrike();

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LEG", collectorNumber = "79")
+@CardRegistration(set = "ME1", collectorNumber = "52")
 public class Telekinesis extends Card {
 
     public Telekinesis() {

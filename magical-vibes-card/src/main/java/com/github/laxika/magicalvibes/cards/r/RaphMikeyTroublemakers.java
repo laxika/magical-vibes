@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestO
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "167")
+@CardRegistration(set = "TMT", collectorNumber = "250")
 public class RaphMikeyTroublemakers extends Card {
 
     public RaphMikeyTroublemakers() {

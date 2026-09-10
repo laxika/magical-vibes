@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.e.ElvenCache;
-import com.github.laxika.magicalvibes.cards.e.Everglades;
-import com.github.laxika.magicalvibes.cards.i.Impulse;
+import com.github.laxika.magicalvibes.cards.m.MuckRats;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,19 +14,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Coercion.class, ElvenCache.class, Impulse.class, Everglades.class})
+@CardUsed({Coercion.class, MuckRats.class, Swamp.class})
 class CoercionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Caster chooses a card from opponent's hand and it is discarded")
     void choosingCardDiscardsIt() {
-        harness.setHand(player2, List.of(new ElvenCache(), new Impulse()));
+        harness.setHand(player2, List.of(new MuckRats(), new Swamp()));
 
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         PendingInteraction.RevealedHandChoice choice =
@@ -40,28 +38,28 @@ class CoercionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertInGraveyard(player2, "Elven Cache");
+        harness.assertInGraveyard(player2, "Muck Rats");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player2.getId()).get(0).getName()).isEqualTo("Impulse");
+        harness.assertInHand(player2, "Swamp");
     }
 
     @Test
     @DisplayName("Any card type is a valid choice, including lands")
     void landsAreValidChoices() {
-        harness.setHand(player2, List.of(new ElvenCache(), new Everglades()));
+        harness.setHand(player2, List.of(new MuckRats(), new Swamp()));
 
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
                 .containsExactly(0, 1);
 
         harness.handleCardChosen(player1, 1);
 
-        harness.assertInGraveyard(player2, "Everglades");
+        harness.assertInGraveyard(player2, "Swamp");
+        harness.assertInHand(player2, "Muck Rats");
     }
 
     @Test
@@ -71,10 +69,11 @@ class CoercionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Coercion");
     }
 
     @Test

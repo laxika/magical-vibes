@@ -70,14 +70,18 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     }
                 }
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(
-                        gameData, entry.getControllerId(), sourceCard.hasType(CardType.CREATURE));
+                List<CardSubtype> tokenSubtypes = sourceCard.getSubtypes() == null
+                        ? new ArrayList<>()
+                        : new ArrayList<>(sourceCard.getSubtypes());
+                if (e.addedSubtype() != null && !tokenSubtypes.contains(e.addedSubtype())) {
+                    tokenSubtypes.add(e.addedSubtype());
+                }
                 AmountContext amountContext = AmountContext.forStackEntry(entry, sourceForRelativeValues);
                 int amount = amountEvaluationService.evaluate(gameData, e.amount(), amountContext);
                 if (amount <= 0) {
                     return;
                 }
-                int totalAmount = amount * tokenMultiplier;
+                int totalAmount = gameQueryService.getTokenCreationAmount(gameData, entry.getControllerId(), amount, tokenSubtypes, sourceCard.hasType(CardType.CREATURE));
                 Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
                 List<Permanent> simultaneouslyEntered = new ArrayList<>();
                 for (int copy = 0; copy < totalAmount; copy++) {
@@ -168,6 +172,18 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                             gameData, entry.getControllerId(), tokenCard);
                     Permanent tokenPermanent = new Permanent(tokenCard);
+
+                    if (e.initialPlusOnePlusOneCounters() > 0
+                            && !gameQueryService.cantHavePlusOnePlusOneCounters(
+                            gameData, tokenPermanent, entry.getControllerId())) {
+                        int initialCounters = gameQueryService.doublePlusOnePlusOneCounters(
+                                gameData, tokenPermanent, entry.getControllerId(),
+                                e.initialPlusOnePlusOneCounters());
+                        if (initialCounters > 0) {
+                            tokenPermanent.setCounterCount(
+                                    CounterType.PLUS_ONE_PLUS_ONE, initialCounters);
+                        }
+                    }
 
                     // Planeswalker tokens enter with loyalty counters and no summoning sickness
                     if (tokenCard.getType() == CardType.PLANESWALKER) {

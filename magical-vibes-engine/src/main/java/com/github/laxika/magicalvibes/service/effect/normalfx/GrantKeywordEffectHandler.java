@@ -109,6 +109,50 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (grant.scope() == GrantScope.TARGETS) {
+            StackEntry triggeringSpell = entry.getTriggeringCardId() == null
+                    ? null
+                    : gameQueryService.findStackEntryByCardId(gameData, entry.getTriggeringCardId());
+            List<UUID> targetIds;
+            if (triggeringSpell == null) {
+                targetIds = entry.targetsForEffect(grant);
+            } else {
+                targetIds = new ArrayList<>();
+                if (triggeringSpell.getTargetId() != null) {
+                    targetIds.add(triggeringSpell.getTargetId());
+                }
+                targetIds.addAll(triggeringSpell.getDeclaredTargetIds());
+            }
+            FilterContext filterContext = resolutionFilterContext(gameData, entry);
+            int count = 0;
+            for (UUID targetId : targetIds) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null
+                        || (grant.filter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(target, grant.filter(), filterContext))) {
+                    continue;
+                }
+                Set<Keyword> grantableKeywords = grantableKeywords(gameData, target, grant.keywords());
+                if (grantableKeywords.isEmpty()) {
+                    continue;
+                }
+                addLegacyBucket(target, grant.duration(), grantableKeywords);
+                gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
+                        entry.getCard().getName(), null, entry.getControllerId(),
+                        new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(),
+                                grant.duration(), grant.grantCondition()),
+                        target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                count++;
+            }
+
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" gives " + formatKeywords(grant.keywords()) + " to " + count
+                            + " target creature(s) " + durationLabel(grant.duration()) + ".").build());
+            log.info("Game {} - {} grants {} to {} target(s)", gameData.id, entry.getCard().getName(),
+                    grant.keywords(), count);
+            return;
+        }
+
         if (grant.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
             UUID targetPlayerId = entry.getTargetId();
             if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
@@ -426,7 +470,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         if (duration != GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
                 && duration != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP
                 && duration != GrantDuration.UNTIL_END_OF_COMBAT) {
-            bucketFor(permanent, duration).addAll(keywords);
+            keywords.stream().filter(keyword -> keyword != Keyword.FLANKING)
+                    .forEach(bucketFor(permanent, duration)::add);
         }
     }
 

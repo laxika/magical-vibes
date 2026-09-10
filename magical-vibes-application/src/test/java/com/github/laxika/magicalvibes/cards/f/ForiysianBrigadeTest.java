@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SerratedBiskelion;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,29 +13,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ForiysianBrigade.class, SerratedBiskelion.class})
 class ForiysianBrigadeTest extends BaseCardTest {
 
     private Permanent addBrigade() {
-        Permanent perm = new Permanent(new ForiysianBrigade());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player2, new ForiysianBrigade());
     }
 
     private void addAttackers(int count) {
         for (int i = 0; i < count; i++) {
-            Permanent atk = new Permanent(new GrizzlyBears());
-            atk.setSummoningSick(false);
+            Permanent atk = addCreatureReady(player1, new SerratedBiskelion());
             atk.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atk);
         }
-    }
-
-    private void enterBlockerDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 
     @Test
@@ -44,7 +33,7 @@ class ForiysianBrigadeTest extends BaseCardTest {
         Permanent brigade = addBrigade();
         int idx = gd.playerBattlefields.get(player2.getId()).indexOf(brigade);
         addAttackers(2);
-        enterBlockerDeclaration();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(idx, 0),
@@ -61,7 +50,7 @@ class ForiysianBrigadeTest extends BaseCardTest {
         Permanent brigade = addBrigade();
         int idx = gd.playerBattlefields.get(player2.getId()).indexOf(brigade);
         addAttackers(3);
-        enterBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(idx, 0),
@@ -77,13 +66,11 @@ class ForiysianBrigadeTest extends BaseCardTest {
     void doesNotGrantAdditionalBlocksToOthers() {
         addBrigade();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = addCreatureReady(player2, new SerratedBiskelion());
         int bearIdx = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
 
         addAttackers(2);
-        enterBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(bearIdx, 0),
@@ -99,7 +86,7 @@ class ForiysianBrigadeTest extends BaseCardTest {
         Permanent brigade = addBrigade();
         int idx = gd.playerBattlefields.get(player2.getId()).indexOf(brigade);
         addAttackers(1);
-        enterBlockerDeclaration();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(idx, 0)));
 
@@ -119,10 +106,7 @@ class ForiysianBrigadeTest extends BaseCardTest {
         Permanent atk1 = attackers.get(0);
         Permanent atk2 = attackers.get(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         // CR 510.1d — a blocker blocking two attackers divides its combat damage among them.
         harness.handleCombatDamageAssigned(player2,

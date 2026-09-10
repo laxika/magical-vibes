@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "114")
 @CardRegistration(set = "TSP", collectorNumber = "136")
+@CardRegistration(set = "DDE", collectorNumber = "30")
+@CardRegistration(set = "DDD", collectorNumber = "54")
 public class TendrilsOfCorruption extends Card {
 
     public TendrilsOfCorruption() {

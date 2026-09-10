@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "189")
 @CardRegistration(set = "ICE", collectorNumber = "158")
+@CardRegistration(set = "ME1", collectorNumber = "82")
 public class Pox extends Card {
 
     public Pox() {

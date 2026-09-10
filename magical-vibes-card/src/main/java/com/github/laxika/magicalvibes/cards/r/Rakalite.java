@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAtEndStepEffe
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "105")
+@CardRegistration(set = "ATQ", collectorNumber = "62")
 public class Rakalite extends Card {
 
     public Rakalite() {

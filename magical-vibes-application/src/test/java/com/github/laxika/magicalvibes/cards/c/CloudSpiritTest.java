@@ -18,15 +18,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({CloudSpirit.class, SkyshroudFalcon.class, SpinedWurm.class})
 class CloudSpiritTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Resolving puts Cloud Spirit onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new CloudSpirit()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CloudSpirit(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -43,8 +38,6 @@ class CloudSpiritTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-
-    // ===== Blocking restriction =====
 
     @Test
     @DisplayName("Cloud Spirit can block a creature with flying")
@@ -87,8 +80,6 @@ class CloudSpiritTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(flying)");
     }
-
-    // ===== Combat =====
 
     @Test
     @DisplayName("Unblocked Cloud Spirit deals 3 damage to defending player")

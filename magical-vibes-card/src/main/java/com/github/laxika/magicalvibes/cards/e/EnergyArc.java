@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ALL", collectorNumber = "106")
+@CardRegistration(set = "ME1", collectorNumber = "144")
 public class EnergyArc extends Card {
 
     public EnergyArc() {

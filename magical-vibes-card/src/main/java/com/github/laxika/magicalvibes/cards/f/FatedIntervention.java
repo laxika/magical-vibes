@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BNG", collectorNumber = "121")
+@CardRegistration(set = "CP1", collectorNumber = "2")
 public class FatedIntervention extends Card {
 
     public FatedIntervention() {

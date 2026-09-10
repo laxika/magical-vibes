@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.CravenGiant;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,18 +16,19 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TidalSurge.class, CravenGiant.class, SkyshroudFalcon.class})
+@CardUsed({TidalSurge.class, CravenGiant.class, SkyshroudFalcon.class, Island.class})
 class TidalSurgeTest extends BaseCardTest {
 
     private void castTidalSurge(List<UUID> targets) {
+        prepareTidalSurge();
+        harness.castAndResolveSorcery(player1, 0, targets);
+    }
+
+    private void prepareTidalSurge() {
         harness.setHand(player1, List.of(new TidalSurge()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, targets);
-        harness.passBothPriorities();
     }
-
-    // ===== Taps three non-flying creatures =====
 
     @Test
     @DisplayName("Taps up to three target creatures without flying")
@@ -41,8 +43,6 @@ class TidalSurgeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .allMatch(Permanent::isTapped);
     }
-
-    // ===== Taps a single creature =====
 
     @Test
     @DisplayName("Can target only one creature")
@@ -65,8 +65,6 @@ class TidalSurgeTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isTrue();
     }
-
-    // ===== Cannot target a creature with flying =====
 
     @Test
     @DisplayName("Cannot target a creature with flying")
@@ -93,8 +91,6 @@ class TidalSurgeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Zero targets is legal =====
-
     @Test
     @DisplayName("Can be cast with no targets")
     void castWithNoTargets() {
@@ -105,5 +101,29 @@ class TidalSurgeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getId().equals(creature.getId()))
                 .noneMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Can tap non-flying creatures controlled by either player without tapping flyers")
+    void tapsValidTargetsRegardlessOfController() {
+        Permanent ownCreature = addCreatureReady(player1, new CravenGiant());
+        Permanent opposingCreature = addCreatureReady(player2, new CravenGiant());
+        Permanent opposingFlyer = addCreatureReady(player2, new SkyshroudFalcon());
+
+        castTidalSurge(List.of(ownCreature.getId(), opposingCreature.getId()));
+
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(opposingCreature.isTapped()).isTrue();
+        assertThat(opposingFlyer.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        UUID islandId = harness.addToBattlefieldAndReturn(player2, new Island()).getId();
+        prepareTidalSurge();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(islandId)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

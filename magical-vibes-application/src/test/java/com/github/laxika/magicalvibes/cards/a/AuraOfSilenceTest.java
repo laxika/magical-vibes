@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AuraOfSilence.class, AngelicChorus.class, AngelsFeather.class, GrizzlyBears.class, Juggernaut.class})
 class AuraOfSilenceTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -26,10 +28,7 @@ class AuraOfSilenceTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Aura of Silence puts it on the stack as an enchantment spell")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new AuraOfSilence()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new AuraOfSilence(), "{1}{W}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -43,10 +42,7 @@ class AuraOfSilenceTest extends BaseCardTest {
     @Test
     @DisplayName("Aura of Silence resolves onto the battlefield")
     void resolvesOntoBattlefield() {
-        harness.setHand(player1, List.of(new AuraOfSilence()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new AuraOfSilence(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -99,11 +95,8 @@ class AuraOfSilenceTest extends BaseCardTest {
     void ownEnchantmentsNotAffected() {
         harness.addToBattlefield(player1, new AuraOfSilence());
 
-        harness.setHand(player1, List.of(new AngelicChorus()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
         // Player1 can cast their own enchantment for normal cost
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new AngelicChorus(), "{3}{W}{W}");
 
         assertThat(harness.getGameData().stack).hasSize(1);
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
@@ -279,11 +272,8 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new AuraOfSilence()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
-
         // 3 mana is enough (no more cost increase)
-        harness.castEnchantment(player2, 0);
+        harness.castFromHand(player2, new AuraOfSilence(), "{1}{W}{W}");
 
         assertThat(harness.getGameData().stack).hasSize(1);
         assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Aura of Silence");
@@ -304,6 +294,22 @@ class AuraOfSilenceTest extends BaseCardTest {
 
         // 2 mana is not enough (needs 2 + 2 = 4)
         assertThatThrownBy(() -> harness.castArtifact(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Aura taxes artifacts cast by the opponent of its controller")
+    void secondPlayerAuraTaxesFirstPlayerArtifact() {
+        harness.addToBattlefield(player2, new AuraOfSilence());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new AngelsFeather()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

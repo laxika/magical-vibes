@@ -310,6 +310,9 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
+            if (ability.triggeringPermanentId() != null && ability.sourceControllerId() != null) {
+                entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
+            }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
             gameData.stack.add(entry);
 
@@ -375,6 +378,9 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
+            if (ability.triggeringPermanentId() != null && ability.sourceControllerId() != null) {
+                entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
+            }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
             entry.setTriggeringCardId(ability.triggeringCardId());
 
@@ -411,7 +417,8 @@ public class MayAbilityHandlerService {
                     && discard.useEntryTarget())) {
                 entry.setNonTargeting(true);
             }
-            if (ability.effects().stream().anyMatch(e -> e instanceof OtherAttackingCreatureReferenceEffect)) {
+            if (ability.effects().stream().anyMatch(e -> e.usesEnteringPermanentReference()
+                    || e instanceof OtherAttackingCreatureReferenceEffect)) {
                 entry.setNonTargeting(true);
             }
             entry.setAttackedTargetId(ability.attackedTargetId());

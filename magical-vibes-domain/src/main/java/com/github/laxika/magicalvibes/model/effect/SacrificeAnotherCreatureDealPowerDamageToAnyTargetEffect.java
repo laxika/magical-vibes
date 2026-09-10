@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 /**
@@ -7,9 +8,9 @@ import java.util.List;
  * creature's power to any target." (Heart-Piercer Manticore's enter trigger; Ziatora, the
  * Incinerator adds a Treasure follow-up.)
  *
- * <p>Placed inside a {@link MayEffect} on {@code ON_ENTER_BATTLEFIELD}. The original enter trigger
- * is not targeted. If the controller accepts and sacrifices another creature, the reflexive
- * triggered ability is created and its any-target is chosen at that point (CR 603.12).
+ * <p>Placed inside a {@link MayEffect} on {@code ON_ENTER_BATTLEFIELD} or another triggered
+ * ability. The original trigger is not targeted. If the controller accepts and sacrifices another
+ * creature, the reflexive triggered ability is created and its target is chosen at that point.
  * The sacrificed creature's effective power is captured before it leaves the battlefield and the
  * source permanent deals that much damage to the chosen target. {@code reflexiveFollowUps} are
  * added to that same reflexive ability, after the damage effect, and only exist if a creature was
@@ -20,14 +21,24 @@ import java.util.List;
  */
 public record SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(
         List<CardEffect> reflexiveFollowUps
-) implements CardEffect {
+, PermanentPredicate targetPredicate) implements CardEffect {
+        public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(
+        List<CardEffect> reflexiveFollowUps
+) {
+            this(reflexiveFollowUps, null);
+        }
+
+
+    public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(PermanentPredicate targetPredicate) {
+        this(List.of(), targetPredicate);
+    }
 
     public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect() {
-        this(List.of());
+        this(List.of(), null);
     }
 
     public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(CardEffect... reflexiveFollowUps) {
-        this(List.of(reflexiveFollowUps));
+        this(List.of(reflexiveFollowUps), null);
     }
 
     public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect {

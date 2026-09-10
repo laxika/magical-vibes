@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "226")
+@CardRegistration(set = "PD2", collectorNumber = "30")
 public class TeeteringPeaks extends Card {
 
     public TeeteringPeaks() {

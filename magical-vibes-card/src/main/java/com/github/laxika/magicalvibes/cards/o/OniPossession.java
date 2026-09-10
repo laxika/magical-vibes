@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHK", collectorNumber = "135")
+@CardRegistration(set = "DDC", collectorNumber = "51")
 public class OniPossession extends Card {
 
     public OniPossession() {

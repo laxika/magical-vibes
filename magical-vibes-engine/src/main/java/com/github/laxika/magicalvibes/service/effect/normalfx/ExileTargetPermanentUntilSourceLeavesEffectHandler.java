@@ -34,8 +34,11 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileTargetPermanentUntilSourceLeavesEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        if (targetIds.isEmpty()) {
             return;
         }
 
@@ -64,27 +67,36 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
             return;
         }
 
-        Card card = target.getOriginalCard();
-        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), targetControllerId);
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
 
-        permanentRemovalService.removePermanentToExile(gameData, target);
+            Card card = target.getOriginalCard();
+            UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), targetControllerId);
 
-        if (e.imprint() && sourcePermanent != null) {
-            gameData.setImprintedCard(sourcePermanent.getCard(), card);
-        }
+            if (!permanentRemovalService.removePermanentToExile(gameData, target)) {
+                continue;
+            }
 
-        gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", entry.getCard(), "."));
-        log.info("Game {} - {} exiles {} until it leaves the battlefield",
-                gameData.id, entry.getCard().getName(), card.getName());
+            if (e.imprint() && sourcePermanent != null) {
+                gameData.setImprintedCard(sourcePermanent.getCard(), card);
+            }
 
-        if (!card.isToken() && sourcePermanent != null) {
-            gameData.addExileReturnOnPermanentLeave(sourcePermanentId, new PendingExileReturn(card, ownerId));
+            gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", entry.getCard(), "."));
+            log.info("Game {} - {} exiles {} until it leaves the battlefield",
+                    gameData.id, entry.getCard().getName(), card.getName());
 
-            var exiledEntry = gameData.findExiledCard(card.getId());
-            if (exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
-                gameData.removeFromExile(card.getId());
-                gameData.addToExile(ownerId, card, sourcePermanentId);
+            if (!card.isToken() && sourcePermanent != null) {
+                gameData.addExileReturnOnPermanentLeave(sourcePermanentId, new PendingExileReturn(card, ownerId));
+
+                var exiledEntry = gameData.findExiledCard(card.getId());
+                if (exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
+                    gameData.removeFromExile(card.getId());
+                    gameData.addToExile(ownerId, card, sourcePermanentId);
+                }
             }
         }
 

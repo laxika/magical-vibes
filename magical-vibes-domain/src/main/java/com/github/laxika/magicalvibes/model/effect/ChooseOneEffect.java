@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Modal spell effect: prompts the controller to choose one of the given options,
@@ -126,6 +127,10 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
                 modeCosts, modeBudget);
     }
 
+    public static ChooseOneEffect upToWithRepeatedModes(List<ChooseOneOption> options, int maxChoices) {
+        return new ChooseOneEffect(options, true, 0, maxChoices, false, true);
+    }
+
     /**
      * Encodes a modal selection for casting. Exact choose-one ({@code choicesRequired == choicesMax == 1})
      * uses a 0-based mode index; any multi-mode or variable-count spell uses a negative bitmask
@@ -215,6 +220,36 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         return -mask;
     }
 
+    /** Encodes an ordered modal selection that may contain repeated mode indices. */
+    public static int encodeRepeatedModeSelectionInRange(int choicesMin, int choicesMax, int optionCount,
+                                                  int... modeIndices) {
+        if (modeIndices.length < choicesMin || modeIndices.length > choicesMax) {
+            throw new IllegalArgumentException(
+                    "Expected between " + choicesMin + " and " + choicesMax + " mode indices");
+        }
+        if (optionCount < 1) {
+            throw new IllegalArgumentException("optionCount must be positive");
+        }
+        long base = optionCount + 1L;
+        long encoded = 1;
+        for (int modeIndex : modeIndices) {
+            if (modeIndex < 0 || modeIndex >= optionCount) {
+                throw new IllegalArgumentException("Invalid mode index: " + modeIndex);
+            }
+            encoded = encoded * base + modeIndex + 1;
+            if (encoded > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("Mode selection is too large to encode");
+            }
+        }
+        return (int) -encoded;
+    }
+
+    public int encodeRepeatedSelection(int... modeIndices) {
+        return variableModeCount()
+                ? encodeRepeatedModeSelectionInRange(choicesRequired, choicesMax, options.size(), modeIndices)
+                : encodeRepeatedModeSelection(options.size(), modeIndices);
+    }
+
     /** Returns the chosen mode indices in card-text order. */
     public List<Integer> decodeModeIndices(int xValue) {
         return decodeModeIndices(xValue, choicesMax);
@@ -250,6 +285,9 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         }
         if (xValue >= 0) {
             throw new IllegalStateException("Invalid mode bitmask: " + xValue);
+        }
+        if (modesMayRepeat && variableModeCount()) {
+            return decodeRepeatedModeIndices(xValue);
         }
         if (modesMayRepeat) {
             long encoded = -(long) xValue;
@@ -314,6 +352,36 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         return choicesMaxCondition == null || additionalModesAllowed ? choicesMax : choicesRequired;
     }
 
+    private List<Integer> decodeRepeatedModeIndices(int xValue) {
+        long encoded = -(long) xValue;
+        if (encoded == 1) {
+            if (choicesRequired > 0) {
+                throw new IllegalStateException("No modes selected");
+            }
+            return List.of();
+        }
+        long base = options.size() + 1L;
+        List<Integer> chosen = new java.util.ArrayList<>();
+        while (encoded > 1) {
+            long digit = encoded % base;
+            if (digit == 0 || digit > options.size()) {
+                throw new IllegalStateException("Invalid repeated mode encoding: " + xValue);
+            }
+            chosen.add((int) digit - 1);
+            encoded /= base;
+        }
+        java.util.Collections.reverse(chosen);
+        if (chosen.size() < choicesRequired || chosen.size() > choicesMax) {
+            throw new IllegalStateException(
+                    "Expected between " + choicesRequired + " and " + choicesMax + " modes, got " + chosen.size());
+        }
+        return chosen;
+    }
+
+    public boolean allowRepeatedModes() {
+        return modesMayRepeat;
+    }
+
     /** True when this modal allows a variable number of modes (e.g. "choose one or more"). */
     public boolean variableModeCount() {
         return choicesMax > choicesRequired;
@@ -347,7 +415,8 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
      */
     public record ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter,
                                   List<TargetFilter> targetFilters, int minTargets, int maxTargets,
-                                  boolean xScaledTargets, String manaCost) {
+                                  boolean xScaledTargets, String manaCost,
+                                  Supplier<List<CardEffect>> effectFactory) {
         public ChooseOneOption {
             if (minTargets < 0) {
                 throw new IllegalArgumentException("minTargets must be >= 0");
@@ -357,25 +426,40 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
             }
         }
 
+        public ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter,
+                               List<TargetFilter> targetFilters, int minTargets, int maxTargets,
+                               boolean xScaledTargets, String manaCost) {
+            this(label, effects, targetFilter, targetFilters, minTargets, maxTargets,
+                    xScaledTargets, manaCost, null);
+        }
+
         public ChooseOneOption(String label, CardEffect effect) {
-            this(label, List.of(effect), null, null, 1, 1, false, null);
+            this(label, List.of(effect), null, null, 1, 1, false, null, null);
         }
 
         public ChooseOneOption(String label, CardEffect effect, TargetFilter targetFilter) {
-            this(label, List.of(effect), targetFilter, null, 1, 1, false, null);
+            this(label, List.of(effect), targetFilter, null, 1, 1, false, null, null);
         }
 
         public ChooseOneOption(String label, List<CardEffect> effects) {
-            this(label, effects, null, null, 1, 1, false, null);
+            this(label, effects, null, null, 1, 1, false, null, null);
         }
 
         public ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter) {
-            this(label, effects, targetFilter, null, 1, 1, false, null);
+            this(label, effects, targetFilter, null, 1, 1, false, null, null);
         }
 
         /** Multi-target mode: one target filter per effect, mapped positionally. */
         public ChooseOneOption(String label, List<CardEffect> effects, List<TargetFilter> targetFilters) {
-            this(label, effects, null, targetFilters, 1, 1, false, null);
+            this(label, effects, null, targetFilters, 1, 1, false, null, null);
+        }
+
+        /** A single-effect mode that creates a fresh effect for each repeated selection. */
+        public static ChooseOneOption withEffectFactory(String label, Supplier<? extends CardEffect> factory,
+                                                        TargetFilter targetFilter) {
+            CardEffect template = factory.get();
+            return new ChooseOneOption(label, List.of(template), targetFilter, null,
+                    1, 1, false, null, () -> List.of(factory.get()));
         }
 
         /**
@@ -383,7 +467,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
          * {@code cap} is only a sanity ceiling; the effective max is {@code min(X, cap)}.
          */
         public static ChooseOneOption upToXTargets(String label, CardEffect effect, TargetFilter filter, int cap) {
-            return new ChooseOneOption(label, List.of(effect), filter, null, 0, cap, true, null);
+            return new ChooseOneOption(label, List.of(effect), filter, null, 0, cap, true, null, null);
         }
 
         /** A mode whose target count is exactly the spell's paid X value. */
@@ -395,7 +479,12 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         /** This mode with its own total mana cost (split-card half / fuse mode). */
         public ChooseOneOption withManaCost(String manaCost) {
             return new ChooseOneOption(label, effects, targetFilter, targetFilters,
-                    minTargets, maxTargets, xScaledTargets, manaCost);
+                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory);
+        }
+
+        /** Returns fresh effects when this mode supports repeated selection. */
+        public List<CardEffect> effectsForSelection() {
+            return effectFactory == null ? effects : effectFactory.get();
         }
 
         /** Backward-compatible accessor for single-effect modes (returns the first effect). */

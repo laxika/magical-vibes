@@ -32,7 +32,7 @@ class SerpentWarriorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 3);
+        harness.assertLife(player1, lifeBefore - 3);
     }
 
     @Test

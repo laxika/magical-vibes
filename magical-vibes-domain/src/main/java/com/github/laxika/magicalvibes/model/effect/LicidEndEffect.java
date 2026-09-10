@@ -8,4 +8,6 @@ package com.github.laxika.magicalvibes.model.effect;
  * activated ability carrying this effect on the Aura-form runtime copy.</p>
  */
 public record LicidEndEffect() implements CardEffect {
+    @Override
+    public boolean isSpecialAction() { return true; }
 }

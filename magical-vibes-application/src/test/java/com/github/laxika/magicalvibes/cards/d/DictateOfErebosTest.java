@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -43,7 +42,7 @@ class DictateOfErebosTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GiantSpider());
 
-        castCruelEdictAt(player1);
+        castDiabolicEdictAt(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -59,7 +58,7 @@ class DictateOfErebosTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GiantSpider());
 
         UUID spiderId = harness.getPermanentId(player2, "Giant Spider");
-        castCruelEdictAt(player1);
+        castDiabolicEdictAt(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -81,18 +80,18 @@ class DictateOfErebosTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DictateOfErebos());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
-    private void castCruelEdictAt(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new CruelEdict()));
+    private void castDiabolicEdictAt(com.github.laxika.magicalvibes.model.Player player) {
+        harness.setHand(player, List.of(new DiabolicEdict()));
         harness.addMana(player, ManaColor.BLACK, 2);
-        harness.castSorcery(player, 0, player1.getId());
+        harness.castInstant(player, 0, player1.getId());
     }
 }

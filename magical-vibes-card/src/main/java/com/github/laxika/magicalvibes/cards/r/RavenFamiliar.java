@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 @CardRegistration(set = "ULG", collectorNumber = "39")
 public class RavenFamiliar extends Card {
 
     public RavenFamiliar() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{2}{U}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)));
     }

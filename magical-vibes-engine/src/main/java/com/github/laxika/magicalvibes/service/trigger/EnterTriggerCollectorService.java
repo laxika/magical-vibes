@@ -236,6 +236,39 @@ public class EnterTriggerCollectorService {
         return enqueueAnyPermanentEnter(match, effect, (TriggerContext.PermanentEnters) ctx);
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED)
+    private boolean handleRoomFullyUnlockedDefault(TriggerMatchContext match, CardEffect effect,
+                                                    TriggerContext ctx) {
+        TriggerContext.RoomFullyUnlocked room = (TriggerContext.RoomFullyUnlocked) ctx;
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    match.permanent().getId(), room.roomPermanentId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            log.info("Game {} - {} triggers when a Room is fully unlocked, awaiting target",
+                    match.gameData().id, match.permanent().getCard().getName());
+            return true;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setTriggeringPermanentId(room.roomPermanentId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers when a Room is fully unlocked",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
             slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleAnyPermanentEnterCardConditional(TriggerMatchContext match,
@@ -361,9 +394,17 @@ public class EnterTriggerCollectorService {
             // The entering permanent rides along for effects phrased around "that creature"
             // (Gruul Ragebeast's fight); target-only effects such as Reaper King's ignore it.
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                        sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId(),
-                        findEnteringPermanentId(match, pe.enteringCard())));
+                UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+                if (sourceCard.getSpellTargets().size() > 1) {
+                    match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                            sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                            match.permanent().getId(), List.of(), 0, 0, List.of(), 0, List.of(),
+                            false, pe.enteringCard().getId(), enteringPermanentId));
+                } else {
+                    match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                            sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                            match.permanent().getId(), enteringPermanentId));
+                }
             }
             logTriggered(match);
             return true;
@@ -745,7 +786,8 @@ public class EnterTriggerCollectorService {
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
                     mayTargetId,
-                    match.permanent().getId());
+                    match.permanent().getId(),
+                    match.markSourceOncePerTurnOnAcceptance());
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect)",
@@ -781,6 +823,10 @@ public class EnterTriggerCollectorService {
     @CollectsTrigger(value = MayEffect.class,
             slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+        if (may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.CONTROLLER
+                || may.targetSpec() != TargetSpec.NONE) {
+            return handleEnterMay(match, may, ctx);
+        }
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
         Permanent enteringPermanent = enteringPermanentId == null
@@ -1078,14 +1124,16 @@ public class EnterTriggerCollectorService {
         }
         Card sourceCard = match.permanent().getCard();
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().stack.add(new StackEntry(
+            StackEntry damageEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(effect)),
                     enteringPermanentId,
-                    match.permanent().getId()));
+                    match.permanent().getId());
+            damageEntry.setNonTargeting(true);
+            match.gameData().stack.add(damageEntry);
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (deal damage to entering creature)",

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "USG", collectorNumber = "144")
+@CardRegistration(set = "DDE", collectorNumber = "11")
 public class OrderOfYawgmoth extends Card {
 
     public OrderOfYawgmoth() {

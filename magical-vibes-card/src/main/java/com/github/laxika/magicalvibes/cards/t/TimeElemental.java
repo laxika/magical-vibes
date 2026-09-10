@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "129")
 @CardRegistration(set = "4ED", collectorNumber = "108")
 @CardRegistration(set = "LEG", collectorNumber = "81")
+@CardRegistration(set = "ME1", collectorNumber = "53")
 public class TimeElemental extends Card {
 
     public TimeElemental() {

@@ -32,7 +32,7 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
 
                 resolveEffect(gd, entry, effect);
 
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
+                verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, source);
             }
 
             @Test
@@ -52,7 +52,7 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.pendingMayAbilities).isNotEmpty();
-                verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+                verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
             }
 
             @Test
@@ -64,7 +64,7 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
 
                 resolveEffect(gd, entry, effect);
 
-        verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+        verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
     }
 
     @Test
@@ -79,7 +79,7 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
 
         resolveEffect(gd, entry, effect);
 
-        verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
+        verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, source);
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 
@@ -99,6 +99,6 @@ class SacrificeUnlessDiscardCardTypeEffectHandlerTest extends AbstractPlayerInte
         resolveEffect(gd, entry, effect);
 
         assertThat(gd.pendingMayAbilities).hasSize(1);
-        verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+        verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
     }
 }

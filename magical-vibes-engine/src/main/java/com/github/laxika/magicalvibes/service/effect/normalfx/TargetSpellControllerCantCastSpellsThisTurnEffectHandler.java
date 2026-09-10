@@ -29,7 +29,7 @@ public class TargetSpellControllerCantCastSpellsThisTurnEffectHandler implements
         if (targetCardId == null) return;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (se.getTargetableId().equals(targetCardId)) {
                 UUID restrictedId = se.getControllerId();
                 gameData.playersSilencedThisTurn.add(restrictedId);
                 gameLogService.append(gameData, GameLog.text(

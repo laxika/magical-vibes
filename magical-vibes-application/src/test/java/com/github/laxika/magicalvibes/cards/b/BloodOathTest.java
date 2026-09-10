@@ -34,7 +34,8 @@ class BloodOathTest extends BaseCardTest {
         assertThat(choice.options()).containsExactlyInAnyOrder(
                 CardType.LAND.name(), CardType.CREATURE.name(), CardType.ENCHANTMENT.name(),
                 CardType.SORCERY.name(), CardType.INSTANT.name(), CardType.ARTIFACT.name(),
-                CardType.PLANESWALKER.name(), CardType.BATTLE.name(), CardType.KINDRED.name());
+                CardType.PLANESWALKER.name(), CardType.BATTLE.name(), CardType.KINDRED.name(),
+                CardType.PLANE.name(), CardType.PHENOMENON.name());
 
         harness.handleListChoice(player1, CardType.CREATURE.name());
 

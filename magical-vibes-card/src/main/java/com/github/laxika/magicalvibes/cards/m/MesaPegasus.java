@@ -10,9 +10,11 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "5ED", collectorNumber = "47")
 @CardRegistration(set = "4ED", collectorNumber = "35")
+@CardRegistration(set = "3ED", collectorNumber = "28")
 @CardRegistration(set = "ITP", collectorNumber = "5")
 @CardRegistration(set = "RQS", collectorNumber = "5")
 @CardRegistration(set = "SUM", collectorNumber = "28")
+@CardRegistration(set = "ME1", collectorNumber = "20")
 public class MesaPegasus extends Card {
 
     public MesaPegasus() {

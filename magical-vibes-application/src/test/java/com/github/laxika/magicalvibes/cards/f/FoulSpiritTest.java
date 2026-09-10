@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FoulSpirit.class, Forest.class, Mountain.class})
 class FoulSpiritTest extends BaseCardTest {
 
     @Test
@@ -25,8 +27,7 @@ class FoulSpiritTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         // Creature entered, its only land was sacrificed
         harness.assertOnBattlefield(player1, "Foul Spirit");
@@ -43,8 +44,7 @@ class FoulSpiritTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
 
@@ -70,12 +70,27 @@ class FoulSpiritTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
 
         harness.assertOnBattlefield(player1, "Foul Spirit");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's land does not satisfy the sacrifice requirement")
+    void opponentLandDoesNotSatisfyRequirement() {
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.setHand(player1, List.of(new FoulSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Foul Spirit");
+        harness.assertOnBattlefield(player2, "Forest");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
