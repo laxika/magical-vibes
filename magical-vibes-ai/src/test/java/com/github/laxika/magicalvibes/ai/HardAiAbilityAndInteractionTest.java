@@ -218,7 +218,7 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
     @DisplayName("Hard AI activates Prodigal Pyromancer targeting opponent face when no killable creature")
     void activatesPyromancerTargetingOpponentFace() {
         pinLibrariesAndHands();
-        HardAiDecisionEngine ai = createHardAi(player1);
+        HardAiDecisionEngine ai = createHardAi(player1, 25);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);

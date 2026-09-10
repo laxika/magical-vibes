@@ -4131,8 +4131,9 @@ public class AbilityActivationService {
             gameData.abilityActivationUsedTreasureMana.put(permanent.getCard().getId(), false);
         }
 
+        Card paidExiledCardSnapshot = null;
         if (putExiledCardIntoGraveyardCost != null) {
-            payPutCardExiledWithSourceIntoGraveyardCost(
+            paidExiledCardSnapshot = payPutCardExiledWithSourceIntoGraveyardCost(
                     gameData, player, permanent, putExiledCardIntoGraveyardCardId, Zone.EXILE);
         }
         if (putOpponentOwnedExiledCardIntoGraveyard) {
@@ -4672,7 +4673,9 @@ public class AbilityActivationService {
         completeActivationAndRecordWithChosenPermanents(gameData, player, permanent, ability, activationEffects,
                 effectiveXValue, resolutionTargetId, resolutionTargetZone, nonTargeting, effectiveIndex,
                 targetIds, damageAssignments, chosenCostPermanentIds, discardedCardSnapshot,
-                exiledTopCardSnapshot != null ? exiledTopCardSnapshot : exiledGraveyardCardSnapshot, activatedAbilityExiledCardIds);
+                paidExiledCardSnapshot != null ? paidExiledCardSnapshot
+                        : exiledTopCardSnapshot != null ? exiledTopCardSnapshot : exiledGraveyardCardSnapshot,
+                activatedAbilityExiledCardIds);
     }
 
     private void validatePreventDividedDamageAssignments(GameData gameData, UUID playerId,
@@ -7740,7 +7743,7 @@ public class AbilityActivationService {
                 player.getUsername() + " exiles ", entry.getCard(), " from the stack as an activation cost."));
     }
 
-    private void payPutCardExiledWithSourceIntoGraveyardCost(GameData gameData, Player player,
+    private Card payPutCardExiledWithSourceIntoGraveyardCost(GameData gameData, Player player,
                                                               Permanent source, UUID targetId,
                                                               Zone targetZone) {
         if (targetZone != Zone.EXILE || targetId == null) {
@@ -7756,6 +7759,7 @@ public class AbilityActivationService {
         graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), exiled.card(), Zone.EXILE);
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " puts ", exiled.card(), " into its owner's graveyard as an activation cost."));
+        return exiled.card();
     }
 
     private void payPutOpponentOwnedExiledCardIntoGraveyardCost(GameData gameData, Player player,

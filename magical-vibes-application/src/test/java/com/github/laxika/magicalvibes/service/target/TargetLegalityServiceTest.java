@@ -1873,6 +1873,23 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("generated triggers can resolve against activated and triggered abilities")
+        void generatedTriggerRetainsAbilityTarget() {
+            for (StackEntryType type : List.of(StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY)) {
+                Card source = createCreature("Ability source", CardColor.BLUE);
+                StackEntry target = new StackEntry(type, source, player2Id, "Ability",
+                        List.of(), null, Zone.STACK);
+                gd.stack.add(target);
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, new Card(), player1Id,
+                        "Counter trigger", List.of(), target.getTargetableId(), Zone.STACK);
+
+                assertThat(sut.isTargetIllegalOnResolution(gd, trigger)).isFalse();
+                gd.stack.remove(target);
+                assertThat(sut.isTargetIllegalOnResolution(gd, trigger)).isTrue();
+            }
+        }
+
+        @Test
         @DisplayName("returns true when stack target has resolved")
         void returnsTrueWhenStackTargetGone() {
             Card counterSpell = new Card();

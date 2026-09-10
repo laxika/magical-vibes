@@ -3088,12 +3088,26 @@ public class TargetLegalityService {
                             entry.getTriggeringPermanentPowerAtTrigger()), entry.isTeamworkCostPaid()).isEmpty();
         }
         if (entry.getTargetZone() == Zone.STACK) {
+            StackEntry target = findAnyEntryOnStack(gameData, targetId);
+            if (target == null) {
+                return false;
+            }
             TargetFilter primaryFilter = primaryTargetFilter(entry);
             TargetFilter effectiveTargetFilter = primaryFilter instanceof StackEntryPredicateTargetFilter
                     ? targetFilterForCast(primaryFilter, entry.isKicked(), entry.isGiftPromised(), entry.isTeamworkCostPaid())
                     : null;
-            return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter, entry.getControllerId(),
-                    entry.getSourcePermanentSnapshot(), entry.getXValue(), false).isEmpty();
+            // The target was already selected legally. Generated triggers can refer to an
+            // ability without carrying the spell-only filters used during target selection.
+            if (!(effectiveTargetFilter instanceof StackEntryPredicateTargetFilter filter)) {
+                return true;
+            }
+            if (filter.predicate() instanceof StackEntrySharesNameWithCardExiledWithSourcePredicate
+                    && entry.getExiledCostCardSnapshot() != null) {
+                // Paying the cost removed this card from exile; use the card actually paid.
+                return entry.getExiledCostCardSnapshot().getName().equals(target.getCard().getName());
+            }
+            return matchesStackEntryPredicate(gameData, target, filter.predicate(), entry.getControllerId(),
+                    entry.getSourcePermanentSnapshot(), entry.getXValue());
         }
         return isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, primaryTargetFilter(entry));
     }
