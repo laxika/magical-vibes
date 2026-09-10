@@ -616,6 +616,13 @@ public class CombatDamageService {
                         "Unblocked combat damage must be assigned to a single recipient");
             }
         }
+        if (!livingBlockers.isEmpty() && assignsCombatDamageAsThoughUnblocked(gameData, atk)
+                && !assignsAmongDefendingPlayerAndCreatures
+                && !gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)
+                && assignments.getOrDefault(overflowTargetId, 0) > 0
+                && assignments.entrySet().stream().anyMatch(e -> !e.getKey().equals(overflowTargetId) && e.getValue() > 0)) {
+            throw new IllegalStateException("Damage assigned as though unblocked must all be assigned to the defending target");
+        }
 
         // Validate trample (CR 510.1c): lethal damage to each blocker is required only as a
         // precondition for assigning damage to the player or planeswalker the creature is
@@ -1425,29 +1432,14 @@ public class CombatDamageService {
                         }
                     }
                     if (may.wrapped() instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
-                        if (damageDealt < destroyEffect.minimumDamage()) {
-                            gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                                    "'s ability does not trigger — less than " + destroyEffect.minimumDamage()
-                                            + " damage dealt."));
-                            continue;
+                        if (damageDealt >= destroyEffect.minimumDamage()) {
+                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                    creature.getCard(), attackerId,
+                                    List.of(new MayEffect(destroyEffect.forDamagedPlayer(defenderId),
+                                            may.prompt(), may.elseEffect(), may.choicePlayer())),
+                                    creature.getId(), attackerId, defenderId));
                         }
-                        List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
-                        boolean hasValidTargets = false;
-                        if (defenderBf != null) {
-                            for (Permanent p : defenderBf) {
-                                if (destroyEffect.predicate() == null
-                                        || predicateEvaluationService.matchesPermanentPredicate(gameData, p, destroyEffect.predicate())) {
-                                    hasValidTargets = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!hasValidTargets) {
-                            gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                                    "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId)
-                                            + " has no valid targets."));
-                            continue;
-                        }
+                        continue;
                     }
                     // Wire the combat damage dealt as the event value for dynamic combat-damage
                     // amounts, such as "draw that many cards" or "deal that much damage".
@@ -1466,34 +1458,15 @@ public class CombatDamageService {
                 CardEffect specialEffect = effect instanceof ConditionalEffect conditional
                         ? conditional.wrapped() : effect;
                 if (specialEffect instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
-                    if (damageDealt < destroyEffect.minimumDamage()) {
-                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                                "'s ability does not trigger — less than " + destroyEffect.minimumDamage()
-                                + " damage dealt."));
-                        continue;
-                    }
-                    List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
-                    boolean hasValidTargets = false;
-                    if (defenderBf != null) {
-                        for (Permanent p : defenderBf) {
-                            if (destroyEffect.predicate() == null
-                                    || predicateEvaluationService.matchesPermanentPredicate(gameData, p, destroyEffect.predicate())) {
-                                hasValidTargets = true;
-                                break;
-                            }
+                    if (damageDealt >= destroyEffect.minimumDamage()) {
+                        CardEffect targeted = destroyEffect.forDamagedPlayer(defenderId);
+                        if (effect instanceof ConditionalEffect conditional) {
+                            targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
                         }
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                creature.getCard(), attackerId, List.of(targeted),
+                                creature.getId(), attackerId, defenderId));
                     }
-                    if (!hasValidTargets) {
-                        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                                "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId)
-                                + " has no valid targets."));
-                        continue;
-                    }
-                    StackEntry destroySe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            creature.getCard().getName() + "'s triggered ability", List.of(effect), defenderId, creature.getId());
-                    destroySe.setNonTargeting(true);
-                    gameData.stack.add(destroySe);
-                    gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
                     continue;
                 }
 
@@ -1644,6 +1617,11 @@ public class CombatDamageService {
                 rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
                 rawEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
                 rawEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                if (!ownerId.equals(defenderId)) {
+                    rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                    rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                    rawEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                }
 
                 // Unwrap EnchantedPermanentConditionalEffect against the enchanted creature that
                 // dealt the damage, so a granted trigger gated on the creature's characteristics
@@ -4065,12 +4043,10 @@ public class CombatDamageService {
     /**
      * Returns {@code true} if the unblocked attacker may redirect its combat damage to a
      * defending creature (e.g. Cunning Giant) and the defending player controls at least one
-     * creature to redirect to. Only applies when attacking a player (not a planeswalker).
+     * creature to redirect to, including when attacking that player's planeswalker.
      */
     private boolean canRedirectUnblockedDamageToDefendingCreature(GameData gameData, Permanent atk, List<Permanent> defBf) {
         if (!assignsUnblockedDamageToDefendingCreature(gameData, atk)) return false;
-        UUID attackTarget = atk.getAttackTarget();
-        if (attackTarget != null && !gameData.playerIds.contains(attackTarget)) return false;
         if (defBf == null) return false;
         for (Permanent p : defBf) {
             if (gameQueryService.isCreature(gameData, p)) return true;

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RathiDragon;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,33 +11,35 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NeedleStorm.class, WindDrake.class, GrizzlyBears.class})
+@CardUsed({NeedleStorm.class, WindDrake.class, RathiDragon.class, TrainedArmodon.class})
 class NeedleStormTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 4 damage to each creature with flying, on both battlefields")
     void dealsFourDamageToFlyingCreatures() {
         harness.addToBattlefield(player1, new WindDrake());
-        harness.addToBattlefield(player2, new WindDrake());
+        Permanent resilientFlyingCreature = harness.addToBattlefieldAndReturn(player2, new RathiDragon());
 
         harness.castFromHand(player1, new NeedleStorm(), "{2}{G}");
 
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Wind Drake");
-        harness.assertNotOnBattlefield(player2, "Wind Drake");
+        harness.assertOnBattlefield(player2, "Rathi Dragon");
+        assertThat(resilientFlyingCreature.getMarkedDamage()).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Does not damage non-flying creatures")
     void doesNotDamageNonFlyingCreatures() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent groundCreature = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
 
         harness.castFromHand(player1, new NeedleStorm(), "{2}{G}");
 
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Trained Armodon");
+        assertThat(groundCreature.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -53,10 +56,8 @@ class NeedleStormTest extends BaseCardTest {
     @Test
     @DisplayName("Deals exactly 4 damage to each surviving flying creature")
     void dealsExactlyFourDamageToEachSurvivingFlyingCreature() {
-        WindDrake player1Card = new WindDrake();
-        player1Card.setToughness(5);
-        WindDrake player2Card = new WindDrake();
-        player2Card.setToughness(5);
+        RathiDragon player1Card = new RathiDragon();
+        RathiDragon player2Card = new RathiDragon();
         Permanent player1Creature = harness.addToBattlefieldAndReturn(player1, player1Card);
         Permanent player2Creature = harness.addToBattlefieldAndReturn(player2, player2Card);
 

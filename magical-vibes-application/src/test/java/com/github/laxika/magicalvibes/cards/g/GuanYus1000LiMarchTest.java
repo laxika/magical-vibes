@@ -1,69 +1,68 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
+import com.github.laxika.magicalvibes.cards.w.WeiInfantry;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
+@CardUsed({GuanYus1000LiMarch.class, ShuFootSoldiers.class, WeiInfantry.class, Plains.class})
 class GuanYus1000LiMarchTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys tapped creatures on both sides")
     void destroysTappedCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent shuFootSoldiers = harness.addToBattlefieldAndReturn(player1, new ShuFootSoldiers());
+        shuFootSoldiers.tap();
+        Permanent weiInfantry = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
+        weiInfantry.tap();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        bears.tap();
-        Permanent elves = findPermanent(player2, "Llanowar Elves");
-        elves.tap();
-
-        harness.setHand(player1, List.of(new GuanYus1000LiMarch()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GuanYus1000LiMarch(), "{4}{W}{W}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Shu Foot Soldiers");
+        harness.assertNotOnBattlefield(player2, "Wei Infantry");
+        harness.assertInGraveyard(player1, "Shu Foot Soldiers");
+        harness.assertInGraveyard(player2, "Wei Infantry");
     }
 
     @Test
     @DisplayName("Untapped creatures are not destroyed")
     void untappedCreaturesSurvive() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ShuFootSoldiers());
 
-        harness.setHand(player1, List.of(new GuanYus1000LiMarch()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GuanYus1000LiMarch(), "{4}{W}{W}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Shu Foot Soldiers");
     }
 
     @Test
     @DisplayName("Indestructible tapped creature survives")
     void indestructibleTappedCreatureSurvives() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent shuFootSoldiers = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        shuFootSoldiers.tap();
+        shuFootSoldiers.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
-        bears.tap();
-        bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
-
-        harness.setHand(player1, List.of(new GuanYus1000LiMarch()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GuanYus1000LiMarch(), "{4}{W}{W}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Shu Foot Soldiers");
+    }
+
+    @Test
+    @DisplayName("Tapped noncreature permanents are not destroyed")
+    void tappedNoncreaturePermanentsSurvive() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        plains.tap();
+
+        harness.castFromHand(player1, new GuanYus1000LiMarch(), "{4}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Plains");
     }
 }

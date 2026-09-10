@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -9,8 +8,7 @@ import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNe
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,8 +25,8 @@ public class DiscardEachPlayerHandAndReturnExiledCardsEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final GraveyardService graveyardService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final DiscardHandEffectHandler discardHandEffectHandler;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,32 +39,11 @@ public class DiscardEachPlayerHandAndReturnExiledCardsEffectHandler
         List<EachPlayerHandExileReturnAtNextEndStep.PlayerCards> players = apnapPlayers(
                 gameData, delayed.players());
         for (var playerCards : players) {
-            discardHand(gameData, entry, playerCards.playerId());
+            if (gameQueryService.canEffectCauseDiscard(gameData, playerCards.playerId(), entry.getControllerId())) {
+                discardHandEffectHandler.discardHand(gameData, playerCards.playerId(),
+                        entry.getControllerId(), entry.getCard().getName());
+            }
             returnCards(gameData, playerCards);
-        }
-    }
-
-    private void discardHand(GameData gameData, StackEntry entry, UUID playerId) {
-        List<Card> hand = gameData.playerHands.get(playerId);
-        List<Card> discarded = hand == null ? List.of() : new ArrayList<>(hand);
-        if (hand != null) {
-            hand.clear();
-        }
-        gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
-
-        for (Card card : discarded) {
-            graveyardService.discardCard(gameData, playerId, card);
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
-        }
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        if (discarded.isEmpty()) {
-            gameLogService.append(gameData,
-                    GameLog.text(playerName + " has no cards to discard (" + entry.getCard().getName() + ")."));
-        } else {
-            gameLogService.append(gameData, GameLog.text(playerName + " discards their hand ("
-                    + discarded.size() + " card" + (discarded.size() != 1 ? "s" : "") + ") ("
-                    + entry.getCard().getName() + ")."));
         }
     }
 

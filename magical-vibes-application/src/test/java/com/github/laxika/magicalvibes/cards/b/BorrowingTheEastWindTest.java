@@ -1,64 +1,59 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.ShuCavalry;
+import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BorrowingTheEastWind.class, ShuCavalry.class, ShuFootSoldiers.class})
 class BorrowingTheEastWindTest extends BaseCardTest {
-
-    /** A 2/2 creature with horsemanship for test purposes. */
-    private static Card horsemanshipCreature() {
-        Card card = new Card();
-        card.setName("Wu Scout");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{2}{U}");
-        card.setColor(CardColor.BLUE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setKeywords(Set.of(Keyword.HORSEMANSHIP));
-        return card;
-    }
 
     @Test
     @DisplayName("Deals X damage to creatures with horsemanship")
     void damagesHorsemanshipCreatures() {
-        harness.addToBattlefield(player2, horsemanshipCreature());
+        harness.addToBattlefield(player2, new ShuCavalry());
 
         harness.setHand(player1, List.of(new BorrowingTheEastWind()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, 2);
+        harness.castAndResolveSorcery(player1, 0, 2);
 
-        harness.passBothPriorities();
+        // Shu Cavalry (2/2) takes 2 damage and dies.
+        harness.assertNotOnBattlefield(player2, "Shu Cavalry");
+    }
 
-        // Wu Scout (2/2) takes 2 damage and dies.
-        harness.assertNotOnBattlefield(player2, "Wu Scout");
+    @Test
+    @DisplayName("Deals X damage to horsemanship creatures controlled by either player")
+    void damagesHorsemanshipCreaturesControlledByEitherPlayer() {
+        harness.addToBattlefield(player1, new ShuCavalry());
+        harness.addToBattlefield(player2, new ShuCavalry());
+
+        harness.setHand(player1, List.of(new BorrowingTheEastWind()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        harness.assertNotOnBattlefield(player1, "Shu Cavalry");
+        harness.assertNotOnBattlefield(player2, "Shu Cavalry");
     }
 
     @Test
     @DisplayName("Does not damage creatures without horsemanship")
     void doesNotDamageNonHorsemanshipCreatures() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ShuFootSoldiers());
 
         harness.setHand(player1, List.of(new BorrowingTheEastWind()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, 2);
+        harness.castAndResolveSorcery(player1, 0, 2);
 
-        harness.passBothPriorities();
-
-        // Grizzly Bears has no horsemanship, so it survives.
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        // Shu Foot Soldiers has no horsemanship, so it survives.
+        harness.assertOnBattlefield(player2, "Shu Foot Soldiers");
     }
 
     @Test
@@ -66,9 +61,7 @@ class BorrowingTheEastWindTest extends BaseCardTest {
     void damagesEachPlayer() {
         harness.setHand(player1, List.of(new BorrowingTheEastWind()));
         harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         GameData gd = harness.getGameData();
 
@@ -79,17 +72,15 @@ class BorrowingTheEastWindTest extends BaseCardTest {
     @Test
     @DisplayName("X=0 deals no damage")
     void xZeroDealsNoDamage() {
-        harness.addToBattlefield(player2, horsemanshipCreature());
+        harness.addToBattlefield(player2, new ShuCavalry());
 
         harness.setHand(player1, List.of(new BorrowingTheEastWind()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, 0);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
 
-        harness.assertOnBattlefield(player2, "Wu Scout");
+        harness.assertOnBattlefield(player2, "Shu Cavalry");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }

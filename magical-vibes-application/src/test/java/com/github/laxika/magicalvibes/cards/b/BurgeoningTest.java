@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MoggFlunkies;
+import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,16 +13,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Burgeoning.class, MoggFlunkies.class, VolrathsStronghold.class})
 class BurgeoningTest extends BaseCardTest {
 
     @Test
     @DisplayName("May put a land from hand onto the battlefield when an opponent plays a land")
     void putsLandOntoBattlefieldAfterOpponentLandPlay() {
         harness.addToBattlefield(player1, new Burgeoning());
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new MoggFlunkies(), new VolrathsStronghold()));
 
         prepareOpponentLandPlay();
-        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new VolrathsStronghold()));
         harness.playLand(player2, 0);
 
         assertThat(gd.stack).hasSize(1);
@@ -35,25 +37,25 @@ class BurgeoningTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        harness.assertOnBattlefield(player1, "Forest");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Volrath's Stronghold");
+        harness.assertInHand(player1, "Mogg Flunkies");
     }
 
     @Test
     @DisplayName("Declining the trigger leaves the land in hand")
     void decliningTriggerLeavesLandInHand() {
         harness.addToBattlefield(player1, new Burgeoning());
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new VolrathsStronghold()));
 
         prepareOpponentLandPlay();
-        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new VolrathsStronghold()));
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertInHand(player1, "Forest");
-        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInHand(player1, "Volrath's Stronghold");
+        harness.assertNotOnBattlefield(player1, "Volrath's Stronghold");
     }
 
     @Test
@@ -64,7 +66,7 @@ class BurgeoningTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new VolrathsStronghold()));
         harness.playLand(player1, 0);
 
         assertThat(gd.stack).isEmpty();
@@ -75,7 +77,7 @@ class BurgeoningTest extends BaseCardTest {
     void doesNotTriggerForLandPutOntoBattlefield() {
         harness.addToBattlefield(player1, new Burgeoning());
 
-        harness.addToBattlefield(player2, new Forest());
+        harness.enterBattlefieldAndReturn(player2, new VolrathsStronghold());
 
         assertThat(gd.stack).isEmpty();
     }

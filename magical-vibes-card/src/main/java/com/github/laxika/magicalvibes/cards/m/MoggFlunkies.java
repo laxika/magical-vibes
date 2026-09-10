@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 @CardRegistration(set = "STH", collectorNumber = "92")
 @CardRegistration(set = "TPR", collectorNumber = "145")
 @CardRegistration(set = "ATH", collectorNumber = "45")
+@CardRegistration(set = "PD2", collectorNumber = "8")
 public class MoggFlunkies extends Card {
 
     public MoggFlunkies() {

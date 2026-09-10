@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RatColony;
 import com.github.laxika.magicalvibes.cards.s.SquirrelMob;
-import com.github.laxika.magicalvibes.cards.z.ZodiacRat;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,8 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Swarmyard.class, GiantSpider.class, RatColony.class, SquirrelMob.class, ZodiacRat.class,
-        GrizzlyBears.class})
+@CardUsed({Swarmyard.class, GiantSpider.class, RatColony.class, SquirrelMob.class, GrizzlyBears.class})
 class SwarmyardTest extends BaseCardTest {
 
     @Test

@@ -26,11 +26,11 @@ class SearingMeditationTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -46,9 +46,9 @@ class SearingMeditationTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -64,6 +64,7 @@ class SearingMeditationTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

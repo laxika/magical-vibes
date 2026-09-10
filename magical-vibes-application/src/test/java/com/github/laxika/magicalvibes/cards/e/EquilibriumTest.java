@@ -38,9 +38,9 @@ class EquilibriumTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, giantId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Hill Giant");
         harness.assertInHand(player2, "Hill Giant");
@@ -53,6 +53,8 @@ class EquilibriumTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HillGiant());
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Hill Giant"));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player2, "Hill Giant");

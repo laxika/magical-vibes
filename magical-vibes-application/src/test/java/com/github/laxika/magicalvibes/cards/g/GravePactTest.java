@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GravePact.class, CruelEdict.class, GrizzlyBears.class, GiantSpider.class, WrathOfGod.class,
+        Mountain.class, PlanarCleansing.class})
 class GravePactTest extends BaseCardTest {
 
     /**
@@ -134,8 +137,7 @@ class GravePactTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castSorcery(player2, 0, player1.getId());
 
-        harness.passBothPriorities(); // Resolve Cruel Edict
-        harness.passBothPriorities(); // Resolve Grave Pact trigger
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -203,12 +205,49 @@ class GravePactTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castSorcery(player2, 0, player1.getId());
 
-        harness.passBothPriorities(); // Resolve Cruel Edict → Grave Pact triggers
-        harness.passBothPriorities(); // Resolve Grave Pact trigger → no creatures
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no creatures to sacrifice"));
+        assertThat(gameLogContains("no creatures to sacrifice")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice opponent's noncreature permanents")
+    void doesNotSacrificeOpponentNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new GravePact());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Mountain());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castSorcery(player2, 0, player1.getId());
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Triggers when Grave Pact is destroyed at the same time as a creature")
+    void triggersWhenDestroyedWithControllerCreature() {
+        harness.addToBattlefield(player1, new GravePact());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new PlanarCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        harness.assertInGraveyard(player1, "Grave Pact");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).anyMatch(entry ->
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && entry.getCard().getName().equals("Grave Pact"));
     }
 
     // ===== Does not trigger for opponent's creatures =====
@@ -296,7 +335,7 @@ class GravePactTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0, 0);
         // Resolve Wrath of God — all creatures die
         harness.passBothPriorities();
 
@@ -329,14 +368,13 @@ class GravePactTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath of God
-        harness.passBothPriorities(); // Resolve Grave Pact trigger
+        harness.castSorcery(player1, 0, 0);
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         // Player2's creature died to Wrath, not to Grave Pact sacrifice
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no creatures to sacrifice"));
+        assertThat(gameLogContains("no creatures to sacrifice")).isTrue();
     }
 }
 

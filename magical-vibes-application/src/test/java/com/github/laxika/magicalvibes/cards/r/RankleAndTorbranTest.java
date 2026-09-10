@@ -49,6 +49,9 @@ class RankleAndTorbranTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         chooseMode(SACRIFICE);
         harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        harness.handleMultiplePermanentsChosen(player2, List.of(opponentCreature.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));

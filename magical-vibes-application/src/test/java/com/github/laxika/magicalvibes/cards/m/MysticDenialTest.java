@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.a.AlabornMusketeer;
+import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.cards.e.Extinguish;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.TouchOfBrilliance;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.s.StrategicPlanning;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,49 +15,50 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AlabornMusketeer.class, Extinguish.class, GrizzlyBears.class, MysticDenial.class, TouchOfBrilliance.class})
+@CardUsed({MysticDenial.class, ForestBear.class, StrategicPlanning.class, Extinguish.class})
 class MysticDenialTest extends BaseCardTest {
 
     @Test
     @DisplayName("Counters a creature spell")
     void countersCreatureSpell() {
-        AlabornMusketeer musketeer = new AlabornMusketeer();
-        harness.castFromHand(player1, musketeer, "{1}{W}");
+        ForestBear bears = new ForestBear();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new MysticDenial()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
+        harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, musketeer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
-        harness.assertInGraveyard(player1, "Alaborn Musketeer");
-        harness.assertNotOnBattlefield(player1, "Alaborn Musketeer");
+        harness.assertInGraveyard(player1, "Forest Bear");
+        harness.assertNotOnBattlefield(player1, "Forest Bear");
     }
 
     @Test
     @DisplayName("Counters a sorcery spell")
     void countersSorcerySpell() {
-        TouchOfBrilliance brilliance = new TouchOfBrilliance();
-        harness.castFromHand(player1, brilliance, "{3}{U}");
+        StrategicPlanning strategicPlanning = new StrategicPlanning();
+        harness.setHand(player1, List.of(strategicPlanning));
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.setHand(player2, List.of(new MysticDenial()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
+        harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, brilliance.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, strategicPlanning.getId());
 
-        GameData gd = harness.getGameData();
-        harness.assertInGraveyard(player1, "Touch of Brilliance");
+        harness.assertInGraveyard(player1, "Strategic Planning");
         assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("Cannot target an instant spell")
     void cannotTargetInstantSpell() {
-        TouchOfBrilliance brilliance = new TouchOfBrilliance();
-        harness.castFromHand(player1, brilliance, "{3}{U}");
+        StrategicPlanning brilliance = new StrategicPlanning();
+        harness.castFromHand(player1, brilliance, "{1}{U}");
 
         Extinguish extinguish = new Extinguish();
         harness.setHand(player1, List.of(extinguish));
@@ -76,9 +76,23 @@ class MysticDenialTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new ForestBear());
+
+        harness.setHand(player2, List.of(new MysticDenial()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Fizzles if the target spell leaves the stack before resolution")
     void fizzlesIfTargetSpellRemoved() {
-        GrizzlyBears bears = new GrizzlyBears();
+        ForestBear bears = new ForestBear();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

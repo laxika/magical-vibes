@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SpindriftDrake.class)
 class SpindriftDrakeTest extends BaseCardTest {
 
     @Test
@@ -52,6 +54,19 @@ class SpindriftDrakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting with only nonblue mana still sacrifices Spindrift Drake")
+    void acceptWithWrongColorManaSacrifices() {
+        harness.addToBattlefield(player1, new SpindriftDrake());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Spindrift Drake");
+    }
+
+    @Test
     @DisplayName("Does not trigger during the opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
         harness.addToBattlefield(player1, new SpindriftDrake());
@@ -59,6 +74,8 @@ class SpindriftDrakeTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Spindrift Drake");
     }
 }

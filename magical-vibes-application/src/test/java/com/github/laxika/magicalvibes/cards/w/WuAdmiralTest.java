@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WuAdmiral.class, Island.class, Forest.class})
 class WuAdmiralTest extends BaseCardTest {
 
     @Test
@@ -16,9 +18,7 @@ class WuAdmiralTest extends BaseCardTest {
     void baseStatsWithoutOpponentIsland() {
         harness.addToBattlefield(player1, new WuAdmiral());
 
-        Permanent admiral = findAdmiral();
-        assertThat(gqs.getEffectivePower(gd, admiral)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, admiral)).isEqualTo(3);
+        assertStats(3, 3);
     }
 
     @Test
@@ -27,9 +27,7 @@ class WuAdmiralTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WuAdmiral());
         harness.addToBattlefield(player2, new Island());
 
-        Permanent admiral = findAdmiral();
-        assertThat(gqs.getEffectivePower(gd, admiral)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, admiral)).isEqualTo(4);
+        assertStats(4, 4);
     }
 
     @Test
@@ -38,9 +36,7 @@ class WuAdmiralTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WuAdmiral());
         harness.addToBattlefield(player1, new Island());
 
-        Permanent admiral = findAdmiral();
-        assertThat(gqs.getEffectivePower(gd, admiral)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, admiral)).isEqualTo(3);
+        assertStats(3, 3);
     }
 
     @Test
@@ -49,28 +45,39 @@ class WuAdmiralTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WuAdmiral());
         harness.addToBattlefield(player2, new Forest());
 
-        Permanent admiral = findAdmiral();
-        assertThat(gqs.getEffectivePower(gd, admiral)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, admiral)).isEqualTo(3);
+        assertStats(3, 3);
     }
 
     @Test
     @DisplayName("Loses boost when opponent's Island leaves the battlefield")
     void losesBoostWhenIslandLeaves() {
         harness.addToBattlefield(player1, new WuAdmiral());
-        harness.addToBattlefield(player2, new Island());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
 
-        Permanent admiral = findAdmiral();
-        assertThat(gqs.getEffectivePower(gd, admiral)).isEqualTo(4);
+        assertStats(4, 4);
 
-        gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Island"));
+        gd.playerBattlefields.get(player2.getId()).remove(island);
 
-        assertThat(gqs.getEffectivePower(gd, admiral)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, admiral)).isEqualTo(3);
+        assertStats(3, 3);
     }
 
-    private Permanent findAdmiral() {
-        return findPermanent(player1, "Wu Admiral");
+    @Test
+    @DisplayName("Remains boosted while at least one of multiple opponent Islands remains")
+    void remainsBoostedWhileOpponentControlsAnotherIsland() {
+        harness.addToBattlefield(player1, new WuAdmiral());
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
+
+        assertStats(4, 4);
+
+        gd.playerBattlefields.get(player2.getId()).remove(firstIsland);
+
+        assertStats(4, 4);
+    }
+
+    private void assertStats(int power, int toughness) {
+        Permanent admiral = findPermanent(player1, "Wu Admiral");
+        assertThat(gqs.getEffectivePower(gd, admiral)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, admiral)).isEqualTo(toughness);
     }
 }

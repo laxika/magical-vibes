@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,14 +14,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Sift.class, SkyshroudFalcon.class})
 class SiftTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Sift puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new Sift()));
+        Sift sift = new Sift();
+        harness.setHand(player1, List.of(sift));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castSorcery(player1, 0, 0);
@@ -33,7 +29,7 @@ class SiftTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Sift");
+        assertThat(entry.getCard()).isSameAs(sift);
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
     }
 
@@ -48,8 +44,6 @@ class SiftTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving draws three cards then prompts for discard")
     void resolvingDrawsThreeThenPromptsForDiscard() {
@@ -61,11 +55,9 @@ class SiftTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Hand should have 3 cards (spell left hand, then drew 3)
+        // The spell left hand, then three cards were drawn.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
-        // Deck should have lost 3 cards
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
-        // Should be awaiting discard choice
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
     }
@@ -79,19 +71,17 @@ class SiftTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Discard the first card
         harness.handleCardChosen(player1, 0);
 
-        // Hand should have 2 cards (drew 3, discarded 1)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        // No longer awaiting input
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("Sift goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new Sift()));
+        Sift sift = new Sift();
+        harness.setHand(player1, List.of(sift));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castSorcery(player1, 0, 0);
@@ -99,34 +89,27 @@ class SiftTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Sift");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sift);
     }
 
     @Test
     @DisplayName("Can choose which card to discard")
     void canChooseWhichCardToDiscard() {
-        harness.setHand(player1, List.of(new Sift()));
-        setDeck(player1, List.of(new GrizzlyBears(), new Forest(), new Sift()));
+        Sift sift = new Sift();
+        SkyshroudFalcon firstDraw = new SkyshroudFalcon();
+        SkyshroudFalcon secondDraw = new SkyshroudFalcon();
+        Sift discardedDraw = new Sift();
+        harness.setHand(player1, List.of(sift));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, discardedDraw));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        // Hand should have [GrizzlyBears, Forest, Sift], discard the last one (index 2)
         harness.handleCardChosen(player1, 2);
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerHands.get(player1.getId()).get(0).getName()).isEqualTo("Grizzly Bears");
-        assertThat(gd.playerHands.get(player1.getId()).get(1).getName()).isEqualTo("Forest");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Sift") && c != gd.playerGraveyards.get(player1.getId()).getFirst());
-    }
-
-    // ===== Helpers =====
-
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sift, discardedDraw);
     }
 }
 

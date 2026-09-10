@@ -1,76 +1,74 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.s.ShuCavalry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DesperateCharge.class, ShuCavalry.class})
 class DesperateChargeTest extends BaseCardTest {
-
-    private void addMana() {
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-    }
 
     @Test
     @DisplayName("Resolving boosts all own creatures +2/+0")
     void resolvingBoostsAllOwnCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new DesperateCharge()));
-        addMana();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ShuCavalry());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ShuCavalry());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
         harness.passBothPriorities();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        for (Permanent p : battlefield) {
-            if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getEffectivePower()).isEqualTo(4);
-                assertThat(p.getEffectiveToughness()).isEqualTo(2);
-            }
-        }
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(2);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Does not boost opponent's creatures")
     void doesNotBoostOpponentCreatures() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new DesperateCharge()));
-        addMana();
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new ShuCavalry());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Boost wears off at cleanup step")
     void boostWearsOffAtCleanup() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new DesperateCharge()));
-        addMana();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ShuCavalry());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not boosted")
+    void creaturesEnteringAfterResolutionAreNotBoosted() {
+        Permanent creatureAlreadyOnBattlefield = harness.addToBattlefieldAndReturn(player1, new ShuCavalry());
+
+        harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
+        harness.passBothPriorities();
+
+        Permanent creatureEnteringLater = harness.addToBattlefieldAndReturn(player1, new ShuCavalry());
+
+        assertThat(creatureAlreadyOnBattlefield.getEffectivePower()).isEqualTo(4);
+        assertThat(creatureAlreadyOnBattlefield.getEffectiveToughness()).isEqualTo(2);
+        assertThat(creatureEnteringLater.getEffectivePower()).isEqualTo(2);
+        assertThat(creatureEnteringLater.getEffectiveToughness()).isEqualTo(2);
     }
 }

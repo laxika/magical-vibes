@@ -1601,6 +1601,7 @@ public class StepTriggerService {
                                 upkeepPlayerId,
                                 perm.getId()
                         );
+                        entry.setNonTargeting(effect.targetSpec() == TargetSpec.NONE);
                         entry.setSourcePermanentSnapshot(new Permanent(perm));
                         gameData.stack.add(entry);
                     }
@@ -1981,6 +1982,7 @@ public class StepTriggerService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof AllPermanentsUpkeepSacrificeUnlessPayEffect grant) {
                         grants.add(new GrantedUpkeepSacrifice(grant, perm.getId()));

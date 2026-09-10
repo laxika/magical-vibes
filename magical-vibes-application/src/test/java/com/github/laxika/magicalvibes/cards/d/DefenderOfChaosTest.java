@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.c.Cessation;
+import com.github.laxika.magicalvibes.cards.e.ExpendableTroops;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DefenderOfChaos.class, Cessation.class, ExpendableTroops.class})
 class DefenderOfChaosTest extends BaseCardTest {
 
     @Test
@@ -41,29 +40,57 @@ class DefenderOfChaosTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Protection from white prevents white spells from targeting Defender of Chaos")
-    void protectionFromWhitePreventsWhiteTargeting() {
-        Permanent defender = new Permanent(new DefenderOfChaos());
-        defender.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(defender);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+    @DisplayName("Protection from white prevents a white Aura spell from targeting Defender of Chaos")
+    void protectionFromWhitePreventsWhiteAuraTargeting() {
+        Permanent defender = addCreatureReady(player1, new DefenderOfChaos());
 
-        harness.setHand(player2, List.of(createTargetedInstant("White Bolt", CardColor.WHITE, "{W}")));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Cessation()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, defender.getId(), null))
+        assertThatThrownBy(() -> harness.castEnchantment(player2, 0, defender.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from white");
     }
 
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
+    @Test
+    @DisplayName("Protection from white prevents abilities of white sources from targeting Defender of Chaos")
+    void protectionFromWhitePreventsWhiteAbilityTargeting() {
+        Permanent defender = addCreatureReady(player1, new DefenderOfChaos());
+        addCreatureReady(player2, new ExpendableTroops());
+        declareAttackers(player1, List.of(0));
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, defender.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
+    }
+
+    @Test
+    @DisplayName("Protection from white prevents white creatures from blocking Defender of Chaos")
+    void protectionFromWhitePreventsWhiteBlocking() {
+        addCreatureReady(player1, new DefenderOfChaos());
+        addCreatureReady(player2, new ExpendableTroops());
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection from white prevents combat damage from white creatures")
+    void protectionFromWhitePreventsCombatDamage() {
+        Permanent defender = addCreatureReady(player1, new DefenderOfChaos());
+        addCreatureReady(player2, new ExpendableTroops());
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat(player2);
+
+        assertThat(defender.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Defender of Chaos");
+        harness.assertInGraveyard(player2, "Expendable Troops");
     }
 }

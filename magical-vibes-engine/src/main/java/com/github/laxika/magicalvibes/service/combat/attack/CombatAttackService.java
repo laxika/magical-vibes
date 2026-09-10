@@ -106,6 +106,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
+import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
@@ -625,6 +626,7 @@ public class CombatAttackService {
         // War's Toll: if one of the active player's creatures attacks, all of that player's
         // creatures attack if able.
         validateOpponentCreaturesAttackTogether(gameData, playerId, attackable, uniqueIndices);
+        validateOtherCreaturesAttackWithSource(gameData, playerId, attackable, uniqueIndices);
 
         // Magnetic Web: "if a creature with a magnet counter attacks, all creatures with magnet
         // counters attack if able"
@@ -2417,6 +2419,28 @@ public class CombatAttackService {
             if (!declaredAttackerIndices.contains(idx)) {
                 throw new IllegalStateException(battlefield.get(idx).getCard().getName()
                         + " must also attack when another creature you control attacks");
+            }
+        }
+    }
+
+    private void validateOtherCreaturesAttackWithSource(GameData gameData, UUID playerId,
+                                                       List<Integer> attackableIndices,
+                                                       Set<Integer> declaredAttackerIndices) {
+        if (castingCostService.getAttackPaymentPerCreature(gameData, playerId) > 0
+                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        boolean sourceAttacks = declaredAttackerIndices.stream().map(battlefield::get)
+                .anyMatch(source -> !source.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, source)
+                        && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OtherCreaturesMustAttackIfSourceAttacksEffect.class::isInstance));
+        if (!sourceAttacks) return;
+        for (int index : attackableIndices) {
+            if (!declaredAttackerIndices.contains(index)
+                    && !canOnlyAttackAlone(gameData, battlefield.get(index))) {
+                throw new IllegalStateException(battlefield.get(index).getCard().getName()
+                        + " must attack when the source creature attacks");
             }
         }
     }

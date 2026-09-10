@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ManaSeverance.class, Plains.class, Swamp.class, Counterspell.class})
 class ManaSeveranceTest extends BaseCardTest {
 
     @Test
@@ -27,13 +28,13 @@ class ManaSeveranceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        chooseCard(0);
-        chooseCard(0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Grizzly Bears");
+                .containsExactly("Counterspell");
         assertThat(gd.exiledCards.stream().map(ExiledCardEntry::card).map(Card::getName))
                 .containsExactlyInAnyOrder("Plains", "Swamp");
         harness.assertInGraveyard(player1, "Mana Severance");
@@ -53,11 +54,27 @@ class ManaSeveranceTest extends BaseCardTest {
         assertThat(search.params().cards()).extracting(Card::getName)
                 .containsExactlyInAnyOrder("Plains", "Swamp");
 
-        chooseCard(0);
+        harness.handleCardChosen(player1, 0);
 
         search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Swamp");
+    }
+
+    @Test
+    @DisplayName("The controller may choose zero lands")
+    void mayChooseZeroLands() {
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Plains", "Swamp", "Counterspell");
+        harness.assertInGraveyard(player1, "Mana Severance");
     }
 
     @Test
@@ -68,15 +85,15 @@ class ManaSeveranceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        chooseCard(0);
-        chooseCard(-1);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.exiledCards.stream().map(ExiledCardEntry::card).map(Card::getName))
                 .containsExactly("Plains");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactlyInAnyOrder("Swamp", "Grizzly Bears");
+                .containsExactlyInAnyOrder("Swamp", "Counterspell");
     }
 
     @Test
@@ -86,21 +103,13 @@ class ManaSeveranceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castSorcery(player1, 0, 0);
 
-        GameData gd = harness.getGameData();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Counterspell()));
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.exiledCards).isEmpty();
-        assertThat(deck).hasSize(1);
-    }
-
-    private void chooseCard(int index) {
-        harness.getGameService().handleInteractionAnswer(harness.getGameData(), player1,
-                new InteractionAnswer.LibraryCardChosen(index));
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void setupAndCast() {
@@ -108,8 +117,6 @@ class ManaSeveranceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castSorcery(player1, 0, 0);
 
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new Counterspell()));
     }
 }

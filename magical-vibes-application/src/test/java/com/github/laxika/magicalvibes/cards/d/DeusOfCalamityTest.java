@@ -7,15 +7,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DeusOfCalamity.class, Forest.class, Mountain.class, GrizzlyBears.class})
 class DeusOfCalamityTest extends BaseCardTest {
 
     private Permanent addPermanent(Player player, Card card) {
@@ -32,10 +32,9 @@ class DeusOfCalamityTest extends BaseCardTest {
         Permanent mountain = addPermanent(player2, new Mountain());
 
         resolveCombat();
-        harness.passBothPriorities(); // resolve destroy trigger
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(mountain.getId());
     }
 
@@ -47,13 +46,12 @@ class DeusOfCalamityTest extends BaseCardTest {
         Permanent mountain = addPermanent(player2, new Mountain());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, mountain.getId());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(mountain.getId()));
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 
     @Test
@@ -66,9 +64,8 @@ class DeusOfCalamityTest extends BaseCardTest {
         Permanent enemyLand = addPermanent(player2, new Mountain());
 
         resolveCombat();
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(enemyLand.getId())
                 .doesNotContain(ownLand.getId())
                 .doesNotContain(enemyCreature.getId());
@@ -82,7 +79,6 @@ class DeusOfCalamityTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -97,7 +93,6 @@ class DeusOfCalamityTest extends BaseCardTest {
         addPermanent(player2, new Mountain());
 
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Mountain");
