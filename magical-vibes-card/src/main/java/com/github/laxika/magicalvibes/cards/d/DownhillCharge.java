@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "79")
+@CardRegistration(set = "DDI", collectorNumber = "69")
 public class DownhillCharge extends Card {
 
     public DownhillCharge() {

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "156")
+@CardRegistration(set = "DDH", collectorNumber = "73")
 public class RiseFall extends Card {
 
     public RiseFall() {

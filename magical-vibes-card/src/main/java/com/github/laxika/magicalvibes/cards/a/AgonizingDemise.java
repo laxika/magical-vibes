@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "92")
+@CardRegistration(set = "DDH", collectorNumber = "66")
 public class AgonizingDemise extends Card {
 
     public AgonizingDemise() {

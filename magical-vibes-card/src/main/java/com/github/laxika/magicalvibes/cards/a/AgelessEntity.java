@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "DST", collectorNumber = "73")
+@CardRegistration(set = "DDH", collectorNumber = "18")
 public class AgelessEntity extends Card {
 
     public AgelessEntity() {

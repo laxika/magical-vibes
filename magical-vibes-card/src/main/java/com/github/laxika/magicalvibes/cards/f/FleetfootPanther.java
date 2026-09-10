@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLS", collectorNumber = "108")
+@CardRegistration(set = "DDH", collectorNumber = "12")
 public class FleetfootPanther extends Card {
 
     public FleetfootPanther() {

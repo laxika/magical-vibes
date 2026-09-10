@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "226")
+@CardRegistration(set = "DDH", collectorNumber = "27")
 public class SearingMeditation extends Card {
 
     public SearingMeditation() {

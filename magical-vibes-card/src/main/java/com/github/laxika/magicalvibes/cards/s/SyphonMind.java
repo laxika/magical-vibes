@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsThenControllerDrawsEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "175")
+@CardRegistration(set = "HOP", collectorNumber = "42")
 public class SyphonMind extends Card {
 
     public SyphonMind() {

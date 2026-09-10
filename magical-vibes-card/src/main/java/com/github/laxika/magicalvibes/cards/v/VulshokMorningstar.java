@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "315")
 @CardRegistration(set = "DST", collectorNumber = "157")
+@CardRegistration(set = "DDI", collectorNumber = "66")
 public class VulshokMorningstar extends Card {
 
     public VulshokMorningstar() {

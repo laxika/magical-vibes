@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "255")
+@CardRegistration(set = "HOP", collectorNumber = "107")
 public class BorosSignet extends Card {
 
     public BorosSignet() {

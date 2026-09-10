@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "135")
+@CardRegistration(set = "DDH", collectorNumber = "70")
+@CardRegistration(set = "HOP", collectorNumber = "38")
 public class ProfaneCommand extends Card {
 
     public ProfaneCommand() {

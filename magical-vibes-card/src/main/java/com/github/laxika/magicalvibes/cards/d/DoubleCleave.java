@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "EVE", collectorNumber = "135")
+@CardRegistration(set = "HOP", collectorNumber = "100")
 public class DoubleCleave extends Card {
 
     public DoubleCleave() {

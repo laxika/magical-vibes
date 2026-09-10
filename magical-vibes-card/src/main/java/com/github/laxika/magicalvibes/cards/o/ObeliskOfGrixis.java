@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "214")
+@CardRegistration(set = "DDH", collectorNumber = "60")
 public class ObeliskOfGrixis extends Card {
 
     public ObeliskOfGrixis() {

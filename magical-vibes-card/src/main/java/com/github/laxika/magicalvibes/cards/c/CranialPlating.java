@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "113")
+@CardRegistration(set = "HOP", collectorNumber = "110")
 public class CranialPlating extends Card {
 
     public CranialPlating() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "240")
+@CardRegistration(set = "HOP", collectorNumber = "125")
 public class SerumTank extends Card {
 
     public SerumTank() {

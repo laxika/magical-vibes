@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureDrawPowerR
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CSP", collectorNumber = "133")
+@CardRegistration(set = "DDI", collectorNumber = "31")
 public class VanishIntoMemory extends Card {
 
     public VanishIntoMemory() {

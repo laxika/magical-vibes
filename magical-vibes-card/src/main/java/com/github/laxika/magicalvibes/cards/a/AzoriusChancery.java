@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "170")
+@CardRegistration(set = "DDI", collectorNumber = "33")
 public class AzoriusChancery extends Card {
 
     public AzoriusChancery() {

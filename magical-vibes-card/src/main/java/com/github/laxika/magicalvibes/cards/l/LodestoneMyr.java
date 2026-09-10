@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "200")
+@CardRegistration(set = "HOP", collectorNumber = "117")
 public class LodestoneMyr extends Card {
 
     public LodestoneMyr() {

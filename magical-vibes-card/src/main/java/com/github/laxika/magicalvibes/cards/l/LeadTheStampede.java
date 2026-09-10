@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MBS", collectorNumber = "82")
 @CardRegistration(set = "IKO", collectorNumber = "163")
+@CardRegistration(set = "DDH", collectorNumber = "24")
 public class LeadTheStampede extends Card {
 
     public LeadTheStampede() {

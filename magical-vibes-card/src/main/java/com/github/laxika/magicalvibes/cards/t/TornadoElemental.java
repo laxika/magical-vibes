@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "5DN", collectorNumber = "97")
+@CardRegistration(set = "HOP", collectorNumber = "79")
 public class TornadoElemental extends Card {
 
     public TornadoElemental() {

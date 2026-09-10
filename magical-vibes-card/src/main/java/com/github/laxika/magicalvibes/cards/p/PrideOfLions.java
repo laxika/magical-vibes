@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 
 @CardRegistration(set = "7ED", collectorNumber = "261")
 @CardRegistration(set = "S99", collectorNumber = "139")
+@CardRegistration(set = "DDH", collectorNumber = "19")
 public class PrideOfLions extends Card {
 
     public PrideOfLions() {

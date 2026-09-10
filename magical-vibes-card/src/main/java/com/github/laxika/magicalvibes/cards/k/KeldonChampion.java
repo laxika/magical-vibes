@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "UDS", collectorNumber = "90")
+@CardRegistration(set = "HOP", collectorNumber = "58")
 @CardRegistration(set = "PD2", collectorNumber = "14")
 public class KeldonChampion extends Card {
 

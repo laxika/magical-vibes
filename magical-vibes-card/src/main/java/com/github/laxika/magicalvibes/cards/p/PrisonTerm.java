@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SHM", collectorNumber = "18")
+@CardRegistration(set = "HOP", collectorNumber = "6")
 public class PrisonTerm extends Card {
 
     public PrisonTerm() {

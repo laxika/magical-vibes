@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M12", collectorNumber = "88")
 @CardRegistration(set = "MRD", collectorNumber = "60")
 @CardRegistration(set = "DDC", collectorNumber = "56")
+@CardRegistration(set = "HOP", collectorNumber = "21")
 public class ConsumeSpirit extends Card {
 
     public ConsumeSpirit() {

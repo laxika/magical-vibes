@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibrary
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 
 @CardRegistration(set = "MIR", collectorNumber = "59")
+@CardRegistration(set = "DDI", collectorNumber = "4")
 public class CoralFighters extends Card {
 
     public CoralFighters() {
