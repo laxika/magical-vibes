@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * No card-specific engine logic.
  */
 @CardRegistration(set = "TMP", collectorNumber = "271")
+@CardRegistration(set = "DDI", collectorNumber = "10")
 public class SkySpirit extends Card {
 
     public SkySpirit() {

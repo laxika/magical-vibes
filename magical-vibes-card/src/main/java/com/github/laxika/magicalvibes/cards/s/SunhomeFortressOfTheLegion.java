@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "282")
+@CardRegistration(set = "HOP", collectorNumber = "138")
 public class SunhomeFortressOfTheLegion extends Card {
 
     public SunhomeFortressOfTheLegion() {

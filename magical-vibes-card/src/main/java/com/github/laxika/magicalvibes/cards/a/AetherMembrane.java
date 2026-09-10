@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnCombatOpponentToHandAtEndOfCombatEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "93")
+@CardRegistration(set = "DDI", collectorNumber = "48")
 public class AetherMembrane extends Card {
 
     public AetherMembrane() {

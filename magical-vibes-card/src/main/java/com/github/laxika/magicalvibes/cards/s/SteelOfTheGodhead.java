@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "150")
+@CardRegistration(set = "DDI", collectorNumber = "30")
 public class SteelOfTheGodhead extends Card {
 
     public SteelOfTheGodhead() {

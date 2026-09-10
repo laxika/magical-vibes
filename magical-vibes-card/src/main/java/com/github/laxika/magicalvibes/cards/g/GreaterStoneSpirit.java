@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "84")
+@CardRegistration(set = "DDI", collectorNumber = "61")
 public class GreaterStoneSpirit extends Card {
 
     public GreaterStoneSpirit() {

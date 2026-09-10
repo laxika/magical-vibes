@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "87")
 @CardRegistration(set = "MMQ", collectorNumber = "183")
+@CardRegistration(set = "HOP", collectorNumber = "51")
 public class CinderElemental extends Card {
 
     public CinderElemental() {

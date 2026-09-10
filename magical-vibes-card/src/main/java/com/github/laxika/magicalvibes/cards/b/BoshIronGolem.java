@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "147")
+@CardRegistration(set = "HOP", collectorNumber = "108")
 public class BoshIronGolem extends Card {
 
     public BoshIronGolem() {

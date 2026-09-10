@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "121")
+@CardRegistration(set = "HOP", collectorNumber = "113")
 public class EtchedOracle extends Card {
 
     public EtchedOracle() {

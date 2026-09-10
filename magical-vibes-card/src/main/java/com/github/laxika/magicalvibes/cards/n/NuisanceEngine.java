@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MRD", collectorNumber = "221")
+@CardRegistration(set = "HOP", collectorNumber = "121")
 public class NuisanceEngine extends Card {
 
     public NuisanceEngine() {

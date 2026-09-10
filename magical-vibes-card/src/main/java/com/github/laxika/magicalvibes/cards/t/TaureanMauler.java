@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "109")
+@CardRegistration(set = "HOP", collectorNumber = "67")
 public class TaureanMauler extends Card {
 
     public TaureanMauler() {

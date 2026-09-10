@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "110")
+@CardRegistration(set = "HOP", collectorNumber = "20")
 public class CadaverousKnight extends Card {
 
     public CadaverousKnight() {

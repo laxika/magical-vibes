@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "227")
+@CardRegistration(set = "DDI", collectorNumber = "73")
 public class VolleyOfBoulders extends Card {
 
     public VolleyOfBoulders() {

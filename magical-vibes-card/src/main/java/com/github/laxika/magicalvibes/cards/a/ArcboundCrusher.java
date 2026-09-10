@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "95")
+@CardRegistration(set = "HOP", collectorNumber = "105")
 public class ArcboundCrusher extends Card {
 
     public ArcboundCrusher() {
