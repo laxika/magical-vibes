@@ -591,10 +591,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 gameData.addCardToHand(controllerId, card);
             }
             if (!topCards.isEmpty()) {
-                GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
-                appendCardList(builder, topCards);
-                builder.text(" into their hand.");
-                gameLogService.append(gameData, builder.build());
+                gameLogService.append(gameData, GameLog.text(playerName + " puts " + topCards.size()
+                        + " card(s) into their hand."));
             }
             return;
         }
@@ -641,10 +639,15 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 gameData.addCardToHand(controllerId, card);
             }
             if (!topCards.isEmpty()) {
-                GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
-                appendCardList(builder, topCards);
-                builder.text(" into their hand.");
-                gameLogService.append(gameData, builder.build());
+                if (e.reveal()) {
+                    GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
+                    appendCardList(builder, topCards);
+                    builder.text(" into their hand.");
+                    gameLogService.append(gameData, builder.build());
+                } else {
+                    gameLogService.append(gameData, GameLog.text(playerName + " puts " + topCards.size()
+                            + " card(s) into their hand."));
+                }
             }
             return;
         }
@@ -659,7 +662,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 false, true, !randomRemaining, randomRemaining, false, 0, null, chooseCount,
                 "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
                         + " into your hand and " + restPhrase,
-                false, e.optional() ? 0 : Math.min(chooseCount, topCards.size()), false));
+                false, e.optional() ? 0 : Math.min(chooseCount, topCards.size()), false)
+                .withRevealSelected(e.reveal()));
     }
 
     /**

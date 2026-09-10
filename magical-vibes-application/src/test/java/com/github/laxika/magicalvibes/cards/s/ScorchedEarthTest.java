@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FightingDrake;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScorchedEarth.class, FightingDrake.class, Forest.class, Island.class, Mountain.class})
 class ScorchedEarthTest extends BaseCardTest {
 
     @Test
@@ -56,7 +58,7 @@ class ScorchedEarthTest extends BaseCardTest {
     @DisplayName("Cannot discard a nonland card to pay the additional cost")
     void cannotDiscardNonlandCard() {
         harness.addToBattlefield(player2, new Forest());
-        harness.setHand(player1, List.of(new ScorchedEarth(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ScorchedEarth(), new FightingDrake()));
         harness.addMana(player1, ManaColor.RED, 2); // X=1
 
         UUID forestId = harness.getPermanentId(player2, "Forest");
@@ -65,6 +67,23 @@ class ScorchedEarthTest extends BaseCardTest {
                 harness.castSorceryWithDiscards(player1, 0, 1, List.of(forestId), List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("land cards");
+    }
+
+    @Test
+    @DisplayName("Cannot cast when fewer than X land cards are available to discard")
+    void cannotCastWithTooFewLandCards() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new ScorchedEarth(), new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 3); // X=2
+
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID islandId = harness.getPermanentId(player2, "Island");
+
+        assertThatThrownBy(() ->
+                harness.castSorceryWithDiscards(player1, 0, 2, List.of(forestId, islandId), List.of(1, 2)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must discard");
     }
 
     @Test
@@ -87,14 +106,14 @@ class ScorchedEarthTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonland() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new FightingDrake());
         harness.setHand(player1, List.of(new ScorchedEarth(), new Mountain()));
         harness.addMana(player1, ManaColor.RED, 2); // X=1
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID drakeId = harness.getPermanentId(player2, "Fighting Drake");
 
         assertThatThrownBy(() ->
-                harness.castSorceryWithDiscards(player1, 0, 1, List.of(bearsId), List.of(1)))
+                harness.castSorceryWithDiscards(player1, 0, 1, List.of(drakeId), List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("lands");
     }

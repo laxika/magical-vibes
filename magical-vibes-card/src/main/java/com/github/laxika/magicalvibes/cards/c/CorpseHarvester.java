@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "62")
+@CardRegistration(set = "HOP", collectorNumber = "22")
 public class CorpseHarvester extends Card {
 
     public CorpseHarvester() {

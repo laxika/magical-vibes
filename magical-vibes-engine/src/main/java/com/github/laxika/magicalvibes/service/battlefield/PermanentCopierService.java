@@ -44,6 +44,8 @@ public class PermanentCopierService {
     public void applyCloneCopy(Permanent clonePerm, Card target, Integer powerOverride,
                                Integer toughnessOverride, Set<CardType> additionalTypesOverride,
                                List<ActivatedAbility> retainedAbilities, boolean copyColor) {
+        clonePerm.setFullTextCopyBaseCard(null);
+        clonePerm.setFullTextCopySourceCard(null);
         Card copy = new Card();
         copy.setName(target.getName());
         copy.setType(target.getType());

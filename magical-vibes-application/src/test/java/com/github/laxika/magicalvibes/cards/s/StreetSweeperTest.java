@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Overgrowth;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StreetSweeper.class, Forest.class})
 class StreetSweeperTest extends BaseCardTest {
 
     @Test
+    @CardUsed({Overgrowth.class, FertileGround.class})
     @DisplayName("Attacking destroys every Aura attached to the chosen land")
     void destroysAurasAttachedToTargetLand() {
         addCreatureReady(player1, new StreetSweeper());
@@ -50,6 +53,7 @@ class StreetSweeperTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GrizzlyBears.class)
     @DisplayName("The attack trigger only accepts a land target")
     void onlyTargetsLands() {
         addCreatureReady(player1, new StreetSweeper());

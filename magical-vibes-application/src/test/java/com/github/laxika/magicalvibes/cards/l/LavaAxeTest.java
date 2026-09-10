@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicCurator;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
-import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChandraNalaar.class, LavaAxe.class, RuneclawBear.class})
+@CardUsed({ChandraNalaar.class, LavaAxe.class, AngelicCurator.class})
 class LavaAxeTest extends BaseCardTest {
 
     @Test
@@ -72,12 +72,12 @@ class LavaAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Lava Axe cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AngelicCurator());
 
         harness.setHand(player1, List.of(new LavaAxe()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -92,6 +92,7 @@ class LavaAxeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertLife(player2, 20);
     }
 
     @Test

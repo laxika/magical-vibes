@@ -21,6 +21,7 @@ public class Anarchist extends Card {
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.SORCERY))
+                        .targetGraveyard(true)
                         .build(),
                 "Return a sorcery card from your graveyard to your hand?"
         ));

@@ -1,19 +1,24 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SadisticGlee.class, GrizzlyBears.class, LightningBolt.class, Forest.class})
 class SadisticGleeTest extends BaseCardTest {
 
     private Permanent enchantGlee(Permanent creature) {
@@ -22,6 +27,18 @@ class SadisticGleeTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
         return creature;
+    }
+
+    @Test
+    @DisplayName("Sadistic Glee can enchant only a creature")
+    void cannotEnchantNonCreature() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new SadisticGlee()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 
     @Test
@@ -38,8 +55,7 @@ class SadisticGleeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, victim.getId());
-        harness.passBothPriorities(); // Bolt resolves, victim dies, trigger goes on stack
-        harness.passBothPriorities(); // trigger resolves
+        resolveAllTriggers();
 
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -58,8 +74,7 @@ class SadisticGleeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, victim.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -79,8 +94,7 @@ class SadisticGleeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, victim.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(victim.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -103,14 +117,42 @@ class SadisticGleeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, first.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.castInstant(player1, 0, second.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each creature in a simultaneous death event triggers Sadistic Glee")
+    void simultaneousCreatureDeathsEachAddCounter() {
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        enchantGlee(host);
+
+        declareAttackers(List.of(1, 2));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(
+                        gd.playerBattlefields.get(player2.getId()).indexOf(firstBlocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(firstAttacker)),
+                new BlockerAssignment(
+                        gd.playerBattlefields.get(player2.getId()).indexOf(secondBlocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(secondAttacker))));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
     @Test
@@ -126,8 +168,7 @@ class SadisticGleeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, host.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Sadistic Glee");

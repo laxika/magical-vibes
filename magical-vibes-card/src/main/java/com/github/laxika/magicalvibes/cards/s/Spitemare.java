@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "147")
+@CardRegistration(set = "DDH", collectorNumber = "16")
 public class Spitemare extends Card {
 
     public Spitemare() {

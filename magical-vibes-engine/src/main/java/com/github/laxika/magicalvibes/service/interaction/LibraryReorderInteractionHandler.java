@@ -89,6 +89,20 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
             }
         }
 
+        if (interaction.planarDeck()) {
+            if (gameData.planechase == null) {
+                throw new IllegalStateException("No planar deck is active");
+            }
+            for (int i = 0; i < count; i++) {
+                gameData.planechase.deck.add(reorderCards.get(cardOrder.get(i)));
+            }
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " puts " + count + " cards on the bottom of the planar deck."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (interaction.planar()) {
             var departing = List.copyOf(gameData.planechase.faceUp);
             gameData.interaction.clearAwaitingInput();

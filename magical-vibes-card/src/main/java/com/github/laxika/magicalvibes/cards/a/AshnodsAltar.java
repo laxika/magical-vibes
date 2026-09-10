@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "6ED", collectorNumber = "274")
 @CardRegistration(set = "5ED", collectorNumber = "349")
 @CardRegistration(set = "CHR", collectorNumber = "92")
+@CardRegistration(set = "ATQ", collectorNumber = "38")
 public class AshnodsAltar extends Card {
 
     public AshnodsAltar() {

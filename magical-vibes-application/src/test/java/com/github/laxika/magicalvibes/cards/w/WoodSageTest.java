@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.c.Capsize;
+import com.github.laxika.magicalvibes.cards.m.MoggConscripts;
+import com.github.laxika.magicalvibes.cards.s.SkyshroudElf;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +18,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WoodSage.class, TrainedArmodon.class, MoggConscripts.class, Capsize.class, SkyshroudElf.class})
 class WoodSageTest extends BaseCardTest {
 
-    private void activate() {
+    private void activate(List<Card> library) {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, library);
+        harness.setLibrary(player2, List.of());
         addCreatureReady(player1, new WoodSage());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -26,7 +34,7 @@ class WoodSageTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving prompts the controller to choose a creature card name")
     void promptsForCreatureName() {
-        activate();
+        activate(List.of());
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
@@ -37,31 +45,35 @@ class WoodSageTest extends BaseCardTest {
     @Test
     @DisplayName("Only creature card names are offered")
     void offersOnlyCreatureNames() {
-        UUID p1 = player1.getId();
-        gd.playerDecks.get(p1).addFirst(instant("Shock Bolt"));
-        gd.playerDecks.get(p1).addFirst(creature("Wall of Wood"));
-
-        activate();
+        activate(List.of(new TrainedArmodon(), new Capsize()));
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice.options()).contains("Wall of Wood").doesNotContain("Shock Bolt");
+        assertThat(choice.options()).contains("Trained Armodon").doesNotContain("Capsize");
+    }
+
+    @Test
+    @DisplayName("A creature card name can be chosen even when no copy is in the game")
+    void offersCreatureNamesNotPresentInGame() {
+        activate(List.of());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).contains("Trained Armodon");
     }
 
     @Test
     @DisplayName("All revealed cards with the chosen name go to hand, the rest to the graveyard")
     void namedCardsToHandRestToGraveyard() {
         UUID p1 = player1.getId();
-        Card hit1 = creature("Llanowar Elf");
-        Card hit2 = creature("Llanowar Elf");
-        Card miss1 = creature("Some Bear");
-        Card miss2 = instant("Some Bolt");
-        Card untouched = creature("Deep Card");
+        Card hit1 = new TrainedArmodon();
+        Card hit2 = new TrainedArmodon();
+        Card miss1 = new MoggConscripts();
+        Card miss2 = new Capsize();
+        Card untouched = new SkyshroudElf();
 
         List<Card> deck = new ArrayList<>(List.of(hit1, miss1, hit2, miss2, untouched));
-        gd.playerDecks.put(p1, deck);
 
-        activate();
-        harness.handleListChoice(player1, "Llanowar Elf");
+        activate(deck);
+        harness.handleListChoice(player1, "Trained Armodon");
 
         assertThat(gd.playerHands.get(p1)).extracting(Card::getId)
                 .contains(hit1.getId(), hit2.getId())
@@ -78,15 +90,14 @@ class WoodSageTest extends BaseCardTest {
         UUID p1 = player1.getId();
         List<Card> chaff = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
-            chaff.add(creature("Chaff " + i));
+            chaff.add(new MoggConscripts());
         }
-        Card wanted = creature("Wanted Beast");
+        Card wanted = new TrainedArmodon();
         List<Card> deck = new ArrayList<>(chaff);
         deck.add(wanted);
-        gd.playerDecks.put(p1, deck);
 
-        activate();
-        harness.handleListChoice(player1, "Wanted Beast");
+        activate(deck);
+        harness.handleListChoice(player1, "Trained Armodon");
 
         assertThat(gd.playerGraveyards.get(p1)).extracting(Card::getId)
                 .containsAll(chaff.stream().map(Card::getId).toList());
@@ -98,33 +109,14 @@ class WoodSageTest extends BaseCardTest {
     @DisplayName("A library with fewer than four cards reveals only what is there")
     void smallLibraryRevealsWhatIsAvailable() {
         UUID p1 = player1.getId();
-        Card hit = creature("Tiny Elf");
-        Card other = creature("Other Elf");
-        gd.playerDecks.put(p1, new ArrayList<>(List.of(hit, other)));
+        Card hit = new TrainedArmodon();
+        Card other = new MoggConscripts();
 
-        activate();
-        harness.handleListChoice(player1, "Tiny Elf");
+        activate(List.of(hit, other));
+        harness.handleListChoice(player1, "Trained Armodon");
 
         assertThat(gd.playerHands.get(p1)).extracting(Card::getId).contains(hit.getId());
         assertThat(gd.playerGraveyards.get(p1)).extracting(Card::getId).contains(other.getId());
         assertThat(gd.playerDecks.get(p1)).isEmpty();
-    }
-
-    private static Card creature(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{G}");
-        card.setColor(CardColor.GREEN);
-        return card;
-    }
-
-    private static Card instant(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{R}");
-        card.setColor(CardColor.RED);
-        return card;
     }
 }

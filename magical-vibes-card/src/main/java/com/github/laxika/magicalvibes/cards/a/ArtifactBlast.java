@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "ATQ", collectorNumber = "22")
 @CardRegistration(set = "ME1", collectorNumber = "85")
 public class ArtifactBlast extends Card {
 

@@ -30,7 +30,7 @@ public class RedirectTargetCreatureNextDamageFromChosenSourceToSelfEffectHandler
         UUID redirectTargetId = entry.getSourcePermanentId();
         if (protectedCreatureId == null || redirectTargetId == null) return;
 
-        List<UUID> validIds = preventionSupport.collectAllBattlefieldPermanentIds(gameData);
+        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
             return;

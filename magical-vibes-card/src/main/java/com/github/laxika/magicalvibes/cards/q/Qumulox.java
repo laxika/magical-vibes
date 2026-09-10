@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "5DN", collectorNumber = "35")
+@CardRegistration(set = "DDF", collectorNumber = "59")
+@CardRegistration(set = "HOP", collectorNumber = "12")
 public class Qumulox extends Card {
 
     public Qumulox() {

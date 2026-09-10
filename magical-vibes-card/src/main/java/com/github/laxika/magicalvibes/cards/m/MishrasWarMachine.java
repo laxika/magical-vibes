@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscard
 
 @CardRegistration(set = "4ED", collectorNumber = "337")
 @CardRegistration(set = "SUM", collectorNumber = "266")
+@CardRegistration(set = "ATQ", collectorNumber = "57")
 @CardRegistration(set = "3ED", collectorNumber = "266")
 public class MishrasWarMachine extends Card {
 

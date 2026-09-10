@@ -1,21 +1,20 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(BloodPet.class)
 class BloodPetTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing Blood Pet adds one black mana immediately")
     void activateAbilityAddsBlackManaImmediately() {
-        harness.addToBattlefield(player1, new BloodPet());
-
-        GameData gd = harness.getGameData();
+        addCreatureReady(player1, new BloodPet());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -35,8 +34,6 @@ class BloodPetTest extends BaseCardTest {
     @DisplayName("Blood Pet can be sacrificed for mana even with summoning sickness")
     void canActivateWithSummoningSickness() {
         harness.addToBattlefield(player1, new BloodPet());
-
-        GameData gd = harness.getGameData();
 
         harness.activateAbility(player1, 0, null, null);
 

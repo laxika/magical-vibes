@@ -810,12 +810,12 @@ public class TriggeredAbilityQueueService {
                             null,
                             pending.sourcePermanentId()));
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                            "'s attack trigger triggers without a target."));
+                            "'s triggered ability triggers without a target."));
                     log.info("Game {} - {} attack trigger pushed without a target",
                             gameData.id, pending.sourceCard().getName());
                 } else {
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                            "'s attack trigger has no valid targets."));
+                            "'s triggered ability has no valid targets."));
                     log.info("Game {} - {} attack trigger skipped (no valid targets)",
                             gameData.id, pending.sourceCard().getName());
                 }
@@ -838,7 +838,7 @@ public class TriggeredAbilityQueueService {
             }
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                    "'s attack trigger - choose " + targetDescription + "."));
+                    "'s triggered ability - choose " + targetDescription + "."));
             log.info("Game {} - {} attack trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
@@ -1280,7 +1280,9 @@ public class TriggeredAbilityQueueService {
                 gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
                 if (targets.validTargets().isEmpty()) continue;
                 gameData.interaction.setPermanentChoiceContext(pending);
-                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                UUID choosingPlayerId = pending.choosingPlayerId() != null
+                        ? pending.choosingPlayerId() : pending.controllerId();
+                playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId,
                         targets.validTargets().stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
                         targets.validTargets().stream().filter(gameData.playerIds::contains).toList(),
                         pending.sourceCard().getName() + "'s ability: choose a target.");

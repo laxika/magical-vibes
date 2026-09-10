@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SUM", collectorNumber = "145")
+@CardRegistration(set = "ATQ", collectorNumber = "25")
+@CardRegistration(set = "ATQ", collectorNumber = "90")
 @CardRegistration(set = "3ED", collectorNumber = "145")
 public class DwarvenWeaponsmith extends Card {
 

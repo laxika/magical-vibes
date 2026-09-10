@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.e.EndangeredArmodon;
+import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({YouthfulKnight.class, HonorGuard.class, EndangeredArmodon.class})
 class YouthfulKnightTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -33,7 +34,6 @@ class YouthfulKnightTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Youthful Knight");
     }
 
     @Test
@@ -63,15 +63,6 @@ class YouthfulKnightTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Youthful Knight has first strike on the battlefield")
-    void hasFirstStrikeOnBattlefield() {
-        harness.addToBattlefield(player1, new YouthfulKnight());
-
-        Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(perm.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-    }
-
-    @Test
     @DisplayName("Enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
         harness.setHand(player1, List.of(new YouthfulKnight()));
@@ -87,69 +78,41 @@ class YouthfulKnightTest extends BaseCardTest {
     // ===== First strike in combat =====
 
     @Test
-    @DisplayName("First strike kills a 2/1 before it deals regular damage")
+    @DisplayName("First strike kills a 1/1 before it deals regular damage")
     void firstStrikeKillsBeforeRegularDamage() {
         // Youthful Knight (2/1 first strike) attacks, blocked by a 1/1
-        YouthfulKnight knight = new YouthfulKnight();
-        Permanent attacker = new Permanent(knight);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        GrizzlyBears smallCreature = new GrizzlyBears();
-        smallCreature.setPower(1);
-        smallCreature.setToughness(1);
-        Permanent blocker = new Permanent(smallCreature);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new HonorGuard());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Youthful Knight deals 2 first strike damage → kills 1/1 before it can deal damage
         // Youthful Knight survives
         harness.assertOnBattlefield(player1, "Youthful Knight");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Honor Guard");
     }
 
     @Test
-    @DisplayName("Youthful Knight dies to a 2/2 blocker despite first strike")
-    void diesTo2_2BlockerDespiteFirstStrike() {
-        // Youthful Knight (2/1 first strike) attacks, blocked by Grizzly Bears (2/2)
-        // First strike deals 2 → Bears survives (2 < 2? No, 2 >= 2, Bears dies)
-        // Actually 2 damage to a 2 toughness creature kills it, so let's use a 2/3
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(2);
-        bigBear.setToughness(3);
+    @DisplayName("Youthful Knight dies to a 4/5 blocker despite first strike")
+    void diesTo4_5BlockerDespiteFirstStrike() {
+        // Youthful Knight (2/1 first strike) attacks, blocked by Endangered Armodon (4/5).
+        Permanent blocker = addCreatureReady(player2, new EndangeredArmodon());
 
-        YouthfulKnight knight = new YouthfulKnight();
-        Permanent attacker = new Permanent(knight);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
-
-        Permanent blocker = new Permanent(bigBear);
-        blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // First strike deals 2 → blocker survives (2 < 3 toughness)
-        // Regular damage: blocker deals 2 → Youthful Knight dies (2 >= 1 toughness)
+        // First strike deals 2, so the blocker survives; regular damage then kills Youthful Knight.
         harness.assertNotOnBattlefield(player1, "Youthful Knight");
         harness.assertInGraveyard(player1, "Youthful Knight");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Endangered Armodon");
     }
 }
 

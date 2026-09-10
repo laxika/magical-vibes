@@ -22,6 +22,11 @@ import java.util.UUID;
 
 @Getter
 public class ActivatedAbility {
+    /** Special-action payments share the action menu but are not activated abilities. */
+    public boolean isSpecialAction() {
+        return effects.stream().anyMatch(CardEffect::isSpecialAction)
+                && effects.stream().allMatch(effect -> effect instanceof CostEffect || effect.isSpecialAction());
+    }
 
     /**
      * Whether this ability is the engine's representation of a level-up ability.

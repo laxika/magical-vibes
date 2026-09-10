@@ -1,22 +1,23 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FoulImp;
+import com.github.laxika.magicalvibes.cards.f.FurnaceSpirit;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Mindwarper.class, FoulImp.class, FurnaceSpirit.class})
 class MindwarperTest extends BaseCardTest {
 
     @Test
@@ -40,7 +41,7 @@ class MindwarperTest extends BaseCardTest {
     @Test
     @DisplayName("Removes a counter and makes the targeted player discard")
     void removesCounterAndMakesTargetPlayerDiscard() {
-        harness.setHand(player1, new ArrayList<>(List.of(new Forest())));
+        harness.setHand(player1, List.of(new FoulImp()));
         Permanent mindwarper = addReadyMindwarper(player1, 3);
         prepareSorcerySpeedActivation();
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -52,14 +53,50 @@ class MindwarperTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Foul Imp");
+    }
+
+    @Test
+    @DisplayName("Can target the opponent to discard exactly one card")
+    void targetsOpponentToDiscardOneCard() {
+        harness.setHand(player2, List.of(new FoulImp(), new FoulImp()));
+        Permanent mindwarper = addReadyMindwarper(player1, 3);
+        prepareSorcerySpeedActivation();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(mindwarper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Foul Imp");
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after removing the last counter")
+    void resolvesAfterRemovingLastCounter() {
+        harness.setHand(player2, List.of(new FoulImp()));
+        Permanent mindwarper = addReadyMindwarper(player1, 1);
+        prepareSorcerySpeedActivation();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mindwarper);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Foul Imp");
     }
 
     @Test
     @DisplayName("Cannot activate without a +1/+1 counter")
     void cannotActivateWithoutCounters() {
         Permanent mindwarper = addReadyMindwarper(player1, 0);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new FurnaceSpirit());
         prepareSorcerySpeedActivation();
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -86,7 +123,7 @@ class MindwarperTest extends BaseCardTest {
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
         addReadyMindwarper(player1, 1);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FurnaceSpirit());
         prepareSorcerySpeedActivation();
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -95,10 +132,8 @@ class MindwarperTest extends BaseCardTest {
     }
 
     private Permanent addReadyMindwarper(Player player, int counters) {
-        Permanent perm = new Permanent(new Mindwarper());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new Mindwarper());
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

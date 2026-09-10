@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "154")
 @CardRegistration(set = "DDG", collectorNumber = "71")
+@CardRegistration(set = "DDI", collectorNumber = "70")
 public class SeismicStrike extends Card {
 
     public SeismicStrike() {

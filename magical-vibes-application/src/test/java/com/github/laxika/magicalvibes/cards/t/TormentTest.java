@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HornOfGreed;
+import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,11 +14,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Torment.class, HornOfGreed.class, VenerableMonk.class})
 class TormentTest extends BaseCardTest {
 
     @Test
     void castingPutsOnStack() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new VenerableMonk());
         harness.setHand(player1, List.of(new Torment()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -29,7 +31,7 @@ class TormentTest extends BaseCardTest {
 
     @Test
     void resolvingAttachesToTargetCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new VenerableMonk());
         harness.setHand(player1, List.of(new Torment()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -42,7 +44,7 @@ class TormentTest extends BaseCardTest {
 
     @Test
     void enchantedCreatureGetsDebuff() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new VenerableMonk());
         Permanent torment = new Permanent(new Torment());
         torment.setAttachedTo(bears.getId());
         gd.playerBattlefields.get(player1.getId()).add(torment);
@@ -52,8 +54,21 @@ class TormentTest extends BaseCardTest {
     }
 
     @Test
+    void canEnchantOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new VenerableMonk());
+        harness.setHand(player1, List.of(new Torment()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
     void effectsStopWhenRemoved() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new VenerableMonk());
         Permanent torment = new Permanent(new Torment());
         torment.setAttachedTo(bears.getId());
         gd.playerBattlefields.get(player1.getId()).add(torment);
@@ -66,7 +81,7 @@ class TormentTest extends BaseCardTest {
 
     @Test
     void fizzlesIfTargetCreatureIsRemoved() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new VenerableMonk());
         harness.setHand(player1, List.of(new Torment()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -81,7 +96,7 @@ class TormentTest extends BaseCardTest {
 
     @Test
     void cannotTargetNonCreaturePermanent() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new HornOfGreed());
         harness.setHand(player1, List.of(new Torment()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 

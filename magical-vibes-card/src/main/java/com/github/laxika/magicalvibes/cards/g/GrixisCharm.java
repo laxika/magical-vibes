@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "171")
+@CardRegistration(set = "DDH", collectorNumber = "63")
 public class GrixisCharm extends Card {
 
     public GrixisCharm() {

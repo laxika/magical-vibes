@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "44")
+@CardRegistration(set = "ME2", collectorNumber = "63")
 public class ScreechingDrake extends Card {
 
     public ScreechingDrake() {

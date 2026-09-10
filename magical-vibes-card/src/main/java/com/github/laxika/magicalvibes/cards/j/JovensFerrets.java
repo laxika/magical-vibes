@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentAtEndOfCombatEffect;
 
 @CardRegistration(set = "HML", collectorNumber = "89")
+@CardRegistration(set = "ME2", collectorNumber = "169")
 public class JovensFerrets extends Card {
 
     public JovensFerrets() {

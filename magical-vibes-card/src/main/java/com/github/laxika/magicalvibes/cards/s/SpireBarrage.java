@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "150")
+@CardRegistration(set = "DDI", collectorNumber = "71")
 public class SpireBarrage extends Card {
 
     public SpireBarrage() {

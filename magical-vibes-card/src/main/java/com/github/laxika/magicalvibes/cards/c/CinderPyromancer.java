@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "50")
 @CardRegistration(set = "DPA", collectorNumber = "41")
+@CardRegistration(set = "PD2", collectorNumber = "9")
 public class CinderPyromancer extends Card {
 
     public CinderPyromancer() {

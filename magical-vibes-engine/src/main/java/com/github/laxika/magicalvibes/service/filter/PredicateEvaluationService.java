@@ -104,6 +104,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControll
 import com.github.laxika.magicalvibes.model.filter.PermanentCastForWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
@@ -1565,6 +1566,9 @@ public class PredicateEvaluationService {
                 List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
                 yield controllerBattlefield != null && controllerBattlefield.contains(permanent);
             }
+            case PermanentControlledByPlayerPredicate p ->
+                    gameData != null && p.playerId() != null
+                            && p.playerId().equals(gameData.findControllerOf(permanent));
             case PermanentControlledByActivePlayerPredicate ignored -> {
                 if (gameData == null || gameData.activePlayerId == null) {
                     yield false;
@@ -2489,7 +2493,13 @@ public class PredicateEvaluationService {
                 return ownerId.equals(context.sourceControllerId());
             }
         }
-        return false;
+        // Death triggers evaluate the last-known permanent after it has left the battlefield.
+        Card originalCard = permanent.getOriginalCard();
+        if (originalCard.getOwnerId() != null) {
+            return originalCard.getOwnerId().equals(context.sourceControllerId());
+        }
+        return gameData.playerGraveyards.getOrDefault(context.sourceControllerId(), List.of()).stream()
+                .anyMatch(card -> card.getId().equals(originalCard.getId()));
     }
 
     public boolean matchesStaticLeaf(Permanent permanent, PermanentPredicate predicate) {

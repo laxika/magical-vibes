@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "EVE", collectorNumber = "18")
+@CardRegistration(set = "DDI", collectorNumber = "18")
 public class CacheRaiders extends Card {
 
     public CacheRaiders() {

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
+import com.github.laxika.magicalvibes.cards.s.SpinedWurm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,24 +16,25 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Provoke.class, SkyshroudFalcon.class, SpinedWurm.class})
 class ProvokeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Untaps an opponent's creature and draws a card")
     void untapsOpponentCreatureAndDraws() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
         target.tap();
         castProvoke(target);
 
         assertThat(target.isTapped()).isFalse();
-        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Spined Wurm");
     }
 
     @Test
     @DisplayName("The targeted creature must block this turn if able")
     void targetMustBlockIfAble() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new SpinedWurm());
         castProvoke(target);
 
         attacker.setAttacking(true);
@@ -48,12 +50,26 @@ class ProvokeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not require a block when the targeted creature cannot block any attacker")
+    void doesNotRequireBlockWhenUnable() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new SkyshroudFalcon());
+        castProvoke(target);
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(target.isBlocking()).isFalse();
+        harness.passBothPriorities();
+    }
+
+    @Test
     @DisplayName("Cannot target a creature controlled by the caster")
     void cannotTargetOwnCreature() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SpinedWurm());
         harness.setHand(player1, List.of(new Provoke()));
-        harness.setLibrary(player1, List.of(new Forest()));
         addManaForProvoke();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -65,13 +81,12 @@ class ProvokeTest extends BaseCardTest {
 
     private void castProvoke(Permanent target) {
         harness.setHand(player1, List.of(new Provoke()));
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new SpinedWurm()));
         addManaForProvoke();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addManaForProvoke() {

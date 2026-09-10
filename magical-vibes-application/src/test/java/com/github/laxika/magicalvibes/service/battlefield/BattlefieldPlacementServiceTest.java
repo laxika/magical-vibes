@@ -135,6 +135,23 @@ class BattlefieldPlacementServiceTest {
     }
 
     @Test
+    void remembersTheOpponentAsThePermanentEnters() {
+        UUID opponentId = UUID.randomUUID();
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(opponentId);
+        Card card = new Card();
+        card.setName("Opponent choice");
+        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect());
+        Permanent entering = new Permanent(card);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, entering);
+
+        assertThat(entering.getRememberedTargetPlayerId()).isEqualTo(opponentId);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Notes the controller's life total as the permanent enters")
     void notesControllerLifeTotalAsPermanentEnters() {
         service.setNoteControllerLifeTotalEffectHandler(

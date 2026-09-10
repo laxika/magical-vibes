@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
@@ -395,10 +396,7 @@ public class AmountEvaluationService {
             case ColorManaSymbolsInHand c ->
                     countColorManaSymbolsInHand(gameData, c, ctx);
             case CountersOnSource c ->
-                    ctx.sourcePermanent() == null ? 0
-                            : c.counterType() == CounterType.ANY
-                            ? ctx.sourcePermanent().getTotalCounterCount()
-                            : ctx.sourcePermanent().getCounterCount(c.counterType());
+                    countersOnSource(gameData, c, ctx);
             case AllCountersOnSource ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getTotalCounterCount();
             case TotalCountersOnSource ignored ->
@@ -578,7 +576,9 @@ public class AmountEvaluationService {
                             : gameData.playerManaPools.get(ctx.controllerId())
                                     .getColoredManaTotals().getOrDefault(a.color(), 0);
             case LastDiscardedCardManaValue ignored ->
-                    gameData.lastDiscardedCardManaValue;
+                    ctx.stackEntry() != null && ctx.stackEntry().getDiscardedCardSnapshot() != null
+                            ? ctx.stackEntry().getDiscardedCardSnapshot().getManaValue()
+                            : gameData.lastDiscardedCardManaValue;
             case GreatestDiscardedCardManaValue ignored ->
                     gameData.greatestDiscardedCardManaValue;
             case LastMilledCardColorSymbols a ->
@@ -803,8 +803,9 @@ public class AmountEvaluationService {
     private int targetManaValue(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
-        // No legal target at resolution -> 0, matching the fizzle behaviour of the targeted handlers.
-        return target == null ? 0 : target.getCard().getManaValue();
+        Card card = target != null ? target.getCard()
+                : ctx.stackEntry() != null ? ctx.stackEntry().lastKnownPermanentCard(ctx.targetPermanentId()) : null;
+        return card == null ? 0 : card.getManaValue();
     }
 
     private int topCardOfLibraryManaValue(GameData gameData, AmountContext ctx) {
@@ -1391,6 +1392,37 @@ public class AmountEvaluationService {
         return linked == null ? 0 : linked.getCounterCount(count.counterType());
     }
 
+    private int countersOnSource(GameData gameData, CountersOnSource count, AmountContext ctx) {
+        if (ctx.sourcePermanent() != null) {
+            return count.counterType() == CounterType.ANY
+                    ? ctx.sourcePermanent().getTotalCounterCount()
+                    : ctx.sourcePermanent().getCounterCount(count.counterType());
+        }
+
+        PlanarObject source = sourcePlanarObject(gameData, ctx);
+        if (source == null) {
+            return 0;
+        }
+        return count.counterType() == CounterType.ANY
+                ? source.getCounters().values().stream().mapToInt(Integer::intValue).sum()
+                : source.getCounters().getOrDefault(count.counterType(), 0);
+    }
+
+    private PlanarObject sourcePlanarObject(GameData gameData, AmountContext ctx) {
+        if (ctx.stackEntry() == null || ctx.stackEntry().getSourcePlanarObject() == null) {
+            return null;
+        }
+
+        PlanarObject snapshot = ctx.stackEntry().getSourcePlanarObject();
+        if (gameData.planechase == null) {
+            return snapshot;
+        }
+        return gameData.planechase.faceUp.stream()
+                .filter(object -> object.getId().equals(snapshot.getId()))
+                .findFirst()
+                .orElse(snapshot);
+    }
+
     private int countCountersOnTargetPermanent(GameData gameData, CountersOnTargetPermanent count,
                                                AmountContext ctx) {
         if (ctx.targetPermanentId() == null) {
@@ -1555,7 +1587,7 @@ public class AmountEvaluationService {
         if (battlefield == null) return 0;
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().hasType(CardType.LAND)) {
+            if (gameQueryService.isLand(gameData, permanent)) {
                 count++;
             }
         }
@@ -2180,6 +2212,8 @@ public class AmountEvaluationService {
             case CONTROLLER -> playerId.equals(ctx.controllerId());
             case OPPONENTS -> !playerId.equals(ctx.controllerId());
             case ANY_PLAYER -> true;
+            case CHOSEN_PLAYER -> ctx.sourcePermanent() != null
+                    && playerId.equals(ctx.sourcePermanent().getRememberedTargetPlayerId());
             // The target channel carries the target player's id for player-targeting effects.
             case TARGET_PLAYER -> playerId.equals(targetPlayerId(gameData, ctx));
             case DEFENDING_PLAYER -> playerId.equals(defendingPlayerId(gameData, ctx));

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "7")
+@CardRegistration(set = "DDF", collectorNumber = "14")
 public class CelestialCrusader extends Card {
 
     public CelestialCrusader() {

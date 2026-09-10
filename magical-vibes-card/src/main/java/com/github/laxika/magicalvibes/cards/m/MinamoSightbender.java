@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "41")
+@CardRegistration(set = "DDI", collectorNumber = "5")
 public class MinamoSightbender extends Card {
 
     public MinamoSightbender() {

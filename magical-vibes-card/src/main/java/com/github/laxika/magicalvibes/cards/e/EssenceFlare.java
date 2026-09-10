@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ICE", collectorNumber = "69")
+@CardRegistration(set = "ME2", collectorNumber = "48")
 public class EssenceFlare extends Card {
 
     public EssenceFlare() {

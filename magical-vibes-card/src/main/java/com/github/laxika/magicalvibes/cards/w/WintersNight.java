@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTa
 import com.github.laxika.magicalvibes.model.effect.TappedSnowLandDoesntUntapEffect;
 
 @CardRegistration(set = "ALL", collectorNumber = "114")
+@CardRegistration(set = "ME2", collectorNumber = "200")
 public class WintersNight extends Card {
 
     public WintersNight() {

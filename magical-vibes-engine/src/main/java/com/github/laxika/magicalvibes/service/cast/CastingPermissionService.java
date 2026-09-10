@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAtta
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueGreaterThanEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
@@ -75,6 +76,7 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectCondit
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -154,6 +156,7 @@ public class CastingPermissionService {
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return false;
+        if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return false;
         // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
         if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
                 && card.hasType(CardType.SORCERY)
@@ -239,6 +242,13 @@ public class CastingPermissionService {
     public boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
         if (gameData.playersCantCastSpellsForRestOfGame.contains(playerId)) return true;
         if (gameData.playersSilencedThisTurn.contains(playerId)) return true;
+        synchronized (gameData.floatingEffects) {
+            if (gameData.floatingEffects.stream().anyMatch(floating ->
+                    playerId.equals(floating.affectedPlayerId())
+                            && floating.effect() instanceof PlayerCantCastSpellsEffect)) {
+                return true;
+            }
+        }
 
         // Grand Abolisher: during its controller's turn their opponents can't cast spells.
         if (gameQueryService.isLockedOutByOpponentsTurnRestriction(gameData, playerId)) return true;
@@ -395,6 +405,7 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (permanent.isDampingEngineEffectIgnoredThisTurn()) continue;
+                if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(DampingEngineEffect.class::isInstance)) {
                     return true;
@@ -669,6 +680,37 @@ public class CastingPermissionService {
         return false;
     }
 
+    public boolean isSpellCastingRestrictedByTopLibraryCard(GameData gameData, Card card) {
+        if (card == null || card.hasType(CardType.LAND) || gameData.planechase == null) {
+            return false;
+        }
+
+        List<Card> topCards = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Card> deck = gameData.playerDecks.get(pid);
+            if (deck != null && !deck.isEmpty()) {
+                topCards.add(deck.getFirst());
+            }
+        }
+        if (topCards.isEmpty()) {
+            return false;
+        }
+
+        for (var planar : gameData.planechase.faceUp) {
+            for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof SpellCastingRestrictionEffect restriction)) {
+                    continue;
+                }
+                for (Card topCard : topCards) {
+                    if (restriction.preventsCastingFromTopOfLibrary(topCard, card)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private boolean anyPlayerControlsEtherswornCanonist(GameData gameData) {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
@@ -807,6 +849,7 @@ public class CastingPermissionService {
         if (isCardPlayRestrictedInHand(gameData, playerId, card)) return true;
         if (isSplitSecondActive(gameData)) return true;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return true;
+        if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return true;
         if (!card.hasType(CardType.CREATURE)
                 && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return true;
         if (!card.hasType(CardType.CREATURE)
@@ -1096,6 +1139,7 @@ public class CastingPermissionService {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, ownerId, effect);
                     if (resolved instanceof GrantFlashToCardTypeEffect grant
+                            && !gameQueryService.hasLostAllAbilities(gameData, perm)
                             && (grant.appliesToAllPlayers() || ownerId.equals(playerId))
                             && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                         return true;
@@ -1468,20 +1512,33 @@ public class CastingPermissionService {
         if (!playerId.equals(gameQueryService.findGraveyardOwnerById(gameData, card.getId()))) {
             return Optional.empty();
         }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield != null) {
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     CardEffect resolved = staticEffectConditionResolver.resolve(
-                            gameData, permanent, playerId, effect);
+                            gameData, permanent, sourceControllerId, effect);
                     if (resolved instanceof GrantFlashbackToGraveyardCardsEffect grant
+                            && (grant.allGraveyards() || playerId.equals(sourceControllerId))
                             && predicateEvaluationService.matchesCardPredicate(
                             card, grant.filter(), null, gameData, playerId)) {
-                        String flashbackCost = grant.flashbackCost() != null
-                                ? grant.flashbackCost() : card.getManaCost();
-                        if (flashbackCost != null) {
-                            return Optional.of(new FlashbackCast(flashbackCost));
-                        }
+                        Optional<FlashbackCast> option = flashbackOption(card, grant);
+                        if (option.isPresent()) return option;
+                    }
+                }
+            }
+        }
+        if (gameData.planechase != null) {
+            UUID sourceControllerId = gameData.planechase.controllerId;
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GrantFlashbackToGraveyardCardsEffect grant
+                            && (grant.allGraveyards() || playerId.equals(sourceControllerId))
+                            && predicateEvaluationService.matchesCardPredicate(
+                            card, grant.filter(), null, gameData, playerId)) {
+                        Optional<FlashbackCast> option = flashbackOption(card, grant);
+                        if (option.isPresent()) return option;
                     }
                 }
             }
@@ -1501,6 +1558,11 @@ public class CastingPermissionService {
             }
         }
         return Optional.empty();
+    }
+
+    private Optional<FlashbackCast> flashbackOption(Card card, GrantFlashbackToGraveyardCardsEffect grant) {
+        String flashbackCost = grant.flashbackCost() != null ? grant.flashbackCost() : card.getManaCost();
+        return flashbackCost == null ? Optional.empty() : Optional.of(new FlashbackCast(flashbackCost));
     }
 
     public boolean hasGrantedFlashback(GameData gameData, UUID playerId, Card card) {

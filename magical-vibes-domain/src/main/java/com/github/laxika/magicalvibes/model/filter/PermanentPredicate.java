@@ -27,6 +27,7 @@ public sealed interface PermanentPredicate permits
         PermanentBlockedOrWasBlockedThisTurnPredicate,
         PermanentColorInPredicate,
         PermanentControlledByActivePlayerPredicate,
+        PermanentControlledByPlayerPredicate,
         PermanentControlledByDefendingPlayerPredicate,
         PermanentControlledBySourceControllerPredicate,
         PermanentControlledContinuouslySinceBeginningOfTurnPredicate,

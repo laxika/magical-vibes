@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "191")
 @CardRegistration(set = "9ED", collectorNumber = "177")
 @CardRegistration(set = "APC", collectorNumber = "55")
+@CardRegistration(set = "DDI", collectorNumber = "62")
 public class BloodfireColossus extends Card {
 
     public BloodfireColossus() {

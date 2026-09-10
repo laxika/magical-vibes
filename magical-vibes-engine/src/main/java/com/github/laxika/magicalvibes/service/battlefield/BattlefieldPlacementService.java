@@ -228,6 +228,8 @@ public class BattlefieldPlacementService {
             carrySpellColorOverride(gameData, controllerId, permanent);
             applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
             applyRandomNumberChoiceOnEnter(permanent);
+            com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoiceOnEnterSupport
+                    .applyIfPresent(gameData, controllerId, permanent);
             conditionalRevealEffect = findActiveConditionalRevealEffect(gameData, controllerId, permanent);
             conditionalRevealWithCountersEffect = findActiveConditionalRevealWithCountersEffect(
                     gameData, controllerId, permanent);

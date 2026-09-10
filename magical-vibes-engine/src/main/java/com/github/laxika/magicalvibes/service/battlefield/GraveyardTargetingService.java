@@ -958,6 +958,14 @@ public class GraveyardTargetingService {
                 "Choose any number of target " + filterLabel + "s from your graveyard.");
     }
 
+    /** Targets up to any number of matching cards from one chosen player's graveyard. */
+    public void handleUpToNSingleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                         StackEntryType entryType, CardPredicate filter,
+                                                         int maxTargetsCap, List<CardEffect> spellEffects) {
+        handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter, maxTargetsCap,
+                spellEffects, 0, false, false, GraveyardSearchScope.ALL_GRAVEYARDS, true, null, null);
+    }
+
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                     StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
                                                     List<CardEffect> spellEffects) {

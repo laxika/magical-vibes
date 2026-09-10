@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomSupport;
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
@@ -77,6 +78,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.UbaMaskDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -1621,7 +1623,8 @@ public class DrawService {
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
 
         checkControllerDrawTriggers(gameData, playerId, drawn);
-        checkOpponentDrawTriggers(gameData, playerId);
+        checkOpponentDrawTriggers(gameData, playerId, drawn);
+        checkPlanarDrawTriggers(gameData, playerId, drawn);
         checkEnchantedPlayerDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
         checkRevealFirstDrawTriggers(gameData, playerId, drawn);
@@ -1788,16 +1791,18 @@ public class DrawService {
                     }
 
                     if (firstDraw.revealBeforeChoice()) {
-                        String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-                        gameLogService.append(gameData, GameLog.builder()
-                                .text(drawerName + " reveals ")
-                                .card(drawn)
-                                .text(" with ")
-                                .card(perm.getCard())
-                                .text(".")
-                                .build());
+                        logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
                     }
                     effect = firstDraw.effectFor(drawn);
+                    if (effect == null) {
+                        continue;
+                    }
+                } else if (effect instanceof DrawRevealTriggerEffect drawReveal) {
+                    if (drawn == null) {
+                        continue;
+                    }
+                    logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
+                    effect = drawReveal.effectFor(drawn);
                     if (effect == null) {
                         continue;
                     }
@@ -1966,6 +1971,10 @@ public class DrawService {
     }
 
     public void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        checkOpponentDrawTriggers(gameData, drawingPlayerId, null);
+    }
+
+    private void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerId.equals(drawingPlayerId)) return;
@@ -1976,7 +1985,16 @@ public class DrawService {
 
                 for (CardEffect authoredEffect : drawEffects) {
                     CardEffect effect = authoredEffect;
-                    if (effect instanceof DrawTriggerEffect drawTrigger) {
+                    if (effect instanceof DrawRevealTriggerEffect drawReveal) {
+                        if (drawn == null) {
+                            continue;
+                        }
+                        logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
+                        effect = drawReveal.effectFor(drawn);
+                        if (effect == null) {
+                            continue;
+                        }
+                    } else if (effect instanceof DrawTriggerEffect drawTrigger) {
                         effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                         if (effect == null) continue;
                     }
@@ -1999,6 +2017,65 @@ public class DrawService {
                 }
             }
         });
+    }
+
+    private void checkPlanarDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
+        if (gameData.planechase == null || drawn == null || gameData.planechase.controllerId == null) {
+            return;
+        }
+
+        UUID planarControllerId = gameData.planechase.controllerId;
+        EffectSlot slot = planarControllerId.equals(drawingPlayerId)
+                ? EffectSlot.ON_CONTROLLER_DRAWS : EffectSlot.ON_OPPONENT_DRAWS;
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+
+        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+            Card card = object.getCard();
+            List<CardEffect> drawEffects = card.getEffects(slot);
+            for (CardEffect authoredEffect : drawEffects) {
+                CardEffect effect = authoredEffect;
+                if (effect instanceof DrawRevealTriggerEffect drawReveal) {
+                    logDrawReveal(gameData, drawingPlayerId, drawn, card);
+                    effect = drawReveal.effectFor(drawn);
+                    if (effect == null) {
+                        continue;
+                    }
+                } else if (effect instanceof DrawTriggerEffect drawTrigger) {
+                    effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
+                    if (effect == null) {
+                        continue;
+                    }
+                }
+
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(card, planarControllerId, may);
+                    continue;
+                }
+
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        planarControllerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)));
+                entry.setTargetId(drawingPlayerId);
+                entry.setSourcePlanarObject(object.copy());
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} planar draw trigger pushed onto stack", gameData.id, card.getName());
+            }
+        }
+    }
+
+    private void logDrawReveal(GameData gameData, UUID drawingPlayerId, Card drawn, Card sourceCard) {
+        String drawerName = gameData.playerIdToName.get(drawingPlayerId);
+        gameLogService.append(gameData, GameLog.builder()
+                .text(drawerName + " reveals ")
+                .card(drawn)
+                .text(" with ")
+                .card(sourceCard)
+                .text(".")
+                .build());
     }
 
     public void checkEnchantedPlayerDrawTriggers(GameData gameData, UUID drawingPlayerId) {

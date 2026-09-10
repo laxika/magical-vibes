@@ -191,6 +191,26 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Test
+    void referringToTheTriggeringSpellDoesNotMakeItADeclaredTarget() {
+        Permanent source = createPermanent("Spell watcher");
+        Card spell = createInstant("Triggering spell");
+        var effect = new SpellCastTriggerEffect(null, List.of(new BoostSelfEffect(2, 2),
+                new MayEffect(new com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect(),
+                        "Choose new targets?")));
+        var context = new TriggerContext.SpellCast(spell, player1Id, true);
+        when(predicateEvaluationService.matchesCardPredicate(eq(spell), eq(null),
+                eq(source.getOriginalCard().getId()), any(), any())).thenReturn(true);
+
+        registry.dispatch(match(source, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, context);
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry triggeredAbility = gd.stack.getLast();
+        assertThat(triggeredAbility.isNonTargeting()).isTrue();
+        assertThat(triggeredAbility.getTriggeringCardId()).isEqualTo(spell.getId());
+    }
+
+    @Test
     void spellCastTriggerPreservesChosenX() {
         Permanent source = createPermanent("X source");
         Card spell = createInstant("X spell");

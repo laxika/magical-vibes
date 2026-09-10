@@ -4,13 +4,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +26,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class GrantLandwalkOfSacrificedLandToTargetEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final GrantKeywordEffectHandler grantKeywordEffectHandler;
 
     @Override
@@ -38,7 +35,7 @@ public class GrantLandwalkOfSacrificedLandToTargetEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Set<Keyword> landwalks = landwalksOfSacrificedLand(gameData, entry);
+        Set<Keyword> landwalks = landwalksOfSacrificedLand(entry);
         if (landwalks.isEmpty()) {
             return;
         }
@@ -46,9 +43,8 @@ public class GrantLandwalkOfSacrificedLandToTargetEffectHandler implements Norma
                 new GrantKeywordEffect(landwalks, GrantScope.TARGET));
     }
 
-    private Set<Keyword> landwalksOfSacrificedLand(GameData gameData, StackEntry entry) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Card sacrificed = source != null ? source.getChosenCard() : null;
+    private Set<Keyword> landwalksOfSacrificedLand(StackEntry entry) {
+        Card sacrificed = entry.getSacrificedCardSnapshot();
         Set<Keyword> landwalks = EnumSet.noneOf(Keyword.class);
         if (sacrificed == null) {
             return landwalks;

@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MultanisPresence.class, Forest.class, GrizzlyBears.class, Cancel.class})
 class MultanisPresenceTest extends BaseCardTest {
 
     @Test
@@ -30,8 +32,7 @@ class MultanisPresenceTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Forest");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -44,13 +45,30 @@ class MultanisPresenceTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addToBattlefield(player1, new MultanisPresence());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotDrawWhenOpponentsSpellIsCountered() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addToBattlefield(player1, new MultanisPresence());
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player2, bears, "{1}{G}");
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castInstant(player1, 0, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Cancel");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

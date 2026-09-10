@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "123")
+@CardRegistration(set = "ME2", collectorNumber = "215")
 public class MishrasGroundbreaker extends Card {
 
     public MishrasGroundbreaker() {

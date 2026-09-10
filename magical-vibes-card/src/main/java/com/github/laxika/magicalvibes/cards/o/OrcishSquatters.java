@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "258")
 @CardRegistration(set = "ICE", collectorNumber = "211")
+@CardRegistration(set = "ME2", collectorNumber = "143")
 public class OrcishSquatters extends Card {
 
     public OrcishSquatters() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "35")
+@CardRegistration(set = "DDH", collectorNumber = "50")
 public class SteamcoreWeird extends Card {
 
     public SteamcoreWeird() {

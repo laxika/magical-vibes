@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "350")
 @CardRegistration(set = "ME1", collectorNumber = "174")
+@CardRegistration(set = "V10", collectorNumber = "15")
 public class ZuranOrb extends Card {
 
     public ZuranOrb() {

@@ -63,7 +63,7 @@ public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implem
         if (creatureIds.size() == 1) {
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
             if (creature != null) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
                 gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , creature.getCard(), "."));
                 log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
 

@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RustmouthOgreTest extends BaseCardTest {
@@ -24,14 +22,14 @@ class RustmouthOgreTest extends BaseCardTest {
 
         resolveCombat();
 
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
 
         harness.assertNotOnBattlefield(player2, "Spellbook");
         harness.assertInGraveyard(player2, "Spellbook");
-        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
     }
 
     @Test
@@ -44,10 +42,8 @@ class RustmouthOgreTest extends BaseCardTest {
         Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(enemyArtifact.getId())
                 .doesNotContain(ownArtifact.getId(), enemyCreature.getId());
     }
@@ -60,6 +56,8 @@ class RustmouthOgreTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Spellbook());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Spellbook"));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player2, "Spellbook");

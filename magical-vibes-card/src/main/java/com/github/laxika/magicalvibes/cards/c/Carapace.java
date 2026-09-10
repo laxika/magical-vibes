@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "281")
 @CardRegistration(set = "HML", collectorNumber = "84a")
 @CardRegistration(set = "HML", collectorNumber = "84b")
+@CardRegistration(set = "ME2", collectorNumber = "155")
 public class Carapace extends Card {
 
     public Carapace() {

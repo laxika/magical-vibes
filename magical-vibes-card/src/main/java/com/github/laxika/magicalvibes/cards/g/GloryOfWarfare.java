@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "98")
+@CardRegistration(set = "HOP", collectorNumber = "88")
 public class GloryOfWarfare extends Card {
 
     public GloryOfWarfare() {

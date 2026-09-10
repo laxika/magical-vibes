@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "INV", collectorNumber = "295")
 @CardRegistration(set = "TSB", collectorNumber = "106")
+@CardRegistration(set = "HOP", collectorNumber = "103")
 public class AssaultBattery extends Card {
 
     public AssaultBattery() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "120")
+@CardRegistration(set = "DDI", collectorNumber = "32")
 public class Overrule extends Card {
 
     public Overrule() {

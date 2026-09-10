@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(ShuFarmer.class)
 class ShuFarmerTest extends BaseCardTest {
 
     @Test
@@ -42,8 +44,8 @@ class ShuFarmerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate once attackers have been declared")
-    void cannotActivateAfterAttackersDeclared() {
+    @DisplayName("Cannot activate once the declare attackers step begins")
+    void cannotActivateAtDeclareAttackersStep() {
         setupFarmerOnMyTurn(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -52,10 +54,20 @@ class ShuFarmerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void summoningSickCannotTap() {
+        harness.addToBattlefield(player1, new ShuFarmer());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Cannot activate during an opponent's turn")
     void cannotActivateOnOpponentTurn() {
-        harness.addToBattlefield(player1, new ShuFarmer());
-        findPermanent(player1, "Shu Farmer").setSummoningSick(false);
+        addCreatureReady(player1, new ShuFarmer());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -65,8 +77,7 @@ class ShuFarmerTest extends BaseCardTest {
     }
 
     private void setupFarmerOnMyTurn(TurnStep step) {
-        harness.addToBattlefield(player1, new ShuFarmer());
-        findPermanent(player1, "Shu Farmer").setSummoningSick(false);
+        addCreatureReady(player1, new ShuFarmer());
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
     }

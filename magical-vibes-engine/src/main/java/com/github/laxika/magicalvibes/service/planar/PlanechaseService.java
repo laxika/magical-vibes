@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.planar.*;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -27,14 +30,17 @@ public class PlanechaseService {
     private final GameQueryService query;
     private final GameLogService logs;
     private final TriggerCollectionService triggers;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     public PlanechaseService(PlanarDieRoller die, @Lazy GameQueryService query,
-                             @Lazy GameLogService logs, @Lazy TriggerCollectionService triggers, CardCatalog catalog) {
+                             @Lazy GameLogService logs, @Lazy TriggerCollectionService triggers,
+                             @Lazy ConditionEvaluationService conditionEvaluationService, CardCatalog catalog) {
         this.catalog = catalog;
         this.die = die;
         this.query = query;
         this.logs = logs;
         this.triggers = triggers;
+        this.conditionEvaluationService = conditionEvaluationService;
     }
 
     public void initializeDeck(GameData game) {
@@ -173,15 +179,51 @@ public class PlanechaseService {
     }
 
     public void trigger(GameData game, PlanarObject object, EffectSlot slot, UUID controller) {
-        for (CardEffect effect : object.getCard().getEffects(slot)) {
+        Card card = object.getCard();
+        List<CardEffect> effects = card.getEffects(slot).stream()
+                .filter(effect -> !(effect instanceof ConditionalEffect conditional)
+                        || !conditional.interveningIf()
+                        || conditionEvaluationService.isMet(game, conditional.condition(),
+                        ConditionContext.forCard(card, controller)))
+                .toList();
+        boolean hasMultipleTargetGroups = card.getSpellTargets().size() > 1;
+        List<CardEffect> multiTargetEffects = hasMultipleTargetGroups
+                ? effects.stream().filter(effect -> card.getEffectTargetIndex(effect) >= 0).toList()
+                : List.of();
+        boolean multiTargetQueued = false;
+
+        for (CardEffect effect : effects) {
+            if (hasMultipleTargetGroups && card.getEffectTargetIndex(effect) >= 0) {
+                if (multiTargetQueued) {
+                    continue;
+                }
+                game.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        card, controller, multiTargetEffects, null, List.of(), 0, 0,
+                        List.of(), 0, List.of(), false, null, null, 0, object.copy()));
+                multiTargetQueued = true;
+                continue;
+            }
+            boolean targetsGraveyard = effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
+            boolean targetsOtherZone = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.SPELL);
+            if (targetsGraveyard && !targetsOtherZone) {
+                game.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        card, controller, List.of(effect), null, 1));
+                continue;
+            }
             if (effect.targetSpec().targetPredicate() != null) {
+                boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+                TargetFilter targetFilter = playerTargetOnly ? null : card.getTargetFilter();
                 game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        object.getCard(), controller, List.of(effect), false, object.getCard().getTargetFilter(),
+                        card, controller, List.of(effect), playerTargetOnly, targetFilter,
                         0, null, null, false, null, null, controller, object.copy()));
                 continue;
             }
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, object.getCard(), controller,
-                    object.getCard().getName() + "'s ability", List.of(effect));
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controller,
+                    card.getName() + "'s ability", List.of(effect));
             entry.setSourcePlanarObject(object.copy());
             game.enqueueTrigger(entry);
         }

@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SaltFlats.class)
 class SaltFlatsTest extends BaseCardTest {
 
     @Test
@@ -22,7 +23,7 @@ class SaltFlatsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findPermanent(player1, "Salt Flats").isTapped()).isTrue();
     }
@@ -31,7 +32,7 @@ class SaltFlatsTest extends BaseCardTest {
     @DisplayName("Tapping for colorless adds {C} and does not deal damage")
     void tapForColorlessAddsManaNoDamage() {
         harness.setLife(player1, 20);
-        Permanent land = addReadyLand(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SaltFlats());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -47,7 +48,7 @@ class SaltFlatsTest extends BaseCardTest {
     @DisplayName("Tapping for white adds {W} and deals 1 damage to controller")
     void tapForWhiteAddsManaAndDealsDamage() {
         harness.setLife(player1, 20);
-        addReadyLand(player1);
+        harness.addToBattlefield(player1, new SaltFlats());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -61,7 +62,7 @@ class SaltFlatsTest extends BaseCardTest {
     @DisplayName("Tapping for black adds {B} and deals 1 damage to controller")
     void tapForBlackAddsManaAndDealsDamage() {
         harness.setLife(player1, 20);
-        addReadyLand(player1);
+        harness.addToBattlefield(player1, new SaltFlats());
 
         harness.activateAbility(player1, 0, 2, null, null);
 
@@ -71,10 +72,4 @@ class SaltFlatsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addReadyLand(Player player) {
-        Permanent perm = new Permanent(new SaltFlats());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

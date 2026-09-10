@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FlowstoneSculpture.class, Forest.class, Island.class})
 class FlowstoneSculptureTest extends BaseCardTest {
 
     private static final String COUNTER_MODE = "Put a +1/+1 counter on this creature.";
@@ -34,7 +37,22 @@ class FlowstoneSculptureTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, sculpture)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, sculpture)).isEqualTo(5);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Discard cost lets the player choose which card to discard")
+    void discardsChosenCard() {
+        Permanent sculpture = addSculpture();
+        Island kept = new Island();
+        Forest discarded = new Forest();
+
+        activate(1, kept, discarded);
+        harness.handleListChoice(player1, COUNTER_MODE);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(sculpture.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -101,18 +119,19 @@ class FlowstoneSculptureTest extends BaseCardTest {
     }
 
     private Permanent addSculpture() {
-        Permanent permanent = new Permanent(new FlowstoneSculpture());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new FlowstoneSculpture());
     }
 
     /** Pays {2} and the discard cost, then resolves the ability up to the mode prompt. */
     private void activate() {
+        activate(0, new Island());
+    }
+
+    private void activate(int discardCardIndex, Card... handCards) {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(handCards));
         harness.activateAbility(player1, 0, null, null);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, discardCardIndex);
         harness.passBothPriorities();
     }
 }

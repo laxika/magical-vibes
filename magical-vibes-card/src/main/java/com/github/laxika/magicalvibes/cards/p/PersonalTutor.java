@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "64")
+@CardRegistration(set = "ME2", collectorNumber = "58")
 public class PersonalTutor extends Card {
 
     public PersonalTutor() {

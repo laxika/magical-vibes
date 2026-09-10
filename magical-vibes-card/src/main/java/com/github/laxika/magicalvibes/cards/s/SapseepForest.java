@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "279")
+@CardRegistration(set = "DDH", collectorNumber = "36")
 public class SapseepForest extends Card {
 
     public SapseepForest() {

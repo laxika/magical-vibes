@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "50")
+@CardRegistration(set = "ME2", collectorNumber = "93")
 public class GrandmotherSengir extends Card {
 
     public GrandmotherSengir() {

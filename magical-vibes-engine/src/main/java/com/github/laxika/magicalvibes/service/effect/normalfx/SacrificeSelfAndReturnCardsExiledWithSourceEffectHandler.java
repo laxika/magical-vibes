@@ -57,7 +57,7 @@ public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements
         }
 
         Permanent self = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (self == null || !permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+        if (self == null || !permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
             return;
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "198")
 @CardRegistration(set = "DKM", collectorNumber = "16")
+@CardRegistration(set = "ME2", collectorNumber = "134")
 public class LavaBurst extends Card {
 
     public LavaBurst() {

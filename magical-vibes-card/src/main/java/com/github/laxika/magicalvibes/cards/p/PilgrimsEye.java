@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "WWK", collectorNumber = "128")
+@CardRegistration(set = "DDI", collectorNumber = "47")
 public class PilgrimsEye extends Card {
 
     public PilgrimsEye() {

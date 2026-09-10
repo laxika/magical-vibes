@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "13")
+@CardRegistration(set = "DDH", collectorNumber = "20")
 public class NacatlHuntPride extends Card {
 
     public NacatlHuntPride() {

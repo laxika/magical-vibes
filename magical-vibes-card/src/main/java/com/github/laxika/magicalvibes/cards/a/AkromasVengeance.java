@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "2")
+@CardRegistration(set = "HOP", collectorNumber = "1")
 public class AkromasVengeance extends Card {
 
     public AkromasVengeance() {

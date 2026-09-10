@@ -101,14 +101,15 @@ class FadeAwayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount())
-                .isEqualTo(1);
-        gs.tapPermanent(gd, player2,
-                gd.playerBattlefields.get(player2.getId()).indexOf(cityOfTraitors));
+                .isEqualTo(2);
+        gs.activateAbility(gd, player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(cityOfTraitors),
+                null, null, null, null);
         harness.handleMultiplePermanentsChosen(player2,
                 List.of(firstCreature.getId(), secondCreature.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).filteredOn(
                 permanent -> permanent.getCard().getName().equals("Raging Goblin")).hasSize(2);
-        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
     }
 }

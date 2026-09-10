@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "367")
 @CardRegistration(set = "ICE", collectorNumber = "317")
 @CardRegistration(set = "DKM", collectorNumber = "35")
+@CardRegistration(set = "ME2", collectorNumber = "207")
 public class ElkinBottle extends Card {
 
     public ElkinBottle() {

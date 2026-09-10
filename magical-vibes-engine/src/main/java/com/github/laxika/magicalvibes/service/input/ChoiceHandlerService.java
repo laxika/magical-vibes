@@ -169,7 +169,9 @@ public class ChoiceHandlerService {
         }
 
         if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx
-                && ctx.nonbasicLandOnly()
+                && (ctx.nonbasicLandOnly() || ctx.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect choice
+                                && choice.excludeBasicLandNames()))
                 && !colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid nonbasic land card name: " + colorName);
         }
@@ -276,7 +278,7 @@ public class ChoiceHandlerService {
 
         // Mana color choice (Chromatic Star, etc.)
         if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
-            handleManaColorChosen(gameData, player, colorName, ctx);
+            handleManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
             return;
         }
 
@@ -946,9 +948,10 @@ public class ChoiceHandlerService {
         }
     }
 
-    private void handleManaColorChosen(GameData gameData, Player player, String colorName, ChoiceContext.ManaColorChoice ctx) {
+    private void handleManaColorChosen(GameData gameData, Player player, String colorName,
+                                       ChoiceContext.ManaColorChoice ctx, List<String> options) {
         ManaColor chosenColor = ManaColor.valueOf(colorName);
-        if (chosenColor == ManaColor.COLORLESS && ctx.fixedColorOptions() == null) {
+        if (chosenColor == ManaColor.COLORLESS && !options.contains(colorName)) {
             throw new IllegalArgumentException("Colorless is not a color");
         }
         if (ctx.fixedColorOptions() != null && !ctx.fixedColorOptions().contains(chosenColor)) {

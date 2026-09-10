@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "14")
+@CardRegistration(set = "ME2", collectorNumber = "31")
 public class RoyalDecree extends Card {
 
     private static final PermanentPredicate SWAMP_MOUNTAIN_BLACK_OR_RED = new PermanentAnyOfPredicate(List.of(

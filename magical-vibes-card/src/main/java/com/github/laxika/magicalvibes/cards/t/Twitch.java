@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -27,7 +28,8 @@ public class Twitch extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, creature, or land"
-        )).addEffect(EffectSlot.SPELL, new TapOrUntapTargetPermanentEffect())
+        )).addEffect(EffectSlot.SPELL, new MayEffect(new TapOrUntapTargetPermanentEffect(),
+                        "You may tap or untap target artifact, creature, or land."))
                 .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

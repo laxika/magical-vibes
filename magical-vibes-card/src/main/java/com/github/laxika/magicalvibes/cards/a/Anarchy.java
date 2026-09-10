@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "ICE", collectorNumber = "170")
+@CardRegistration(set = "ME2", collectorNumber = "116")
 public class Anarchy extends Card {
 
     public Anarchy() {

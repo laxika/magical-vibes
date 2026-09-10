@@ -1290,6 +1290,7 @@ public class CombatBlockService {
     private boolean hasGlobalBlockerDeclarationControl(GameData gameData) {
         return gameData.playerBattlefields.values().stream()
                 .flatMap(Collection::stream)
+                .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(BlockerDeclarationControlEffect.class::isInstance);
     }
@@ -2037,6 +2038,8 @@ public class CombatBlockService {
                     );
                     // "That creature" wording references the blocker without targeting it.
                     trigger.setNonTargeting(true);
+                    trigger.getRemovedPermanentControllers().put(blocker.getId(),
+                            gameQueryService.findPermanentController(gameData, blocker.getId()));
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
                     log.info("Game {} - {} any-creature-blocks trigger pushed onto stack for {}",
@@ -2681,6 +2684,7 @@ public class CombatBlockService {
     private boolean hasGlobalMustBlockEachCombat(GameData gameData) {
         return gameData.playerBattlefields.values().stream()
                 .flatMap(Collection::stream)
+                .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance);
     }

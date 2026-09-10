@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "353")
+@CardRegistration(set = "ME2", collectorNumber = "229")
 public class GlacialChasm extends Card {
 
     public GlacialChasm() {

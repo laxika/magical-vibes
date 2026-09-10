@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CSP", collectorNumber = "39")
-@CardRegistration(set = "CST", collectorNumber = "39")
 public class KrovikanWhispers extends Card {
 
     public KrovikanWhispers() {
