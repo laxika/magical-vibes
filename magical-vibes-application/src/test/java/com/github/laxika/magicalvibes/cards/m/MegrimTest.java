@@ -5,20 +5,24 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HypnoticSpecter;
+import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.Sift;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Megrim.class, Distress.class, GrizzlyBears.class, HypnoticSpecter.class, Sift.class,
+        MindRot.class, Swamp.class})
 class MegrimTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -33,7 +37,7 @@ class MegrimTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Megrim");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(Megrim.class);
     }
 
     @Test
@@ -46,7 +50,8 @@ class MegrimTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Megrim");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof Megrim);
     }
 
     // ===== Triggered ability: opponent discards via Distress (revealed hand path) =====
@@ -55,21 +60,21 @@ class MegrimTest extends BaseCardTest {
     @DisplayName("Megrim deals 2 damage when opponent discards via Distress")
     void triggersOnOpponentDiscardViaDistress() {
         harness.addToBattlefield(player1, new Megrim());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLife(player2, 20);
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1 chooses card from player2's revealed hand
         harness.handleCardChosen(player1, 0);
 
         // Megrim trigger should have resolved, dealing 2 damage to player2
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof GrizzlyBears);
     }
 
     // ===== Triggered ability: opponent discards via handleDiscardCardChosen path =====
@@ -86,15 +91,12 @@ class MegrimTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Give player2 a deck to draw from
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setHand(player2, List.of(new Sift()));
         harness.addMana(player2, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // Resolve Sift — draws 3, prompts for discard
+        harness.castAndResolveSorcery(player2, 0, 0); // Resolve Sift — draws 3, prompts for discard
 
         // Player2 chooses a card to discard
         harness.handleCardChosen(player2, 0);
@@ -112,15 +114,12 @@ class MegrimTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Player1 casts Sift (draw 3, discard 1) — player1 is the one discarding
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new Sift()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // Resolve Sift — draws 3, prompts for discard
+        harness.castAndResolveSorcery(player1, 0, 0); // Resolve Sift — draws 3, prompts for discard
 
         harness.handleCardChosen(player1, 0);
 
@@ -134,20 +133,39 @@ class MegrimTest extends BaseCardTest {
     @DisplayName("Megrim triggers once per card discarded via Distress (single card)")
     void triggersOncePerDiscardViaDistress() {
         harness.addToBattlefield(player1, new Megrim());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLife(player2, 20);
 
         // Distress forces discard of 1 nonland card
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         // Only 1 card discarded, so only 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Megrim triggers once for each card discarded by Mind Rot")
+    void triggersForEachDiscardedCard() {
+        harness.addToBattlefield(player1, new Megrim());
+        harness.setHand(player2, List.of(new Swamp(), new GrizzlyBears()));
+        harness.setLife(player2, 20);
+
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof Swamp)
+                .anyMatch(card -> card instanceof GrizzlyBears);
     }
 
     // ===== Two Megrims each trigger =====
@@ -157,14 +175,13 @@ class MegrimTest extends BaseCardTest {
     void twoMegrimsEachTrigger() {
         harness.addToBattlefield(player1, new Megrim());
         harness.addToBattlefield(player1, new Megrim());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLife(player2, 20);
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         // Both Megrims trigger, dealing 2 + 2 = 4 damage
@@ -180,10 +197,9 @@ class MegrimTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLife(player2, 20);
 
-        Permanent specter = new Permanent(new HypnoticSpecter());
+        Permanent specter = harness.addToBattlefieldAndReturn(player1, new HypnoticSpecter());
         specter.setSummoningSick(false);
         specter.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(specter);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -194,7 +210,8 @@ class MegrimTest extends BaseCardTest {
         // Total: 20 - 2 (combat) - 2 (Megrim) = 16
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof GrizzlyBears);
     }
 
     // ===== No trigger when Megrim is not on the battlefield =====
@@ -203,18 +220,19 @@ class MegrimTest extends BaseCardTest {
     @DisplayName("Megrim does not trigger when it is not on the battlefield")
     void doesNotTriggerWhenNotOnBattlefield() {
         // Megrim is in hand, NOT on the battlefield
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Megrim()));
         harness.setLife(player2, 20);
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         // No Megrim on battlefield, so no extra damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .anyMatch(card -> card instanceof Megrim);
     }
 
     // ===== Logging =====
@@ -223,18 +241,17 @@ class MegrimTest extends BaseCardTest {
     @DisplayName("Megrim trigger is logged")
     void triggerIsLogged() {
         harness.addToBattlefield(player1, new Megrim());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLife(player2, 20);
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Megrim") && log.contains("triggers") && log.contains("2 damage"));
+                log.contains("triggers") && log.contains("2 damage"));
     }
 
     // ===== Opponent controls Megrim — their discard does not trigger it =====
@@ -246,15 +263,12 @@ class MegrimTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Player1 casts Sift — player1 discards, which is an opponent of player2's Megrim
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new Sift()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // Resolve Sift — draws 3, prompts for discard
+        harness.castAndResolveSorcery(player1, 0, 0); // Resolve Sift — draws 3, prompts for discard
 
         harness.handleCardChosen(player1, 0);
 

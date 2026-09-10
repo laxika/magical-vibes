@@ -7,12 +7,15 @@ import com.github.laxika.magicalvibes.cards.p.PaleBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Winnowing.class, GrizzlyBears.class, PaleBears.class, HillGiant.class,
+        WoodlandChangeling.class, ForestBear.class})
 class WinnowingTest extends BaseCardTest {
 
     private void cast() {
