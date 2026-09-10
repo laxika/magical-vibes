@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "18")
+@CardRegistration(set = "DDF", collectorNumber = "6")
 public class MosquitoGuard extends Card {
 
     public MosquitoGuard() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "15")
+@CardRegistration(set = "DDF", collectorNumber = "30")
 public class Saltblast extends Card {
 
     public Saltblast() {

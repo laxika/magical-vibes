@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "202")
 @CardRegistration(set = "MRD", collectorNumber = "241")
+@CardRegistration(set = "DDF", collectorNumber = "43")
 public class SilverMyr extends Card {
 
     public SilverMyr() {

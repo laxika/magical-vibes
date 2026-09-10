@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "49")
+@CardRegistration(set = "DDF", collectorNumber = "48")
 public class MasterOfEtherium extends Card {
 
     public MasterOfEtherium() {

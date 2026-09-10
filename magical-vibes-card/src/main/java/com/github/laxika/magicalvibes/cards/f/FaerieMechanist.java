@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "CON", collectorNumber = "27")
+@CardRegistration(set = "DDF", collectorNumber = "54")
 public class FaerieMechanist extends Card {
 
     public FaerieMechanist() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "23")
+@CardRegistration(set = "DDF", collectorNumber = "9")
 public class TempleAcolyte extends Card {
 
     public TempleAcolyte() {

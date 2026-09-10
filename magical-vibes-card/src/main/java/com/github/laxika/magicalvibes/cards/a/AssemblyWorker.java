@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "248")
+@CardRegistration(set = "DDF", collectorNumber = "45")
 public class AssemblyWorker extends Card {
 
     private static final PermanentAllOfPredicate ASSEMBLY_WORKER_CREATURE = new PermanentAllOfPredicate(List.of(

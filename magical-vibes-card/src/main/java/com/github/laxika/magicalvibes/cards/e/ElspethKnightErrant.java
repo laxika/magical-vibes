@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "9")
+@CardRegistration(set = "DDF", collectorNumber = "1")
 public class ElspethKnightErrant extends Card {
 
     public ElspethKnightErrant() {

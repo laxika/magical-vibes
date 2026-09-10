@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "4ED", collectorNumber = "361")
 @CardRegistration(set = "ME1", collectorNumber = "178")
+@CardRegistration(set = "DDF", collectorNumber = "73")
 public class MishrasFactory extends Card {
 
     public MishrasFactory() {

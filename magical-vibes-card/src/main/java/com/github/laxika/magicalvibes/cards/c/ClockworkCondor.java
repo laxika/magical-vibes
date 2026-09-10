@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndOfCombatEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "154")
+@CardRegistration(set = "DDF", collectorNumber = "50")
 public class ClockworkCondor extends Card {
 
     public ClockworkCondor() {
