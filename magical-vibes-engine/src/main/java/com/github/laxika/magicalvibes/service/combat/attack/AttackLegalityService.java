@@ -444,7 +444,9 @@ public class AttackLegalityService {
 
         UUID creatureControllerId = gameData.findControllerOf(creature);
         if (gameData.getDelayedActions(DestroyNonAttackersAtEndStep.class).stream()
-                .anyMatch(action -> action.playerId().equals(creatureControllerId))) {
+                .anyMatch(action -> action.playerId().equals(creatureControllerId)
+                        && (!action.excludeWallsFromAttack() || !gameQueryService.hasEffectiveSubtype(gameData, creature,
+                        com.github.laxika.magicalvibes.model.CardSubtype.WALL)))) {
             count[0]++;
         }
 

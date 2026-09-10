@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.Bloodbriar;
 import com.github.laxika.magicalvibes.cards.f.ForbiddingWatchtower;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.h.HarshMentor;
 import com.github.laxika.magicalvibes.cards.k.Knighthood;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,8 +23,40 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DampingEngine.class, ForbiddingWatchtower.class, GiantCockroach.class, Knighthood.class})
+@CardUsed({DampingEngine.class, ForbiddingWatchtower.class, GiantCockroach.class, Knighthood.class,
+        Bloodbriar.class, HarshMentor.class})
 class DampingEngineTest extends BaseCardTest {
+
+    @Test
+    void specialActionTriggersSacrificeButNotAbilityActivation() {
+        Permanent engine = harness.addToBattlefieldAndReturn(player1, new DampingEngine());
+        Permanent bloodbriar = harness.addToBattlefieldAndReturn(player1, new Bloodbriar());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new ForbiddingWatchtower());
+        harness.addToBattlefield(player2, new HarshMentor());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, land.getId());
+
+        assertThat(engine.isDampingEngineEffectIgnoredThisTurn()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(bloodbriar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void specialActionIsAvailableWhenActivatedAbilitiesAreProhibited() {
+        Permanent engine = harness.addToBattlefieldAndReturn(player1, new DampingEngine());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new ForbiddingWatchtower());
+        harness.addToBattlefield(player2, new ForbiddingWatchtower());
+        gd.playersCantActivateAbilitiesThisTurn.add(player1.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, land.getId());
+
+        assertThat(engine.isDampingEngineEffectIgnoredThisTurn()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Player with more permanents than every other player cannot cast a creature spell")
@@ -126,7 +161,6 @@ class DampingEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, sacrificeTarget.getId());
-        harness.passBothPriorities();
 
         assertThat(availability.getPlayableCardIndices(gd, player1.getId())).contains(0);
         harness.castCreature(player1, 0);
@@ -196,7 +230,6 @@ class DampingEngineTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player2, sacrificeTarget.getId());
-        harness.passBothPriorities();
 
         assertThat(availability.getPlayableCardIndices(gd, player2.getId())).contains(0);
     }

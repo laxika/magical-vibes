@@ -149,6 +149,19 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ActivatedAbilityExecutionService {
+    private final com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry effectHandlerRegistry;
+
+    /** Performs a paid special action immediately, without activation triggers or a stack entry. */
+    public void performSpecialAction(GameData gameData, Player player, Permanent source, ActivatedAbility action) {
+        StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(), player.getId(),
+                action.getDescription(), action.getEffects(), null, source.getId());
+        for (CardEffect effect : action.getEffects()) {
+            if (effect instanceof CostEffect) continue;
+            effectHandlerRegistry.getHandler(effect).resolve(gameData, entry, effect);
+        }
+        gameData.priorityPassedBy.clear();
+        stateBasedActionService.performStateBasedActions(gameData);
+    }
 
     private final DamagePreventionService damagePreventionService;
     private final DrawService drawService;
@@ -413,7 +426,9 @@ public class ActivatedAbilityExecutionService {
         }
         UUID activatedPermanentControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
         TriggerCollectionService.PreCostActivationTriggers preCostActivationTriggers =
-                triggerCollectionService.collectNonTapActivationTriggersBeforeCosts(
+                ability.isSpecialAction()
+                        ? new TriggerCollectionService.PreCostActivationTriggers(List.of(), List.of())
+                        : triggerCollectionService.collectNonTapActivationTriggersBeforeCosts(
                         gameData, playerId, ability, permanent, activatedPermanentControllerId);
 
         UUID effectiveTargetId = targetId;
@@ -653,6 +668,13 @@ public class ActivatedAbilityExecutionService {
             gameData.stack.subList(stackBeforeCosts, gameData.stack.size()).clear();
         }
 
+        if (ability.isSpecialAction()) {
+            performSpecialAction(gameData, player, permanent, ability);
+            gameData.stack.addAll(deferredTapTriggers);
+            gameData.stack.addAll(deferredCostTriggers);
+            return;
+        }
+
         // "Whenever you activate an ability of ..." triggers (e.g. Ceaseless Searblades). Collected
         // here so they end up ON TOP of the activated ability (non-mana), or deferred to the next
         // priority window alongside cost triggers (mana abilities, per CR 603.3).
@@ -722,6 +744,10 @@ public class ActivatedAbilityExecutionService {
                     gameData.stack.subList(stackBeforeManaResolutionTriggers, gameData.stack.size()).clear();
                     gameData.pendingManaAbilityTriggers.addAll(manaResolutionTriggers);
                 }
+            }
+            if (ability.isRequiresTap()) {
+                triggerCollectionService.checkAnyPlayerTapsPermanentForManaTriggers(
+                        gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
             }
             if (ability.isRequiresTap()) {
                 triggerCollectionService.checkNonlandPermanentTapForManaTriggers(
@@ -796,7 +822,9 @@ public class ActivatedAbilityExecutionService {
         boolean tracksSacrificedCard = abilityEffects.stream()
                 .filter(CostEffect.class::isInstance)
                 .map(CostEffect.class::cast)
-                .anyMatch(CostEffect::tracksSacrificedCard);
+                .anyMatch(CostEffect::tracksSacrificedCard)
+                || abilityEffects.stream().anyMatch(
+                        com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect.class::isInstance);
         boolean recordsSacrificedPermanentSnapshot = abilityEffects.stream()
                 .filter(SacrificeCreatureCost.class::isInstance)
                 .map(SacrificeCreatureCost.class::cast)

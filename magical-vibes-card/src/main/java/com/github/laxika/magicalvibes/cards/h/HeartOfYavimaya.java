@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "138")
+@CardRegistration(set = "ME2", collectorNumber = "231")
 public class HeartOfYavimaya extends Card {
 
     public HeartOfYavimaya() {

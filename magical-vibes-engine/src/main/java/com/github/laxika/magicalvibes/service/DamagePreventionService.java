@@ -1662,6 +1662,11 @@ public class DamagePreventionService {
                 it.remove();
                 continue;
             }
+            if (shield.isUnlimited() && !gameData.playerIds.contains(shield.redirectTargetId())
+                    && !gameQueryService.isCreature(gameData,
+                    gameQueryService.findPermanentById(gameData, shield.redirectTargetId()))) {
+                continue;
+            }
 
             if (shield.isNextEvent()) {
                 // Next-event (Jade Monolith, Mirrorwood Treefolk): redirect all of this one damage event,

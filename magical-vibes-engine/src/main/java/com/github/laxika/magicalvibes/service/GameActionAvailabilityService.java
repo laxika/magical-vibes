@@ -732,6 +732,7 @@ public class GameActionAvailabilityService {
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
             return (castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+                    || castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)
                     || castingCostService.canPayCollectEvidenceAlternativeCost(gameData, playerId, card)
                     || castingCostService.canAffordWebSlingingCost(
                             gameData, playerId, card, pool, additionalGenericCost))
@@ -1460,6 +1461,10 @@ public class GameActionAvailabilityService {
                     : cardHasFlashback
                     ? cost.canPayFlashbackFromGraveyard(finalPaymentPool, additionalCost)
                     : cost.canPayFromGraveyard(finalPaymentPool, additionalCost);
+            if (!cardHasFlashback && !isDisturb && !isHarmonize && graveyardAlternateManaCost == null) {
+                canPayMana |= castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(
+                        gameData, playerId, castHalf);
+            }
             if (isHarmonize) {
                 canPayMana = canPayMana || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                         .filter(permanent -> !permanent.isTapped() && gameQueryService.isCreature(gameData, permanent))

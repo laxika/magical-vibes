@@ -152,6 +152,7 @@ public class Card {
      * the casting player when the spell is cast; null means mana alone caps X.
      */
     private DynamicAmount xValueCap;
+    private int minimumXValue;
     private String setCode;
     private String collectorNumber;
 
@@ -341,6 +342,7 @@ public class Card {
                 ? null
                 : EnumSet.copyOf(source.xColorRestrictions);
         this.xValueCap = source.xValueCap;
+        this.minimumXValue = source.minimumXValue;
         this.setCode = source.setCode;
         this.collectorNumber = source.collectorNumber;
         this.token = source.token;
@@ -431,6 +433,7 @@ public class Card {
                 ? null
                 : EnumSet.copyOf(face.xColorRestrictions);
         this.xValueCap = face.xValueCap;
+        this.minimumXValue = face.minimumXValue;
         this.token = face.token;
         this.cantBeCopied = face.cantBeCopied;
         this.sacrificeAtEndStep = face.sacrificeAtEndStep;
@@ -537,6 +540,7 @@ public class Card {
         return xColorRestrictions != null && !xColorRestrictions.isEmpty();
     }
     public void setXValueCap(DynamicAmount xValueCap) { assertMutable(); this.xValueCap = xValueCap; }
+    public void setMinimumXValue(int minimumXValue) { assertMutable(); this.minimumXValue = minimumXValue; }
     public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
     public void setToken(boolean token) { assertMutable(); this.token = token; }
@@ -867,11 +871,13 @@ public class Card {
     }
 
     /**
-     * Returns the minimum total number of targets required when this card is cast for an alternate
-     * cost. Most alternate costs do not change targeting, so they use the normal minimum.
+     * Returns an additional minimum target count imposed by an alternate cost, such as awaken.
+     * Normal spell targeting is validated against the prepared spell effects. Target declarations
+     * on this card may instead belong to triggered abilities or disappear when cast face down or
+     * overloaded, so they must not impose a blanket cast-time minimum here.
      */
     public int getMinTargetsWhenCastForAlternateCost() {
-        return getMinTargets();
+        return 0;
     }
 
     /**
@@ -1346,7 +1352,12 @@ public class Card {
      * <em>other</em> creatures and is a different effect entirely.
      */
     public void addUnearth(String cost) {
-        addGraveyardActivatedAbility(new ActivatedAbility(false, cost,
+        addGraveyardActivatedAbility(unearthAbility(cost));
+    }
+
+    /** Builds the unearth graveyard-activated ability for {@code cost}. */
+    public static ActivatedAbility unearthAbility(String cost) {
+        return new ActivatedAbility(false, cost,
                 List.of(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardIsSelfPredicate())
@@ -1357,7 +1368,7 @@ public class Card {
                         .unearth(true)
                         .build()),
                 "Unearth " + cost,
-                ActivationTimingRestriction.SORCERY_SPEED));
+                ActivationTimingRestriction.SORCERY_SPEED);
     }
 
     /**

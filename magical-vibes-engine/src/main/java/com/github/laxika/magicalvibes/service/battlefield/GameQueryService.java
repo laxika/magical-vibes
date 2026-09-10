@@ -1015,14 +1015,28 @@ public class GameQueryService {
         List<ActivatedAbility> result = new ArrayList<>();
         if (graveyardCardsHaveLostAllAbilities(gameData)) return result;
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
-        if (bf == null) return result;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GraveyardAbilityGrantingEffect g) {
-                    if (!g.appliesTo(card)) continue;
-                    ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
-                    if (granted != null) {
-                        result.add(granted);
+        if (bf != null) {
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GraveyardAbilityGrantingEffect g) {
+                        if (!g.appliesTo(card)) continue;
+                        ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
+                        if (granted != null) {
+                            result.add(granted);
+                        }
+                    }
+                }
+            }
+        }
+        if (gameData.planechase != null && Objects.equals(gameData.planechase.controllerId, ownerId)) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GraveyardAbilityGrantingEffect g) {
+                        if (!g.appliesTo(card)) continue;
+                        ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
+                        if (granted != null) {
+                            result.add(granted);
+                        }
                     }
                 }
             }
@@ -2225,7 +2239,7 @@ public class GameQueryService {
         if (battlefield == null) return 0;
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().hasType(CardType.LAND)) {
+            if (isLand(gameData, permanent)) {
                 count++;
             }
         }
@@ -3873,6 +3887,16 @@ public class GameQueryService {
                 }
             }
         }
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
+                            && acdt.scope() == GrantScope.ALL_CREATURES) {
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
@@ -5037,7 +5061,8 @@ public class GameQueryService {
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
         protectedTypes.addAll(target.getProtectionFromCardTypes());
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionGrantingEffect protection) {
+            if (effect instanceof ProtectionGrantingEffect protection
+                    && !hasLostPrintedAbilities(gameData, target)) {
                 // Protection from everything (Progenitus): every source has a card type, so this is
                 // the shared gate that stops all damage/combat/targeting/enchant from any source.
                 if (protection.protectsFromEverything()) return true;
@@ -5070,7 +5095,9 @@ public class GameQueryService {
     public boolean hasProtectionFromSourceCardTypes(Permanent target, Card sourceCard) {
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
         protectedTypes.addAll(target.getProtectionFromCardTypes());
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+        List<CardEffect> printedEffects = target.isFaceDown() || target.isLosesAllAbilitiesUntilEndOfTurn()
+                ? List.of() : target.getCard().getEffects(EffectSlot.STATIC);
+        for (CardEffect effect : printedEffects) {
             if (effect instanceof ProtectionGrantingEffect protection) {
                 // Protection from everything (Progenitus): every source has a card type, so this is
                 // the shared gate that stops all damage/combat/targeting/enchant from any source.
@@ -5095,7 +5122,8 @@ public class GameQueryService {
                 || hasProtectionFromMonocolored(gameData, target, sourceCard)) {
             return true;
         }
-        if (hasProtectionFromSourceCardTypes(target, sourceCard)) {
+        if (hasProtectionFromSourceCardTypes(target, sourceCard)
+                && !hasLostPrintedAbilities(gameData, target)) {
             return true;
         }
         return computeStaticBonus(gameData, target).grantedEffects().stream()
@@ -7563,9 +7591,10 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the global damage multiplier based on {@link GlobalDamageMultiplyingEffect} permanents
-     * on the battlefield (e.g. Furnace of Rath). Each instance multiplies by its factor, and multiple
-     * instances stack multiplicatively (e.g. two Furnaces = 4x damage).
+     * Returns the global damage multiplier based on {@link GlobalDamageMultiplyingEffect} static
+     * effects on the battlefield and face-up planar cards (e.g. Furnace of Rath). Each instance
+     * multiplies by its factor, and multiple instances stack multiplicatively (e.g. two Furnaces =
+     * 4x damage).
      */
     private int getDamageMultiplier(GameData gameData) {
         int[] multiplier = {1};
@@ -7576,6 +7605,15 @@ public class GameQueryService {
                 }
             }
         });
+        if (gameData.planechase != null) {
+            for (var planar : gameData.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GlobalDamageMultiplyingEffect multiplyingEffect) {
+                        multiplier[0] *= multiplyingEffect.damageMultiplierFactor();
+                    }
+                }
+            }
+        }
         return multiplier[0];
     }
 
@@ -8461,6 +8499,7 @@ public class GameQueryService {
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData, isCombatDamage)) return false;
+        if (damageCantBePreventedFromSource(gameData, creature, isCombatDamage)) return false;
         UUID sourceControllerId = findPermanentController(gameData, creature.getId());
         if (isCombatDamage && sourceControllerId != null
                 && gameData.playersWithCombatDamageFromTargetOpponentCreaturesPrevented.contains(sourceControllerId)

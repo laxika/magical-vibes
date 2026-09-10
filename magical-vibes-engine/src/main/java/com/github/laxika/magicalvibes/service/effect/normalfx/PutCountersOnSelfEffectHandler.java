@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -28,6 +29,11 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCountersOnSelfEffect) effect;
+        if (entry.getSourcePlanarObject() != null && entry.getSourcePermanentId() == null) {
+            resolvePlanarSource(gameData, entry, e);
+            return;
+        }
+
         UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
@@ -41,5 +47,26 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
         if (entry.getSourcePermanentId() != null) {
             entry.setSourcePermanentSnapshot(new Permanent(self));
         }
+    }
+
+    private void resolvePlanarSource(GameData gameData, StackEntry entry, PutCountersOnSelfEffect effect) {
+        PlanarObject source = gameData.planechase == null ? null
+                : gameData.planechase.faceUp.stream()
+                .filter(object -> object.getId().equals(entry.getSourcePlanarObject().getId()))
+                .findFirst()
+                .orElse(null);
+        if (source == null) {
+            source = entry.getSourcePlanarObject();
+        }
+
+        int count = effect.amount() != null
+                ? amountEvaluationService.evaluate(gameData, effect.amount(),
+                AmountContext.forStackEntry(entry, null))
+                : effect.count();
+        if (count <= 0) {
+            return;
+        }
+        source.getCounters().merge(effect.counterType(), count, Integer::sum);
+        entry.setSourcePlanarObject(source.copy());
     }
 }

@@ -121,7 +121,11 @@ public class PermanentChoiceSpellHandlerService {
         if (targetSpell == null) {
             log.info("Game {} - Target spell no longer on stack for retarget", gameData.id);
         } else {
-            targetSpell.setTargetId(permanentId);
+            if (retarget.targetIndex() != null) {
+                psychicBattleSupport.replaceTarget(targetSpell, retarget.targetIndex(), permanentId);
+            } else {
+                targetSpell.setTargetId(permanentId);
+            }
             String spellName = targetSpell.isCopy()
                     ? "Copy of " + targetSpell.getCard().getName()
                     : targetSpell.getCard().getName();

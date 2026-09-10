@@ -2,14 +2,13 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,20 +17,17 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Overrun.class, GrizzlyBears.class})
 class OverrunTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Resolving Overrun gives own creatures +3/+3 and trample")
     void resolvesAndBuffsOwnCreatures() {
-        Permanent p1a = addReadyCreature(player1, new GrizzlyBears());
-        Permanent p1b = addReadyCreature(player1, new GrizzlyBears());
-        Permanent p2 = addReadyCreature(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Overrun()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
+        Permanent p1a = addCreatureReady(player1, new GrizzlyBears());
+        Permanent p1b = addCreatureReady(player1, new GrizzlyBears());
+        Permanent p2 = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(p1a.getEffectivePower()).isEqualTo(5);
@@ -50,19 +46,14 @@ class OverrunTest extends BaseCardTest {
     @DisplayName("Overrun trample assigns excess damage to defending player")
     void trampleAssignsExcessDamageToDefender() {
         harness.setLife(player2, 20);
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Overrun()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -81,11 +72,9 @@ class OverrunTest extends BaseCardTest {
     @Test
     @DisplayName("Overrun effects wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Overrun()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(creature.getEffectivePower()).isEqualTo(5);
@@ -102,23 +91,40 @@ class OverrunTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only creatures present at resolution receive Overrun's effects")
+    void onlyCreaturesPresentAtResolutionAreAffected() {
+        Permanent existingCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
+        harness.passBothPriorities();
+
+        Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(existingCreature.getEffectivePower()).isEqualTo(5);
+        assertThat(existingCreature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(existingCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(laterCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolves with no creatures on the battlefield")
+    void resolvesWithNoCreatures() {
+
+        harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Casting Overrun puts it on stack as sorcery spell")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new Overrun()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Overrun");
-    }
-
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.CardCatalog;
+import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -28,6 +30,9 @@ import java.util.UUID;
 public class LibraryRevealSupport {
 
     private final GameLogService gameLogService;
+    @lombok.Setter(onMethod_ = @org.springframework.beans.factory.annotation.Autowired(required = false))
+    private CardCatalog cardCatalog;
+    private volatile List<String> catalogCreatureNames;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public record TopCardsResult(UUID controllerId, List<Card> topCards, String playerName) {}
@@ -74,7 +79,26 @@ public class LibraryRevealSupport {
 
     /** Every distinct creature card name across all zones, sorted alphabetically (Wood Sage). */
     public List<String> collectCreatureCardNamesInGame(GameData gameData) {
-        return collectCardNamesInGame(gameData, card -> matchesCardTypes(card, Set.of(CardType.CREATURE)));
+        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
+                card -> card.hasType(CardType.CREATURE)));
+        if (cardCatalog != null) {
+            List<String> cached = catalogCreatureNames;
+            if (cached == null) {
+                Set<String> catalogNames = new TreeSet<>();
+                for (CardSet set : CardSet.values()) {
+                    for (var printing : cardCatalog.getPrintings(set)) {
+                        Card card = printing.createCard();
+                        if (card.getName() != null && card.hasType(CardType.CREATURE)) {
+                            catalogNames.add(card.getName());
+                        }
+                    }
+                }
+                cached = List.copyOf(catalogNames);
+                catalogCreatureNames = cached;
+            }
+            names.addAll(cached);
+        }
+        return new ArrayList<>(names);
     }
 
     /** Every distinct nonland card name across all zones (Tamiyo, Collector of Tales). */

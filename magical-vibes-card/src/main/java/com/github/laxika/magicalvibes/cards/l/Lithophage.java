@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MMQ", collectorNumber = "202")
+@CardRegistration(set = "DDI", collectorNumber = "57")
 public class Lithophage extends Card {
 
     public Lithophage() {

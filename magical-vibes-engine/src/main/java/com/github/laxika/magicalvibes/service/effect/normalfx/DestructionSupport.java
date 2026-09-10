@@ -406,9 +406,7 @@ public class DestructionSupport {
         }
 
         if (matching.size() <= count) {
-            for (Permanent perm : matching) {
-                tryDestroyAndLog(gameData, perm, sourceName);
-            }
+            destroyBatch(gameData, matching, sourceName, false);
             permanentRemovalService.removeOrphanedAuras(gameData);
             return false;
         }

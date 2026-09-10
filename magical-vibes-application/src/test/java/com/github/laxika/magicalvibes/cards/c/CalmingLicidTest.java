@@ -4,10 +4,9 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CalmingLicid.class, GrizzlyBears.class, Forest.class})
 class CalmingLicidTest extends BaseCardTest {
 
     @Test
     @DisplayName("Ability attaches the Licid to the target creature as an Aura")
     void abilityTurnsLicidIntoAttachedAura() {
-        Permanent licid = addReadyLicid(player1);
+        Permanent licid = addCreatureReady(player1, new CalmingLicid());
         Permanent host = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -36,19 +36,14 @@ class CalmingLicidTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature cannot attack")
     void enchantedCreatureCannotAttack() {
-        Permanent licid = addReadyLicid(player1);
+        Permanent licid = addCreatureReady(player1, new CalmingLicid());
         Permanent host = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, host.getId());
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -56,7 +51,7 @@ class CalmingLicidTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature can still block")
     void enchantedCreatureCanBlock() {
-        Permanent licid = addReadyLicid(player1);
+        Permanent licid = addCreatureReady(player1, new CalmingLicid());
         Permanent host = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -66,10 +61,7 @@ class CalmingLicidTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
@@ -79,7 +71,7 @@ class CalmingLicidTest extends BaseCardTest {
     @Test
     @DisplayName("Paying the end cost reverts the Licid to a creature")
     void endCostRevertsLicidToCreature() {
-        Permanent licid = addReadyLicid(player1);
+        Permanent licid = addCreatureReady(player1, new CalmingLicid());
         Permanent host = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -98,8 +90,8 @@ class CalmingLicidTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetLand() {
-        addReadyLicid(player1);
-        Permanent land = addReadyLand(player2);
+        addCreatureReady(player1, new CalmingLicid());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
@@ -110,7 +102,7 @@ class CalmingLicidTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles and the Licid stays a creature if the target leaves")
     void fizzlesIfTargetLeaves() {
-        Permanent licid = addReadyLicid(player1);
+        Permanent licid = addCreatureReady(player1, new CalmingLicid());
         Permanent host = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -123,16 +115,4 @@ class CalmingLicidTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, licid)).isTrue();
     }
 
-    private Permanent addReadyLicid(Player player) {
-        Permanent perm = new Permanent(new CalmingLicid());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyLand(Player player) {
-        Permanent perm = new Permanent(new Forest());
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "325")
+@CardRegistration(set = "ME2", collectorNumber = "211")
 public class JestersMask extends Card {
 
     public JestersMask() {

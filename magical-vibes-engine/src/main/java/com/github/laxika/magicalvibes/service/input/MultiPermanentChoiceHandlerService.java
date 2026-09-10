@@ -211,6 +211,16 @@ public class MultiPermanentChoiceHandlerService {
         if (permanentIds.size() > maxCount) {
             throw new IllegalStateException("Too many permanents selected: " + permanentIds.size() + " > " + maxCount);
         }
+        if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.FadeAwayKeep keep) {
+            var pool = new com.github.laxika.magicalvibes.model.ManaPool(gameData.playerManaPools.get(playerId));
+            var cost = new com.github.laxika.magicalvibes.model.ManaCost(keep.manaCost());
+            for (int i = 0; i < permanentIds.size(); i++) {
+                if (!cost.canPay(pool)) {
+                    throw new IllegalStateException("Not enough mana to pay for the selected creatures");
+                }
+                cost.pay(pool);
+            }
+        }
 
         Set<UUID> uniqueIds = new HashSet<>(permanentIds);
         if (uniqueIds.size() != permanentIds.size()) {
@@ -1548,12 +1558,11 @@ public class MultiPermanentChoiceHandlerService {
     private void handleForcedDestroy(GameData gameData, List<UUID> permanentIds,
                                      MultiPermanentChoiceContext.ForcedDestroy context) {
         // Chosen permanents are destroyed simultaneously (regeneration/indestructible apply).
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                destructionSupport.tryDestroyAndLog(gameData, perm, context.sourceName());
-            }
-        }
+        List<Permanent> permanents = permanentIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        destructionSupport.destroyBatch(gameData, permanents, context.sourceName(), false);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
@@ -1834,6 +1843,8 @@ public class MultiPermanentChoiceHandlerService {
                                                    MultiPermanentChoiceContext.ChooseCreatureRestCantBlock context) {
         UUID targetPlayerId = context.targetPlayerId();
         UUID keptId = permanentIds.isEmpty() ? null : permanentIds.getFirst();
+        com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerChoosesCreatureRestCantBlockEffectHandler
+                .restrictOtherCreatures(gameData, targetPlayerId, keptId);
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         int count = 0;
@@ -1858,7 +1869,7 @@ public class MultiPermanentChoiceHandlerService {
     private void handleChooseCreaturesToAttackNextTurn(GameData gameData, List<UUID> permanentIds,
                                                        MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn context) {
         UUID targetPlayerId = context.targetPlayerId();
-        gameData.chosenAttackersNextTurn.put(targetPlayerId, Set.copyOf(permanentIds));
+        gameData.restrictAttackersNextTurn(targetPlayerId, Set.copyOf(permanentIds));
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         gameLogService.append(gameData, GameLog.text(playerName + " chooses " + permanentIds.size()
@@ -2553,13 +2564,17 @@ public class MultiPermanentChoiceHandlerService {
 
         int totalPower = 0;
         int totalToughness = 0;
+        List<Permanent> sacrificed = new ArrayList<>();
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null) {
                 totalPower += gameQueryService.getEffectivePower(gameData, perm);
                 totalToughness += gameQueryService.getEffectiveToughness(gameData, perm);
-                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                sacrificed.add(perm);
             }
+        }
+        for (Permanent perm : sacrificed) {
+            destructionSupport.sacrificeAndLog(gameData, perm, playerId);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 

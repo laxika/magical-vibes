@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
@@ -1753,6 +1754,11 @@ public class PlayerInputService {
                 return false;
             }
             prompt = "Choose the name of a revealed card.";
+        } else if (card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect choice
+                        && choice.excludeBasicLandNames())) {
+            cardNames = collectNonbasicCardNamesInGame(gameData);
+            prompt = "Choose a card name other than a basic land card name.";
         } else if (nonbasicLandOnly) {
             cardNames = collectNonbasicLandCardNames(gameData);
             prompt = "Choose a nonbasic land card name.";

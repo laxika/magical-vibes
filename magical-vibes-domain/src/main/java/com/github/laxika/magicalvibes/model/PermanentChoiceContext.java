@@ -129,7 +129,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID targetCardId
     ) implements PermanentChoiceContext {}
 
-    record SpellRetarget(UUID spellCardId) implements PermanentChoiceContext {}
+    record SpellRetarget(UUID spellCardId, Integer targetIndex) implements PermanentChoiceContext {
+        public SpellRetarget(UUID spellCardId) { this(spellCardId, null); }
+    }
 
     record PsychicBattleRetarget(UUID spellCardId, UUID controllerId, Card sourceCard, int targetIndex)
             implements PermanentChoiceContext {}
@@ -1569,7 +1571,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       boolean resumePendingMayResolution,
                                       UUID triggeringCardId,
                                       UUID triggeringPermanentId,
-                                      int eventValue) implements PermanentChoiceContext {
+                                      int eventValue,
+                                      com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource)
+            implements PermanentChoiceContext {
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
@@ -1582,7 +1586,57 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, 0);
+                    triggeringPermanentId, 0, null);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          boolean resumePendingMayResolution,
+                                          UUID triggeringCardId,
+                                          UUID triggeringPermanentId,
+                                          int eventValue) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, null);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          boolean resumePendingMayResolution,
+                                          UUID triggeringCardId,
+                                          UUID triggeringPermanentId,
+                                          int eventValue,
+                                          com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource) {
+            this.sourceCard = sourceCard;
+            this.controllerId = controllerId;
+            this.effects = List.copyOf(effects);
+            this.sourcePermanentId = sourcePermanentId;
+            this.chosenTargetsSoFar = List.copyOf(chosenTargetsSoFar);
+            this.currentGroupIndex = currentGroupIndex;
+            this.chosenInCurrentGroup = chosenInCurrentGroup;
+            this.groupSizes = List.copyOf(groupSizes);
+            this.xValue = xValue;
+            this.repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            this.resumePendingMayResolution = resumePendingMayResolution;
+            this.triggeringCardId = triggeringCardId;
+            this.triggeringPermanentId = triggeringPermanentId;
+            this.eventValue = eventValue;
+            this.planarSource = planarSource;
+        }
+
+        public ETBTokenMultiTargetTrigger copyPlanarSnapshot() {
+            return planarSource == null ? this : new ETBTokenMultiTargetTrigger(
+                    sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource.copy());
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

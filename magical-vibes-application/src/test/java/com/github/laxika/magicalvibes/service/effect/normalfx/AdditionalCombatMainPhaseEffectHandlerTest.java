@@ -39,6 +39,30 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class AdditionalCombatMainPhaseEffectHandlerTest {
+    @Test
+    void mainPhaseOnlyEffectDoesNothingDuringCombat() {
+        gd.currentStep = com.github.laxika.magicalvibes.model.TurnStep.BEGINNING_OF_COMBAT;
+        var effect = new AdditionalCombatMainPhaseEffect(1, null, true);
+        var entry = createUntargetedEntry(createCard("Extra combat", CardType.SORCERY), player1Id, List.of(effect));
+
+        additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
+
+        assertThat(gd.additionalCombatMainPhasePairs).isZero();
+        assertThat(gd.additionalCombatMainPhasePairsReturnStep).isNull();
+    }
+
+    @Test
+    void precombatInsertionPreservesTheOrdinaryCombat() {
+        gd.currentStep = com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN;
+        var effect = new AdditionalCombatMainPhaseEffect(1, null, true);
+        var entry = createUntargetedEntry(createCard("Extra combat", CardType.SORCERY), player1Id, List.of(effect));
+
+        additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
+
+        assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
+        assertThat(gd.additionalCombatMainPhasePairsReturnStep)
+                .isEqualTo(com.github.laxika.magicalvibes.model.TurnStep.BEGINNING_OF_COMBAT);
+    }
 
     @Mock private CombatService combatService;
     @Mock private GameLogService gameLogService;

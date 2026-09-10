@@ -48,6 +48,8 @@ public class StackEntry {
     @Setter private UUID targetId;
     /** The opponent chosen before that opponent selected the spell's creature target. */
     @Setter private UUID opponentChosenTargetPlayerId;
+    /** Controller fixed when choosing a group of targets controlled by the same player. */
+    @Setter private UUID requiredTargetControllerId;
     private boolean targetIdOverriddenForEffectResolution;
     private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
@@ -657,6 +659,7 @@ public class StackEntry {
         this.targetCardIdsByEffect = copyTargetCardIdsByEffect(source.targetCardIdsByEffect);
         this.targetFilter = source.targetFilter;
         this.removedPermanentControllers.putAll(source.removedPermanentControllers);
+        this.requiredTargetControllerId = source.requiredTargetControllerId;
         this.copy = source.copy;
         this.nonTargeting = source.nonTargeting;
         this.spellDispositionHandled = source.spellDispositionHandled;

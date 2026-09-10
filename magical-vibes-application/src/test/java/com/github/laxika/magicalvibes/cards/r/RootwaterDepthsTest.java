@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(RootwaterDepths.class)
 class RootwaterDepthsTest extends BaseCardTest {
 
     @Test
@@ -78,14 +80,12 @@ class RootwaterDepthsTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(nextActivePlayer, TurnStep.UPKEEP);
     }
 
     private Permanent addReadyDepths(Player player) {
-        harness.addToBattlefield(player, new RootwaterDepths());
-        Permanent perm = gd.playerBattlefields.get(player.getId()).getLast();
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RootwaterDepths());
         perm.setSummoningSick(false);
         return perm;
     }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -17,13 +18,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 public class Pallimud extends Card {
 
     public Pallimud() {
-        // "As this creature enters, choose an opponent" is implicit in the single-opponent model,
-        // so the CDA simply counts tapped lands opponents control. Toughness stays a flat 3.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
         addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(), new PermanentIsTappedPredicate())),
-                        CountScope.OPPONENTS),
+                        CountScope.CHOSEN_PLAYER),
                 new Fixed(3)));
     }
 }

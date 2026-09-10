@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "FEM", collectorNumber = "180")
 @CardRegistration(set = "BTD", collectorNumber = "72")
 @CardRegistration(set = "PD3", collectorNumber = "25")
+@CardRegistration(set = "ME2", collectorNumber = "228")
 public class EbonStronghold extends Card {
 
     public EbonStronghold() {

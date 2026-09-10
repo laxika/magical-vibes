@@ -115,7 +115,8 @@ class MemoryJarTest extends BaseCardTest {
         harness.setHand(player2, player2Hand);
 
         addReadyJar();
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 5);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 

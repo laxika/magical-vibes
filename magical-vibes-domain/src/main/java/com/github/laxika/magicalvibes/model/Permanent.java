@@ -29,6 +29,8 @@ public class Permanent {
     @Setter private boolean bestow;
     /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
     @Setter private Card fullTextCopySourceCard;
+    /** Copiable characteristics before a layer-3 graveyard text change, including Clone effects. */
+    @Setter private Card fullTextCopyBaseCard;
     private boolean tapped;
     /** Whether this permanent was untapped before its controller's most recent untap step. */
     @Setter private boolean untappedAtTurnStart;
@@ -683,6 +685,7 @@ public class Permanent {
         this.originalCard = source.originalCard;
         this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
+        this.fullTextCopyBaseCard = source.fullTextCopyBaseCard;
         this.tapped = source.tapped;
         this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "138")
+@CardRegistration(set = "DDI", collectorNumber = "19")
 public class Windreaver extends Card {
 
     public Windreaver() {

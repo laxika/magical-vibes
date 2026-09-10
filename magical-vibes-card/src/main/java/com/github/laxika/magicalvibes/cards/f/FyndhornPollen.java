@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "245")
+@CardRegistration(set = "ME2", collectorNumber = "166")
 public class FyndhornPollen extends Card {
 
     public FyndhornPollen() {

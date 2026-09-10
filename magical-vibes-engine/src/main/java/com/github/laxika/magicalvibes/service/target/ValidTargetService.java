@@ -218,6 +218,11 @@ public class ValidTargetService {
                 ? Set.copyOf(alreadySelectedIds) : Set.of();
 
         int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
+        if (isMultiTarget && positionIndex < targetFilters.size()
+                && targetFilters.get(positionIndex) instanceof PermanentPredicateTargetFilter) {
+            allowedTargets = new java.util.HashSet<>(allowedTargets);
+            allowedTargets.add(TargetType.PERMANENT);
+        }
 
         if (allowedTargets.equals(Set.of(TargetType.SPELL_ON_STACK))) {
             TargetFilter filter = positionIndex < targetFilters.size() ? targetFilters.get(positionIndex)

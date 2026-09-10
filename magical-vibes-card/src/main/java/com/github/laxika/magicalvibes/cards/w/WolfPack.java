@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 
 @CardRegistration(set = "PTK", collectorNumber = "158")
+@CardRegistration(set = "ME2", collectorNumber = "187")
 public class WolfPack extends Card {
 
     public WolfPack() {

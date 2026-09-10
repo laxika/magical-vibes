@@ -1,41 +1,35 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DreamProwler.class, SkyshroudFalcon.class})
 class DreamProwlerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Dream Prowler can't be blocked while attacking alone")
     void cantBeBlockedWhenAttackingAlone() {
-        // Defender has a creature that could block
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new SkyshroudFalcon());
+        addCreatureReady(player1, new SkyshroudFalcon());
 
-        // Dream Prowler is the only attacker
-        Permanent prowler = new Permanent(new DreamProwler());
-        prowler.setSummoningSick(false);
+        Permanent prowler = addCreatureReady(player1, new DreamProwler());
         prowler.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(prowler);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                        gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(prowler)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
     }
@@ -43,29 +37,21 @@ class DreamProwlerTest extends BaseCardTest {
     @Test
     @DisplayName("Dream Prowler can be blocked when attacking alongside another creature")
     void canBeBlockedWhenNotAttackingAlone() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new SkyshroudFalcon());
 
-        // Dream Prowler (index 0) attacks alongside a second attacker (index 1)
-        Permanent prowler = new Permanent(new DreamProwler());
-        prowler.setSummoningSick(false);
+        Permanent prowler = addCreatureReady(player1, new DreamProwler());
         prowler.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(prowler);
 
-        Permanent companion = new Permanent(new GrizzlyBears());
-        companion.setSummoningSick(false);
+        Permanent companion = addCreatureReady(player1, new SkyshroudFalcon());
         companion.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(companion);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        // Blocking Dream Prowler is now legal — it's no longer attacking alone
-        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .doesNotThrowAnyException();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(prowler))));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
@@ -73,17 +59,11 @@ class DreamProwlerTest extends BaseCardTest {
     void dealsDamageWhenUnblockedAlone() {
         harness.setLife(player2, 20);
 
-        Permanent prowler = new Permanent(new DreamProwler());
-        prowler.setSummoningSick(false);
+        Permanent prowler = addCreatureReady(player1, new DreamProwler());
         prowler.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(prowler);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
-        // Dream Prowler is a 1/5
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }

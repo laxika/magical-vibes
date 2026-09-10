@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -1553,6 +1554,40 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (card put into controller's graveyard from anywhere)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = LoseLifeEffect.class,
+            slot = EffectSlot.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleNonblackCardPutIntoGraveyardLoseLife(TriggerMatchContext match,
+            LoseLifeEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)
+                || effect.recipient() != LoseLifeRecipient.TARGET_PLAYER) {
+            return false;
+        }
+
+        Card sourceCard = match.sourceCard();
+        if (sourceCard == null) {
+            return false;
+        }
+        UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                cardPut.graveyardOwnerId(),
+                sourcePermanentId);
+        entry.setNonTargeting(true);
+        if (match.sourcePlanarObject() != null) {
+            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+        }
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers (nonblack card put into a graveyard from anywhere)",
+                match.gameData().id, sourceCard.getName());
         return true;
     }
 

@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "M12", collectorNumber = "208")
 @CardRegistration(set = "M13", collectorNumber = "204")
 @CardRegistration(set = "M14", collectorNumber = "209")
+@CardRegistration(set = "DDF", collectorNumber = "62")
 public class ElixirOfImmortality extends Card {
 
     public ElixirOfImmortality() {

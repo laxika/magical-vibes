@@ -362,12 +362,20 @@ public class DamageTriggerCollectorService {
             return false;
         }
 
-        boolean destroyed = permanentRemovalService.tryDestroyPermanent(gameData, currentSource);
-        if (destroyed) {
-            gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
-                    " triggers - ", currentSource.getCard(), " is destroyed."));
-        }
-        log.info("Game {} - {} triggers, destroying damage source {}",
+        Permanent watcher = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING))),
+                null,
+                watcher.getId());
+        entry.setTriggeringPermanentId(currentSource.getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers to destroy damage source {}",
                 gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
         return true;
     }

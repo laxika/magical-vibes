@@ -1,41 +1,41 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.c.CravenGiant;
+import com.github.laxika.magicalvibes.cards.c.CrystallineSliver;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VictualSliver.class, CrystallineSliver.class, CravenGiant.class})
 class VictualSliverTest extends BaseCardTest {
 
     @Test
     @DisplayName("All Slivers can sacrifice themselves to gain 4 life")
     void grantsLifeGainAbilityToAllSlivers() {
         harness.addToBattlefield(player1, new VictualSliver());
-        harness.addToBattlefield(player1, new MetallicSliver());
-        harness.addToBattlefield(player2, new MetallicSliver());
+        Permanent ownSliver = harness.addToBattlefieldAndReturn(player1, new CrystallineSliver());
+        Permanent opposingSliver = harness.addToBattlefieldAndReturn(player2, new CrystallineSliver());
         harness.setLife(player1, 10);
         harness.setLife(player2, 10);
 
-        Permanent ownSliver = findPermanent(player1, "Metallic Sliver");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(ownSliver), null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
-        harness.assertInGraveyard(player1, "Metallic Sliver");
+        harness.assertLife(player1, 14);
+        harness.assertInGraveyard(player1, "Crystalline Sliver");
 
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(opposingSliver), null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
-        harness.assertInGraveyard(player2, "Metallic Sliver");
+        harness.assertLife(player2, 14);
+        harness.assertInGraveyard(player2, "Crystalline Sliver");
     }
 
     @Test
@@ -48,7 +48,7 @@ class VictualSliverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+        harness.assertLife(player1, 14);
         harness.assertInGraveyard(player1, "Victual Sliver");
         harness.assertNotOnBattlefield(player1, "Victual Sliver");
     }
@@ -57,7 +57,7 @@ class VictualSliverTest extends BaseCardTest {
     @DisplayName("Non-Slivers do not gain Victual Sliver's ability")
     void doesNotGrantAbilityToNonSlivers() {
         harness.addToBattlefield(player1, new VictualSliver());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CravenGiant());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
@@ -67,9 +67,8 @@ class VictualSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Slivers lose the granted ability when Victual Sliver leaves the battlefield")
     void losesGrantedAbilityWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new VictualSliver());
-        harness.addToBattlefield(player1, new MetallicSliver());
-        Permanent source = findPermanent(player1, "Victual Sliver");
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new VictualSliver());
+        harness.addToBattlefield(player1, new CrystallineSliver());
         gd.playerBattlefields.get(player1.getId()).remove(source);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

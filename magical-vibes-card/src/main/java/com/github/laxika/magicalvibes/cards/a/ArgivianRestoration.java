@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WTH", collectorNumber = "34")
+@CardRegistration(set = "DDF", collectorNumber = "69")
 public class ArgivianRestoration extends Card {
 
     public ArgivianRestoration() {

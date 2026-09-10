@@ -146,6 +146,23 @@ class LibraryChoiceHandlerServiceTest {
     }
 
     @Test
+    void choosingFromLookedAtCardsDoesNotPubliclyNameTheSelection() {
+        Card selected = createCard("Private selection", CardType.CREATURE);
+        Card remaining = createCard("Private remainder", CardType.LAND);
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player1Id, List.of(selected, remaining), List.of(selected.getId(), remaining.getId()),
+                false, true, false, true, false, 0, null, 1, "Choose.",
+                false, 1, false).withRevealSelected(false));
+
+        service.handleLibraryRevealChoice(gd, player1, List.of(selected.getId()));
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(selected);
+        verify(gameLogService, never()).append(eq(gd),
+                argThat((com.github.laxika.magicalvibes.model.GameLogEntry entry) ->
+                        entry.plainText().contains("Private selection")));
+    }
+
+    @Test
     void simultaneousCloakingUsesFaceDownEntryAndTriggers() {
         Card creature = createCard("Creature", CardType.CREATURE);
         Card land = createCard("Land", CardType.LAND);

@@ -461,7 +461,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             GameData gameData, StackEntry entry, FlickerEffect e, Permanent target,
             UUID returnControllerOverride) {
         UUID previousControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), previousControllerId);
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(),
+                target.getCard().getOwnerId() != null ? target.getCard().getOwnerId() : previousControllerId);
         UUID returnControllerId = returnControllerOverride != null
                 ? returnControllerOverride
                 : e.returnUnderController() ? entry.getControllerId() : ownerId;

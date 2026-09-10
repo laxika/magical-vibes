@@ -203,10 +203,15 @@ public class CombatTriggerService {
                                             List.of(), 1, 0, List.of(0), 0, List.of(), false, null,
                                             creature.getId()));
                                 } else if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
+                                    int firstGroup = effectsForStack.stream()
+                                            .mapToInt(perm.getCard()::getEffectTargetIndex)
+                                            .filter(index -> index >= 0).min().orElse(0);
+                                    List<Integer> skippedGroups = java.util.Collections.nCopies(firstGroup, 0);
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                                     perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
-                                                    List.of(), 0, 0));
+                                                    List.of(), firstGroup, 0, skippedGroups, 0, List.of(), false,
+                                                    null, creature.getId()));
                                 } else {
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.AttackTriggerTarget(

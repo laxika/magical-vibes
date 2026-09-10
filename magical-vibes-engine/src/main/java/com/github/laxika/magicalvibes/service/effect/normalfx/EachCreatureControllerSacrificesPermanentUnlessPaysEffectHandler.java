@@ -34,6 +34,7 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
+    private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -93,7 +94,7 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
                 return;
             }
 
-            playerInputService.beginMultiPermanentChoice(gameData, playerId, creatureIds, maxKeeps,
+            playerInputService.beginMultiPermanentChoice(gameData, playerId, creatureIds, creatureIds.size(),
                     new MultiPermanentChoiceContext.FadeAwayKeep(playerId, creatureIds, remaining,
                             accumulatedKeepIds, accumulatedSacrificeIds, sourceControllerId,
                             sourceName, manaCost),
@@ -179,7 +180,7 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
         if (pool == null) {
             return 0;
         }
-        ManaPool simulatedPool = new ManaPool(pool);
+        ManaPool simulatedPool = potentialManaService.buildVirtualManaPool(gameData, playerId);
         int keeps = 0;
         while (keeps < creatureCount) {
             ManaCost cost = new ManaCost(manaCost);

@@ -830,6 +830,9 @@ public class SpellCastingService {
     }
 
     private void validateXValueCap(GameData gameData, Card card, UUID controllerId, int xValue) {
+        if (card.getMinimumXValue() > 0 && xValue < card.getMinimumXValue()) {
+            throw new IllegalStateException("X must be at least " + card.getMinimumXValue());
+        }
         if (card.getXValueCap() == null) {
             return;
         }
@@ -2065,6 +2068,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Card does not have a castable Adventure face");
         }
         if (castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, adventureCard)
+                || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, adventureCard)
                 || castingPermissionService.isOpponentsChosenColorSpellCastRestricted(
                 gameData, playerId, adventureCard)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(
@@ -2660,6 +2664,15 @@ public class SpellCastingService {
                 : selectingModalBackFace
                 ? physicalHandCard.getBackFaceCard()
                 : physicalHandCard;
+        if (usingBestowCost) {
+            handCardForTiming = bestowRuntimeCopyForHandCast(new ArrayList<>(List.of(physicalHandCard)), 0);
+            if (!castingPermissionService.canCastWithTiming(gameData, playerId, handCardForTiming,
+                    playerId.equals(gameData.activePlayerId),
+                    gameData.currentStep == TurnStep.PRECOMBAT_MAIN || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,
+                    gameData.stack.isEmpty())) {
+                throw new IllegalStateException("Card is not playable");
+            }
+        }
         if (handCardForTiming.isCastOnlyFromGraveyard()) {
             throw new IllegalStateException("Card cannot be cast from hand");
         }
@@ -5365,6 +5378,11 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, targetId, null
                 ));
             }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
+                    && !targetIds.isEmpty()) {
+                gameData.stack.getLast().setRequiredTargetControllerId(
+                        gameQueryService.findPermanentController(gameData, targetIds.getFirst()));
+            }
             if (adventure && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setPhysicalCard(physicalHandCard);
                 gameData.stack.getLast().setCastWithAdventure(true);
@@ -7340,6 +7358,7 @@ public class SpellCastingService {
                 gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -8494,6 +8513,7 @@ public class SpellCastingService {
                 gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -9122,6 +9142,7 @@ public class SpellCastingService {
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -9239,6 +9260,7 @@ public class SpellCastingService {
         }
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(gameData, card)
+                || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, 0)) {
             throw new IllegalStateException("Card is not playable");
         }

@@ -83,6 +83,8 @@ class YavimayaScionTest extends BaseCardTest {
         Permanent scion = addCreatureReady(player1, new YavimayaScion());
         scion.setLosesAllAbilitiesUntilEndOfTurn(true);
         Permanent artifactBlocker = addCreatureReady(player2, new TickingGnomes());
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, scion, artifactBlocker)).isFalse();
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, scion, new RingOfGix())).isFalse();
 
         declareAttackers(player1, List.of(indexOf(player1, scion)));
         prepareDeclareBlockers(player1);

@@ -1827,6 +1827,20 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect.class,
+            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleCreaturePutIntoOwnerGraveyardToLibrary(TriggerMatchContext match,
+            com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect effect,
+            TriggerContext ctx) {
+        var death = (TriggerContext.AnyPermanentGraveyard) ctx;
+        match.gameData().enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(), match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect.boundToDyingCard(death.dyingCard().getId()))),
+                null, match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
+
     /** Bakes the dead card and its owner into graveyard-to-hand triggers. */
     @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
             slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)

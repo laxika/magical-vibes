@@ -8,5 +8,10 @@ import java.util.UUID;
  * player controls that didn't attack this turn. Creatures that player didn't control continuously
  * since the beginning of the turn (summoning sick) are ignored.
  */
-public record DestroyNonAttackersAtEndStep(UUID playerId, Card sourceCard) implements DelayedAction {
+public record DestroyNonAttackersAtEndStep(UUID playerId, Card sourceCard,
+                                          boolean excludeWallsFromAttack,
+                                          boolean excludeSummoningSickFromDestruction) implements DelayedAction {
+    public DestroyNonAttackersAtEndStep(UUID playerId, Card sourceCard) {
+        this(playerId, sourceCard, false, true);
+    }
 }

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ARB", collectorNumber = "136")
+@CardRegistration(set = "DDH", collectorNumber = "67")
 public class SlaveOfBolas extends Card {
 
     public SlaveOfBolas() {

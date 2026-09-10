@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "25")
+@CardRegistration(set = "DDI", collectorNumber = "20")
 public class JeditsDragoons extends Card {
 
     public JeditsDragoons() {

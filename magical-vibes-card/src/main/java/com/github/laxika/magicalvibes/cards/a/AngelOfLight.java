@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "S99", collectorNumber = "1")
+@CardRegistration(set = "ME2", collectorNumber = "3")
 public class AngelOfLight extends Card {
 
     public AngelOfLight() {

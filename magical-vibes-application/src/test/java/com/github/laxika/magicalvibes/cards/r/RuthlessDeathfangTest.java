@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RuthlessDeathfang.class, CruelEdict.class, Forest.class, GiantSpider.class, GrizzlyBears.class,
+@CardUsed({RuthlessDeathfang.class, DiabolicEdict.class, Forest.class, GiantSpider.class, GrizzlyBears.class,
         ZuranOrb.class})
 class RuthlessDeathfangTest extends BaseCardTest {
 
@@ -63,9 +63,9 @@ class RuthlessDeathfangTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player, List.of(new CruelEdict()));
+        harness.setHand(player, List.of(new DiabolicEdict()));
         harness.addMana(player, ManaColor.BLACK, 2);
-        harness.castSorcery(player, 0, player.getId());
+        harness.castInstant(player, 0, player.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player, permanent.getId());
     }
