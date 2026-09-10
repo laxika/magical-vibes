@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "128")
+@CardRegistration(set = "DDK", collectorNumber = "45")
 public class AshmouthHound extends Card {
 
     public AshmouthHound() {
