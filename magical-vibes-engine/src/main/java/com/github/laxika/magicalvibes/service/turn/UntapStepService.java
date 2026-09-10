@@ -607,7 +607,8 @@ public class UntapStepService {
     }
 
     private boolean matchingStaticPreventsUntap(GameData gameData, Permanent permanent) {
-        return gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+        return gameData.anyPermanentMatches(source -> !gameQueryService.hasLostAllAbilities(gameData, source)
+                && source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof MatchingPermanentsDoesntUntapEffect lock
                         // Source-relative filters (An-Zerrin Ruins' chosen creature type) need the
                         // locking permanent as the filter's source, not just the game state.

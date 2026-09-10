@@ -27,7 +27,7 @@ class EmptyCityRuseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipCombatPhasesNextTurn).contains(player2.getId());
     }
 
     @Test
@@ -54,8 +54,7 @@ class EmptyCityRuseTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
 
         harness.castFromHand(player2, new RelentlessAssault(), "{2}{R}{R}");

@@ -135,6 +135,7 @@ class OracleEnVecTest extends BaseCardTest {
 
         advanceTurn();
         runEndStep();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(chosen);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(chosen.getCard());
@@ -149,6 +150,7 @@ class OracleEnVecTest extends BaseCardTest {
         advanceTurn();
         declareAttackers(player2, List.of(0));
         runEndStep();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen);
     }
@@ -218,6 +220,7 @@ class OracleEnVecTest extends BaseCardTest {
 
         advanceTurn();
         runEndStep();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .doesNotContain(firstChosen, secondChosen);

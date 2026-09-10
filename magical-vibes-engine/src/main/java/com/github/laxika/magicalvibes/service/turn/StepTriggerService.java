@@ -4216,7 +4216,9 @@ public class StepTriggerService {
                                 new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.WALL)),
                         new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(
                                 new com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate()),
-                        new com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate()));
+                        action.excludeSummoningSickFromDestruction()
+                                ? new com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate()
+                                : new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate()));
                 StackEntry delayed = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.playerId(),
                         action.sourceCard().getName() + "'s delayed ability",
@@ -4237,12 +4239,15 @@ public class StepTriggerService {
                 if (perm == null || perm.isAttackedThisTurn()) {
                     continue;
                 }
-                if (permanentRemovalService.tryDestroyPermanent(gameData, perm)) {
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(perm.getCard(), " is destroyed for not attacking."));
-                    log.info("Game {} - {} destroyed for not attacking",
-                            gameData.id, perm.getCard().getName());
-                }
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(),
+                        gameQueryService.findPermanentController(gameData, perm.getId()),
+                        "Destroy creature that didn't attack",
+                        new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect(
+                                com.github.laxika.magicalvibes.model.effect.PermanentReference.TRIGGERING))),
+                        null, (UUID) null);
+                trigger.setTriggeringPermanentId(perm.getId());
+                trigger.setNonTargeting(true);
+                gameData.enqueueTrigger(trigger);
             }
         }
 

@@ -24,10 +24,12 @@ class YuanShaosInfantryTest extends BaseCardTest {
     void attacksAloneBecomesUnblockable() {
         Permanent infantry = addCreatureReady(player1, new YuanShaosInfantry());
 
+        gd.playerAutoStopSteps.put(player1.getId(),
+                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(infantry.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, infantry)).isTrue();
     }
 
     @Test
@@ -39,7 +41,7 @@ class YuanShaosInfantryTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(infantry.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, infantry)).isFalse();
     }
 
     @Test
@@ -47,16 +49,20 @@ class YuanShaosInfantryTest extends BaseCardTest {
     void unblockableResetsAtEndOfTurn() {
         Permanent infantry = addCreatureReady(player1, new YuanShaosInfantry());
 
+        gd.playerAutoStopSteps.put(player1.getId(),
+                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(infantry.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, infantry)).isTrue();
 
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(infantry.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, infantry)).isFalse();
     }
 
     @Test

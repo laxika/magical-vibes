@@ -112,7 +112,7 @@ class LuXunScholarGeneralTest extends BaseCardTest {
         attachHermeticStudy(luXun);
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -125,7 +125,7 @@ class LuXunScholarGeneralTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);

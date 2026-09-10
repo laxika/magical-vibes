@@ -51,7 +51,8 @@ class FurnaceSpiritTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        assertThat(spirit.isAttacking()).isTrue();
+        assertThat(spirit.isTapped()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 
     @Test

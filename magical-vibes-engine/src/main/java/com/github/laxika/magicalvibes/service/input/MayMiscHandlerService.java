@@ -168,6 +168,9 @@ public class MayMiscHandlerService {
         if (accepted && sourcePermanent != null && !gameQueryService.cantBecomeUntapped(gameData, sourcePermanent)) {
             boolean wasTapped = sourcePermanent.isTapped();
             sourcePermanent.untap();
+            if (wasTapped) {
+                triggerCollectionService.checkBecomesUntappedTriggers(gameData, sourcePermanent);
+            }
             if (wasTapped && gameData.currentStep == TurnStep.UNTAP
                     && controllerId.equals(gameData.untapStepPlayerId)) {
                 gameData.untapStepUntappedPermanentCount++;

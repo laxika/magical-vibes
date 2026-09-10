@@ -42,14 +42,14 @@ class RockslideAmbushTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Mountain());
         harness.addToBattlefield(player2, new Mountain());
         harness.addToBattlefield(player2, new Mountain());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
         harness.setHand(player1, List.of(new RockslideAmbush()));
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        harness.assertOnBattlefield(player2, "Wei Infantry");
+        harness.assertOnBattlefield(player2, "Shu Foot Soldiers");
     }
 
     @Test

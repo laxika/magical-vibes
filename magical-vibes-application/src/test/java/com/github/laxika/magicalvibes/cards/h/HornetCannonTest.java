@@ -75,11 +75,10 @@ class HornetCannonTest extends BaseCardTest {
     }
 
     private Permanent createHornetToken(Player player) {
-        addHornetCannon(player);
+        Permanent cannon = addHornetCannon(player);
         harness.addMana(player, ManaColor.COLORLESS, 3);
 
-        harness.activateAbility(player, 0, null, null);
-        harness.passBothPriorities();
+        harness.activateAbility(player, gd.playerBattlefields.get(player.getId()).indexOf(cannon), null, null);
         harness.passBothPriorities();
         return findPermanent(player, "Hornet");
     }

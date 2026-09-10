@@ -1560,8 +1560,11 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleRedirectCreatureDamageSourceChoice(GameData gameData, UUID permanentId,
                                                          PermanentChoiceContext.RedirectCreatureDamageSourceChoice redirectSource) {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        StackEntry chosenSpell = gameQueryService.findStackEntryByCardId(gameData, permanentId);
+        Card chosenCard = chosenPermanent != null ? chosenPermanent.getCard()
+                : chosenSpell != null ? chosenSpell.getCard() : null;
+        if (chosenCard == null) {
+            throw new IllegalStateException("Chosen damage source no longer exists");
         }
 
         int redirectAmount = redirectSource.nextEventOnly()
@@ -1583,9 +1586,9 @@ public class PermanentChoiceBattlefieldHandlerService {
         String suffix = redirectSource.nextEventOnly()
                 ? " would deal damage to " + protectedName + " this turn, that damage is dealt to " + redirectName + " instead."
                 : " would deal to " + protectedName + " this turn is dealt to " + redirectName + " instead.";
-        gameLogService.append(gameData, GameLog.textCardText(prefix, chosenPermanent.getCard(), suffix));
+        gameLogService.append(gameData, GameLog.textCardText(prefix, chosenCard, suffix));
         log.info("Game {} - {} chose {} as creature damage redirect source", gameData.id,
-                gameData.playerIdToName.get(redirectSource.controllerId()), chosenPermanent.getCard().getName());
+                gameData.playerIdToName.get(redirectSource.controllerId()), chosenCard.getName());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

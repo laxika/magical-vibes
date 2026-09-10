@@ -95,7 +95,8 @@ class LoyalRetainersTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, null, guanYu.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("your graveyard");
+                .hasMessageContaining("allowed graveyard");
+        harness.assertOnBattlefield(player1, "Loyal Retainers");
     }
 
     @Test

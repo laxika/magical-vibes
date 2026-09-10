@@ -1340,7 +1340,9 @@ public class EnterTriggerCollectorService {
             // The creature already left the battlefield; nothing to copy.
             return true;
         }
-        enqueue(match, new BecomeCopyOfEnteringCreatureEffect(enteringPermanentId),
+        Permanent entering = gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        enqueue(match, new BecomeCopyOfEnteringCreatureEffect(enteringPermanentId,
+                        entering == null ? null : new Permanent(entering)),
                 match.permanent().getId(), pe.perEffectTriggerCount());
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (become a copy of it)",

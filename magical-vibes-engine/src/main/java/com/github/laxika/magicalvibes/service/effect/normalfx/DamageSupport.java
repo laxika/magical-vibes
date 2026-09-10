@@ -331,7 +331,10 @@ public class DamageSupport {
             if (rawDamage <= 0) return 0;
             // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
             // a chosen source to the protected creature onto another permanent.
-            rawDamage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), sourcePermId, rawDamage);
+            UUID redirectSourceId = sourcePermId != null ? sourcePermId
+                    : entry.getEffectiveDamageSourceCard() == null ? null : entry.getEffectiveDamageSourceCard().getId();
+            rawDamage = damagePreventionService.applyCreatureRedirectShields(
+                    gameData, target.getId(), redirectSourceId, rawDamage);
             processSourceRedirectDamage(gameData);
         }
         if (applyDralnuReplacement(gameData, target, rawDamage) > 0) {

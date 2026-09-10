@@ -90,7 +90,7 @@ class EmmessiTomeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Drawing two with one card left draws it before the second draw ends the game")
+    @DisplayName("Draws the available card and finishes discarding before empty-library loss")
     void drawsAvailableCardBeforeEmptyLibraryLoss() {
         harness.addToBattlefieldAndReturn(player1, new EmmessiTome());
         harness.setHand(player1, List.of());
@@ -101,8 +101,10 @@ class EmmessiTomeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(lastCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

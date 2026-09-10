@@ -136,5 +136,6 @@ class SkeletonScavengersTest extends BaseCardTest {
         prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
         harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

@@ -12,9 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SereneOffering extends Card {
 
     public SereneOffering() {
-        // Gain life first so the target's mana value is read before it is destroyed.
         target(TargetFilters.enchantment())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetManaValue()))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false));
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false))
+                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetManaValue()));
     }
 }

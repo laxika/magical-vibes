@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Propaganda extends Card {
 
     public Propaganda() {
-        addEffect(EffectSlot.STATIC, new RequirePaymentToAttackEffect(2));
+        addEffect(EffectSlot.STATIC, RequirePaymentToAttackEffect.playerOnly(2));
     }
 }

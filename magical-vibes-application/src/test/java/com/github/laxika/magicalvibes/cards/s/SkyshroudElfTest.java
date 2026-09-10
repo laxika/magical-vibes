@@ -33,6 +33,7 @@ class SkyshroudElfTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
@@ -59,7 +60,8 @@ class SkyshroudElfTest extends BaseCardTest {
         addCreatureReady(player1, new SkyshroudElf());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.activateAbility(player1, 0, 2, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
@@ -83,6 +85,7 @@ class SkyshroudElfTest extends BaseCardTest {
         elf.tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }

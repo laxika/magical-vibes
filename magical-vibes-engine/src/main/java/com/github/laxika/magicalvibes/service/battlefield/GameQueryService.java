@@ -8499,6 +8499,7 @@ public class GameQueryService {
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData, isCombatDamage)) return false;
+        if (damageCantBePreventedFromSource(gameData, creature, isCombatDamage)) return false;
         UUID sourceControllerId = findPermanentController(gameData, creature.getId());
         if (isCombatDamage && sourceControllerId != null
                 && gameData.playersWithCombatDamageFromTargetOpponentCreaturesPrevented.contains(sourceControllerId)

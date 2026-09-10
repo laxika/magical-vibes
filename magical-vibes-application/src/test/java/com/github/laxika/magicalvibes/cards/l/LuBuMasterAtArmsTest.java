@@ -24,7 +24,8 @@ class LuBuMasterAtArmsTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isAttacking()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 
     @Test

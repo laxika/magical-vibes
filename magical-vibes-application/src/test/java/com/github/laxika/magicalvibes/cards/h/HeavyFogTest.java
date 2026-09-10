@@ -21,9 +21,9 @@ class HeavyFogTest extends BaseCardTest {
     @DisplayName("Combat damage from an attacking creature to you is prevented")
     void preventsCombatDamageFromAttacker() {
         addCreatureReady(player1, new ForestBear());
-        declareAttackers(player1, List.of(0));
         harness.setHand(player2, List.of(new HeavyFog()));
         harness.addMana(player2, ManaColor.GREEN, 2);
+        declareAttackers(player1, List.of(0));
 
         int defenderLifeBefore = gd.getLife(player2.getId());
 
@@ -42,9 +42,9 @@ class HeavyFogTest extends BaseCardTest {
     @DisplayName("Does not prevent damage from a noncreature source")
     void doesNotPreventNoncreatureDamage() {
         addCreatureReady(player1, new ForestBear());
-        declareAttackers(player1, List.of(0));
         harness.setHand(player2, List.of(new HeavyFog()));
         harness.addMana(player2, ManaColor.GREEN, 2);
+        declareAttackers(player1, List.of(0));
         harness.castAndResolveInstant(player2, 0);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

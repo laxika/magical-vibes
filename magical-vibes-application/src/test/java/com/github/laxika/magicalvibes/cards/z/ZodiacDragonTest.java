@@ -78,6 +78,8 @@ class ZodiacDragonTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new OverwhelmingForces()));
         harness.addMana(player2, ManaColor.BLACK, 8);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.passBothPriorities();
 

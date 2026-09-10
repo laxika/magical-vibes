@@ -152,6 +152,7 @@ public class Card {
      * the casting player when the spell is cast; null means mana alone caps X.
      */
     private DynamicAmount xValueCap;
+    private int minimumXValue;
     private String setCode;
     private String collectorNumber;
 
@@ -341,6 +342,7 @@ public class Card {
                 ? null
                 : EnumSet.copyOf(source.xColorRestrictions);
         this.xValueCap = source.xValueCap;
+        this.minimumXValue = source.minimumXValue;
         this.setCode = source.setCode;
         this.collectorNumber = source.collectorNumber;
         this.token = source.token;
@@ -431,6 +433,7 @@ public class Card {
                 ? null
                 : EnumSet.copyOf(face.xColorRestrictions);
         this.xValueCap = face.xValueCap;
+        this.minimumXValue = face.minimumXValue;
         this.token = face.token;
         this.cantBeCopied = face.cantBeCopied;
         this.sacrificeAtEndStep = face.sacrificeAtEndStep;
@@ -537,6 +540,7 @@ public class Card {
         return xColorRestrictions != null && !xColorRestrictions.isEmpty();
     }
     public void setXValueCap(DynamicAmount xValueCap) { assertMutable(); this.xValueCap = xValueCap; }
+    public void setMinimumXValue(int minimumXValue) { assertMutable(); this.minimumXValue = minimumXValue; }
     public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
     public void setToken(boolean token) { assertMutable(); this.token = token; }

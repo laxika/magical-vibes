@@ -1139,6 +1139,7 @@ public class CastingPermissionService {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, ownerId, effect);
                     if (resolved instanceof GrantFlashToCardTypeEffect grant
+                            && !gameQueryService.hasLostAllAbilities(gameData, perm)
                             && (grant.appliesToAllPlayers() || ownerId.equals(playerId))
                             && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                         return true;

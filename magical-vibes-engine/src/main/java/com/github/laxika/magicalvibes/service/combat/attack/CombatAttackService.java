@@ -2480,7 +2480,10 @@ public class CombatAttackService {
                     continue;
                 }
                 Permanent creature = battlefield.get(idx);
-                if (creature.getCounterCount(counterType) > 0) {
+                if (creature.getCounterCount(counterType) > 0
+                        && !canOnlyAttackAlone(gameData, creature)
+                        && declaredAttackerIndices.stream()
+                        .noneMatch(attacker -> canOnlyAttackAlone(gameData, battlefield.get(attacker)))) {
                     throw new IllegalStateException(creature.getCard().getName()
                             + " must also attack when a creature with such a counter attacks");
                 }

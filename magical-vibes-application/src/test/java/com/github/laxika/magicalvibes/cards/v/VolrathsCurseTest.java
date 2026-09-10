@@ -99,7 +99,6 @@ class VolrathsCurseTest extends BaseCardTest {
 
         harness.activateAbility(player1, 2, 0, null, null);
         harness.handlePermanentChosen(player1, sacrificeTarget.getId());
-        harness.passBothPriorities();
         assertThat(curse.isAuraEffectsIgnoredThisTurn()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);

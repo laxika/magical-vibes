@@ -517,15 +517,22 @@ public class LayerSystemService {
                 topCreature = null;
             }
             for (Permanent permanent : battlefield) {
-                if (!hasFullTextCopyEffect(permanent.getOriginalCard())
-                        || permanent.getFullTextCopySourceCard() == topCreature) {
+                Card baseCard = permanent.getFullTextCopyBaseCard();
+                if (baseCard == null) {
+                    baseCard = permanent.getCard();
+                    if (!hasFullTextCopyEffect(baseCard)) {
+                        continue;
+                    }
+                    permanent.setFullTextCopyBaseCard(baseCard);
+                }
+                if (permanent.getFullTextCopySourceCard() == topCreature) {
                     continue;
                 }
                 if (topCreature == null) {
-                    permanent.setCard(permanent.getOriginalCard());
+                    permanent.setCard(baseCard);
                     permanent.setFullTextCopySourceCard(null);
                 } else {
-                    permanent.setCard(buildFullTextCopy(permanent.getOriginalCard(), topCreature));
+                    permanent.setCard(buildFullTextCopy(baseCard, topCreature));
                     permanent.setFullTextCopySourceCard(topCreature);
                 }
             }

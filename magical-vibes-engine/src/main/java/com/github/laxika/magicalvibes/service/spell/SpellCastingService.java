@@ -830,6 +830,9 @@ public class SpellCastingService {
     }
 
     private void validateXValueCap(GameData gameData, Card card, UUID controllerId, int xValue) {
+        if (card.getMinimumXValue() > 0 && xValue < card.getMinimumXValue()) {
+            throw new IllegalStateException("X must be at least " + card.getMinimumXValue());
+        }
         if (card.getXValueCap() == null) {
             return;
         }
@@ -2661,6 +2664,15 @@ public class SpellCastingService {
                 : selectingModalBackFace
                 ? physicalHandCard.getBackFaceCard()
                 : physicalHandCard;
+        if (usingBestowCost) {
+            handCardForTiming = bestowRuntimeCopyForHandCast(new ArrayList<>(List.of(physicalHandCard)), 0);
+            if (!castingPermissionService.canCastWithTiming(gameData, playerId, handCardForTiming,
+                    playerId.equals(gameData.activePlayerId),
+                    gameData.currentStep == TurnStep.PRECOMBAT_MAIN || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,
+                    gameData.stack.isEmpty())) {
+                throw new IllegalStateException("Card is not playable");
+            }
+        }
         if (handCardForTiming.isCastOnlyFromGraveyard()) {
             throw new IllegalStateException("Card cannot be cast from hand");
         }
@@ -5365,6 +5377,11 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId, null
                 ));
+            }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
+                    && !targetIds.isEmpty()) {
+                gameData.stack.getLast().setRequiredTargetControllerId(
+                        gameQueryService.findPermanentController(gameData, targetIds.getFirst()));
             }
             if (adventure && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setPhysicalCard(physicalHandCard);

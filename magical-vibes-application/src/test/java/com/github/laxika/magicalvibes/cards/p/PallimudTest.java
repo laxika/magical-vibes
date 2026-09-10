@@ -94,7 +94,9 @@ class PallimudTest extends BaseCardTest {
     }
 
     private Permanent addPallimud() {
-        return addCreatureReady(player1, new Pallimud());
+        Permanent pallimud = addCreatureReady(player1, new Pallimud());
+        pallimud.setRememberedTargetPlayerId(player2.getId());
+        return pallimud;
     }
 
     private Permanent addOpponentLand(boolean tapped) {

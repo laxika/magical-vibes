@@ -35,7 +35,7 @@ class BurgeoningTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         harness.assertOnBattlefield(player1, "Volrath's Stronghold");
         harness.assertInHand(player1, "Mogg Flunkies");

@@ -2493,7 +2493,13 @@ public class PredicateEvaluationService {
                 return ownerId.equals(context.sourceControllerId());
             }
         }
-        return false;
+        // Death triggers evaluate the last-known permanent after it has left the battlefield.
+        Card originalCard = permanent.getOriginalCard();
+        if (originalCard.getOwnerId() != null) {
+            return originalCard.getOwnerId().equals(context.sourceControllerId());
+        }
+        return gameData.playerGraveyards.getOrDefault(context.sourceControllerId(), List.of()).stream()
+                .anyMatch(card -> card.getId().equals(originalCard.getId()));
     }
 
     public boolean matchesStaticLeaf(Permanent permanent, PermanentPredicate predicate) {

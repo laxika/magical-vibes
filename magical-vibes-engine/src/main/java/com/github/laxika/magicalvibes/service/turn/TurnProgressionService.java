@@ -581,7 +581,8 @@ public class TurnProgressionService {
         Set<UUID> chosenAttackers = gameData.chosenAttackersNextTurn.remove(nextActive);
         if (chosenAttackers != null) {
             gameData.chosenAttackersThisTurn.put(nextActive, chosenAttackers);
-            for (UUID chosenId : chosenAttackers) {
+            Set<UUID> markedForDestruction = gameData.chosenAttackersToDestroyNextTurn.remove(nextActive);
+            for (UUID chosenId : markedForDestruction != null ? markedForDestruction : chosenAttackers) {
                 gameData.queueDelayedAction(new DestroyPermanentIfDidNotAttackAtEndStep(chosenId));
             }
             gameLogService.append(gameData, GameLog.text("Only the " + chosenAttackers.size()

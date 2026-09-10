@@ -19,13 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({ThalakosDreamsower.class, HornedTurtle.class, Forest.class, SoltariFootSoldier.class})
 class ThalakosDreamsowerTest extends BaseCardTest {
 
-    /** Advance from the given active player's turn into the next player's turn. */
+    /** Run the next player's untap step and stop at upkeep. */
     private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        advanceToUpkeep(newActivePlayer);
     }
 
     /** Same, answering the new active player's may-not-untap prompt with {@code acceptUntap}. */
@@ -75,12 +72,12 @@ class ThalakosDreamsowerTest extends BaseCardTest {
     void untapLockLastsWhileSourceTapped() {
         Permanent dreamsower = addCreatureReady(player1, new ThalakosDreamsower());
         dreamsower.setAttacking(true);
+        dreamsower.tap();
         Permanent enemyCreature = addCreatureReady(player2, new HornedTurtle());
 
         resolveCombat();
         harness.handlePermanentChosen(player1, enemyCreature.getId());
         harness.passBothPriorities();
-        dreamsower.tap();
 
         // Player 2's untap step — the locked creature stays tapped.
         advanceToNextTurn(player1);

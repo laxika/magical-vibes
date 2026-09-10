@@ -73,7 +73,8 @@ class DauthiTrapperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, knight.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, knight, Keyword.SHADOW)).isFalse();

@@ -23,10 +23,12 @@ class MaChaoWesternWarriorTest extends BaseCardTest {
     void attacksAloneBecomesUnblockable() {
         Permanent maChao = addCreatureReady(player1, new MaChaoWesternWarrior());
 
+        gd.playerAutoStopSteps.put(player1.getId(),
+                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(maChao.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, maChao)).isTrue();
     }
 
     @Test
@@ -38,7 +40,7 @@ class MaChaoWesternWarriorTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(maChao.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, maChao)).isFalse();
     }
 
     @Test
@@ -79,16 +81,18 @@ class MaChaoWesternWarriorTest extends BaseCardTest {
     void unblockableResetsAtEndOfCombat() {
         Permanent maChao = addCreatureReady(player1, new MaChaoWesternWarrior());
 
+        gd.playerAutoStopSteps.put(player1.getId(),
+                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(maChao.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, maChao)).isTrue();
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(maChao.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, maChao)).isFalse();
     }
 
     @Test
@@ -96,15 +100,19 @@ class MaChaoWesternWarriorTest extends BaseCardTest {
     void unblockableResetsAtEndOfTurn() {
         Permanent maChao = addCreatureReady(player1, new MaChaoWesternWarrior());
 
+        gd.playerAutoStopSteps.put(player1.getId(),
+                new java.util.HashSet<>(java.util.Set.of(TurnStep.DECLARE_BLOCKERS)));
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(maChao.isCantBeBlocked()).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, maChao)).isTrue();
 
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(maChao.isCantBeBlocked()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, maChao)).isFalse();
     }
 }

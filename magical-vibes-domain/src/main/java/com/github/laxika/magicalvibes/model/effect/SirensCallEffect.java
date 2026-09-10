@@ -11,5 +11,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * on each of the active player's creatures (cleared at end of turn); the end-step destruction is
  * scheduled via a {@code DestroyNonAttackersAtEndStep} delayed action keyed on the active player.
  */
-public record SirensCallEffect() implements CardEffect {
+public record SirensCallEffect(boolean excludeWallsFromAttack, boolean excludeSummoningSickFromDestruction) implements CardEffect {
+    public SirensCallEffect() {
+        this(false, true);
+    }
 }

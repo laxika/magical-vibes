@@ -1122,7 +1122,13 @@ public class GraveyardService {
         }
         perm.setPlusOnePlusOneCounterRegenerationShield(perm.getPlusOnePlusOneCounterRegenerationShield() - 1);
 
-        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, perm, 1);
+        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(),
+                gameQueryService.findPermanentController(gameData, perm.getId()),
+                perm.getCard().getName() + "'s regeneration ability",
+                new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1))),
+                perm.getId(), perm.getId());
+        trigger.setNonTargeting(true);
+        gameData.enqueueTrigger(trigger);
     }
 
     /**

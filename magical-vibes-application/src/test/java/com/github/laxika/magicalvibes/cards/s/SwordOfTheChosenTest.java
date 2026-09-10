@@ -63,7 +63,8 @@ class SwordOfTheChosenTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sword.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a legendary creature");
+                .hasMessageContaining("Target must be a creature");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
     }
 
     @Test

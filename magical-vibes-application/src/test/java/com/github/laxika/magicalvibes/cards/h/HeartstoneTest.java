@@ -19,7 +19,6 @@ class HeartstoneTest extends BaseCardTest {
     void reducesCreatureAbilityForAnyPlayer() {
         harness.addToBattlefield(player1, new Carnassid());
         harness.addToBattlefield(player2, new Heartstone());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);

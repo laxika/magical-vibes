@@ -10,8 +10,7 @@ import java.util.Set;
  * ability's cost, until end of turn (Excavator).
  *
  * <p>The land is already in the graveyard when this resolves, so the handler reads the card
- * recorded on the source permanent at cost payment (the same channel
- * {@link AwardManaOfTypeSacrificedLandCouldProduceEffect} uses) and maps each basic land subtype
+ * snapshotted on the stack entry at cost payment and maps each basic land subtype
  * to its landwalk {@link com.github.laxika.magicalvibes.model.Keyword}.</p>
  */
 public record GrantLandwalkOfSacrificedLandToTargetEffect() implements KeywordGrantingEffect {

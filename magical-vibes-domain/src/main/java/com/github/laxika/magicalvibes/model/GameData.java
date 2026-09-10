@@ -2223,6 +2223,17 @@ public class GameData {
     // Oracle en-Vec — "the chosen creatures attack if able, and other creatures can't attack"
     /** Delayed: affectedPlayerId -> the creature IDs that player chose, consumed when their turn begins. */
     public final Map<UUID, Set<UUID>> chosenAttackersNextTurn = new ConcurrentHashMap<>();
+    public final Map<UUID, Set<UUID>> chosenAttackersToDestroyNextTurn = new ConcurrentHashMap<>();
+
+    public void restrictAttackersNextTurn(UUID playerId, Set<UUID> chosen) {
+        chosenAttackersNextTurn.merge(playerId, Set.copyOf(chosen), (previous, current) -> {
+            Set<UUID> allowed = new java.util.HashSet<>(previous);
+            allowed.retainAll(current);
+            return Set.copyOf(allowed);
+        });
+        chosenAttackersToDestroyNextTurn.computeIfAbsent(playerId, ignored -> new java.util.HashSet<>())
+                .addAll(chosen);
+    }
     /** Active this turn: affectedPlayerId -> the only creatures allowed to attack (all others can't). */
     public final Map<UUID, Set<UUID>> chosenAttackersThisTurn = new ConcurrentHashMap<>();
 
@@ -5563,6 +5574,8 @@ public class GameData {
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
         copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);
         this.chosenAttackersNextTurn.forEach((playerId, ids) -> copy.chosenAttackersNextTurn.put(playerId, Set.copyOf(ids)));
+        this.chosenAttackersToDestroyNextTurn.forEach((playerId, ids) ->
+                copy.chosenAttackersToDestroyNextTurn.put(playerId, new java.util.HashSet<>(ids)));
         this.chosenAttackersThisTurn.forEach((playerId, ids) -> copy.chosenAttackersThisTurn.put(playerId, Set.copyOf(ids)));
         this.attackableCreaturesThisTurn.forEach((playerId, ids) -> copy.attackableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
         this.creaturesAbleToAttackAtDeclareAttackersThisTurn.forEach((playerId, ids) ->

@@ -22,7 +22,6 @@ class RenegadeTroopsTest extends BaseCardTest {
         assertThat(troops.isSummoningSick()).isTrue();
 
         declareAttackers(List.of(0));
-        assertThat(troops.isAttacking()).isTrue();
         assertThat(troops.isTapped()).isTrue();
 
         harness.passBothPriorities();

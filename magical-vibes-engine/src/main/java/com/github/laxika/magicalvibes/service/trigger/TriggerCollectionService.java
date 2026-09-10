@@ -7782,9 +7782,9 @@ public class TriggerCollectionService {
 
         Map<UUID, Permanent> sourcesById = new LinkedHashMap<>();
         battlefield.forEach(source -> sourcesById.put(source.getId(), source));
-        gameData.simultaneousDyingCreatures.forEach((permanentId, source) -> {
+        gameData.simultaneousDyingPermanents.forEach((permanentId, source) -> {
             if (dyingCreatureControllerId.equals(
-                    gameData.simultaneousDyingControllers.get(permanentId))) {
+                    gameData.simultaneousDyingPermanentControllers.get(permanentId))) {
                 sourcesById.putIfAbsent(permanentId, source);
             }
         });
@@ -12061,7 +12061,13 @@ public class TriggerCollectionService {
         if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
         boolean triggered = false;
         if (!gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
-            for (CardEffect effect : perm.getCard().getEffects(slot)) {
+            for (EffectRegistration registration : perm.getCard().getEffectRegistrations(slot)) {
+                CardEffect effect = registration.effect();
+                if (slot == EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE
+                        && registration.triggerMode() == TriggerMode.ONCE_PER_BATCH
+                        && hasEarlierLandInDeathBatch(gameData, controllerId)) {
+                    continue;
+                }
                 if ((slot == EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE
                         || slot == EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
                         && !passesPermanentCardPutIntoGraveyardInterveningIf(gameData, perm, controllerId, effect)) {
@@ -12085,6 +12091,17 @@ public class TriggerCollectionService {
             }
         }
         return triggered;
+    }
+
+    private boolean hasEarlierLandInDeathBatch(GameData gameData, UUID graveyardOwnerId) {
+        if (gameData.simultaneousDyingPermanents.isEmpty()) return false;
+        // Count actual arrivals, so a land exiled by a replacement cannot suppress the trigger.
+        Set<UUID> dyingCardIds = gameData.simultaneousDyingPermanents.values().stream()
+                .map(permanent -> permanent.getOriginalCard().getId())
+                .collect(java.util.stream.Collectors.toSet());
+        return gameData.playerGraveyards.getOrDefault(graveyardOwnerId, List.of()).stream()
+                .filter(card -> card.hasType(CardType.LAND) && dyingCardIds.contains(card.getId()))
+                .limit(2).count() > 1;
     }
 
     private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,

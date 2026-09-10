@@ -14,7 +14,13 @@ import java.util.List;
  * @param requiredType if non-null, only card names with this card type may be chosen
  */
 public record ChooseCardNameOnEnterEffect(List<CardType> excludedTypes, HandAccess handAccess,
-                                           boolean nonbasicLandOnly, CardType requiredType) implements ChooseCardNameEffect {
+                                           boolean nonbasicLandOnly, CardType requiredType,
+                                           boolean excludeBasicLandNames) implements ChooseCardNameEffect {
+
+    public ChooseCardNameOnEnterEffect(List<CardType> excludedTypes, HandAccess handAccess,
+                                      boolean nonbasicLandOnly, CardType requiredType) {
+        this(excludedTypes, handAccess, nonbasicLandOnly, requiredType, false);
+    }
 
     /** How the choosing player interacts with opponents' hands before naming a card. */
     public enum HandAccess {

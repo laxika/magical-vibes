@@ -53,8 +53,8 @@ class ControlOfTheCourtTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Loses before the discard step when the library runs out during the draw")
-    void losesBeforeDiscardStepWhenLibraryRunsOut() {
+    @DisplayName("Finishes discarding before losing for drawing from an empty library")
+    void finishesResolvingBeforeEmptyLibraryLoss() {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player1.getId()).add(new ShuGeneral());
         gd.playerDecks.get(player1.getId()).add(new ShuGeneral());
@@ -65,9 +65,10 @@ class ControlOfTheCourtTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        // Attempting the third draw loses the game before the spell's discard instruction happens.
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        // State-based actions are checked after the spell finishes resolving (CR 704.4).
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .noneMatch(log -> log.contains("discards") && log.contains("at random"));
+                .filteredOn(log -> log.contains("discards") && log.contains("at random"))
+                .hasSize(2);
     }
 }

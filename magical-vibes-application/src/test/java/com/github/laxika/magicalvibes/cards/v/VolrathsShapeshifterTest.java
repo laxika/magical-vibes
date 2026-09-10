@@ -119,6 +119,7 @@ class VolrathsShapeshifterTest extends BaseCardTest {
                 .filter(permanent -> permanent.getOriginalCard().getId().equals(clone.getId()))
                 .findFirst().orElseThrow();
         int copiedShapeshifterIndex = gd.playerBattlefields.get(player1.getId()).indexOf(copiedShapeshifter);
+        copiedShapeshifter.setSummoningSick(false);
         harness.activateAbility(player1, copiedShapeshifterIndex, 0, null, stronghold.getId());
         harness.passBothPriorities();
 
@@ -126,8 +127,8 @@ class VolrathsShapeshifterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not trigger copied enter-the-battlefield abilities when it enters")
-    void doesNotTriggerCopiedEnterTheBattlefieldAbilityOnEntry() {
+    @DisplayName("Triggers the creature card's enter-the-battlefield ability when it enters")
+    void triggersCreatureEnterTheBattlefieldAbilityOnEntry() {
         harness.setLife(player1, 20);
         harness.setGraveyard(player1, List.of(new VenerableMonk()));
         harness.setHand(player1, List.of(new VolrathsShapeshifter()));
@@ -135,9 +136,9 @@ class VolrathsShapeshifterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(gd.stack).isEmpty();
     }
 }

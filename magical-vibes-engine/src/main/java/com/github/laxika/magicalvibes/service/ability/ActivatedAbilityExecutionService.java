@@ -822,7 +822,9 @@ public class ActivatedAbilityExecutionService {
         boolean tracksSacrificedCard = abilityEffects.stream()
                 .filter(CostEffect.class::isInstance)
                 .map(CostEffect.class::cast)
-                .anyMatch(CostEffect::tracksSacrificedCard);
+                .anyMatch(CostEffect::tracksSacrificedCard)
+                || abilityEffects.stream().anyMatch(
+                        com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect.class::isInstance);
         boolean recordsSacrificedPermanentSnapshot = abilityEffects.stream()
                 .filter(SacrificeCreatureCost.class::isInstance)
                 .map(SacrificeCreatureCost.class::cast)

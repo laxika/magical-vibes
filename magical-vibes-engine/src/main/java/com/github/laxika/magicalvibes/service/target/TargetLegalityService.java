@@ -2717,9 +2717,12 @@ public class TargetLegalityService {
                 }
             }
             if (multiTargetConstraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
-                    && targetLegal.length > 0 && targetLegal[0]) {
-                UUID requiredControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.getFirst());
-                for (int i = 1; i < declaredTargetIds.size(); i++) {
+                    && targetLegal.length > 0) {
+                UUID requiredControllerId = entry.getRequiredTargetControllerId();
+                if (requiredControllerId == null) {
+                    requiredControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.getFirst());
+                }
+                for (int i = 0; i < declaredTargetIds.size(); i++) {
                     UUID targetControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i));
                     if (targetLegal[i] && !java.util.Objects.equals(requiredControllerId, targetControllerId)) {
                         targetLegal[i] = false;

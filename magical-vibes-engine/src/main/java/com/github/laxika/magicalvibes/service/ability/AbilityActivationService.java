@@ -4821,7 +4821,7 @@ public class AbilityActivationService {
      * types (Excavator). The land's card is stored on the source so the effect can still read it
      * after the land has left the battlefield.
      */
-    private void recordSacrificedLandCard(CardEffect costEffect, Permanent source, int abilityIndex,
+    private void recordSacrificedLandCard(GameData gameData, CardEffect costEffect, Permanent source, int abilityIndex,
                                           Permanent sacrificed) {
         if (costEffect instanceof CostEffect cost && cost.tracksSacrificedCard() && sacrificed != null) {
             source.setChosenCard(sacrificed.getCard());
@@ -4845,6 +4845,11 @@ public class AbilityActivationService {
                 .anyMatch(GrantLandwalkOfSacrificedLandToTargetEffect.class::isInstance);
         if (recordsProducedManaTypes || recordsLandTypes) {
             source.setChosenCard(sacrificed.getCard());
+        }
+        if (recordsLandTypes) {
+            Card snapshot = sacrificed.getCard().createRuntimeCopy();
+            snapshot.setSubtypes(new ArrayList<>(gameQueryService.effectiveBasicLandTypes(gameData, sacrificed)));
+            source.setChosenCard(snapshot);
         }
         if (recordsProducedManaTypes) {
             source.setChosenSacrificedPermanentSnapshot(new Permanent(sacrificed));
@@ -4876,7 +4881,7 @@ public class AbilityActivationService {
                                     gameData, player.getId(), ability, abilityEffects, targetId, targetZone,
                                     source.getCard(), costDerivedXValue);
                         }
-                        recordSacrificedLandCard(handler.costEffect(), source, abilityIndex, chosen);
+                        recordSacrificedLandCard(gameData, handler.costEffect(), source, abilityIndex, chosen);
                         handler.validateAndPay(gameData, player, chosen);
                         recordUntappedCostPermanent(handler.costEffect(), source, chosen.getId());
                         recordTappedCostPermanent(handler.costEffect(), source, chosen.getId());
@@ -5055,7 +5060,7 @@ public class AbilityActivationService {
                     sourcePermanent.getCard(), costDerivedXValue);
         }
         recordUntappedCostPermanent(context.costEffect(), sourcePermanent, chosenPermanentId);
-        recordSacrificedLandCard(context.costEffect(), sourcePermanent, effectiveIndex, chosen);
+        recordSacrificedLandCard(gameData, context.costEffect(), sourcePermanent, effectiveIndex, chosen);
 
         handler.validateAndPay(gameData, player, chosen);
         if (tracksChosenPermanents) {
@@ -5525,6 +5530,17 @@ public class AbilityActivationService {
         if (xValue < ability.getMinimumXValue()) {
             throw new IllegalStateException("X must be at least " + ability.getMinimumXValue());
         }
+        // Volrath's Curse: only the enchanted permanent's controller may activate this ability.
+        if (ability.isActivatableOnlyByEnchantedPermanentController()) {
+            UUID enchantedController = permanent.isAttached()
+                    ? gameQueryService.findPermanentController(gameData, permanent.getAttachedTo())
+                    : null;
+            if (!playerId.equals(enchantedController)) {
+                throw new IllegalStateException(
+                        "Only the enchanted permanent's controller may activate this ability");
+            }
+        }
+
         if (ability.isSpecialAction()) {
             if (ability.getManaCost() != null && !new ManaCost(ability.getManaCost()).canPay(manaPool)) {
                 throw new IllegalStateException("Not enough mana to pay for this special action");
@@ -5551,17 +5567,6 @@ public class AbilityActivationService {
 
         // City of Solitude: players can activate abilities only during their own turns.
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
-
-        // Volrath's Curse: only the enchanted permanent's controller may activate this ability.
-        if (ability.isActivatableOnlyByEnchantedPermanentController()) {
-            UUID enchantedController = permanent.isAttached()
-                    ? gameQueryService.findPermanentController(gameData, permanent.getAttachedTo())
-                    : null;
-            if (!playerId.equals(enchantedController)) {
-                throw new IllegalStateException(
-                        "Only the enchanted permanent's controller may activate this ability");
-            }
-        }
 
         UUID ownerId = permanent.getCard().getOwnerId();
         if (ownerId == null) {

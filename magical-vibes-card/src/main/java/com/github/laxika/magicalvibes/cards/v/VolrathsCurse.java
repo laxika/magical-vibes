@@ -23,10 +23,10 @@ public class VolrathsCurse extends Card {
                 .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
                 .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect());
         addActivatedAbility(new ActivatedAbility(false, null,
-                        List.of(new SacrificePermanentCost(new PermanentTruePredicate(), "a permanent"),
+                        List.of(new SacrificePermanentCost(new PermanentTruePredicate(), "a permanent", false),
                                 new IgnoreSourceAuraEffectsUntilEndOfTurnEffect()),
                         "Sacrifice a permanent: Ignore this effect until end of turn. "
-                                + "Only the enchanted creature's controller may activate this ability.")
+                                + "Only the enchanted creature's controller may activate this ability.", 1)
                         .withActivatableByAnyPlayer()
                         .withActivatableOnlyByEnchantedPermanentController());
         addActivatedAbility(new ActivatedAbility(false, "{1}{U}",

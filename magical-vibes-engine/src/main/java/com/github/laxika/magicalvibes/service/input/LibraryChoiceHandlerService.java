@@ -744,6 +744,14 @@ public class LibraryChoiceHandlerService {
             toBattlefieldTapped = battlefieldIfChosenPredicate != null && battlefieldIfChosenTapped;
         }
 
+        if (toBattlefield && !chosenCard.getType().isPermanentType()) {
+            // CR 304.4/307.4: an instant or sorcery instructed to enter stays in its current zone.
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            }
+            finishSearchAndResume(gameData);
+            return;
+        }
         boolean removed = false;
         for (int i = 0; i < sourceZone.size(); i++) {
             if (sourceZone.get(i).getId().equals(chosenCard.getId())) {
