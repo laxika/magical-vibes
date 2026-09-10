@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "59")
+@CardRegistration(set = "ME2", collectorNumber = "109")
 public class RitualOfTheMachine extends Card {
 
     public RitualOfTheMachine() {

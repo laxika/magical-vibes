@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "205")
+@CardRegistration(set = "DDH", collectorNumber = "21")
 public class FiremaneAngel extends Card {
 
     public FiremaneAngel() {

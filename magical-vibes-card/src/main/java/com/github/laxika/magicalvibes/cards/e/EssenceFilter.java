@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ICE", collectorNumber = "233")
+@CardRegistration(set = "ME2", collectorNumber = "160")
 public class EssenceFilter extends Card {
 
     public EssenceFilter() {

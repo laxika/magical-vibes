@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MRD", collectorNumber = "124")
+@CardRegistration(set = "HOP", collectorNumber = "75")
 public class LivingHive extends Card {
 
     public LivingHive() {

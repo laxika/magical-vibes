@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "293")
 @CardRegistration(set = "DKM", collectorNumber = "33")
+@CardRegistration(set = "ME2", collectorNumber = "195")
 public class GiantTrapDoorSpider extends Card {
 
     public GiantTrapDoorSpider() {

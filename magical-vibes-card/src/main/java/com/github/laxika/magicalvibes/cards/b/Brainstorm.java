@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTop
 @CardRegistration(set = "BTD", collectorNumber = "3")
 @CardRegistration(set = "CST", collectorNumber = "46")
 @CardRegistration(set = "CST", collectorNumber = "61")
+@CardRegistration(set = "ME2", collectorNumber = "42")
 public class Brainstorm extends Card {
 
     public Brainstorm() {

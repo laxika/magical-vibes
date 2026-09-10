@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "161")
+@CardRegistration(set = "DDF", collectorNumber = "53")
 public class SynodCenturion extends Card {
 
     public SynodCenturion() {

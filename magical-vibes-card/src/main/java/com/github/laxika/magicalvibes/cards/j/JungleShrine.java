@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "226")
+@CardRegistration(set = "DDH", collectorNumber = "34")
 public class JungleShrine extends Card {
 
     public JungleShrine() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "92")
+@CardRegistration(set = "DDH", collectorNumber = "45")
 public class SlaveringNulls extends Card {
 
     public SlaveringNulls() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "131")
+@CardRegistration(set = "HOP", collectorNumber = "96")
 public class ArsenalThresher extends Card {
 
     public ArsenalThresher() {

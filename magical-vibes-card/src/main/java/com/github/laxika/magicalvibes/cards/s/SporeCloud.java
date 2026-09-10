@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "FEM", collectorNumber = "72b")
 @CardRegistration(set = "FEM", collectorNumber = "72c")
 @CardRegistration(set = "FEM", collectorNumber = "150")
+@CardRegistration(set = "ME2", collectorNumber = "176")
 public class SporeCloud extends Card {
 
     public SporeCloud() {

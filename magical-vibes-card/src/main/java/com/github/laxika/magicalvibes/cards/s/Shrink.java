@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 @CardRegistration(set = "5ED", collectorNumber = "326")
 @CardRegistration(set = "HML", collectorNumber = "97a")
 @CardRegistration(set = "HML", collectorNumber = "97b")
+@CardRegistration(set = "ME2", collectorNumber = "175")
 public class Shrink extends Card {
 
     public Shrink() {

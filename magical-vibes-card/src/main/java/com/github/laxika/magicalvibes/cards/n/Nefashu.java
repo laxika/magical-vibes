@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SCG", collectorNumber = "70")
+@CardRegistration(set = "HOP", collectorNumber = "34")
 public class Nefashu extends Card {
 
     public Nefashu() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "FEM", collectorNumber = "43")
 @CardRegistration(set = "FEM", collectorNumber = "148")
+@CardRegistration(set = "ME2", collectorNumber = "111")
 public class SoulExchange extends Card {
 
     public SoulExchange() {

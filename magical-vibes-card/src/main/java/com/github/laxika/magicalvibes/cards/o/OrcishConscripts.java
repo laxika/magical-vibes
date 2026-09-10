@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 
 @CardRegistration(set = "5ED", collectorNumber = "255")
 @CardRegistration(set = "ICE", collectorNumber = "206")
+@CardRegistration(set = "ME2", collectorNumber = "140")
 public class OrcishConscripts extends Card {
 
     public OrcishConscripts() {

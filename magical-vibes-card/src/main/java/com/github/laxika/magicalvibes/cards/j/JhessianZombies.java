@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "22")
+@CardRegistration(set = "DDH", collectorNumber = "56")
 public class JhessianZombies extends Card {
 
     public JhessianZombies() {

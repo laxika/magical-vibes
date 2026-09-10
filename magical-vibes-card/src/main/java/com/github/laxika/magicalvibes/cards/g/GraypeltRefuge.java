@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "214")
+@CardRegistration(set = "DDH", collectorNumber = "33")
 public class GraypeltRefuge extends Card {
 
     public GraypeltRefuge() {

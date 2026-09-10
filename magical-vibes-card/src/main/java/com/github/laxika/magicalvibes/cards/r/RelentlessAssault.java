@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffe
 @CardRegistration(set = "7ED", collectorNumber = "214")
 @CardRegistration(set = "6ED", collectorNumber = "202")
 @CardRegistration(set = "VIS", collectorNumber = "91")
+@CardRegistration(set = "HOP", collectorNumber = "62")
 public class RelentlessAssault extends Card {
 
     public RelentlessAssault() {

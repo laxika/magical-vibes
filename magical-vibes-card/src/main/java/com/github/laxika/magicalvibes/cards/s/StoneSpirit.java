@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "271")
 @CardRegistration(set = "ICE", collectorNumber = "218")
+@CardRegistration(set = "ME2", collectorNumber = "150")
 public class StoneSpirit extends Card {
 
     public StoneSpirit() {
