@@ -1623,8 +1623,13 @@ public class PermanentRemovalService {
                         gameData, controllerId, target, wasCreature);
             }
             // Any permanent at all is put into a graveyard (Yomiji, Who Bars the Way).
+            // Retain types granted by battlefield effects for graveyard-event filters.
+            Permanent graveyardEventSnapshot = new Permanent(target);
+            if (wasCreature) graveyardEventSnapshot.getGrantedCardTypes().add(CardType.CREATURE);
+            if (wasArtifact) graveyardEventSnapshot.getGrantedCardTypes().add(CardType.ARTIFACT);
+            if (wasEnchantment) graveyardEventSnapshot.getGrantedCardTypes().add(CardType.ENCHANTMENT);
             triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(
-                    gameData, target, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
+                    gameData, graveyardEventSnapshot, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 gameData.creatureNamesDiedThisTurn.add(target.getCard().getName());

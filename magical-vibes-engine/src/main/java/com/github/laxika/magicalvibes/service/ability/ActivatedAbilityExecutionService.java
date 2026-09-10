@@ -156,6 +156,7 @@ public class ActivatedAbilityExecutionService {
         StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(), player.getId(),
                 action.getDescription(), action.getEffects(), null, source.getId());
         for (CardEffect effect : action.getEffects()) {
+            if (effect instanceof CostEffect) continue;
             effectHandlerRegistry.getHandler(effect).resolve(gameData, entry, effect);
         }
         gameData.priorityPassedBy.clear();
@@ -425,7 +426,9 @@ public class ActivatedAbilityExecutionService {
         }
         UUID activatedPermanentControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
         TriggerCollectionService.PreCostActivationTriggers preCostActivationTriggers =
-                triggerCollectionService.collectNonTapActivationTriggersBeforeCosts(
+                ability.isSpecialAction()
+                        ? new TriggerCollectionService.PreCostActivationTriggers(List.of(), List.of())
+                        : triggerCollectionService.collectNonTapActivationTriggersBeforeCosts(
                         gameData, playerId, ability, permanent, activatedPermanentControllerId);
 
         UUID effectiveTargetId = targetId;
@@ -663,6 +666,13 @@ public class ActivatedAbilityExecutionService {
         if (gameData.stack.size() > stackBeforeCosts) {
             deferredCostTriggers.addAll(gameData.stack.subList(stackBeforeCosts, gameData.stack.size()));
             gameData.stack.subList(stackBeforeCosts, gameData.stack.size()).clear();
+        }
+
+        if (ability.isSpecialAction()) {
+            performSpecialAction(gameData, player, permanent, ability);
+            gameData.stack.addAll(deferredTapTriggers);
+            gameData.stack.addAll(deferredCostTriggers);
+            return;
         }
 
         // "Whenever you activate an ability of ..." triggers (e.g. Ceaseless Searblades). Collected

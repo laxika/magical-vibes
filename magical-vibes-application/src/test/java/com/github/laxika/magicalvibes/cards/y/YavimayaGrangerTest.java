@@ -28,6 +28,7 @@ class YavimayaGrangerTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -41,6 +42,7 @@ class YavimayaGrangerTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -63,6 +65,7 @@ class YavimayaGrangerTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -126,6 +129,7 @@ class YavimayaGrangerTest extends BaseCardTest {
 
     private void castAndDeclineLandSearch() {
         setupAndCast();
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);

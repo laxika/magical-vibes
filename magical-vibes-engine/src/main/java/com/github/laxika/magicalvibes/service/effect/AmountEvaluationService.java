@@ -578,7 +578,9 @@ public class AmountEvaluationService {
                             : gameData.playerManaPools.get(ctx.controllerId())
                                     .getColoredManaTotals().getOrDefault(a.color(), 0);
             case LastDiscardedCardManaValue ignored ->
-                    gameData.lastDiscardedCardManaValue;
+                    ctx.stackEntry() != null && ctx.stackEntry().getDiscardedCardSnapshot() != null
+                            ? ctx.stackEntry().getDiscardedCardSnapshot().getManaValue()
+                            : gameData.lastDiscardedCardManaValue;
             case GreatestDiscardedCardManaValue ignored ->
                     gameData.greatestDiscardedCardManaValue;
             case LastMilledCardColorSymbols a ->

@@ -1193,3 +1193,5 @@ Cryptic Gateway uses `TapMultiplePermanentsCost(2, PermanentIsCreaturePredicate,
 
 
 Licid end payments use `ActivatedAbility.isSpecialAction()`, derived from the effects' `CardEffect.isSpecialAction()` capability. The engine pays the end cost and applies the effect immediately; the action does not create a stack entry or trigger abilities that watch activations.
+
+Special actions may also include `CostEffect` entries, as Damping Engine does with `SacrificePermanentCost`. The engine validates and completes the cost choice before applying the special-action effect. Sacrifice triggers still go on the stack, but the special action itself does not, and restrictions on activated abilities do not prohibit it.

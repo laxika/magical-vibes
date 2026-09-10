@@ -5037,7 +5037,8 @@ public class GameQueryService {
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
         protectedTypes.addAll(target.getProtectionFromCardTypes());
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionGrantingEffect protection) {
+            if (effect instanceof ProtectionGrantingEffect protection
+                    && !hasLostPrintedAbilities(gameData, target)) {
                 // Protection from everything (Progenitus): every source has a card type, so this is
                 // the shared gate that stops all damage/combat/targeting/enchant from any source.
                 if (protection.protectsFromEverything()) return true;
@@ -5070,7 +5071,9 @@ public class GameQueryService {
     public boolean hasProtectionFromSourceCardTypes(Permanent target, Card sourceCard) {
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
         protectedTypes.addAll(target.getProtectionFromCardTypes());
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+        List<CardEffect> printedEffects = target.isFaceDown() || target.isLosesAllAbilitiesUntilEndOfTurn()
+                ? List.of() : target.getCard().getEffects(EffectSlot.STATIC);
+        for (CardEffect effect : printedEffects) {
             if (effect instanceof ProtectionGrantingEffect protection) {
                 // Protection from everything (Progenitus): every source has a card type, so this is
                 // the shared gate that stops all damage/combat/targeting/enchant from any source.
@@ -5095,7 +5098,8 @@ public class GameQueryService {
                 || hasProtectionFromMonocolored(gameData, target, sourceCard)) {
             return true;
         }
-        if (hasProtectionFromSourceCardTypes(target, sourceCard)) {
+        if (hasProtectionFromSourceCardTypes(target, sourceCard)
+                && !hasLostPrintedAbilities(gameData, target)) {
             return true;
         }
         return computeStaticBonus(gameData, target).grantedEffects().stream()

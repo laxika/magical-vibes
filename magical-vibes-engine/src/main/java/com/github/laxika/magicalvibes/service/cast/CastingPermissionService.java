@@ -395,6 +395,7 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (permanent.isDampingEngineEffectIgnoredThisTurn()) continue;
+                if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(DampingEngineEffect.class::isInstance)) {
                     return true;

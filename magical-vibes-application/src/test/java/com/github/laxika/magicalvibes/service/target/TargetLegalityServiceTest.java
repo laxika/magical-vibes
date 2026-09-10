@@ -108,7 +108,7 @@ class TargetLegalityServiceTest {
         var entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player1Id,
                 "Life comparison", List.of(damage), player2Id, (UUID) null);
         entry.setTargetFilter(new com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter(
-                new com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate(),
+                new com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate(true),
                 "Target must have more life"));
         gd.playerLifeTotals.put(player1Id, 10);
         gd.playerLifeTotals.put(player2Id, 11);

@@ -24,7 +24,8 @@ import java.util.UUID;
 public class ActivatedAbility {
     /** Special-action payments share the action menu but are not activated abilities. */
     public boolean isSpecialAction() {
-        return !effects.isEmpty() && effects.stream().allMatch(CardEffect::isSpecialAction);
+        return effects.stream().anyMatch(CardEffect::isSpecialAction)
+                && effects.stream().allMatch(effect -> effect instanceof CostEffect || effect.isSpecialAction());
     }
 
     /**

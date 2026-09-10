@@ -452,7 +452,7 @@ class AbilityActivationServiceTest {
 
             service.sacrificePermanent(gameData, player1, 0, targetId);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
+            verify(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
             verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id, perm.getCard());
             verify(permanentRemovalService).removeOrphanedAuras(gameData);
             assertThat(gameData.stack).hasSize(1);
@@ -1630,7 +1630,7 @@ class AbilityActivationServiceTest {
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, husk);
+            verify(permanentRemovalService).sacrificePermanentToGraveyard(gameData, husk);
             verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id, husk.getCard());
             verify(gameLogService).append(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Nantuko Husk.")));
         }

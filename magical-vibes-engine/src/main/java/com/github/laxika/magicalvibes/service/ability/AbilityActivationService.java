@@ -3408,8 +3408,8 @@ public class AbilityActivationService {
         int effectiveIndex = effectiveAbilityIndex(abilityIndex);
         ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
         List<CardEffect> abilityEffects = ability.getEffects();
-        if (ability.isSpecialAction()) {
-            ManaCost cost = new ManaCost(ability.getManaCost());
+        if (ability.isSpecialAction() && abilityEffects.stream().noneMatch(CostEffect.class::isInstance)) {
+            ManaCost cost = new ManaCost(ability.getManaCost() == null ? "{0}" : ability.getManaCost());
             if (!cost.canPay(activationPool)) {
                 throw new IllegalStateException("Not enough mana to pay for this special action");
             }
@@ -5521,8 +5521,17 @@ public class AbilityActivationService {
             throw new IllegalStateException("X must be at least " + ability.getMinimumXValue());
         }
         if (ability.isSpecialAction()) {
-            if (!new ManaCost(ability.getManaCost()).canPay(manaPool)) {
+            if (ability.getManaCost() != null && !new ManaCost(ability.getManaCost()).canPay(manaPool)) {
                 throw new IllegalStateException("Not enough mana to pay for this special action");
+            }
+            validateTimingRestrictions(gameData, playerId, permanent, ability);
+            validateActivationLimitPerTurn(gameData, playerId, permanent, ability, abilityIndex);
+            for (CardEffect effect : abilityEffects) {
+                PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(
+                        gameData, effect, permanent.getId(), xValue);
+                if (handler != null) {
+                    handler.validateCanPay(gameData, playerId);
+                }
             }
             return;
         }

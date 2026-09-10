@@ -2786,7 +2786,7 @@ public class TargetLegalityService {
                                     entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)), entry.isTeamworkCostPaid()).isPresent();
                 }
             } else if (entry.getTargetZone() == Zone.STACK) {
-                targetFizzled = gameData.stack.stream().noneMatch(se -> se.getTargetableId().equals(entry.getTargetId()));
+                targetFizzled = !isPrimaryTargetLegalOnResolution(gameData, entry, entry.getTargetId());
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetId())) {
@@ -4486,6 +4486,11 @@ public class TargetLegalityService {
     private boolean matchesPlayerPredicateAtResolution(GameData gameData, UUID controllerId,
                                                         UUID targetPlayerId, PlayerPredicate predicate,
                                                         UUID sourcePermanentId) {
+        if (predicate instanceof PlayerHasMoreLifeThanControllerPredicate lifePredicate) {
+            return controllerId != null && targetPlayerId != null && !controllerId.equals(targetPlayerId)
+                    && (!lifePredicate.recheckAtResolution()
+                    || gameData.getLife(targetPlayerId) > gameData.getLife(controllerId));
+        }
         if (predicate instanceof PlayerHasMoreCardsInHandThanControllerPredicate handPredicate) {
             if (controllerId == null || controllerId.equals(targetPlayerId)) {
                 return false;

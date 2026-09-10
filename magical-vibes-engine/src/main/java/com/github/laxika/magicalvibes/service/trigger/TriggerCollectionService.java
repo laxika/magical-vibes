@@ -8447,8 +8447,8 @@ public class TriggerCollectionService {
             if (playerId.equals(graveyardOwnerId)) {
                 for (CardEffect effect : perm.getCard().getEffects(
                         EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {
-                    CardEffect resolved = unwrapTriggeringCardConditional(
-                            effect, dyingCard, gameData, playerId);
+                    CardEffect resolved = unwrapCreatureDeathConditional(
+                            effect, dyingCard, dyingPermanent, gameData, playerId, perm);
                     if (resolved == null) continue;
                     var match = new TriggerMatchContext(gameData, perm, playerId, resolved);
                     dispatch(match,
@@ -11847,6 +11847,15 @@ public class TriggerCollectionService {
     private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,
             EffectSlot slot, TriggerContext ctx, CardEffect effect) {
         CardEffect conditionedEffect = effect;
+        if (slot == EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD
+                && ctx instanceof TriggerContext.AnyPermanentGraveyard graveyard) {
+            conditionedEffect = unwrapCreatureDeathConditional(effect, graveyard.dyingCard(),
+                    graveyard.dyingPermanent(), gameData, controllerId, perm);
+            if (conditionedEffect == null
+                    || !passesInterveningIf(gameData, perm, controllerId, conditionedEffect)) {
+                return false;
+            }
+        }
         if (effect instanceof ConditionalEffect conditional
                 && conditional.condition() instanceof SourceHasChosenMode) {
             if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
