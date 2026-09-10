@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "224")
+@CardRegistration(set = "DDI", collectorNumber = "36")
 public class SejiriRefuge extends Card {
 
     public SejiriRefuge() {

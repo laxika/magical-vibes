@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "257")
+@CardRegistration(set = "DDI", collectorNumber = "65")
 public class JourneyersKite extends Card {
 
     public JourneyersKite() {

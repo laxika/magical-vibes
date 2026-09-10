@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "135")
+@CardRegistration(set = "DDI", collectorNumber = "1")
 public class VenserTheSojourner extends Card {
 
     public VenserTheSojourner() {

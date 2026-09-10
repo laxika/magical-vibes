@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "CON", collectorNumber = "25")
+@CardRegistration(set = "DDF", collectorNumber = "47")
 public class Esperzoa extends Card {
 
     public Esperzoa() {

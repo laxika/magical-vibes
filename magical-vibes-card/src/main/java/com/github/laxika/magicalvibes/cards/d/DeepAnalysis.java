@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "36")
+@CardRegistration(set = "DDH", collectorNumber = "65")
 public class DeepAnalysis extends Card {
 
     public DeepAnalysis() {

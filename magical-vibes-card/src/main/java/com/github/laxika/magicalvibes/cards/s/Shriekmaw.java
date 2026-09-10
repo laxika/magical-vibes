@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "139")
+@CardRegistration(set = "DDH", collectorNumber = "54")
 public class Shriekmaw extends Card {
 
     public Shriekmaw() {

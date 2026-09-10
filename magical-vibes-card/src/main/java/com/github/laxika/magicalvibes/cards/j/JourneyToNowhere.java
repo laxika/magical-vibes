@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "14")
+@CardRegistration(set = "DDF", collectorNumber = "23")
 public class JourneyToNowhere extends Card {
 
     public JourneyToNowhere() {

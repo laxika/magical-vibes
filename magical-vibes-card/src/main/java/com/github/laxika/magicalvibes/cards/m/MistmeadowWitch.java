@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "144")
+@CardRegistration(set = "DDI", collectorNumber = "6")
 public class MistmeadowWitch extends Card {
 
     public MistmeadowWitch() {

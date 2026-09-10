@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "13")
+@CardRegistration(set = "DDF", collectorNumber = "13")
 public class KembasSkyguard extends Card {
 
     public KembasSkyguard() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "94")
+@CardRegistration(set = "DDH", collectorNumber = "30")
 public class SylvanBounty extends Card {
 
     public SylvanBounty() {

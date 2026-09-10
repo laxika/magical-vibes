@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GPT", collectorNumber = "70")
+@CardRegistration(set = "DDH", collectorNumber = "55")
 public class OgreSavant extends Card {
 
     public OgreSavant() {

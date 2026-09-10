@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "17")
+@CardRegistration(set = "DDF", collectorNumber = "3")
 public class GoldmeadowHarrier extends Card {
 
     public GoldmeadowHarrier() {

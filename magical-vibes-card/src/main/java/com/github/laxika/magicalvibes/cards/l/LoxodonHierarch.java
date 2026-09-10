@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "214")
+@CardRegistration(set = "DDH", collectorNumber = "15")
 public class LoxodonHierarch extends Card {
 
     public LoxodonHierarch() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "UDS", collectorNumber = "46")
+@CardRegistration(set = "DDI", collectorNumber = "25")
 public class SigilOfSleep extends Card {
 
     public SigilOfSleep() {

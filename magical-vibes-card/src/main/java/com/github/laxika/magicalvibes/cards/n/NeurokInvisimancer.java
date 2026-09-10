@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "37")
+@CardRegistration(set = "DDI", collectorNumber = "8")
 public class NeurokInvisimancer extends Card {
 
     public NeurokInvisimancer() {

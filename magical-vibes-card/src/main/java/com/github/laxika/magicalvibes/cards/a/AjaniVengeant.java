@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "154")
+@CardRegistration(set = "DDH", collectorNumber = "1")
 public class AjaniVengeant extends Card {
 
     public AjaniVengeant() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "NPH", collectorNumber = "48")
+@CardRegistration(set = "DDH", collectorNumber = "58")
 public class VaporSnag extends Card {
 
     public VaporSnag() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "15")
+@CardRegistration(set = "DDI", collectorNumber = "12")
 public class GalepowderMage extends Card {
 
     public GalepowderMage() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "141")
+@CardRegistration(set = "DDI", collectorNumber = "45")
 public class PlatedGeopede extends Card {
 
     public PlatedGeopede() {

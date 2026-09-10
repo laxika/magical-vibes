@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEnd
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MRD", collectorNumber = "17")
+@CardRegistration(set = "DDF", collectorNumber = "26")
 public class RazorBarrier extends Card {
 
     public RazorBarrier() {

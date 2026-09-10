@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "204")
+@CardRegistration(set = "DDH", collectorNumber = "31")
 public class TitanicUltimatum extends Card {
 
     public TitanicUltimatum() {

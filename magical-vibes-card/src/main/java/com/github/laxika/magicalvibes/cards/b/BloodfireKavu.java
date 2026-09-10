@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "58")
+@CardRegistration(set = "DDI", collectorNumber = "54")
 public class BloodfireKavu extends Card {
 
     public BloodfireKavu() {

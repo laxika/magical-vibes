@@ -362,10 +362,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DD2", collectorNumber = "59")
 @CardRegistration(set = "DD2", collectorNumber = "60")
 @CardRegistration(set = "DD2", collectorNumber = "61")
+@CardRegistration(set = "DDI", collectorNumber = "75")
+@CardRegistration(set = "DDI", collectorNumber = "76")
+@CardRegistration(set = "DDI", collectorNumber = "77")
 @CardRegistration(set = "3ED", collectorNumber = "301")
 @CardRegistration(set = "3ED", collectorNumber = "302")
 @CardRegistration(set = "3ED", collectorNumber = "303")
 @CardRegistration(set = "H09", collectorNumber = "40")
+@CardRegistration(set = "DDH", collectorNumber = "41")
+@CardRegistration(set = "DDH", collectorNumber = "80")
 @CardRegistration(set = "HOP", collectorNumber = "156")
 @CardRegistration(set = "HOP", collectorNumber = "157")
 @CardRegistration(set = "HOP", collectorNumber = "158")
@@ -374,6 +379,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "HOP", collectorNumber = "161")
 @CardRegistration(set = "HOP", collectorNumber = "162")
 @CardRegistration(set = "PD2", collectorNumber = "34")
+@CardRegistration(set = "DDI", collectorNumber = "74")
 public class Mountain extends Card {
 
     public Mountain() {

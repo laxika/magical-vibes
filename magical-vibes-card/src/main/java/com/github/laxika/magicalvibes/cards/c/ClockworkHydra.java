@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEf
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "253")
+@CardRegistration(set = "DDF", collectorNumber = "55")
 public class ClockworkHydra extends Card {
 
     public ClockworkHydra() {

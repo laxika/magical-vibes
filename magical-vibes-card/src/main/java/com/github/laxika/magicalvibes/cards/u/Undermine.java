@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "282")
+@CardRegistration(set = "DDH", collectorNumber = "62")
 public class Undermine extends Card {
 
     public Undermine() {

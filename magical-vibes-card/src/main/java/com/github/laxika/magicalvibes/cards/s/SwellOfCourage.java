@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "26")
+@CardRegistration(set = "DDF", collectorNumber = "31")
 public class SwellOfCourage extends Card {
 
     public SwellOfCourage() {
