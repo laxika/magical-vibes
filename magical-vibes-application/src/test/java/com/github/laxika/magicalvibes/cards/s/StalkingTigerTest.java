@@ -12,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(StalkingTiger.class)
+@CardUsed({StalkingTiger.class, ShuFootSoldiers.class})
 class StalkingTigerTest extends BaseCardTest {
 
     @Test
@@ -50,6 +50,20 @@ class StalkingTigerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Stalking Tiger can remain unblocked")
+    void canRemainUnblocked() {
+        Permanent attacker = addCreatureReady(player1, new StalkingTiger());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
     @DisplayName("Each Stalking Tiger can be blocked by one creature")
     void eachAttackerCanBeBlockedByOneCreature() {
         Permanent firstAttacker = addCreatureReady(player1, new StalkingTiger());
@@ -65,6 +79,26 @@ class StalkingTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 1)
+        ));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Stalking Tiger's restriction does not affect other creatures")
+    void restrictionOnlyAppliesToStalkingTiger() {
+        Permanent attacker = addCreatureReady(player1, new ShuFootSoldiers());
+        attacker.setAttacking(true);
+
+        Permanent firstBlocker = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent secondBlocker = addCreatureReady(player2, new ShuFootSoldiers());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
         ));
 
         assertThat(firstBlocker.isBlocking()).isTrue();

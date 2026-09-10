@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "22")
+@CardRegistration(set = "TMT", collectorNumber = "259")
 public class PrehistoricPet extends Card {
 
     public PrehistoricPet() {

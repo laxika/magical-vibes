@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "INV", collectorNumber = "188")
 @CardRegistration(set = "USG", collectorNumber = "252")
 @CardRegistration(set = "BRB", collectorNumber = "26")
+@CardRegistration(set = "HOP", collectorNumber = "71")
+@CardRegistration(set = "DDE", collectorNumber = "52")
 public class FertileGround extends Card {
 
     public FertileGround() {

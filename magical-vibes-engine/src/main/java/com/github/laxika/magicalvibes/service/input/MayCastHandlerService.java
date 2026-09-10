@@ -451,7 +451,7 @@ public class MayCastHandlerService {
         boolean canTargetSpell = spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL));
         if (canTargetSpell) {
             for (StackEntry stackEntry : gameData.stack) {
-                UUID targetId = stackEntry.getCard().getId();
+                UUID targetId = stackEntry.getTargetableId();
                 if (targetLegalityService.checkSpellTargetOnStack(
                         gameData, targetId, card.getTargetFilter(), controllerId, null).isEmpty()) {
                     validTargets.add(targetId);
@@ -1266,6 +1266,7 @@ public class MayCastHandlerService {
             }
 
             sideboard.remove(cardIndex);
+            gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(
                             cardToCast, player.getId(), spellEffects, spellType));
@@ -1277,6 +1278,7 @@ public class MayCastHandlerService {
         }
 
         sideboard.remove(cardIndex);
+        gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
         gameData.stack.add(new StackEntry(
                 spellType, cardToCast, player.getId(), cardToCast.getName(),
                 spellEffects, 0, (UUID) null, null));

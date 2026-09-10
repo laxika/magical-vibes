@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -16,9 +18,10 @@ import java.util.Set;
 public class LurkingSkirge extends Card {
 
     public LurkingSkirge() {
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new ConditionalEffect(
+        addEffect(EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(new PermanentIsCreaturePredicate(), new ConditionalEffect(
                 new SourceIsEnchantment(),
                 new BecomeCreatureEffect(3, 2,
-                        List.of(CardSubtype.PHYREXIAN, CardSubtype.IMP), Set.of(Keyword.FLYING))));
+                        List.of(CardSubtype.PHYREXIAN, CardSubtype.IMP), Set.of(Keyword.FLYING)))));
     }
 }

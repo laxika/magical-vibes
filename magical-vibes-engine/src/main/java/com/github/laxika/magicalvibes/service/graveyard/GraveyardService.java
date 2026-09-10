@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.service.graveyard;
 
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -61,6 +64,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -80,6 +84,10 @@ public class GraveyardService {
     // @Lazy to break indirect circular dependency:
     // GraveyardService → TriggerCollectionService → PermanentRemovalService → GraveyardService
     private TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    @Lazy
+    private InteractionHandlerRegistry interactionHandlerRegistry;
 
     public GraveyardService(GameQueryService gameQueryService,
                             GameLogService gameLogService,
@@ -190,7 +198,7 @@ public class GraveyardService {
                 .filter(card -> !card.isToken())
                 .count();
         triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(
-                gameData, targetPlayerId, cardsEntered);
+                gameData, targetPlayerId, cardsEntered, cardsEnteredGraveyard);
         triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
                 gameData, targetPlayerId, creatureCardsEntered);
 
@@ -238,10 +246,20 @@ public class GraveyardService {
         List<Card> cardsEnteredGraveyard = new ArrayList<>();
         for (Card card : movedCards) {
             if (addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY,
-                    false, null, null, null, false, true, false)) {
+                    true, null, null, null, false, true, false)) {
                 cardsEnteredGraveyard.add(card);
             }
         }
+        int creatureCardsEntered = (int) cardsEnteredGraveyard.stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .count();
+        int cardsEntered = (int) cardsEnteredGraveyard.stream()
+                .filter(card -> !card.isToken())
+                .count();
+        triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(
+                gameData, targetPlayerId, cardsEntered, cardsEnteredGraveyard);
+        triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
+                gameData, targetPlayerId, creatureCardsEntered);
         return cardsEnteredGraveyard;
     }
 
@@ -321,6 +339,13 @@ public class GraveyardService {
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
                 null, null, null, false, false, false);
+    }
+
+    /** Moves a spell card to its owner's graveyard while preserving the spell controller. */
+    public boolean addCardToGraveyardFromSpell(GameData gameData, UUID ownerId, Card card,
+                                               UUID controllerId) {
+        return addCardToGraveyard(gameData, ownerId, card, Zone.STACK, false,
+                null, null, null, false, false, false, controllerId);
     }
 
     /**
@@ -407,6 +432,19 @@ public class GraveyardService {
                                        Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed,
                                        boolean suppressLibraryMillTriggers,
                                        boolean creatureDeathTriggersSuppressed) {
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, suppressLibraryBatchTriggers,
+                battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot,
+                selfGraveyardTriggerSuppressed, suppressLibraryMillTriggers,
+                creatureDeathTriggersSuppressed, null);
+    }
+
+    private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
+                                       boolean suppressLibraryBatchTriggers,
+                                       UUID battlefieldControllerId, UUID battlefieldPermanentId,
+                                       Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed,
+                                       boolean suppressLibraryMillTriggers,
+                                       boolean creatureDeathTriggersSuppressed,
+                                       UUID cardControllerId) {
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         gameData.spellsWithPlotOnResolution.remove(card.getId());
         // CR 614.7 — self-replacement effects apply first
@@ -538,8 +576,18 @@ public class GraveyardService {
             return false;
         }
 
-        if (opponentHasExileReplacementEffect(gameData, ownerId)) {
-            exileService.exileCard(gameData, ownerId, card);
+        UUID effectiveCardControllerId = battlefieldControllerId != null
+                ? battlefieldControllerId
+                : cardControllerId != null ? cardControllerId : ownerId;
+        OpponentExileReplacement opponentExileReplacement = opponentHasExileReplacementEffect(
+                gameData, ownerId, effectiveCardControllerId);
+        if (opponentExileReplacement != null) {
+            if (opponentExileReplacement.effect().trackWithSource()) {
+                exileService.exileCard(gameData, ownerId, card,
+                        opponentExileReplacement.sourcePermanentId());
+            } else {
+                exileService.exileCard(gameData, ownerId, card);
+            }
             
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
@@ -574,6 +622,13 @@ public class GraveyardService {
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
         collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
+        if (sourceZone == Zone.LIBRARY) {
+            for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY)) {
+                gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
+                        card.getName() + "'s ability", new ArrayList<>(List.of(effect)), null, (UUID) null));
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+            }
+        }
         if (sourceZone == Zone.BATTLEFIELD && !selfGraveyardTriggerSuppressed
                 && !creatureDeathTriggersSuppressed) {
             collectPutIntoGraveyardFromBattlefieldTriggers(
@@ -581,6 +636,10 @@ public class GraveyardService {
         }
         if (!card.isToken() && isPermanentCard(card)) {
             triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            if (sourceZone == Zone.LIBRARY) {
+                triggerCollectionService.checkPermanentCardPutIntoGraveyardFromLibraryTriggers(
+                        gameData, ownerId, card);
+            }
         }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -590,6 +649,7 @@ public class GraveyardService {
         }
         if (!card.isToken()) {
             triggerCollectionService.checkCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            triggerCollectionService.checkNonblackCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         }
         if (!card.isToken() && card.hasType(CardType.CREATURE)) {
             triggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -609,7 +669,8 @@ public class GraveyardService {
         if (!card.isToken()) {
             triggerCollectionService.checkCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
             if (sourceZone == Zone.LIBRARY && !suppressLibraryBatchTriggers) {
-                triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(gameData, ownerId, 1);
+                    triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(
+                            gameData, ownerId, 1, List.of(card));
             }
         }
         triggerCollectionService.checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
@@ -813,6 +874,10 @@ public class GraveyardService {
 
     private boolean tryReplaceDestruction(GameData gameData, Permanent perm, boolean allowRegeneration,
                                           boolean allowShieldCounter) {
+        if (pendingRegenerationChoices(gameData).stream()
+                .anyMatch(choice -> perm.getId().equals(choice.permanentId()))) {
+            return true;
+        }
         Permanent umbraArmor = findDestructionReplacementSource(gameData, perm, DestructionReplacement.UMBRA_ARMOR);
         if (umbraArmor != null) {
             performUmbraArmorReplacement(gameData, perm, umbraArmor);
@@ -835,15 +900,125 @@ public class GraveyardService {
             return true;
         }
         if (perm.getRegenerationShield() > 0) {
-            perm.setRegenerationShield(perm.getRegenerationShield() - 1);
-            performRegeneration(gameData, perm);
-            spendOpponentDrawRegenerationShield(gameData, perm);
-            spendMinusOneCounterRegenerationShield(gameData, perm);
-            spendPlusOnePlusOneCounterRegenerationShield(gameData, perm);
-            spendGainControlRegenerationShield(gameData, perm);
+            String chosenShield = gameData.chosenRegenerationShields.remove(perm.getId());
+            if (chosenShield != null) {
+                spendRegenerationShield(gameData, perm, chosenShield);
+                return true;
+            }
+            Map<String, String> shields = regenerationOptions(gameData, perm);
+            if (shields.size() > 1) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
+                        controllerId, perm.getId(), null,
+                        new ChoiceContext.RegenerationShieldChoice(perm.getId(), shields),
+                        List.copyOf(shields.keySet()), "Choose a regeneration shield for " + perm.getCard().getName()));
+                processPendingRegenerationChoice(gameData);
+            } else {
+                spendRegenerationShield(gameData, perm, shields.values().iterator().next());
+            }
             return true;
         }
         return false;
+    }
+
+    private Map<String, String> regenerationOptions(GameData gameData, Permanent perm) {
+        Map<String, String> options = new LinkedHashMap<>();
+        int riders = perm.getMinusOneCounterRegenerationShield() + perm.getPlusOnePlusOneCounterRegenerationShield()
+                + perm.getOpponentDrawRegenerationShield() + perm.getGainControlRegenerationShields().size();
+        if (perm.getRegenerationShield() > riders) {
+            options.put("Regenerate without an additional effect", "PLAIN");
+        }
+        if (perm.getMinusOneCounterRegenerationShield() > 0) {
+            options.put("Regenerate and put a -1/-1 counter on it", "MINUS");
+        }
+        if (perm.getPlusOnePlusOneCounterRegenerationShield() > 0) {
+            options.put("Regenerate and put a +1/+1 counter on it", "PLUS");
+        }
+        for (UUID recipient : perm.getOpponentDrawRegenerationShieldRecipients()) {
+            options.put("Regenerate and let " + gameData.playerIdToName.get(recipient) + " draw a card",
+                    "DRAW:" + recipient);
+        }
+        for (UUID controller : perm.getGainControlRegenerationShields()) {
+            options.put("Regenerate and give " + gameData.playerIdToName.get(controller) + " control",
+                    "CONTROL:" + controller);
+        }
+        return options;
+    }
+
+    /** Collects choices before any replacement or death in the state-based batch is performed. */
+    public void prepareRegenerationChoice(GameData gameData, Permanent perm) {
+        if (perm.getRegenerationShield() < 2 || gameData.chosenRegenerationShields.containsKey(perm.getId())
+                || perm.isCantRegenerateThisTurn() || damagedByRegenerationDenyingSource(gameData, perm)
+                || findDestructionReplacementSource(gameData, perm, DestructionReplacement.UMBRA_ARMOR) != null
+                || findDestructionReplacementSource(gameData, perm, DestructionReplacement.REGENERATE) != null) {
+            return;
+        }
+        Map<String, String> shields = regenerationOptions(gameData, perm);
+        if (shields.size() > 1) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+            gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
+                    controllerId, perm.getId(), null,
+                    new ChoiceContext.RegenerationShieldChoice(perm.getId(), shields, true),
+                    List.copyOf(shields.keySet()), "Choose a regeneration shield for " + perm.getCard().getName()));
+            processPendingRegenerationChoice(gameData);
+        }
+    }
+
+    private List<PendingInteraction.ColorChoice> pendingRegenerationChoices(GameData gameData) {
+        List<PendingInteraction.ColorChoice> choices = new ArrayList<>();
+        if (gameData.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice choice
+                && choice.context() instanceof ChoiceContext.RegenerationShieldChoice) {
+            choices.add(choice);
+        }
+        for (PendingInteraction pending : gameData.pendingInteractions) {
+            if (pending instanceof PendingInteraction.ColorChoice choice
+                    && choice.context() instanceof ChoiceContext.RegenerationShieldChoice) {
+                choices.add(choice);
+            }
+        }
+        return choices;
+    }
+
+    public boolean hasPendingRegenerationChoice(GameData gameData) {
+        return !pendingRegenerationChoices(gameData).isEmpty();
+    }
+
+    public void processPendingRegenerationChoice(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput()) return;
+        var choices = pendingRegenerationChoices(gameData);
+        if (!choices.isEmpty()) {
+            var choice = choices.getFirst();
+            gameData.pendingInteractions.removeFirstOccurrence(choice);
+            interactionHandlerRegistry.begin(gameData, choice);
+        }
+    }
+
+    public void resolveRegenerationShieldChoice(GameData gameData,
+            ChoiceContext.RegenerationShieldChoice choice, String option) {
+        String shield = choice.shields().get(option);
+        if (shield == null) throw new IllegalArgumentException("Invalid regeneration shield");
+        Permanent permanent = gameQueryService.findPermanentById(gameData, choice.permanentId());
+        if (permanent != null) {
+            if (choice.stateBasedDestruction()) {
+                gameData.chosenRegenerationShields.put(permanent.getId(), shield);
+            } else {
+                spendRegenerationShield(gameData, permanent, shield);
+            }
+        }
+    }
+
+    private void spendRegenerationShield(GameData gameData, Permanent perm, String shield) {
+        perm.setRegenerationShield(perm.getRegenerationShield() - 1);
+        performRegeneration(gameData, perm);
+        if (shield.equals("MINUS")) {
+            spendMinusOneCounterRegenerationShield(gameData, perm);
+        } else if (shield.equals("PLUS")) {
+            spendPlusOnePlusOneCounterRegenerationShield(gameData, perm);
+        } else if (shield.startsWith("DRAW:")) {
+            spendOpponentDrawRegenerationShield(gameData, perm, UUID.fromString(shield.substring(5)));
+        } else if (shield.startsWith("CONTROL:")) {
+            spendGainControlRegenerationShield(gameData, perm, UUID.fromString(shield.substring(8)));
+        }
     }
 
     private Permanent findDestructionReplacementSource(GameData gameData, Permanent destroyedPermanent,
@@ -896,20 +1071,12 @@ public class GraveyardService {
 
     /**
      * Soldevi Sentry: a regeneration shield granted by its ability owes the opponent an optional draw
-     * once it is actually spent. Plain shields are consumed first — a rider shield is only spent when
-     * the remaining shields are all rider shields.
+     * once that shield is chosen and spent.
      */
-    private void spendOpponentDrawRegenerationShield(GameData gameData, Permanent perm) {
-        if (perm.getOpponentDrawRegenerationShield() <= perm.getRegenerationShield()) {
-            return;
-        }
+    private void spendOpponentDrawRegenerationShield(GameData gameData, Permanent perm, UUID opponentId) {
         perm.setOpponentDrawRegenerationShield(perm.getOpponentDrawRegenerationShield() - 1);
 
-        UUID opponentId = perm.getOpponentDrawRegenerationShieldRecipients().isEmpty()
-                ? null : perm.getOpponentDrawRegenerationShieldRecipients().removeFirst();
-        if (opponentId == null) {
-            return;
-        }
+        perm.getOpponentDrawRegenerationShieldRecipients().remove(opponentId);
 
         gameData.queueMayAbility(perm.getCard(), opponentId, new MayEffect(new DrawCardEffect(), "Draw a card?"));
         gameLogService.append(gameData, GameLog.textCardText(
@@ -918,8 +1085,7 @@ public class GraveyardService {
 
     /**
      * Matopi Golem: a regeneration shield granted by its ability puts a -1/-1 counter on the
-     * permanent once it is actually spent. When both kinds are available, the Matopi shield is
-     * selected so its rider is not silently discarded behind an indistinguishable plain shield.
+     * permanent once that shield is chosen and spent.
      */
     private void spendMinusOneCounterRegenerationShield(GameData gameData, Permanent perm) {
         if (perm.getMinusOneCounterRegenerationShield() <= 0) {
@@ -948,32 +1114,30 @@ public class GraveyardService {
 
     /**
      * Skeleton Scavengers: a regeneration shield granted by its ability puts a +1/+1 counter on the
-     * permanent once it is actually spent. Plain shields are consumed first — a rider shield is only
-     * spent once it is all that is left.
+     * permanent once that shield is chosen and spent.
      */
     private void spendPlusOnePlusOneCounterRegenerationShield(GameData gameData, Permanent perm) {
-        if (perm.getPlusOnePlusOneCounterRegenerationShield() <= perm.getRegenerationShield()) {
+        if (perm.getPlusOnePlusOneCounterRegenerationShield() <= 0) {
             return;
         }
         perm.setPlusOnePlusOneCounterRegenerationShield(perm.getPlusOnePlusOneCounterRegenerationShield() - 1);
 
-        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, perm, 1);
+        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(),
+                gameQueryService.findPermanentController(gameData, perm.getId()),
+                perm.getCard().getName() + "'s regeneration ability",
+                new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1))),
+                perm.getId(), perm.getId());
+        trigger.setNonTargeting(true);
+        gameData.enqueueTrigger(trigger);
     }
 
     /**
      * Debt of Loyalty: a regeneration shield granted by that spell hands its controller control of the
-     * creature once the shield is actually spent. Plain shields are consumed first, so a rider shield is
-     * only spent when the remaining shields are all rider shields.
+     * creature once that shield is chosen and spent.
      */
-    private void spendGainControlRegenerationShield(GameData gameData, Permanent perm) {
+    private void spendGainControlRegenerationShield(GameData gameData, Permanent perm, UUID newControllerId) {
         List<UUID> shields = perm.getGainControlRegenerationShields();
-        if (shields.size() <= perm.getRegenerationShield()) {
-            return;
-        }
-        UUID newControllerId = shields.remove(shields.size() - 1);
-        if (newControllerId == null) {
-            return;
-        }
+        shields.remove(newControllerId);
         // Queued rather than applied here: regeneration usually happens inside the state-based-action
         // sweep, which is iterating the battlefield lists this would move the permanent between.
         gameData.pendingRegenerationControlChanges.put(perm.getId(), newControllerId);
@@ -1085,19 +1249,25 @@ public class GraveyardService {
         return false;
     }
 
-    private boolean opponentHasExileReplacementEffect(GameData gameData, UUID ownerId) {
+    private OpponentExileReplacement opponentHasExileReplacementEffect(
+            GameData gameData, UUID ownerId, UUID cardControllerId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(ownerId)) continue;
+            if (playerId.equals(cardControllerId)) continue;
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(ExileOpponentCardsInsteadOfGraveyardEffect.class::isInstance)) {
-                    return true;
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement) {
+                        return new OpponentExileReplacement(replacement, p.getId());
+                    }
                 }
             }
         }
-        return false;
+        return null;
+    }
+
+    private record OpponentExileReplacement(ExileOpponentCardsInsteadOfGraveyardEffect effect,
+                                            UUID sourcePermanentId) {
     }
 
     private boolean opponentHasCreatureCardExileReplacement(GameData gameData, UUID ownerId,
@@ -1783,7 +1953,7 @@ public class GraveyardService {
                 .filter(card -> !card.isToken())
                 .count();
         triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(
-                gameData, ownerId, cardsEntered);
+                gameData, ownerId, cardsEntered, entered);
         triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
                 gameData, ownerId, creatureCardsEntered);
         return entered;

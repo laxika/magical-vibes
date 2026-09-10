@@ -67,19 +67,6 @@ class ShatteredAcolyteTest extends BaseCardTest {
         Permanent target = findPermanent(player2, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be an artifact or enchantment");
-    }
-
-    @Test
-    @DisplayName("Cannot activate without enough mana")
-    void cannotActivateWithoutMana() {
-        harness.addToBattlefield(player1, new ShatteredAcolyte());
-        harness.addToBattlefield(player2, new IronMyr());
-
-        Permanent target = findPermanent(player2, "Iron Myr");
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,19 +13,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RathiDragon.class, Mountain.class, Forest.class})
 class RathiDragonTest extends BaseCardTest {
 
-    private long mountainsControlledBy(UUID playerId) {
-        return gd.playerBattlefields.get(playerId).stream()
-                .filter(p -> p.getCard().getName().equals("Mountain"))
-                .count();
-    }
-
     private void castRathiDragon() {
-        harness.setHand(player1, List.of(new RathiDragon()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RathiDragon(), "{2}{R}{R}");
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB
     }
@@ -40,7 +33,7 @@ class RathiDragonTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Rathi Dragon");
         harness.assertInGraveyard(player1, "Rathi Dragon");
         // The lone Mountain is untouched.
-        assertThat(mountainsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(countPermanents(player1, "Mountain")).isEqualTo(1);
     }
 
     @Test
@@ -66,7 +59,23 @@ class RathiDragonTest extends BaseCardTest {
 
         // Both Mountains sacrificed without a further choice; Rathi Dragon stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(mountainsControlledBy(player1.getId())).isEqualTo(0);
+        assertThat(countPermanents(player1, "Mountain")).isEqualTo(0);
+        harness.assertOnBattlefield(player1, "Rathi Dragon");
+    }
+
+    @Test
+    @DisplayName("Accepting sacrifices Mountains but not other land types")
+    void acceptSacrificesOnlyMountains() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        castRathiDragon();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countPermanents(player1, "Mountain")).isEqualTo(0);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Rathi Dragon");
     }
 
@@ -91,7 +100,7 @@ class RathiDragonTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, mountainIds);
 
         // Two Mountains sacrificed, one remains; Rathi Dragon stays.
-        assertThat(mountainsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(countPermanents(player1, "Mountain")).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Rathi Dragon");
     }
 
@@ -106,7 +115,7 @@ class RathiDragonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Rathi Dragon");
         harness.assertInGraveyard(player1, "Rathi Dragon");
-        assertThat(mountainsControlledBy(player1.getId())).isEqualTo(2);
+        assertThat(countPermanents(player1, "Mountain")).isEqualTo(2);
     }
 
     @Test
@@ -119,6 +128,6 @@ class RathiDragonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Rathi Dragon");
         harness.assertInGraveyard(player1, "Rathi Dragon");
-        assertThat(mountainsControlledBy(player2.getId())).isEqualTo(2);
+        assertThat(countPermanents(player2, "Mountain")).isEqualTo(2);
     }
 }

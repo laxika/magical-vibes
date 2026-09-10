@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "112")
+@CardRegistration(set = "CST", collectorNumber = "112")
+@CardRegistration(set = "ME2", collectorNumber = "76")
 public class ZuranSpellcaster extends Card {
 
     public ZuranSpellcaster() {

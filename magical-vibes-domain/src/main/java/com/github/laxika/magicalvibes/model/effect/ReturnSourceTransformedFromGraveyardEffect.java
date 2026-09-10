@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * immediately on resolution. By default it returns under the trigger controller's control;
  * {@code underOwnersControl} handles effects that explicitly return it under its owner's control.
  *
- * <p>Unlike {@link RegisterDelayedReturnSourceTransformedEffect} there is no wait for the
- * next end step.
+ * <p>Unlike {@link RegisterDelayedReturnSourceTransformedEffect} there is no wait for the next
+ * end step.
  */
 public record ReturnSourceTransformedFromGraveyardEffect(
         boolean tapped,

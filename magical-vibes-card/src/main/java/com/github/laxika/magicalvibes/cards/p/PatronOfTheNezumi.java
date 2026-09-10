@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
  * keyword, so the card can only be cast for its printed mana cost.
  */
 @CardRegistration(set = "BOK", collectorNumber = "77")
+@CardRegistration(set = "PHUK", collectorNumber = "25")
 public class PatronOfTheNezumi extends Card {
 
     public PatronOfTheNezumi() {

@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
   styleUrl: './home.component.css'
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  planechase = signal(false);
   games = signal<LobbyGame[]>([]);
   newGameName = signal('');
   selectedDeckId = signal<string>('');
@@ -147,6 +148,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       gameName: this.newGameName(),
       deckId: this.selectedDeckId(),
       vsAi: this.vsAi(),
+      planechase: this.planechase(),
       aiDeckId: this.aiDeckId(),
       aiDifficulty: this.aiDifficulty(),
       allRandom: this.activeTab() === 'allrandom',

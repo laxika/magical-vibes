@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.a.AlertShuInfantry;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SouthernElephant;
+import com.github.laxika.magicalvibes.cards.v.VolunteerMilitia;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,20 +15,24 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ImperialRecruiter.class, AlertShuInfantry.class, VolunteerMilitia.class,
+        SouthernElephant.class, Plains.class})
 class ImperialRecruiterTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB offers only creature cards with power 2 or less")
     void etbOffersOnlyLowPowerCreatures() {
         setupAndCast();
-        setupLibrary();
+        List<Card> library = setupLibrary();
 
         resolveEtb();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactlyInAnyOrder("Grizzly Bears", "Llanowar Elves");
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards())
+                .containsExactlyInAnyOrder(library.get(0), library.get(1));
+        assertThat(search.params().reveals()).isTrue();
+        assertThat(search.params().canFailToFind()).isTrue();
     }
 
     @Test
@@ -41,17 +43,16 @@ class ImperialRecruiterTest extends BaseCardTest {
 
         resolveEtb();
 
-        GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
-        String chosenName = offered.getFirst().getName();
+        Card chosenCard = offered.getFirst();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals(chosenName));
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card == chosenCard);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     @Test
@@ -62,14 +63,14 @@ class ImperialRecruiterTest extends BaseCardTest {
 
         resolveEtb();
 
-        GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     @Test
@@ -77,30 +78,25 @@ class ImperialRecruiterTest extends BaseCardTest {
     void noMatchingCreatures() {
         setupAndCast();
 
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new HillGiant(), new Plains()));
+        harness.setLibrary(player1, List.of(new SouthernElephant(), new Plains()));
 
         resolveEtb();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new ImperialRecruiter()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ImperialRecruiter(), "{2}{R}");
     }
 
-    private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new LlanowarElves(), new HillGiant(), new Plains()));
+    private List<Card> setupLibrary() {
+        List<Card> library = List.of(
+                new AlertShuInfantry(), new VolunteerMilitia(), new SouthernElephant(), new Plains());
+        harness.setLibrary(player1, library);
+        return library;
     }
 
     private void resolveEtb() {
-        harness.passBothPriorities(); // resolve creature spell → ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB trigger → library search
+        resolveAllTriggers();
     }
 }

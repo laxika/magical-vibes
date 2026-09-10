@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Thumbscrews.class, GrizzlyBears.class, LilianaVess.class, SuntailHawk.class})
 class ThumbscrewsTest extends BaseCardTest {
 
     private List<Card> handOf(int size) {
@@ -38,6 +40,21 @@ class ThumbscrewsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Intervening if is checked again when the trigger resolves")
+    void doesNotDealDamageIfHandShrinksBeforeResolution() {
+        harness.addToBattlefield(player1, new Thumbscrews());
+        harness.setHand(player1, handOf(5));
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player1, handOf(4));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("No trigger with four cards in hand — intervening if fails at trigger time")
     void doesNotTriggerWithFourCardsInHand() {
         harness.addToBattlefield(player1, new Thumbscrews());
@@ -56,6 +73,21 @@ class ThumbscrewsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Thumbscrews());
         harness.setHand(player1, handOf(5));
         Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, liliana.getId());
+        harness.passBothPriorities();
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger can deal its damage to the controller's planeswalker")
+    void dealsOneDamageToControllersPlaneswalker() {
+        harness.addToBattlefield(player1, new Thumbscrews());
+        harness.setHand(player1, handOf(5));
+        Permanent liliana = harness.addToBattlefieldAndReturn(player1, new LilianaVess());
         liliana.setCounterCount(CounterType.LOYALTY, 5);
 
         advanceToUpkeep(player1);

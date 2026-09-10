@@ -9,4 +9,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * activated-ability restrictions. The flag is cleared by the end-of-turn modifier reset.
  */
 public record IgnoreSourceAuraEffectsUntilEndOfTurnEffect() implements CardEffect {
+    @Override
+    public boolean isSpecialAction() {
+        return true;
+    }
 }

@@ -33,6 +33,6 @@ public class GrakmawSkyclaveRavager extends Card {
                 "Hydra", 0, 0, CardColor.BLACK,
                 Set.of(CardColor.BLACK, CardColor.GREEN), List.of(CardSubtype.HYDRA));
         addEffect(EffectSlot.ON_DEATH,
-                new CreateTokenWithDyingSourceCounterPTEffect(hydraToken));
+                new CreateTokenWithDyingSourceCounterPTEffect(hydraToken, CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.FieldOfRuin;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed({PriceOfProgress.class, FieldOfRuin.class, Forest.class})
 class PriceOfProgressTest extends BaseCardTest {
 
     @Test
@@ -27,8 +27,8 @@ class PriceOfProgressTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 16);
     }
 
     @Test
@@ -42,7 +42,22 @@ class PriceOfProgressTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Counts nonbasic lands when the spell resolves")
+    void countsNonbasicLandsAtResolution() {
+        harness.setHand(player1, List.of(new PriceOfProgress()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0);
+
+        harness.addToBattlefield(player1, new FieldOfRuin());
+        harness.addToBattlefield(player2, new FieldOfRuin());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 }

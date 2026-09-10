@@ -12,7 +12,7 @@ import java.util.Set;
 public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
         String nameOverride,
         Set<CardSupertype> additionalSupertypesOverride
-) implements CardEffect {
+) implements TemporaryCopyEffect {
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect {
         additionalSupertypesOverride = additionalSupertypesOverride == null

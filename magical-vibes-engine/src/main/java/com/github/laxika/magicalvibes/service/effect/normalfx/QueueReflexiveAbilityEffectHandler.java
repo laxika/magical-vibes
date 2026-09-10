@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
@@ -30,6 +31,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     private final PlayerInputService playerInputService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    private final ETBTokenTargetService etbTokenTargetService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +41,19 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         QueueReflexiveAbilityEffect queueEffect = (QueueReflexiveAbilityEffect) effect;
+        int targetGroupIndex = entry.getCard().getEffectTargetIndex(queueEffect.effect());
+        if (isMultiTargetGroup(entry, targetGroupIndex)) {
+            List<Integer> precedingGroupSizes = new ArrayList<>();
+            for (int i = 0; i < targetGroupIndex; i++) {
+                precedingGroupSizes.add(0);
+            }
+            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()),
+                    entry.getSourcePermanentId(), List.of(), targetGroupIndex, 0,
+                    precedingGroupSizes, entry.getXValue(), List.of(), false));
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+            return;
+        }
         if (graveyardTargetingSupport.findTarget(List.of(queueEffect.effect())) != null
                 || queueEffect.effect().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
@@ -63,6 +78,18 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         }
         reflexiveEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         gameData.stack.add(reflexiveEntry);
+    }
+
+    private boolean isMultiTargetGroup(StackEntry entry, int targetGroupIndex) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= entry.getCard().getSpellTargets().size()) {
+            return false;
+        }
+        var group = entry.getCard().getSpellTargets().get(targetGroupIndex);
+        return entry.getCard().getSpellTargets().size() > 1
+                || group.getMaxTargets() > 1
+                || group.getMinTargets() == 0
+                || group.getDynamicMinTargets() != null
+                || group.getDynamicMaxTargets() != null;
     }
 
     private boolean beginTargetChoice(GameData gameData, StackEntry entry, CardEffect effect,
@@ -100,7 +127,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                         && targetPredicateEvaluationService.matchesSpell(
                         predicate, stackEntry, entry.getControllerId(), entry.getSourcePermanentSnapshot(),
                         filterContext)) {
-                    validPermanentIds.add(stackEntry.getCard().getId());
+                    validPermanentIds.add(stackEntry.getTargetableId());
                 }
             }
         }

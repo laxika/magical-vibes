@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "150")
+@CardRegistration(set = "DDF", collectorNumber = "34")
 public class RusticClachan extends Card {
 
     public RusticClachan() {

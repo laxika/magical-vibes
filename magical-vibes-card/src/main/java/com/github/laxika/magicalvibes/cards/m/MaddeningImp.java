@@ -18,7 +18,7 @@ public class MaddeningImp extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SirensCallEffect()),
+                List.of(new SirensCallEffect(true, false)),
                 "{T}: Non-Wall creatures the active player controls attack this turn if able. At the beginning of the next end step, destroy each of those creatures that didn't attack this turn. Activate only during an opponent's turn and only before combat.",
                 ActivationTimingRestriction.ONLY_DURING_OPPONENTS_TURN_BEFORE_COMBAT));
     }

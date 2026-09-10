@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "LEG", collectorNumber = "68")
+@CardRegistration(set = "ME1", collectorNumber = "45")
 public class PsychicPurge extends Card {
 
     public PsychicPurge() {

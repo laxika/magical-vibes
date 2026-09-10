@@ -42,7 +42,7 @@ public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements Norma
 
         StackEntry targetEntry = null;
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getCard().getId().equals(targetCardId)
+            if (stackEntry.getTargetableId().equals(targetCardId)
                     && (stackEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                     || stackEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)) {
                 targetEntry = stackEntry;
@@ -55,7 +55,7 @@ public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements Norma
         }
 
         UUID copyControllerId = targetEntry.getControllerId();
-        Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
+        Card copyCard = targetEntry.getCard() == null ? null : copySupport.createCopyCard(targetEntry.getCard());
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
         copyEntry.setTargetFilter(targetEntry.getTargetFilter());
@@ -71,9 +71,8 @@ public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements Norma
 
         copySupport.addCopyToStack(gameData, copyEntry);
 
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A copy of ", targetEntry.getCard(), "'s ability is created."));
-        log.info("Game {} - copy of {}'s ability created", gameData.id, targetEntry.getCard().getName());
+        gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
+        log.info("Game {} - copy of {}'s ability created", gameData.id, targetEntry.getDescription());
 
         boolean singleTarget = targetEntry.getTargetId() != null
                 && (targetEntry.getTargetIds() == null || targetEntry.getTargetIds().size() <= 1)
@@ -83,8 +82,8 @@ public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements Norma
                     entry.getCard(),
                     copyControllerId,
                     List.of(new CopyTriggeredAbilityRetargetEffect()),
-                    "Choose a new target for the copy of " + targetEntry.getCard().getName() + "'s ability?",
-                    copyCard.getId()
+                    "Choose a new target for the copy of " + targetEntry.getDescription() + "'s ability?",
+                    copyEntry.getTargetableId()
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);
         }

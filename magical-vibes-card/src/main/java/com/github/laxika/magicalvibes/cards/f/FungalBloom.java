@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "70")
+@CardRegistration(set = "ME2", collectorNumber = "165")
 public class FungalBloom extends Card {
 
     public FungalBloom() {

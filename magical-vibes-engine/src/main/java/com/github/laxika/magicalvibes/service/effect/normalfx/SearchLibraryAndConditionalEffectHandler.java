@@ -26,14 +26,11 @@ public class SearchLibraryAndConditionalEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SearchLibraryAndConditionalEffect conditional = (SearchLibraryAndConditionalEffect) effect;
-        SearchLibraryEffect search = new SearchLibraryEffect(
-                new Fixed(1), conditional.searchFilter(), conditional.destination(), null, 1, false,
-                false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, false,
-                conditional.shuffleAfterSelection());
         searchLibraryEffectHandler.resolveWithFollowUp(
                 gameData,
                 entry,
-                search,
+                new SearchLibraryEffect(conditional.searchFilter(), conditional.destination(),
+                        conditional.manaValueBound(), conditional.shuffleAfterSelection()),
                 LibrarySearchFollowUp.forSelectedCard(
                         conditional.selectedCardFilter(), conditional.conditionalEffect()));
     }

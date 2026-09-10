@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -117,6 +119,36 @@ class FlickerEffectHandlerTest {
         card.setType(CardType.PLANESWALKER);
         card.setLoyalty(3);
         return card;
+    }
+
+    @Test
+    @DisplayName("Global delayed flicker exiles matching permanents from every battlefield and batches returns by owner")
+    void globalDelayedFlickerExilesEveryBattlefield() {
+        Permanent first = new Permanent(createCreatureCard("Grizzly Bears"));
+        Permanent second = new Permanent(createCreatureCard("Llanowar Elves"));
+        gd.playerBattlefields.get(player1Id).add(first);
+        gd.playerBattlefields.get(player2Id).add(second);
+
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenReturn(true);
+        when(gameQueryService.findPermanentController(gd, first.getId())).thenReturn(player1Id);
+        when(gameQueryService.findPermanentController(gd, second.getId())).thenReturn(player2Id);
+
+        Card sourceCard = createCreatureCard("Planar Guide");
+        FlickerEffect effect = FlickerEffect.exileAllPlayersPermanentsReturnAtStep(
+                new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate(), TurnStep.END_STEP);
+        StackEntry entry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                List.of(effect), (UUID) null, List.<UUID>of());
+
+        handler.resolve(gd, entry, effect);
+
+        verify(permanentRemovalService).removePermanentToExile(gd, first);
+        verify(permanentRemovalService).removePermanentToExile(gd, second);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class))
+                .extracting(PendingExileReturn::controllerId)
+                .containsExactly(player1Id, player2Id);
     }
 
     @Nested

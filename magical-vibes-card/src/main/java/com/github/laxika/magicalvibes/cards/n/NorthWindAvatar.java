@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameToHandEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "162")
+@CardRegistration(set = "TMT", collectorNumber = "248")
 public class NorthWindAvatar extends Card {
 
     public NorthWindAvatar() {

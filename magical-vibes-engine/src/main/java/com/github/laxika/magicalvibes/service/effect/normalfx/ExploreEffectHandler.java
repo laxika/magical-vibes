@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -105,6 +104,8 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                 if (placed > 0) {
                     source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
                     permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, placed);
+                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                            gameData, source, controllerId);
                     permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                             gameData, source, placed);
                     permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(

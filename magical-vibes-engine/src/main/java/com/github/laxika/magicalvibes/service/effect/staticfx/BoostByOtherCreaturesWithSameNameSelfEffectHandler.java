@@ -27,13 +27,13 @@ public class BoostByOtherCreaturesWithSameNameSelfEffectHandler implements Stati
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostByOtherCreaturesWithSameNameEffect) effect;
-        String sourceName = context.source().getCard().getName();
+        String sourceName = context.sourceCard().getName();
         GameData gameData = context.gameData();
         boolean hasAnimateArtifacts = support.hasAnimateArtifactEffect(gameData);
 
         final int[] count = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (permanent.getId().equals(context.source().getId())) return;
+            if (permanent.getId().equals(context.sourceId())) return;
             if (boost.onlyControlled() && !playerId.equals(context.sourceControllerId())) return;
             if (!support.isEffectivelyCreature(permanent, hasAnimateArtifacts)) return;
             if (!sourceName.equals(permanent.getCard().getName())) return;

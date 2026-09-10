@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "45")
+@CardRegistration(set = "DDI", collectorNumber = "3")
 public class AuguryOwl extends Card {
 
     public AuguryOwl() {

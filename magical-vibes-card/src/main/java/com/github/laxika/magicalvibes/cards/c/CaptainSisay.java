@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "237")
+@CardRegistration(set = "V11", collectorNumber = "2")
 public class CaptainSisay extends Card {
 
     public CaptainSisay() {

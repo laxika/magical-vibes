@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "6ED", collectorNumber = "17")
+@CardRegistration(set = "ME1", collectorNumber = "9")
 @CardRegistration(set = "5ED", collectorNumber = "28")
 @CardRegistration(set = "4ED", collectorNumber = "23")
 @CardRegistration(set = "LEG", collectorNumber = "10")

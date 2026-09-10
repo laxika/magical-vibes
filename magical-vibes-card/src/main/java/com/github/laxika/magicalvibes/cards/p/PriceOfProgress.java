@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "95")
+@CardRegistration(set = "PD2", collectorNumber = "18")
 public class PriceOfProgress extends Card {
 
     public PriceOfProgress() {

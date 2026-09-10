@@ -99,6 +99,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         } else if (e.chosenDestination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
             if (e.optional() && e.restDestination() == LookDestination.GRAVEYARD) {
                 resolveMayPutOnTopRestToGraveyard(gameData, entry, lookCount, chooseCount);
+            } else if (e.optional() && e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY
+                    && e.choosePredicate() != null && chooseCount > 1) {
+                resolveMayPutAnyNumberOnTopRestOnBottom(
+                        gameData, entry, e, lookCount, chooseCount);
             } else {
                 resolvePutOneOnTop(gameData, entry, e, lookCount);
             }
@@ -336,6 +340,32 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 true));
     }
 
+    private void resolveMayPutAnyNumberOnTopRestOnBottom(
+            GameData gameData, StackEntry entry, LookAtTopCardsEffect effect,
+            int lookCount, int chooseCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) {
+            return;
+        }
+
+        List<Card> matchingCards = filterEligibleCards(result.topCards(), effect.choosePredicate(),
+                entry, gameData, result.controllerId());
+        if (matchingCards.isEmpty()) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    result.controllerId(), result.topCards(), true, result.controllerId(),
+                    "Put these cards on the bottom of your library in any order.", List.of()));
+            return;
+        }
+
+        int maxCount = Math.min(chooseCount, matchingCards.size());
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                result.controllerId(), result.topCards(),
+                matchingCards.stream().map(Card::getId).toList(), maxCount,
+                "You may reveal any number of matching cards from among them and put them on top of your library. "
+                        + "Put the rest on the bottom in any order.", true));
+    }
+
     private void resolveOneToGraveyardRestOnTop(GameData gameData, StackEntry entry, int lookCount) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
@@ -523,7 +553,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     e.payLifePerSelectedCard() > 0
                             ? e.payLifePerSelectedCard() : e.loseLifePerSelectedCard(),
                     null, max, revealPrompt, false, 0, false, e.effectIfNoCardChosen(), false,
-                    false, e.payLifePerSelectedCard() > 0, null, false, false));
+                    false, e.payLifePerSelectedCard() > 0, null, false, false).withSelectedCardFollowUp(e.selectedCardPredicate(), e.effectIfSelectedCardMatches()));
             return;
         }
 
@@ -561,10 +591,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 gameData.addCardToHand(controllerId, card);
             }
             if (!topCards.isEmpty()) {
-                GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
-                appendCardList(builder, topCards);
-                builder.text(" into their hand.");
-                gameLogService.append(gameData, builder.build());
+                gameLogService.append(gameData, GameLog.text(playerName + " puts " + topCards.size()
+                        + " card(s) into their hand."));
             }
             return;
         }
@@ -611,10 +639,15 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 gameData.addCardToHand(controllerId, card);
             }
             if (!topCards.isEmpty()) {
-                GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
-                appendCardList(builder, topCards);
-                builder.text(" into their hand.");
-                gameLogService.append(gameData, builder.build());
+                if (e.reveal()) {
+                    GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
+                    appendCardList(builder, topCards);
+                    builder.text(" into their hand.");
+                    gameLogService.append(gameData, builder.build());
+                } else {
+                    gameLogService.append(gameData, GameLog.text(playerName + " puts " + topCards.size()
+                            + " card(s) into their hand."));
+                }
             }
             return;
         }
@@ -629,7 +662,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 false, true, !randomRemaining, randomRemaining, false, 0, null, chooseCount,
                 "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
                         + " into your hand and " + restPhrase,
-                false, e.optional() ? 0 : Math.min(chooseCount, topCards.size()), false));
+                false, e.optional() ? 0 : Math.min(chooseCount, topCards.size()), false)
+                .withRevealSelected(e.reveal()));
     }
 
     /**
@@ -672,7 +706,14 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<Card> remainingCards = new ArrayList<>(topCards);
         remainingCards.removeAll(eligibleCards);
         if (!remainingCards.isEmpty()) {
-            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, remainingCards);
+            if (randomRemaining) {
+                java.util.Collections.shuffle(remainingCards);
+                gameData.playerDecks.get(controllerId).addAll(remainingCards);
+                gameLogService.append(gameData, GameLog.text(playerName
+                        + " puts the rest on the bottom of their library in a random order."));
+            } else {
+                libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, remainingCards);
+            }
         }
     }
 

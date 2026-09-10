@@ -130,6 +130,7 @@ export class TargetingChoiceService {
     this.modeOptional = false;
     this.modeModesMayRepeat = false;
     this.modeSelectedIndices = [];
+    this.pendingModalTargeting = false;
     this.spellTargetCount = 1;
     this.spellTargetSelectedIds = [];
     // Flashback
@@ -212,6 +213,7 @@ export class TargetingChoiceService {
     this.exileTargetCards = [];
     this.exileTargetCardIds = [];
     this.exileTargetPrompt = '';
+    this.planarRollPending = false;
     // MTGO-style cast payment
     this.clearCastPayment();
     this.clearAbilityPayment();
@@ -281,6 +283,7 @@ export class TargetingChoiceService {
   modeForAbility = false;
   modeAbilityPermanentIndex = -1;
   modeAbilityIndex = -1;
+  private pendingModalTargeting = false;
   // Multi-spell-target modal modes (e.g. "copy target instant and target creature spell")
   spellTargetCount = 1;
   spellTargetSelectedIds: string[] = [];
@@ -489,6 +492,10 @@ export class TargetingChoiceService {
   // pool yet, so the message is held back while the player taps mana sources. It fires
   // automatically once the pool covers the cost; Cancel reverts the taps.
   payingForAbility = false;
+  planarRollPending = false;
+  private pendingPlanarRollSequence = -1;
+  private pendingPlanarTurn = -1;
+  private planarActivation: { sourceId: string; abilityIndex: number; manaCost: string | null } | null = null;
   pendingActivationSourceName = '';
   pendingActivationPermanentId: string | null = null;
   private pendingActivationManaCost: string | null = null;
@@ -501,6 +508,13 @@ export class TargetingChoiceService {
   handleValidTargetsResponse(msg: ValidTargetsResponse): void {
     this.pendingTargetRequest = false;
 
+    if (this.targetingSpell) {
+      this.validTargetIds.set(new Set(msg.validPermanentIds));
+      this.targetingPrompt = msg.prompt;
+      if (msg.validPermanentIds.length === 0) this.cancelSpellTargeting();
+      return;
+    }
+
     const hasGraveyardTargets = msg.validGraveyardCardIds && msg.validGraveyardCardIds.length > 0;
     const hasExileTargets = msg.validExiledCardIds && msg.validExiledCardIds.length > 0;
 
@@ -512,6 +526,27 @@ export class TargetingChoiceService {
       return;
     }
 
+    this.validTargetIds.set(new Set(msg.validPermanentIds));
+    this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
+    this.targetingPrompt = msg.prompt;
+    this.targetingGraveyard = false;
+    this.graveyardTargetCards = [];
+    this.graveyardTargetCardIds = [];
+    this.graveyardTargetPrompt = '';
+
+    if (msg.maxTargets > 1) {
+      if (!this.multiTargeting) {
+        this.multiTargeting = true;
+        this.multiTargetCardIndex = this.targetingCardIndex;
+        this.multiTargetCardName = this.targetingCardName;
+        this.multiTargetSelectedIds.set([]);
+      }
+      this.multiTargetMinCount = msg.minTargets;
+      this.multiTargetMaxCount = msg.maxTargets;
+    }
+
+    // Graveyard targeting: show graveyard cards as targets in an overlay. A multi-target response
+    // may also contain permanent targets; the selected cards stay in the same ordered target list.
     // Exile targeting: source-tracked exiled cards are displayed under their permanent.
     if (hasExileTargets) {
       const g = this.gameSignal();
@@ -559,10 +594,6 @@ export class TargetingChoiceService {
       }
       return;
     }
-
-    this.validTargetIds.set(new Set(msg.validPermanentIds));
-    this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
-    this.targetingPrompt = msg.prompt;
 
     if (msg.maxTargets > 1) {
       // Multi-target mode. Responses also arrive as refreshes after each pick
@@ -697,7 +728,7 @@ export class TargetingChoiceService {
     if (this.skipBeholdForCardIndex === index) this.skipBeholdForCardIndex = null;
 
     // Modal ("choose one/two") spell or ETB — pick mode(s) before anything else
-    if (card.modalChoicesRequired > 0 && card.modalOptions && card.modalOptions.length > 0) {
+    if (card.modalChoicesMax > 0 && card.modalOptions && card.modalOptions.length > 0) {
       this.choosingMode = true;
       this.modeCardIndex = index;
       this.modeCardName = card.name;
@@ -743,6 +774,8 @@ export class TargetingChoiceService {
       this.targetingSpell = true;
       this.targetingSpellCardIndex = index;
       this.targetingSpellCardName = card.name;
+      this.validTargetIds.set(new Set());
+      this.sendValidTargetsRequest(index, null, null);
       return;
     }
     if (card.needsTarget) {
@@ -1004,6 +1037,12 @@ export class TargetingChoiceService {
 
   toggleMode(optionIndex: number): void {
     if (!this.choosingMode) return;
+    if (this.modeModesMayRepeat && this.modeChoicesMax > this.modeChoicesRequired) {
+      if (this.modeSelectedIndices.length < this.modeChoicesMax) {
+        this.modeSelectedIndices = [...this.modeSelectedIndices, optionIndex];
+      }
+      return;
+    }
     if (this.modeChoicesRequired === 1 && this.modeChoicesMax === 1) {
       this.modeSelectedIndices = [optionIndex];
       return;
@@ -1032,6 +1071,13 @@ export class TargetingChoiceService {
     return this.modeSelectedIndices.filter(i => i === optionIndex).length;
   }
 
+  removeMode(optionIndex: number): void {
+    if (!this.choosingMode || !this.modeModesMayRepeat) return;
+    const last = this.modeSelectedIndices.lastIndexOf(optionIndex);
+    if (last < 0) return;
+    this.modeSelectedIndices = this.modeSelectedIndices.filter((_, index) => index !== last);
+  }
+
   /**
    * Encodes the mode selection the same way the engine's ChooseOneEffect.encodeModeSelection
    * does: exact choose-one uses the 0-based mode index; ordinary multi-mode spells use a
@@ -1043,7 +1089,7 @@ export class TargetingChoiceService {
     }
     if (this.modeModesMayRepeat) {
       const base = this.modeOptions.length + 1;
-      let encoded = 0;
+      let encoded = this.modeChoicesMax > this.modeChoicesRequired ? 1 : 0;
       for (const i of indices) {
         encoded = encoded * base + i + 1;
       }
@@ -1107,6 +1153,7 @@ export class TargetingChoiceService {
       return;
     }
     if (chosen.some(o => o.needsTarget)) {
+      this.pendingModalTargeting = true;
       if (zoneCard) {
         // Zone plays can't use VALID_TARGETS_REQUEST (it only knows hand cards)
         this.pendingZoneCard = null;
@@ -1362,8 +1409,8 @@ export class TargetingChoiceService {
 
   // ========== Casting from exile / top of library ==========
 
-  /** Cast a card the server marked playable from exile (impulse draw, prepare
-      spells, ExileCast cards). The PLAY_CARD message identifies the card by
+  /** Cast a card the server marked playable from exile or outside the game (impulse draw, prepare
+      spells, ExileCast cards, Wish). The PLAY_CARD message identifies the card by
       fromExileCardId, so its cardIndex is unused and sent as 0. */
   startExilePlay(card: Card): void {
     if (!card.id) return;
@@ -1391,7 +1438,7 @@ export class TargetingChoiceService {
       return;
     }
     // Modal ("choose one/two") spell — pick mode(s) before anything else
-    if (card.modalChoicesRequired > 0 && card.modalOptions && card.modalOptions.length > 0) {
+    if (card.modalChoicesMax > 0 && card.modalOptions && card.modalOptions.length > 0) {
       this.pendingZoneCard = card;
       this.choosingMode = true;
       this.modeCardIndex = 0;
@@ -1613,9 +1660,11 @@ export class TargetingChoiceService {
         || msg.morph === true
         || (msg.alternateCostSacrificePermanentIds?.length ?? 0) > 0;
     if (!isZonePlay && this.beginCastPaymentIfUnaffordable(msg)) {
+      this.pendingModalTargeting = false;
       return;
     }
     this.websocketService.send(msg);
+    this.pendingModalTargeting = false;
   }
 
   // ========== MTGO-style cast payment ==========
@@ -1774,9 +1823,84 @@ export class TargetingChoiceService {
     return true;
   }
 
-  private onAbilityPaymentGameState(): void {
-    if (!this.payingForAbility) return;
+  activatePlanarAbility(sourceId: string, abilityIndex: number): void {
+    const source = this.gameSignal()?.planechase?.faceUp.find(p => p.id === sourceId);
+    const ability = source?.card.activatedAbilities[abilityIndex];
+    if (!source || !ability || this.payingForCast || this.payingForAbility) return;
+    this.planarActivation = { sourceId, abilityIndex, manaCost: ability.manaCost };
+    if (ability.needsTarget || ability.needsSpellTarget) {
+      this.selectingTarget = !ability.needsSpellTarget;
+      this.targetingSpell = ability.needsSpellTarget;
+      this.validTargetIds.set(new Set());
+      this.targetingCardName = source.card.name;
+      this.targetingAbilityIndex = abilityIndex;
+      this.pendingTargetRequest = true;
+      this.websocketService.send({ type: MessageType.VALID_TARGETS_REQUEST, planarObjectId: sourceId, abilityIndex });
+    } else {
+      this.sendPlanarActivation();
+    }
+  }
+
+  private sendPlanarActivation(targetId?: string): void {
+    const activation = this.planarActivation;
+    if (!activation) return;
+    const msg = { type: MessageType.ACTIVATE_PLANAR_ABILITY, sourceId: activation.sourceId,
+      abilityIndex: activation.abilityIndex, targetId };
+    if (activation.manaCost && !this.canPayManaCost(activation.manaCost)) {
+      this.payingForAbility = true;
+      this.pendingActivationSourceName = this.targetingCardName || 'Planar ability';
+      this.pendingActivationManaCost = activation.manaCost;
+      this.pendingActivationMessage = msg;
+    } else {
+      this.websocketService.send(msg);
+    }
+    this.planarActivation = null;
+  }
+
+  rollPlanarDie(): void {
     const g = this.gameSignal();
+    const planar = g?.planechase;
+    if (!g || !planar?.canRoll || this.payingForCast || this.payingForAbility || this.planarRollPending) return;
+    this.pendingPlanarRollSequence = planar.rollSequence;
+    this.pendingPlanarTurn = g.turnNumber;
+    if (planar.canPayRoll) {
+      this.planarRollPending = true;
+      this.websocketService.send({ type: MessageType.ROLL_PLANAR_DIE });
+    } else {
+      this.payingForAbility = true;
+      this.pendingActivationSourceName = 'Planar die';
+      this.pendingActivationManaCost = '{' + planar.rollCost + '}';
+      this.pendingActivationMessage = { type: MessageType.ROLL_PLANAR_DIE };
+    }
+  }
+
+  private onAbilityPaymentGameState(): void {
+    const planar = this.gameSignal()?.planechase;
+    if (!planar?.canRoll || planar.rollSequence !== this.pendingPlanarRollSequence) this.planarRollPending = false;
+    if (!this.payingForAbility) return;
+    if (this.pendingActivationMessage?.type === MessageType.ROLL_PLANAR_DIE) {
+      if (!planar || this.priorityMovedOn || this.gameSignal()?.turnNumber !== this.pendingPlanarTurn
+          || planar.rollSequence !== this.pendingPlanarRollSequence) {
+        this.clearAbilityPayment();
+      } else if (planar.canRoll && planar.canPayRoll) {
+        this.clearAbilityPayment();
+        this.planarRollPending = true;
+        this.websocketService.send({ type: MessageType.ROLL_PLANAR_DIE });
+      }
+      return;
+    }
+    const g = this.gameSignal();
+    if (this.pendingActivationMessage?.type === MessageType.ACTIVATE_PLANAR_ABILITY) {
+      const source = g?.planechase?.faceUp.find(p => p.id === this.pendingActivationMessage.sourceId);
+      if (!source || this.priorityMovedOn) {
+        this.clearAbilityPayment();
+      } else if (!this.pendingActivationManaCost || this.canPayManaCost(this.pendingActivationManaCost)) {
+        const message = this.pendingActivationMessage;
+        this.clearAbilityPayment();
+        this.websocketService.send(message);
+      }
+      return;
+    }
     const index = this.myBattlefieldFn().findIndex(p => p.id === this.pendingActivationPermanentId);
     if (!g || index < 0 || this.priorityMovedOn) {
       this.clearAbilityPayment();
@@ -1951,7 +2075,9 @@ export class TargetingChoiceService {
   selectTarget(permanentId: string): void {
     if (!this.selectingTarget) return;
     if (!this.validTargetIds().has(permanentId)) return;
-    if (this.targetingForGraveyardAbility) {
+    if (this.planarActivation) {
+      this.sendPlanarActivation(permanentId);
+    } else if (this.targetingForGraveyardAbility) {
       const msg: any = {
         type: MessageType.ACTIVATE_GRAVEYARD_ABILITY,
         graveyardCardIndex: this.targetingCardIndex,
@@ -1989,7 +2115,12 @@ export class TargetingChoiceService {
       if (this.pendingAbilityXValue != null) {
         extra['xValue'] = this.pendingAbilityXValue;
       }
-      this.sendPlayCardMessage(this.targetingCardIndex, permanentId, extra);
+      if (this.pendingModalTargeting) {
+        extra['targetIds'] = [permanentId];
+        this.sendPlayCardMessage(this.targetingCardIndex, null, extra);
+      } else {
+        this.sendPlayCardMessage(this.targetingCardIndex, permanentId, extra);
+      }
     }
     this.resetTargetingState();
   }
@@ -2000,7 +2131,9 @@ export class TargetingChoiceService {
     if (!g) return;
     const playerId = g.playerIds[playerIndex];
     if (!this.validTargetPlayerIds().has(playerId)) return;
-    if (this.targetingForAbility) {
+    if (this.planarActivation) {
+      this.sendPlanarActivation(playerId);
+    } else if (this.targetingForAbility) {
       const msg: any = {
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingCardIndex,
@@ -2016,7 +2149,12 @@ export class TargetingChoiceService {
       if (this.pendingAbilityXValue != null) {
         extra['xValue'] = this.pendingAbilityXValue;
       }
-      this.sendPlayCardMessage(this.targetingCardIndex, playerId, extra);
+      if (this.pendingModalTargeting) {
+        extra['targetIds'] = [playerId];
+        this.sendPlayCardMessage(this.targetingCardIndex, null, extra);
+      } else {
+        this.sendPlayCardMessage(this.targetingCardIndex, playerId, extra);
+      }
     }
     this.resetTargetingState();
   }
@@ -2044,7 +2182,12 @@ export class TargetingChoiceService {
     if (this.pendingAbilityXValue != null) {
       extra['xValue'] = this.pendingAbilityXValue;
     }
-    this.sendPlayCardMessage(this.targetingCardIndex, cardId, extra);
+    if (this.pendingModalTargeting) {
+      extra['targetIds'] = [cardId];
+      this.sendPlayCardMessage(this.targetingCardIndex, null, extra);
+    } else {
+      this.sendPlayCardMessage(this.targetingCardIndex, cardId, extra);
+    }
     this.targetingGraveyard = false;
     this.graveyardTargetCards = [];
     this.graveyardTargetCardIds = [];
@@ -2093,9 +2236,11 @@ export class TargetingChoiceService {
       this.cancelMultiTargeting();
     }
     this.resetTargetingState();
+    this.pendingModalTargeting = false;
   }
 
   private resetTargetingState(): void {
+    this.planarActivation = null;
     this.selectingTarget = false;
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
@@ -2134,14 +2279,17 @@ export class TargetingChoiceService {
 
   cancelTargeting(): void {
     this.resetTargetingState();
+    this.pendingModalTargeting = false;
     this.pendingGraveyardCastDiscardHandIndex = null;
     this.pendingGraveyardCastExileIndices = [];
     this.pendingPhyrexianLifeCount = null;
   }
 
   selectSpellTarget(entry: StackEntry): void {
-    if (!this.targetingSpell || !entry.isSpell) return;
-    if (this.targetingForAbility) {
+    if (!this.targetingSpell || this.pendingTargetRequest || (!entry.isSpell && !this.validTargetIds().has(entry.cardId))) return;
+    if (this.planarActivation) {
+      this.sendPlanarActivation(entry.cardId);
+    } else if (this.targetingForAbility) {
       this.sendActivateAbilityMessage({
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingSpellCardIndex,
@@ -2174,6 +2322,7 @@ export class TargetingChoiceService {
   }
 
   private resetSpellTargetingState(): void {
+    this.planarActivation = null;
     this.targetingSpell = false;
     this.targetingSpellCardIndex = -1;
     this.targetingSpellCardName = '';
@@ -2310,6 +2459,7 @@ export class TargetingChoiceService {
     this.targetingForAbility = false;
     this.targetingForGraveyardAbility = false;
     this.targetingAbilityIndex = -1;
+    this.pendingModalTargeting = false;
     this.pendingPhyrexianLifeCount = null;
   }
 
@@ -2404,13 +2554,14 @@ export class TargetingChoiceService {
 
   private addPendingTargetsToMsg(msg: any): void {
     if (this.pendingMultiTargetIds.length > 0) {
-      if (this.pendingConvokeCard && this.multiTargetMaxCount > 1) {
+      if (this.pendingModalTargeting || this.pendingConvokeCard && this.multiTargetMaxCount > 1) {
         msg.targetIds = this.pendingMultiTargetIds;
       } else {
         // Single-target card that went through convoke flow
         msg.targetId = this.pendingMultiTargetIds[0];
       }
     }
+    this.pendingModalTargeting = false;
   }
 
   private addPendingPhyrexianToMsg(msg: any): void {
@@ -3032,7 +3183,7 @@ export class TargetingChoiceService {
         ?? (ability.xValueFromCardsInHandColor ? 0 : 1);
       if (available < minimum) return false;
     }
-    if (ability.manaCost && !this.canPayManaCost(ability.manaCost)
+    if (ability.manaCost && !this.canPayManaCost(ability.manaCost, ability.xValueMin ?? 0)
         && !(allowPotentialMana && this.isPotentiallyPayableAbility(perm, ability))) return false;
     return true;
   }
@@ -3177,7 +3328,7 @@ export class TargetingChoiceService {
       this.choosingXValue = true;
       this.xValueCardIndex = permanentIndex;
       this.xValueCardName = perm.card.name;
-      this.xValueInput = 0;
+      this.xValueInput = ability.xValueMin ?? 0;
       // X can be paid MTGO-style by tapping more lands after announcing, so the cap is
       // the potential mana (pool + untapped sources), not just what's floating now.
       this.xValueMaximum = Math.max(this.totalManaFn(), this.potentialTotalManaFn()) - base;
@@ -3193,6 +3344,8 @@ export class TargetingChoiceService {
       this.targetingSpellCardName = perm.card.name;
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
+      this.validTargetIds.set(new Set());
+      this.sendValidTargetsRequest(null, permanentIndex, abilityIndex);
       return;
     }
 

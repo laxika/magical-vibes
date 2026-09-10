@@ -24,4 +24,9 @@ public record GainedLifeThisTurn(int minimumAmount) implements Condition {
                 ? "you didn't gain " + minimumAmount + " or more life this turn"
                 : "you didn't gain life this turn";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

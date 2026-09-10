@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Static effect: the controller's maximum hand size is reduced by the given amount.
- * Checked during cleanup when calculating discard requirements.
+ * Reduces the controller's maximum hand size by the given amount.
+ * When resolved by a spell or ability, the reduction lasts for the rest of the game.
  */
 public record ReduceControllerMaxHandSizeEffect(int reduction) implements ControllerMaxHandSizeEffect {
 

@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "9a")
 @CardRegistration(set = "ALL", collectorNumber = "9b")
+@CardRegistration(set = "CST", collectorNumber = "9b")
 public class KjeldoranPride extends Card {
 
     public KjeldoranPride() {

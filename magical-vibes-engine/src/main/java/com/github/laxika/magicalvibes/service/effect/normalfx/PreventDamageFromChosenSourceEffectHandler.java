@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenSourcePreventionScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -80,7 +81,9 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             sourceFilter = new PermanentColorInPredicate(activationColors);
         }
 
-        List<UUID> validIds = collectValidSourceIds(gameData, sourceFilter);
+        List<UUID> validIds = e.scope() == ChosenSourcePreventionScope.NEXT_COMBAT_DAMAGE_TO_CONTROLLER_ALL_BUT_ONE
+                ? collectValidBattlefieldSourceIds(gameData, sourceFilter)
+                : collectValidSourceIds(gameData, sourceFilter);
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
             return;
@@ -116,6 +119,10 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 prompt = "Choose a " + label
                         + "source. The next time it would deal damage to you this turn, " + prevention
                         + rider;
+            }
+            case NEXT_COMBAT_DAMAGE_TO_CONTROLLER_ALL_BUT_ONE -> {
+                context = new PermanentChoiceContext.PreventNextCombatDamageFromUnblockedCreatureChoice(controllerId);
+                prompt = "Choose a creature. The next time it is unblocked and would deal combat damage to you this turn, prevent all but 1 of that damage.";
             }
             case NEXT_DAMAGE_TO_ANY_TARGET -> {
                 context = e.damageRedSourceController()
@@ -204,9 +211,20 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             Permanent source = new Permanent(stackEntry.getCard());
             if (sourceFilter == null
                     || predicateEvaluationService.matchesPermanentPredicate(gameData, source, sourceFilter)) {
-                validIds.add(stackEntry.getCard().getId());
+                validIds.add(stackEntry.getTargetableId());
             }
         }
+        return validIds;
+    }
+
+    private List<UUID> collectValidBattlefieldSourceIds(GameData gameData, PermanentPredicate sourceFilter) {
+        List<UUID> validIds = new ArrayList<>();
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (sourceFilter == null
+                    || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, sourceFilter)) {
+                validIds.add(perm.getId());
+            }
+        });
         return validIds;
     }
 

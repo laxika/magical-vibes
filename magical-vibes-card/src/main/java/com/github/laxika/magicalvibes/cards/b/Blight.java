@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "5ED", collectorNumber = "144")
 @CardRegistration(set = "4ED", collectorNumber = "122")
 @CardRegistration(set = "LEG", collectorNumber = "89")
+@CardRegistration(set = "ME1", collectorNumber = "61")
 public class Blight extends Card {
 
     public Blight() {

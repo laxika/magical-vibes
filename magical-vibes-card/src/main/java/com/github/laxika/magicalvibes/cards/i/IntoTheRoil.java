@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "ZEN", collectorNumber = "48")
 @CardRegistration(set = "ZNR", collectorNumber = "62")
+@CardRegistration(set = "FDN", collectorNumber = "509")
 public class IntoTheRoil extends Card {
 
     public IntoTheRoil() {

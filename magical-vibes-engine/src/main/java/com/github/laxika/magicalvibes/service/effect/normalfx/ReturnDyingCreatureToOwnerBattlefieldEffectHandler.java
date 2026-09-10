@@ -62,6 +62,9 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
                     permanent.getCounterCount(returnEffect.enterWithCounter())
                             + returnEffect.enterWithCounterCount());
         }
+        if (returnEffect.enterTapped()) {
+            permanent.tap();
+        }
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 

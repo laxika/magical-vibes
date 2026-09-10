@@ -273,6 +273,26 @@ class CastingPermissionServiceTest {
         }
 
         @Test
+        @DisplayName("once-each-turn top-library permission is consumed per source")
+        void consumesOnceEachTurnPermissionPerSource() {
+            Card illuminator = new Card();
+            illuminator.addEffect(EffectSlot.STATIC,
+                    new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE), false, null, true));
+            Permanent source = new Permanent(illuminator);
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            Card creature = new Card();
+            creature.setType(CardType.CREATURE);
+
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isTrue();
+            assertThat(svc.findTopLibraryCastPermissionSource(gd, player1Id, creature))
+                    .contains(source.getId());
+            svc.markTopLibraryCastPermissionUsed(gd, player1Id, creature);
+            assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isFalse();
+            assertThat(svc.findTopLibraryCastPermissionSource(gd, player1Id, creature)).isEmpty();
+        }
+
+        @Test
         @DisplayName("consumes a once-each-turn filtered library permission after use")
         void consumesOnceEachTurnFilteredPermission() {
             Card assemble = new Card();
@@ -691,7 +711,9 @@ class CastingPermissionServiceTest {
             Card creature = new Card();
             creature.setType(CardType.CREATURE);
             when(predicateEvaluationService.matchesCardPredicate(
-                    eq(creature), any(CardPredicate.class), any(UUID.class), eq(gd), eq(player2Id)))
+                    eq(creature), any(CardPredicate.class), any(UUID.class), eq(gd), eq(player2Id),
+                    org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                    org.mockito.ArgumentMatchers.isNull()))
                     .thenReturn(true);
 
             assertThat(svc.isSpellCastingAllowed(gd, player2Id, creature)).isFalse();

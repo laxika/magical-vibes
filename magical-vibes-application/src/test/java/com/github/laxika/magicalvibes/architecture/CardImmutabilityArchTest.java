@@ -40,6 +40,7 @@ class CardImmutabilityArchTest {
             "CardPrinting",            // stamps printing data on freshly constructed cards and their back faces
             "GameSetupService",        // stamps ownerId, then freezes
             "SpellCastingService",     // mutates the modal runtime copy it just created
+            "AbilityActivationService", // records effective sacrificed-land types on a fresh runtime copy
             "StackResolutionService",  // marks a fresh runtime copy of a resolving copied permanent spell as a token
             "AiDecisionEngine",        // mutates the evaluation runtime copy it just created
             "PermanentCopierService",  // assembles fresh clone-copy cards
@@ -54,6 +55,9 @@ class CardImmutabilityArchTest {
             "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
             "BecomeCopyOfEnteringCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Unstable Shapeshifter)
             "BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
+            "BecomeCopyOfTargetPermanentUntilEndOfTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
+            "BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
+            "BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffectHandler", // decorates the fresh clone-copy card installed by PermanentCopierService
             "BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler", // name/legendary/hexproof/"this ability" on the fresh clone-copy card (Lazav, Dimir Mastermind)
             "BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler", // name/legendary/activated ability on the fresh clone-copy card
             "BecomeCopyOfTargetLandEffectHandler", // re-grants "except it has this ability" on the fresh clone-copy card (Thespian's Stage)
@@ -64,8 +68,10 @@ class CardImmutabilityArchTest {
             "BecomeAuraManifestTopCardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Lightform)
             "ReturnSourceAsAuraEffectHandler", // assembles a fresh Aura runtime copy before returning it
             "ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler", // assembles a fresh non-Aura runtime copy
+            "ReturnSourceAuraToCreatureOrAsNonAuraEffectHandler", // decorates a fresh non-Aura runtime copy before creating its Permanent
             "LicidBecomeAuraEffectHandler", // Aura face built on the fresh runtime copy (Licid cycle)
             "TokenCardFactory",        // assembles the fresh token card it just instantiated
+            "PermanentControlSupport", // adds effects to a fresh token card before creating its Permanent
             "TokenCopySupport",        // assembles fresh token-copy cards for copy-effect handlers
             "GraveyardReturnSupport",
             "LivingWeaponEffectHandler",

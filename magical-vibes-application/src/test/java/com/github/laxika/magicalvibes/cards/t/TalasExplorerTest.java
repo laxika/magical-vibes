@@ -2,19 +2,21 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.Lynx;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TalasExplorer.class, Lynx.class})
 class TalasExplorerTest extends BaseCardTest {
 
     @Test
@@ -32,7 +34,7 @@ class TalasExplorerTest extends BaseCardTest {
     @Test
     @DisplayName("ETB trigger looks at target opponent's hand")
     void etbLooksAtTargetHand() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new Lynx()));
         castTalasExplorer(player2.getId());
 
         harness.passBothPriorities(); // resolve creature spell
@@ -41,17 +43,17 @@ class TalasExplorerTest extends BaseCardTest {
         // Card identity is private: only the controller is told what is in the hand. The public log
         // records that the look happened without naming anything (see CardRevealService#lookAtHand).
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
-                .anyMatch(message -> message.contains("Grizzly Bears"));
+                .anyMatch(message -> message.contains("Lynx"));
         assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("looks at") && log.contains("hand"))
-                .noneMatch(log -> log.contains("Grizzly Bears"));
+                .noneMatch(log -> log.contains("Lynx"));
     }
 
     @Test
     @DisplayName("ETB trigger against empty hand logs that hand is empty")
     void etbEmptyHandLogged() {
-        harness.setHand(player2, new ArrayList<>());
+        harness.setHand(player2, List.of());
         castTalasExplorer(player2.getId());
 
         harness.passBothPriorities(); // resolve creature spell
@@ -60,9 +62,19 @@ class TalasExplorerTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("empty"));
     }
 
+    @Test
+    @DisplayName("Cannot target self because self is not an opponent")
+    void cannotTargetSelf() {
+        harness.setHand(player1, List.of(new TalasExplorer()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castTalasExplorer(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new TalasExplorer()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
+        harness.castCreature(player1, 0, targetPlayerId);
     }
 }

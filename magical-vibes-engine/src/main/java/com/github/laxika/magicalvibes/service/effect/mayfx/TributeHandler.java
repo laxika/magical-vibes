@@ -51,6 +51,8 @@ public class TributeHandler implements MayEffectHandlerBean {
             if (placed > 0) {
                 source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                        gameData, source, player.getId());
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                         gameData, source, placed);
                 paid = placed >= tribute.counterCount();

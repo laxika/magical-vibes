@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "DRK", collectorNumber = "11")
+@CardRegistration(set = "ME1", collectorNumber = "19")
 public class KnightsOfThorn extends Card {
 
     public KnightsOfThorn() {

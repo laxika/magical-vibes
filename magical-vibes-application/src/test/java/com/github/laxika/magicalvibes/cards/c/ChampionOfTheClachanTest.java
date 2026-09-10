@@ -6,14 +6,18 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChampionOfTheClachan.class, KnightOfMeadowgrain.class, GrizzlyBears.class})
 class ChampionOfTheClachanTest extends BaseCardTest {
 
     @Test
@@ -48,17 +52,22 @@ class ChampionOfTheClachanTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(beheldCard);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
     @DisplayName("Can behold a Kithkin card from hand")
-    void beholdsCardFromHand() {
+    void beholdsCardFromHand(int spellIndex) {
         Card beheldCard = new KnightOfMeadowgrain();
-        harness.setHand(player1, List.of(new ChampionOfTheClachan(), beheldCard));
+        Card bystander = new GrizzlyBears();
+        harness.setHand(player1, spellIndex == 0
+                ? List.of(new ChampionOfTheClachan(), beheldCard, bystander)
+                : List.of(beheldCard, new ChampionOfTheClachan(), bystander));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castCreatureWithBeholdHandCard(player1, 0, 1);
+        harness.castCreatureWithBeholdHandCard(player1, spellIndex, 1 - spellIndex);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(beheldCard.getId())).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bystander);
         Permanent champion = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard() instanceof ChampionOfTheClachan)
                 .findFirst().orElseThrow();

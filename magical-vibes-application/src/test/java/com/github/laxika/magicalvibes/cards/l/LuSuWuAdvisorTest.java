@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,13 +11,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(LuSuWuAdvisor.class)
 class LuSuWuAdvisorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws a card when the ability resolves")
     void drawsACard() {
         setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new LuSuWuAdvisor()));
         int before = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
@@ -59,8 +60,7 @@ class LuSuWuAdvisorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate during an opponent's turn")
     void cannotActivateOnOpponentTurn() {
-        harness.addToBattlefield(player1, new LuSuWuAdvisor());
-        findPermanent(player1, "Lu Su, Wu Advisor").setSummoningSick(false);
+        addCreatureReady(player1, new LuSuWuAdvisor());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -70,8 +70,7 @@ class LuSuWuAdvisorTest extends BaseCardTest {
     }
 
     private void setupOnMyTurn(TurnStep step) {
-        harness.addToBattlefield(player1, new LuSuWuAdvisor());
-        findPermanent(player1, "Lu Su, Wu Advisor").setSummoningSick(false);
+        addCreatureReady(player1, new LuSuWuAdvisor());
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
     }

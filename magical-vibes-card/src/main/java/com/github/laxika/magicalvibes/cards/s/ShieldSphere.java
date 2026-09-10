@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "ALL", collectorNumber = "129")
+@CardRegistration(set = "ME1", collectorNumber = "166")
 public class ShieldSphere extends Card {
 
     public ShieldSphere() {

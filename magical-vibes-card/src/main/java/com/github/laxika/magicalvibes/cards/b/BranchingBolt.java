@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "158")
+@CardRegistration(set = "HOP", collectorNumber = "83")
 public class BranchingBolt extends Card {
 
     public BranchingBolt() {

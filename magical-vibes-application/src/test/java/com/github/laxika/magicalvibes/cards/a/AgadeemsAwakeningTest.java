@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishMystic;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AgadeemsAwakening.class, AgadeemTheUndercrypt.class, Memnite.class,
-        ElvishMystic.class, GrizzlyBears.class, SerraAngel.class})
+        ElvishMystic.class, GrizzlyBears.class, SerraAngel.class, Boomerang.class})
 class AgadeemsAwakeningTest extends BaseCardTest {
 
     @Test
@@ -54,7 +55,8 @@ class AgadeemsAwakeningTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(
                         zeroManaCreature.getId(), oneManaCreature.getId(), twoManaCreature.getId());
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .containsExactly(anotherTwoManaCreature, tooExpensiveCreature);
+                .contains(anotherTwoManaCreature, tooExpensiveCreature).hasSize(3);
+        harness.assertInGraveyard(player1, "Agadeem's Awakening");
     }
 
     @Test
@@ -64,9 +66,9 @@ class AgadeemsAwakeningTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(firstTwoManaCreature, secondTwoManaCreature));
         harness.setHand(player1, List.of(new AgadeemsAwakening()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 1, List.of());
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 2, List.of());
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
                 List.of(firstTwoManaCreature.getId(), secondTwoManaCreature.getId())))
@@ -106,5 +108,21 @@ class AgadeemsAwakeningTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    void returningTheLandFaceToHandRestoresTheFrontFace() {
+        harness.setHand(player1, List.of(new AgadeemsAwakening()));
+        gs.playCard(gd, player1, 0, 1, null, null);
+        harness.handleMayAbilityChosen(player1, false);
+        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).singleElement()
+                .satisfies(card -> assertThat(card.getName()).isEqualTo("Agadeem's Awakening"));
     }
 }

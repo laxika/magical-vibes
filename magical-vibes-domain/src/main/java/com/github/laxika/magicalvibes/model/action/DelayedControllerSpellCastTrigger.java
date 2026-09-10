@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -27,6 +28,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  *                                      for the delayed trigger to fire
  * @param targetFilter                  optional permanent/player target filter used when the delayed
  *                                      trigger goes on the stack
+ * @param sourcePermanentSnapshot        last-known source snapshot for source-relative filters
+ * @param sourcePowerAtLastKnown         last-known effective source power for source-relative filters
  */
 public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                                 UUID sourcePermanentId,
@@ -36,14 +39,16 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                                 List<CardEffect> resolvedEffects,
                                                 boolean oneShot,
                                                 boolean sourceMustRemainOnBattlefield,
-                                                TargetFilter targetFilter)
+                                                TargetFilter targetFilter,
+                                                Permanent sourcePermanentSnapshot,
+                                                Integer sourcePowerAtLastKnown)
         implements DelayedAction {
 
     public DelayedControllerSpellCastTrigger(UUID controllerId, UUID sourcePermanentId,
                                              Card sourceCard, CardPredicate spellFilter,
                                              List<CardEffect> resolvedEffects) {
         this(controllerId, sourcePermanentId, sourceCard, spellFilter, null, resolvedEffects,
-                false, true, null);
+                false, true, null, null, null);
     }
 
     public DelayedControllerSpellCastTrigger(UUID controllerId, UUID sourcePermanentId,
@@ -51,7 +56,7 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                              List<CardEffect> resolvedEffects,
                                              boolean sourceMustRemainOnBattlefield) {
         this(controllerId, sourcePermanentId, sourceCard, spellFilter, null, resolvedEffects,
-                false, sourceMustRemainOnBattlefield, null);
+                false, sourceMustRemainOnBattlefield, null, null, null);
     }
 
     public DelayedControllerSpellCastTrigger(UUID controllerId, UUID sourcePermanentId,
@@ -59,6 +64,18 @@ public record DelayedControllerSpellCastTrigger(UUID controllerId,
                                              List<CardEffect> resolvedEffects, boolean oneShot,
                                              boolean sourceMustRemainOnBattlefield) {
         this(controllerId, sourcePermanentId, sourceCard, spellFilter, null, resolvedEffects,
-                oneShot, sourceMustRemainOnBattlefield, null);
+                oneShot, sourceMustRemainOnBattlefield, null, null, null);
+    }
+
+    public DelayedControllerSpellCastTrigger withSourcePermanentSnapshot(Permanent snapshot) {
+        return withSourcePermanentSnapshot(snapshot, null);
+    }
+
+    public DelayedControllerSpellCastTrigger withSourcePermanentSnapshot(
+            Permanent snapshot, Integer powerAtLastKnown) {
+        return new DelayedControllerSpellCastTrigger(
+                controllerId, sourcePermanentId, sourceCard, spellFilter, stackEntryFilter,
+                resolvedEffects, oneShot, sourceMustRemainOnBattlefield, targetFilter, snapshot,
+                powerAtLastKnown);
     }
 }

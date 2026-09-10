@@ -754,6 +754,26 @@ class ValidTargetServiceTest {
         }
 
         @Test
+        void appliesSinglePositionalModeFilter() {
+            Card spell = createCard();
+            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Destroy a creature",
+                            List.of(new DestroyTargetPermanentEffect()), List.of(mode0Filter)))));
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+            Permanent enchantment = addEnchantmentToBattlefield(player2Id);
+            lenient().doThrow(new IllegalStateException("not a creature"))
+                    .when(predicateEvaluationService).validateTargetFilter(
+                            eq(mode0Filter), eq(enchantment), any(FilterContext.class));
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of(), 0);
+
+            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
+            assertThat(response.minTargets()).isEqualTo(1);
+            assertThat(response.maxTargets()).isEqualTo(1);
+        }
+
+        @Test
         @DisplayName("applies mode 1's target filter when mode 1 is selected")
         void appliesChosenModeFilter_mode1() {
             Card spell = createModalSpell();

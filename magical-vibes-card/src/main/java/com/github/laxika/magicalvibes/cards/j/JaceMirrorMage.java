@@ -20,7 +20,7 @@ public class JaceMirrorMage extends Card {
     public JaceMirrorMage() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
-                new CreateTokenCopyOfSourceEffect(true, 1, 1)));
+                CreateTokenCopyOfSourceEffect.withStartingLoyalty(true, 1, 1)));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

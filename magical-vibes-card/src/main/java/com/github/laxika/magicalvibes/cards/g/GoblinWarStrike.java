@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "P02", collectorNumber = "105")
+@CardRegistration(set = "SCG", collectorNumber = "96")
 public class GoblinWarStrike extends Card {
 
     public GoblinWarStrike() {

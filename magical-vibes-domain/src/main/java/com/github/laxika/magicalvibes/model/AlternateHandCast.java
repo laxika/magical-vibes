@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.condition.DuringYourDeclareBlockers;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 
@@ -31,19 +32,19 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
                                 boolean reduceManaBySacrificedManaValue,
                                 boolean reduceManaBySacrificedManaCost,
                                 CardColor prototypeColor, Integer prototypePower,
-                                Integer prototypeToughness, boolean spectacle, boolean sneak) implements CastingOption {
+                                Integer prototypeToughness, boolean spectacle, boolean sneak, TargetFilter alternateTargetFilter) implements CastingOption {
 
     public AlternateHandCast(List<CastingCost> costs) {
-        this(costs, Set.of(), null, false, false, false, null, null, null, false, false);
+        this(costs, Set.of(), null, false, false, false, null, null, null, false, false, null);
     }
 
     public AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes) {
-        this(costs, prowlDamageSubtypes, null, false, false, false, null, null, null, false, false);
+        this(costs, prowlDamageSubtypes, null, false, false, false, null, null, null, false, false, null);
     }
 
     /** Convenience constructor for prowl with a single qualifying creature subtype. */
     public AlternateHandCast(List<CastingCost> costs, CardSubtype prowlDamageSubtype) {
-        this(costs, Set.of(prowlDamageSubtype), null, false, false, false, null, null, null, false, false);
+        this(costs, Set.of(prowlDamageSubtype), null, false, false, false, null, null, null, false, false, null);
     }
 
     /**
@@ -51,7 +52,7 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
      * timing (e.g. Qasali Ambusher's free "as though it had flash" cast).
      */
     public AlternateHandCast(List<CastingCost> costs, Condition availabilityCondition, boolean grantsFlash) {
-        this(costs, Set.of(), availabilityCondition, grantsFlash, false, false, null, null, null, false, false);
+        this(costs, Set.of(), availabilityCondition, grantsFlash, false, false, null, null, null, false, false, null);
     }
 
     /**
@@ -59,24 +60,24 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
      * sacrificed permanent's mana value.
      */
     public AlternateHandCast(List<CastingCost> costs, boolean reduceManaBySacrificedManaValue) {
-        this(costs, Set.of(), null, false, reduceManaBySacrificedManaValue, false, null, null, null, false, false);
+        this(costs, Set.of(), null, false, reduceManaBySacrificedManaValue, false, null, null, null, false, false, null);
     }
 
     /** Convenience factory for offering alternate costs. */
     public static AlternateHandCast offering(List<CastingCost> costs) {
-        return new AlternateHandCast(costs, Set.of(), null, true, false, true, null, null, null, false, false);
+        return new AlternateHandCast(costs, Set.of(), null, true, false, true, null, null, null, false, false, null);
     }
 
     /** Prototype's alternate cost and the characteristics used when it is cast that way. */
     public static AlternateHandCast prototype(String manaCost, CardColor color, int power, int toughness) {
         return new AlternateHandCast(List.of(new ManaCastingCost(manaCost)), Set.of(), null,
-                false, false, false, color, power, toughness, false, false);
+                false, false, false, color, power, toughness, false, false, null);
     }
 
     /** Creates a spectacle alternate cost gated by its spectacle condition. */
     public static AlternateHandCast spectacle(String manaCost, Condition availabilityCondition) {
         return new AlternateHandCast(List.of(new ManaCastingCost(manaCost)), Set.of(),
-                availabilityCondition, false, false, false, null, null, null, true, false);
+                availabilityCondition, false, false, false, null, null, null, true, false, null);
     }
 
     /** Creates a Sneak alternate cost using the supplied mana cost. */
@@ -85,7 +86,13 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
                 List.of(new ManaCastingCost(manaCost),
                         new ReturnPermanentsCost(1, new PermanentIsUnblockedAttackingPredicate())),
                 Set.of(), new DuringYourDeclareBlockers(), false,
-                false, false, null, null, null, false, true);
+                false, false, null, null, null, false, true, null);
+    }
+
+    /** Creates a cleave alternate cast with a broader target filter. */
+    public static AlternateHandCast cleave(String manaCost, TargetFilter alternateTargetFilter) {
+        return new AlternateHandCast(List.of(new ManaCastingCost(manaCost)), Set.of(), null,
+                false, false, false, null, null, null, false, false, alternateTargetFilter);
     }
 
     public boolean isPrototype() {

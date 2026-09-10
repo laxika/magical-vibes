@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -25,10 +24,7 @@ class BogWraithTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Bog Wraith puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new BogWraith()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BogWraith(), "{3}{B}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -38,10 +34,7 @@ class BogWraithTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Bog Wraith onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new BogWraith()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BogWraith(), "{3}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

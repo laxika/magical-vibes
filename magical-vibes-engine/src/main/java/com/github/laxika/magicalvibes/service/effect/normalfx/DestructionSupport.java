@@ -243,6 +243,9 @@ public class DestructionSupport {
             if (indestructible.contains(perm)) {
                 continue;
             }
+            if (damagePreventionService.replaceDestructionWithShieldCounter(perm)) {
+                continue;
+            }
             if (graveyardService.tryReplaceDestruction(gameData, perm, !cannotBeRegenerated)) {
                 continue;
             }
@@ -309,7 +312,7 @@ public class DestructionSupport {
 
     public void sacrificeAndLog(GameData gameData, Permanent creature, UUID playerId) {
         Card sacrificedCard = creature.getCard();
-        permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
         gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
@@ -403,9 +406,7 @@ public class DestructionSupport {
         }
 
         if (matching.size() <= count) {
-            for (Permanent perm : matching) {
-                tryDestroyAndLog(gameData, perm, sourceName);
-            }
+            destroyBatch(gameData, matching, sourceName, false);
             permanentRemovalService.removeOrphanedAuras(gameData);
             return false;
         }
@@ -430,7 +431,8 @@ public class DestructionSupport {
         }
 
         int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
-        effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+        effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                gameData, playerId, effectiveDamage, cardName, false, null, sourceCard);
         effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
                 gameData, playerId, effectiveDamage);
 
@@ -806,10 +808,10 @@ public class DestructionSupport {
                     damageTargetAndTheirCreaturesHandler.resolve(gameData, entry, damageAndCreatures);
                     entry.setTargetId(previousTarget);
                 }
-            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect) {
+            } else if (elseEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect exileLibrary) {
                 // "When a player doesn't pay this enchantment's cumulative upkeep, that player
                 // exiles all cards from their library" (Thought Lash).
-                libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId());
+                libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId(), exileLibrary.faceDown());
             } else if (elseEffect instanceof RemoveAllCountersEffect removeCounters
                     && removeCounters.subject() == CounterRemovalSubject.SOURCE) {
                 // "remove all wage counters from this creature" (Rogue Skycaptain).
@@ -904,7 +906,7 @@ public class DestructionSupport {
         if (!entry.getControllerId().equals(currentControllerId)) {
             return;
         }
-        if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+        if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
             triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
             gameLogService.append(gameData, GameLog.isSacrificed(self.getCard()));
             permanentRemovalService.removeOrphanedAuras(gameData);
@@ -961,7 +963,7 @@ public class DestructionSupport {
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature);
         CreateTokenEffect additionalFrog = TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                 gameData, controllerId, token);
-        int totalAmount = tokenCount * tokenMultiplier;
+        int totalAmount = gameQueryService.getTokenCreationAmount(gameData, controllerId, tokenCount, token.subtypes(), baseTokenIsCreature);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         for (int count = 0; count < totalAmount + (additionalFrog != null && totalAmount > 0 ? 1 : 0); count++) {
@@ -1065,7 +1067,7 @@ public class DestructionSupport {
             for (UUID permId : pileToSacrifice) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
-                    if (permanentRemovalService.removePermanentToGraveyard(gameData, perm)) {
+                    if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, perm)) {
                         gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
                     }
                 }

@@ -67,6 +67,12 @@ public class InputCompletionService {
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
+        if (gameData.pendingInteractions.stream().anyMatch(pending ->
+                pending instanceof com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice choice
+                        && choice.context() instanceof com.github.laxika.magicalvibes.model.ChoiceContext.RegenerationShieldChoice)) {
+            stateBasedActionService.performStateBasedActions(gameData);
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
         if (!gameData.pendingCardDraws.isEmpty()) {
             drawService.resumePendingCardDraws(gameData);
             if (gameData.status == GameStatus.FINISHED) return;

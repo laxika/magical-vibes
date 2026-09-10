@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "119")
+@CardRegistration(set = "FDN", collectorNumber = "346")
+@CardRegistration(set = "FDN", collectorNumber = "407")
+@CardRegistration(set = "FDN", collectorNumber = "479")
 public class ElendaSaintOfDusk extends Card {
 
     public ElendaSaintOfDusk() {

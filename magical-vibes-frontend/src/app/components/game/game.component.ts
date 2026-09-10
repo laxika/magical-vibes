@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, NgZone, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
+import { PlanarPanelComponent } from './planar-panel/planar-panel.component';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -25,7 +26,7 @@ export interface PermanentStackContext {
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent],
+  imports: [PlanarPanelComponent, CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent],
   templateUrl: './game.component.html',
   styleUrls: ['./shared-game-styles.css', './game.component.css', './game-phone.css']
 })
@@ -489,6 +490,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const updated = {
       ...g,
       status: state.status,
+      planechase: state.planechase ?? null,
       activePlayerId: state.activePlayerId,
       turnNumber: state.turnNumber,
       currentStep: state.currentStep,
@@ -1513,7 +1515,7 @@ export class GameComponent implements OnInit, OnDestroy {
       }
     }
     for (const se of g.stack) {
-      if (se.cardId === entry.targetId) return se.card.name;
+      if (se.cardId === entry.targetId) return se.card?.name ?? se.description;
     }
     for (const graveyard of g.graveyards) {
       for (const card of graveyard) {

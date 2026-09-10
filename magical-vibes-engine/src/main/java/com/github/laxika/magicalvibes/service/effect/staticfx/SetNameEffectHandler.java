@@ -23,7 +23,7 @@ public class SetNameEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var setName = (SetNameEffect) effect;
         if ((setName.scope() == GrantScope.SELF
-                && context.target().getId().equals(context.source().getId()))
+                && context.target().getId().equals(context.sourceId()))
                 || support.matchesCreatureScope(context, setName.scope(), null)) {
             accumulator.setName(setName.name());
         }

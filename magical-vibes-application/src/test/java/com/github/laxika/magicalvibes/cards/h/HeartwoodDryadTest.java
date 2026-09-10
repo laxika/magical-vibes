@@ -1,53 +1,34 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
+import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeartwoodDryad.class, MoggFanatic.class, SoltariFootSoldier.class})
 class HeartwoodDryadTest extends BaseCardTest {
 
-    private void attacker(Card card, boolean shadow) {
-        if (shadow) {
-            card.setKeywords(Set.of(Keyword.SHADOW));
-        }
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+    private void attacker(Card card) {
+        Permanent permanent = addCreatureReady(player1, card);
         permanent.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-    }
-
-    private Permanent blocker(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void beginBlocking() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 
     @Test
     @DisplayName("Heartwood Dryad can block a creature with shadow")
     void blocksShadowAttacker() {
-        Permanent dryad = blocker(new HeartwoodDryad());
-        attacker(new GrizzlyBears(), true);
-        beginBlocking();
+        Permanent dryad = addCreatureReady(player2, new HeartwoodDryad());
+        attacker(new SoltariFootSoldier());
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -57,9 +38,9 @@ class HeartwoodDryadTest extends BaseCardTest {
     @Test
     @DisplayName("Heartwood Dryad still blocks creatures without shadow")
     void blocksNormalAttacker() {
-        Permanent dryad = blocker(new HeartwoodDryad());
-        attacker(new GrizzlyBears(), false);
-        beginBlocking();
+        Permanent dryad = addCreatureReady(player2, new HeartwoodDryad());
+        attacker(new MoggFanatic());
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -69,11 +50,23 @@ class HeartwoodDryadTest extends BaseCardTest {
     @Test
     @DisplayName("A creature without the ability still can't block a creature with shadow")
     void plainBlockerCannotBlockShadow() {
-        blocker(new GrizzlyBears());
-        attacker(new GrizzlyBears(), true);
-        beginBlocking();
+        addCreatureReady(player2, new MoggFanatic());
+        attacker(new SoltariFootSoldier());
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Heartwood Dryad does not gain shadow while attacking")
+    void canBeBlockedByNormalCreature() {
+        attacker(new HeartwoodDryad());
+        Permanent blocker = addCreatureReady(player2, new MoggFanatic());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

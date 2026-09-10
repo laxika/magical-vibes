@@ -23,6 +23,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LookAtTopCardMayPlayLandOrCastFreeEffectHandler implements NormalEffectHandlerBean {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
 
@@ -54,7 +58,7 @@ public class LookAtTopCardMayPlayLandOrCastFreeEffectHandler implements NormalEf
         if (topCard.hasType(CardType.LAND)) {
             int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(controllerId, 0);
             if (!controllerId.equals(gameData.activePlayerId)
-                    || landsPlayed >= gameData.getMaxLandsThisTurn(controllerId)) {
+                    || landsPlayed >= (gameData.getMaxLandsThisTurn(controllerId) + gameQueryService.getConditionalAdditionalLandPlays(gameData, controllerId))) {
                 putTopCardIntoHand(gameData, controllerId, deck, topCard, playerName);
                 return;
             }

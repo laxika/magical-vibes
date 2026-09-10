@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 
 import java.util.Set;
@@ -7,11 +8,19 @@ import java.util.Set;
 /**
  * Makes the first target permanent become a copy of the second target permanent until end of turn.
  */
-public record BecomeCopyOfTargetPermanentUntilEndOfTurnEffect(Set<CardType> additionalTypes)
+public record BecomeCopyOfTargetPermanentUntilEndOfTurnEffect(
+        Set<CardType> additionalTypes,
+        Set<CardSupertype> removedSupertypes
+)
         implements CardEffect {
 
     public BecomeCopyOfTargetPermanentUntilEndOfTurnEffect {
         additionalTypes = additionalTypes == null ? Set.of() : Set.copyOf(additionalTypes);
+        removedSupertypes = removedSupertypes == null ? Set.of() : Set.copyOf(removedSupertypes);
+    }
+
+    public BecomeCopyOfTargetPermanentUntilEndOfTurnEffect(Set<CardType> additionalTypes) {
+        this(additionalTypes, Set.of());
     }
 
     @Override

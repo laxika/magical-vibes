@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 
 @CardRegistration(set = "BNG", collectorNumber = "119")
+@CardRegistration(set = "CP2", collectorNumber = "6")
 public class CourserOfKruphix extends Card {
 
     public CourserOfKruphix() {

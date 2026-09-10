@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromSingleGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -67,7 +68,10 @@ public class CumulativeUpkeepEffectHandler implements NormalEffectHandlerBean {
         // along with the sacrifice on the unpaid branch.
         List<CardEffect> unpaid = new ArrayList<>();
         unpaid.add(new SacrificeSelfEffect());
-        unpaid.addAll(snapshotAgeRelativeAmounts(gameData, entry, self, e.unpaidEffects()));
+        for (CardEffect unpaidEffect : snapshotAgeRelativeAmounts(gameData, entry, self, e.unpaidEffects())) {
+            unpaid.add(unpaidEffect instanceof QueueReflexiveAbilityEffect
+                    ? unpaidEffect : new QueueReflexiveAbilityEffect(unpaidEffect));
+        }
 
         ForcedCostOrElseEffect payOrSacrifice;
         if (e.flipCoinPerAge()) {

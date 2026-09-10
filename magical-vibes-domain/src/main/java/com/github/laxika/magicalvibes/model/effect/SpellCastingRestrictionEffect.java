@@ -14,6 +14,10 @@ public interface SpellCastingRestrictionEffect extends CardEffect {
         return preventsCasting(mostRecentSpell, candidateSpell);
     }
 
+    default boolean preventsCastingFromTopOfLibrary(Card topCard, Card candidateSpell) {
+        return false;
+    }
+
     default boolean restrictsDefendingPlayerWhileSourceAttacking() {
         return false;
     }

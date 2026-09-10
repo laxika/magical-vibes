@@ -27,7 +27,7 @@ class IridescentHornbeetleTest extends BaseCardTest {
         putCounterOn(target);
         advanceToEndStepAndResolve(player1);
 
-        assertThat(findPermanents(player1, "Insect")).filteredOn(Permanent::isToken).hasSize(2);
+        assertThat(findPermanents(player1, "Insect")).filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
     }
 
     @Test
@@ -39,7 +39,7 @@ class IridescentHornbeetleTest extends BaseCardTest {
         putCounterOn(target);
         advanceToEndStepAndResolve(player1);
 
-        assertThat(findPermanents(player1, "Insect")).filteredOn(Permanent::isToken).isEmpty();
+        assertThat(findPermanents(player1, "Insect")).filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();
     }
 
     @Test
@@ -50,12 +50,15 @@ class IridescentHornbeetleTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new IronshellBeetle()));
         harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         gs.playCard(gd, player2, 0, 0, target.getId(), null);
         harness.passBothPriorities();
         harness.passBothPriorities();
         advanceToEndStepAndResolve(player1);
 
-        assertThat(findPermanents(player1, "Insect")).filteredOn(Permanent::isToken).isEmpty();
+        assertThat(findPermanents(player1, "Insect")).filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();
     }
 
     private void putCounterOn(Permanent target) {

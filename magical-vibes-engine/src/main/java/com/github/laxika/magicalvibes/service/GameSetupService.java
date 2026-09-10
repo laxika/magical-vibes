@@ -39,6 +39,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 public class GameSetupService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
 
     private final Random random = new Random();
 
@@ -86,6 +90,11 @@ public class GameSetupService {
      * {@code allRandom} is set.
      */
     public GameData createGame(String gameName, Player player, String deckId, boolean allRandom, String randomSetCode) {
+        return createGame(gameName, player, deckId, allRandom, randomSetCode, false);
+    }
+
+    public GameData createGame(String gameName, Player player, String deckId, boolean allRandom,
+                               String randomSetCode, boolean planechase) {
         UUID gameId = UUID.randomUUID();
 
         if (allRandom) {
@@ -97,6 +106,7 @@ public class GameSetupService {
         String selectedDeckId = deckId;
         mutationCoordinator.mutate(gameData, () -> {
             gameData.allRandom = allRandom;
+            if (planechase) planechaseService.initializeDeck(gameData);
             gameData.randomSetCode = allRandom ? randomSetCode : null;
             gameData.playerIds.add(player.getId());
             gameData.orderedPlayerIds.add(player.getId());
@@ -161,6 +171,10 @@ public class GameSetupService {
             String deckId = gameData.playerDeckChoices.get(playerId);
             List<Card> deck = resolveDeck(deckId, gameData.randomSetCode);
             List<Card> sideboard = resolveSideboard(deckId);
+            if (java.util.stream.Stream.concat(deck.stream(), sideboard.stream())
+                    .anyMatch(card -> card.getType() != null && card.getType().isPlanar())) {
+                throw new IllegalArgumentException("Planar cards belong in the planar deck");
+            }
 
             // Stamp card ownership: each card is owned by the player whose deck it started in.
             // Preserved across zone changes; used to evaluate "a spell you don't own".

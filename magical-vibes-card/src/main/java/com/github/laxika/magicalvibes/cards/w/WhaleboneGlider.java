@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "349")
+@CardRegistration(set = "CST", collectorNumber = "47")
 public class WhaleboneGlider extends Card {
 
     public WhaleboneGlider() {

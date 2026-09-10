@@ -15,15 +15,16 @@ import java.util.UUID;
  * address flat target positions. The default groups are 0 and 1.</p>
  */
 public record FightTargetsEffect(int firstTargetGroup, int secondTargetGroup,
-                                 UUID firstTargetId, UUID secondTargetId) implements CardEffect {
+                                 UUID firstTargetId, UUID secondTargetId,
+                                 boolean useBoundTargetGroupAndNext) implements CardEffect {
 
     /** "Target creature fights another target creature" — groups 0 and 1. */
     public FightTargetsEffect() {
-        this(0, 1, null, null);
+        this(0, 1, null, null, false);
     }
 
     public FightTargetsEffect(int firstTargetGroup, int secondTargetGroup) {
-        this(firstTargetGroup, secondTargetGroup, null, null);
+        this(firstTargetGroup, secondTargetGroup, null, null, false);
     }
 
     /**
@@ -37,7 +38,21 @@ public record FightTargetsEffect(int firstTargetGroup, int secondTargetGroup,
 
     /** Creates a fight effect with targets captured by a reflexive ability. */
     public FightTargetsEffect(UUID firstTargetId, UUID secondTargetId) {
-        this(0, 1, firstTargetId, secondTargetId);
+        this(0, 1, firstTargetId, secondTargetId, false);
+    }
+
+    public FightTargetsEffect(int firstTargetGroup, int secondTargetGroup,
+                              UUID firstTargetId, UUID secondTargetId) {
+        this(firstTargetGroup, secondTargetGroup, firstTargetId, secondTargetId, false);
+    }
+
+    /**
+     * Creates a fight effect whose first target group is the group bound to this effect and whose
+     * second target group is the following group. This is useful for modal spells where preceding
+     * selected modes may shift the fight mode's target-group indices.
+     */
+    public static FightTargetsEffect boundTargetGroupAndNext() {
+        return new FightTargetsEffect(0, 1, null, null, true);
     }
 
     @Override

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INV", collectorNumber = "221")
+@CardRegistration(set = "DDE", collectorNumber = "43")
 public class VerduranEmissary extends Card {
 
     public VerduranEmissary() {

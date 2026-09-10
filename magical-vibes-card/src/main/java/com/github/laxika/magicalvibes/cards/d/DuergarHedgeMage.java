@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "137")
+@CardRegistration(set = "HOP", collectorNumber = "101")
 public class DuergarHedgeMage extends Card {
 
     public DuergarHedgeMage() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingDamagedCreatureUnderControlEffect;
 
 @CardRegistration(set = "TSB", collectorNumber = "47")
+@CardRegistration(set = "SCG", collectorNumber = "74")
 public class SoulCollector extends Card {
 
     public SoulCollector() {

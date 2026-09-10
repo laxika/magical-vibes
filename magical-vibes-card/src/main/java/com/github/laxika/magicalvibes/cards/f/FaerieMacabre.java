@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "66")
+@CardRegistration(set = "DDD", collectorNumber = "42")
 public class FaerieMacabre extends Card {
 
     public FaerieMacabre() {

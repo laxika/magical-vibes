@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.d.DuskriderFalcon;
+import com.github.laxika.magicalvibes.cards.d.DwarvenBerserker;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Thunderbolt.class, DuskriderFalcon.class, DwarvenBerserker.class, ChandraNalaar.class})
 class ThunderboltTest extends BaseCardTest {
 
     private void giveMana() {
@@ -35,36 +39,50 @@ class ThunderboltTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Mode 1 deals 4 damage to a creature with flying, killing it")
-    void mode1KillsFlyingCreature() {
-        harness.addToBattlefield(player2, new SuntailHawk());
+    @DisplayName("Mode 0 deals 3 damage to target planeswalker")
+    void mode0DamagesPlaneswalker() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new Thunderbolt()));
         giveMana();
 
-        UUID hawkId = battlefieldId("Suntail Hawk");
-        harness.castInstant(player1, 0, 1, hawkId);
+        harness.castInstant(player1, 0, 0, chandra.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
-        harness.assertInGraveyard(player2, "Suntail Hawk");
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Mode 1 deals 4 damage to a creature with flying, killing it")
+    void mode1KillsFlyingCreature() {
+        harness.addToBattlefield(player2, new DuskriderFalcon());
+        harness.setHand(player1, List.of(new Thunderbolt()));
+        giveMana();
+
+        UUID falconId = harness.getPermanentId(player2, "Duskrider Falcon");
+        harness.castModalInstant(player1, 0, 1, List.of(falconId));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Duskrider Falcon");
+        harness.assertInGraveyard(player2, "Duskrider Falcon");
     }
 
     @Test
     @DisplayName("Mode 1 deals exactly 4 damage to a large flier")
     void mode1DealsFourDamage() {
-        SuntailHawk bigHawk = new SuntailHawk();
-        bigHawk.setPower(5);
-        bigHawk.setToughness(5);
-        harness.addToBattlefield(player2, bigHawk);
+        DuskriderFalcon bigFalcon = new DuskriderFalcon();
+        bigFalcon.setPower(5);
+        bigFalcon.setToughness(5);
+        harness.addToBattlefield(player2, bigFalcon);
         harness.setHand(player1, List.of(new Thunderbolt()));
         giveMana();
 
-        UUID hawkId = battlefieldId("Suntail Hawk");
-        harness.castInstant(player1, 0, 1, hawkId);
+        UUID falconId = harness.getPermanentId(player2, "Duskrider Falcon");
+        harness.castModalInstant(player1, 0, 1, List.of(falconId));
         harness.passBothPriorities();
 
         Permanent hawk = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(hawkId))
+                .filter(p -> p.getId().equals(falconId))
                 .findFirst().orElseThrow();
         assertThat(hawk.getMarkedDamage()).isEqualTo(4);
     }
@@ -72,20 +90,13 @@ class ThunderboltTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 1 cannot target a creature without flying")
     void mode1CannotTargetNonFlyingCreature() {
-        harness.addToBattlefield(player2, new SuntailHawk());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DuskriderFalcon());
+        harness.addToBattlefield(player2, new DwarvenBerserker());
         harness.setHand(player1, List.of(new Thunderbolt()));
         giveMana();
 
-        UUID bearsId = battlefieldId("Grizzly Bears");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, bearsId))
+        UUID berserkerId = harness.getPermanentId(player2, "Dwarven Berserker");
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(berserkerId)))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private UUID battlefieldId(String name) {
-        return gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .map(Permanent::getId)
-                .findFirst().orElseThrow();
     }
 }

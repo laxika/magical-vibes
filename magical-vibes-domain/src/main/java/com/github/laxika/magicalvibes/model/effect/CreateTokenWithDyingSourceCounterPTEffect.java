@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import java.util.Map;
 
 /**
- * Creates a token whose base power and toughness equal the dying creature's +1/+1 counter count.
+ * Creates a token whose base power and toughness equal the dying creature's selected counter count.
+ * A null counter type counts all counter types.
  * The death trigger pipeline binds the dying permanent's counter snapshot before resolution.
  */
 public record CreateTokenWithDyingSourceCounterPTEffect(
         CreateTokenEffect tokenTemplate,
+        CounterType counterType,
         Map<CounterType, Integer> counters
 ) implements CardEffect, DyingCreatureCountersAwareEffect, TokenCreatingEffect {
 
@@ -20,12 +22,16 @@ public record CreateTokenWithDyingSourceCounterPTEffect(
     }
 
     public CreateTokenWithDyingSourceCounterPTEffect(CreateTokenEffect tokenTemplate) {
-        this(tokenTemplate, Map.of());
+        this(tokenTemplate, null, Map.of());
+    }
+
+    public CreateTokenWithDyingSourceCounterPTEffect(CreateTokenEffect tokenTemplate, CounterType counterType) {
+        this(tokenTemplate, counterType, Map.of());
     }
 
     @Override
     public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
-        return new CreateTokenWithDyingSourceCounterPTEffect(tokenTemplate, counters);
+        return new CreateTokenWithDyingSourceCounterPTEffect(tokenTemplate, counterType, counters);
     }
 
     @Override

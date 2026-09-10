@@ -27,7 +27,8 @@ public class InteractionState {
         InteractionState copy = new InteractionState();
         copy.activeInteraction = this.activeInteraction;
         copy.activeDecisionId = this.activeDecisionId;
-        copy.permanentChoiceContext = this.permanentChoiceContext;
+        copy.permanentChoiceContext = this.permanentChoiceContext instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
+                ? trigger.copyPlanarSnapshot() : this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOriginalCard = this.pendingAuraOriginalCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;

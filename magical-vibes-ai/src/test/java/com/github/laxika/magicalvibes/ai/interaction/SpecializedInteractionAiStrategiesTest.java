@@ -54,6 +54,86 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
+    void exileProcessingChoosesTwoCards() throws Exception {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        var interaction = new PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice(
+                aiPlayerId, List.of(first, second, UUID.randomUUID()));
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(List.of(first, second)));
+    }
+
+    @Test
+    void exileProcessingDeclinesWhenOnlyOneCardIsAvailable() throws Exception {
+        var interaction = new PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice(
+                aiPlayerId, List.of(UUID.randomUUID()));
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(List.of()));
+    }
+
+    @Test
+    void oblivionSowerChoosesAllOfferedLands() throws Exception {
+        var ids = List.of(UUID.randomUUID(), UUID.randomUUID());
+        var interaction = new PendingInteraction.OblivionSowerLandChoice(
+                aiPlayerId, UUID.randomUUID(), ids, "Oblivion Sower");
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(ids));
+    }
+
+    @Test
+    void singleExileProcessingChoosesOneCard() throws Exception {
+        UUID first = UUID.randomUUID();
+        var interaction = new PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice(
+                aiPlayerId, List.of(first, UUID.randomUUID()), 1, new Card(),
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY);
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(List.of(first)));
+    }
+
+    @Test
+    void exileProcessingCostChoosesOneCard() throws Exception {
+        UUID first = UUID.randomUUID();
+        var interaction = new PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice(
+                aiPlayerId, UUID.randomUUID(), 0, 0, null, null, List.of(), java.util.Map.of(),
+                List.of(first, UUID.randomUUID()));
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(List.of(first)));
+    }
+
+    @Test
+    void turtlesForeverSearchChoosesDifferentNamesAcrossBothSources() throws Exception {
+        Card first = card("First", "{1}");
+        Card duplicate = card("First", "{1}");
+        Card second = card("Second", "{2}");
+        Card third = card("Third", "{3}");
+        Card fourth = card("Fourth", "{4}");
+        Card fifth = card("Fifth", "{5}");
+        var interaction = new PendingInteraction.TurtlesForeverSearchChoice(
+                aiPlayerId, UUID.randomUUID(), List.of(first, duplicate, second, third, fourth, fifth),
+                List.of(first.getId(), duplicate.getId(), second.getId()),
+                List.of(third.getId(), fourth.getId(), fifth.getId()));
+
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())));
+    }
+
+    @Test
+    void turtlesForeverOpponentChoosesExactlyTwoOfferedCards() throws Exception {
+        Card first = card("First", "{1}");
+        Card second = card("Second", "{2}");
+        var interaction = new PendingInteraction.TurtlesForeverOpponentChoice(
+                aiPlayerId, UUID.randomUUID(),
+                List.of(first, second, card("Third", "{3}"), card("Fourth", "{4}")));
+
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(
+                List.of(first.getId(), second.getId())));
+    }
+
+    @Test
     void adNauseamDeclinesWhenTheNextCardWouldBeLethal() throws Exception {
         gameData.playerLifeTotals.put(aiPlayerId, 3);
         gameData.playerDecks.get(aiPlayerId).add(card("Lethal", "{3}"));

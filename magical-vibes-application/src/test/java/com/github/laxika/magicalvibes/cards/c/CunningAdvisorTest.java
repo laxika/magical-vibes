@@ -1,25 +1,25 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(CunningAdvisor.class)
 class CunningAdvisorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target opponent discards a card when the ability resolves")
     void targetOpponentDiscards() {
         setupAdvisorOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new CunningAdvisor()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -28,7 +28,7 @@ class CunningAdvisorTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Cunning Advisor");
     }
 
     @Test
@@ -42,8 +42,29 @@ class CunningAdvisorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate once attackers have been declared")
-    void cannotActivateAfterAttackersDeclared() {
+    @DisplayName("Can activate during the beginning of combat, before attackers are declared")
+    void canActivateBeforeAttackers() {
+        setupAdvisorOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate before attackers are declared during a later combat phase")
+    void cannotActivateBeforeLaterCombatPhase() {
+        setupAdvisorOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+        gd.combatPhasesThisTurn = 2;
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+    }
+
+    @Test
+    @DisplayName("Cannot activate once the declare attackers step begins")
+    void cannotActivateAtDeclareAttackersStep() {
         setupAdvisorOnMyTurn(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -52,10 +73,23 @@ class CunningAdvisorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not prompt when the target opponent has no cards")
+    void emptyHandDoesNotPrompt() {
+        setupAdvisorOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot activate during an opponent's turn")
     void cannotActivateOnOpponentTurn() {
-        harness.addToBattlefield(player1, new CunningAdvisor());
-        findPermanent(player1, "Cunning Advisor").setSummoningSick(false);
+        addCreatureReady(player1, new CunningAdvisor());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -75,8 +109,7 @@ class CunningAdvisorTest extends BaseCardTest {
     }
 
     private void setupAdvisorOnMyTurn(TurnStep step) {
-        harness.addToBattlefield(player1, new CunningAdvisor());
-        findPermanent(player1, "Cunning Advisor").setSummoningSick(false);
+        addCreatureReady(player1, new CunningAdvisor());
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
     }

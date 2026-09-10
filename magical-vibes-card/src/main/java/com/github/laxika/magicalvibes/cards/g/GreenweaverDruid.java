@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "164")
+@CardRegistration(set = "DPA", collectorNumber = "68")
 public class GreenweaverDruid extends Card {
 
     public GreenweaverDruid() {

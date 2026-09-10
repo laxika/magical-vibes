@@ -65,7 +65,7 @@ public class RevealTopCardMayPlayFreeEffectHandler implements NormalEffectHandle
         if (topCard.hasType(CardType.LAND)) {
             boolean isControllersTurn = controllerId.equals(gameData.activePlayerId);
             int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(controllerId, 0);
-            if (!isControllersTurn || landsPlayed >= gameData.getMaxLandsThisTurn(controllerId)) {
+            if (!isControllersTurn || landsPlayed >= (gameData.getMaxLandsThisTurn(controllerId) + gameQueryService.getConditionalAdditionalLandPlays(gameData, controllerId))) {
                 String reason = !isControllersTurn ? "not controller's turn" : "land already played this turn";
                 disposeOfUnplayedCard(gameData, controllerId, deck, topCard, e.notPlayedDestination(),
                         "can't be played (" + reason + ")");

@@ -33,7 +33,6 @@ public class NimbleTrapfinder extends Card {
                 new FullParty(),
                 new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                        new DrawCardEffect(1)));
+                        new DrawCardEffect(1))));
     }
-}
 }

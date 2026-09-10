@@ -552,6 +552,12 @@
       </div>
     </ng-template>
 
+    @if (game()?.planechase; as planar) {
+      <app-planar-panel (cardHover)="onCardHover($event)" (cardHoverEnd)="onCardHoverEnd()" [state]="planar"
+        [busy]="choice.targeting.payingForAbility || choice.targeting.payingForCast || choice.targeting.planarRollPending"
+        (roll)="choice.targeting.rollPlanarDie()"
+        (activate)="choice.targeting.activatePlanarAbility($event.sourceId, $event.abilityIndex)" />
+    }
     <div class="battlefield-area" #battlefieldArea [style.--density-zoom]="battlefieldZoom">
       <div class="battlefield-row" [style.--density-zoom]="opponentBattlefieldZoom"
         [class.active-turn]="isActivePlayer(opponentPlayerIndex)">
@@ -642,7 +648,7 @@
         }
         @if (playableExileCards().length > 0) {
           <div class="revealed-hand-row">
-            <div class="revealed-hand-label">Playable From Exile</div>
+            <div class="revealed-hand-label">Playable From Exile or Outside the Game</div>
             <div class="revealed-hand-cards">
               @for (card of playableExileCards(); track card.id) {
                 <app-card-display [card]="card" class="revealed-hand-card playable"
@@ -796,7 +802,33 @@
               (mouseleave)="onCardHoverEnd()" />
           }
         </div>
+        @if (choice.targeting.multiTargeting) {
+          <button class="btn-cancel-combat"
+                  (click)="choice.targeting.confirmMultiTargets()"
+                  [disabled]="choice.targeting.multiTargetSelectedIds().length < choice.targeting.multiTargetMinCount">Confirm</button>
+        }
         <button class="btn-cancel-combat" (click)="choice.targeting.cancelGraveyardTargeting()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (choice.choosingMultiplePermanents && choice.multiPermanentChoiceCards.length > 0) {
+    <div class="reveal-hand-layer">
+      <div class="reveal-hand-window">
+        <div class="reveal-hand-titlebar">{{ choice.multiPermanentChoicePrompt }}</div>
+        <div class="reveal-hand-body">
+          <div class="reveal-hand-cards">
+            @for (card of choice.multiPermanentChoiceCards; track card.id; let i = $index) {
+              <app-card-display [card]="card"
+                [class.selected-multi-permanent]="choice.multiPermanentSelectedIds().has(choice.multiPermanentChoiceCardIds[i])"
+                class="choosable-card"
+                (click)="choice.toggleMultiPermanentCardSelection(choice.multiPermanentChoiceCardIds[i])"
+                (mouseenter)="onCardHover(card)"
+                (mouseleave)="onCardHoverEnd()" />
+            }
+          </div>
+          <button class="btn-keep" (click)="choice.confirmMultiPermanentChoice()">Confirm</button>
+        </div>
       </div>
     </div>
   }

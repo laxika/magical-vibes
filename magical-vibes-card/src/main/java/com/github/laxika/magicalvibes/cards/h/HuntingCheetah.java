@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class HuntingCheetah extends Card {
 
     public HuntingCheetah() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new MayEffect(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.FOREST)),
                         "Search your library for a Forest card?"));
     }

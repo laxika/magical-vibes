@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 @CardRegistration(set = "FEM", collectorNumber = "40a")
 @CardRegistration(set = "FEM", collectorNumber = "40b")
 @CardRegistration(set = "FEM", collectorNumber = "40c")
+@CardRegistration(set = "ME1", collectorNumber = "76")
 public class MindstabThrull extends Card {
 
     public MindstabThrull() {

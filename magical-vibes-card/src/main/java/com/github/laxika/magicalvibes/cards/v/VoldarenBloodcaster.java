@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "138")
+@CardRegistration(set = "VOW", collectorNumber = "137")
 public class VoldarenBloodcaster extends Card {
 
     private static final CreateTokenEffect CREATE_BLOOD = CreateTokenEffect.ofBloodToken(1);

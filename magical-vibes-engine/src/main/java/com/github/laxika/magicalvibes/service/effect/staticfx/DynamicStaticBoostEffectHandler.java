@@ -27,7 +27,9 @@ public class DynamicStaticBoostEffectHandler implements StaticEffectHandlerBean 
         if (!support.matchesCreatureScope(context, boost.scope(), boost.filter())) {
             return;
         }
-        AmountContext amountContext = AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
+        AmountContext amountContext = boost.amountsFromTarget()
+                ? AmountContext.forStaticEffect(context.target(), context.gameData().findControllerOf(context.target()))
+                : AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
         accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), boost.powerBoost(), amountContext));
         accumulator.addToughness(amountEvaluationService.evaluate(context.gameData(), boost.toughnessBoost(), amountContext));
     }

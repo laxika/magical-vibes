@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "286")
+@CardRegistration(set = "ME2", collectorNumber = "193")
 public class ElementalAugury extends Card {
 
     public ElementalAugury() {

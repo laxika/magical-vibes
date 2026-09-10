@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "117")
+@CardRegistration(set = "DDF", collectorNumber = "64")
 public class EnergyChamber extends Card {
 
     public EnergyChamber() {

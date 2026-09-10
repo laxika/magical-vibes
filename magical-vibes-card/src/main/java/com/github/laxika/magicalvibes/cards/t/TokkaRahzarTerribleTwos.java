@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanMa
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "171")
+@CardRegistration(set = "TMT", collectorNumber = "252")
 public class TokkaRahzarTerribleTwos extends Card {
 
     public TokkaRahzarTerribleTwos() {

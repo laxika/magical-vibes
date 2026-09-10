@@ -709,10 +709,7 @@ public class CombatBlockService {
         // battlefield, once per declaration no matter how many creatures blocked.
         checkAnyCreaturesBlockTriggers(gameData, blockerAssignments);
 
-        // Engine-level flanking triggers (CR 702.25a): whenever a creature with flanking becomes
-        // blocked by a creature without flanking, that blocker gets -1/-1 until end of turn. Each
-        // instance of flanking triggers separately (CR 702.25b), but a card can only carry the
-        // Scryfall-loaded keyword once, so one trigger per blocker.
+        // Each flanking ability triggers separately for a blocker without flanking.
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.FLANKING)) {
@@ -722,20 +719,22 @@ public class CombatBlockService {
             if (gameQueryService.hasKeyword(gameData, blocker, Keyword.FLANKING)) {
                 continue;
             }
-            StackEntry flankingTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    attacker.getCard(),
-                    activeId,
-                    attacker.getCard().getName() + "'s flanking trigger",
-                    List.of(new BoostTargetCreatureEffect(-1, -1)),
-                    blocker.getId(),
-                    attacker.getId()
-            );
-            // Flanking references the blocking creature without targeting it.
-            flankingTrigger.setNonTargeting(true);
-            gameData.stack.add(flankingTrigger);
-            gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), "'s flanking triggers."));
-            log.info("Game {} - {} flanking trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            for (int instance = 0; instance < gameQueryService.flankingInstances(gameData, attacker); instance++) {
+                StackEntry flankingTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        activeId,
+                        attacker.getCard().getName() + "'s flanking trigger",
+                        List.of(new BoostTargetCreatureEffect(-1, -1)),
+                        blocker.getId(),
+                        attacker.getId()
+                );
+                // Flanking references the blocking creature without targeting it.
+                flankingTrigger.setNonTargeting(true);
+                gameData.stack.add(flankingTrigger);
+                gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), "'s flanking triggers."));
+                log.info("Game {} - {} flanking trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            }
         }
 
         // "Whenever this creature attacks and isn't blocked" triggers (ON_ATTACKS_UNBLOCKED,
@@ -856,16 +855,18 @@ public class CombatBlockService {
 
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLANKING)
                     && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLANKING)) {
-                StackEntry flankingTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        activeId,
-                        attacker.getCard().getName() + "'s flanking trigger",
-                        List.of(new BoostTargetCreatureEffect(-1, -1)),
-                        blocker.getId(),
-                        attacker.getId());
-                flankingTrigger.setNonTargeting(true);
-                gameData.stack.add(flankingTrigger);
+                for (int instance = 0; instance < gameQueryService.flankingInstances(gameData, attacker); instance++) {
+                    StackEntry flankingTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            attacker.getCard(),
+                            activeId,
+                            attacker.getCard().getName() + "'s flanking trigger",
+                            List.of(new BoostTargetCreatureEffect(-1, -1)),
+                            blocker.getId(),
+                            attacker.getId());
+                    flankingTrigger.setNonTargeting(true);
+                    gameData.stack.add(flankingTrigger);
+                }
             }
         }
 
@@ -1289,6 +1290,7 @@ public class CombatBlockService {
     private boolean hasGlobalBlockerDeclarationControl(GameData gameData) {
         return gameData.playerBattlefields.values().stream()
                 .flatMap(Collection::stream)
+                .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(BlockerDeclarationControlEffect.class::isInstance);
     }
@@ -2036,6 +2038,8 @@ public class CombatBlockService {
                     );
                     // "That creature" wording references the blocker without targeting it.
                     trigger.setNonTargeting(true);
+                    trigger.getRemovedPermanentControllers().put(blocker.getId(),
+                            gameQueryService.findPermanentController(gameData, blocker.getId()));
                     gameData.stack.add(trigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
                     log.info("Game {} - {} any-creature-blocks trigger pushed onto stack for {}",
@@ -2680,6 +2684,7 @@ public class CombatBlockService {
     private boolean hasGlobalMustBlockEachCombat(GameData gameData) {
         return gameData.playerBattlefields.values().stream()
                 .flatMap(Collection::stream)
+                .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance);
     }

@@ -60,7 +60,7 @@ public class SacrificeUnlessSacrificeOwnPermanentEffectHandler implements Normal
 
         if (!hasValidPermanent) {
             if (sourcePermanent != null) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
                 gameLogService.append(gameData, GameLog.builder()
                         .text(playerName + " controls no " + e.description() + " to sacrifice. ")
                         .card(sourceCard)

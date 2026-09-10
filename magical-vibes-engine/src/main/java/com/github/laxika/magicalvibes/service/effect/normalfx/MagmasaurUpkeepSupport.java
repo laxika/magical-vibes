@@ -59,9 +59,14 @@ public class MagmasaurUpkeepSupport {
      * — once the creature is gone the damage uses that last known information (CR 608.2h).
      */
     public void applyPenalty(GameData gameData, UUID controllerId, UUID sourcePermanentId, Card sourceCard) {
-        int damage = counters(gameData, sourcePermanentId);
+        applyPenalty(gameData, controllerId, sourcePermanentId, sourceCard, null);
+    }
 
+    public void applyPenalty(GameData gameData, UUID controllerId, UUID sourcePermanentId, Card sourceCard,
+                             Permanent snapshot) {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        Permanent damageSource = source != null ? source : snapshot;
+        int damage = damageSource == null ? 0 : damageSource.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (source != null) {
             destructionSupport.sacrificeAndLog(gameData, source, controllerId);
         }

@@ -26,7 +26,8 @@ public class PutCardToBattlefieldEffectHandler implements NormalEffectHandlerBea
         java.util.UUID sourceEquipmentCardId = e.attachSourceEquipment() ? entry.getCard().getId() : null;
         playerInteractionSupport.applyPutCardToBattlefield(gameData, entry.getControllerId(), e, entry.getXValue(),
                 sourceEquipmentCardId, entry.getCard() == null ? null : entry.getCard().getId(),
-                e.enterBlocking() ? entry.getTargetId() : null);
+                null, null, e.enterBlocking() ? entry.getTargetId() : null,
+                ignored -> true, entry.getSourcePermanentId());
 
     }
 }

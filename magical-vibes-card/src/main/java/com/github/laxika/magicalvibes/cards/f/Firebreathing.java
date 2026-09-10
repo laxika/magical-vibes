@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "5ED", collectorNumber = "228")
 @CardRegistration(set = "4ED", collectorNumber = "193")
 @CardRegistration(set = "MIR", collectorNumber = "174")
+@CardRegistration(set = "3ED", collectorNumber = "151")
 public class Firebreathing extends Card {
 
     public Firebreathing() {

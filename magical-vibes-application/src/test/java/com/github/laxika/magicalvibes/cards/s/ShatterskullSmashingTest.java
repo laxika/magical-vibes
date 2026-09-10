@@ -48,8 +48,7 @@ class ShatterskullSmashingTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .extracting(card -> card.getClass())
-                .containsExactlyInAnyOrder(GrizzlyBears.class, GrizzlyBears.class);
+                .containsExactlyInAnyOrder(first.getCard(), second.getCard());
     }
 
     @Test

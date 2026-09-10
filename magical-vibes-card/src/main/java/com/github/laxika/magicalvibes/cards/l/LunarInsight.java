@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongContro
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "46")
+@CardRegistration(set = "FDN", collectorNumber = "310")
+@CardRegistration(set = "FDN", collectorNumber = "378")
+@CardRegistration(set = "FDN", collectorNumber = "456")
 public class LunarInsight extends Card {
 
     public LunarInsight() {

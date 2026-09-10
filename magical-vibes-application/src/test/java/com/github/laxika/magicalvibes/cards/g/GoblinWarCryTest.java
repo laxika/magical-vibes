@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BearCub;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinWarCry.class, BearCub.class, Island.class})
 class GoblinWarCryTest extends BaseCardTest {
 
     @Test
@@ -42,6 +45,21 @@ class GoblinWarCryTest extends BaseCardTest {
         assertThat(kept.isCantBlockThisTurn()).isFalse();
         assertThat(other1.isCantBlockThisTurn()).isTrue();
         assertThat(other2.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only creatures are considered; other permanents are unaffected")
+    void onlyCreaturesAreRestricted() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent kept = addReadyCreature(player2);
+        Permanent other = addReadyCreature(player2);
+
+        castGoblinWarCry();
+        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+
+        assertThat(island.isCantBlockThisTurn()).isFalse();
+        assertThat(kept.isCantBlockThisTurn()).isFalse();
+        assertThat(other.isCantBlockThisTurn()).isTrue();
     }
 
     @Test
@@ -87,10 +105,7 @@ class GoblinWarCryTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class);
@@ -109,13 +124,10 @@ class GoblinWarCryTest extends BaseCardTest {
     private void castGoblinWarCry() {
         harness.setHand(player1, List.of(new GoblinWarCry()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private Permanent addReadyCreature(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new BearCub());
     }
 }

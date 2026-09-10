@@ -119,7 +119,7 @@ public class ETBTokenTargetService {
                         && !targetLegalityService.matchesStackEntryPredicate(gameData, se, pending.spellFilter(), pending.controllerId())) {
                     continue;
                 }
-                validSpellCardIds.add(se.getCard().getId());
+                validSpellCardIds.add(se.getTargetableId());
             }
 
             List<UUID> validPermanentTargetIds = new ArrayList<>();
@@ -173,7 +173,8 @@ public class ETBTokenTargetService {
                     pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
                     pending.sourcePermanentId() == null
                             ? null
-                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
+                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()),
+                    null, pending.xValue());
             List<UUID> validSpellTargets = validMixedEtbSpellTargets(gameData, pending);
             List<UUID> validPlayerTargets = targets.validTargets().stream()
                     .filter(gameData.playerIds::contains)
@@ -244,7 +245,7 @@ public class ETBTokenTargetService {
                 if (isSpell(stackEntry)
                         && targetLegalityService.matchesStackEntryPredicate(
                         gameData, stackEntry, spells.inner(), controllerId)) {
-                    validTargets.add(stackEntry.getCard().getId());
+                    validTargets.add(stackEntry.getTargetableId());
                 }
             }
         }
@@ -309,7 +310,8 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId(),
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
                 continue;
             }
 
@@ -326,7 +328,8 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId(),
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
                 continue;
             }
 
@@ -360,7 +363,7 @@ public class ETBTokenTargetService {
                     for (Permanent p : battlefield) {
                         if (targetAlreadyChosen(pending, p.getId())) continue;
                         if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
-                                pending.controllerId(), card, pending.sourcePermanentId())) {
+                                pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue())) {
                             validPermanentTargets.add(p.getId());
                         }
                     }
@@ -410,6 +413,21 @@ public class ETBTokenTargetService {
                         selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
             }
 
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
+                    && !pending.chosenTargetsSoFar().isEmpty()) {
+                UUID firstTargetId = pending.chosenTargetsSoFar().getFirst();
+                UUID requiredControllerId = gameData.playerIds.contains(firstTargetId)
+                        ? firstTargetId
+                        : gameQueryService.findPermanentController(gameData, firstTargetId);
+                if (requiredControllerId == null && !gameData.playerIds.contains(firstTargetId)) {
+                    requiredControllerId = gameQueryService.findGraveyardOwnerById(gameData, firstTargetId);
+                }
+                UUID controllerId = requiredControllerId;
+                validPermanentTargets.removeIf(id ->
+                        !java.util.Objects.equals(controllerId,
+                                gameQueryService.findPermanentController(gameData, id)));
+            }
+
             boolean noLegalTargets = validPlayerTargets.isEmpty()
                     && validPermanentTargets.isEmpty()
                     && validExiledCardTargets.isEmpty();
@@ -428,11 +446,21 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId(),
+                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource()));
                 continue;
             }
 
             boolean minMet = chosenInGroup >= effectiveMinTargets;
+            if (effectiveMinTargets == 0 && group.getMaxTargets() > 1
+                    && validPermanentTargets.isEmpty() && validExiledCardTargets.isEmpty()
+                    && validPlayerTargets.contains(pending.controllerId())) {
+                playerInputService.beginMultiPermanentOrPlayerChoice(gameData, pending.controllerId(),
+                        List.of(), validPlayerTargets, Math.min(validPlayerTargets.size(), effectiveMaxTargets - chosenInGroup),
+                        new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbPlayerTargetGroup(pending),
+                        card.getName() + "'s ability — Choose target players.");
+                return;
+            }
             boolean mustChooseRemainingController =
                     card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
             if (minMet && !mustChooseRemainingController
@@ -476,16 +504,19 @@ public class ETBTokenTargetService {
     private int effectiveMaxTargets(GameData gameData,
                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
                                     SpellTarget group) {
+        int staticMax = group.isXScaled()
+                ? Math.min(pending.xValue(), group.getMaxTargets())
+                : group.getMaxTargets();
         if (group.getDynamicMaxTargets() == null) {
-            return group.getMaxTargets();
+            return staticMax;
         }
         Permanent source = pending.sourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         int dynamicMax = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
-                new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0, false,
+                new AmountContext(pending.controllerId(), source, null, pending.xValue(), pending.eventValue(), false,
                         null, pending.repeatedAdditionalCosts(), null));
-        return Math.min(group.getMaxTargets(), Math.max(0, dynamicMax));
+        return Math.min(staticMax, Math.max(0, dynamicMax));
     }
 
     public int effectiveMinTargets(GameData gameData,
@@ -507,7 +538,7 @@ public class ETBTokenTargetService {
                 ? null
                 : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         int dynamicMin = amountEvaluationService.evaluate(gameData, group.getDynamicMinTargets(),
-                new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0, false,
+                new AmountContext(pending.controllerId(), source, null, pending.xValue(), pending.eventValue(), false,
                         null, pending.repeatedAdditionalCosts(), null));
         return Math.max(staticMin, Math.max(0, dynamicMin));
     }
@@ -574,10 +605,19 @@ public class ETBTokenTargetService {
                 List.of(),
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
+        etbEntry.setMultiTargetConstraint(card.getMultiTargetConstraint());
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
+        etbEntry.setEventValue(pending.eventValue());
         etbEntry.setTriggeringCardId(pending.triggeringCardId());
+        if (pending.planarSource() != null) {
+            etbEntry.setSourcePlanarObject(pending.planarSource().copy());
+        }
+        if (pending.triggeringPermanentId() != null && card.isAura()) {
+            etbEntry.setTargetId(pending.triggeringPermanentId());
+        }
         if (pending.sourcePermanentId() != null) {
-            etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
+            etbEntry.setTriggeringPermanentId(pending.triggeringPermanentId() != null
+                    ? pending.triggeringPermanentId() : pending.sourcePermanentId());
             Permanent sourcePermanent = gameQueryService.findPermanentById(
                     gameData, pending.sourcePermanentId());
             if (sourcePermanent != null) {
@@ -645,7 +685,7 @@ public class ETBTokenTargetService {
         }
         List<CardEffect> matched = new ArrayList<>();
         for (CardEffect effect : effects) {
-            if (card.getEffectTargetIndex(effect) == groupIndex) {
+            if (card.isEffectBoundToTargetGroup(effect, groupIndex)) {
                 matched.add(effect);
             }
         }
@@ -664,7 +704,7 @@ public class ETBTokenTargetService {
     private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
                                                   TargetFilter targetFilter,
                                                   UUID controllerId, Card sourceCard,
-                                                  UUID sourcePermanentId) {
+                                                  UUID sourcePermanentId, int xValue) {
         if (targetFilter == null) {
             return gameQueryService.isCreature(gameData, permanent);
         }
@@ -672,7 +712,7 @@ public class ETBTokenTargetService {
             return false;
         }
         FilterContext filterContext = new FilterContext(
-                gameData, sourceCard.getId(), controllerId, null, null, sourcePermanentId);
+                gameData, sourceCard.getId(), controllerId, xValue, null, sourcePermanentId);
         return predicateEvaluationService.checkTargetFilter(targetFilter, permanent, filterContext).isEmpty();
     }
 }

@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "41")
+@CardRegistration(set = "FDN", collectorNumber = "308")
+@CardRegistration(set = "FDN", collectorNumber = "376")
+@CardRegistration(set = "FDN", collectorNumber = "454")
 public class HomunculusHorde extends Card {
 
     public HomunculusHorde() {

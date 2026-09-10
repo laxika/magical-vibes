@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromHandWithManaVa
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "91")
+@CardRegistration(set = "V10", collectorNumber = "1")
 public class AetherVial extends Card {
 
     public AetherVial() {

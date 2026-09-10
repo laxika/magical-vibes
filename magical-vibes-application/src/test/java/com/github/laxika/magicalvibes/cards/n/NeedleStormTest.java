@@ -1,78 +1,71 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.r.RathiDragon;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NeedleStorm.class, WindDrake.class, RathiDragon.class, TrainedArmodon.class})
 class NeedleStormTest extends BaseCardTest {
-
-    /** A 2/2 flying creature for test purposes. */
-    private static Card flyingCreature() {
-        Card card = new Card();
-        card.setName("Wind Drake");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{2}{U}");
-        card.setColor(CardColor.BLUE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setKeywords(Set.of(Keyword.FLYING));
-        return card;
-    }
 
     @Test
     @DisplayName("Deals 4 damage to each creature with flying, on both battlefields")
     void dealsFourDamageToFlyingCreatures() {
-        harness.addToBattlefield(player1, flyingCreature());
-        harness.addToBattlefield(player2, flyingCreature());
+        harness.addToBattlefield(player1, new WindDrake());
+        Permanent resilientFlyingCreature = harness.addToBattlefieldAndReturn(player2, new RathiDragon());
 
-        harness.setHand(player1, List.of(new NeedleStorm()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new NeedleStorm(), "{2}{G}");
 
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Wind Drake");
-        harness.assertNotOnBattlefield(player2, "Wind Drake");
+        harness.assertOnBattlefield(player2, "Rathi Dragon");
+        assertThat(resilientFlyingCreature.getMarkedDamage()).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Does not damage non-flying creatures")
     void doesNotDamageNonFlyingCreatures() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent groundCreature = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
 
-        harness.setHand(player1, List.of(new NeedleStorm()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new NeedleStorm(), "{2}{G}");
 
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Trained Armodon");
+        assertThat(groundCreature.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Does not damage players")
     void doesNotDamagePlayers() {
-        harness.setHand(player1, List.of(new NeedleStorm()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new NeedleStorm(), "{2}{G}");
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    @Test
+    @DisplayName("Deals exactly 4 damage to each surviving flying creature")
+    void dealsExactlyFourDamageToEachSurvivingFlyingCreature() {
+        RathiDragon player1Card = new RathiDragon();
+        RathiDragon player2Card = new RathiDragon();
+        Permanent player1Creature = harness.addToBattlefieldAndReturn(player1, player1Card);
+        Permanent player2Creature = harness.addToBattlefieldAndReturn(player2, player2Card);
+
+        harness.castFromHand(player1, new NeedleStorm(), "{2}{G}");
+
+        harness.passBothPriorities();
+
+        assertThat(player1Creature.getMarkedDamage()).isEqualTo(4);
+        assertThat(player2Creature.getMarkedDamage()).isEqualTo(4);
     }
 }

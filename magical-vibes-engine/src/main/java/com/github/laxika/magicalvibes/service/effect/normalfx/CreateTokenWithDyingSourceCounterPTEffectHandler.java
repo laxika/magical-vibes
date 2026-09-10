@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -23,7 +22,9 @@ public class CreateTokenWithDyingSourceCounterPTEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var create = (CreateTokenWithDyingSourceCounterPTEffect) effect;
-        int counters = create.counters().getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        int counters = create.counterType() == null
+                ? create.counters().values().stream().mapToInt(Integer::intValue).sum()
+                : create.counters().getOrDefault(create.counterType(), 0);
         createTokenEffectHandler.resolve(gameData, entry,
                 create.tokenTemplate().withPowerToughness(counters, counters));
     }

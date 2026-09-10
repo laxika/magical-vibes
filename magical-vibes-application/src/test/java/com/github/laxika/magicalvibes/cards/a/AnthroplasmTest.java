@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Anthroplasm.class})
 class AnthroplasmTest extends BaseCardTest {
 
     @Test
@@ -41,6 +43,21 @@ class AnthroplasmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(anthroplasm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Activation removes only +1/+1 counters")
+    void removesOnlyPlusOneCounters() {
+        Permanent anthroplasm = addReadyAnthroplasm(2);
+        anthroplasm.setCounterCount(CounterType.CHARGE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(anthroplasm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(anthroplasm.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
     }
 
     @Test

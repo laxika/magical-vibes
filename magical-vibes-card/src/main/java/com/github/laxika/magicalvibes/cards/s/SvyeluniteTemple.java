@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "425")
 @CardRegistration(set = "FEM", collectorNumber = "102")
 @CardRegistration(set = "BTD", collectorNumber = "78")
+@CardRegistration(set = "ME2", collectorNumber = "237")
 public class SvyeluniteTemple extends Card {
 
     public SvyeluniteTemple() {

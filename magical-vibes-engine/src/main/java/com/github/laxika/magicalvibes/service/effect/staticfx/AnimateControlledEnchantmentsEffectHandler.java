@@ -33,7 +33,7 @@ public class AnimateControlledEnchantmentsEffectHandler implements StaticEffectH
         AnimateControlledEnchantmentsEffect animate = (AnimateControlledEnchantmentsEffect) effect;
         Permanent target = context.target();
         if (!context.targetOnSameBattlefield()) return;
-        if (context.source() != null && context.source().getId().equals(target.getId())) return;
+        if (context.source() != null && context.sourceId().equals(target.getId())) return;
         if (!gameQueryService.isEnchantment(target)
                 || target.getCard().getSubtypes().contains(CardSubtype.AURA)) {
             return;

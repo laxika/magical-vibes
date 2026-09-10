@@ -45,6 +45,9 @@ public class BecomeCopyOfEnteringCreatureEffectHandler implements NormalEffectHa
 
         Permanent entering = gameQueryService.findPermanentById(gameData, e.enteringPermanentId());
         if (entering == null) {
+            entering = e.enteringSnapshot();
+        }
+        if (entering == null) {
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                     "'s ability fizzles (the creature that entered is no longer on the battlefield)."));
             log.info("Game {} - Become-copy-of-entering fizzles, entering permanent gone", gameData.id);
@@ -53,6 +56,13 @@ public class BecomeCopyOfEnteringCreatureEffectHandler implements NormalEffectHa
 
         String originalName = source.getCard().getName();
         Card enteringCard = entering.getCard();
+        if (entering.isFaceDown()) {
+            enteringCard = new Card();
+            enteringCard.setName(null);
+            enteringCard.setType(com.github.laxika.magicalvibes.model.CardType.CREATURE);
+            enteringCard.setPower(entering.getFaceDownPower());
+            enteringCard.setToughness(entering.getFaceDownToughness());
+        }
         permanentCopierService.applyCloneCopy(source, enteringCard, null, null, Set.of());
 
         // "except it has this ability" — re-grant the source's own enters trigger onto the copy.

@@ -43,7 +43,7 @@ public class MoveKeywordFromTargetToTargetEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Keyword keyword = ((MoveKeywordFromTargetToTargetEffect) effect).keyword();
-        List<UUID> targets = entry.getTargetIds();
+        List<UUID> targets = entry.getDeclaredTargetIds();
         if (targets == null || targets.isEmpty()) {
             return;
         }

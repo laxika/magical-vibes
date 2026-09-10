@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "135")
+@CardRegistration(set = "TMT", collectorNumber = "275")
 public class TurtlePower extends Card {
 
     public TurtlePower() {

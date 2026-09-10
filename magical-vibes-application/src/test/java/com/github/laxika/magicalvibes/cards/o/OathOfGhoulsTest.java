@@ -89,4 +89,51 @@ class OathOfGhoulsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    void activePlayerMayReturnTheirOwnCreatureOnTheirOwnUpkeep() {
+        harness.addToBattlefield(player1, new OathOfGhouls());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new Forest()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Forest");
+    }
+
+    @Test
+    void returnChoiceOnlyOffersCreatureCards() {
+        harness.addToBattlefield(player1, new OathOfGhouls());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(new Forest(), new GrizzlyBears()));
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices())
+                .containsExactly(1);
+        harness.handleGraveyardCardChosen(player2, 1);
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Forest");
+    }
 }

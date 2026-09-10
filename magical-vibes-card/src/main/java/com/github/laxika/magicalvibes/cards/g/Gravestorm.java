@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ODY", collectorNumber = "141")
+@CardRegistration(set = "PHUK", collectorNumber = "37")
 public class Gravestorm extends Card {
 
     public Gravestorm() {

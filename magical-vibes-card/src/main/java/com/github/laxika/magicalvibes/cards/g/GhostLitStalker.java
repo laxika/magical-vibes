@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "69")
+@CardRegistration(set = "DDD", collectorNumber = "34")
 public class GhostLitStalker extends Card {
 
     public GhostLitStalker() {

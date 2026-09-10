@@ -20,7 +20,7 @@ public record ExileTopCardMayPlayThisTurnEffect(
         DynamicAmount count,
         boolean withoutPayingManaCost,
         CardPredicate freeCastFilter
-) implements CardEffect {
+) implements ExileTopCardsMayPlayThisTurnDrawReplacementEffect {
 
     /** Single-card variant (Oracle's Vault). */
     public ExileTopCardMayPlayThisTurnEffect(boolean withoutPayingManaCost) {

@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,39 +14,41 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JustFate.class, BearCub.class})
 class JustFateTest extends BaseCardTest {
 
     @Test
     @DisplayName("Cast during declare attackers while attacked: destroys the attacker")
     void destroysAttacker() {
-        harness.forceActivePlayer(player1);
-        Permanent attacker = addAttacker(player1, player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BearCub());
+        addCreatureReady(player2, new BearCub());
+        declareAttackers(List.of(0));
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new JustFate()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
     }
 
     @Test
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttacker() {
-        harness.forceActivePlayer(player1);
-        addAttacker(player1, player2, new GrizzlyBears()); // valid target elsewhere so the spell is castable
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        java.util.UUID nonAttackerId = harness.getPermanentId(player2, "Grizzly Bears");
+        addCreatureReady(player1, new BearCub());
+        Permanent nonAttacker = addCreatureReady(player2, new BearCub());
+        declareAttackers(List.of(0));
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new JustFate()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, nonAttackerId))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, nonAttacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking creature");
     }
@@ -55,8 +56,9 @@ class JustFateTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast outside the declare attackers step")
     void cannotCastOutsideDeclareAttackers() {
-        harness.forceActivePlayer(player1);
-        Permanent attacker = addAttacker(player1, player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BearCub());
+        addCreatureReady(player2, new BearCub());
+        declareAttackers(List.of(0));
         harness.setHand(player2, List.of(new JustFate()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
@@ -67,12 +69,20 @@ class JustFateTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    private Permanent addAttacker(Player controller, Player defender, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        perm.setAttacking(true);
-        perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(controller.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Cannot cast during declare attackers if you have not been attacked")
+    void cannotCastWhenNotAttacked() {
+        Permanent attacker = addCreatureReady(player1, new BearCub());
+        addCreatureReady(player2, new BearCub());
+        declareAttackers(List.of(0));
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new JustFate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 }

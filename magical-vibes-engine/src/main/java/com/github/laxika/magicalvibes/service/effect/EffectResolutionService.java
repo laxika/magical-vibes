@@ -131,7 +131,7 @@ public class EffectResolutionService {
                     effectOccurrence++;
                 }
             }
-            int resolvingTargetGroup = entry.getCard().getEffectTargetIndex(effect, effectOccurrence);
+            int resolvingTargetGroup = (entry.getCard() == null ? -1 : entry.getCard().getEffectTargetIndex(effect, effectOccurrence));
             entry.setResolvingEffectTargetGroup(resolvingTargetGroup >= 0 ? resolvingTargetGroup : null);
 
             // Resolution-time conditions that depend on the target (e.g. TargetPermanentMatches)
@@ -139,7 +139,7 @@ public class EffectResolutionService {
             // spell the target lives in the flat targetIds list and is only remapped below. Build
             // the condition context against the group's chosen target up front.
             ConditionContext conditionContext = ConditionContext.forStackEntry(entry);
-            if (entry.getCard().getEffectTargetIndex(effect) >= 0) {
+            if (entry.getCard() != null && entry.getCard().getEffectTargetIndex(effect) >= 0) {
                 List<UUID> conditionTargets = entry.targetsForEffect(effect);
                 if (!conditionTargets.isEmpty()) {
                     conditionContext = conditionContext.withTargetId(conditionTargets.getFirst());
@@ -350,6 +350,7 @@ public class EffectResolutionService {
             gameData.clearSpellCastManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
+            gameData.clearSpellCastTreasureManaSpent(entry.getCard().getId());
             gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }

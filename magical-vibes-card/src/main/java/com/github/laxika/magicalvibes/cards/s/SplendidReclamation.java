@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "171")
+@CardRegistration(set = "VOW", collectorNumber = "221")
 public class SplendidReclamation extends Card {
 
     public SplendidReclamation() {

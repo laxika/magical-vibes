@@ -17,17 +17,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DoomsdayEffect}: the controller loses half their life (rounded up), then their
- * library and graveyard are held out as one combined pool. A {@link PendingInteraction.DoomsdayChoice}
- * lets the controller keep up to five of those cards on top of their library (ordered via the
- * shared library-reorder flow); the rest are exiled.
+ * Holds the library and graveyard as one pool and chooses five cards, or all available cards
+ * if fewer remain. The rest are exiled and the chosen cards are ordered on the library.
+ * Subsequent spell effects resume after the choice and ordering finish.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DoomsdayEffectHandler implements NormalEffectHandlerBean {
 
-    private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -55,11 +53,6 @@ public class DoomsdayEffectHandler implements NormalEffectHandlerBean {
             graveyard.clear();
         }
 
-        // "You lose half your life, rounded up." Computed from the current life total.
-        int life = gameData.getLife(controllerId);
-        int lifeLoss = (life + 1) / 2;
-        lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, cardName);
-
         if (pool.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(controllerName + " has no cards in their library or graveyard (" + cardName + ")."));
             return;
@@ -69,7 +62,7 @@ public class DoomsdayEffectHandler implements NormalEffectHandlerBean {
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.DoomsdayChoice(controllerId, pool, maxCount));
 
-        log.info("Game {} - Awaiting {} to choose up to {} cards for {} (pool of {})",
+        log.info("Game {} - Awaiting {} to choose {} cards for {} (pool of {})",
                 gameData.id, controllerName, maxCount, cardName, pool.size());
     }
 }

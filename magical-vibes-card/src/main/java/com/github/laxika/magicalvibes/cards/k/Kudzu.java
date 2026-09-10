@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SUM", collectorNumber = "205")
+@CardRegistration(set = "3ED", collectorNumber = "205")
 public class Kudzu extends Card {
 
     public Kudzu() {

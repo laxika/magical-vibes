@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.effect.AsEntersGraveyardExileEffect;
+import com.github.laxika.magicalvibes.model.effect.AsEntersOpponentExileToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -515,6 +517,36 @@ public class AsEntersInteractionService {
             return;
         }
 
+        AsEntersOpponentExileToGraveyardEffect opponentExileToGraveyard =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(AsEntersOpponentExileToGraveyardEffect.class::isInstance)
+                        .map(AsEntersOpponentExileToGraveyardEffect.class::cast)
+                        .findFirst().orElse(null);
+        if (opponentExileToGraveyard != null) {
+            List<Card> eligibleCards;
+            UUID entryControllerId = controllerId;
+            synchronized (gameData.exiledCards) {
+                eligibleCards = gameData.exiledCards.stream()
+                        .filter(exiled -> !exiled.faceDown()
+                                && gameData.playerIds.contains(exiled.ownerId())
+                                && !entryControllerId.equals(exiled.ownerId()))
+                        .map(ExiledCardEntry::card)
+                        .toList();
+            }
+            if (eligibleCards.size() >= 2) {
+                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                Permanent justEntered = bf.get(bf.size() - 1);
+                gameData.graveyardTargetOperation.asEntersOpponentExileToGraveyard =
+                        new GraveyardTargetOperationState.AsEntersOpponentExileToGraveyardContext(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode,
+                                xValue, kicked, targetIds, opponentExileToGraveyard.counterCount());
+                playerInputService.beginMultiGraveyardChoice(gameData, controllerId,
+                        new ArrayList<>(eligibleCards), 2, 0,
+                        card.getName() + " — Put two opponent-owned cards from exile into their owners' graveyards?");
+                return;
+            }
+        }
+
         // As-enters graveyard exiles are tracked with the entering permanent so its continuous
         // effects can derive values from the exiled cards.
         ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect limitedGraveyardExile =
@@ -581,12 +613,17 @@ public class AsEntersInteractionService {
 
     public void applyAsEntersExileCounters(GameData gameData, UUID controllerId, UUID enteringPermanentId,
                                            int exiledCardCount, int countersPerCard) {
+        applyAsEntersPlusOnePlusOneCounters(gameData, controllerId, enteringPermanentId,
+                exiledCardCount * countersPerCard);
+    }
+
+    public void applyAsEntersPlusOnePlusOneCounters(GameData gameData, UUID controllerId,
+                                                     UUID enteringPermanentId, int count) {
         Permanent permanent = gameQueryService.findPermanentById(gameData, enteringPermanentId);
-        if (permanent == null || exiledCardCount <= 0 || countersPerCard <= 0
+        if (permanent == null || count <= 0
                 || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
             return;
         }
-        int count = exiledCardCount * countersPerCard;
         count = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, controllerId, count);
         if (count > 0) {
             permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
@@ -612,6 +649,8 @@ public class AsEntersInteractionService {
         permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + count);
         permanentCounterSupport.recordCounterPlacedOnCreature(gameData, permanent, controllerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                    gameData, permanent, controllerId);
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                     gameData, permanent, count, controllerId);
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent, controllerId);

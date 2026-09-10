@@ -21,7 +21,8 @@ public class AbandonHope extends Card {
         addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
         // Look at target opponent's hand and choose X cards from it; that player discards them.
         addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(
-                new XValue(), List.of(), HandChoiceDestination.DISCARD));
+                new XValue(), List.of(), List.of(), HandChoiceDestination.DISCARD,
+                false, null, 0, false, false, false, false));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));

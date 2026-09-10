@@ -664,6 +664,11 @@ public class GameTestHarness {
         gameService.foretellCard(gameData, player, cardIndex);
     }
 
+    public void unlockRoomDoor(Player player, int permanentIndex, int doorIndex) {
+        ensurePriority(player);
+        gameService.unlockRoomDoor(gameData, player, permanentIndex, doorIndex);
+    }
+
     public void castCreatureWithAlternateCost(Player player, int cardIndex, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         if (sacrificePermanentIds == null || sacrificePermanentIds.isEmpty()) {
@@ -831,6 +836,10 @@ public class GameTestHarness {
     public void castSorcery(Player player, int cardIndex, int xValue) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, null, null);
+    }
+
+    public void castSorcery(Player player, int cardIndex) {
+        castSorcery(player, cardIndex, 0);
     }
 
     public void castSorceryWithBehold(Player player, int cardIndex, int xValue, CardSubtype chosenType,
@@ -1132,6 +1141,14 @@ public class GameTestHarness {
                 null, null, List.of(), List.of(), null, null, chosenObjectId);
     }
 
+    public void castSorceryWithChosenAdditionalCostObject(Player player, int cardIndex, UUID targetId,
+                                                          UUID chosenObjectId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
+                null, null, List.of(), List.of(), null, null, chosenObjectId);
+    }
+
     public void castInstantWithRepeatedCosts(Player player, int cardIndex, UUID targetId,
                                               List<String> repeatedAdditionalCosts) {
         ensurePriority(player);
@@ -1364,6 +1381,14 @@ public class GameTestHarness {
     public void castWithConspire(Player player, int cardIndex, UUID targetId, List<UUID> conspireCreatureIds) {
         ensurePriority(player);
         gameService.playCardWithConspire(gameData, player, cardIndex, 0, targetId, null, List.of(), conspireCreatureIds);
+    }
+
+    public void castWithCasualty(Player player, int cardIndex, UUID targetId, List<UUID> casualtyCreatureIds) {
+        ensurePriority(player);
+        gameService.playCardWithCasualty(gameData, player, cardIndex, 0, targetId, null,
+                List.of(), List.of(), false, null, null, null, null, null, false, null, null,
+                List.of(), List.of(), List.of(), false, null, null, null, List.of(), List.of(), null,
+                casualtyCreatureIds);
     }
 
     public void castWithSplice(Player player, int cardIndex, UUID targetId, List<Integer> spliceHandCardIndices) {

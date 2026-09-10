@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "183")
+@CardRegistration(set = "FDN", collectorNumber = "555")
 public class JoragaInvocation extends Card {
 
     public JoragaInvocation() {

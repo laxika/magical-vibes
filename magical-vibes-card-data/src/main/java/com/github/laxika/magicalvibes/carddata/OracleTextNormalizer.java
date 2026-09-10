@@ -110,8 +110,7 @@ public final class OracleTextNormalizer {
     }
 
     private static boolean isEmDashParameterizedKeyword(String segment, String keyword) {
-        return segment.length() > keyword.length()
-                && segment.charAt(keyword.length()) == '\u2014';
+        return segment.substring(keyword.length()).stripLeading().startsWith("\u2014");
     }
 
     private static boolean allKeywords(String[] segments, Set<String> keywords) {

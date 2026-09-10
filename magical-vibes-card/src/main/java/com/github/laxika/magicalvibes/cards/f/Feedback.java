@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "85")
 @CardRegistration(set = "4ED", collectorNumber = "71")
+@CardRegistration(set = "3ED", collectorNumber = "58")
 @CardRegistration(set = "ITP", collectorNumber = "9")
 @CardRegistration(set = "RQS", collectorNumber = "9")
 @CardRegistration(set = "SUM", collectorNumber = "58")

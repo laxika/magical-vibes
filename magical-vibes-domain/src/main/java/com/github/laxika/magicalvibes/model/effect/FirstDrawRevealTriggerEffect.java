@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * The draw service supplies the drawn card and selects the ordinary effect to put on the stack;
  * implementations can defer public reveal until a may-choice is accepted.
  */
-public interface FirstDrawRevealTriggerEffect extends CardEffect {
+public interface FirstDrawRevealTriggerEffect extends DrawRevealTriggerEffect {
 
     default boolean onlyOnControllerTurn() {
         return false;

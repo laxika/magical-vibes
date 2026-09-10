@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "120")
+@CardRegistration(set = "TMT", collectorNumber = "198")
 public class MichelangeloMutantBFF extends Card {
 
     public MichelangeloMutantBFF() {

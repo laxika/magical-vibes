@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,7 @@ public class ExileNCardsFromGraveyardThenEffectHandler implements NormalEffectHa
     private final ExileService exileService;
     private final GraveyardService graveyardService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,7 +63,8 @@ public class ExileNCardsFromGraveyardThenEffectHandler implements NormalEffectHa
                             .filter(card -> card.getId().equals(cardId))
                             .findFirst()
                             .orElse(null))
-                    .filter(java.util.Objects::nonNull)
+                    .filter(card -> card != null && predicateEvaluationService.matchesCardPredicate(
+                            card, exileThen.filter(), entry.getCard() == null ? null : entry.getCard().getId()))
                     .toList();
             if (chosenCards.size() != exileThen.count()) {
                 return;
@@ -70,7 +75,10 @@ public class ExileNCardsFromGraveyardThenEffectHandler implements NormalEffectHa
         }
 
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        List<Card> candidates = graveyard == null ? List.of() : List.copyOf(graveyard);
+        UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
+        List<Card> candidates = graveyard == null ? List.of() : graveyard.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, exileThen.filter(), sourceCardId))
+                .toList();
         if (candidates.size() < exileThen.count()) {
             return;
         }
@@ -103,8 +111,19 @@ public class ExileNCardsFromGraveyardThenEffectHandler implements NormalEffectHa
                 gameData.playerIdToName.get(controllerId) + " exiles " + cards.size()
                         + " cards from their graveyard."));
 
-        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                entry.getCard(), controllerId, List.of(effect.thenEffect())));
-        triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
+        if (effect.thenEffect().targetSpec().equals(TargetSpec.NONE)) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    entry.getCard(),
+                    controllerId,
+                    entry.getCard().getName() + "'s ability",
+                    List.of(effect.thenEffect()),
+                    null,
+                    entry.getSourcePermanentId()));
+        } else {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    entry.getCard(), controllerId, List.of(effect.thenEffect())));
+            triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
+        }
     }
 }

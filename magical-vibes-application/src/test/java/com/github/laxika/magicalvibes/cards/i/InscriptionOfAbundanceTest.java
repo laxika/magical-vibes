@@ -65,8 +65,10 @@ class InscriptionOfAbundanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InscriptionOfAbundance()));
         addMana(2, 3);
 
-        harness.castModalInstantWithModes(player1, 0, 1, 3, new int[]{0, 1, 2},
-                List.of(counterTarget.getId(), player2.getId(), fighter.getId(), opponent.getId()));
+        gs.playCard(gd, player1, 0,
+                com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.encodeModeSelection(1, 3, new int[]{0, 1, 2}),
+                null, null, List.of(counterTarget.getId(), player2.getId(), fighter.getId(), opponent.getId()),
+                List.of(), false, null, null, null, null, null, true);
         harness.passBothPriorities();
 
         assertThat(counterTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

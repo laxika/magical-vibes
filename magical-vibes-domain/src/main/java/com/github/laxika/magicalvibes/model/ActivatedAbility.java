@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -21,6 +22,11 @@ import java.util.UUID;
 
 @Getter
 public class ActivatedAbility {
+    /** Special-action payments share the action menu but are not activated abilities. */
+    public boolean isSpecialAction() {
+        return effects.stream().anyMatch(CardEffect::isSpecialAction)
+                && effects.stream().allMatch(effect -> effect instanceof CostEffect || effect.isSpecialAction());
+    }
 
     /**
      * Whether this ability is the engine's representation of a level-up ability.
@@ -129,7 +135,7 @@ public class ActivatedAbility {
     private CounterType sourceCounterScaledTargetsType;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
     private boolean requiresXValue;
-    /** Minimum value that may be chosen for X in this ability's mana cost. */
+    /** Minimum value that may be announced for this ability's {@code X} cost. */
     private int minimumXValue;
     /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
     private boolean modalChoiceAtActivation;
@@ -151,6 +157,8 @@ public class ActivatedAbility {
     private Integer maxActivationsPerGame;
     /** Whether this is an exhaust ability, which may be activated only once per permanent object. */
     private boolean exhaustAbility;
+    /** Whether this is a Power-up ability whose cost is discounted on its source's entry turn. */
+    private boolean powerUpAbility;
     /**
      * When true this hand-activated ability's intrinsic cost exiles the source card instead of
      * discarding it ("Exile this card from your hand: Add {G}" — Elvish Spirit Guide). No discard
@@ -316,6 +324,7 @@ public class ActivatedAbility {
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
         copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
+        copy.powerUpAbility = this.powerUpAbility;
         copy.exilesSourceFromHand = this.exilesSourceFromHand;
         copy.revealsSourceFromHand = this.revealsSourceFromHand;
         copy.ninjutsuAbility = this.ninjutsuAbility;
@@ -378,6 +387,13 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withMaxActivationsPerGame(int maxActivations) {
         this.maxActivationsPerGame = maxActivations;
+        return this;
+    }
+
+    /** Marks this ability as a Power-up ability, usable only once per permanent object. */
+    public ActivatedAbility withPowerUp() {
+        this.powerUpAbility = true;
+        this.maxActivationsPerGame = 1;
         return this;
     }
 
@@ -676,6 +692,7 @@ public class ActivatedAbility {
         return this;
     }
 
+
     /** Marks the modal choice as part of activating this ability rather than resolving it. */
     public ActivatedAbility withModalChoiceAtActivation() {
         this.modalChoiceAtActivation = true;
@@ -742,6 +759,11 @@ public class ActivatedAbility {
         return effects.stream()
                 .filter(effect -> !(effect instanceof CostEffect))
                 .anyMatch(ManaProducingEffect.class::isInstance);
+    }
+
+    /** Whether this activated ability is an equip ability. */
+    public boolean isEquipAbility() {
+        return effects.stream().anyMatch(EquipEffect.class::isInstance);
     }
 
     /**

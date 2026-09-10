@@ -63,6 +63,7 @@ class GrakmawSkyclaveRavagerTest extends BaseCardTest {
     void deathCreatesHydraTokenWithCounterCountAsPowerAndToughness() {
         Permanent grakmaw = addReadyGrakmaw();
         grakmaw.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        grakmaw.setCounterCount(CounterType.CHARGE, 2);
         grakmaw.tap();
 
         destroyWithAssassinate(grakmaw);

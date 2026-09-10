@@ -42,7 +42,7 @@ public class CounterUnlessWaterbendsEffectHandler implements NormalEffectHandler
                 List.of(waterbend),
                 "Pay {" + waterbend.amount() + "} using waterbend to prevent "
                         + targetEntry.getCard().getName() + " from being countered?",
-                targetEntry.getCard().getId(),
+                targetEntry.getTargetableId(),
                 entry.getControllerId()
         ));
     }

@@ -19,6 +19,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast spells, not to pay activated ability costs (Leyline Immersion). */
     SPELL_ONLY,
 
+    /** Spendable only to cast spells with devoid (Corrupted Crossroads). */
+    DEVOID_SPELL,
+
     /** Spendable only to pay activated ability costs (Thran Turbine). */
     ABILITIES,
 
@@ -71,6 +74,9 @@ public enum ManaSpendRestriction {
 
     /** Spendable only to activate abilities of creatures, with colors chosen from the source creature. */
     CREATURE_COLORS_ABILITIES,
+
+    /** Spendable only to activate abilities of creature sources, with any colors allowed. */
+    CREATURE_ABILITIES,
 
     /**
      * Spendable only to cast creature spells of the type chosen as the source entered

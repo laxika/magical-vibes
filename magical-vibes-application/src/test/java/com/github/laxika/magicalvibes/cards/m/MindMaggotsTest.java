@@ -1,22 +1,25 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Fugue;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MindMaggots.class, RagingGoblin.class, Fugue.class})
 class MindMaggotsTest extends BaseCardTest {
 
     @Test
     void discardsChosenCreatureCardsAndGetsTwoCountersPerCard() {
-        harness.setHand(player1, List.of(new MindMaggots(), new GrizzlyBears(), new Mountain(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new MindMaggots(), new RagingGoblin(), new Fugue(), new RagingGoblin()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -37,16 +40,41 @@ class MindMaggotsTest extends BaseCardTest {
         Permanent maggots = findPermanent(player1, "Mind Maggots");
         assertThat(maggots.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gd.playerHands.get(player1.getId()))
-                .filteredOn(card -> card.getName().equals("Mountain"))
+                .filteredOn(card -> card.getName().equals("Fugue"))
                 .hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .filteredOn(card -> card.getName().equals("Grizzly Bears"))
+                .filteredOn(card -> card.getName().equals("Raging Goblin"))
                 .hasSize(2);
     }
 
     @Test
+    void canDiscardOnlySomeEligibleCreatureCards() {
+        harness.setHand(player1, List.of(new MindMaggots(), new RagingGoblin(), new Fugue(), new RagingGoblin()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 2);
+
+        Permanent maggots = findPermanent(player1, "Mind Maggots");
+        assertThat(maggots.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Raging Goblin"))
+                .hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Fugue"))
+                .hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Raging Goblin"))
+                .hasSize(1);
+    }
+
+    @Test
     void choosingZeroDiscardsNoCardsAndAddsNoCounters() {
-        harness.setHand(player1, List.of(new MindMaggots(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new MindMaggots(), new RagingGoblin()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -58,13 +86,13 @@ class MindMaggotsTest extends BaseCardTest {
         Permanent maggots = findPermanent(player1, "Mind Maggots");
         assertThat(maggots.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerHands.get(player1.getId()))
-                .filteredOn(card -> card.getName().equals("Grizzly Bears"))
+                .filteredOn(card -> card.getName().equals("Raging Goblin"))
                 .hasSize(1);
     }
 
     @Test
     void doesNotOfferNoncreatureCardsForDiscard() {
-        harness.setHand(player1, List.of(new MindMaggots(), new Mountain()));
+        harness.setHand(player1, List.of(new MindMaggots(), new Fugue()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

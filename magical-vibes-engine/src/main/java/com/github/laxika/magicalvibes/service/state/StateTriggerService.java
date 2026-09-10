@@ -14,10 +14,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,12 +55,16 @@ public class StateTriggerService {
         this(gameLogService, predicateEvaluationService, null);
     }
 
+
     /**
      * Evaluates a state trigger's condition: a {@code sourcePredicate} goes through the
-     * layer-aware predicate evaluator (so static keyword/color/type grants count), otherwise the
-     * free-form {@link com.github.laxika.magicalvibes.model.effect.StateTriggerPredicate} runs.
+     * layer-aware predicate evaluator (so static keyword/color/type grants count). A supplied
+     * free-form {@link com.github.laxika.magicalvibes.model.effect.StateTriggerPredicate} must also pass.
      */
     private boolean conditionMet(GameData gameData, StateTriggerEffect trigger, Permanent perm, UUID controllerId) {
+        if (trigger.predicate() != null && !trigger.predicate().test(gameData, perm, controllerId)) {
+            return false;
+        }
         if (trigger.sourcePredicate() != null) {
             return predicateEvaluationService.matchesPermanentPredicate(perm, trigger.sourcePredicate(),
                     FilterContext.of(gameData)
@@ -87,7 +93,7 @@ public class StateTriggerService {
             }
             return true;
         }
-        return trigger.predicate().test(gameData, perm, controllerId);
+        return trigger.predicate() != null;
     }
 
     /**
@@ -106,7 +112,7 @@ public class StateTriggerService {
             List<Permanent> snapshot = List.copyOf(battlefield);
             for (Permanent perm : snapshot) {
                 if (gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.STATE_TRIGGERED);
+                List<CardEffect> effects = stateTriggeredEffects(gameData, perm);
                 for (int i = 0; i < effects.size(); i++) {
                     StateTriggerEffect trigger = (StateTriggerEffect) effects.get(i);
 
@@ -148,6 +154,16 @@ public class StateTriggerService {
                 }
             }
         }
+    }
+
+    private List<CardEffect> stateTriggeredEffects(GameData gameData, Permanent permanent) {
+        List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.STATE_TRIGGERED));
+        if (gameQueryService != null) {
+            gameQueryService.getGrantedEffects(gameData, permanent).stream()
+                    .filter(StateTriggerEffect.class::isInstance)
+                    .forEach(effects::add);
+        }
+        return effects;
     }
 
     private Permanent findReferencedPermanent(GameData gameData,

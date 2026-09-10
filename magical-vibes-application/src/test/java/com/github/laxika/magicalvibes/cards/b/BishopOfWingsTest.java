@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BishopOfWings.class, GrizzlyBears.class, Murder.class, StarlitAngel.class})
 class BishopOfWingsTest extends BaseCardTest {
 
     @Test
@@ -75,7 +77,7 @@ class BishopOfWingsTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.BLACK, 3);
 
         UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.getGameService().playCard(harness.getGameData(), caster, 0, 0, targetId, null);
+        harness.castInstant(caster, 0, targetId);
         harness.passBothPriorities();
     }
 }

@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "91")
+@CardRegistration(set = "FDN", collectorNumber = "330")
+@CardRegistration(set = "FDN", collectorNumber = "392")
+@CardRegistration(set = "FDN", collectorNumber = "466")
 public class KellanPlanarTrailblazer extends Card {
 
     public KellanPlanarTrailblazer() {

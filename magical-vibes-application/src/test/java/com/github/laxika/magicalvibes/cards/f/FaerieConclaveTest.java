@@ -2,22 +2,23 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FaerieConclave.class})
 class FaerieConclaveTest extends BaseCardTest {
 
     // ===== Enters the battlefield tapped =====
@@ -26,12 +27,10 @@ class FaerieConclaveTest extends BaseCardTest {
     @DisplayName("Faerie Conclave enters the battlefield tapped")
     void entersBattlefieldTapped() {
         harness.setHand(player1, List.of(new FaerieConclave()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
-        Permanent conclave = findPermanent(player1, "Faerie Conclave");
+        Permanent conclave = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(conclave.isTapped()).isTrue();
     }
 
@@ -40,10 +39,9 @@ class FaerieConclaveTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping Faerie Conclave produces blue mana")
     void tappingProducesBlueMana() {
-        Permanent conclave = addConclaveReady(player1);
-        int index = gd.playerBattlefields.get(player1.getId()).indexOf(conclave);
+        addCreatureReady(player1, new FaerieConclave());
 
-        gs.tapPermanent(gd, player1, index);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
@@ -53,7 +51,7 @@ class FaerieConclaveTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts AnimateLand on the stack")
     void activatingAbilityPutsOnStack() {
-        Permanent conclave = addConclaveReady(player1);
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -62,14 +60,13 @@ class FaerieConclaveTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Faerie Conclave");
         assertThat(entry.getTargetId()).isEqualTo(conclave.getId());
     }
 
     @Test
     @DisplayName("Resolving ability makes it a 2/1 creature with flying")
     void resolvingAbilityMakesItA2x1WithFlying() {
-        Permanent conclave = addConclaveReady(player1);
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -77,53 +74,52 @@ class FaerieConclaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(conclave.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(conclave.getAnimatedPower()).isEqualTo(2);
-        assertThat(conclave.getAnimatedToughness()).isEqualTo(1);
         assertThat(gqs.isCreature(gd, conclave)).isTrue();
         assertThat(gqs.getEffectivePower(gd, conclave)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, conclave)).isEqualTo(1);
-        assertThat(conclave.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(gqs.hasKeyword(gd, conclave, Keyword.FLYING)).isTrue();
     }
 
     @Test
     @DisplayName("Animated Faerie Conclave gains Faerie subtype")
     void animatedGainsFaerieSubtype() {
-        Permanent conclave = addConclaveReady(player1);
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(conclave.getTransientSubtypes()).containsExactly(CardSubtype.FAERIE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, conclave)).contains(CardSubtype.FAERIE);
     }
 
     @Test
     @DisplayName("Animated Faerie Conclave becomes blue")
     void animatedBecomesBlue() {
-        Permanent conclave = addConclaveReady(player1);
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(conclave.getAnimatedColor()).isEqualTo(CardColor.BLUE);
+        assertThat(gqs.getEffectiveColors(gd, conclave)).containsExactly(CardColor.BLUE);
     }
 
     @Test
     @DisplayName("Faerie Conclave is still a land while animated")
     void stillALandWhileAnimated() {
-        Permanent conclave = addConclaveReady(player1);
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(conclave.getCard().getType()).isEqualTo(CardType.LAND);
+        assertThat(gqs.isLand(gd, conclave)).isTrue();
         assertThat(gqs.isCreature(gd, conclave)).isTrue();
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
     // ===== End of turn resets animation =====
@@ -131,7 +127,7 @@ class FaerieConclaveTest extends BaseCardTest {
     @Test
     @DisplayName("Animation resets at end of turn")
     void animationResetsAtEndOfTurn() {
-        Permanent conclave = addConclaveReady(player1);
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -144,11 +140,11 @@ class FaerieConclaveTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(conclave.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, conclave)).isFalse();
-        assertThat(conclave.getGrantedKeywords()).isEmpty();
-        assertThat(conclave.getTransientSubtypes()).isEmpty();
-        assertThat(conclave.getAnimatedColor()).isNull();
+        assertThat(gqs.isLand(gd, conclave)).isTrue();
+        assertThat(gqs.hasKeyword(gd, conclave, Keyword.FLYING)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, conclave)).doesNotContain(CardSubtype.FAERIE);
+        assertThat(gqs.getEffectiveColors(gd, conclave)).isEmpty();
     }
 
     // ===== Mana cost enforcement =====
@@ -156,7 +152,7 @@ class FaerieConclaveTest extends BaseCardTest {
     @Test
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumedWhenActivating() {
-        addConclaveReady(player1);
+        addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -164,12 +160,22 @@ class FaerieConclaveTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Ability requires blue mana")
+    void abilityRequiresBlueMana() {
+        addCreatureReady(player1, new FaerieConclave());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     // ===== Ability does not tap =====
 
     @Test
     @DisplayName("Activating ability does NOT tap the permanent")
     void activatingAbilityDoesNotTap() {
-        Permanent conclave = addConclaveReady(player1);
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -183,13 +189,13 @@ class FaerieConclaveTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if Faerie Conclave is removed before resolution")
     void abilityFizzlesIfSourceRemoved() {
-        addConclaveReady(player1);
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
-        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerBattlefields.get(player1.getId()).remove(conclave);
 
         harness.passBothPriorities();
 
@@ -201,19 +207,10 @@ class FaerieConclaveTest extends BaseCardTest {
     @Test
     @DisplayName("Faerie Conclave is not a creature before activation")
     void notACreatureBeforeActivation() {
-        Permanent conclave = addConclaveReady(player1);
+        Permanent conclave = addCreatureReady(player1, new FaerieConclave());
 
         assertThat(gqs.isCreature(gd, conclave)).isFalse();
-        assertThat(conclave.getCard().getType()).isEqualTo(CardType.LAND);
+        assertThat(gqs.isLand(gd, conclave)).isTrue();
     }
 
-    // ===== Helper methods =====
-
-    private Permanent addConclaveReady(Player player) {
-        FaerieConclave card = new FaerieConclave();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

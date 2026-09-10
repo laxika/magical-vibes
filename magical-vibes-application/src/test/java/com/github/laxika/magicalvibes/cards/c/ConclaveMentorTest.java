@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.j.JungleDelver;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,10 +30,10 @@ class ConclaveMentorTest extends BaseCardTest {
     @Test
     void gainsLifeEqualToItsPowerWhenItDies() {
         Permanent mentor = harness.addToBattlefieldAndReturn(player1, new ConclaveMentor());
-        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player1.getId());
+        harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -44,10 +45,10 @@ class ConclaveMentorTest extends BaseCardTest {
     void usesItsLastKnownPowerWhenItDies() {
         Permanent mentor = harness.addToBattlefieldAndReturn(player1, new ConclaveMentor());
         mentor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player1.getId());
+        harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

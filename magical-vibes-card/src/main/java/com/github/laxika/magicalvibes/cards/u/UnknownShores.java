@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "XLN", collectorNumber = "259")
 @CardRegistration(set = "THS", collectorNumber = "229")
 @CardRegistration(set = "THB", collectorNumber = "249")
+@CardRegistration(set = "OGW", collectorNumber = "181")
 public class UnknownShores extends Card {
 
     public UnknownShores() {

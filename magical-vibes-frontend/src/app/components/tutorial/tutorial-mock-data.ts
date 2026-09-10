@@ -324,6 +324,7 @@ export const TUTORIAL_MOCK_GAME: Game = {
   stack: [],
   graveyards: [[], []],
   revealedLibraryTopCards: [[], []],
+  dayNight: 'NEITHER',
   mindControlledPlayerId: null
 };
 

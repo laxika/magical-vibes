@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "102")
+@CardRegistration(set = "TMT", collectorNumber = "218")
+@CardRegistration(set = "TMT", collectorNumber = "303")
 public class RaphaelNinjaDestroyer extends Card {
 
     public RaphaelNinjaDestroyer() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnNControlledPermanentsTo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "20")
+@CardRegistration(set = "DDF", collectorNumber = "17")
 public class StormfrontRiders extends Card {
 
     public StormfrontRiders() {

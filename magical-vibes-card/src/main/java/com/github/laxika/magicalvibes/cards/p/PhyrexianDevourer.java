@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "125")
+@CardRegistration(set = "ME2", collectorNumber = "216")
 public class PhyrexianDevourer extends Card {
 
     public PhyrexianDevourer() {

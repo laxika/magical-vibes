@@ -206,7 +206,10 @@ public class LandTapTriggerCollectorService {
         }
 
         var gameData = match.gameData();
-        UUID tappingPlayerId = lt.tappingPlayerId();
+        UUID tappingPlayerId = gameQueryService.findPermanentController(gameData, lt.tappedLandId());
+        if (tappingPlayerId == null) {
+            return false;
+        }
         String playerName = gameData.playerIdToName.get(tappingPlayerId);
         var sourceCard = match.permanent().getCard();
         String cardName = sourceCard.getName();

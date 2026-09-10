@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "UDS", collectorNumber = "65")
+@CardRegistration(set = "DDE", collectorNumber = "1")
 public class PhyrexianNegator extends Card {
 
     public PhyrexianNegator() {

@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MoggConscripts.class, TrainedArmodon.class, DarkRitual.class})
 class MoggConscriptsTest extends BaseCardTest {
 
     @Test
@@ -29,11 +31,8 @@ class MoggConscriptsTest extends BaseCardTest {
     void canAttackAfterCastingCreatureSpell() {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new MoggConscripts());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new TrainedArmodon(), "{1}{G}{G}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         declareAttackers(player1, List.of(0));
@@ -42,13 +41,40 @@ class MoggConscriptsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting Mogg Conscripts itself counts as casting a creature spell")
+    void canAttackAfterCastingItself() {
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new MoggConscripts(), "{R}");
+        harness.passBothPriorities();
+
+        Permanent conscripts = findPermanents(player1, "Mogg Conscripts").getFirst();
+        conscripts.setSummoningSick(false);
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
+    }
+
+    @Test
+    @DisplayName("A creature spell cast by an opponent does not lift the attack restriction")
+    void opponentsCreatureSpellDoesNotLiftRestriction() {
+        addCreatureReady(player1, new MoggConscripts());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new TrainedArmodon(), "{1}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Casting a noncreature spell does not lift the attack restriction")
     void noncreatureSpellDoesNotLiftRestriction() {
         addCreatureReady(player1, new MoggConscripts());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
+        harness.passBothPriorities();
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

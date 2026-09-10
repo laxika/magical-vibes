@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpikeRogue.class, GrizzlyBears.class, Forest.class})
 class SpikeRogueTest extends BaseCardTest {
 
     @Test
@@ -45,6 +47,20 @@ class SpikeRogueTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can put a counter on an opponent's creature")
+    void movesCounterToOpponentsCreature() {
+        Permanent spikeRogue = addReadySpikeRogue(2);
+        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeRogue), 0, null, opposingBears.getId());
+        harness.passBothPriorities();
+
+        assertThat(spikeRogue.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Removes a counter from a creature you control to put one on itself")
     void movesCounterFromControlledCreatureToItself() {
         Permanent spikeRogue = addReadySpikeRogue(2);
@@ -58,6 +74,20 @@ class SpikeRogueTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(spikeRogue.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can remove a counter from itself to put one back on itself")
+    void movesCounterFromItselfToItself() {
+        Permanent spikeRogue = addReadySpikeRogue(2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeRogue), 1, null, null);
+        assertThat(spikeRogue.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(spikeRogue.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

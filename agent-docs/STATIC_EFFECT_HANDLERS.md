@@ -121,3 +121,7 @@ Verification after adding a handler:
 ```
 
 Plus card tests for the relevant effect(s).
+
+## Planar sources
+
+Face-up planar static effects use the existing registry and layers. Use `StaticEffectContext.sourceId()`, `sourceCard()` and `sourceCounterCount()` when a handler can accept a command-zone source. `source()` remains a nullable permanent for permanent-specific operations. See [PLANECHASE.md](PLANECHASE.md).

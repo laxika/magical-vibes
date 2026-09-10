@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "56")
+@CardRegistration(set = "VOW", collectorNumber = "52")
 public class CobbledLancer extends Card {
 
     public CobbledLancer() {

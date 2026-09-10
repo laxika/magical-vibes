@@ -13,6 +13,8 @@ import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "127")
 @CardRegistration(set = "NEM", collectorNumber = "51")
+@CardRegistration(set = "DPA", collectorNumber = "19")
+@CardRegistration(set = "HOP", collectorNumber = "17")
 public class AscendantEvincar extends Card {
 
     public AscendantEvincar() {

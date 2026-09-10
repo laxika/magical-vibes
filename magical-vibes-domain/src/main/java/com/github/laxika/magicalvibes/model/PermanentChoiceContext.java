@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTa
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDrawAndMayPutPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
@@ -19,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
 
@@ -51,7 +51,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                                      boolean unattachAtNextEndStep)
             implements PermanentChoiceContext {
         public AttachControlledEquipmentToTargetCreature(UUID targetCreatureId, UUID controllerId,
-                                                          Card sourceCard, List<UUID> equipmentPermanentIds) {
+                                                         Card sourceCard, List<UUID> equipmentPermanentIds) {
             this(targetCreatureId, controllerId, sourceCard, equipmentPermanentIds, true);
         }
 
@@ -129,7 +129,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID targetCardId
     ) implements PermanentChoiceContext {}
 
-    record SpellRetarget(UUID spellCardId) implements PermanentChoiceContext {}
+    record SpellRetarget(UUID spellCardId, Integer targetIndex) implements PermanentChoiceContext {
+        public SpellRetarget(UUID spellCardId) { this(spellCardId, null); }
+    }
 
     record PsychicBattleRetarget(UUID spellCardId, UUID controllerId, Card sourceCard, int targetIndex)
             implements PermanentChoiceContext {}
@@ -365,6 +367,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChosenPermanentCopyChoice(UUID controllerId, Card sourceCard, PermanentPredicate filter)
             implements PermanentChoiceContext {}
 
+    /** Mister Hyde: choose a creature you control from which to remove a counter, then draw a card. */
+    record RemoveCounterFromControlledCreatureThenDraw(StackEntry resolvingEntry)
+            implements PermanentChoiceContext {}
+
     /** Awaken the Maelstrom: choose a creature for the next counter allocation. */
     record AwakenTheMaelstromCounterCreatureChoice() implements PermanentChoiceContext {}
 
@@ -386,6 +392,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  sacrifice; the other one gets a -1/-1 counter from {@code sourceCard}. */
     record SacrificeOneOfTwoThenCounterOnOther(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,
                                                UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
+
+    /** Trial of Agony: the targeted creatures' controller picks which one receives damage; the
+     *  other one can't block this turn. */
+    record DealDamageToOneOfTwoThenOtherCantBlock(UUID choosingPlayerId, Card sourceCard, UUID controllerId,
+                                                  UUID firstPermanentId, UUID secondPermanentId, int damage)
+            implements PermanentChoiceContext {}
 
     /** Cannibalize: the spell's controller picks which target to exile; the other gets two +1/+1 counters. */
     record CannibalizeChoice(Card sourceCard, UUID controllerId,
@@ -442,6 +454,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AnyOpponentSacrificeCreatureForTapAndCounter(
             UUID sacrificingPlayerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffect effect)
+            implements PermanentChoiceContext {}
+
+    /** Innocent Traveler: the accepting opponent is picking which creature to sacrifice. */
+    record AnyOpponentSacrificeCreatureForTransform(
+            UUID sacrificingPlayerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureOrTransformSourceEffect effect)
             implements PermanentChoiceContext {}
 
     /** Clackbridge Troll: the accepting opponent is picking which creature to sacrifice. */
@@ -589,7 +607,19 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                       String eventDescription, UUID sourcePermanentId,
                                       Permanent sourcePermanentSnapshot,
-                                      Integer eventValue) implements PermanentChoiceContext {
+                                      Integer eventValue, boolean optionalTarget) implements PermanentChoiceContext {
+        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          String eventDescription, UUID sourcePermanentId, Integer eventValue) {
+            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, null, eventValue, false);
+        }
+        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          String eventDescription, UUID sourcePermanentId, Integer eventValue, boolean optionalTarget) {
+            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, null, eventValue, optionalTarget);
+        }
+        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          String eventDescription, UUID sourcePermanentId, Permanent sourcePermanentSnapshot, Integer eventValue) {
+            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, sourcePermanentSnapshot, eventValue, false);
+        }
         public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
             this(sourceCard, controllerId, effects, "leaves-the-battlefield", null, null, null);
         }
@@ -611,11 +641,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourcePermanentSnapshot, null);
         }
 
-        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                          String eventDescription, UUID sourcePermanentId,
-                                          Integer eventValue) {
-            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, null, eventValue);
-        }
     }
 
     record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
@@ -712,6 +737,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Forcefield: choose a creature whose next unblocked combat damage to the controller leaves 1. */
+    record PreventNextCombatDamageFromUnblockedCreatureChoice(UUID controllerId)
+            implements PermanentChoiceContext {}
+
     /** "The next time a source of your choice would deal damage to any target this turn, prevent that
      *  damage." (Sanctum Guardian). Protects any recipient, not just the controller. When
      *  {@code damageRedSourceController} is true, prevented red damage is dealt back to the source's
@@ -759,7 +788,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  differs only for text such as Erithizon's "of defending player's choice". */
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                UUID sourcePermanentId, UUID choosingPlayerId,
-                               UUID attackedTargetId, UUID triggeringPermanentId) implements PermanentChoiceContext {
+                               UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue) implements PermanentChoiceContext {
+
+        public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID choosingPlayerId,
+                                   UUID attackedTargetId, UUID triggeringPermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, triggeringPermanentId, null);
+        }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID choosingPlayerId,
@@ -785,6 +821,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  int amount, int tokenCount, boolean sacrificeAtEndStep,
                                  List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
 
+    /** Remembers the attack target for each copy entering tapped and attacking. */
+    record CreateTokenCopiesAttacking(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                                      UUID targetPermanentId,
+                                      com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                                      int tokenCount, List<UUID> chosenAttackTargets)
+            implements PermanentChoiceContext {}
     /** Raph & Mikey: choose the player, planeswalker, or battle the revealed creature attacks. */
     record RevealUntilCardPredicateAttackTarget(Card sourceCard, UUID controllerId, Card foundCard,
                                                 List<Card> remainingRevealedCards)
@@ -921,8 +963,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        int spellManaSpentX, UUID sourcePermanentId,
                                        Permanent sourcePermanentSnapshot, boolean optionalTarget,
                                        UUID triggeringPermanentId, UUID permanentTargetControllerId,
-                                       UUID choosingPlayerId)
+                                       UUID choosingPlayerId, com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource)
             implements PermanentChoiceContext {
+        public SpellTargetTriggerAnyTarget copyPlanarSnapshot() {
+            return planarSource == null ? this : new SpellTargetTriggerAnyTarget(sourceCard, controllerId,
+                    effects, playerTargetOnly, targetFilter, spellManaSpentX, sourcePermanentId,
+                    sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, choosingPlayerId, planarSource.copy());
+        }
+
+        public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                boolean playerTargetOnly, TargetFilter targetFilter, int spellManaSpentX,
+                UUID sourcePermanentId, Permanent sourcePermanentSnapshot, boolean optionalTarget,
+                UUID triggeringPermanentId, UUID permanentTargetControllerId, UUID choosingPlayerId) {
+            this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
+                    sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, choosingPlayerId, null);
+        }
+
 
         /** Convenience constructor for any-target (permanents + players). */
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
@@ -1188,10 +1246,19 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Choose the creature whose sacrifice creates the reflexive trigger. */
     record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
-                                                   List<CardEffect> reflexiveFollowUps)
+                                                   List<CardEffect> reflexiveFollowUps, PermanentPredicate targetPredicate)
             implements PermanentChoiceContext {
+        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
+                                                   List<CardEffect> reflexiveFollowUps) {
+            this(controllerId, sourceCard, reflexiveFollowUps, null);
+        }
+
+        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard, PermanentPredicate targetPredicate) {
+            this(controllerId, sourceCard, List.of(), targetPredicate);
+        }
+
         public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard) {
-            this(controllerId, sourceCard, List.of());
+            this(controllerId, sourceCard, List.of(), null);
         }
 
         public SacrificeAnotherCreatureDealPowerDamage {
@@ -1206,7 +1273,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                 boolean copy, List<UUID> chosenTargets, int genericCostReduction,
                                 boolean resolutionCast, int lifeLossAfterCast,
-                                boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard) implements PermanentChoiceContext {
+                                boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard, boolean payManaCost) implements PermanentChoiceContext {
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
+                                boolean copy, List<UUID> chosenTargets, int genericCostReduction,
+                                boolean resolutionCast, int lifeLossAfterCast,
+                                boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard) {
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, genericCostReduction, resolutionCast, lifeLossAfterCast, putOnBottomOfOwnersLibraryInsteadOfGraveyard, false);
+        }
+
         // {@code copy=true} marks a Paradigm copy that must cease to exist rather than being placed in
         // a zone (CR 707.10a) — both on resolution and when it can't be legally cast. Defaults to false
         // for real cards cast from exile.
@@ -1214,30 +1288,34 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         // order, while a multi-target spell walks its target slots one at a time. Empty for the
         // single-target path (which stores its lone target as the StackEntry's {@code targetId}).
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType, boolean copy) {
-            this(cardToCast, controllerId, spellEffects, spellType, copy, List.of(), 0, false, 0, false);
+            this(cardToCast, controllerId, spellEffects, spellType, copy, List.of(), 0, false, 0, false, false);
+        }
+
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType, boolean copy, List<UUID> chosenTargets, int genericCostReduction, boolean payManaCost) {
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, genericCostReduction, false, 0, false, payManaCost);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
-            this(cardToCast, controllerId, spellEffects, spellType, false, List.of(), 0, false, 0, false);
+            this(cardToCast, controllerId, spellEffects, spellType, false, List.of(), 0, false, 0, false, false);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                     StackEntryType spellType, boolean copy, List<UUID> chosenTargets) {
-            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, 0, false, 0, false);
+            this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets, 0, false, 0, false, false);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                     StackEntryType spellType, boolean copy, List<UUID> chosenTargets,
                                     int genericCostReduction) {
             this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets,
-                    genericCostReduction, false, 0, false);
+                    genericCostReduction, false, 0, false, false);
         }
 
         public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                     StackEntryType spellType, boolean copy, List<UUID> chosenTargets,
                                     boolean resolutionCast, int lifeLossAfterCast) {
             this(cardToCast, controllerId, spellEffects, spellType, copy, chosenTargets,
-                    0, resolutionCast, lifeLossAfterCast, false);
+                    0, resolutionCast, lifeLossAfterCast, false, false);
         }
 
         public static ExileCastSpellTarget resolutionCastCopy(Card cardToCast, UUID controllerId,
@@ -1245,7 +1323,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                                                StackEntryType spellType,
                                                                int lifeLossAfterCast) {
             return new ExileCastSpellTarget(cardToCast, controllerId, spellEffects, spellType,
-                    true, List.of(), 0, true, lifeLossAfterCast, false);
+                    true, List.of(), 0, true, lifeLossAfterCast, false, false);
         }
     }
 
@@ -1415,16 +1493,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * fires after the sacrifice (false when the exploit permanent left before resolution).
      */
     record ExploitSacrifice(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                            boolean sourceStillOnBattlefield) implements PermanentChoiceContext {}
+                            boolean sourceStillOnBattlefield, Permanent sourcePermanent)
+            implements PermanentChoiceContext {}
 
     /**
-     * "When this creature exploits a creature" trigger that needs a stack target (spell and/or
-     * ability). {@code includeAbilities} is true when the card's stack filter includes
-     * {@code StackEntryHasTargetPredicate} (Overcharged Amalgam).
+     * "When this creature exploits a creature" trigger that needs a target. Stack targets use
+     * {@code stackFilter}; permanent/player targets use {@code targetFilter}.
      */
     record ExploitTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, StackEntryPredicate stackFilter,
-                                boolean includeAbilities, Permanent sacrificedPermanentSnapshot,
+                                boolean includeAbilities, TargetFilter targetFilter, Permanent sacrificedPermanentSnapshot,
                                 int sacrificedPower, int sacrificedColorCount,
                                 int sacrificedToughness) implements PermanentChoiceContext {}
 
@@ -1450,7 +1528,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      */
     record ETBTokenTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                  UUID sourcePermanentId, TargetFilter targetFilter,
-                                 UUID triggeringPermanentId) implements PermanentChoiceContext {
+                                 UUID triggeringPermanentId, int xValue) implements PermanentChoiceContext {
+
+        public ETBTokenTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                     UUID sourcePermanentId, TargetFilter targetFilter, UUID triggeringPermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, triggeringPermanentId, 0);
+        }
+
+        public ETBTokenTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                     UUID sourcePermanentId, TargetFilter targetFilter, int xValue) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, null, xValue);
+        }
 
         public ETBTokenTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                      UUID sourcePermanentId, TargetFilter targetFilter) {
@@ -1481,13 +1569,81 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       List<Integer> groupSizes, int xValue,
                                       List<String> repeatedAdditionalCosts,
                                       boolean resumePendingMayResolution,
-                                      UUID triggeringCardId) implements PermanentChoiceContext {
+                                      UUID triggeringCardId,
+                                      UUID triggeringPermanentId,
+                                      int eventValue,
+                                      com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource)
+            implements PermanentChoiceContext {
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          boolean resumePendingMayResolution,
+                                          UUID triggeringCardId,
+                                          UUID triggeringPermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, 0, null);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          boolean resumePendingMayResolution,
+                                          UUID triggeringCardId,
+                                          UUID triggeringPermanentId,
+                                          int eventValue) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, null);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          boolean resumePendingMayResolution,
+                                          UUID triggeringCardId,
+                                          UUID triggeringPermanentId,
+                                          int eventValue,
+                                          com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource) {
+            this.sourceCard = sourceCard;
+            this.controllerId = controllerId;
+            this.effects = List.copyOf(effects);
+            this.sourcePermanentId = sourcePermanentId;
+            this.chosenTargetsSoFar = List.copyOf(chosenTargetsSoFar);
+            this.currentGroupIndex = currentGroupIndex;
+            this.chosenInCurrentGroup = chosenInCurrentGroup;
+            this.groupSizes = List.copyOf(groupSizes);
+            this.xValue = xValue;
+            this.repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            this.resumePendingMayResolution = resumePendingMayResolution;
+            this.triggeringCardId = triggeringCardId;
+            this.triggeringPermanentId = triggeringPermanentId;
+            this.eventValue = eventValue;
+            this.planarSource = planarSource;
+        }
+
+        public ETBTokenMultiTargetTrigger copyPlanarSnapshot() {
+            return planarSource == null ? this : new ETBTokenMultiTargetTrigger(
+                    sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource.copy());
+        }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
                                           int currentGroupIndex, int chosenInCurrentGroup) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
-                    currentGroupIndex, chosenInCurrentGroup, List.of(), 0, List.of(), false, null);
+                    currentGroupIndex, chosenInCurrentGroup, List.of(), 0, List.of(), false, null, null);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1495,7 +1651,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           int currentGroupIndex, int chosenInCurrentGroup,
                                           List<Integer> groupSizes) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
-                    currentGroupIndex, chosenInCurrentGroup, groupSizes, 0, List.of(), false, null);
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, 0, List.of(), false, null, null);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1503,7 +1659,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           int currentGroupIndex, int chosenInCurrentGroup,
                                           List<Integer> groupSizes, int xValue) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
-                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue, List.of(), false, null);
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue, List.of(), false, null, null);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1513,7 +1669,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           boolean resumePendingMayResolution) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue, List.of(),
-                    resumePendingMayResolution, null);
+                    resumePendingMayResolution, null, null);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1523,7 +1679,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           List<String> repeatedAdditionalCosts) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
-                    repeatedAdditionalCosts, false, null);
+                    repeatedAdditionalCosts, false, null, null);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1534,7 +1690,19 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           boolean resumePendingMayResolution) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
-                    repeatedAdditionalCosts, resumePendingMayResolution, null);
+                    repeatedAdditionalCosts, resumePendingMayResolution, null, null);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          boolean resumePendingMayResolution,
+                                          UUID triggeringCardId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId, null);
         }
     }
 
@@ -1615,51 +1783,53 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
                                        Integer sourcePowerAtTrigger,
-                                       boolean sourceAlternateCostAtTrigger)
+                                       boolean sourceAlternateCostAtTrigger,
+                                       UUID triggeringPermanentId)
     implements PermanentChoiceContext {
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
                                            Integer sourcePowerAtTrigger) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
-                    sourcePowerAtTrigger, false);
+                    sourcePowerAtTrigger, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue, int maxCount) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount, null, false);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, null, 0, 0, 0, null, false);
+            this(sourceCard, controllerId, effects, null, 0, 0, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0, 0, null, false);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0, 0, null, false);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null, false);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            int xValue) {
-            this(sourceCard, controllerId, effects, null, 0, xValue, 0, null, false);
+            this(sourceCard, controllerId, effects, null, 0, xValue, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue,
                                            boolean sourceAlternateCostAtTrigger) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null,
-                    sourceAlternateCostAtTrigger);
+                    sourceAlternateCostAtTrigger, null);
         }
+
     }
 
     /** "Sacrifice a [permanent]. If you do, [effect]." (e.g. The First Eruption chapter III). */
@@ -1709,6 +1879,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID sourcePermanentId,
             List<UUID> remainingOpponentIds,
             int count
+    ) implements PermanentChoiceContext {}
+
+    /** Each opponent chooses a creature to sacrifice instead of letting the source's controller create a token. */
+    record EachOpponentCreatesTokenUnlessSacrificesCreature(
+            UUID sacrificingPlayerId,
+            UUID sourceControllerId,
+            Card sourceCard,
+            UUID sourcePermanentId,
+            Permanent sourcePermanentSnapshot,
+            CreateTokenEffect token,
+            List<UUID> remainingOpponentIds
     ) implements PermanentChoiceContext {}
 
     /** Each targeted player chooses a creature to sacrifice after the life loss has been applied. */

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "76")
+@CardRegistration(set = "FDN", collectorNumber = "325")
 public class VengefulBloodwitch extends Card {
 
     public VengefulBloodwitch() {

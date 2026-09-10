@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "188")
+@CardRegistration(set = "V10", collectorNumber = "3")
 public class IsochronScepter extends Card {
 
     public IsochronScepter() {

@@ -33,8 +33,7 @@ class LithoformBlightTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getClass())
-                .containsExactly(GrizzlyBears.class);
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(GrizzlyBears.class);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof LithoformBlight
                         && forest.getId().equals(permanent.getAttachedTo()));

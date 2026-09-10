@@ -1,20 +1,23 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FightingDrake;
+import com.github.laxika.magicalvibes.cards.r.RollingThunder;
 import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DauthiGhoul.class, FightingDrake.class, RollingThunder.class, SoltariFootSoldier.class})
 class DauthiGhoulTest extends BaseCardTest {
 
     @Test
@@ -26,13 +29,13 @@ class DauthiGhoulTest extends BaseCardTest {
         Permanent ghoul = findPermanent(player1, "Dauthi Ghoul");
         assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new RollingThunder()));
+        harness.addMana(player1, ManaColor.RED, 3);
 
         UUID soldierId = harness.getPermanentId(player2, "Soltari Foot Soldier");
-        harness.castInstant(player1, 0, soldierId);
-        harness.passBothPriorities(); // Resolve Shock -> soldier dies -> death trigger
-        harness.passBothPriorities(); // Resolve the +1/+1 counter trigger
+        harness.castSorceryForX(player1, 0, 1, Map.of(soldierId, 1));
+        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, ghoul)).isEqualTo(2);
@@ -47,13 +50,13 @@ class DauthiGhoulTest extends BaseCardTest {
 
         Permanent ghoul = findPermanent(player1, "Dauthi Ghoul");
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new RollingThunder()));
+        harness.addMana(player1, ManaColor.RED, 3);
 
         UUID soldierId = harness.getPermanentId(player1, "Soltari Foot Soldier");
-        harness.castInstant(player1, 0, soldierId);
+        harness.castSorceryForX(player1, 0, 1, Map.of(soldierId, 1));
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -62,18 +65,38 @@ class DauthiGhoulTest extends BaseCardTest {
     @DisplayName("Does not trigger when a creature without shadow dies")
     void noCounterWhenNonShadowCreatureDies() {
         harness.addToBattlefield(player1, new DauthiGhoul());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new FightingDrake());
 
         Permanent ghoul = findPermanent(player1, "Dauthi Ghoul");
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player1, List.of(new RollingThunder()));
+        harness.addMana(player1, ManaColor.RED, 6);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
+        UUID drakeId = harness.getPermanentId(player2, "Fighting Drake");
+        harness.castSorceryForX(player1, 0, 4, Map.of(drakeId, 4));
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Triggers once for each shadow creature that dies simultaneously")
+    void getsOneCounterPerShadowCreatureThatDies() {
+        harness.addToBattlefield(player1, new DauthiGhoul());
+        Permanent firstSoldier = harness.addToBattlefieldAndReturn(player2, new SoltariFootSoldier());
+        Permanent secondSoldier = harness.addToBattlefieldAndReturn(player2, new SoltariFootSoldier());
+
+        Permanent ghoul = findPermanent(player1, "Dauthi Ghoul");
+
+        harness.setHand(player1, List.of(new RollingThunder()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorceryForX(player1, 0, 2,
+                Map.of(firstSoldier.getId(), 1, secondSoldier.getId(), 1));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

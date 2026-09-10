@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "48")
+@CardRegistration(set = "FDN", collectorNumber = "313")
 public class Refute extends Card {
 
     public Refute() {

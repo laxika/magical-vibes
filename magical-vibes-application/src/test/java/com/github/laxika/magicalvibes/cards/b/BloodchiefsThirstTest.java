@@ -47,7 +47,7 @@ class BloodchiefsThirstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castKickedSorcery(player1, 0, giant.getId());
+        harness.castKickedInstant(player1, 0, giant.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Hill Giant");
@@ -61,7 +61,7 @@ class BloodchiefsThirstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castKickedSorcery(player1, 0, chandra.getId());
+        harness.castKickedInstant(player1, 0, chandra.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Chandra Nalaar");

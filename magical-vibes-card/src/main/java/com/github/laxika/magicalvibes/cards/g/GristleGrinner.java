@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "CSP", collectorNumber = "59")
+@CardRegistration(set = "CST", collectorNumber = "59")
 public class GristleGrinner extends Card {
 
     public GristleGrinner() {

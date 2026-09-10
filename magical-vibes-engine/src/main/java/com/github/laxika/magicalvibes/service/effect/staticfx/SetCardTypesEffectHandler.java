@@ -23,7 +23,7 @@ public class SetCardTypesEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var set = (SetCardTypesEffect) effect;
         boolean matches = switch (set.scope()) {
-            case ALL_PERMANENTS -> !context.source().getId().equals(context.target().getId())
+            case ALL_PERMANENTS -> !context.sourceId().equals(context.target().getId())
                     && support.matchesStaticFilter(context, context.target(), null);
             case OWN_PERMANENTS -> context.targetOnSameBattlefield()
                     && support.matchesStaticFilter(context, context.target(), null);

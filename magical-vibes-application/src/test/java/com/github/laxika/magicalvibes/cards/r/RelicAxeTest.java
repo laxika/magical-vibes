@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -80,12 +79,6 @@ class RelicAxeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castArtifact(player1, 0, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addCreatureReady(Player player, Card creature) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, creature);
-        permanent.setSummoningSick(false);
-        return permanent;
     }
 
     private Permanent addReadyEquipment(Player player) {

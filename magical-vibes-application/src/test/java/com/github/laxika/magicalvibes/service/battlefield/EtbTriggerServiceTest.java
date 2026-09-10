@@ -71,6 +71,24 @@ class EtbTriggerServiceTest {
     }
 
     @Test
+    void optionalEtbPreservesCastXValue() {
+        Card creature = new Card();
+        creature.setName("Optional draw creature");
+        creature.setType(CardType.CREATURE);
+        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.MayEffect(
+                        new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(
+                                new com.github.laxika.magicalvibes.model.amount.XValue()), "Draw?"));
+        gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, true,
+                0, 3, false, java.util.List.of());
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(3);
+    }
+
+    @Test
     void targetedLandEtbQueuesTargetSelectionAtTriggerTime() {
         Card land = new Card();
         land.setName("Targeted Land");

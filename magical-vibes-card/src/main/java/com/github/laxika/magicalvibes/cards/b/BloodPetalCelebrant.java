@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "144")
+@CardRegistration(set = "VOW", collectorNumber = "146")
 public class BloodPetalCelebrant extends Card {
 
     public BloodPetalCelebrant() {

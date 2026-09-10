@@ -32,7 +32,7 @@ public class SlogurkTheOverslime extends Card {
         ));
 
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new ReturnTargetCardsFromGraveyardToHandEffect(
+                ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(
                         new CardTypePredicate(CardType.LAND), 3));
     }
 }

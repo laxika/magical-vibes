@@ -85,6 +85,27 @@ class BlockLegalityContextTest extends BaseCardTest {
         return bls.getBlockingIllegalityReason(gd, blocker, attacker, defenderBattlefield());
     }
 
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.d.DreadCharge.class)
+    void temporaryRestrictionUsesCurrentControllerAndExpiresAtCleanup() {
+        harness.castFromHand(player1, new com.github.laxika.magicalvibes.cards.d.DreadCharge(), "{3}{B}");
+        harness.passBothPriorities();
+        Permanent attacker = attacking(player1, new ScatheZombies());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        assertThat(reason(blocker, attacker)).isPresent();
+
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        assertThat(reason(blocker, attacker)).isEmpty();
+        gd.playerBattlefields.get(player2.getId()).remove(attacker);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(reason(blocker, attacker)).isEmpty();
+    }
+
     // ===== Per-rule legality + exact message =====
 
     @Test

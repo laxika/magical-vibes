@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -19,11 +20,12 @@ import java.util.List;
 public class SkyshroudWarBeast extends Card {
 
     public SkyshroudWarBeast() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
         PermanentPredicate nonbasicLand = new PermanentAllOfPredicate(List.of(
                 new PermanentIsLandPredicate(),
                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
         ));
-        PermanentCount opponentNonbasicLands = new PermanentCount(nonbasicLand, CountScope.OPPONENTS);
+        PermanentCount opponentNonbasicLands = new PermanentCount(nonbasicLand, CountScope.CHOSEN_PLAYER);
         addEffect(EffectSlot.STATIC,
                 new SetPowerToughnessToAmountEffect(opponentNonbasicLands, opponentNonbasicLands));
     }

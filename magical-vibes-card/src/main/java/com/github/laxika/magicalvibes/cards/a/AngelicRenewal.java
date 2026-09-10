@@ -13,7 +13,7 @@ public class AngelicRenewal extends Card {
     public AngelicRenewal() {
         // Whenever a creature is put into your graveyard from the battlefield, you may sacrifice
         // this enchantment. If you do, return that card to the battlefield.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addEffect(EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                 new MayEffect(new SacrificeSelfThenEffect(new ReturnTriggeringCreatureToBattlefieldEffect()),
                         "Sacrifice Angelic Renewal to return the creature to the battlefield?"));
     }

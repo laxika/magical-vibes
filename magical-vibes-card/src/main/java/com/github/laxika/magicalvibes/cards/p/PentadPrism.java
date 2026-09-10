@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "143")
+@CardRegistration(set = "HOP", collectorNumber = "122")
 public class PentadPrism extends Card {
 
     public PentadPrism() {

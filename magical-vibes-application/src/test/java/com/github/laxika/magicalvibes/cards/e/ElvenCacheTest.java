@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,13 +20,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElvenCache.class, Everglades.class})
+@CardUsed({ElvenCache.class, Forest.class})
 class ElvenCacheTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Elven Cache puts a graveyard-targeted spell on the stack")
     void castingPutsGraveyardTargetedSpellOnStack() {
-        Card target = new Everglades();
+        Card target = new Forest();
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new ElvenCache()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -43,7 +44,7 @@ class ElvenCacheTest extends BaseCardTest {
     @Test
     @DisplayName("Resolve Elven Cache returns targeted card to hand")
     void resolvesAndReturnsTargetedCard() {
-        Card target = new Everglades();
+        Card target = new Forest();
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new ElvenCache()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -59,7 +60,7 @@ class ElvenCacheTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Cache cannot target card in opponent graveyard")
     void cannotTargetCardInOpponentGraveyard() {
-        Card opponentsCard = new Everglades();
+        Card opponentsCard = new Forest();
         harness.setGraveyard(player2, List.of(opponentsCard));
         harness.setHand(player1, List.of(new ElvenCache()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -83,7 +84,7 @@ class ElvenCacheTest extends BaseCardTest {
     @Test
     @DisplayName("Elven Cache fizzles if targeted card leaves graveyard before resolution")
     void fizzlesIfTargetLeavesGraveyardBeforeResolution() {
-        Card target = new Everglades();
+        Card target = new Forest();
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new ElvenCache()));
         harness.addMana(player1, ManaColor.GREEN, 4);
