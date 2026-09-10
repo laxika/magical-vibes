@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "204")
+@CardRegistration(set = "TD2", collectorNumber = "64")
 public class DroolingGroodion extends Card {
 
     public DroolingGroodion() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "MBS", collectorNumber = "143")
+@CardRegistration(set = "TD2", collectorNumber = "27")
 public class ViridianClaw extends Card {
 
     public ViridianClaw() {
