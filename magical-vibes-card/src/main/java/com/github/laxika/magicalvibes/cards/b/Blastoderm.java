@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfEffect;
 
 @CardRegistration(set = "NEM", collectorNumber = "102")
+@CardRegistration(set = "DDD", collectorNumber = "7")
 public class Blastoderm extends Card {
 
     public Blastoderm() {

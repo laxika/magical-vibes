@@ -78,7 +78,23 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        StackEntry damageEntry = entry;
+        if (e.sourceIsTriggeringPermanent()) {
+            damageEntry = new StackEntry(entry);
+            if (source != null) {
+                damageEntry.setDamageSourceCard(source.getCard());
+            }
+            UUID sourceControllerId = entry.getSourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+            if (sourceControllerId == null) {
+                sourceControllerId = entry.getTriggeringPermanentControllerId();
+            }
+            if (sourceControllerId != null) {
+                damageEntry.setControllerId(sourceControllerId);
+            }
+        }
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
 
         boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(nextEffect ->
                 nextEffect instanceof LookAtTopCardsMayExileOneAndPlayThisTurnEffect look
@@ -118,13 +134,13 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             boolean previous = gameData.damageCantBePreventedThisTurn;
             gameData.damageCantBePreventedThisTurn = true;
             try {
-                damageDealt = damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage,
+                damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage,
                         e.cantRegenerate(), e.cantBeRedirectedWhenUnpreventable());
             } finally {
                 gameData.damageCantBePreventedThisTurn = previous;
             }
         } else {
-            damageDealt = damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, e.cantRegenerate());
+            damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, e.cantRegenerate());
         }
         if (tracksExcess) {
             entry.setEventValue(excessTarget == null

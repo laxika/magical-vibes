@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "SUM", collectorNumber = "126")
+@CardRegistration(set = "3ED", collectorNumber = "126")
 public class Sacrifice extends Card {
 
     public Sacrifice() {

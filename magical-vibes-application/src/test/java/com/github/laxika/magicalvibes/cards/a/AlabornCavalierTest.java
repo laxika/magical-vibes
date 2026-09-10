@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.Telepathy;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +14,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlabornCavalier.class, AlabornTrooper.class, Plains.class})
 class AlabornCavalierTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking queues attack trigger for creature target selection")
     void attackingQueuesTargetSelection() {
-        addReadyCavalier(player1);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AlabornCavalier());
+        addCreatureReady(player2, new AlabornTrooper());
 
         declareAttackers(player1, List.of(0));
 
@@ -33,39 +33,49 @@ class AlabornCavalierTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting attack may taps target opponent creature")
     void acceptingMayTapsOpponentCreature() {
-        addReadyCavalier(player1);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AlabornCavalier());
+        Permanent trooper = addCreatureReady(player2, new AlabornTrooper());
 
-        attackChooseTargetAndAccept(bears);
+        attackChooseTargetAndAccept(trooper);
 
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(trooper.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting attack may taps target creature controlled by the attacker")
+    void acceptingMayTapsOwnCreature() {
+        addCreatureReady(player1, new AlabornCavalier());
+        Permanent trooper = addCreatureReady(player1, new AlabornTrooper());
+
+        attackChooseTargetAndAccept(trooper);
+
+        assertThat(trooper.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Declining attack may leaves target creature untapped")
     void decliningMayLeavesTargetUntapped() {
-        addReadyCavalier(player1);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AlabornCavalier());
+        Permanent trooper = addCreatureReady(player2, new AlabornTrooper());
 
         declareAttackers(player1, List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, trooper.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(bears.isTapped()).isFalse();
+        assertThat(trooper.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Attack trigger rejects noncreature targets")
     void attackTriggerRejectsNoncreatureTargets() {
-        addReadyCavalier(player1);
-        harness.addToBattlefield(player2, new Telepathy());
-        Permanent telepathy = gd.playerBattlefields.get(player2.getId()).getFirst();
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AlabornCavalier());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        addCreatureReady(player2, new AlabornTrooper());
 
         declareAttackers(player1, List.of(0));
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, telepathy.getId()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, plains.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
     }
@@ -77,10 +87,4 @@ class AlabornCavalierTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
     }
 
-    private Permanent addReadyCavalier(Player player) {
-        Permanent perm = new Permanent(new AlabornCavalier());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -32,9 +32,9 @@ public class CoilingRebirth extends Card {
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(creatureCards)
                         .targetGraveyard(true)
-                        .build());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
-                new CreateTokenCopyOfReturnedPermanentEffect(
-                        new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)), 1, 1)));
+                        .build())
+                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                        new CreateTokenCopyOfReturnedPermanentEffect(
+                                new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)), 1, 1)));
     }
 }

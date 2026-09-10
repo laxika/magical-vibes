@@ -13,9 +13,16 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * copy cycle (e.g. Lumaret's Favor). When {@code tokenCopy} is true, the copied permanent spell
  * enters as a token.
  */
-public record CopyThisSpellIfConditionEffect(Condition condition, boolean tokenCopy) implements CardEffect {
+public record CopyThisSpellIfConditionEffect(Condition condition, boolean tokenCopy, boolean optional, boolean conditionAtCast) implements CardEffect {
+    public CopyThisSpellIfConditionEffect(Condition condition, boolean tokenCopy) {
+        this(condition, tokenCopy, false, false);
+    }
+
 
     public CopyThisSpellIfConditionEffect(Condition condition) {
         this(condition, false);
+    }
+    public static CopyThisSpellIfConditionEffect whenCastWhile(Condition condition, boolean optional) {
+        return new CopyThisSpellIfConditionEffect(condition, false, optional, true);
     }
 }

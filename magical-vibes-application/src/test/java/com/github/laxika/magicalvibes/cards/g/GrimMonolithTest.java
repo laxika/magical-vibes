@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(GrimMonolith.class)
 class GrimMonolithTest extends BaseCardTest {
 
     @Test
@@ -50,6 +52,22 @@ class GrimMonolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Grim Monolith can be tapped again after paying to untap it")
+    void canBeTappedAgainAfterUntapping() {
+        Permanent monolith = addReadyMonolith(player1, false);
+
+        gs.tapPermanent(gd, player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        gs.tapPermanent(gd, player1, 0);
+
+        assertThat(monolith.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Grim Monolith's untap ability requires {4}")
     void cannotUntapWithoutFourMana() {
         addReadyMonolith(player1, true);
@@ -60,12 +78,11 @@ class GrimMonolithTest extends BaseCardTest {
     }
 
     private Permanent addReadyMonolith(Player player, boolean tapped) {
-        Permanent monolith = new Permanent(new GrimMonolith());
+        Permanent monolith = harness.addToBattlefieldAndReturn(player, new GrimMonolith());
         monolith.setSummoningSick(false);
         if (tapped) {
             monolith.tap();
         }
-        gd.playerBattlefields.get(player.getId()).add(monolith);
         return monolith;
     }
 
@@ -75,8 +92,6 @@ class GrimMonolithTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UNTAP);
     }
 }

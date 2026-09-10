@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "89")
+@CardRegistration(set = "ME1", collectorNumber = "44")
 public class PolarKraken extends Card {
 
     public PolarKraken() {

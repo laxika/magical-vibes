@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "125")
+@CardRegistration(set = "H09", collectorNumber = "28")
 public class AphettoDredging extends Card {
 
     public AphettoDredging() {

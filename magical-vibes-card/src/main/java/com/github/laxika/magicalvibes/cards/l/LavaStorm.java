@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPerma
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 
 import java.util.List;
 
@@ -17,9 +19,11 @@ public class LavaStorm extends Card {
     public LavaStorm() {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Lava Storm deals 2 damage to each attacking creature",
-                        new DealDamageToEachMatchingPermanentEffect(2, new PermanentIsAttackingPredicate(), EachPermanentScope.ALL_PLAYERS)),
+                        new DealDamageToEachMatchingPermanentEffect(2, new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(), new PermanentIsAttackingPredicate())), EachPermanentScope.ALL_PLAYERS)),
                 new ChooseOneEffect.ChooseOneOption("Lava Storm deals 2 damage to each blocking creature",
-                        new DealDamageToEachMatchingPermanentEffect(2, new PermanentIsBlockingPredicate(), EachPermanentScope.ALL_PLAYERS))
+                        new DealDamageToEachMatchingPermanentEffect(2, new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(), new PermanentIsBlockingPredicate())), EachPermanentScope.ALL_PLAYERS))
         )));
     }
 }

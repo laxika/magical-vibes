@@ -314,7 +314,7 @@ public class ExileFreeCastQueueSupport {
                                                ChooseOneEffect modal, List<Integer> chosenModeIndices) {
         int[] indices = chosenModeIndices.stream().mapToInt(Integer::intValue).toArray();
         int modeEncoding = modal.modesMayRepeat()
-                ? ChooseOneEffect.encodeRepeatedModeSelection(modal.options().size(), indices)
+                ? modal.encodeRepeatedSelection(indices)
                 : ChooseOneEffect.encodeModeSelection(modal.choicesRequired(), modal.choicesMax(), indices);
 
         Card runtimeCard = card.createRuntimeCopy();

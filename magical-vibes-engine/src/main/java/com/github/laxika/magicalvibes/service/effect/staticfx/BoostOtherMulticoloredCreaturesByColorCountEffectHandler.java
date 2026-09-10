@@ -28,7 +28,7 @@ public class BoostOtherMulticoloredCreaturesByColorCountEffectHandler implements
             return;
         }
         Permanent target = context.target();
-        if (target.getId().equals(context.source().getId())) {
+        if (target.getId().equals(context.sourceId())) {
             return;
         }
         boolean hasAnimateArtifacts = support.hasAnimateArtifactEffect(context.gameData());

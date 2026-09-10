@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Plateau;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Flashfires.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class})
+@CardUsed({Flashfires.class, GrizzlyBears.class, Island.class, Mountain.class, Plateau.class, Plains.class})
 class FlashfiresTest extends BaseCardTest {
 
     @Test
@@ -53,6 +54,16 @@ class FlashfiresTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mountain");
         harness.assertOnBattlefield(player1, "Island");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Destroys nonbasic lands with the Plains subtype")
+    void destroysNonbasicPlains() {
+        harness.addToBattlefield(player1, new Plateau());
+        castFlashfiresAndResolve();
+
+        harness.assertNotOnBattlefield(player1, "Plateau");
+        harness.assertInGraveyard(player1, "Plateau");
     }
 
     @Test

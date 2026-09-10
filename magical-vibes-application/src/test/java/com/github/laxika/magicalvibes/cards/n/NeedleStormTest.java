@@ -52,4 +52,20 @@ class NeedleStormTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
+
+    @Test
+    @DisplayName("Deals exactly 4 damage to each surviving flying creature")
+    void dealsExactlyFourDamageToEachSurvivingFlyingCreature() {
+        RathiDragon player1Card = new RathiDragon();
+        RathiDragon player2Card = new RathiDragon();
+        Permanent player1Creature = harness.addToBattlefieldAndReturn(player1, player1Card);
+        Permanent player2Creature = harness.addToBattlefieldAndReturn(player2, player2Card);
+
+        harness.castFromHand(player1, new NeedleStorm(), "{2}{G}");
+
+        harness.passBothPriorities();
+
+        assertThat(player1Creature.getMarkedDamage()).isEqualTo(4);
+        assertThat(player2Creature.getMarkedDamage()).isEqualTo(4);
+    }
 }

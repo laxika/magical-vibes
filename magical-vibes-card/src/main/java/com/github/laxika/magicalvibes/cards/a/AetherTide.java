@@ -16,7 +16,7 @@ public class AetherTide extends Card {
     public AetherTide() {
         addEffect(EffectSlot.SPELL, new DiscardXCardsCost(
                 new CardTypePredicate(CardType.CREATURE), "creature cards"));
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Targets must be creatures"
         ), 100).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
     }

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "75")
+@CardRegistration(set = "DDE", collectorNumber = "41")
 public class ThunderscapeBattlemage extends Card {
 
     public ThunderscapeBattlemage() {

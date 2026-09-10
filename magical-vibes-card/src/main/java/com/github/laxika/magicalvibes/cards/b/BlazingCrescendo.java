@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ONE", collectorNumber = "123")
+@CardRegistration(set = "MSH", collectorNumber = "125")
 public class BlazingCrescendo extends Card {
 
     public BlazingCrescendo() {

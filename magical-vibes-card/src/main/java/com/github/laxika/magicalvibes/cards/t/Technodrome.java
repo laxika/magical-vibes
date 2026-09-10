@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "179")
+@CardRegistration(set = "TMT", collectorNumber = "222")
 public class Technodrome extends Card {
 
     public Technodrome() {

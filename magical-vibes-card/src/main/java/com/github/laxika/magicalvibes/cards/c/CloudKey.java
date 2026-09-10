@@ -19,7 +19,9 @@ public class CloudKey extends Card {
                 CardType.LAND,
                 CardType.PLANESWALKER,
                 CardType.BATTLE,
-                CardType.KINDRED
+                CardType.KINDRED,
+                CardType.PLANE,
+                CardType.PHENOMENON
         )));
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
                 new CardHasSourceChosenCardTypePredicate(), 1, CostModificationScope.SELF));

@@ -49,7 +49,28 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         Condition triggerCondition,
         List<CardPredicate> firstSpellFilters,
         CardEffect beforeCopyEffect
-) implements CardEffect {
+, com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter, String sacrificeDescription) implements CardEffect {
+    public CopyControllerCastSpellOnSpellCastEffect(
+        CardPredicate spellFilter,
+        TapMultiplePermanentsCost tapCost,
+        String manaCost,
+        Zone requiredCastZone,
+        StackEntryPredicate castSpellTargetCondition,
+        Set<Keyword> grantedKeywords,
+        Condition intervening,
+        boolean requiredCastWithAdventure,
+        Set<CardType> additionalTypes,
+        boolean tokenCopy,
+        boolean mayChooseNewTargets,
+        boolean grantHasteToPermanentSpell,
+        boolean excludeHandCast,
+        Condition triggerCondition,
+        List<CardPredicate> firstSpellFilters,
+        CardEffect beforeCopyEffect
+) {
+        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition, grantedKeywords, intervening, requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters, beforeCopyEffect, null, null);
+    }
+
 
     public CopyControllerCastSpellOnSpellCastEffect {
         grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
@@ -190,5 +211,13 @@ public record CopyControllerCastSpellOnSpellCastEffect(
     @Override
     public TargetSpec targetSpec() {
         return beforeCopyEffect == null ? TargetSpec.NONE : beforeCopyEffect.targetSpec();
+    }
+    public static CopyControllerCastSpellOnSpellCastEffect withSacrificeFilter(
+            CardPredicate spellFilter,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
+            String sacrificeDescription) {
+        return new CopyControllerCastSpellOnSpellCastEffect(spellFilter, null, null, null, null,
+                Set.of(), null, false, Set.of(), false, true, false, false, null, List.of(), null,
+                sacrificeFilter, sacrificeDescription);
     }
 }

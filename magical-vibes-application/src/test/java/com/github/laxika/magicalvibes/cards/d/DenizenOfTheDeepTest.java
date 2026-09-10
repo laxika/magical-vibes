@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.Archangel;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,18 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DenizenOfTheDeep.class, AirElemental.class, Archangel.class, Island.class})
 class DenizenOfTheDeepTest extends BaseCardTest {
-
-    // ===== ETB trigger =====
 
     @Test
     @DisplayName("ETB triggers when Denizen enters the battlefield")
     void etbTriggersOnEnter() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new DenizenOfTheDeep()));
-        harness.addMana(player1, ManaColor.BLUE, 8);
-
-        harness.castCreature(player1, 0);
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
 
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
@@ -41,19 +38,13 @@ class DenizenOfTheDeepTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB returns all other creatures controller owns to hand")
+    @DisplayName("ETB returns all other creatures controlled by its controller to their owners' hands")
     void etbReturnsAllOtherCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new SerraAngel());
-        harness.setHand(player1, List.of(new DenizenOfTheDeep()));
-        harness.addMana(player1, ManaColor.BLUE, 8);
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player1, new Archangel());
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
 
-        harness.castCreature(player1, 0);
-
-        // Resolve creature spell
-        harness.passBothPriorities();
-        // Resolve ETB triggered ability
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -63,50 +54,36 @@ class DenizenOfTheDeepTest extends BaseCardTest {
                 .hasSize(1)
                 .allMatch(p -> p.getCard().getName().equals("Denizen of the Deep"));
 
-        // Grizzly Bears and Serra Angel should be in hand
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
-                .containsExactlyInAnyOrder("Grizzly Bears", "Serra Angel");
+                .containsExactlyInAnyOrder("Air Elemental", "Archangel");
     }
 
     @Test
     @DisplayName("ETB does not return opponent's creatures")
     void etbDoesNotReturnOpponentCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new SerraAngel());
-        harness.setHand(player1, List.of(new DenizenOfTheDeep()));
-        harness.addMana(player1, ManaColor.BLUE, 8);
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player2, new Archangel());
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
 
-        harness.castCreature(player1, 0);
-
-        // Resolve creature spell
-        harness.passBothPriorities();
-        // Resolve ETB triggered ability
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
 
-        // Opponent's Serra Angel should still be on battlefield
-        harness.assertOnBattlefield(player2, "Serra Angel");
+        // Opponent's Archangel should still be on battlefield
+        harness.assertOnBattlefield(player2, "Archangel");
 
-        // Player 1's Grizzly Bears should be bounced to hand
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
-                .containsExactly("Grizzly Bears");
+                .containsExactly("Air Elemental");
     }
 
     @Test
     @DisplayName("ETB with no other creatures does nothing")
     void etbWithNoOtherCreaturesDoesNothing() {
-        harness.setHand(player1, List.of(new DenizenOfTheDeep()));
-        harness.addMana(player1, ManaColor.BLUE, 8);
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
 
-        harness.castCreature(player1, 0);
-
-        // Resolve creature spell
-        harness.passBothPriorities();
-        // Resolve ETB triggered ability
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -117,6 +94,36 @@ class DenizenOfTheDeepTest extends BaseCardTest {
                 .allMatch(p -> p.getCard().getName().equals("Denizen of the Deep"));
 
         // Hand should be empty
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB leaves noncreature permanents alone")
+    void etbLeavesNoncreaturePermanentsAlone() {
+        harness.addToBattlefield(player1, new Island());
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Denizen of the Deep");
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB returns a controlled creature to its owner's hand")
+    void etbReturnsControlledCreatureToOwnerHand() {
+        AirElemental ownedByOpponent = new AirElemental();
+        ownedByOpponent.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, ownedByOpponent);
+        harness.setHand(player2, List.of());
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Air Elemental");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

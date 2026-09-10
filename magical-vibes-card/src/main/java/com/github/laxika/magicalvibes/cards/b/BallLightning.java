@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "M10", collectorNumber = "125")
+@CardRegistration(set = "ME1", collectorNumber = "87")
 @CardRegistration(set = "5ED", collectorNumber = "210")
 @CardRegistration(set = "4ED", collectorNumber = "176")
 @CardRegistration(set = "DRK", collectorNumber = "57")
 @CardRegistration(set = "BTD", collectorNumber = "35")
+@CardRegistration(set = "PD2", collectorNumber = "12")
 public class BallLightning extends Card {
 
     public BallLightning() {

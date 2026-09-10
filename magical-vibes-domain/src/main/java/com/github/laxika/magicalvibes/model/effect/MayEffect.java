@@ -17,7 +17,7 @@ import java.util.UUID;
  *                            the player attacked by an attack trigger
  */
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
-        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
+        implements GrantingPermanentAwareEffect, CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
         TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
         SacrificedPermanentManaValueAwareEffect {
 
@@ -36,6 +36,11 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         return wrappedSpec != TargetSpec.NONE || elseEffect == null
                 ? wrappedSpec
                 : elseEffect.targetSpec();
+    }
+
+    @Override
+    public boolean resolvesWhenTargetIllegal() {
+        return wrapped.resolvesWhenTargetIllegal();
     }
 
     @Override
@@ -66,6 +71,17 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
                 ? aware.withCombatDamageDealerIds(dealerIds)
                 : wrapped;
         return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer);
+    }
+
+    @Override
+    public CardEffect withGrantingPermanentId(UUID permanentId) {
+        CardEffect boundWrapped = wrapped instanceof GrantingPermanentAwareEffect aware
+                ? aware.withGrantingPermanentId(permanentId)
+                : wrapped;
+        CardEffect boundElse = elseEffect instanceof GrantingPermanentAwareEffect aware
+                ? aware.withGrantingPermanentId(permanentId)
+                : elseEffect;
+        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer);
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M10", collectorNumber = "63")
 @CardRegistration(set = "M11", collectorNumber = "67")
 @CardRegistration(set = "M12", collectorNumber = "67")
+@CardRegistration(set = "DPA", collectorNumber = "11")
 public class MindControl extends Card {
 
     public MindControl() {

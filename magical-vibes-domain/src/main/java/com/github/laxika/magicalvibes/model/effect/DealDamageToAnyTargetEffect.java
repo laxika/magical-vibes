@@ -5,6 +5,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+
+import java.util.List;
 
 /**
  * Deals damage to any target (creature, planeswalker, or player). The amount is a
@@ -32,14 +39,31 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
  *                           {@code unpreventableWhen} also can't be redirected
  * @param preventRegenerationWithoutDamage when true, the targeted creature cannot regenerate
  *                           even if no damage is dealt (Disintegrate)
+ * @param sourceIsTriggeringPermanent whether an enter trigger binds the entering permanent as damage source
  */
 public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                           boolean exileInsteadOfDie, int targetGroup,
                                           Condition unpreventableWhen,
                                           boolean onlyIfSacrificed,
                                           boolean cantBeRedirectedWhenUnpreventable,
-                                          boolean preventRegenerationWithoutDamage)
-        implements DamageDealingEffect {
+                                          boolean preventRegenerationWithoutDamage,
+                                          boolean sourceIsTriggeringPermanent)
+        implements DamageDealingEffect, TriggeringPermanentSourceEffect {
+
+    public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
+                                       boolean exileInsteadOfDie, int targetGroup,
+                                       Condition unpreventableWhen, boolean onlyIfSacrificed,
+                                       boolean cantBeRedirectedWhenUnpreventable,
+                                       boolean preventRegenerationWithoutDamage) {
+        this(damage, cantRegenerate, exileInsteadOfDie, targetGroup, unpreventableWhen,
+                onlyIfSacrificed, cantBeRedirectedWhenUnpreventable, preventRegenerationWithoutDamage, false);
+    }
+
+    /** The entering permanent deals the damage, with its live characteristics or last known values. */
+    public static DealDamageToAnyTargetEffect fromEnteringPermanent(DynamicAmount damage) {
+        return new DealDamageToAnyTargetEffect(damage, false, false, -1, null,
+                false, false, false, true);
+    }
 
     private static final int ANY_OTHER_TARGET = -2;
 
@@ -54,7 +78,8 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
     /** Applies the no-regeneration rider to the targeted creature regardless of damage dealt. */
     public DealDamageToAnyTargetEffect withUnconditionalRegenerationPrevention() {
         return new DealDamageToAnyTargetEffect(damage, true, exileInsteadOfDie, targetGroup,
-                unpreventableWhen, onlyIfSacrificed, cantBeRedirectedWhenUnpreventable, true);
+                unpreventableWhen, onlyIfSacrificed, cantBeRedirectedWhenUnpreventable, true,
+                sourceIsTriggeringPermanent);
     }
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
@@ -116,12 +141,27 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
         return new DealDamageToAnyTargetEffect(damage, false, false, ANY_OTHER_TARGET, null);
     }
 
+    /** Target filter for an any-target effect that excludes its source permanent. */
+    public static TargetFilter anyOtherTargetFilter() {
+        return new AnyTargetPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        TargetPredicates.anyTarget().permanentRestriction().orElseThrow(),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be another target");
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return targetGroup == ANY_OTHER_TARGET
                 ? TargetSpec.harmful(TargetPredicates.anyTarget(),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))
                 : TargetSpec.harmful(TargetPredicates.anyTarget());
+    }
+
+    @Override
+    public TargetFilter triggeredTargetFilter() {
+        return targetGroup == ANY_OTHER_TARGET ? anyOtherTargetFilter() : null;
     }
 
     @Override

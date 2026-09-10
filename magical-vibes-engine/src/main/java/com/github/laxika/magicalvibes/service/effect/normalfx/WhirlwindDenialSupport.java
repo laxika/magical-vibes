@@ -143,7 +143,7 @@ public class WhirlwindDenialSupport {
             return null;
         }
         return gameData.stack.stream()
-                .filter(stackEntry -> targetId.equals(stackEntry.getCard().getId()))
+                .filter(stackEntry -> targetId.equals(stackEntry.getTargetableId()))
                 .findFirst()
                 .orElse(null);
     }

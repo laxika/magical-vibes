@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "1")
 @CardRegistration(set = "USG", collectorNumber = "4")
 @CardRegistration(set = "BRB", collectorNumber = "4")
+@CardRegistration(set = "DDC", collectorNumber = "3")
 public class AngelicPage extends Card {
 
     public AngelicPage() {

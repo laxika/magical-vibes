@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "97")
+@CardRegistration(set = "DD1", collectorNumber = "35")
 public class EmberwildeAugur extends Card {
 
     public EmberwildeAugur() {

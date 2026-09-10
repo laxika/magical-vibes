@@ -61,6 +61,7 @@ class CoercionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         harness.assertInGraveyard(player2, "Island");
+        harness.assertInHand(player2, "Dark Ritual");
     }
 
     @Test
@@ -74,10 +75,12 @@ class CoercionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Coercion");
     }
 
     @Test
-    @DisplayName("Cannot target self — must target an opponent")
+    @DisplayName("Cannot target self Ă˘â‚¬â€ť must target an opponent")
     void cannotTargetSelf() {
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);

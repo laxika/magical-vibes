@@ -1,0 +1,37 @@
+<section class="planar-panel" aria-label="Planechase">
+  <div class="planes">
+    @for (plane of state().faceUp; track plane.id) {
+      <details class="plane" open>
+        <summary (mouseenter)="cardHover.emit(plane.card)" (mouseleave)="cardHoverEnd.emit()"
+          (focus)="cardHover.emit(plane.card)" (blur)="cardHoverEnd.emit()">{{ plane.card.name }}</summary>
+        <div class="plane-type">{{ plane.card.type }} · {{ plane.card.subtypes.join(' ') }}</div>
+        <p class="plane-text">{{ plane.card.cardText }}</p>
+        @for (ability of plane.card.activatedAbilities; track $index) {
+          <button type="button" [disabled]="busy() || !plane.availableAbilityIndices?.includes($index)"
+            (click)="activate.emit({ sourceId: plane.id, abilityIndex: $index })">{{ ability.description }}</button>
+        }
+        @for (counter of plane.counters | keyvalue; track counter.key) {
+          <span class="counter">{{ counter.key }}: {{ counter.value }}</span>
+        }
+      </details>
+    } @empty {
+      <p class="waiting">The starting plane will be revealed after opening hands.</p>
+    }
+  </div>
+  <div class="planar-controls">
+    <button type="button" (click)="roll.emit()" [disabled]="!state().canRoll || busy()">
+      Roll planar die
+      <span>{{ state().rollCost === 0 ? 'Free' : '{' + state().rollCost + '}' }}</span>
+    </button>
+    <span class="deck-count">{{ state().deckSize }} cards in planar deck</span>
+    <output aria-live="polite">
+      @if (state().lastRoll) {
+        @switch (state().lastRoll) {
+          @case ('BLANK') { Blank }
+          @case ('CHAOS') { Chaos }
+          @case ('PLANESWALKER') { Planeswalker }
+        }
+      }
+    </output>
+  </div>
+</section>

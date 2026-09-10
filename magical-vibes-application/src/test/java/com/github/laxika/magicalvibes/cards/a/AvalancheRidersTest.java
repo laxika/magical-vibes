@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GhituEncampment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,37 +14,62 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AvalancheRiders.class, GhituEncampment.class})
 class AvalancheRidersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering the battlefield destroys a target land")
     void etbDestroysTargetLand() {
-        harness.addToBattlefield(player2, new Forest());
-        castAndResolveAvalancheRiders(harness.getPermanentId(player2, "Forest"));
+        harness.addToBattlefield(player2, new GhituEncampment());
+        castAndResolveAvalancheRiders(harness.getPermanentId(player2, "Ghitu Encampment"));
 
         harness.assertOnBattlefield(player1, "Avalanche Riders");
-        harness.assertNotOnBattlefield(player2, "Forest");
-        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Ghitu Encampment");
+        harness.assertInGraveyard(player2, "Ghitu Encampment");
     }
 
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AvalancheRiders());
         harness.setHand(player1, List.of(new AvalancheRiders()));
         addCastMana();
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Avalanche Riders");
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("land");
     }
 
     @Test
+    @DisplayName("Haste allows Avalanche Riders to attack immediately")
+    void hasteAllowsAttackingImmediately() {
+        harness.addToBattlefield(player2, new GhituEncampment());
+        castAndResolveAvalancheRiders(harness.getPermanentId(player2, "Ghitu Encampment"));
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Echo does not trigger during the opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player2, new GhituEncampment());
+        castAndResolveAvalancheRiders(harness.getPermanentId(player2, "Ghitu Encampment"));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Avalanche Riders");
+    }
+
+    @Test
     @DisplayName("Declining echo sacrifices Avalanche Riders")
     void decliningEchoSacrificesAvalancheRiders() {
-        harness.addToBattlefield(player2, new Forest());
-        castAndResolveAvalancheRiders(harness.getPermanentId(player2, "Forest"));
+        harness.addToBattlefield(player2, new GhituEncampment());
+        castAndResolveAvalancheRiders(harness.getPermanentId(player2, "Ghitu Encampment"));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -58,8 +83,8 @@ class AvalancheRidersTest extends BaseCardTest {
     @Test
     @DisplayName("Paying echo keeps Avalanche Riders and echo does not trigger again")
     void payingEchoKeepsAvalancheRidersAndIsOneShot() {
-        harness.addToBattlefield(player2, new Forest());
-        castAndResolveAvalancheRiders(harness.getPermanentId(player2, "Forest"));
+        harness.addToBattlefield(player2, new GhituEncampment());
+        castAndResolveAvalancheRiders(harness.getPermanentId(player2, "Ghitu Encampment"));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

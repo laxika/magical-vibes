@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "128")
+@CardRegistration(set = "DPA", collectorNumber = "81")
 public class RoughshodMentor extends Card {
 
     public RoughshodMentor() {

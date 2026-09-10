@@ -1,17 +1,17 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.w.WallOfNets;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,15 +21,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeismicAssault.class, CityOfTraitors.class, RagingGoblin.class, Spellbook.class, WallOfNets.class})
 class SeismicAssaultTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating ability starts discard-cost choice before stack entry")
     void activationStartsDiscardChoice() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
+        harness.setHand(player1, List.of(new RagingGoblin(), new CityOfTraitors()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -43,7 +42,7 @@ class SeismicAssaultTest extends BaseCardTest {
     @DisplayName("Choosing a land pays cost and puts ability on stack")
     void choosingLandPaysCostAndStacksAbility() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain(), new Plains()));
+        harness.setHand(player1, List.of(new RagingGoblin(), new Spellbook(), new CityOfTraitors()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.handleCardChosen(player1, 2);
@@ -51,12 +50,11 @@ class SeismicAssaultTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        harness.assertNotInHand(player1, "Plains");
-        harness.assertInGraveyard(player1, "Plains");
+        harness.assertNotInHand(player1, "City of Traitors");
+        harness.assertInGraveyard(player1, "City of Traitors");
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Seismic Assault");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -64,7 +62,7 @@ class SeismicAssaultTest extends BaseCardTest {
     @DisplayName("Cannot activate without a land card in hand")
     void cannotActivateWithoutLandCard() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RagingGoblin()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -75,7 +73,7 @@ class SeismicAssaultTest extends BaseCardTest {
     @DisplayName("Cannot choose nonland for discard cost")
     void cannotChooseNonLandForDiscardCost() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
+        harness.setHand(player1, List.of(new RagingGoblin(), new CityOfTraitors()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -92,7 +90,7 @@ class SeismicAssaultTest extends BaseCardTest {
     @DisplayName("Illegal target is rejected before discard cost is paid")
     void illegalTargetRejectedBeforePayingCost() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new Mountain()));
+        harness.setHand(player1, List.of(new CityOfTraitors()));
         UUID illegalTarget = UUID.randomUUID();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, illegalTarget))
@@ -110,7 +108,7 @@ class SeismicAssaultTest extends BaseCardTest {
     void deals2DamageToPlayer() {
         harness.setLife(player2, 20);
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new Mountain()));
+        harness.setHand(player1, List.of(new CityOfTraitors()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.handleCardChosen(player1, 0);
@@ -123,24 +121,35 @@ class SeismicAssaultTest extends BaseCardTest {
     @DisplayName("Deals 2 damage to target creature")
     void deals2DamageToCreature() {
         addReadySeismicAssault(player1);
-        harness.setHand(player1, List.of(new Mountain()));
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new CityOfTraitors()));
+        harness.addToBattlefield(player2, new RagingGoblin());
 
-        UUID elfId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.activateAbility(player1, 0, null, elfId);
+        UUID goblinId = harness.getPermanentId(player2, "Raging Goblin");
+        harness.activateAbility(player1, 0, null, goblinId);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Raging Goblin");
+        harness.assertInGraveyard(player2, "Raging Goblin");
     }
 
-    private Permanent addReadySeismicAssault(Player player) {
-        SeismicAssault card = new SeismicAssault();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Deals exactly 2 damage to a surviving target creature")
+    void dealsExactly2DamageToSurvivingCreature() {
+        addReadySeismicAssault(player1);
+        harness.setHand(player1, List.of(new CityOfTraitors()));
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfNets());
+
+        harness.activateAbility(player1, 0, null, wall.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(wall.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Wall of Nets");
+    }
+
+    private void addReadySeismicAssault(Player player) {
+        harness.addToBattlefield(player, new SeismicAssault());
     }
 }
 

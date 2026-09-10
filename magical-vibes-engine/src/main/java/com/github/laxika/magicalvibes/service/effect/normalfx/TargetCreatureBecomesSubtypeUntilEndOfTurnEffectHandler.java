@@ -69,7 +69,10 @@ public class TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler implements 
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        UUID targetId = entry.getTargetId() != null ? entry.getTargetId()
+                : targetIds.isEmpty() ? null : targetIds.getFirst();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }

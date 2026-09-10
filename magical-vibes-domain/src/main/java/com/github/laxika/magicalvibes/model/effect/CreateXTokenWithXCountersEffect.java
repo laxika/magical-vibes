@@ -18,6 +18,12 @@ public record CreateXTokenWithXCountersEffect(
 
     public CreateXTokenWithXCountersEffect(String tokenName, int power, int toughness,
                                            CardColor color, Set<CardColor> colors,
+                                           List<CardSubtype> subtypes, CounterType counterType, DynamicAmount counterAmount) {
+        this(new CreateTokenEffect(tokenName, power, toughness, color, colors, subtypes), counterAmount, counterType);
+    }
+
+    public CreateXTokenWithXCountersEffect(String tokenName, int power, int toughness,
+                                           CardColor color, Set<CardColor> colors,
                                            List<CardSubtype> subtypes, CounterType counterType) {
         this(new CreateTokenEffect(tokenName, power, toughness, color, colors, subtypes),
                 new XValue(), counterType);

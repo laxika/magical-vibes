@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -77,15 +79,19 @@ public class PermanentControlSupport {
      */
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                        String sourceSetCode, int power, int toughness) {
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, Map.of());
+    }
+
+    public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
         Card jinnieFay = amount > 0
                 ? TokenCreationReplacementSupport.findJinnieFay(gameData, controllerId) : null;
         if (jinnieFay != null) {
             playerInputService.beginJinnieFayTokenChoice(
-                    gameData, controllerId, jinnieFay, token, amount, power, toughness, sourceSetCode);
+                    gameData, controllerId, jinnieFay, token, amount, power, toughness, sourceSetCode, additionalEffects);
             return List.of();
         }
         return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
-                true, true, true);
+                true, true, true, additionalEffects);
     }
 
     /** Creates tokens after Jinnie Fay's replacement choice has already been made. */
@@ -100,11 +106,13 @@ public class PermanentControlSupport {
                                         String sourceSetCode, int power, int toughness,
                                         boolean applyAdditionalReplacements, boolean applyTokenMultiplier,
         boolean fireTokenTriggers) {
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, Map.of());
+    }
+
+    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
         List<UUID> createdIds = new ArrayList<>();
         boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
-        int tokenMultiplier = applyTokenMultiplier
-                ? gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature) : 1;
-        int totalAmount = amount * tokenMultiplier;
+        int totalAmount = applyTokenMultiplier ? gameQueryService.getTokenCreationAmount(gameData, controllerId, amount, token.subtypes(), baseTokenIsCreature) : amount;
         int additionalMapTokenCount = applyAdditionalReplacements
                 ? TokenCreationReplacementSupport.additionalMapTokenCount(
                         gameData, controllerId, token, amount)
@@ -140,6 +148,13 @@ public class PermanentControlSupport {
             int blueprintPower = fixedStat(tokenBlueprint.power(), tokenBlueprint);
             int blueprintToughness = fixedStat(tokenBlueprint.toughness(), tokenBlueprint);
             Card tokenCard = TokenCardFactory.create(tokenBlueprint, blueprintPower, blueprintToughness, sourceSetCode);
+            if (tokenBlueprint == evaluatedToken && additionalEffects != null) {
+                for (var additional : additionalEffects.entrySet()) {
+                    for (var registration : additional.getValue()) {
+                        tokenCard.addEffect(additional.getKey(), registration.effect(), registration.triggerMode());
+                    }
+                }
+            }
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                     gameData, controllerId, tokenCard);
 
@@ -228,6 +243,10 @@ public class PermanentControlSupport {
 
         log.info("Game {} - {} token(s) created for player {}", gameData.id, createdIds.size(), controllerId);
         return createdIds;
+    }
+
+    public List<UUID> applyCreateTokenAfterJinnieFayChoice(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, true, true, true, additionalEffects);
     }
 
     private boolean hasSolvedClueReplacement(GameData gameData, UUID controllerId) {

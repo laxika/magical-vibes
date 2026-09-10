@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -139,6 +140,9 @@ public class AnimationSupport {
             targetIds = List.of(enchantedId);
         } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
             targetIds = List.of(entry.getSourcePermanentId());
+        } else if (effect.scope() == GrantScope.TARGET && !entry.getTargetIds().isEmpty()
+                && entry.targetsForResolvingEffectGroup() != null) {
+            targetIds = entry.targetsForResolvingEffectGroup();
         } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
                 && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
             targetIds = entry.getTargetIds();
@@ -509,7 +513,10 @@ public class AnimationSupport {
      */
     public void animatePermanentTarget(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         List<UUID> targetIds;
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
+        if (effect.scope() == GrantScope.TARGET && !entry.getTargetIds().isEmpty()
+                && entry.targetsForResolvingEffectGroup() != null) {
+            targetIds = entry.targetsForResolvingEffectGroup();
+        } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
                 && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
             targetIds = entry.getTargetIds();
         } else if (entry.getTargetId() != null) {
@@ -563,9 +570,14 @@ public class AnimationSupport {
         target.setPermanentlyAnimated(true);
         target.setPermanentAnimatedPower(power);
         target.setPermanentAnimatedToughness(toughness);
+        boolean dynamicPowerToughness = effect.power() != null && effect.toughness() != null
+                && (!(effect.power() instanceof Fixed) || !(effect.toughness() instanceof Fixed));
+        CardEffect basePowerToughnessEffect = !dynamicPowerToughness
+                ? new SetBasePowerToughnessEffect(power, toughness)
+                : new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness());
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
-                sourcePermanentId, controllerId, new SetBasePowerToughnessEffect(power, toughness),
-                target.getId(), null, null, EffectDuration.PERMANENT, 0));
+                sourcePermanentId, controllerId, basePowerToughnessEffect, target.getId(), null, null,
+                EffectDuration.PERMANENT, 0));
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             if (!target.getGrantedSubtypes().contains(subtype)) {
@@ -659,6 +671,30 @@ public class AnimationSupport {
         log.info("Game {} - {} becomes a {}/{} creature while {} is on the battlefield",
                 gameData.id, target.getCard().getName(), power, toughness,
                 entry.getCard().getName());
+    }
+
+    /**
+     * Animates the target with floating type, subtype, color, keyword, and base P/T effects
+     * for as long as the source remains tapped, provided it has not untapped since activation.
+     */
+    public void animateWhileSourceRemainsTapped(GameData gameData, StackEntry entry,
+                                                AnimatePermanentsEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent source = sourcePermanentId == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
+        if (source == null || !source.isTapped() || sourceSnapshot == null
+                || source.getUntapSequence() != sourceSnapshot.getUntapSequence()) {
+            return;
+        }
+
+        animateOneWithFloatingDuration(gameData, entry, effect, target.getId());
     }
 
     /**

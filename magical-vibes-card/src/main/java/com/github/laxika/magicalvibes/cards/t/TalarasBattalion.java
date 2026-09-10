@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpell
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "EVE", collectorNumber = "77")
+@CardRegistration(set = "DPA", collectorNumber = "84")
 public class TalarasBattalion extends Card {
 
     public TalarasBattalion() {

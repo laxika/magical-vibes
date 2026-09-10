@@ -31,7 +31,7 @@ public class StaticBoostEffectHandler implements StaticEffectHandlerBean {
                     ? 1
                     : (boost.scalingCounterOnTarget()
                             ? context.target().getCounterCount(boost.scalingCounter())
-                            : context.source().getCounterCount(boost.scalingCounter()));
+                            : context.sourceCounterCount(boost.scalingCounter()));
             accumulator.addPower(boost.powerBoost() * multiplier);
             accumulator.addToughness(boost.toughnessBoost() * multiplier);
             accumulator.addKeywords(boost.grantedKeywords());

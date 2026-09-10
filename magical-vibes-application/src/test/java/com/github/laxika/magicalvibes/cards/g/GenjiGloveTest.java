@@ -52,8 +52,8 @@ class GenjiGloveTest extends BaseCardTest {
         glove.setAttachedTo(creature.getId());
 
         declareAttackers(player1, List.of(0), 2);
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(creature.isTapped()).isTrue();
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
     }

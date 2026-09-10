@@ -44,6 +44,21 @@ import static org.assertj.core.api.Assertions.assertThat;
         TrainingDrone.class
 })
 class BlockLegalityServiceTest extends BaseCardTest {
+    @Test
+    void globalBlockRestrictionStopsWhenItsSourceLosesAbilities() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new LightOfDay());
+        var card = new com.github.laxika.magicalvibes.model.Card();
+        card.setType(com.github.laxika.magicalvibes.model.CardType.CREATURE);
+        card.setColor(com.github.laxika.magicalvibes.model.CardColor.BLACK);
+        card.setPower(2);
+        card.setToughness(2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, card);
+        assertThat(bls.canBlock(gd, creature)).isFalse();
+
+        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        assertThat(bls.canBlock(gd, creature)).isTrue();
+    }
 
     @Test
     @DisplayName("An untapped creature can block")

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
+import com.github.laxika.magicalvibes.cards.f.FearOfMissingOut;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FormOfTheDragon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.j.JackalFamiliar;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.k.KeldonBerserker;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
@@ -22,6 +24,7 @@ import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SightlessBrawler;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
@@ -100,6 +103,22 @@ class CombatAttackServiceTest extends BaseCardTest {
 
         gs.declareAttackers(gd, player1, List.of(0));
 
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({FearOfMissingOut.class, GrizzlyBears.class, Forest.class, Shock.class,
+            LeoninScimitar.class})
+    @DisplayName("An unmet intervening-if attack trigger is skipped before target selection")
+    void skipsUnmetInterveningIfAttackTriggerBeforeTargetSelection() {
+        Permanent fear = addCreatureReady(player1, new FearOfMissingOut());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock(), new LeoninScimitar()));
+        enterDeclareAttackers();
+
+        gs.declareAttackers(gd, player1, List.of(index(fear)));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
 

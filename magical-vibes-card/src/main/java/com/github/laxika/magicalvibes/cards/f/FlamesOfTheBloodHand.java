@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeThisTurnEffect;
 
 @CardRegistration(set = "BOK", collectorNumber = "101")
+@CardRegistration(set = "PD2", collectorNumber = "22")
 public class FlamesOfTheBloodHand extends Card {
 
     public FlamesOfTheBloodHand() {

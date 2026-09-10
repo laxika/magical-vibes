@@ -16,6 +16,8 @@ import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "295")
 @CardRegistration(set = "SUM", collectorNumber = "234")
+@CardRegistration(set = "ATQ", collectorNumber = "37")
+@CardRegistration(set = "3ED", collectorNumber = "234")
 public class ArmageddonClock extends Card {
 
     public ArmageddonClock() {

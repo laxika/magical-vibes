@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -21,8 +22,10 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
@@ -39,10 +42,12 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
+import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -66,7 +71,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -252,6 +259,32 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("queues one trigger when a controlled Hero deals damage to a player")
+    void queuesBatchedHeroDamageTrigger() {
+        Permanent watcher = createPermanent("The Thing, Ben Grimm");
+        Permanent hero = createPermanent("Agent Maria Hill");
+        var predicate = new PermanentHasSubtypePredicate(CardSubtype.HERO);
+        var wrapped = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        var effect = new TriggeringPermanentConditionalEffect(predicate, wrapped);
+        var ctx = new TriggerContext.AllyCreaturesDealDamageToPlayer(
+                player2Id, player1Id, List.of(hero));
+
+        when(gameQueryService.isCreature(gd, hero)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(hero), eq(predicate), any(FilterContext.class)))
+                .thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(watcher, player1Id, effect),
+                EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2Id);
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(wrapped);
+    }
+
+    @Test
     @DisplayName("queues a may ability for combat damage to a creature")
     void queuesMayForAllyCombatDamageToCreature() {
         Permanent quest = createPermanent("Quest for the Gemblades");
@@ -360,6 +393,34 @@ class DamageTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("unwraps and limits once-per-turn effects inside the controller conditional")
+        void unwrapsAndLimitsOncePerTurnEffect() {
+            Permanent watcher = createPermanent("The Sensational She-Hulk");
+            Permanent damaged = createPermanent("Hill Giant");
+            MayEffect may = new MayEffect(
+                    new com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect(new EventValue()),
+                    "Reflect the damage?");
+            var effect = new TriggeringPermanentConditionalEffect(
+                    new PermanentControlledBySourceControllerPredicate(),
+                    new OncePerTurnTriggerEffect(may));
+            var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player1Id, 2);
+
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(damaged),
+                    eq((PermanentPredicate) effect.predicate()), any(FilterContext.class))).thenReturn(true);
+
+            assertThat(registry.dispatch(
+                    match(watcher, player1Id, effect), EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx))
+                    .isTrue();
+            assertThat(registry.dispatch(
+                    match(watcher, player1Id, effect), EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx))
+                    .isFalse();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isNull();
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(may);
+            assertThat(gd.oncePerTurnTriggersFiredThisTurn).contains(watcher.getId());
         }
     }
 
@@ -1007,6 +1068,37 @@ class DamageTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT creature damage")
+    class AllySourceDealtNoncombatDamageToOpponentCreatureDamage {
+
+        @Test
+        @DisplayName("queues conditional creature damage and preserves the damaged player")
+        void queuesConditionalCreatureDamage() {
+            Permanent watcher = createPermanent("Fear of Burning Alive");
+            Permanent damagedCreature = createPermanent("Primordial Wurm");
+            gd.playerBattlefields.put(player2Id, List.of(damagedCreature));
+            var effect = new ConditionalEffect(new Delirium(),
+                    new DealDamageToTargetCreatureDamagedPlayerControlsEffect(new EventValue()));
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 3);
+
+            when(gameQueryService.isCreature(gd, damagedCreature)).thenReturn(true);
+            when(conditionEvaluationService.isMet(eq(gd), eq(effect.condition()),
+                    any(ConditionContext.class), eq(3))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(watcher, player1Id, effect),
+                    EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
         }
     }
 

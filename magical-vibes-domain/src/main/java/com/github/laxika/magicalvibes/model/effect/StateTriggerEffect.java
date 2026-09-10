@@ -14,7 +14,7 @@ import java.util.List;
  * or, when it is purely a property of the source permanent, as a {@code sourcePredicate}. The
  * latter is evaluated through the CR 613 layer-aware predicate evaluator, so keyword/color/type
  * grants from static effects are visible ("When this creature has flying, sacrifice it" —
- * Floodgate). Exactly one of the two is non-null.</p>
+ * Floodgate). When both are supplied, both conditions must be met.</p>
  *
  * @param predicate       condition to check after state-based actions, or {@code null}
  * @param sourcePredicate layer-aware condition on the source permanent, or {@code null}

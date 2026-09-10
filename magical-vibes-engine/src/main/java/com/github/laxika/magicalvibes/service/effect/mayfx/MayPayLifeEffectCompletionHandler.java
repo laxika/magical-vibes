@@ -38,13 +38,14 @@ public class MayPayLifeEffectCompletionHandler implements MayEffectHandlerBean {
         UUID playerId = ability.controllerId();
         boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameData.getLife(playerId) >= effect.lifeCost();
+        CardEffect continuation = accepted && canPay ? effect.wrapped() : effect.elseEffect();
         if (accepted && canPay) {
             lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
-            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-            if (pendingEntry != null && effect.wrapped() != null) {
-                pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
-                        List.of(effect.wrapped()));
-            }
+        }
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null && continuation != null) {
+            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                    List.of(continuation));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

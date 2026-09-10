@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "AKH", collectorNumber = "40")
 @CardRegistration(set = "AKR", collectorNumber = "48")
+@CardRegistration(set = "OGW", collectorNumber = "50")
 public class AncientCrab extends Card {
 
     public AncientCrab() {

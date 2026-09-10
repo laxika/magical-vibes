@@ -45,7 +45,27 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               boolean targetOpponentsDiscardThenDraw,
                               UUID thenEffectSourcePermanentId,
                               Permanent thenEffectSourcePermanentSnapshot,
+                              int thenEffectEventValue, UUID discardedCardSelectionControllerId, List<UUID> discardedCardIds) {
+    public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
+                              List<UUID> remainingEachPlayerDiscards,
+                              UUID eachPlayerControllerId, int eachPlayerAmount,
+                              int graveyardReturnCount, List<Integer> eachPlayerAmounts,
+                              UUID boostPermanentId, int boostPower, int boostToughness,
+                              Card thenEffectSourceCard, CardEffect thenEffect, CardPredicate thenEffectCondition,
+                              Permanent enteringPermanent, UUID enteringControllerId,
+                              UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount,
+                              UUID thenEffectTargetId, boolean plaguecrafter,
+                              int eachPlayerNoDiscardCount, boolean thenEffectUsesDiscardedManaValue,
+                              UUID rummageDrawPlayerId,
+                              CardType thenEffectAlternateCardType,
+                              CardEffect thenEffectAlternate,
+                              boolean targetOpponentsDiscardThenDraw,
+                              UUID thenEffectSourcePermanentId,
+                              Permanent thenEffectSourcePermanentSnapshot,
                               int thenEffectEventValue) {
+        this(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect, thenEffectCondition, enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue, rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate, targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId, thenEffectSourcePermanentSnapshot, thenEffectEventValue, null, List.of());
+    }
+
 
     public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                            List<UUID> remainingEachPlayerDiscards,
@@ -297,7 +317,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 thenEffectUsesDiscardedManaValue, rummageDrawPlayerId,
                 thenEffectAlternateCardType, thenEffectAlternate,
                 targetOpponentsDiscardThenDraw, sourcePermanentId,
-                sourcePermanentSnapshot, eventValue);
+                sourcePermanentSnapshot, eventValue, discardedCardSelectionControllerId, discardedCardIds);
     }
 
     /**
@@ -315,7 +335,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 thenEffectUsesDiscardedManaValue, rummageDrawPlayerId,
                 thenEffectAlternateCardType, thenEffectAlternate,
                 targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId,
-                thenEffectSourcePermanentSnapshot, thenEffectEventValue);
+                thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds);
     }
 
     /** Records an opponent who had no card to discard. */
@@ -329,6 +349,27 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 eachPlayerNoDiscardCount + 1, thenEffectUsesDiscardedManaValue,
                 rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate,
                 targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId,
-                thenEffectSourcePermanentSnapshot, thenEffectEventValue);
+                thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds);
+    }
+    public static DiscardFollowUp chooseDiscardedLandForBattlefield(UUID controllerId) {
+        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
+                null, null, null, null, null, null, 0, null, false, 0, false, null, null, null,
+                false, null, null, 0, controllerId, List.of());
+    }
+
+    public DiscardFollowUp withDiscardedCard(UUID cardId) {
+        if (discardedCardSelectionControllerId == null) return this;
+        List<UUID> updatedCardIds = new java.util.ArrayList<>(discardedCardIds);
+        updatedCardIds.add(cardId);
+        return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards,
+                eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts,
+                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect,
+                thenEffectCondition, enteringPermanent, enteringControllerId,
+                plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId,
+                plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue,
+                rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate,
+                targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId,
+                thenEffectSourcePermanentSnapshot, thenEffectEventValue,
+                discardedCardSelectionControllerId, updatedCardIds);
     }
 }

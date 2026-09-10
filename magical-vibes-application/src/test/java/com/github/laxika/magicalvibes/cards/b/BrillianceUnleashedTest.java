@@ -90,7 +90,7 @@ class BrillianceUnleashedTest extends BaseCardTest {
         } else {
             gs.playCard(gd, player1, 0,
                     ChooseOneEffect.encodeModeSelection(1, 2, new int[]{mode}),
-                    targetId, null);
+                    null, null, List.of(targetId), List.of());
         }
         harness.passBothPriorities();
     }
