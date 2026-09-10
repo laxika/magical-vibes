@@ -1,32 +1,29 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GoblinKing;
+import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Dracoplasm.class, GrizzlyBears.class, GiantSpider.class, HillGiant.class,
+        GoblinKing.class, GoblinPiker.class})
 class DracoplasmTest extends BaseCardTest {
 
     private void castDracoplasm() {
-        harness.setHand(player1, new ArrayList<>(List.of(new Dracoplasm())));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Dracoplasm(), "{U}{R}");
         harness.passBothPriorities();
-    }
-
-    private Permanent dracoplasm() {
-        return findPermanent(player1, "Dracoplasm");
     }
 
     @Test
@@ -39,7 +36,7 @@ class DracoplasmTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), spider.getId()));
 
-        Permanent dracoplasm = dracoplasm();
+        Permanent dracoplasm = findPermanent(player1, "Dracoplasm");
         assertThat(harness.getGameQueryService().getEffectivePower(gd, dracoplasm)).isEqualTo(4);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, dracoplasm)).isEqualTo(6);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
@@ -57,11 +54,10 @@ class DracoplasmTest extends BaseCardTest {
         castDracoplasm();
         harness.handleMultiplePermanentsChosen(player1, List.of(giant.getId()));
 
-        Permanent dracoplasm = dracoplasm();
+        Permanent dracoplasm = findPermanent(player1, "Dracoplasm");
         assertThat(harness.getGameQueryService().getEffectivePower(gd, dracoplasm)).isEqualTo(3);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, dracoplasm)).isEqualTo(3);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -72,10 +68,8 @@ class DracoplasmTest extends BaseCardTest {
         castDracoplasm();
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dracoplasm"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dracoplasm"));
+        harness.assertNotOnBattlefield(player1, "Dracoplasm");
+        harness.assertInGraveyard(player1, "Dracoplasm");
     }
 
     @Test
@@ -84,8 +78,7 @@ class DracoplasmTest extends BaseCardTest {
         castDracoplasm();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Dracoplasm"));
+        harness.assertNotOnBattlefield(player1, "Dracoplasm");
     }
 
     @Test
@@ -103,6 +96,20 @@ class DracoplasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Uses the selected creatures' power and toughness before sacrificing them")
+    void sumsSelectedCreaturesBeforeSacrificingThem() {
+        Permanent king = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
+        Permanent piker = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
+
+        castDracoplasm();
+        harness.handleMultiplePermanentsChosen(player1, List.of(king.getId(), piker.getId()));
+
+        Permanent dracoplasm = findPermanent(player1, "Dracoplasm");
+        assertThat(gqs.getEffectivePower(gd, dracoplasm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, dracoplasm)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("{R} pumps it +1/+0 on top of the P/T it entered with")
     void firebreathingStacksOnEnteredPowerToughness() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());  // 2/2
@@ -110,7 +117,7 @@ class DracoplasmTest extends BaseCardTest {
         castDracoplasm();
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        Permanent dracoplasm = dracoplasm();
+        Permanent dracoplasm = findPermanent(player1, "Dracoplasm");
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

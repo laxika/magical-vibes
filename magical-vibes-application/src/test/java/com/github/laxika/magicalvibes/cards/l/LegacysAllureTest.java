@@ -1,21 +1,23 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BenthicBehemoth;
+import com.github.laxika.magicalvibes.cards.m.MoggConscripts;
+import com.github.laxika.magicalvibes.cards.w.WallOfDiffusion;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LegacysAllure.class, MoggConscripts.class, BenthicBehemoth.class, WallOfDiffusion.class})
 class LegacysAllureTest extends BaseCardTest {
 
     private Permanent addAllureWithCounters(int treasureCounters) {
-        harness.addToBattlefield(player1, new LegacysAllure());
-        Permanent allure = findPermanent(player1, "Legacy's Allure");
+        Permanent allure = harness.addToBattlefieldAndReturn(player1, new LegacysAllure());
         allure.setCounterCount(CounterType.TREASURE, treasureCounters);
         return allure;
     }
@@ -48,14 +50,12 @@ class LegacysAllureTest extends BaseCardTest {
     @DisplayName("Sacrificing with two treasure counters steals a 2/2 permanently")
     void stealsCreatureWithinCounterCount() {
         addAllureWithCounters(2);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MoggConscripts());
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Mogg Conscripts");
+        harness.assertNotOnBattlefield(player2, "Mogg Conscripts");
         harness.assertNotOnBattlefield(player1, "Legacy's Allure");
     }
 
@@ -63,9 +63,7 @@ class LegacysAllureTest extends BaseCardTest {
     @DisplayName("Cannot target a creature with power above the treasure counter count")
     void cannotTargetTooLargeCreature() {
         addAllureWithCounters(1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenthicBehemoth());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -73,15 +71,40 @@ class LegacysAllureTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no treasure counters even a 4/4 stays untouchable")
+    @DisplayName("With no treasure counters even a larger creature stays untouchable")
     void noCountersMeansNoLegalTarget() {
         addAllureWithCounters(0);
-        harness.addToBattlefield(player2, new AirElemental());
-
-        Permanent target = findPermanent(player2, "Air Elemental");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BenthicBehemoth());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature with power");
+    }
+
+    @Test
+    @DisplayName("With no treasure counters a zero-power creature is a legal target")
+    void zeroPowerCreatureIsLegalWithNoCounters() {
+        addAllureWithCounters(0);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WallOfDiffusion());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Wall of Diffusion");
+        harness.assertNotOnBattlefield(player2, "Wall of Diffusion");
+    }
+
+    @Test
+    @DisplayName("A target that becomes too powerful before resolution is not controlled")
+    void targetBecomingTooPowerfulBeforeResolutionIsNotControlled() {
+        addAllureWithCounters(2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MoggConscripts());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Mogg Conscripts");
+        harness.assertNotOnBattlefield(player1, "Mogg Conscripts");
     }
 }

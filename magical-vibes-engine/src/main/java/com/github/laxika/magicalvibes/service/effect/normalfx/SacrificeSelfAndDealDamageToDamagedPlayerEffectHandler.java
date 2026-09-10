@@ -48,7 +48,7 @@ public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements N
         }
 
         // Sacrifice the source creature
-        permanentRemovalService.removePermanentToGraveyard(gameData, source);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, source);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));
 
         // Deal damage to the damaged player

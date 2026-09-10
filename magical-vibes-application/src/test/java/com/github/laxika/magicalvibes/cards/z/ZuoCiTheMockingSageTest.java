@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PoisonArrow;
+import com.github.laxika.magicalvibes.cards.w.WeiInfantry;
 import com.github.laxika.magicalvibes.cards.w.WeiEliteCompanions;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,24 +16,33 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZuoCiTheMockingSage.class, WeiEliteCompanions.class, WeiInfantry.class, PoisonArrow.class})
 class ZuoCiTheMockingSageTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Hexproof prevents an opponent from targeting Zuo Ci")
+    void hexproofPreventsOpponentTargeting() {
+        Permanent zuoCi = addCreatureReady(player1, new ZuoCiTheMockingSage());
+
+        harness.setHand(player2, List.of(new PoisonArrow()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, zuoCi.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hexproof");
+    }
 
     @Test
     @DisplayName("Zuo Ci can't be blocked by a creature with horsemanship")
     void cannotBeBlockedByHorsemanshipCreature() {
-        Permanent blockerPerm = new Permanent(new WeiEliteCompanions());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new WeiEliteCompanions());
 
-        Permanent atkPerm = new Permanent(new ZuoCiTheMockingSage());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new ZuoCiTheMockingSage());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -43,19 +54,12 @@ class ZuoCiTheMockingSageTest extends BaseCardTest {
     @Test
     @DisplayName("Zuo Ci can be blocked by a creature without horsemanship")
     void canBeBlockedByNonHorsemanshipCreature() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new WeiInfantry());
 
-        Permanent atkPerm = new Permanent(new ZuoCiTheMockingSage());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new ZuoCiTheMockingSage());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);

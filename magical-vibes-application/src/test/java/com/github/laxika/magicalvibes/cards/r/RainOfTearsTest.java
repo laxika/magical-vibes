@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RainOfTears.class, Mountain.class, RishadanPort.class, CloudSprite.class})
+@CardUsed({RainOfTears.class, Mountain.class, RishadanPort.class, LowlandGiant.class})
 class RainOfTearsTest extends BaseCardTest {
 
     @Test
@@ -139,11 +139,11 @@ class RainOfTearsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot destroy a creature with Rain of Tears")
     void cannotDestroyCreature() {
-        harness.addToBattlefield(player2, new CloudSprite());
+        harness.addToBattlefield(player2, new LowlandGiant());
         harness.setHand(player1, List.of(new RainOfTears()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        UUID creatureId = harness.getPermanentId(player2, "Cloud Sprite");
+        UUID creatureId = harness.getPermanentId(player2, "Lowland Giant");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }

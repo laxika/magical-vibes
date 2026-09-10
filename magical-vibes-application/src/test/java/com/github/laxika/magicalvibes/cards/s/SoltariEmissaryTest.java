@@ -6,13 +6,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(SoltariEmissary.class)
 class SoltariEmissaryTest extends BaseCardTest {
 
     @Test
@@ -40,6 +45,24 @@ class SoltariEmissaryTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.hasKeyword(gd, emissary, Keyword.SHADOW)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted shadow prevents a non-shadow creature from blocking")
+    void grantedShadowPreventsNonShadowCreatureFromBlocking() {
+        Permanent emissary = addEmissaryReady(player1);
+        addEmissaryReady(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        emissary.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
     }
 
     @Test
@@ -84,9 +107,6 @@ class SoltariEmissaryTest extends BaseCardTest {
     }
 
     private Permanent addEmissaryReady(Player player) {
-        Permanent perm = new Permanent(new SoltariEmissary());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SoltariEmissary());
     }
 }

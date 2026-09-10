@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,50 +13,34 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HuangZhongShuGeneral.class, ShuFootSoldiers.class})
 class HuangZhongShuGeneralTest extends BaseCardTest {
 
     @Test
     @DisplayName("Huang Zhong can be blocked by one creature")
     void canBeBlockedByOneCreature() {
-        Permanent attacker = new Permanent(new HuangZhongShuGeneral());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new HuangZhongShuGeneral());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
     @DisplayName("Huang Zhong cannot be blocked by two creatures")
     void cannotBeBlockedByTwoCreatures() {
-        Permanent attacker = new Permanent(new HuangZhongShuGeneral());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new HuangZhongShuGeneral());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blockerOne = new Permanent(new GrizzlyBears());
-        blockerOne.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerOne);
+        addCreatureReady(player2, new ShuFootSoldiers());
+        addCreatureReady(player2, new ShuFootSoldiers());
 
-        Permanent blockerTwo = new Permanent(new GrizzlyBears());
-        blockerTwo.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerTwo);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -64,5 +48,27 @@ class HuangZhongShuGeneralTest extends BaseCardTest {
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked by more than 1 creature");
+    }
+
+    @Test
+    @DisplayName("Each Huang Zhong can be blocked by one creature")
+    void eachHuangZhongCanBeBlockedByOneCreature() {
+        Permanent firstAttacker = addCreatureReady(player1, new HuangZhongShuGeneral());
+        firstAttacker.setAttacking(true);
+        Permanent secondAttacker = addCreatureReady(player1, new HuangZhongShuGeneral());
+        secondAttacker.setAttacking(true);
+
+        Permanent firstBlocker = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent secondBlocker = addCreatureReady(player2, new ShuFootSoldiers());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1)
+        ));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
     }
 }

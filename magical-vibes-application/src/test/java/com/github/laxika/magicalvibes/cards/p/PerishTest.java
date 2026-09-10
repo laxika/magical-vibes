@@ -1,60 +1,73 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.b.BrokenFall;
+import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
+import com.github.laxika.magicalvibes.cards.s.SkyshroudTroll;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BrokenFall.class, MoggFanatic.class, Perish.class, SkyshroudTroll.class})
 class PerishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys green creatures controlled by both players")
     void destroysGreenCreaturesFromBothPlayers() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Perish()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addToBattlefield(player1, new SkyshroudTroll());
+        harness.addToBattlefield(player2, new SkyshroudTroll());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Skyshroud Troll");
+        harness.assertNotOnBattlefield(player2, "Skyshroud Troll");
+        harness.assertInGraveyard(player1, "Skyshroud Troll");
+        harness.assertInGraveyard(player2, "Skyshroud Troll");
     }
 
     @Test
-    @DisplayName("Leaves non-green creatures on the battlefield")
-    void leavesNonGreenCreatures() {
-        harness.addToBattlefield(player1, new SuntailHawk());
-        harness.addToBattlefield(player1, new HillGiant());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Perish()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+    @DisplayName("Leaves non-green creatures and green noncreatures on the battlefield")
+    void leavesNonGreenCreaturesAndGreenNoncreatures() {
+        harness.addToBattlefield(player1, new MoggFanatic());
+        harness.addToBattlefield(player1, new BrokenFall());
+        harness.addToBattlefield(player2, new SkyshroudTroll());
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Suntail Hawk");
-        harness.assertOnBattlefield(player1, "Hill Giant");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Mogg Fanatic");
+        harness.assertOnBattlefield(player1, "Broken Fall");
+        harness.assertNotOnBattlefield(player2, "Skyshroud Troll");
     }
 
     @Test
     @DisplayName("Perish goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new Perish()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Perish");
+    }
+
+    @Test
+    @DisplayName("Does not allow regeneration to save a green creature")
+    void doesNotAllowRegenerationToSaveGreenCreature() {
+        harness.addToBattlefield(player2, new SkyshroudTroll());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Skyshroud Troll").getRegenerationShield()).isEqualTo(1);
+        harness.castFromHand(player1, new Perish(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Skyshroud Troll");
+        harness.assertInGraveyard(player2, "Skyshroud Troll");
     }
 }

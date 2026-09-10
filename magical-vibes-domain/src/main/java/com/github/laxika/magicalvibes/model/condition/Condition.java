@@ -288,6 +288,7 @@ public sealed interface Condition permits
         SourceHasColor,
         SourceBlockedOrWasBlockedByColorThisTurn,
         SourceIsAttacking,
+        SourceIsBlocked,
         SourceIsAttackingOrBlocking,
         SourceIsCreature,
         SourceIsEnchantment,

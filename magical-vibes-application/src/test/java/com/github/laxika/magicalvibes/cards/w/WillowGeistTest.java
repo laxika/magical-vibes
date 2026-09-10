@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.r.Reminisce;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WillowGeist.class, CruelEdict.class, Reminisce.class, Shock.class})
+@CardUsed({WillowGeist.class, DiabolicEdict.class, Reminisce.class, Shock.class})
 class WillowGeistTest extends BaseCardTest {
 
     @Test
@@ -34,10 +34,10 @@ class WillowGeistTest extends BaseCardTest {
     @Test
     void gainsLifeEqualToItsPowerWhenItDies() {
         addReadyGeist();
-        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player1.getId());
+        harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -48,10 +48,10 @@ class WillowGeistTest extends BaseCardTest {
     void usesItsLastKnownPowerWhenItDies() {
         Permanent geist = addReadyGeist();
         geist.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player1.getId());
+        harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

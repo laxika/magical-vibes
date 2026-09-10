@@ -39,7 +39,7 @@ public class SacrificeSelfThenDestroyTargetEffectHandler implements NormalEffect
         }
 
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (self == null || !permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+        if (self == null || !permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
             // "If you do" — no sacrifice, no destroy.
             return;
         }

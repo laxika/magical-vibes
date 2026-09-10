@@ -70,18 +70,21 @@ class CinderCrawlerTest extends BaseCardTest {
     void canActivateWhenBlockedWithoutBlockers() {
         Permanent crawler = addCreatureReady(player1, new CinderCrawler());
         addCreatureReady(player2, new CinderCrawler());
-        declareAttackers(List.of(battlefieldIndex(crawler)));
+        crawler.setAttacking(true);
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.EnumSet.allOf(TurnStep.class));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.EnumSet.allOf(TurnStep.class));
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new DazzlingBeauty()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, crawler.getId());
 
         assertThat(crawler.isBlockedWithoutBlockers()).isTrue();
+        assertThat(crawler.isAttacking()).isTrue();
 
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, battlefieldIndex(crawler), null, null);
         harness.passBothPriorities();
 
@@ -126,7 +129,7 @@ class CinderCrawlerTest extends BaseCardTest {
     }
 
     private void setupBlockedCrawler(Permanent crawler, Permanent blocker) {
-        declareAttackers(List.of(battlefieldIndex(crawler)));
+        crawler.setAttacking(true);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),

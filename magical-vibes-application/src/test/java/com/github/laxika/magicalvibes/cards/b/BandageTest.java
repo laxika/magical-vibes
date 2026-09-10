@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Bandage.class, BallistaSquad.class, GrizzlyBears.class})
 class BandageTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Bandage puts it on the stack")
@@ -54,8 +53,6 @@ class BandageTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Prevention on creature =====
-
     @Test
     @DisplayName("Resolving Bandage adds prevention shield to target creature")
     void resolvingAddsPrevention() {
@@ -63,12 +60,10 @@ class BandageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Bandage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        // Ensure player1 has a card to draw
-        harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
@@ -77,80 +72,55 @@ class BandageTest extends BaseCardTest {
     @Test
     @DisplayName("Prevention shield prevents 1 combat damage to creature")
     void preventionShieldPrevents1CombatDamage() {
-        // Set up: player1's Grizzly Bears (2/2) with 1 prevention shield
-        // vs player2's Grizzly Bears (2/2) attacking
-        GrizzlyBears bear1 = new GrizzlyBears();
-        Permanent defender = new Permanent(bear1);
-        defender.setSummoningSick(false);
-        defender.setDamagePreventionShield(1);
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Bandage()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, defender.getId());
+
+        attacker.setAttacking(true);
         defender.setBlocking(true);
         defender.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(defender);
 
-        GrizzlyBears bear2 = new GrizzlyBears();
-        Permanent attacker = new Permanent(bear2);
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
-
-        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        // Passing priorities advances from DECLARE_BLOCKERS → COMBAT_DAMAGE, triggering resolveCombatDamage
-        harness.passBothPriorities();
-
-        // Attacker dealt 2 damage, but defender has 1 prevention → 1 effective damage
-        // 1 < 2 toughness → defender survives
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        // Attacker took 2 damage with no shield → 2 >= 2 toughness → attacker dies
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        // Prevention shield was consumed
-        Permanent surviving = findPermanent(player2, "Grizzly Bears");
-        assertThat(surviving.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(defender.getMarkedDamage()).isEqualTo(1);
+        assertThat(defender.getDamagePreventionShield()).isZero();
     }
 
     @Test
     @DisplayName("Prevention shield is consumed after preventing damage")
     void preventionShieldIsConsumed() {
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent target = new Permanent(bear);
-        target.setSummoningSick(false);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.setDamagePreventionShield(1);
         target.setBlocking(true);
         target.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(target);
 
-        GrizzlyBears attBear = new GrizzlyBears();
-        Permanent attacker = new Permanent(attBear);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // After combat, shield should be consumed
         Permanent surviving = findPermanent(player2, "Grizzly Bears");
+        assertThat(surviving.getMarkedDamage()).isEqualTo(1);
         assertThat(surviving.getDamagePreventionShield()).isEqualTo(0);
     }
-
-    // ===== Prevention on player =====
 
     @Test
     @DisplayName("Resolving Bandage targeting a player adds prevention shield")
     void resolvingAddsPlayerPrevention() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Bandage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
-        // Target player2 with Bandage (using player UUID as target)
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
@@ -160,40 +130,31 @@ class BandageTest extends BaseCardTest {
     @DisplayName("Player prevention shield reduces combat damage by 1")
     void playerPreventionReducesCombatDamage() {
         harness.setLife(player2, 20);
-        harness.getGameData().playerDamagePreventionShields.put(player2.getId(), 1);
+        harness.setHand(player1, List.of(new Bandage()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        // Set up an unblocked 3/3 attacker
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent attacker = new Permanent(bear);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         GameData gd = harness.getGameData();
-        // 2 damage - 1 prevented = 1 effective damage → 20 - 1 = 19
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
-
-    // ===== Draw a card =====
 
     @Test
     @DisplayName("Resolving Bandage draws a card for the caster")
     void resolvingDrawsACard() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         GrizzlyBears deckCard = new GrizzlyBears();
-        harness.getGameData().playerDecks.get(player1.getId()).add(deckCard);
+        harness.setLibrary(player1, List.of(deckCard));
 
         harness.setHand(player1, List.of(new Bandage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-
-        int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
@@ -213,54 +174,44 @@ class BandageTest extends BaseCardTest {
     @DisplayName("Bandage goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new Bandage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player1, "Bandage");
     }
 
-    // ===== Prevention with spell damage =====
-
     @Test
     @DisplayName("Prevention shield reduces activated ability damage to creature")
     void preventionReducesAbilityDamage() {
-        // Set up target creature with prevention shield
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent target = new Permanent(bear);
-        target.setSummoningSick(false);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.setAttacking(true);
-        target.setDamagePreventionShield(1);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(target);
 
-        // Set up Ballista Squad for player1
-        BallistaSquad ballista = new BallistaSquad();
-        Permanent ballistaPerm = new Permanent(ballista);
-        ballistaPerm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(ballistaPerm);
+        addCreatureReady(player1, new BallistaSquad());
 
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.setHand(player1, List.of(new Bandage()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        // Activate ability with X=2, targeting the shielded creature
         harness.activateAbility(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
-        // 2 damage - 1 prevented = 1 effective damage. 1 < 2 toughness → survives
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getDamagePreventionShield()).isZero();
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Bandage fizzles entirely if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new Bandage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -281,22 +232,17 @@ class BandageTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Bandage");
     }
 
-    // ===== End of turn cleanup =====
-
     @Test
     @DisplayName("Prevention shields are cleared at end of turn")
     void preventionShieldsClearedAtEndOfTurn() {
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent perm = new Permanent(bear);
-        perm.setSummoningSick(false);
-        perm.setDamagePreventionShield(1);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(perm);
-        harness.getGameData().playerDamagePreventionShields.put(player1.getId(), 1);
+        Permanent perm = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Bandage(), new Bandage()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.castAndResolveInstant(player1, 0, perm.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        // Trigger cleanup by advancing through the step
-        // Directly test resetEndOfTurnModifiers by moving past cleanup
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -304,7 +250,7 @@ class BandageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         Permanent afterCleanup = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(afterCleanup.getDamagePreventionShield()).isEqualTo(0);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 }
 

@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.l.LightningElemental;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
@@ -19,6 +18,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IgniteDisorder.class, SoulWarden.class, SamiteHealer.class, FugitiveWizard.class,
+        LightningElemental.class})
 class IgniteDisorderTest extends BaseCardTest {
 
     @Test
@@ -27,7 +28,7 @@ class IgniteDisorderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IgniteDisorder()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        Permanent target = addToBattlefield(player2, new SoulWarden());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SoulWarden());
 
         harness.castInstant(player1, 0, Map.of(target.getId(), 3));
         harness.passBothPriorities();
@@ -45,8 +46,8 @@ class IgniteDisorderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IgniteDisorder()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        Permanent target1 = addToBattlefield(player2, new SoulWarden());
-        Permanent target2 = addToBattlefield(player2, new SamiteHealer());
+        Permanent target1 = harness.addToBattlefieldAndReturn(player2, new SoulWarden());
+        Permanent target2 = harness.addToBattlefieldAndReturn(player2, new SamiteHealer());
 
         harness.castInstant(player1, 0, Map.of(target1.getId(), 2, target2.getId(), 1));
         harness.passBothPriorities();
@@ -64,9 +65,9 @@ class IgniteDisorderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IgniteDisorder()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        Permanent white1 = addToBattlefield(player2, new SoulWarden());
-        Permanent white2 = addToBattlefield(player2, new SamiteHealer());
-        Permanent blue1 = addToBattlefield(player2, new FugitiveWizard());
+        Permanent white1 = harness.addToBattlefieldAndReturn(player2, new SoulWarden());
+        Permanent white2 = harness.addToBattlefieldAndReturn(player2, new SamiteHealer());
+        Permanent blue1 = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
 
         harness.castInstant(player1, 0, Map.of(
                 white1.getId(), 1,
@@ -89,7 +90,7 @@ class IgniteDisorderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IgniteDisorder()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        Permanent blue = addToBattlefield(player2, new FugitiveWizard());
+        Permanent blue = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
 
         harness.castInstant(player1, 0, Map.of(blue.getId(), 3));
         harness.passBothPriorities();
@@ -105,8 +106,8 @@ class IgniteDisorderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IgniteDisorder()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        Permanent protectedTarget = addToBattlefield(player2, new SamiteHealer());
-        Permanent legalTarget = addToBattlefield(player2, new SoulWarden());
+        Permanent protectedTarget = harness.addToBattlefieldAndReturn(player2, new SamiteHealer());
+        Permanent legalTarget = harness.addToBattlefieldAndReturn(player2, new SoulWarden());
 
         harness.castInstant(player1, 0, Map.of(protectedTarget.getId(), 2, legalTarget.getId(), 1));
         protectedTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
@@ -124,7 +125,7 @@ class IgniteDisorderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IgniteDisorder()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        Permanent red = addToBattlefield(player2, new LightningElemental());
+        Permanent red = harness.addToBattlefieldAndReturn(player2, new LightningElemental());
 
         assertThatThrownBy(() ->
                 harness.castInstant(player1, 0, Map.of(red.getId(), 3))
@@ -137,17 +138,11 @@ class IgniteDisorderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IgniteDisorder()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        Permanent target = addToBattlefield(player2, new SoulWarden());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SoulWarden());
 
         // Only assigning 2 damage — should fail
         assertThatThrownBy(() ->
                 harness.castInstant(player1, 0, Map.of(target.getId(), 2))
         ).isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addToBattlefield(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.y;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,24 +12,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({YellowScarvesTroops.class, ForestBear.class})
 class YellowScarvesTroopsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Yellow Scarves Troops cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent troops = new Permanent(new YellowScarvesTroops());
-        troops.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(troops);
+        Permanent troops = addCreatureReady(player2, new YellowScarvesTroops());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ForestBear());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)

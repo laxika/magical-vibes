@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "175")
+@CardRegistration(set = "V11", collectorNumber = "4")
 public class KikiJikiMirrorBreaker extends Card {
 
     public KikiJikiMirrorBreaker() {

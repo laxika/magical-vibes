@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RootMaze.class, Forest.class, Ornithopter.class, GrizzlyBears.class})
 class RootMazeTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Lands enter tapped while Root Maze is on battlefield")
@@ -23,7 +23,7 @@ class RootMazeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RootMaze());
         harness.setHand(player1, List.of(new Forest()));
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.playLand(player1, 0);
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isTrue();
@@ -62,8 +62,7 @@ class RootMazeTest extends BaseCardTest {
     @Test
     @DisplayName("Existing permanents are not tapped when Root Maze enters")
     void existingPermanentsAreNotTappedWhenRootMazeEnters() {
-        Permanent existingForest = new Permanent(new Forest());
-        gd.playerBattlefields.get(player1.getId()).add(existingForest);
+        Permanent existingForest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.setHand(player1, List.of(new RootMaze()));
         harness.addMana(player1, ManaColor.GREEN, 1);

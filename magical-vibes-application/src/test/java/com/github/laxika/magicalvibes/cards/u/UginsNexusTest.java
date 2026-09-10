@@ -6,43 +6,32 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UginsNexus.class, CaptureOfJingzhou.class, KuldothaRebirth.class})
 class UginsNexusTest extends BaseCardTest {
-
-    private void enableAutoStop() {
-        Set<TurnStep> stops1 = ConcurrentHashMap.newKeySet();
-        stops1.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player1.getId(), stops1);
-        Set<TurnStep> stops2 = ConcurrentHashMap.newKeySet();
-        stops2.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player2.getId(), stops2);
-    }
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
     }
 
     @Test
     @DisplayName("An extra turn is skipped while Ugin's Nexus remains on the battlefield")
     void skipsExtraTurnWhileOnBattlefield() {
-        enableAutoStop();
         harness.addToBattlefield(player1, new UginsNexus());
 
         harness.setHand(player1, List.of(new CaptureOfJingzhou()));
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         int turnBefore = gd.turnNumber;
         advanceTurn();
@@ -55,7 +44,6 @@ class UginsNexusTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Ugin's Nexus exiles it and queues an extra turn")
     void sacrificingNexusExilesItAndQueuesExtraTurn() {
-        enableAutoStop();
         Permanent nexus = new Permanent(new UginsNexus());
         gd.playerBattlefields.get(player1.getId()).add(nexus);
 

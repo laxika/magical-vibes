@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "ULG", collectorNumber = "129")
+@CardRegistration(set = "V10", collectorNumber = "8")
 public class MemoryJar extends Card {
 
     public MemoryJar() {

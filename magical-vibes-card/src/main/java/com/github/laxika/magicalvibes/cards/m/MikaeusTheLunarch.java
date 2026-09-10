@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "23")
+@CardRegistration(set = "V11", collectorNumber = "6")
 public class MikaeusTheLunarch extends Card {
 
     public MikaeusTheLunarch() {

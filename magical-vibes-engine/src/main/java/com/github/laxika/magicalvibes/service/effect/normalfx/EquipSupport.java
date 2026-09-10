@@ -110,7 +110,7 @@ public class EquipSupport {
                 
                 gameLogService.append(gameData, GameLog.cardTextCard(oldCreature.getCard(), " is sacrificed (", equipment.getCard(), " became unattached)."));
                 log.info("Game {} - {} sacrificed due to {} unattach", gameData.id, oldCreature.getCard().getName(), equipment.getCard().getName());
-                permanentRemovalService.removePermanentToGraveyard(gameData, oldCreature);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, oldCreature);
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }

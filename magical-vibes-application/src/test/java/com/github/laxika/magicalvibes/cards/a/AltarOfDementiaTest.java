@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AltarOfDementia.class, EliteVanguard.class, GrizzlyBears.class, SerraAngel.class})
 class AltarOfDementiaTest extends BaseCardTest {
 
     @Test
@@ -100,6 +102,20 @@ class AltarOfDementiaTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        harness.addToBattlefield(player1, new AltarOfDementia());
+        addCreatureReady(player1, new EliteVanguard());
+        UUID altarId = harness.getPermanentId(player1, "Altar of Dementia");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, altarId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a player");
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     @Test

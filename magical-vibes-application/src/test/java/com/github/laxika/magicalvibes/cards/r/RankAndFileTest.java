@@ -1,32 +1,28 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.e.ElvishMystic;
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.j.JhoirasToolbox;
+import com.github.laxika.magicalvibes.cards.l.LoneWolf;
+import com.github.laxika.magicalvibes.cards.w.WeatherseedElf;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RankAndFile.class, JhoirasToolbox.class, LoneWolf.class, WeatherseedElf.class})
 class RankAndFileTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB gives all green creatures -1/-1 and leaves non-green creatures alone")
     void etbWeakensAllGreenCreatures() {
-        Permanent ownGreenCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentGreenCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent nonGreenCreature = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        Permanent ownGreenCreature = harness.addToBattlefieldAndReturn(player1, new LoneWolf());
+        Permanent opponentGreenCreature = harness.addToBattlefieldAndReturn(player2, new LoneWolf());
+        Permanent nonGreenCreature = harness.addToBattlefieldAndReturn(player1, new JhoirasToolbox());
 
-        harness.setHand(player1, List.of(new RankAndFile()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RankAndFile(), "{2}{B}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -41,27 +37,21 @@ class RankAndFileTest extends BaseCardTest {
     @Test
     @DisplayName("ETB -1/-1 kills a green 1/1")
     void etbKillsGreenOneToughnessCreature() {
-        harness.addToBattlefieldAndReturn(player2, new ElvishMystic());
+        harness.addToBattlefieldAndReturn(player2, new WeatherseedElf());
 
-        harness.setHand(player1, List.of(new RankAndFile()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RankAndFile(), "{2}{B}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Elvish Mystic");
+        harness.assertInGraveyard(player2, "Weatherseed Elf");
     }
 
     @Test
     @DisplayName("ETB -1/-1 wears off at end of turn")
     void etbWeakeningWearsOffAtEndOfTurn() {
-        Permanent greenCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent greenCreature = harness.addToBattlefieldAndReturn(player2, new LoneWolf());
 
-        harness.setHand(player1, List.of(new RankAndFile()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RankAndFile(), "{2}{B}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -71,5 +61,22 @@ class RankAndFileTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, greenCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, greenCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("ETB does not affect green creatures that enter after the trigger resolves")
+    void etbDoesNotAffectGreenCreaturesEnteringLater() {
+        Permanent initialGreenCreature = harness.addToBattlefieldAndReturn(player2, new LoneWolf());
+
+        harness.castFromHand(player1, new RankAndFile(), "{2}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent laterGreenCreature = harness.enterBattlefieldAndReturn(player2, new LoneWolf());
+
+        assertThat(gqs.getEffectivePower(gd, initialGreenCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, initialGreenCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterGreenCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterGreenCreature)).isEqualTo(2);
     }
 }

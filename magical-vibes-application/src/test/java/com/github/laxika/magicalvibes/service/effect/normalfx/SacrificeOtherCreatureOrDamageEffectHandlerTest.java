@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -164,7 +165,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                 when(gameQueryService.isDamageFromCardSourcePrevented(gd, lordCard)).thenReturn(false);
                 when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
                 when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
-                when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"))).thenReturn(7);
+                when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"), eq(false), isNull(), any(Card.class))).thenReturn(7);
                 when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
 
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
@@ -191,7 +192,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
 
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
+                verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, elves);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Llanowar Elves.")));
                 // No damage dealt
                 assertThat(gd.getLife(player1Id)).isEqualTo(20);
@@ -234,7 +235,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                 when(gameQueryService.isDamageFromCardSourcePrevented(gd, lordCard)).thenReturn(false);
                 when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
                 when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
-                when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"))).thenReturn(7);
+                when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"), eq(false), isNull(), any(Card.class))).thenReturn(7);
                 when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
 
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);

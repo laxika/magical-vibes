@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "ATQ", collectorNumber = "27")
+@CardRegistration(set = "ATQ", collectorNumber = "92")
 @CardRegistration(set = "ME1", collectorNumber = "106")
 public class OrcishMechanics extends Card {
 
@@ -16,7 +18,10 @@ public class OrcishMechanics extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false), new DealDamageToAnyTargetEffect(2)),
+                List.of(
+                        new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
+                        new DealDamageToAnyTargetEffect(2)
+                ),
                 "{T}, Sacrifice an artifact: This creature deals 2 damage to any target."
         ));
     }

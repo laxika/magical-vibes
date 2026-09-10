@@ -2,18 +2,21 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
+import com.github.laxika.magicalvibes.cards.c.CircleOfFlame;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +26,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FurnaceOfRath.class, BenalishKnight.class, Blaze.class, CircleOfFlame.class, FlamewaveInvoker.class,
+        GrizzlyBears.class, JaceBeleren.class, SerraAngel.class, SkyhunterSkirmisher.class})
 class FurnaceOfRathTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -38,7 +43,6 @@ class FurnaceOfRathTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Furnace of Rath");
     }
 
     @Test
@@ -75,7 +79,7 @@ class FurnaceOfRathTest extends BaseCardTest {
     @DisplayName("Doubles damage from activated ability to a player")
     void doublesActivatedAbilityDamageToPlayer() {
         harness.addToBattlefield(player1, new FurnaceOfRath());
-        Permanent invoker = addReadyInvoker(player1);
+        addReadyInvoker(player1);
         harness.addMana(player1, ManaColor.RED, 8);
         harness.setLife(player2, 20);
 
@@ -121,6 +125,35 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Serra Angel");
     }
 
+    @Test
+    @DisplayName("Doubles spell damage to a planeswalker")
+    void doublesSpellDamageToPlaneswalker() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, 2, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Jace Beleren");
+    }
+
+    @Test
+    @DisplayName("Doubles damage from a triggered ability")
+    void doublesTriggeredAbilityDamage() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.addToBattlefield(player1, new CircleOfFlame());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
     // ===== Doubles combat damage =====
 
     @Test
@@ -129,16 +162,8 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
-        Permanent bear = new Permanent(new GrizzlyBears());
-        bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(1)); // bear is at index 1 (Furnace at 0)
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackers(player1, List.of(1)); // bear is at index 1 (Furnace at 0)
 
         // 2 combat damage doubled to 4
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -160,10 +185,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -209,10 +231,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -242,10 +261,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -292,10 +308,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -324,10 +337,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -396,16 +406,8 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
         harness.addToBattlefield(player2, new FurnaceOfRath());
 
-        Permanent bear = new Permanent(new GrizzlyBears());
-        bear.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bear);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(1)); // bear is at index 1 (Furnace at 0; other Furnace is on player2's side)
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackers(player1, List.of(1)); // bear is at index 1 (Furnace at 0; other Furnace is on player2's side)
 
         // 2 combat damage * 4 = 8
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
@@ -460,12 +462,11 @@ class FurnaceOfRathTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private Permanent addReadyInvoker(Player player) {
+    private void addReadyInvoker(Player player) {
         FlamewaveInvoker card = new FlamewaveInvoker();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }
 

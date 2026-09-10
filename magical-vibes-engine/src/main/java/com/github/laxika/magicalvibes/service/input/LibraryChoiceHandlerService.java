@@ -1622,6 +1622,7 @@ public class LibraryChoiceHandlerService {
             if (selectedCardFollowUp.useSelectedCardManaValue()) {
                 gameData.pendingEffectResolutionEntry.setEventValue(chosenCard.getManaValue());
             }
+            gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCard);
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
                     List.of(selectedCardFollowUp.effect()));
@@ -2442,7 +2443,8 @@ public class LibraryChoiceHandlerService {
                     libraryRevealChoice.gainLifeEqualToSelectedCardManaValue(),
                     gameData.pendingEffectResolutionEntry, libraryRevealChoice.effectIfNoCardChosen(),
                     controllerLifePayment ? 0 : libraryRevealChoice.lifeCostPerSelection(),
-                    controllerLifePayment ? libraryRevealChoice.lifeCostPerSelection() : 0);
+                    controllerLifePayment ? libraryRevealChoice.lifeCostPerSelection() : 0,
+                    libraryRevealChoice.revealSelected());
             return;
         }
 
@@ -2883,7 +2885,7 @@ public class LibraryChoiceHandlerService {
                                               boolean remainingToExile, boolean randomRemainingToBottom) {
         resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
                 reorderRemainingToBottom, remainingToGraveyard, remainingToExile,
-                randomRemainingToBottom, false, null, null, 0, 0);
+                randomRemainingToBottom, false, null, null, 0, 0, true);
     }
 
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
@@ -2893,7 +2895,7 @@ public class LibraryChoiceHandlerService {
                                               boolean gainLifeEqualToSelectedCardManaValue,
                                               StackEntry sourceEntry, CardEffect effectIfNoCardChosen,
                                               int lifeLossPerSelectedCard,
-                                              int lifePaymentPerSelectedCard) {
+                                              int lifePaymentPerSelectedCard, boolean revealSelected) {
         // Put selected cards into hand
         for (Card card : selectedCards) {
             gameData.addCardToHand(controllerId, card);
@@ -2942,6 +2944,9 @@ public class LibraryChoiceHandlerService {
         } else if (selectedCards.isEmpty()) {
             String logEntry = playerName + " does not reveal any creature cards.";
             gameLogService.append(gameData, GameLog.text(logEntry));
+        } else if (!revealSelected) {
+            gameLogService.append(gameData, GameLog.text(playerName + " puts " + selectedCards.size()
+                    + " card(s) into their hand."));
         } else if (randomRemainingToBottom) {
             gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)

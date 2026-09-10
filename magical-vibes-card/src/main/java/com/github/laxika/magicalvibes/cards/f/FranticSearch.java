@@ -17,6 +17,6 @@ public class FranticSearch extends Card {
         addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
         addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.CONTROLLER));
         addEffect(EffectSlot.SPELL,
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 3));
+                new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentIsLandPredicate(), 3));
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -12,14 +13,17 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Twitch.class, GrizzlyBears.class, Forest.class, AngelsFeather.class, Pacifism.class})
 class TwitchTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -28,16 +32,13 @@ class TwitchTest extends BaseCardTest {
     @DisplayName("Casting Twitch puts it on the stack targeting a permanent")
     void castingPutsItOnStack() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        prepareTwitch();
 
         harness.castInstant(player1, 0, target.getId());
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Twitch");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -58,14 +59,10 @@ class TwitchTest extends BaseCardTest {
     @DisplayName("Taps an untapped creature")
     void tapsUntappedCreature() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThat(target.isTapped()).isFalse();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -74,12 +71,8 @@ class TwitchTest extends BaseCardTest {
     @DisplayName("Taps an untapped land")
     void tapsUntappedLand() {
         Permanent target = addReadyLand(player2);
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -88,12 +81,8 @@ class TwitchTest extends BaseCardTest {
     @DisplayName("Taps an untapped artifact")
     void tapsUntappedArtifact() {
         Permanent target = addReadyArtifact(player2);
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -105,14 +94,10 @@ class TwitchTest extends BaseCardTest {
     void untapsTappedCreature() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThat(target.isTapped()).isTrue();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -122,12 +107,8 @@ class TwitchTest extends BaseCardTest {
     void untapsTappedLand() {
         Permanent target = addReadyLand(player2);
         target.tap();
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -137,12 +118,8 @@ class TwitchTest extends BaseCardTest {
     void untapsTappedArtifact() {
         Permanent target = addReadyArtifact(player2);
         target.tap();
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -154,9 +131,7 @@ class TwitchTest extends BaseCardTest {
     void cannotTargetEnchantment() {
         addCreatureReady(player1, new GrizzlyBears()); // valid target so spell is playable
         Permanent enchantment = addReadyEnchantment(player2);
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        prepareTwitch();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -170,12 +145,8 @@ class TwitchTest extends BaseCardTest {
     void drawsACard() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         // Hand should have 1 card (Twitch left hand, then drew 1)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -188,13 +159,42 @@ class TwitchTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        castAndAcceptTwitch(target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Offers the tap or untap choice at resolution")
+    void offersTapOrUntapChoiceAtResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        prepareTwitch();
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can decline tapping or untapping and still draw a card")
+    void canDeclineTapOrUntapAndStillDraws() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        prepareTwitch();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
     }
@@ -205,12 +205,8 @@ class TwitchTest extends BaseCardTest {
     @DisplayName("Twitch goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Twitch");
@@ -222,9 +218,8 @@ class TwitchTest extends BaseCardTest {
     @DisplayName("Fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        prepareTwitch();
 
         harness.castInstant(player1, 0, target.getId());
 
@@ -234,6 +229,7 @@ class TwitchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
@@ -243,12 +239,8 @@ class TwitchTest extends BaseCardTest {
     @DisplayName("Can tap own untapped creature")
     void canTapOwnCreature() {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, ownCreature.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(ownCreature.getId());
 
         assertThat(ownCreature.isTapped()).isTrue();
     }
@@ -258,12 +250,8 @@ class TwitchTest extends BaseCardTest {
     void canUntapOwnCreature() {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.tap();
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, ownCreature.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(ownCreature.getId());
 
         assertThat(ownCreature.isTapped()).isFalse();
     }
@@ -274,12 +262,8 @@ class TwitchTest extends BaseCardTest {
     @DisplayName("Tapping logs correct message")
     void tappingLogsMessage() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Twitch") && log.contains("taps") && log.contains("Grizzly Bears"));
@@ -290,12 +274,8 @@ class TwitchTest extends BaseCardTest {
     void untappingLogsMessage() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
-        harness.setHand(player1, List.of(new Twitch()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        castAndAcceptTwitch(target.getId());
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Twitch") && log.contains("untaps") && log.contains("Grizzly Bears"));
@@ -304,24 +284,29 @@ class TwitchTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyLand(Player player) {
-        Forest card = new Forest();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        AngelsFeather card = new AngelsFeather();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new AngelsFeather());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        Pacifism card = new Pacifism();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Pacifism());
+    }
+
+    private void prepareTwitch() {
+        harness.setHand(player1, List.of(new Twitch()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+    }
+
+    private void castAndAcceptTwitch(UUID targetId) {
+        prepareTwitch();
+        harness.castAndResolveInstant(player1, 0, targetId);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
     }
 }
 
