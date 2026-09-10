@@ -404,7 +404,7 @@ public class GameActionAvailabilityService {
         }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
-                && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty()
+                && ctx.landsPlayed() < gameQueryService.getMaxLandsThisTurn(gameData, playerId) && ctx.stackEmpty()
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 && !castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
@@ -1081,7 +1081,7 @@ public class GameActionAvailabilityService {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         boolean stackEmpty = gameData.stack.isEmpty();
 
-        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty
+        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameQueryService.getMaxLandsThisTurn(gameData, playerId) || !stackEmpty
                 || gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 || gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId)
                 || castingPermissionService.isLandPlayRestricted(gameData, playerId)
@@ -1118,7 +1118,7 @@ public class GameActionAvailabilityService {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId)
+        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameQueryService.getMaxLandsThisTurn(gameData, playerId)
                 || !gameData.stack.isEmpty()
                 || gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 || gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId)

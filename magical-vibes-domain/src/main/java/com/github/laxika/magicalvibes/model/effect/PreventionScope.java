@@ -57,6 +57,8 @@ public enum PreventionScope {
     ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS,
     /** "Prevent all [combat] damage target creature(s) would deal this turn" (Soul Parry, Resistance Fighter). */
     ALL_BY_TARGET_CREATURES,
+    /** Prevents all damage target creature would deal while the source remains on the battlefield. */
+    ALL_BY_TARGET_CREATURES_WHILE_SOURCE_REMAINS,
     /** "Until your next turn, prevent all damage target permanent would deal" (Gideon of the Trials +1).
      *  Unlike {@link #ALL_BY_TARGET_CREATURES} this targets any permanent and lasts until the
      *  controller's next turn rather than only the current turn. */

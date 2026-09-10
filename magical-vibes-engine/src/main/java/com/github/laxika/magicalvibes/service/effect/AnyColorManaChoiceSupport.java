@@ -151,11 +151,15 @@ public final class AnyColorManaChoiceSupport {
         if (effect.sourceBecomesProducedColorUntilEndOfTurn()) {
             if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
                 choiceContext = manaColorChoice.withSourcePermanentId(sourcePermanentId);
+            } else if (choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+                choiceContext = subtypeChoice.withSourcePermanentId(sourcePermanentId);
             }
         }
         if (recipientPlayerId != null) {
             if (choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
                 choiceContext = manaColorChoice.withRecipientPlayerId(recipientPlayerId);
+            } else if (choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+                choiceContext = subtypeChoice.withRecipientPlayerId(recipientPlayerId);
             } else if (choiceContext instanceof ChoiceContext.SpellOnlyManaColorChoice spellOnlyChoice) {
                 choiceContext = spellOnlyChoice.withRecipientPlayerId(recipientPlayerId);
             } else if (choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
@@ -165,11 +169,17 @@ public final class AnyColorManaChoiceSupport {
         if (fromSnowSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withSnowSource(true);
         } else if (fromSnowSource
+                && choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+            choiceContext = subtypeChoice.withSnowSource(true);
+        } else if (fromSnowSource
                 && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withSnowSource(true);
         }
         if (fromCaveSource && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withCaveSource(true);
+        } else if (fromCaveSource
+                && choiceContext instanceof ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice subtypeChoice) {
+            choiceContext = subtypeChoice.withCaveSource(true);
         } else if (fromCaveSource
                 && choiceContext instanceof ChoiceContext.MulticoloredSpellManaColorChoice multicoloredChoice) {
             choiceContext = multicoloredChoice.withCaveSource(true);
@@ -236,6 +246,10 @@ public final class AnyColorManaChoiceSupport {
                     && !effect.spellOnlySubtypes().isEmpty()) {
                 return ChoiceContext.ManaColorSpellChoice.anyColorCombination(
                         playerId, amount, effect.spellOnlySubtypes());
+            }
+            if (effect.restriction() == ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY) {
+                return ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                        playerId, amount, effect.subtype());
             }
             if (effect.restriction() == ManaSpendRestriction.CREATURE_SPELL_ONLY) {
                 return ChoiceContext.ManaColorChoice.creatureSpellOnlyColorCombination(
@@ -329,7 +343,8 @@ public final class AnyColorManaChoiceSupport {
                     ? null
                     : ChoiceContext.ManaColorChoice.creatureSourceSpellOrAbility(playerId, amount, chosenSubtype);
             case SUBTYPE_SPELL_OR_ABILITY ->
-                    ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, amount, effect.subtype());
+                    new ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice(
+                            playerId, amount, effect.subtype(), fromCreature);
             case MANA_VALUE_AT_LEAST_FOUR ->
                     ChoiceContext.ManaColorChoice.manaValueAtLeastFour(playerId, amount);
             case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X ->

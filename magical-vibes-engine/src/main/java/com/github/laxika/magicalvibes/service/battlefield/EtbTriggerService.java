@@ -594,6 +594,11 @@ public class EtbTriggerService {
                         .filter(e -> !EffectResolution.targetsSpellOnStack(e)
                                 || isMixedPermanentAndSpellTarget(e)).toList()
                 : List.of();
+        boolean combinesGraveyardCardExileWithOtherEffects = graveyardCardsExileEffects.size() == 1
+                && !otherEffects.isEmpty()
+                && otherEffects.size() + graveyardCardsExileEffects.size() == mandatoryEffects.size()
+                && targetId == null
+                && targetIds.isEmpty();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
                 .filter(EffectResolution::targetsSpellOnStack)
@@ -614,7 +619,7 @@ public class EtbTriggerService {
                 && sourceBattlefield.getLast().isControlledDragonAsCast();
 
         // Put non-special effects on the stack as before
-        if (!otherEffects.isEmpty()) {
+        if (!otherEffects.isEmpty() && !combinesGraveyardCardExileWithOtherEffects) {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
             boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
 
@@ -820,7 +825,10 @@ public class EtbTriggerService {
         for (CardEffect effect : graveyardCardsExileEffects) {
             ExileGraveyardCardsEffect exile = (ExileGraveyardCardsEffect) effect;
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleGraveyardCardsExileETBTargeting(gameData, controllerId, card, List.of(effect), exile);
+                List<CardEffect> effects = combinesGraveyardCardExileWithOtherEffects
+                        ? mandatoryEffects : List.of(effect);
+                graveyardTargetingService.handleGraveyardCardsExileETBTargeting(
+                        gameData, controllerId, card, effects, exile);
             }
         }
 

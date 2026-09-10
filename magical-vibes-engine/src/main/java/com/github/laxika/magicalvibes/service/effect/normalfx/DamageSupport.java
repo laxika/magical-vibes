@@ -874,9 +874,10 @@ public class DamageSupport {
     public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
         if (entry.getSourcePermanentId() == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
+        if (source != null && (gameQueryService.isPreventedFromDealingDamage(gameData, source)
+                || gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
                 || gameQueryService.isDamageByCreaturePrevented(gameData, source)
-                || gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId())) return true;
+                || gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId()))) return true;
         // Defang / Heart of Light: an aura can blank all damage dealt by the enchanted permanent,
         // including damage from its own activated and triggered abilities.
         return source != null

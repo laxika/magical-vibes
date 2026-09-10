@@ -99,6 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
+import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.HandCardCost;
@@ -2310,6 +2311,32 @@ public class AbilityActivationService {
         return false;
     }
 
+    private Permanent findFreeEquipSource(GameData gameData, UUID playerId,
+                                          ActivatedAbility ability, String abilityCost) {
+        if (abilityCost == null
+                || ability.getEffects().stream().noneMatch(EquipEffect.class::isInstance)
+                || !gameData.playersWithEnduringStory.contains(playerId)) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+        for (Permanent permanent : battlefield) {
+            if (gameData.freeEquipPermanentUsedThisTurn.contains(permanent.getId())
+                    || permanent.isFaceDown()
+                    || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof FreeEquipEffect) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * Activates a hand ability whose targets are cards in graveyards (e.g. Faerie Macabre:
      * "Discard this card: Exile up to two target cards from graveyards."). Mirrors
@@ -3286,6 +3313,10 @@ public class AbilityActivationService {
         ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
         List<CardEffect> abilityEffects = ability.getEffects();
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
+        Permanent freeEquipSource = findFreeEquipSource(gameData, playerId, ability, abilityCost);
+        if (freeEquipSource != null) {
+            abilityCost = null;
+        }
         if (ability.getSourceCounterScaledTargetsType() != null) {
             effectiveXValue = permanent.getCounterCount(ability.getSourceCounterScaledTargetsType());
         }
@@ -4475,6 +4506,9 @@ public class AbilityActivationService {
                 && !EffectResolution.needsTarget(activationEffects, List.of(), false, false);
         UUID resolutionTargetId = targetId;
         Zone resolutionTargetZone = targetZone;
+        if (freeEquipSource != null) {
+            gameData.freeEquipPermanentUsedThisTurn.add(freeEquipSource.getId());
+        }
         completeActivationAndRecordWithChosenPermanents(gameData, player, permanent, ability, activationEffects,
                 effectiveXValue, resolutionTargetId, resolutionTargetZone, nonTargeting, effectiveIndex,
                 targetIds, damageAssignments, chosenCostPermanentIds, discardedCardSnapshot,
@@ -5231,24 +5265,27 @@ public class AbilityActivationService {
                         + castingCostService.getActivatedAbilityActivationTax(
                         gameData, playerId, permanent, ability, isManaAbility(ability));
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
+        boolean freeEquip = findFreeEquipSource(gameData, playerId, ability, abilityCost) != null;
         if (abilityCost == null) {
             return additionalGenericCost;
         }
 
         ManaCost manaCost = new ManaCost(abilityCost);
-        int totalManaCost = manaCost.getManaValue()
+        int totalManaCost = freeEquip ? 0 : manaCost.getManaValue()
                 + effectiveXValue * manaCost.getXSymbolCount();
-        int genericCost = manaCost.getGenericCost();
-        int equipReduction = Math.min(
-                castingCostService.getActivatedAbilityCostReduction(
-                        gameData, playerId, permanent, ability, targetId, targetIds,
-                        Math.max(0, totalManaCost + additionalGenericCost - 1)),
-                genericCost);
-        additionalGenericCost -= equipReduction;
-        int battlefieldReduction = Math.min(
-                castingCostService.getActivatedAbilityActivationCostReduction(gameData, permanent, ability),
-                Math.max(0, totalManaCost + additionalGenericCost - 1));
-        additionalGenericCost -= battlefieldReduction;
+        int genericCost = freeEquip ? 0 : manaCost.getGenericCost();
+        if (!freeEquip) {
+            int equipReduction = Math.min(
+                    castingCostService.getActivatedAbilityCostReduction(
+                            gameData, playerId, permanent, ability, targetId, targetIds,
+                            Math.max(0, totalManaCost + additionalGenericCost - 1)),
+                    genericCost);
+            additionalGenericCost -= equipReduction;
+            int battlefieldReduction = Math.min(
+                    castingCostService.getActivatedAbilityActivationCostReduction(gameData, permanent, ability),
+                    Math.max(0, totalManaCost + additionalGenericCost - 1));
+            additionalGenericCost -= battlefieldReduction;
+        }
         AmountContext activationCostContext = new AmountContext(
                 playerId, permanent, targetId, effectiveXValue, 0);
         for (CardEffect effect : ability.getEffects()) {
@@ -5469,6 +5506,9 @@ public class AbilityActivationService {
             }
         }
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
+        if (findFreeEquipSource(gameData, playerId, ability, abilityCost) != null) {
+            abilityCost = null;
+        }
         if (ability.isManaCostOfEnchantedPermanent() && abilityCost == null) {
             throw new IllegalStateException("The enchanted permanent has no mana cost");
         }
@@ -7165,7 +7205,8 @@ public class AbilityActivationService {
             if (!cost.isEligible(gameData, playerId, card)) {
                 continue;
             }
-            if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null)) {
+            if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(
+                    card, cost.predicate(), null, gameData, playerId)) {
                 validIndices.add(i);
             }
         }

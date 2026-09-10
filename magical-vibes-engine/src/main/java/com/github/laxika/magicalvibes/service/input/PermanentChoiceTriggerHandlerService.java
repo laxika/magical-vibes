@@ -125,7 +125,9 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
         entry.setSourcePermanentSnapshot(stt.sourcePermanentSnapshot());
-        entry.setEventValue(stt.spellManaSpentX());
+        entry.setEventValue(stt.triggeringSpellManaValue() != null
+                ? stt.triggeringSpellManaValue()
+                : stt.spellManaSpentX());
         if (stt.targetFilter() != null) {
             entry.setTargetFilter(stt.targetFilter());
         }
@@ -913,6 +915,10 @@ public class PermanentChoiceTriggerHandlerService {
             }
             entry.setAttackedTargetId(mat.attackedTargetId());
             entry.setEventValue(mat.eventValue());
+            entry.setSacrificedPermanentSnapshot(mat.sacrificedPermanentSnapshot());
+            entry.setSacrificedPower(mat.sacrificedPower());
+            entry.setSacrificedColorCount(mat.sacrificedColorCount());
+            entry.setSacrificedToughness(mat.sacrificedToughness());
             pushTriggeredEntry(gameData, entry);
 
             if (isPlayerTarget) {

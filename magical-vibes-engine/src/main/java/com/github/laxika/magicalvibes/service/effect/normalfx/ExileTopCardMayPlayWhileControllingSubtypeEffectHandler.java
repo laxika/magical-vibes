@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,23 +35,45 @@ public class ExileTopCardMayPlayWhileControllingSubtypeEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileTopCardMayPlayWhileControllingSubtypeEffect exileEffect =
                 (ExileTopCardMayPlayWhileControllingSubtypeEffect) effect;
+        if (exileEffect.count() <= 0) {
+            return;
+        }
+
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             return;
         }
 
-        Card topCard = deck.removeFirst();
-        exileService.exileCard(gameData, controllerId, topCard);
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayPermissionConditions.put(topCard.getId(),
-                new ControlsPermanent(new PermanentHasSubtypePredicate(exileEffect.subtype())));
+        List<Card> exiledCards = new ArrayList<>();
+        for (int i = 0; i < exileEffect.count() && !deck.isEmpty(); i++) {
+            Card topCard = deck.removeFirst();
+            if (exileEffect.faceDown()) {
+                exileService.exileCardFaceDown(gameData, controllerId, topCard, null);
+            } else {
+                exileService.exileCard(gameData, controllerId, topCard);
+            }
+            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
+            gameData.exilePlayPermissionConditions.put(topCard.getId(),
+                    new ControlsPermanent(new PermanentHasSubtypePredicate(exileEffect.subtype())));
+            exiledCards.add(topCard);
+        }
 
         String controllerName = gameData.playerIdToName.get(controllerId);
-        gameLogService.append(gameData, GameLog.text(controllerName + " exiles " + topCard.getName()
-                + " from the top of their library and may play it while controlling a "
-                + exileEffect.subtype().getDisplayName() + "."));
-        log.info("Game {} - {} exiles {} from library top and may play it while controlling a {}",
-                gameData.id, controllerName, topCard.getName(), exileEffect.subtype().getDisplayName());
+        if (exileEffect.faceDown()) {
+            gameLogService.append(gameData, GameLog.text(controllerName + " exiles "
+                    + exiledCards.size() + " card(s) face down from the top of their library and may play them while controlling a "
+                    + exileEffect.subtype().getDisplayName() + "."));
+            log.info("Game {} - {} exiles {} cards face down from library top and may play them while controlling a {}",
+                    gameData.id, controllerName, exiledCards.size(), exileEffect.subtype().getDisplayName());
+        } else {
+            String cardNames = exiledCards.stream().map(Card::getName).reduce((first, second) -> first + ", " + second)
+                    .orElse("");
+            gameLogService.append(gameData, GameLog.text(controllerName + " exiles " + cardNames
+                    + " from the top of their library and may play them while controlling a "
+                    + exileEffect.subtype().getDisplayName() + "."));
+            log.info("Game {} - {} exiles {} cards from library top and may play them while controlling a {}",
+                    gameData.id, controllerName, exiledCards.size(), exileEffect.subtype().getDisplayName());
+        }
     }
 }

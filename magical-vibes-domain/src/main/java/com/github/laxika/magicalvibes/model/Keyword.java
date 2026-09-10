@@ -122,6 +122,8 @@ public enum Keyword {
     FIREBENDING,
     BLOW_UP,
     ALLIANCE,
+    RECRUIT,
+    STORIED,
     DISGUISE,
     STATION;
 

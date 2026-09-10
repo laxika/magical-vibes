@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSameNameCardFromGraveyardOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -79,6 +80,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
@@ -102,6 +104,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingC
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCardEffect;
@@ -2171,6 +2174,10 @@ public class SpellCastTriggerCollectorService {
                 spellCard.getId(), match.permanent().getId())) {
             return false;
         }
+        if (trigger.requiresTreasureMana()
+                && !match.gameData().spellCastUsedTreasureMana(spellCard.getId())) {
+            return false;
+        }
 
         // "Whenever you cast a spell during an opponent's turn" — the source's controller must not be
         // the active player when the spell is cast (Glen Elendra Pranksters).
@@ -2256,20 +2263,29 @@ public class SpellCastTriggerCollectorService {
                 ? match.gameData().getSpellCastCreatureManaSpent(spellCard.getId())
                 : needsSpellManaSpentX ? match.gameData().getSpellCastManaSpent(spellCard.getId()) : 0;
         boolean carriesTriggeringSpellManaValue = resolved.stream()
-                .anyMatch(TriggeringSpellManaValueEffect.class::isInstance);
+                .anyMatch(this::effectCarriesTriggeringSpellManaValue);
         int triggeringSpellManaValue = carriesTriggeringSpellManaValue
                 ? spellManaValue(match.gameData(), spellCard) : 0;
 
         MayEffect optionalMay = optionalMayEffect(match.rawEffect());
         if (optionalMay != null) {
-            match.gameData().pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
+            PendingMayAbility pendingMayAbility = PendingMayAbility.forSpellCastTrigger(
                     match.permanent().getCard(),
                     match.controllerId(),
                     resolved,
                     match.permanent().getCard().getName() + " — " + optionalMay.prompt(),
                     trigger.manaCost(),
                     match.permanent().getId(),
-                    spellCard.getId()));
+                    spellCard.getId());
+            if (needsSpellManaSpentX) {
+                pendingMayAbility = pendingMayAbility.withXValue(spellManaSpentX);
+            }
+            match.gameData().pendingMayAbilities.add(pendingMayAbility);
+        } else if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseModeNotYetChosenEffect modeEffect) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    match.permanent().getCard(), match.controllerId(), new ChooseOneEffect(modeEffect.options()),
+                    match.permanent().getId(), false, true, spellCard.getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         } else if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                     match.permanent().getCard(), match.controllerId(), chooseOneEffect, match.permanent().getId(),
@@ -2318,7 +2334,8 @@ public class SpellCastTriggerCollectorService {
             } else {
                 match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                         sourceCard, match.controllerId(), queued, playerTargetOnly, trigger.targetFilter(),
-                        spellManaSpentX, match.permanent().getId()
+                        spellManaSpentX, match.permanent().getId(), null, false, null, null,
+                        match.controllerId(), carriesTriggeringSpellManaValue ? triggeringSpellManaValue : null
                 ));
             }
             gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
@@ -2494,6 +2511,10 @@ public class SpellCastTriggerCollectorService {
     }
 
     private boolean effectNeedsSpellManaSpentX(CardEffect effect) {
+        if (effect instanceof DrawCardEffect draw
+                && amountEvaluationService.referencesXValue(draw.amount())) {
+            return true;
+        }
         if (effect instanceof PutCountersOnSelfEffect putCounters
                 && putCounters.amount() != null
                 && amountEvaluationService.referencesXValue(putCounters.amount())) {
@@ -2506,6 +2527,11 @@ public class SpellCastTriggerCollectorService {
         }
         if (effect instanceof SequenceEffect sequence
                 && sequence.steps().stream().anyMatch(this::effectNeedsSpellManaSpentX)) {
+            return true;
+        }
+        if (effect instanceof MayEffect may
+                && (effectNeedsSpellManaSpentX(may.wrapped())
+                || (may.elseEffect() != null && effectNeedsSpellManaSpentX(may.elseEffect())))) {
             return true;
         }
         if (effect instanceof BoostSelfEffect boost
@@ -2523,6 +2549,30 @@ public class SpellCastTriggerCollectorService {
                     || replacement.condition() instanceof SpellManaSpentGreaterThanSourcePower
                     || effectNeedsSpellManaSpentX(replacement.baseEffect())
                     || effectNeedsSpellManaSpentX(replacement.upgradedEffect());
+        }
+        return false;
+    }
+
+    private boolean effectCarriesTriggeringSpellManaValue(CardEffect effect) {
+        if (effect instanceof TriggeringSpellManaValueEffect) {
+            return true;
+        }
+        if (effect instanceof PutCounterOnTargetPermanentEffect putCounter) {
+            return amountEvaluationService.referencesEventValue(putCounter.amount());
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream().anyMatch(this::effectCarriesTriggeringSpellManaValue);
+        }
+        if (effect instanceof MayEffect may) {
+            return effectCarriesTriggeringSpellManaValue(may.wrapped())
+                    || (may.elseEffect() != null && effectCarriesTriggeringSpellManaValue(may.elseEffect()));
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return effectCarriesTriggeringSpellManaValue(conditional.wrapped());
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            return effectCarriesTriggeringSpellManaValue(replacement.baseEffect())
+                    || effectCarriesTriggeringSpellManaValue(replacement.upgradedEffect());
         }
         return false;
     }

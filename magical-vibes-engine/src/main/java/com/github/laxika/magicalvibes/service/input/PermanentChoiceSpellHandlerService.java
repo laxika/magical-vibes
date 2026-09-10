@@ -494,11 +494,12 @@ public class PermanentChoiceSpellHandlerService {
     public void handleGraveyardCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.GraveyardCastSpellTarget gct) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+        Card spellCard = gct.castWithAdventure() ? gct.cardToCast().getBackFaceCard() : gct.cardToCast();
 
         if (target != null || isPlayerTarget) {
             if (!gct.withoutPayingManaCost()) {
                 try {
-                    spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), gct.cardToCast(), 0,
+                    spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), spellCard, 0,
                             Zone.GRAVEYARD, gct.anyManaType());
                 } catch (IllegalStateException ex) {
                     graveyardService.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
@@ -507,16 +508,22 @@ public class PermanentChoiceSpellHandlerService {
                     return;
                 }
             }
+            if (gct.castWithAdventure()) {
+                int manaSpent = gameData.getSpellCastManaSpent(spellCard.getId());
+                gameData.clearSpellCastManaSpent(spellCard.getId());
+                gameData.addSpellCastManaSpent(gct.cardToCast().getId(), manaSpent);
+            }
             StackEntry entry = new StackEntry(
                     gct.spellType(),
                     gct.cardToCast(),
                     gct.controllerId(),
-                    gct.cardToCast().getName(),
+                    spellCard.getName(),
                     new ArrayList<>(gct.spellEffects()),
                     0,
                     permanentId,
                     null
             );
+            entry.setCastWithAdventure(gct.castWithAdventure());
             entry.setExileInsteadOfGraveyard(gct.exileInsteadOfGraveyard());
             entry.setOwnerIdOverride(gct.ownerId());
             entry.setSourceZone(Zone.GRAVEYARD);
@@ -536,7 +543,12 @@ public class PermanentChoiceSpellHandlerService {
                 }
             }
 
-            gameData.recordSpellCast(gct.controllerId(), gct.cardToCast());
+            Card castCharacteristics = gct.castWithAdventure()
+                    ? gct.cardToCast().createRuntimeCopyWithFace(spellCard) : gct.cardToCast();
+            if (gct.castWithAdventure()) {
+                castCharacteristics.freeze();
+            }
+            gameData.recordSpellCast(gct.controllerId(), castCharacteristics);
             if (gct.restrictAdditionalSpellsThisTurn()) {
                 gameData.preventAdditionalSpellCastsThisTurn(gct.controllerId());
             }
@@ -546,10 +558,10 @@ public class PermanentChoiceSpellHandlerService {
                     ? gameData.playerIdToName.get(permanentId)
                     : target.getCard().getName();
             
-            gameLogService.append(gameData, GameLog.builder().card(gct.cardToCast()).text(" targets " + targetName + ".").build());
-            log.info("Game {} - {} cast-from-graveyard targets {}", gameData.id, gct.cardToCast().getName(), targetName);
+            gameLogService.append(gameData, GameLog.builder().card(castCharacteristics).text(" targets " + targetName + ".").build());
+            log.info("Game {} - {} cast-from-graveyard targets {}", gameData.id, spellCard.getName(), targetName);
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, gct.cardToCast(), gct.controllerId(), false);
+            triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, gct.controllerId(), false);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
             UUID ownerId = gct.ownerId() != null ? gct.ownerId() : gct.controllerId();

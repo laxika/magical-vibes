@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -1026,8 +1028,18 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleMaySacrificeForCounterOnSource(GameData gameData, UUID permanentId,
                                                      PermanentChoiceContext.MaySacrificeForCounterOnSource context) {
-        maySacrificeForCounterSupport.sacrificeThenAddCounter(
-                gameData, context.controllerId(), permanentId, context.sourcePermanentId(), context.counterType());
+        if (context.counterAmount() instanceof SacrificedPermanentPower) {
+            maySacrificeForCounterSupport.sacrificeThenAddCountersEqualToPower(
+                    gameData, context.controllerId(), permanentId, context.sourcePermanentId(),
+                    context.counterType());
+        } else if (context.counterAmount() instanceof Fixed fixed) {
+            maySacrificeForCounterSupport.sacrificeThenAddCounters(
+                    gameData, context.controllerId(), permanentId, context.sourcePermanentId(),
+                    context.counterType(), fixed.value());
+        } else {
+            throw new IllegalArgumentException("Unsupported counter amount for may-sacrifice choice: "
+                    + context.counterAmount().getClass().getSimpleName());
+        }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -2149,7 +2161,8 @@ public class PermanentChoiceBattlefieldHandlerService {
                     // re-implemented here and stays layer-aware (CR 613.1d).
                     TargetPredicate declared = targetSpec.targetPredicate();
                     FilterContext filterContext = new FilterContext(
-                            gameData, ctx.sourceCard().getId(), ctx.controllerId(), null, null);
+                            gameData, ctx.sourceCard().getId(), ctx.controllerId(), null,
+                            sourcePermanentSnapshot, sourcePermanentId);
                     for (UUID pid : gameData.orderedPlayerIds) {
                         List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                         if (battlefield == null) {
@@ -2174,7 +2187,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                     gameData.interaction.setPermanentChoiceContext(
                             new PermanentChoiceContext.MayAbilityTriggerTarget(
                                     ctx.sourceCard(), ctx.controllerId(), thenEffects,
-                                    sourcePermanentId, sourcePermanentSnapshot));
+                                    sourcePermanentId, sourcePermanentSnapshot,
+                                    sacrificedSnapshot, sacrificedPower, sacrificedColorCount,
+                                    sacrificedToughness));
                     playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(),
                             validPermanentTargets, validPlayerTargets,
                             ctx.sourceCard().getName() + " — Choose any target.");

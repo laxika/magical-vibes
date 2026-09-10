@@ -498,6 +498,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Put counters on the chosen permanent, attribute them to another player, and remember it. */
+    record OwnPermanentCounterPlacementByPlayerWithChosenReference(
+            CounterType counterType, int count, UUID placingPlayerId) implements MultiPermanentChoiceContext {
+    }
+
     /** Put one counter on an opponent's creature for each remaining cumulative-upkeep payment. */
     record OpponentCreatureCounterPlacement(CounterType counterType, int remainingCount,
                                              UUID placingPlayerId) implements MultiPermanentChoiceContext {

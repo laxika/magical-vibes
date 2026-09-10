@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEff
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -35,6 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -105,6 +109,24 @@ class EtbTriggerServiceTest {
                 PermanentChoiceContext.ETBTokenTargetTrigger.class)).isFalse();
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getTargetId()).isNull();
+    }
+
+    @Test
+    void targetedGraveyardExileKeepsSiblingEtbEffectsOnTheSameAbility() {
+        Card creature = new Card();
+        creature.setName("Graveyard Target Creature");
+        creature.setType(CardType.CREATURE);
+        ExileGraveyardCardsEffect exile = ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard();
+        LoseLifeEffect lifeLoss = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, exile);
+        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, lifeLoss);
+        gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        verify(graveyardTargetingService).handleGraveyardCardsExileETBTargeting(
+                gameData, controllerId, creature, List.of(exile, lifeLoss), exile);
+        assertThat(gameData.stack).isEmpty();
     }
 
     @Test

@@ -1501,6 +1501,15 @@ public class PermanentRemovalService {
                 gameData.queueMayAbility(
                         opponentExileReplacement.sourceCard(), opponentExileReplacement.controllerId(),
                         may, null, opponentExileReplacement.sourcePermanentId());
+            } else if (whenExiledEffect != null) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        opponentExileReplacement.sourceCard(),
+                        opponentExileReplacement.controllerId(),
+                        opponentExileReplacement.sourceCard().getName() + "'s triggered ability",
+                        new ArrayList<>(List.of(whenExiledEffect)),
+                        null,
+                        opponentExileReplacement.sourcePermanentId()));
             }
         }
         graveyardService.notifyCardsExiledFromBattlefield(

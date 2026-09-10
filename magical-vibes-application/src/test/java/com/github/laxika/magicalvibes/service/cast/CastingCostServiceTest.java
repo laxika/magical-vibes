@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ModifyFlashbackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceNonHandSpellCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceDashCostEffect;
@@ -376,6 +377,25 @@ class CastingCostServiceTest {
                     .isEqualTo(-1);
             assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.EXILE))
                     .isZero();
+        }
+
+        @Test
+        @DisplayName("Reduces spells cast from outside the hand but not spells cast from hand")
+        void appliesNonHandReductionOnlyOutsideHand() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceNonHandSpellCastCostEffect(1));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+            Card spell = new Card();
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{1}{R}");
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.GRAVEYARD))
+                    .isEqualTo(-1);
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.EXILE))
+                    .isEqualTo(-1);
         }
 
         @Test

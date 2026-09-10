@@ -105,6 +105,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestDiscardedCardManaValu
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.GreatestCreatureTypeCountAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.GraveyardsAtLeast;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
@@ -357,6 +358,8 @@ public class AmountEvaluationService {
                     countForetoldCardsInExile(gameData, c, ctx);
             case CardsInGraveyard c ->
                     countGraveyardCards(gameData, c, ctx);
+            case GraveyardsAtLeast c ->
+                    countGraveyardsAtLeast(gameData, c);
             case CardsInHand c ->
                     countHandCards(gameData, c, ctx);
             case MatchingCardsInHand c ->
@@ -538,8 +541,8 @@ public class AmountEvaluationService {
                     totalManaValueOfCardsOwnedInExile(gameData, ctx);
             case TotalPowerOfCardsExiledWithSource ignored ->
                     totalPTOfCardsExiledWithSource(gameData, ctx, true);
-            case TotalPowerOfControlledCreatures ignored ->
-                    totalPowerOfControlledCreatures(gameData, ctx);
+            case TotalPowerOfControlledCreatures a ->
+                    totalPowerOfControlledCreatures(gameData, a, ctx);
             case TotalToughnessOfCardsExiledWithSource ignored ->
                     totalPTOfCardsExiledWithSource(gameData, ctx, false);
             case TotalToughnessOfControlledCreatures ignored ->
@@ -1199,6 +1202,19 @@ public class AmountEvaluationService {
         return matches;
     }
 
+    private int countGraveyardsAtLeast(GameData gameData, GraveyardsAtLeast count) {
+        int matches = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            long cardCount = graveyard.stream().filter(card -> !card.isToken()).count();
+            if (cardCount >= count.threshold()) {
+                matches++;
+            }
+        }
+        return matches;
+    }
+
     private int greatestPowerAmongCardsInGraveyard(
             GameData gameData, GreatestPowerAmongCardsInGraveyard amount, AmountContext ctx) {
         int greatestPower = 0;
@@ -1459,13 +1475,28 @@ public class AmountEvaluationService {
         return total;
     }
 
-    private int totalPowerOfControlledCreatures(GameData gameData, AmountContext ctx) {
+    private int totalPowerOfControlledCreatures(
+            GameData gameData, TotalPowerOfControlledCreatures amount, AmountContext ctx) {
         if (ctx.controllerId() == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
+        FilterContext filterContext = null;
+        if (amount.filter() != null) {
+            filterContext = (GameQueryService.isStaticEvaluationActive()
+                    ? FilterContext.empty()
+                    : FilterContext.of(gameData))
+                    .withSourceControllerId(ctx.controllerId())
+                    .withSourceCardId(ctx.sourceCard() == null ? null : ctx.sourceCard().getId())
+                    .withSourcePermanentSnapshot(ctx.sourcePermanent())
+                    .withSourcePermanentId(ctx.sourcePermanent() == null
+                            ? null : ctx.sourcePermanent().getId());
+        }
         int total = 0;
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.isCreature(gameData, permanent)) {
+            if (gameQueryService.isCreature(gameData, permanent)
+                    && (amount.filter() == null
+                    || predicateEvaluationService.matchesPermanentPredicate(
+                    permanent, amount.filter(), filterContext))) {
                 total += GameQueryService.isStaticEvaluationActive()
                         ? gameQueryService.powerForStaticFilter(permanent)
                         : gameQueryService.getEffectivePower(gameData, permanent);

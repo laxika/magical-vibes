@@ -55,6 +55,7 @@ public sealed interface CardPredicate permits
         CardSharesCardTypeWithImprintedCardPredicate,
         CardToughnessLessThanSourceToughnessPredicate,
         CardSharesNameWithAPermanentPredicate,
+        CardSharesNameWithLegendaryControlledPermanentPredicate,
         CardSubtypePredicate,
         CardSupertypePredicate,
         CardTruePredicate,

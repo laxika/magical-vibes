@@ -1052,30 +1052,42 @@ public class GameService {
      */
     public void playCardWithAlternateCost(GameData gameData, Player player, int cardIndex, Integer xValue,
                                           UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        playCardWithAlternateCost(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, null);
+    }
+
+    public void playCardWithAlternateCost(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                          UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                                          UUID sacrificePermanentId) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardWithAlternateCost(gameData, actionPlayer, cardIndex, xValue, targetId,
-                        damageAssignments, targetIds))) return;
+                        damageAssignments, targetIds, sacrificePermanentId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithAlternateCost(gameData, player, cardIndex, xValue, targetId,
-                    damageAssignments, targetIds != null ? targetIds : List.of());
+                    damageAssignments, targetIds != null ? targetIds : List.of(), null, sacrificePermanentId);
         }
     }
 
     public void playCardWithAdventure(GameData gameData, Player player, int cardIndex, Integer xValue,
                                       UUID targetId, Map<UUID, Integer> damageAssignments,
                                       List<UUID> targetIds) {
+        playCardWithAdventure(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, null);
+    }
+
+    public void playCardWithAdventure(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                      UUID targetId, Map<UUID, Integer> damageAssignments,
+                                      List<UUID> targetIds, UUID sacrificePermanentId) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardWithAdventure(gameData, actionPlayer, cardIndex, xValue, targetId,
-                        damageAssignments, targetIds))) return;
+                        damageAssignments, targetIds, sacrificePermanentId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithAdventure(gameData, player, cardIndex, xValue, targetId,
-                    damageAssignments, targetIds != null ? targetIds : List.of());
+                    damageAssignments, targetIds != null ? targetIds : List.of(), sacrificePermanentId);
         }
     }
 
@@ -1087,15 +1099,21 @@ public class GameService {
     public void playAdventureCard(GameData gameData, Player player, int cardIndex, Integer xValue,
                                   UUID targetId, List<UUID> targetIds,
                                   Map<UUID, Integer> damageAssignments) {
+        playAdventureCard(gameData, player, cardIndex, xValue, targetId, targetIds, damageAssignments, null);
+    }
+
+    public void playAdventureCard(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                  UUID targetId, List<UUID> targetIds,
+                                  Map<UUID, Integer> damageAssignments, UUID sacrificePermanentId) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playAdventureCard(gameData, actionPlayer, cardIndex, xValue, targetId, targetIds,
-                        damageAssignments))) return;
+                        damageAssignments, sacrificePermanentId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playAdventureCard(gameData, player, cardIndex, xValue, targetId,
-                    targetIds != null ? targetIds : List.of(), damageAssignments);
+                    targetIds != null ? targetIds : List.of(), damageAssignments, sacrificePermanentId);
         }
     }
 

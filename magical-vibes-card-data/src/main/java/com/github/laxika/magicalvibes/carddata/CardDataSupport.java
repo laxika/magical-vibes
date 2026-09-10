@@ -152,6 +152,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Waterbend", Keyword.WATERBEND);
         KEYWORD_MAP.put("Firebending", Keyword.FIREBENDING);
         KEYWORD_MAP.put("Suspect", Keyword.SUSPECT);
+        KEYWORD_MAP.put("Recruit", Keyword.RECRUIT);
+        KEYWORD_MAP.put("Storied", Keyword.STORIED);
         KEYWORD_MAP.put("Disguise", Keyword.DISGUISE);
         KEYWORD_MAP.put("Alliance", Keyword.ALLIANCE);
         KEYWORD_MAP.put("Station", Keyword.STATION);

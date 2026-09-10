@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.SourceBlocksWithAtLeastAndOnlyMatchingBlockers;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
@@ -143,6 +144,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreaturesSharingCreatureType;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterCountAtLeast;
@@ -638,6 +640,8 @@ public class ConditionEvaluationService {
                     controllerHasMoreLifeThanAnOpponent(gameData, ctx.controllerId());
             case ControllerHasCityBlessing ignored ->
                     ctx.controllerId() != null && gameData.playersWithCityBlessing.contains(ctx.controllerId());
+            case ControllerHasEnduringStory ignored ->
+                    ctx.controllerId() != null && gameData.playersWithEnduringStory.contains(ctx.controllerId());
             case ControllerHasMoreCardsInHandThanEachOpponent ignored ->
                     controllerHasMoreCardsInHandThanEachOpponent(gameData, ctx.controllerId());
             case ControllerControlsFewerCreaturesThanEachOpponent ignored ->
@@ -772,6 +776,8 @@ public class ConditionEvaluationService {
                     enchantedPermanentMatches(gameData, ctx, c.filter());
             case AttacksAlone ignored ->
                     countAttackingCreatures(gameData, ctx.controllerId()) == 1;
+            case AttackingCreaturesTotalPowerAtLeast c ->
+                    attackingCreaturesTotalPower(gameData, ctx.controllerId()) >= c.threshold();
             case AttackedTargetMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 yield target != null && matchesPermanent(gameData, target, c.filter(), ctx);
@@ -2543,6 +2549,19 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return 0;
         return battlefield.stream().filter(Permanent::isAttacking).count();
+    }
+
+    private int attackingCreaturesTotalPower(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return 0;
+        int totalPower = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.isAttacking() && isCreatureForCondition(gameData, permanent)) {
+                totalPower += gameQueryService.getEffectivePower(gameData, permanent);
+            }
+        }
+        return totalPower;
     }
 
     private long countAttackingCreaturesOfSubtype(GameData gameData, UUID controllerId, CardSubtype subtype) {

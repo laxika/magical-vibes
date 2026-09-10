@@ -222,6 +222,7 @@ export interface Card {
   additionalCreatureTypeChoices?: string[];
   additionalCostLifePayment?: number;
   additionalCostManaCost?: string | null;
+  additionalSacrificeCreature?: boolean;
   alternateCostCollectEvidence?: boolean;
   alternateCostCollectEvidenceAmount?: number;
   /** SOS "Prepared": the spell printed inset on a prepare card's front face. Null for every other

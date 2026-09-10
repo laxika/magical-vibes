@@ -116,6 +116,8 @@ public class GameData {
     public final Set<UUID> playersWhoSearchedLibraryThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have received the city's blessing for the rest of the game. */
     public final Set<UUID> playersWithCityBlessing = ConcurrentHashMap.newKeySet();
+    /** Players who have received the enduring story designation for the rest of the game. */
+    public final Set<UUID> playersWithEnduringStory = ConcurrentHashMap.newKeySet();
     /** Players who played at least one card from exile this turn. */
     public final Set<UUID> playersWhoPlayedCardFromExileThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who flipped at least one coin this turn. */
@@ -176,6 +178,8 @@ public class GameData {
     public final Map<UUID, Integer> spellCastCaveManaSpent = new ConcurrentHashMap<>();
     /** Producing permanents whose tagged mana was spent to cast each spell. */
     public final Map<UUID, Set<UUID>> spellCastManaSourceIds = new ConcurrentHashMap<>();
+    /** Whether mana produced by a Treasure was spent to cast each spell. */
+    public final Map<UUID, Boolean> spellCastUsedTreasureMana = new ConcurrentHashMap<>();
     /**
      * Names of the cards spliced onto a spell (CR 702.47), keyed by host spell card instance id.
      * Populated as splice costs are paid and read while the spell is on the stack (Minamo's Meddling).
@@ -1521,6 +1525,8 @@ public class GameData {
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
     /** Optional condition that must remain true for an exiled card's play permission to be active. */
     public final Map<UUID, Condition> exilePlayPermissionConditions = new ConcurrentHashMap<>();
+    /** Exiled cards whose spells may be cast by paying life equal to mana value this turn. */
+    public final Set<UUID> exilePlayForLifeEqualToManaValue = ConcurrentHashMap.newKeySet();
     public final Set<UUID> plottedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps a source permanent to the latest card whose permission it granted. */
     public final Map<UUID, UUID> exilePlayPermissionSourceCards = new ConcurrentHashMap<>();
@@ -1960,6 +1966,9 @@ public class GameData {
     /** Tracks which permanents (by UUID) have already provided their once-each-turn "you may pay {0}"
      *  alternative cast cost this turn (As Foretold). Cleared at start of new turn. */
     public final Set<UUID> freeCastPermanentUsedThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks which source permanents have supplied their first free equip activation this turn. */
+    public final Set<UUID> freeEquipPermanentUsedThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks which source permanents' once-per-turn permissions to cast cards from exile have been
      *  used this turn. Cleared at start of new turn. */
@@ -3348,6 +3357,18 @@ public class GameData {
         spellCastManaSpent.remove(spellCardId);
     }
 
+    public void markSpellCastUsedTreasureMana(UUID spellCardId) {
+        spellCastUsedTreasureMana.put(spellCardId, true);
+    }
+
+    public boolean spellCastUsedTreasureMana(UUID spellCardId) {
+        return spellCastUsedTreasureMana.getOrDefault(spellCardId, false);
+    }
+
+    public void clearSpellCastTreasureMana(UUID spellCardId) {
+        spellCastUsedTreasureMana.remove(spellCardId);
+    }
+
     public void recordBending(UUID playerId, BendingType type) {
         bendingTypesCompletedThisTurn
                 .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
@@ -3891,6 +3912,7 @@ public class GameData {
             plottedCardIds.remove(cardId);
             exilePlayPermissions.remove(cardId);
             exilePlayPermissionConditions.remove(cardId);
+            exilePlayForLifeEqualToManaValue.remove(cardId);
             exilePlayCostModifiers.remove(cardId);
             exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
@@ -4572,6 +4594,7 @@ public class GameData {
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
         copy.playersWithCityBlessing.addAll(this.playersWithCityBlessing);
+        copy.playersWithEnduringStory.addAll(this.playersWithEnduringStory);
         copy.playersWhoSurveilledThisTurn.addAll(this.playersWhoSurveilledThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
@@ -4680,6 +4703,7 @@ public class GameData {
             copy.qualifyingDamageControllersByPermanentThisTurn.put(k, controllers);
         });
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
+        copy.freeEquipPermanentUsedThisTurn.addAll(this.freeEquipPermanentUsedThisTurn);
         copy.oncePerTurnExileCastPermissionsUsedThisTurn.addAll(this.oncePerTurnExileCastPermissionsUsedThisTurn);
         copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
@@ -5177,6 +5201,7 @@ public class GameData {
         copy.libraryTopCardLifePlayPermissionsUntilEndOfTurn.addAll(this.libraryTopCardLifePlayPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionConditions.putAll(this.exilePlayPermissionConditions);
+        copy.exilePlayForLifeEqualToManaValue.addAll(this.exilePlayForLifeEqualToManaValue);
         copy.exilePlayPermissionSourceCards.putAll(this.exilePlayPermissionSourceCards);
         copy.exilePlayPermissionSourcePermanents.putAll(this.exilePlayPermissionSourcePermanents);
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
@@ -5298,6 +5323,7 @@ public class GameData {
         this.spellCastSnowManaSpentByColor.forEach((k, v) ->
                 copy.spellCastSnowManaSpentByColor.put(k, new java.util.EnumMap<>(v)));
         copy.spellCastCaveManaSpent.putAll(this.spellCastCaveManaSpent);
+        copy.spellCastUsedTreasureMana.putAll(this.spellCastUsedTreasureMana);
         this.spellCastManaSourceIds.forEach((k, v) -> {
             Set<UUID> sourceIds = ConcurrentHashMap.newKeySet();
             sourceIds.addAll(v);

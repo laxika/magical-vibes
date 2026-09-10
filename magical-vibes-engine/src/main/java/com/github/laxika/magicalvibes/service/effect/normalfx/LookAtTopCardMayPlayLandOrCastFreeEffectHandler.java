@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPlayLandOrCastFreeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
@@ -25,6 +26,7 @@ public class LookAtTopCardMayPlayLandOrCastFreeEffectHandler implements NormalEf
 
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,7 +56,7 @@ public class LookAtTopCardMayPlayLandOrCastFreeEffectHandler implements NormalEf
         if (topCard.hasType(CardType.LAND)) {
             int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(controllerId, 0);
             if (!controllerId.equals(gameData.activePlayerId)
-                    || landsPlayed >= gameData.getMaxLandsThisTurn(controllerId)) {
+                    || landsPlayed >= gameQueryService.getMaxLandsThisTurn(gameData, controllerId)) {
                 putTopCardIntoHand(gameData, controllerId, deck, topCard, playerName);
                 return;
             }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Component;
 public class BrilliantUltimatumSupport {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -44,6 +46,7 @@ public class BrilliantUltimatumSupport {
 
     // @Lazy mirrors ExileFreeCastSupport: breaks cycles through the interaction registry / input services.
     public BrilliantUltimatumSupport(GameLogService gameLogService,
+                                     GameQueryService gameQueryService,
                                      BattlefieldEntryService battlefieldEntryService,
                                      TriggerCollectionService triggerCollectionService,
                                      InteractionHandlerRegistry interactionHandlerRegistry,
@@ -51,6 +54,7 @@ public class BrilliantUltimatumSupport {
                                      @Lazy InputCompletionService inputCompletionService,
                                      com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator) {
         this.gameLogService = gameLogService;
+        this.gameQueryService = gameQueryService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
@@ -161,7 +165,7 @@ public class BrilliantUltimatumSupport {
         String playerName = gameData.playerIdToName.get(playerId);
         boolean isControllersTurn = playerId.equals(gameData.activePlayerId);
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        if (!isControllersTurn || landsPlayed >= gameData.getMaxLandsThisTurn(playerId)) {
+        if (!isControllersTurn || landsPlayed >= gameQueryService.getMaxLandsThisTurn(gameData, playerId)) {
             String reason = !isControllersTurn ? "not your turn" : "land already played this turn";
             gameLogService.append(gameData, GameLog.builder().card(card).text(" can't be played (" + reason + ") and stays exiled.").build());
             return;

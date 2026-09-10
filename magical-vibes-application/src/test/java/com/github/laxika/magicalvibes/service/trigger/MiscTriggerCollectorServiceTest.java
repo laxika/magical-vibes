@@ -828,6 +828,23 @@ class MiscTriggerCollectorServiceTest {
     class LifeLossMill {
 
         @Test
+        @DisplayName("mills the controller when dispatched from the controller life-loss slot")
+        void millsControllerForLifeLost() {
+            Permanent master = createPermanent("The Master of Lake-town");
+            var effect = new MillOpponentOnLifeLossEffect();
+            var ctx = new TriggerContext.LifeLoss(player1Id, 2);
+
+            gd.playerIdToName.put(player1Id, "Player1");
+
+            boolean result = registry.dispatch(
+                    match(master, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            verify(graveyardService).resolveMillPlayer(gd, player1Id, 2);
+        }
+
+        @Test
         @DisplayName("mills opponent for the amount of life lost and returns true")
         void millsOpponentForLifeLost() {
             Permanent mindcrank = createPermanent("Mindcrank");

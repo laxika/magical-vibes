@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.filter.CardToughnessAtLeastPredicate
 import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithLegendaryControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -257,6 +258,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPre
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -600,6 +602,18 @@ public class PredicateEvaluationService {
                     gameData != null && gameData.playerBattlefields.values().stream()
                             .flatMap(java.util.List::stream)
                             .anyMatch(perm -> perm.getCard().getName().equals(card.getName()));
+            case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
+                if (gameData == null || cardOwnerId == null
+                        || !card.getSupertypes().contains(CardSupertype.LEGENDARY)) {
+                    yield false;
+                }
+                List<Permanent> controlledBattlefield = gameData.playerBattlefields.get(cardOwnerId);
+                String cardName = card.getName();
+                yield cardName != null && controlledBattlefield != null
+                        && controlledBattlefield.stream().anyMatch(permanent ->
+                        gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.LEGENDARY)
+                                && cardName.equals(gameQueryService.getEffectiveName(gameData, permanent)));
+            }
             case CardNotPredicate p ->
                     !matchesCardPredicateInternal(card, p.predicate(), sourceCardId, gameData, cardOwnerId,
                             sourcePermanentId, sourcePowerAtTrigger, xValue);
@@ -3070,6 +3084,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
             case StackEntryManaValueEqualsSourcePowerPredicate ignored -> false;
             case StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate ignored -> false;
+            case StackEntryManaValueParityMatchesSourceChosenParityPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntryManaValueAtMostControllerGraveyardCountPredicate ignored -> false;
             case StackEntrySharesColorOrManaValueWithImprintedCardPredicate ignored -> false;

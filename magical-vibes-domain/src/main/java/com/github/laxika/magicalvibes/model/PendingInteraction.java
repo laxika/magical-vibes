@@ -71,6 +71,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryAndOrGraveyardChoice,
+        PendingInteraction.SearchHandAndOrLibraryChoice,
         PendingInteraction.SearchLibraryToTopChoice,
         PendingInteraction.IntuitionSearchChoice,
         PendingInteraction.TurtlesForeverSearchChoice,
@@ -1291,6 +1292,35 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             libraryCardIds = java.util.Set.copyOf(libraryCardIds);
             handCardIds = java.util.Set.copyOf(handCardIds);
             outsideGameCardIds = java.util.Set.copyOf(outsideGameCardIds);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return pool.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, 1);
+        }
+    }
+
+    /** One matching card from the controller's hand or library is chosen for its destination. */
+    record SearchHandAndOrLibraryChoice(UUID playerId, java.util.List<Card> pool,
+                                        java.util.Set<UUID> libraryCardIds,
+                                        java.util.Set<UUID> handCardIds,
+                                        boolean librarySearchAllowed, String cardLabel,
+                                        LibrarySearchDestination destination)
+            implements PendingInteraction {
+
+        public SearchHandAndOrLibraryChoice {
+            pool = java.util.List.copyOf(pool);
+            libraryCardIds = java.util.Set.copyOf(libraryCardIds);
+            handCardIds = java.util.Set.copyOf(handCardIds);
         }
 
         public java.util.List<UUID> validCardIds() {

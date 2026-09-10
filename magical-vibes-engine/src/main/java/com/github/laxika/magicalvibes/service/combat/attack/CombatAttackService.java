@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -1221,8 +1222,29 @@ public class CombatAttackService {
             // gates are checked and unwrapped here for the same event-snapshot reason.
             List<CardEffect> filteredEffects = new ArrayList<>();
             Integer matchingAttackerCount = null;
+            boolean oncePerTurn = false;
+            boolean markOncePerTurnOnAcceptance = false;
             for (CardEffect effect : allyAttackEffects) {
-                if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
+                CardEffect normalizedEffect = effect;
+                if (effect instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast) {
+                    if (!conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId))) {
+                        continue;
+                    }
+                    normalizedEffect = ce.wrapped();
+                }
+                if (normalizedEffect instanceof OncePerTurnTriggerEffect onceEffect) {
+                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                        continue;
+                    }
+                    oncePerTurn = true;
+                    markOncePerTurnOnAcceptance |= onceEffect.markOnAcceptance();
+                    normalizedEffect = onceEffect.wrapped();
+                }
+                if (normalizedEffect != effect) {
+                    filteredEffects.add(normalizedEffect);
+                } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
                     boolean minimumMet = conditionEvaluationService.isMet(gameData, ce.condition(),
                             ConditionContext.forPermanent(perm, playerId).withXValue(attackerIndices.size()));
                     if (!minimumMet) {
@@ -1331,7 +1353,11 @@ public class CombatAttackService {
                     if (matchingAttackerCount != null) {
                         attackTrigger.setEventValue(matchingAttackerCount);
                     }
+                    attackTrigger.setMarkSourceOncePerTurnOnAcceptance(markOncePerTurnOnAcceptance);
                     gameData.stack.add(attackTrigger);
+                    if (oncePerTurn && !markOncePerTurnOnAcceptance) {
+                        gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                    }
                     gameLogService.append(gameData,
                             GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
                     log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
@@ -1340,6 +1366,10 @@ public class CombatAttackService {
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
+        }
+
+        if (!attackerIndices.isEmpty()) {
+            triggerCollectionService.checkTemporaryGlobalAllyCreatureAttackTriggers(gameData, playerId);
         }
 
         // Check for "whenever you attack a player with one or more creatures" triggers. These

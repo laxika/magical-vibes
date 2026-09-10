@@ -527,8 +527,10 @@ public class AnimationSupport {
             }
 
             AmountContext ctx = AmountContext.forStackEntry(entry, target);
-            int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
-            int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+            int power = effect.power() == null ? printedPower(target) :
+                    amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+            int toughness = effect.toughness() == null ? printedToughness(target) :
+                    amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
             animatePermanently(gameData, target, effect, power, toughness,
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
@@ -563,9 +565,11 @@ public class AnimationSupport {
         target.setPermanentlyAnimated(true);
         target.setPermanentAnimatedPower(power);
         target.setPermanentAnimatedToughness(toughness);
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
-                sourcePermanentId, controllerId, new SetBasePowerToughnessEffect(power, toughness),
-                target.getId(), null, null, EffectDuration.PERMANENT, 0));
+        if (effect.power() != null || effect.toughness() != null) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
+                    sourcePermanentId, controllerId, new SetBasePowerToughnessEffect(power, toughness),
+                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+        }
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             if (!target.getGrantedSubtypes().contains(subtype)) {
@@ -609,6 +613,14 @@ public class AnimationSupport {
                 " becomes a " + power + "/" + toughness + " creature."));
 
         log.info("Game {} - {} becomes a {}/{} creature permanently", gameData.id, target.getCard().getName(), power, toughness);
+    }
+
+    private int printedPower(Permanent permanent) {
+        return permanent.getCard().getPower() == null ? 0 : permanent.getCard().getPower();
+    }
+
+    private int printedToughness(Permanent permanent) {
+        return permanent.getCard().getToughness() == null ? 0 : permanent.getCard().getToughness();
     }
 
     /**
