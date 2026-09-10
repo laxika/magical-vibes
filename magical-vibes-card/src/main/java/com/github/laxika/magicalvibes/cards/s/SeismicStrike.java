@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "154")
+@CardRegistration(set = "DDG", collectorNumber = "71")
 public class SeismicStrike extends Card {
 
     public SeismicStrike() {

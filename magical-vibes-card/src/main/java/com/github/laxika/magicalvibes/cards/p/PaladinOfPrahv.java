@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "14")
+@CardRegistration(set = "DDG", collectorNumber = "22")
 public class PaladinOfPrahv extends Card {
 
     public PaladinOfPrahv() {

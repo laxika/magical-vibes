@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "142")
+@CardRegistration(set = "DDG", collectorNumber = "66")
 public class PunishingFire extends Card {
 
     public PunishingFire() {

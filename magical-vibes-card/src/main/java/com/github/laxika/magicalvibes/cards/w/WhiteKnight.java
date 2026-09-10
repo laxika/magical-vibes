@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "44")
 @CardRegistration(set = "LGN", collectorNumber = "27")
 @CardRegistration(set = "3ED", collectorNumber = "44")
+@CardRegistration(set = "DDG", collectorNumber = "9")
 public class WhiteKnight extends Card {
 
     public WhiteKnight() {
