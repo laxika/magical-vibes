@@ -3,13 +3,16 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ManaWeb.class, AdarkarWastes.class, Forest.class, Island.class, Mountain.class})
 class ManaWebTest extends BaseCardTest {
 
     @Test
@@ -31,10 +34,36 @@ class ManaWebTest extends BaseCardTest {
         assertThat(mountain.isTapped()).isFalse();
         assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
 
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         assertThat(secondForest.isTapped()).isTrue();
         assertThat(mountain.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent can tap matching lands in response to Mana Web's trigger")
+    void opponentCanTapMatchingLandInResponse() {
+        harness.addToBattlefield(player1, new ManaWeb());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+
+        Permanent firstForest = gd.playerBattlefields.get(player2.getId()).get(0);
+        Permanent secondForest = gd.playerBattlefields.get(player2.getId()).get(1);
+        Permanent mountain = gd.playerBattlefields.get(player2.getId()).get(2);
+
+        harness.tapPermanent(player2, 0);
+        harness.tapPermanent(player2, 1);
+
+        assertThat(firstForest.isTapped()).isTrue();
+        assertThat(secondForest.isTapped()).isTrue();
+        assertThat(mountain.isTapped()).isFalse();
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(mountain.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
 
     @Test
@@ -68,15 +97,9 @@ class ManaWebTest extends BaseCardTest {
         assertThat(forest.isTapped()).isFalse();
         assertThat(island.isTapped()).isFalse();
 
-        resolveDeferredTriggers();
+        resolveAllTriggers();
 
         assertThat(forest.isTapped()).isFalse();
         assertThat(island.isTapped()).isTrue();
-    }
-
-    private void resolveDeferredTriggers() {
-        for (int i = 0; i < 4 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
     }
 }

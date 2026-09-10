@@ -29,6 +29,9 @@ import java.util.UUID;
  * @param drawCards                 the protected player draws cards equal to the prevented damage
  *                 (New Way Forward)
  * @param sourceControllerId        fallback controller for a chosen spell source, which is not a battlefield permanent
+ * @param combatOnly                whether the shield only applies to combat damage
+ * @param unblockedOnly              whether the source must be unblocked when the damage is dealt
+ * @param preventAllButOne           whether the shield leaves one damage instead of preventing the whole event
  */
 public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                            boolean coversControlledCreatures,
@@ -38,14 +41,17 @@ public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean
                                            boolean preventHalfDamage,
                                            boolean drawCards,
                                            UUID sourceControllerId,
-                                           Set<CardColor> requiredDamageColors) {
+                                           Set<CardColor> requiredDamageColors,
+                                           boolean combatOnly,
+                                           boolean unblockedOnly,
+                                           boolean preventAllButOne) {
 
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                         boolean coversControlledCreatures,
                                         boolean gainLifeOnlyFromBlackSource,
                                         boolean exileFromLibrary) {
         this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
-                exileFromLibrary, null, false, false, null, null);
+                exileFromLibrary, null, false, false, null, null, false, false, false);
     }
 
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
@@ -54,16 +60,38 @@ public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean
                                         boolean exileFromLibrary,
                                         Card damageSourceControllerCard) {
         this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
-                exileFromLibrary, damageSourceControllerCard, false, false, null, null);
+                exileFromLibrary, damageSourceControllerCard, false, false, null, null, false, false, false);
     }
 
     /** Convenience constructor for a player-only shield (Circle of Protection, Reverse Damage). */
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife) {
-        this(playerId, sourceId, gainLife, false, false, false, null, false, false, null, null);
+        this(playerId, sourceId, gainLife, false, false, false, null, false, false, null, null,
+                false, false, false);
     }
 
     /** Convenience constructor for a plain prevention shield with no life gain. */
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId) {
         this(playerId, sourceId, false);
+    }
+
+    public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
+                                        boolean coversControlledCreatures,
+                                        boolean gainLifeOnlyFromBlackSource,
+                                        boolean exileFromLibrary,
+                                        Card damageSourceControllerCard,
+                                        boolean preventHalfDamage,
+                                        boolean drawCards,
+                                        UUID sourceControllerId,
+                                        Set<CardColor> requiredDamageColors) {
+        this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
+                exileFromLibrary, damageSourceControllerCard, preventHalfDamage, drawCards,
+                sourceControllerId, requiredDamageColors, false, false, false);
+    }
+
+    /** Forcefield's one-shot shield. */
+    public static PlayerSourceNextDamageShield nextUnblockedCombatDamageAllButOne(
+            UUID playerId, UUID sourceId) {
+        return new PlayerSourceNextDamageShield(playerId, sourceId, false, false, false, false,
+                null, false, false, null, null, true, true, true);
     }
 }

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "149")
+@CardRegistration(set = "DD1", collectorNumber = "22")
+@CardRegistration(set = "DDD", collectorNumber = "21")
 public class Harmonize extends Card {
 
     public Harmonize() {

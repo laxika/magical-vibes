@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "121")
+@CardRegistration(set = "ME2", collectorNumber = "210")
 public class HelmOfObedience extends Card {
 
     public HelmOfObedience() {

@@ -2,15 +2,29 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SimianGrunts.class)
 class SimianGruntsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Flash allows Simian Grunts to be cast during an opponent's turn")
+    void flashAllowsCastingDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passPriority(player2);
+
+        harness.castFromHand(player1, new SimianGrunts(), "{2}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
 
     @Test
     @DisplayName("Declining echo sacrifices Simian Grunts at its next upkeep")
@@ -46,6 +60,20 @@ class SimianGruntsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Echo cannot be paid with non-green mana")
+    void echoRequiresGreenMana() {
+        castAndResolveSimianGrunts();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Simian Grunts");
+        harness.assertInGraveyard(player1, "Simian Grunts");
+    }
+
+    @Test
     @DisplayName("Echo does not trigger during an opponent's upkeep")
     void echoDoesNotTriggerDuringOpponentUpkeep() {
         castAndResolveSimianGrunts();
@@ -57,11 +85,7 @@ class SimianGruntsTest extends BaseCardTest {
     }
 
     private void castAndResolveSimianGrunts() {
-        harness.setHand(player1, List.of(new SimianGrunts()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new SimianGrunts(), "{2}{G}");
+        resolveAllTriggers();
     }
 }

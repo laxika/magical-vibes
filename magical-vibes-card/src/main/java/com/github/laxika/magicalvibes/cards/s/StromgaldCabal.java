@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "ICE", collectorNumber = "166")
 @CardRegistration(set = "6ED", collectorNumber = "157")
 @CardRegistration(set = "5ED", collectorNumber = "195")
+@CardRegistration(set = "ME2", collectorNumber = "113")
 public class StromgaldCabal extends Card {
 
     public StromgaldCabal() {

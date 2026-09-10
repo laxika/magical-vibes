@@ -84,14 +84,16 @@ public class CounterSupport {
             return null;
         }
 
-        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+        boolean spell = targetEntry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && targetEntry.getEntryType() != StackEntryType.TRIGGERED_ABILITY;
+        if (spell && targetEntry.getCard() != null && gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
             log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
             return null;
         }
 
-        if (gameQueryService.isProtectedFromCounterBySpellColor(gameData, targetEntry.getControllerId(), counterSource)) {
+        if (spell && gameQueryService.isProtectedFromCounterBySpellColor(gameData, targetEntry.getControllerId(), counterSource)) {
             log.info("Game {} - {} cannot be countered by {} spells",
-                    gameData.id, targetEntry.getCard().getName(),
+                    gameData.id, targetEntry.getDescription(),
                     counterSource.getCard().getColor().name().toLowerCase());
             return null;
         }
@@ -106,7 +108,7 @@ public class CounterSupport {
             if (excludeSource && se == counterSource) {
                 continue;
             }
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (se.getTargetableId().equals(targetCardId)) {
                 targetEntry = se;
                 break;
             }
@@ -137,7 +139,8 @@ public class CounterSupport {
             } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
             } else {
-                graveyardService.addCardToGraveyard(gameData, target.getOwnerId(), target.getPhysicalCard());
+                graveyardService.addCardToGraveyardFromSpell(gameData, target.getOwnerId(),
+                        target.getPhysicalCard(), target.getControllerId());
             }
         }
 
@@ -145,12 +148,12 @@ public class CounterSupport {
 
         if (isAbility) {
             gameLogService.append(gameData,
-                    GameLog.cardThen(target.getCard(), "'s ability is countered."));
+                    GameLog.text(target.getDescription() + " is countered."));
         } else {
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is countered."));
         }
-        log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
+        log.info("Game {} - {} countered {}", gameData.id, source.getDescription(), target.getDescription());
         return true;
     }
 
@@ -177,13 +180,13 @@ public class CounterSupport {
 
         if (isAbility) {
             gameLogService.append(gameData,
-                    GameLog.cardThen(target.getCard(), "'s ability is countered."));
+                    GameLog.text(target.getDescription() + " is countered."));
         } else {
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is countered and returned to its owner's hand."));
         }
         log.info("Game {} - {} countered {} into its owner's hand", gameData.id,
-                source.getCard().getName(), target.getCard().getName());
+                source.getDescription(), target.getDescription());
         return true;
     }
 
@@ -204,7 +207,7 @@ public class CounterSupport {
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and put on top of its owner's library."));
         log.info("Game {} - {} countered {} onto its owner's library", gameData.id,
-                source.getCard().getName(), target.getCard().getName());
+                source.getDescription(), target.getDescription());
     }
 
     /**
@@ -219,7 +222,7 @@ public class CounterSupport {
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered."));
         log.info("Game {} - {} countered {} onto its owner's library", gameData.id,
-                source.getCard().getName(), target.getCard().getName());
+                source.getDescription(), target.getDescription());
 
         if (target.isCopy()) {
             notifyCounteredSpell(gameData, source.getControllerId(), target);
@@ -260,14 +263,15 @@ public class CounterSupport {
             if (sharesCardType(spell, Set.of(CardType.ARTIFACT, CardType.CREATURE))) {
                 gained = physicalCard;
             } else {
-                graveyardService.addCardToGraveyard(gameData, target.getOwnerId(), physicalCard);
+                graveyardService.addCardToGraveyardFromSpell(gameData, target.getOwnerId(),
+                        physicalCard, target.getControllerId());
             }
         }
 
         
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered."));
         notifyCounteredSpell(gameData, source.getControllerId(), target);
-        log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
+        log.info("Game {} - {} countered {}", gameData.id, source.getDescription(), target.getDescription());
         return gained;
     }
 
@@ -292,7 +296,7 @@ public class CounterSupport {
         notifyCounteredSpell(gameData, source.getControllerId(), target);
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and exiled."));
-        log.info("Game {} - {} countered and exiled {}", gameData.id, source.getCard().getName(), target.getCard().getName());
+        log.info("Game {} - {} countered and exiled {}", gameData.id, source.getDescription(), target.getDescription());
         return !target.isCopy();
     }
 
@@ -327,7 +331,7 @@ public class CounterSupport {
 
         gameLogService.append(gameData, GameLog.cardThen(spell, " is exiled instead of countered (Guile)."));
         log.info("Game {} - {} exiled {} instead of countering (Guile)", gameData.id,
-                source.getCard().getName(), spell.getName());
+                source.getDescription(), spell.getName());
         return true;
     }
 

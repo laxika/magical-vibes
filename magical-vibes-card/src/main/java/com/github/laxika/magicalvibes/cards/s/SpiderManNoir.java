@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
 
 @CardRegistration(set = "SPM", collectorNumber = "67")
 @CardRegistration(set = "SPM", collectorNumber = "204")
+@CardRegistration(set = "OM1", collectorNumber = "59")
 public class SpiderManNoir extends Card {
 
     public SpiderManNoir() {

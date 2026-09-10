@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.s.SavageSummoning;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +16,30 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GuildmagesForum.class, GrizzlyBears.class, SavageSummoning.class})
 class GuildmagesForumTest extends BaseCardTest {
+
+    @Test
+    void manaCounterStacksWithSavageSummoningCounter() {
+        harness.addToBattlefield(player1, new GuildmagesForum());
+        harness.setHand(player1, List.of(new SavageSummoning()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+        Card creature = multicoloredCreature();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(creature));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, creature.getName())
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 
     @Test
     @DisplayName("The first ability adds a colorless mana")

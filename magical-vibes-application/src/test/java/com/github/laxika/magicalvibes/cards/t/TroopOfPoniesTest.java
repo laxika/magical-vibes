@@ -92,6 +92,7 @@ class TroopOfPoniesTest extends BaseCardTest {
     }
 
     private void setupAndActivate() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new TroopOfPonies());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);

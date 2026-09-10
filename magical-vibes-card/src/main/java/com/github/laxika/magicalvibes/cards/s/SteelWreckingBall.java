@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "177")
+@CardRegistration(set = "OM1", collectorNumber = "176")
 public class SteelWreckingBall extends Card {
 
     public SteelWreckingBall() {

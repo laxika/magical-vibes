@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CapriciousSorcerer.class, BogImp.class})
 class CapriciousSorcererTest extends BaseCardTest {
 
     @Test
@@ -30,13 +32,13 @@ class CapriciousSorcererTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
         setupSorcererOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new BogImp());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.getPermanentId(player2, "Bog Imp");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Bog Imp");
     }
 
     @Test
@@ -62,8 +64,7 @@ class CapriciousSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate during an opponent's turn")
     void cannotActivateOnOpponentTurn() {
-        harness.addToBattlefield(player1, new CapriciousSorcerer());
-        findPermanent(player1, "Capricious Sorcerer").setSummoningSick(false);
+        addCreatureReady(player1, new CapriciousSorcerer());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -72,9 +73,20 @@ class CapriciousSorcererTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
-    private void setupSorcererOnMyTurn(TurnStep step) {
+    @Test
+    @DisplayName("Cannot activate while it has summoning sickness")
+    void cannotActivateWhileSummoningSick() {
         harness.addToBattlefield(player1, new CapriciousSorcerer());
-        findPermanent(player1, "Capricious Sorcerer").setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    private void setupSorcererOnMyTurn(TurnStep step) {
+        addCreatureReady(player1, new CapriciousSorcerer());
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
     }

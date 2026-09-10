@@ -1,46 +1,52 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.cards.l.LotusPetal;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkyshroudCondor.class, LotusPetal.class})
 class SkyshroudCondorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Castable after another spell was cast this turn")
     void castableAfterAnotherSpell() {
-        harness.setHand(player1, List.of(new GrizzlyBears(), new SkyshroudCondor()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0); // Grizzly Bears
+        harness.castFromHand(player1, new LotusPetal(), "{0}");
         harness.passBothPriorities();
 
-        harness.castCreature(player1, 0); // Skyshroud Condor
+        harness.castFromHand(player1, new SkyshroudCondor(), "{1}{U}");
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(SkyshroudCondor.class);
 
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Skyshroud Condor");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof SkyshroudCondor);
     }
 
     @Test
     @DisplayName("Not castable when no other spell was cast this turn")
     void notCastableWithoutAnotherSpell() {
-        harness.setHand(player1, List.of(new SkyshroudCondor()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        assertThatThrownBy(() -> harness.castFromHand(player1, new SkyshroudCondor(), "{1}{U}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+    @Test
+    @DisplayName("An opponent's spell does not satisfy the cast condition")
+    void opponentSpellDoesNotEnableCast() {
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new LotusPetal(), "{0}");
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new SkyshroudCondor(), "{1}{U}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

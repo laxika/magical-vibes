@@ -85,7 +85,11 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             }
             if (toBattlefield) {
                 Permanent entered = graveyardReturnSupport.putCardOntoBattlefield(
-                        gameData, playerId, chosen, null, null, false, false, null);
+                        gameData, playerId, chosen, null, null, false, false,
+                        interaction.enterWithCounterType(), interaction.enterWithCounterCount(), false);
+                if (entered != null && gameData.pendingEffectResolutionEntry != null) {
+                    gameData.pendingEffectResolutionEntry.setChosenPermanentId(entered.getId());
+                }
                 if (entered != null && interaction.attachToPermanentId() != null) {
                     entered.setAttachedTo(interaction.attachToPermanentId());
                 }

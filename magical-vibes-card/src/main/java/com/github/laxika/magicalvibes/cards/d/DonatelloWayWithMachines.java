@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "38")
+@CardRegistration(set = "TMT", collectorNumber = "197")
 public class DonatelloWayWithMachines extends Card {
 
     public DonatelloWayWithMachines() {

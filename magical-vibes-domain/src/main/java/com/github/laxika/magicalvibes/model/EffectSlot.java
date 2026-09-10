@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
 public enum EffectSlot {
+    PLANESWALK_TO_TRIGGERED,
+    PLANESWALK_FROM_TRIGGERED,
+    CHAOS_TRIGGERED,
+    ENCOUNTER_TRIGGERED,
     ON_TAP,
     /** "Whenever you tap this permanent for mana, …" (Zhur-Taa Druid). Dispatched only from the
      *  mana-ability tap path in {@code AbilityActivationService}, so unlike
@@ -77,6 +81,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * battlefield by an effect.
      */
     ON_CONTROLLER_PLAYS_LAND,
+    /** Triggers when the controller plays a land other than the source permanent. */
+    ON_CONTROLLER_PLAYS_ANOTHER_LAND,
     /**
      * "Whenever an opponent plays a land" — the opponent-side mirror of
      * {@link #ON_CONTROLLER_PLAYS_LAND}: fired at the actual land-play sites only, NOT when a land
@@ -178,6 +184,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller surveils. Checked by
      *  {@code TriggerCollectionService.checkSurveilTriggers}. */
     ON_CONTROLLER_SURVEILS,
+    /** Triggers whenever this permanent's controller manifests dread. */
+    ON_CONTROLLER_MANIFESTS_DREAD,
+    /** Triggers whenever this permanent's controller completes a dungeon. */
+    ON_CONTROLLER_COMPLETES_DUNGEON,
+    /** Triggers whenever this permanent's controller rolls one or more dice. */
+    ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
     ON_CONTROLLER_BENDS,
     /** Triggers whenever this permanent's controller collects evidence. */
     ON_CONTROLLER_COLLECTS_EVIDENCE,
@@ -189,6 +201,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_DISCARDED,
     ON_SELF_DISCARDED_BY_OPPONENT,
     ON_ANY_PLAYER_TAPS_LAND,
+    /** Triggers whenever any player taps any permanent for mana. */
+    ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA,
     /** "Whenever you tap a creature for mana"; checked on the tapping player's battlefield. */
     ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
     /** "Whenever you tap a nonland permanent for mana"; checked on the tapping player's battlefield. */
@@ -303,6 +317,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land card is put into the controller's graveyard from their library.
      *  Fires on permanents the graveyard owner controls. */
     ON_ALLY_LAND_CARD_MILLED,
+    /** Triggers whenever a nontoken permanent card is put into the controller's graveyard from their library. */
+    ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers once for each library-to-graveyard event in which one or more creature cards enter the
      *  controller's graveyard. */
     ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
@@ -313,6 +329,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
     ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers whenever a nonblack card is put into any player's graveyard from anywhere. */
+    ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a creature card the controller owns is put into their graveyard from anywhere
      *  (battlefield, hand, library, stack, exile). Fires on permanents the graveyard owner controls.
      *  Uses the card's printed types (not battlefield creature-ness), so tokens never trigger and a
@@ -375,6 +393,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  triggering Vehicle is stored on the resulting stack entry for effects that refer to it.
      *  Checked from {@code CrewCostHandler}. */
     ON_CREWS_VEHICLE,
+    /** Triggers whenever this creature is tapped to pay a teamwork cost. */
+    ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST,
     /** Triggers whenever this permanent becomes untapped (transitions from tapped to untapped),
      *  from any source — the untap step, or an untap effect. Fires only on the permanent that
      *  became untapped. Driven from the untap call sites via
@@ -445,6 +465,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
      *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
     ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
+    /** Triggers whenever the player this Aura is attached to is dealt damage (combat or non-combat).
+     *  Fires once for each damage event on the attached player. */
+    ON_ENCHANTED_PLAYER_DEALT_DAMAGE,
     /** Triggers whenever the creature this aura is attached to deals damage (combat or non-combat) to the
      *  aura's controller — i.e. "whenever enchanted creature deals damage to you" (Backfire). Because the
      *  aura sits on its controller's battlefield, the trigger is scanned on the damaged player's battlefield
@@ -518,6 +541,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  subtype with a {@code TriggeringCardConditionalEffect}. Checked in
      *  {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. Used by Trial of Solidarity. */
     ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+    /** Triggers whenever the controller fully unlocks a Room. */
+    ON_ALLY_ROOM_FULLY_UNLOCKED,
+    /** Triggers whenever the controller fully unlocks a Room while this card is in the controller's
+     *  graveyard. Checked in {@code TriggerCollectionService.checkAllyRoomFullyUnlockedTriggers}. */
+    GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED,
+    /** Triggers whenever this Room's specified door becomes unlocked. */
+    ON_SELF_ROOM_DOOR_UNLOCKED,
     ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this creature or another creature enters the battlefield from the
      *  controller's graveyard. Checked in {@code BattlefieldEntryService.checkEntersFromGraveyardTriggers}
@@ -579,6 +609,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).
      *  Checked per-card inside {@code GraveyardService.resolveMillPlayer}. */
     ON_SELF_MILLED,
+    ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers when this card is put into a graveyard from anywhere (battlefield, hand, library,
      *  stack, exile). Checked for every card entering a graveyard in
      *  {@code GraveyardService.addCardToGraveyard}, which is the single choke point for all
@@ -653,6 +684,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields;
      *  the queued stack entry targets the damaged creature (e.g. Death Pits of Rath). */
     ON_ANY_CREATURE_DEALT_DAMAGE,
+    /** Triggers whenever any permanent is dealt damage, regardless of its controller. */
+    ON_ANY_PERMANENT_DEALT_DAMAGE,
     /** Triggers whenever a creature this permanent's controller controls (matching the effect's
      *  source filter) deals damage — combat or non-combat — to a creature. Fires on the permanent
      *  with this slot, not on the damaged creature. Scans all battlefields; the reflected damage is
@@ -664,9 +697,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers whenever the controller completes a dungeon, while this card is in their graveyard. */
+    GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON,
     /** Triggers whenever the controller surveils, while this card is in the controller's
      *  graveyard. Checked per-card inside {@code TriggerCollectionService.checkSurveilTriggers}. */
     GRAVEYARD_ON_CONTROLLER_SURVEILS,
+    /** Triggers whenever the controller rolls a natural 20, while this card is in their graveyard. */
+    GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20,
     /** Triggers whenever the controller activates an exhaust ability, while this card is in the
      *  controller's graveyard. Checked per-card inside
      *  {@code TriggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard}. */
@@ -774,6 +811,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
      *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** Triggers whenever any creature enters the battlefield, while this card is in its owner's
+     *  graveyard. Like {@link #ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD} but fired from the graveyard.
+     *  Checked in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
+    GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a creature the controller controls dies, while this card is in the
      *  controller's graveyard. Like {@link #ON_ALLY_CREATURE_DIES} but fired from the graveyard.
      *  Checked in {@code TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers}. */
@@ -804,6 +845,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+    /** Triggers when this permanent's training ability successfully puts a +1/+1 counter on it. */
+    ON_SELF_TRAINS,
+    /** Triggers whenever one or more +1/+1 counters are put on a Human the controller controls. */
+    ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN,
     ON_SELF_REACHES_LEVEL_TWO,
     ON_SELF_REACHES_LEVEL_THREE,
     /** Triggers whenever one or more counters are put on this permanent. */
@@ -821,6 +866,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
     /** Triggers whenever one or more +1/+1 counters are put on a creature the controller controls. */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
+    /** Triggers whenever one or more +1/+1 counters are put on another Hero the controller controls. */
+    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO,
+    /** Triggers whenever the controller puts one or more +1/+1 counters on another creature. */
+    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE,
     /** Triggers whenever the controller puts one or more +1/+1 counters on a creature they control. */
     ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever the controller puts one or more counters on a permanent or player. */
@@ -902,6 +951,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  on the battlefield at the start of that resolution (sacrificing itself still counts).
      *  Fired from the exploit sacrifice completion path. Used by Overcharged Amalgam. */
     ON_EXPLOIT,
+    /** Triggers whenever a creature controlled by this permanent's controller exploits a nontoken
+     *  creature. Fired after the exploit sacrifice completes. */
+    ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE,
     /** Triggers once per attacking creature the controller controls. Unlike ON_ALLY_CREATURES_ATTACK
      *  (which fires once per combat), this fires separately for each creature declared as an attacker.
      *  Supports TriggeringCardConditionalEffect and TriggeringPermanentConditionalEffect to filter
@@ -1024,12 +1076,18 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle
      *  (e.g. Lumaret's Favor) via {@code CopyThisSpellIfConditionEffect}. */
     ON_SELF_CAST,
+    /** Marker slot for a permanent that gives its controller's instant and sorcery spells storm. */
+    GRANT_STORM_TO_INSTANT_OR_SORCERY,
     /** Marker slot: "The first spell you cast each turn has cascade." Holds a {@code CascadeEffect};
      *  detected by presence (not effect type) in {@code TriggerCollectionService.checkSpellCastTriggers},
      *  which — when the casting player casts their first spell of the turn — queues that CascadeEffect as
      *  a triggered ability keyed to the just-cast spell (so the cascade threshold is the spell's mana
      *  value, not this permanent's). Used by Maelstrom Nexus. */
     GRANT_CASCADE_TO_FIRST_SPELL,
+    /** Marker slot: "Instant and sorcery spells you cast from your hand have cascade." Holds a
+     *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
+     *  instant or sorcery is cast from hand. */
+    GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
@@ -1073,6 +1131,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkControllerActivatesAbilityTriggers}, driven from
      *  {@code ActivatedAbilityExecutionService.completeActivationAfterCosts}. */
     ON_CONTROLLER_ACTIVATES_ABILITY,
+    /** Triggers whenever an opponent of this permanent's controller activates an activated ability
+     *  (including mana abilities) of a permanent. Fires on every permanent NOT controlled by the
+     *  activating player that has this slot. Wrap the effect in
+     *  {@code TriggeringPermanentConditionalEffect} to filter by the permanent whose ability was
+     *  activated. Checked in {@code TriggerCollectionService.checkOpponentActivatesAbilityTriggers}. */
+    ON_OPPONENT_ACTIVATES_ABILITY,
     /** Triggers whenever the controller activates an exhaust ability. */
     ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY,
     /** Triggers whenever this creature saddles a Mount or crews a Vehicle during its controller's
@@ -1142,6 +1206,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_CREATURE_RETURNED_TO_HAND,
     /** Triggers whenever a permanent is returned from the battlefield to this permanent's controller's hand. */
     ON_CONTROLLER_PERMANENT_RETURNED_TO_HAND,
+    /** Triggers whenever another nonland permanent controlled by this permanent's controller is returned to its owner's hand. */
+    ON_CONTROLLER_ANOTHER_NONLAND_PERMANENT_RETURNED_TO_HAND,
     /** Global watcher: triggers whenever any source (creature or spell) deals damage, regardless of
      *  who controls it or what it damages. Holds a {@code ReflectSourceDamageToItsControllerEffect}
      *  carrying the color the watcher reacts to. Fires on every permanent with this slot across all
@@ -1218,6 +1284,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers}.
      *  Used by Night Dealings. */
     ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
+    /** Triggers whenever one or more creatures the controller controls deal damage to a player. */
+    ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER,
     /** Triggers whenever a source the controller controls deals noncombat damage to another player. */
     ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat) by a
@@ -1253,7 +1321,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU} (immediate, permanent sources of any kind,
      *  combat or not) this slot is creature- and combat-only and puts a real triggered ability on the
      *  stack whose {@code targetId} is the damaging creature, so {@code DestroyTargetPermanentEffect}
-     *  resolves as "destroy that creature" without targeting. Used by Teysa, Envoy of Ghosts. */
+     *  resolves as "destroy that creature" without targeting. The damaging creature and its
+     *  controller are stamped on the trigger entry, and {@code TriggeringPermanentConditionalEffect}
+     *  may filter which creatures fire the ability. Used by Teysa, Envoy of Ghosts. */
     ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU,
     /** Triggers whenever an opponent of this card's owner gains life while this card is in
      *  that owner's graveyard. */

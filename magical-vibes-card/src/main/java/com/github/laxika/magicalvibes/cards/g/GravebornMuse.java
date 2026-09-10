@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffe
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "145")
+@CardRegistration(set = "LGN", collectorNumber = "73")
 public class GravebornMuse extends Card {
 
     public GravebornMuse() {

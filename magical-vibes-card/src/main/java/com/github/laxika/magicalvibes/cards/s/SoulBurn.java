@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulBurnEffect;
 @CardRegistration(set = "ICE", collectorNumber = "161")
 @CardRegistration(set = "INV", collectorNumber = "124")
 @CardRegistration(set = "DKM", collectorNumber = "9")
+@CardRegistration(set = "CST", collectorNumber = "31")
 public class SoulBurn extends Card {
 
     public SoulBurn() {

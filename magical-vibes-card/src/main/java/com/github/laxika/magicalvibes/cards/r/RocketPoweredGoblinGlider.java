@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "172")
 @CardRegistration(set = "SPM", collectorNumber = "281")
+@CardRegistration(set = "OM1", collectorNumber = "175")
 public class RocketPoweredGoblinGlider extends Card {
 
     public RocketPoweredGoblinGlider() {

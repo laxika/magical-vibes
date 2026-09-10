@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "135")
 @CardRegistration(set = "SPM", collectorNumber = "274")
+@CardRegistration(set = "OM1", collectorNumber = "158")
 public class MisterNegative extends Card {
 
     public MisterNegative() {

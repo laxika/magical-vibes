@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "32")
 @CardRegistration(set = "SPM", collectorNumber = "249")
+@CardRegistration(set = "OM1", collectorNumber = "44")
 public class HideOnTheCeiling extends Card {
 
     public HideOnTheCeiling() {

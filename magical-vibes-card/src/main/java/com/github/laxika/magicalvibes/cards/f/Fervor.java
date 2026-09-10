@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class Fervor extends Card {
 
     public Fervor() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
     }
 }

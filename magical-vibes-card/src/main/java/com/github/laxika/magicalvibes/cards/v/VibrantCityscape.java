@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "188")
+@CardRegistration(set = "OM1", collectorNumber = "188")
 public class VibrantCityscape extends Card {
 
     public VibrantCityscape() {

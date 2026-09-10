@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.FlameJavelin;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GemstoneMine;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,13 +23,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VeteranExplorer.class, FlameJavelin.class, Forest.class, GrizzlyBears.class, Plains.class})
 class VeteranExplorerTest extends BaseCardTest {
-
-    private void setupLibrary(Player player, Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
-    }
 
     private PendingInteraction.LibrarySearch activeSearch() {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -63,8 +60,8 @@ class VeteranExplorerTest extends BaseCardTest {
     @DisplayName("When Veteran Explorer dies each player may fetch two basic lands, in APNAP order")
     void bothPlayersFetchTwoBasicLands() {
         harness.addToBattlefield(player1, new VeteranExplorer());
-        setupLibrary(player1, new Forest(), new Forest(), new GrizzlyBears());
-        setupLibrary(player2, new Plains(), new Plains(), new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains(), new GrizzlyBears()));
 
         killExplorer();
 
@@ -94,8 +91,8 @@ class VeteranExplorerTest extends BaseCardTest {
     @DisplayName("The fetched lands enter untapped")
     void fetchedLandsEnterUntapped() {
         harness.addToBattlefield(player1, new VeteranExplorer());
-        setupLibrary(player1, new Forest());
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of());
 
         killExplorer();
 
@@ -109,8 +106,8 @@ class VeteranExplorerTest extends BaseCardTest {
     @DisplayName("The search is a may — a player can decline, or take fewer than two lands")
     void searchIsOptional() {
         harness.addToBattlefield(player1, new VeteranExplorer());
-        setupLibrary(player1, new Forest(), new Forest());
-        setupLibrary(player2, new Plains(), new Plains());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains()));
 
         killExplorer();
 
@@ -131,8 +128,8 @@ class VeteranExplorerTest extends BaseCardTest {
     @DisplayName("A player whose library holds no basic land is skipped")
     void playerWithoutBasicLandsIsSkipped() {
         harness.addToBattlefield(player1, new VeteranExplorer());
-        setupLibrary(player1, new Forest());
-        setupLibrary(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
         killExplorer();
 
@@ -147,11 +144,33 @@ class VeteranExplorerTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GemstoneMine.class)
+    @DisplayName("A nonbasic land is not a valid search result")
+    void searchExcludesNonbasicLands() {
+        harness.addToBattlefield(player1, new VeteranExplorer());
+        GemstoneMine mine = new GemstoneMine();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(mine, plains));
+
+        killExplorer();
+
+        assertThat(activeSearch().params().cards()).containsExactly(plains);
+
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(mine);
+        assertThat(landCount(player2)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Nothing happens while Veteran Explorer stays on the battlefield")
     void noSearchWhileAlive() {
         harness.addToBattlefield(player1, new VeteranExplorer());
-        setupLibrary(player1, new Forest(), new Forest());
-        setupLibrary(player2, new Plains(), new Plains());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains()));
 
         harness.passBothPriorities();
 

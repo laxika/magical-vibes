@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "113")
+@CardRegistration(set = "OM1", collectorNumber = "114")
 public class ScoutTheCity extends Card {
 
     public ScoutTheCity() {

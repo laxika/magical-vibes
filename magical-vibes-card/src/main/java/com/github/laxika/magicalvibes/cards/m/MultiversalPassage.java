@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenBasicLandT
 
 @CardRegistration(set = "SPM", collectorNumber = "180")
 @CardRegistration(set = "SPM", collectorNumber = "206")
+@CardRegistration(set = "OM1", collectorNumber = "181")
 public class MultiversalPassage extends Card {
 
     public MultiversalPassage() {

@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,12 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DeathPitsOfRath.class, GrizzlyBears.class, HillGiant.class, Shock.class})
 class DeathPitsOfRathTest extends BaseCardTest {
-
-    private boolean onBattlefield(com.github.laxika.magicalvibes.model.Player owner, String name) {
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals(name));
-    }
 
     @Test
     @DisplayName("A creature dealt non-lethal noncombat damage is destroyed")
@@ -44,7 +40,39 @@ class DeathPitsOfRathTest extends BaseCardTest {
 
         harness.passBothPriorities(); // Resolve the trigger
 
-        assertThat(onBattlefield(player2, "Hill Giant")).isFalse();
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Death Pits destruction cannot be stopped by a regeneration shield")
+    void destructionCannotBeRegenerated() {
+        harness.addToBattlefield(player1, new DeathPitsOfRath());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        giant.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Prevented damage does not trigger Death Pits")
+    void preventedDamageDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DeathPitsOfRath());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        giant.setDamagePreventionShield(2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(giant.getMarkedDamage()).isZero();
     }
 
     @Test
@@ -62,7 +90,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(onBattlefield(player1, "Hill Giant")).isFalse();
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
     }
 
     @Test
@@ -81,18 +109,12 @@ class DeathPitsOfRathTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1); // Grizzly Bears is index 1 on player1's battlefield
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
         // Resolve combat damage and the Death Pits trigger it queues.
-        harness.passBothPriorities();
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveCombat();
+        resolveAllTriggers();
 
         // Hill Giant survived combat (3 toughness, took only 2) but Death Pits destroys it anyway.
-        assertThat(onBattlefield(player2, "Hill Giant")).isFalse();
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
     }
 
     /**
@@ -104,6 +126,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
     class NonCreatureAnyTargets {
 
         @Test
+        @CardUsed({ArcTrail.class, LilianaVess.class})
         @DisplayName("Damaging a planeswalker does not trigger Death Pits, but the creature beside it still does")
         void planeswalkerDealtDamageDoesNotTrigger() {
             harness.addToBattlefield(player1, new DeathPitsOfRath());
@@ -123,12 +146,13 @@ class DeathPitsOfRathTest extends BaseCardTest {
 
             harness.passBothPriorities(); // Resolve the trigger
 
-            assertThat(onBattlefield(player2, "Hill Giant")).isFalse();
-            assertThat(onBattlefield(player2, "Liliana Vess")).isTrue();
+            harness.assertNotOnBattlefield(player2, "Hill Giant");
+            harness.assertOnBattlefield(player2, "Liliana Vess");
             assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         }
 
         @Test
+        @CardUsed(InvasionOfInnistrad.class)
         @DisplayName("Damaging a battle does not trigger Death Pits")
         void battleDealtDamageDoesNotTrigger() {
             harness.addToBattlefield(player1, new DeathPitsOfRath());
@@ -141,7 +165,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve Shock — 2 damage to the battle
 
             assertThat(gd.stack).isEmpty();
-            assertThat(onBattlefield(player2, "Invasion of Innistrad")).isTrue();
+            harness.assertOnBattlefield(player2, "Invasion of Innistrad");
             assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
         }
     }

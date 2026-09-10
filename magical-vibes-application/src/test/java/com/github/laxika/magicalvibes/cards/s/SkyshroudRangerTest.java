@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkyshroudRanger.class, Forest.class, MetallicSliver.class})
 class SkyshroudRangerTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Activating ability taps Skyshroud Ranger and puts ability on stack")
@@ -32,14 +32,14 @@ class SkyshroudRangerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Skyshroud Ranger");
+        assertThat(entry.getCard()).isInstanceOf(SkyshroudRanger.class);
     }
 
     @Test
     @DisplayName("Resolving ability prompts may choice first")
     void resolvingPromptsMayChoice() {
         addReadyRanger(player1);
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Forest(), new MetallicSliver()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -52,7 +52,7 @@ class SkyshroudRangerTest extends BaseCardTest {
     @DisplayName("Accepting may prompt allows choosing only land cards from hand")
     void acceptingMayPromptsLandChoice() {
         addReadyRanger(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new MetallicSliver(), new Forest(), new MetallicSliver()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -68,7 +68,8 @@ class SkyshroudRangerTest extends BaseCardTest {
     @DisplayName("Choosing a land puts it onto the battlefield untapped")
     void choosingLandPutsItOntoBattlefieldUntapped() {
         addReadyRanger(player1);
-        harness.setHand(player1, List.of(new Forest()));
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(forest));
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
@@ -78,8 +79,8 @@ class SkyshroudRangerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
-        Permanent land = findPermanent(player1, "Forest");
-        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == forest && !permanent.isTapped());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -96,7 +97,24 @@ class SkyshroudRangerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
-        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof Forest);
+    }
+
+    @Test
+    @DisplayName("Accepting may choice with no land in hand does nothing")
+    void acceptingMayWithNoLandDoesNothing() {
+        addReadyRanger(player1);
+        harness.setHand(player1, List.of(new MetallicSliver()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof Forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -116,8 +134,7 @@ class SkyshroudRangerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while Skyshroud Ranger has summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent ranger = new Permanent(new SkyshroudRanger());
-        gd.playerBattlefields.get(player1.getId()).add(ranger);
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new SkyshroudRanger());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -170,7 +187,7 @@ class SkyshroudRangerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         gd.stack.add(new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
-                new GrizzlyBears(),
+                new MetallicSliver(),
                 player2.getId(),
                 "dummy ability",
                 List.of()
@@ -182,9 +199,6 @@ class SkyshroudRangerTest extends BaseCardTest {
     }
 
     private Permanent addReadyRanger(Player player) {
-        Permanent ranger = new Permanent(new SkyshroudRanger());
-        ranger.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(ranger);
-        return ranger;
+        return addCreatureReady(player, new SkyshroudRanger());
     }
 }

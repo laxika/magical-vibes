@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "22")
+@CardRegistration(set = "OM1", collectorNumber = "2")
 public class WebShooters extends Card {
 
     public WebShooters() {

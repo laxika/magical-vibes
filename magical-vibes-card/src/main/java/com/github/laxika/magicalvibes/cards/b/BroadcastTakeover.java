@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "86")
+@CardRegistration(set = "TMT", collectorNumber = "234")
 public class BroadcastTakeover extends Card {
 
     public BroadcastTakeover() {

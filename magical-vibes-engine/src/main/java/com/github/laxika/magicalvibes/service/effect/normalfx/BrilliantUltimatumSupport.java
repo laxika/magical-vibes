@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -35,8 +34,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class BrilliantUltimatumSupport {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -46,7 +48,6 @@ public class BrilliantUltimatumSupport {
 
     // @Lazy mirrors ExileFreeCastSupport: breaks cycles through the interaction registry / input services.
     public BrilliantUltimatumSupport(GameLogService gameLogService,
-                                     GameQueryService gameQueryService,
                                      BattlefieldEntryService battlefieldEntryService,
                                      TriggerCollectionService triggerCollectionService,
                                      InteractionHandlerRegistry interactionHandlerRegistry,
@@ -54,7 +55,6 @@ public class BrilliantUltimatumSupport {
                                      @Lazy InputCompletionService inputCompletionService,
                                      com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator) {
         this.gameLogService = gameLogService;
-        this.gameQueryService = gameQueryService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;

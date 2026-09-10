@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "42")
+@CardRegistration(set = "CST", collectorNumber = "18")
+@CardRegistration(set = "CST", collectorNumber = "42")
+@CardRegistration(set = "ME2", collectorNumber = "73")
 public class VisceridDrone extends Card {
 
     public VisceridDrone() {

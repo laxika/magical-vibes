@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "156")
 @CardRegistration(set = "SPM", collectorNumber = "217")
+@CardRegistration(set = "OM1", collectorNumber = "155")
 public class SymbioteSpiderMan extends Card {
 
     public SymbioteSpiderMan() {

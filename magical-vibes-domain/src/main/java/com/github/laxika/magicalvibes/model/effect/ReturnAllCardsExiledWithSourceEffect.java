@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.Set;
 
@@ -20,27 +22,43 @@ import java.util.Set;
  * @param turnFaceUp when {@code true}, turn every card exiled with the source face up before
  *        returning the matching cards (Pyxis of Pandemonium)
  * @param grantedKeywords keywords granted indefinitely to each card returned to the battlefield
+ * @param basePower optional permanent base-power override for each returned permanent
+ * @param baseToughness optional permanent base-toughness override for each returned permanent
+ * @param grantedSubtype optional subtype added to each returned permanent
+ * @param enteringCounterType optional counter put on each returned permanent as it enters
  */
 public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                    CardPredicate filter,
                                                    boolean turnFaceUp,
-                                                   Set<Keyword> grantedKeywords) implements CardEffect {
+                                                   Set<Keyword> grantedKeywords,
+                                                   Integer basePower,
+                                                   Integer baseToughness,
+                                                   CardSubtype grantedSubtype,
+                                                   CounterType enteringCounterType) implements CardEffect {
 
     public ReturnAllCardsExiledWithSourceEffect() {
-        this(false, null, false, Set.of());
+        this(false, null, false, Set.of(), null, null, null, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl) {
-        this(underControllerControl, null, false, Set.of());
+        this(underControllerControl, null, false, Set.of(), null, null, null, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(CardPredicate filter) {
-        this(false, filter, false, Set.of());
+        this(false, filter, false, Set.of(), null, null, null, null);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                 CardPredicate filter,
                                                 boolean turnFaceUp) {
-        this(underControllerControl, filter, turnFaceUp, Set.of());
+        this(underControllerControl, filter, turnFaceUp, Set.of(), null, null, null, null);
+    }
+
+    public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
+                                                CardPredicate filter,
+                                                boolean turnFaceUp,
+                                                Set<Keyword> grantedKeywords) {
+        this(underControllerControl, filter, turnFaceUp, grantedKeywords,
+                null, null, null, null);
     }
 }

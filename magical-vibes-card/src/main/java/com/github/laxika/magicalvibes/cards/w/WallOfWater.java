@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "114")
 @CardRegistration(set = "SUM", collectorNumber = "91")
+@CardRegistration(set = "3ED", collectorNumber = "91")
 public class WallOfWater extends Card {
 
     public WallOfWater() {

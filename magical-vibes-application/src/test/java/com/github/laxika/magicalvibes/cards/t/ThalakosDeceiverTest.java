@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
+import com.github.laxika.magicalvibes.cards.h.Heartstone;
+import com.github.laxika.magicalvibes.cards.s.SoltariChampion;
+import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,21 +15,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThalakosDeceiver.class, YouthfulKnight.class, Heartstone.class, SoltariChampion.class})
 class ThalakosDeceiverTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new ThalakosDeceiver());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ThalakosDeceiver());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     private void advanceToUnblockedMay() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
     }
@@ -38,7 +34,7 @@ class ThalakosDeceiverTest extends BaseCardTest {
     @DisplayName("Accepting the may sacrifices it and permanently gains control of the target creature")
     void acceptSacrificeAndGainControl() {
         Permanent attacker = addAttacker();
-        Permanent target = new Permanent(new GrizzlyBears());
+        Permanent target = new Permanent(new YouthfulKnight());
         gd.playerBattlefields.get(player2.getId()).add(target);
 
         advanceToUnblockedMay();
@@ -58,26 +54,26 @@ class ThalakosDeceiverTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The target choice offers creatures but not lands")
+    @DisplayName("The target choice offers creatures but not artifacts")
     void targetChoiceOffersCreaturesOnly() {
         addAttacker();
-        Permanent target = new Permanent(new GrizzlyBears());
-        Permanent land = new Permanent(new Forest());
+        Permanent target = new Permanent(new YouthfulKnight());
+        Permanent artifact = new Permanent(new Heartstone());
         gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.playerBattlefields.get(player2.getId()).add(land);
+        gd.playerBattlefields.get(player2.getId()).add(artifact);
 
         advanceToUnblockedMay();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(target.getId())
-                .doesNotContain(land.getId());
+                .doesNotContain(artifact.getId());
     }
 
     @Test
     @DisplayName("Declining the may keeps it on the battlefield and does not change control")
     void declineKeepsCreature() {
         addAttacker();
-        Permanent target = new Permanent(new GrizzlyBears());
+        Permanent target = new Permanent(new YouthfulKnight());
         gd.playerBattlefields.get(player2.getId()).add(target);
 
         advanceToUnblockedMay();
@@ -91,17 +87,52 @@ class ThalakosDeceiverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An illegal target prevents the source from being sacrificed")
+    void illegalTargetPreventsResolution() {
+        Permanent attacker = addAttacker();
+        Permanent target = new Permanent(new YouthfulKnight());
+        gd.playerBattlefields.get(player2.getId()).add(target);
+
+        advanceToUnblockedMay();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thalakos Deceiver");
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card.getName().equals("Youthful Knight"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(attacker.getId()));
+    }
+
+    @Test
+    @DisplayName("If the source leaves first, accepting the may cannot gain control")
+    void sourceLeavingBeforeResolutionPreventsControl() {
+        Permanent attacker = addAttacker();
+        Permanent target = new Permanent(new YouthfulKnight());
+        gd.playerBattlefields.get(player2.getId()).add(target);
+
+        advanceToUnblockedMay();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, attacker));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
+        assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("A shadow creature can block it, so the ability does not trigger")
     void blockedByShadowCreatureDoesNotTrigger() {
-        Permanent blocker = new Permanent(new SoltariFootSoldier());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new SoltariChampion());
         Permanent attacker = addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);

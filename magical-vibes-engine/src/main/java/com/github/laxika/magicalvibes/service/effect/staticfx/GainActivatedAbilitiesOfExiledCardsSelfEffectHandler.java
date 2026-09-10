@@ -30,7 +30,7 @@ public class GainActivatedAbilitiesOfExiledCardsSelfEffectHandler implements Sta
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         GainActivatedAbilitiesOfExiledCardsEffect gainEffect =
                 (GainActivatedAbilitiesOfExiledCardsEffect) effect;
-        List<Card> exiledCards = context.gameData().getCardsExiledByPermanent(context.source().getId());
+        List<Card> exiledCards = context.gameData().getCardsExiledByPermanent(context.sourceId());
         if (exiledCards.isEmpty()) return;
         for (Card card : exiledCards) {
             for (var ability : card.getActivatedAbilities()) {

@@ -67,6 +67,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         chosen.setCounterCount(type, chosen.getCounterCount(type) + count);
         gameData.playersWhoPutCountersOnCreaturesThisTurn.add(player.getId());
         if (type == CounterType.PLUS_ONE_PLUS_ONE) {
+            gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(player.getId());
             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(player.getId());
         }
 

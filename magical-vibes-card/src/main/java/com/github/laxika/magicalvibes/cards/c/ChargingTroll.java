@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "239")
+@CardRegistration(set = "DDE", collectorNumber = "45")
 public class ChargingTroll extends Card {
 
     public ChargingTroll() {

@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.w.WindingCanyons;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FungusElemental.class, Forest.class, WindingCanyons.class})
 class FungusElementalTest extends BaseCardTest {
 
     private Permanent elemental() {
@@ -26,9 +27,7 @@ class FungusElementalTest extends BaseCardTest {
      */
     private void castElementalWithForest() {
         harness.addToBattlefield(player1, new Forest());
-        harness.setHand(player1, List.of(new FungusElemental()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FungusElemental(), "{3}{G}");
         harness.passBothPriorities();
     }
 
@@ -39,12 +38,36 @@ class FungusElementalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 1, null, null);
+
+        assertThat(elemental().getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        harness.assertInGraveyard(player1, "Forest");
+
         harness.passBothPriorities();
 
         assertThat(elemental().getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, elemental())).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, elemental())).isEqualTo(5);
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cannot activate after the turn it entered ends")
+    void cannotActivateAfterTheTurnItEnteredEnds() {
+        castElementalWithForest();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(elemental().getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -81,9 +104,7 @@ class FungusElementalTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without a Forest to sacrifice")
     void cannotActivateWithoutAForest() {
-        harness.setHand(player1, List.of(new FungusElemental()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FungusElemental(), "{3}{G}");
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -96,16 +117,14 @@ class FungusElementalTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice a non-Forest land to the ability")
     void cannotSacrificeNonForestLand() {
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.i.Island());
-        harness.setHand(player1, List.of(new FungusElemental()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.addToBattlefield(player1, new WindingCanyons());
+        harness.castFromHand(player1, new FungusElemental(), "{3}{G}");
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.assertOnBattlefield(player1, "Island");
+        harness.assertOnBattlefield(player1, "Winding Canyons");
     }
 }

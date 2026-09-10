@@ -62,6 +62,8 @@ export class GameChoiceService {
     this.choosingMultiplePermanents = false;
     this.multiPermanentChoiceIds.set(new Set());
     this.multiPermanentSelectedIds.set(new Set());
+    this.multiPermanentChoiceCards = [];
+    this.multiPermanentChoiceCardIds = [];
     this.multiPermanentMaxCount = 0;
     this.multiPermanentChoicePrompt = '';
     // Multi-graveyard
@@ -152,6 +154,8 @@ export class GameChoiceService {
   choosingMultiplePermanents = false;
   multiPermanentChoiceIds = signal(new Set<string>());
   multiPermanentSelectedIds = signal(new Set<string>());
+  multiPermanentChoiceCards: Card[] = [];
+  multiPermanentChoiceCardIds: string[] = [];
   multiPermanentMaxCount = 0;
   multiPermanentChoicePrompt = '';
 
@@ -246,9 +250,12 @@ export class GameChoiceService {
         break;
       case 'MULTI_PERMANENT_PICK':
         this.choosingMultiplePermanents = true;
+        this.multiPermanentChoiceCards = msg.cards ?? [];
+        this.multiPermanentChoiceCardIds = msg.cardIds ?? [];
         this.multiPermanentChoiceIds.set(new Set([
           ...(msg.permanentIds ?? []),
-          ...(msg.playerIds ?? [])
+          ...(msg.playerIds ?? []),
+          ...(msg.cardIds ?? [])
         ]));
         this.multiPermanentSelectedIds.set(new Set());
         this.multiPermanentMaxCount = msg.maxCount ?? 0;
@@ -451,6 +458,10 @@ export class GameChoiceService {
     this.multiPermanentSelectedIds.set(selected);
   }
 
+  toggleMultiPermanentCardSelection(cardId: string): void {
+    this.toggleMultiPermanentSelection(cardId);
+  }
+
   confirmMultiPermanentChoice(): void {
     if (!this.choosingMultiplePermanents) return;
     this.websocketService.send({
@@ -461,6 +472,8 @@ export class GameChoiceService {
     this.choosingMultiplePermanents = false;
     this.multiPermanentChoiceIds.set(new Set());
     this.multiPermanentSelectedIds.set(new Set());
+    this.multiPermanentChoiceCards = [];
+    this.multiPermanentChoiceCardIds = [];
     this.multiPermanentMaxCount = 0;
     this.multiPermanentChoicePrompt = '';
   }

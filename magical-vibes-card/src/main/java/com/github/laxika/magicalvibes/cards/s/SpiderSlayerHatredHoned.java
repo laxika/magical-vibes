@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "175")
+@CardRegistration(set = "OM1", collectorNumber = "168")
 public class SpiderSlayerHatredHoned extends Card {
 
     public SpiderSlayerHatredHoned() {

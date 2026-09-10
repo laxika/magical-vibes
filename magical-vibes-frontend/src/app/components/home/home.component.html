@@ -68,9 +68,16 @@
               <input
                 type="checkbox"
                 [ngModel]="vsAi()"
-                (ngModelChange)="vsAi.set($event)"
+                (ngModelChange)="vsAi.set($event); $event && planechase.set(false)"
               />
               Play vs AI
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" [ngModel]="planechase()"
+                (ngModelChange)="planechase.set($event); $event && vsAi.set(false)" />
+              Planechase
             </label>
           </div>
           @if (vsAi()) {
@@ -127,9 +134,16 @@
               <input
                 type="checkbox"
                 [ngModel]="vsAi()"
-                (ngModelChange)="vsAi.set($event)"
+                (ngModelChange)="vsAi.set($event); $event && planechase.set(false)"
               />
               Play vs AI
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" [ngModel]="planechase()"
+                (ngModelChange)="planechase.set($event); $event && vsAi.set(false)" />
+              Planechase
             </label>
           </div>
           @if (vsAi()) {
@@ -227,6 +241,7 @@
               <div class="game-row">
                 <span class="game-name">
                   {{ game.gameName }}
+                  @if (game.planechase) { <span class="game-mode-badge">Planechase</span> }
                   @if (game.allRandom) {
                     <span class="mode-badge">All Random</span>
                   }

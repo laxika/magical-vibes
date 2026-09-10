@@ -10,6 +10,7 @@ import java.util.List;
 @CardRegistration(set = "9ED", collectorNumber = "169")
 @CardRegistration(set = "4ED", collectorNumber = "171")
 @CardRegistration(set = "SUM", collectorNumber = "137")
+@CardRegistration(set = "3ED", collectorNumber = "137")
 public class WillOTheWisp extends Card {
 
     public WillOTheWisp() {

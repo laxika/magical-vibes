@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "62")
+@CardRegistration(set = "OM1", collectorNumber = "52")
 public class RiskyResearch extends Card {
 
     public RiskyResearch() {

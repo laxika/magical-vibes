@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "141")
+@CardRegistration(set = "OM1", collectorNumber = "151")
 public class RhinosRampage extends Card {
 
     public RhinosRampage() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellWithDelayCoun
 public class ErtaisMeddling extends Card {
 
     public ErtaisMeddling() {
+        setMinimumXValue(1);
         // The upkeep trigger that removes the delay counters and puts the card back onto the stack
         // is handled by StepTriggerService scanning GameData.delayedSpellExiles.
         addEffect(EffectSlot.SPELL, new ExileTargetSpellWithDelayCountersEffect());

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "209")
+@CardRegistration(set = "DD1", collectorNumber = "41")
 public class GoblinSledder extends Card {
 
     public GoblinSledder() {

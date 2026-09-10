@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "117")
+@CardRegistration(set = "TMT", collectorNumber = "272")
 public class LeatherheadSwampStalker extends Card {
 
     public LeatherheadSwampStalker() {

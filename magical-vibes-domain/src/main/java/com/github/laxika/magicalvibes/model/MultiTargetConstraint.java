@@ -58,6 +58,8 @@ public enum MultiTargetConstraint {
     SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST,
     /** At most one selected card may be assigned to each color. */
     AT_MOST_ONE_PER_COLOR,
+    /** The chosen graveyard cards must have different mana values. */
+    DIFFERENT_MANA_VALUES,
     /** The chosen targets must have different names. */
     DIFFERENT_NAMES
 }

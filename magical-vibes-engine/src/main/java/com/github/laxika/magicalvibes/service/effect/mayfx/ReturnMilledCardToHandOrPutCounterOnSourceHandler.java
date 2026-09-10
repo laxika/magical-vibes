@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Handles grouped offers created by Airlift Chaplain's mill ability. */
+/** Handles grouped offers created by mill abilities that return cards or put a counter on the source. */
 @Component
 @RequiredArgsConstructor
 public class ReturnMilledCardToHandOrPutCounterOnSourceHandler implements MayEffectHandlerBean {
@@ -36,28 +36,46 @@ public class ReturnMilledCardToHandOrPutCounterOnSourceHandler implements MayEff
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        UUID groupId = ability.effects().stream()
+        ReturnMilledCardToHandOrPutCounterOnSourceEffect marker = ability.effects().stream()
                 .filter(ReturnMilledCardToHandOrPutCounterOnSourceEffect.class::isInstance)
                 .map(ReturnMilledCardToHandOrPutCounterOnSourceEffect.class::cast)
-                .map(ReturnMilledCardToHandOrPutCounterOnSourceEffect::groupId)
-                .findFirst()
-                .orElseThrow();
+                .findFirst().orElseThrow();
+        UUID groupId = marker.groupId();
 
         if (accepted) {
-            removeOffersInGroup(gameData, groupId);
+            int acceptedCount = ability.eventValue() + 1;
+            if (acceptedCount >= marker.maxCount()) {
+                removeOffersInGroup(gameData, groupId);
+            } else {
+                for (int i = 0; i < gameData.pendingMayAbilities.size(); i++) {
+                    PendingMayAbility pending = gameData.pendingMayAbilities.get(i);
+                    boolean sameGroup = pending.effects().stream()
+                            .filter(ReturnMilledCardToHandOrPutCounterOnSourceEffect.class::isInstance)
+                            .map(ReturnMilledCardToHandOrPutCounterOnSourceEffect.class::cast)
+                            .anyMatch(candidate -> groupId.equals(candidate.groupId()));
+                    if (sameGroup) {
+                        gameData.pendingMayAbilities.set(i, pending.withEventValue(acceptedCount));
+                    }
+                }
+            }
             Card card = gameQueryService.findCardInGraveyardById(gameData, ability.targetCardId());
             UUID ownerId = card == null ? null : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
             if (card != null && ownerId != null) {
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, card);
-            } else {
+            } else if (acceptedCount == 1 && gameData.pendingMayAbilities.stream().noneMatch(pending ->
+                    pending.effects().stream()
+                            .filter(ReturnMilledCardToHandOrPutCounterOnSourceEffect.class::isInstance)
+                            .map(ReturnMilledCardToHandOrPutCounterOnSourceEffect.class::cast)
+                            .anyMatch(candidate -> groupId.equals(candidate.groupId())))) {
                 putCounterOnSource(gameData, ability);
             }
         } else if (gameData.pendingMayAbilities.stream().noneMatch(pending ->
                 pending.effects().stream()
                         .filter(ReturnMilledCardToHandOrPutCounterOnSourceEffect.class::isInstance)
                         .map(ReturnMilledCardToHandOrPutCounterOnSourceEffect.class::cast)
-                        .anyMatch(marker -> groupId.equals(marker.groupId())))) {
+                        .anyMatch(candidate -> groupId.equals(candidate.groupId())))
+                && ability.eventValue() == 0) {
             putCounterOnSource(gameData, ability);
         }
 

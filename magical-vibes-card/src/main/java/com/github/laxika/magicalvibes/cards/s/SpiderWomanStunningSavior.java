@@ -10,6 +10,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "152")
 @CardRegistration(set = "SPM", collectorNumber = "230")
+@CardRegistration(set = "OM1", collectorNumber = "145")
 public class SpiderWomanStunningSavior extends Card {
 
     public SpiderWomanStunningSavior() {

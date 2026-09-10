@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "222")
+@CardRegistration(set = "DD1", collectorNumber = "48")
 public class RecklessOne extends Card {
 
     public RecklessOne() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCre
 
 @CardRegistration(set = "5ED", collectorNumber = "59")
 @CardRegistration(set = "ICE", collectorNumber = "51")
+@CardRegistration(set = "ME1", collectorNumber = "26")
 public class Seraph extends Card {
 
     public Seraph() {

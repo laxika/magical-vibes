@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 
 @CardRegistration(set = "ALA", collectorNumber = "4")
+@CardRegistration(set = "DDC", collectorNumber = "15")
 public class Angelsong extends Card {
 
     public Angelsong() {

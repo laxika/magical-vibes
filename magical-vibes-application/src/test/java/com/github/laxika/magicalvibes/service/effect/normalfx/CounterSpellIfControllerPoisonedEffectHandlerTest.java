@@ -137,7 +137,7 @@ class CounterSpellIfControllerPoisonedEffectHandlerTest {
                 counterSpellIfControllerPoisonedHandler.resolve(gd, counterEntry, new CounterSpellIfControllerPoisonedEffect());
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
-                verify(graveyardService).addCardToGraveyard(gd, player1Id, bears);
+                verify(graveyardService).addCardToGraveyardFromSpell(gd, player1Id, bears, player1Id);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is countered.")));
             }
 
@@ -154,7 +154,7 @@ class CounterSpellIfControllerPoisonedEffectHandlerTest {
                 counterSpellIfControllerPoisonedHandler.resolve(gd, counterEntry, new CounterSpellIfControllerPoisonedEffect());
 
                 assertThat(gd.stack).contains(bearsEntry);
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             }
 
             @Test
@@ -166,7 +166,7 @@ class CounterSpellIfControllerPoisonedEffectHandlerTest {
 
                 counterSpellIfControllerPoisonedHandler.resolve(gd, counterEntry, new CounterSpellIfControllerPoisonedEffect());
 
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             }
 
             @Test
@@ -185,7 +185,7 @@ class CounterSpellIfControllerPoisonedEffectHandlerTest {
                 counterSpellIfControllerPoisonedHandler.resolve(gd, counterEntry, new CounterSpellIfControllerPoisonedEffect());
 
                 assertThat(gd.stack).contains(bearsEntry);
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             }
 
             @Test
@@ -196,6 +196,6 @@ class CounterSpellIfControllerPoisonedEffectHandlerTest {
 
                 counterSpellIfControllerPoisonedHandler.resolve(gd, counterEntry, new CounterSpellIfControllerPoisonedEffect());
 
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).addCardToGraveyardFromSpell(any(), any(), any(), any());
             }
 }

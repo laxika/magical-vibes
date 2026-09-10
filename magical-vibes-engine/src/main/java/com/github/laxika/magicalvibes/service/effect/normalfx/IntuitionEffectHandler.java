@@ -46,11 +46,14 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
+        com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
+                .checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
                     controllerName + " searches their library but it is empty. Library is shuffled."));
             return;

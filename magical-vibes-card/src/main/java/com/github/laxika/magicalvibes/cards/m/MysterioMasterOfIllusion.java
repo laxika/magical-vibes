@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "37")
 @CardRegistration(set = "SPM", collectorNumber = "253")
+@CardRegistration(set = "OM1", collectorNumber = "48")
 public class MysterioMasterOfIllusion extends Card {
 
     public MysterioMasterOfIllusion() {

@@ -1,25 +1,22 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BogardanFirefiend.class, FountainOfYouth.class, GrizzlyBears.class, WrathOfGod.class})
 class BogardanFirefiendTest extends BaseCardTest {
 
     /**
@@ -34,15 +31,9 @@ class BogardanFirefiendTest extends BaseCardTest {
         GrizzlyBears bigBear = new GrizzlyBears();
         bigBear.setPower(3);
         bigBear.setToughness(3);
-        Permanent blockerPerm = new Permanent(bigBear);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, bigBear);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
     }
 
     // ===== Casting =====
@@ -50,13 +41,10 @@ class BogardanFirefiendTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Bogardan Firefiend puts it on the battlefield")
     void castingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new BogardanFirefiend()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castFromHand(player1, new BogardanFirefiend(), "{2}{R}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Bogardan Firefiend");
     }
@@ -70,9 +58,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         setupCombatWhereFirefiendDies();
 
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
+        resolveCombat();
 
         // Bogardan Firefiend should be dead
         harness.assertInGraveyard(player1, "Bogardan Firefiend");
@@ -91,9 +77,8 @@ class BogardanFirefiendTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         setupCombatWhereFirefiendDies();
-        harness.passBothPriorities(); // Combat damage — Firefiend dies
+        resolveCombat();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the surviving Grizzly Bears (2/2)
@@ -127,9 +112,8 @@ class BogardanFirefiendTest extends BaseCardTest {
         UUID bigBearId = harness.getPermanentId(player2, "Grizzly Bears");
 
         setupCombatWhereFirefiendDies();
-        harness.passBothPriorities(); // Firefiend dies
+        resolveCombat();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the 3/3 bear
@@ -152,9 +136,8 @@ class BogardanFirefiendTest extends BaseCardTest {
         UUID ownBearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         setupCombatWhereFirefiendDies();
-        harness.passBothPriorities(); // Firefiend dies
+        resolveCombat();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose own Grizzly Bears
@@ -170,19 +153,84 @@ class BogardanFirefiendTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Death trigger only offers creature permanents as targets")
+    void deathTriggerOnlyOffersCreatureTargets() {
+        harness.addToBattlefield(player1, new BogardanFirefiend());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        setupCombatWhereFirefiendDies();
+        resolveCombat();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(creature.getId()).doesNotContain(artifact.getId());
+
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(creature.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(artifact.getId()));
+    }
+
+    @Test
+    @DisplayName("Each Firefiend that dies creates its own damage trigger")
+    void eachDyingFirefiendCreatesDamageTrigger() {
+        Permanent firstFirefiend = harness.addToBattlefieldAndReturn(player1, new BogardanFirefiend());
+        Permanent secondFirefiend = harness.addToBattlefieldAndReturn(player1, new BogardanFirefiend());
+        firstFirefiend.setSummoningSick(false);
+        firstFirefiend.setAttacking(true);
+        secondFirefiend.setSummoningSick(false);
+        secondFirefiend.setAttacking(true);
+
+        GrizzlyBears targetCard = new GrizzlyBears();
+        targetCard.setPower(4);
+        targetCard.setToughness(4);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+
+        GrizzlyBears firstBlockerCard = new GrizzlyBears();
+        firstBlockerCard.setPower(3);
+        firstBlockerCard.setToughness(3);
+        Permanent firstBlocker = addCreatureReady(player2, firstBlockerCard);
+        firstBlocker.setBlocking(true);
+        firstBlocker.addBlockingTarget(0);
+
+        GrizzlyBears secondBlockerCard = new GrizzlyBears();
+        secondBlockerCard.setPower(3);
+        secondBlockerCard.setToughness(3);
+        Permanent secondBlocker = addCreatureReady(player2, secondBlockerCard);
+        secondBlocker.setBlocking(true);
+        secondBlocker.addBlockingTarget(1);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(target.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Bogardan Firefiend"))
+                .hasSize(2);
+    }
+
+    @Test
     @DisplayName("Death trigger skips if no creatures are on the battlefield (Wrath of God)")
     void deathTriggerSkipsWithNoCreatures() {
         harness.addToBattlefield(player1, new BogardanFirefiend());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         // Use Wrath of God to kill all creatures simultaneously
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // Resolve Wrath — all creatures die
-
-        GameData gd = harness.getGameData();
 
         // Both creatures should be dead
         harness.assertNotOnBattlefield(player1, "Bogardan Firefiend");
@@ -193,7 +241,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         // Log should mention no valid targets
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));
+        assertThat(gameLogContains("no valid targets")).isTrue();
     }
 
     @Test
@@ -205,9 +253,8 @@ class BogardanFirefiendTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         setupCombatWhereFirefiendDies();
-        harness.passBothPriorities(); // Firefiend dies
+        resolveCombat();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose target
@@ -221,7 +268,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -233,9 +280,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         setupCombatWhereFirefiendDies();
-        harness.passBothPriorities(); // Firefiend dies
-
-        GameData gd = harness.getGameData();
+        resolveCombat();
 
         // Choose target
         harness.handlePermanentChosen(player1, bearsId);

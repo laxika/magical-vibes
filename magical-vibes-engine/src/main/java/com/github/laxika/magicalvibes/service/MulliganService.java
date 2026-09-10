@@ -41,6 +41,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @Service
 @RequiredArgsConstructor
 public class MulliganService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
 
     private final Random random = new Random();
 
@@ -368,9 +372,12 @@ public class MulliganService {
         }
         gameData.clearPendingInteractions(PendingKarnRestart.class);
 
+        gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.status = GameStatus.RUNNING;
         gameData.activePlayerId = gameData.startingPlayerId;
+        if (gameData.planechase != null) planechaseService.start(gameData);
         gameData.turnNumber = 1;
+        gameData.turnStartTimestamp = gameData.timestampCounter + 1;
         gameData.turnsTakenByPlayer.clear();
         gameData.turnsTakenByPlayer.put(gameData.activePlayerId, 1);
         gameData.currentStep = TurnStep.first();

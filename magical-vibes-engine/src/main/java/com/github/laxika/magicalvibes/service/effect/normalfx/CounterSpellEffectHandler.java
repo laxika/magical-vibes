@@ -28,6 +28,14 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
+        StackEntry targetOnStack = gameData.stack.stream()
+                .filter(stackEntry -> stackEntry.getTargetableId().equals(targetCardId))
+                .findFirst()
+                .orElse(null);
+        if (targetOnStack != null) {
+            entry.setCounteredSpellControllerId(targetOnStack.getControllerId());
+        }
+
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 

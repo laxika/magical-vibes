@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FEM", collectorNumber = "2")
 @CardRegistration(set = "FEM", collectorNumber = "138")
+@CardRegistration(set = "ME2", collectorNumber = "13")
 public class FarrelsMantle extends Card {
 
     public FarrelsMantle() {

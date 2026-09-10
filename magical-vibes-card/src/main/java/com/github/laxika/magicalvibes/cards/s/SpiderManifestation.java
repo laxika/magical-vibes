@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "148")
+@CardRegistration(set = "OM1", collectorNumber = "144")
 public class SpiderManifestation extends Card {
 
     public SpiderManifestation() {

@@ -81,8 +81,7 @@ class SongOfSerenityTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature can attack after Song of Serenity leaves the battlefield")
     void restrictionLiftsWhenSongOfSerenityLeaves() {
-        Permanent song = new Permanent(new SongOfSerenity());
-        gd.playerBattlefields.get(player1.getId()).add(song);
+        Permanent song = harness.addToBattlefieldAndReturn(player1, new SongOfSerenity());
         harness.setLife(player2, 20);
         Permanent enchanted = addCreatureReady(player1, new Carnophage());
         attachRobeOfMirrors(enchanted, player2);
@@ -95,10 +94,60 @@ class SongOfSerenityTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    private void attachRobeOfMirrors(Permanent creature, Player controller) {
-        Permanent aura = new Permanent(new RobeOfMirrors());
+    @Test
+    @DisplayName("Enchanted creature can attack after its Aura leaves the battlefield")
+    void restrictionLiftsWhenAuraLeaves() {
+        harness.addToBattlefield(player1, new SongOfSerenity());
+        harness.setLife(player2, 20);
+        Permanent enchanted = addCreatureReady(player1, new Carnophage());
+        Permanent aura = attachRobeOfMirrors(enchanted, player2);
+
+        gd.playerBattlefields.get(player2.getId()).remove(aura);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(enchanted);
+        declareAttackers(player1, List.of(index));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Losing Song of Serenity's abilities removes its attack restriction")
+    void losingAllAbilitiesRemovesAttackRestriction() {
+        Permanent song = harness.addToBattlefieldAndReturn(player1, new SongOfSerenity());
+        song.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setLife(player2, 20);
+        Permanent enchanted = addCreatureReady(player1, new Carnophage());
+        attachRobeOfMirrors(enchanted, player2);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(enchanted);
+        declareAttackers(player1, List.of(index));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Losing Song of Serenity's abilities removes its block restriction")
+    void losingAllAbilitiesRemovesBlockRestriction() {
+        Permanent song = harness.addToBattlefieldAndReturn(player1, new SongOfSerenity());
+        song.setLosesAllAbilitiesUntilEndOfTurn(true);
+        Permanent attacker = addCreatureReady(player1, new Carnophage());
+        attacker.setAttacking(true);
+        Permanent enchanted = addCreatureReady(player2, new Carnophage());
+        attachRobeOfMirrors(enchanted, player1);
+
+        prepareDeclareBlockers();
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(enchanted);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(enchanted.isBlocking()).isTrue();
+    }
+
+    private Permanent attachRobeOfMirrors(Permanent creature, Player controller) {
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new RobeOfMirrors());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
+        return aura;
     }
 
 }

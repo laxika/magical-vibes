@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "181")
+@CardRegistration(set = "SCG", collectorNumber = "119")
 public class FierceEmpath extends Card {
 
     public FierceEmpath() {

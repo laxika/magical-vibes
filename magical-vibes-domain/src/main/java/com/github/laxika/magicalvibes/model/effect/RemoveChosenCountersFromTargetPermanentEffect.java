@@ -4,8 +4,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public record RemoveChosenCountersFromTargetPermanentEffect(int amount) implements CardEffect {
 
     public RemoveChosenCountersFromTargetPermanentEffect {
-        if (amount < 1) {
-            throw new IllegalArgumentException("amount must be positive");
+        if (amount < 0) {
+            throw new IllegalArgumentException("amount must not be negative");
         }
     }
 

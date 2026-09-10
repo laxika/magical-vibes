@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeOneOfTwoTargetCreatu
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HML", collectorNumber = "79")
+@CardRegistration(set = "ME2", collectorNumber = "148")
 public class Retribution extends Card {
 
     public Retribution() {

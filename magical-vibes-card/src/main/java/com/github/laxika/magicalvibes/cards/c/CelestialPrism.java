@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "304")
 @CardRegistration(set = "SUM", collectorNumber = "239")
+@CardRegistration(set = "3ED", collectorNumber = "239")
 public class CelestialPrism extends Card {
 
     public CelestialPrism() {

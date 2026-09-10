@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 @CardRegistration(set = "ATH", collectorNumber = "48")
 @CardRegistration(set = "LEG", collectorNumber = "161")
 @CardRegistration(set = "FRF", collectorNumber = "111")
+@CardRegistration(set = "HOP", collectorNumber = "60")
 public class Pyrotechnics extends Card {
 
     public Pyrotechnics() {

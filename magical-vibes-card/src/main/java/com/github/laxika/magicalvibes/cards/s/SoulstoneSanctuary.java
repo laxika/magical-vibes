@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "133")
+@CardRegistration(set = "FDN", collectorNumber = "356")
+@CardRegistration(set = "FDN", collectorNumber = "416")
+@CardRegistration(set = "FDN", collectorNumber = "487")
 public class SoulstoneSanctuary extends Card {
 
     public SoulstoneSanctuary() {

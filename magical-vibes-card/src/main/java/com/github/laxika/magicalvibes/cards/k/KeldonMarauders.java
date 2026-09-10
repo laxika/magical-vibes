@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "102")
+@CardRegistration(set = "PD2", collectorNumber = "7")
 public class KeldonMarauders extends Card {
 
     public KeldonMarauders() {

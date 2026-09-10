@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "6")
+@CardRegistration(set = "OM1", collectorNumber = "16")
 public class DailyBugleReporters extends Card {
 
     public DailyBugleReporters() {

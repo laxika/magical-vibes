@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "35")
 @CardRegistration(set = "SPM", collectorNumber = "252")
+@CardRegistration(set = "OM1", collectorNumber = "34")
 public class LadyOctopusInspiredInventor extends Card {
 
     public LadyOctopusInspiredInventor() {

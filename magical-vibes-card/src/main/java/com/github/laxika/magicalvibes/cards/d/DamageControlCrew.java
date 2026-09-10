@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "99")
+@CardRegistration(set = "OM1", collectorNumber = "115")
 public class DamageControlCrew extends Card {
 
     public DamageControlCrew() {

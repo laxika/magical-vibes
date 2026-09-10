@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "SPM", collectorNumber = "46")
 @CardRegistration(set = "SPM", collectorNumber = "284")
 @CardRegistration(set = "SPM", collectorNumber = "254")
+@CardRegistration(set = "OM1", collectorNumber = "28")
 public class SpiderSense extends Card {
 
     public SpiderSense() {

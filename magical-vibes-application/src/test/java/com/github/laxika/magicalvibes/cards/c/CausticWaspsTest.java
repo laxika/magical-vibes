@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CausticWaspsTest extends BaseCardTest {
@@ -32,11 +30,11 @@ class CausticWaspsTest extends BaseCardTest {
         Permanent artifact = addPermanent(player2, new FountainOfYouth());
 
         resolveCombat();
-        harness.passBothPriorities();
 
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertInGraveyard(player2, "Fountain of Youth");
@@ -50,6 +48,7 @@ class CausticWaspsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FountainOfYouth());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Fountain of Youth"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -66,11 +65,8 @@ class CausticWaspsTest extends BaseCardTest {
         Permanent enemyArtifact = addPermanent(player2, new FountainOfYouth());
 
         resolveCombat();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(enemyArtifact.getId())
                 .doesNotContain(ownArtifact.getId(), enemyCreature.getId());
     }

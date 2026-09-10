@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "122")
+@CardRegistration(set = "ME2", collectorNumber = "213")
 public class LodestoneBauble extends Card {
 
     public LodestoneBauble() {

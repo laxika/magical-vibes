@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HonorGuard;
+import com.github.laxika.magicalvibes.cards.m.ManaLeak;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,17 +17,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChangeOfHeart.class, HonorGuard.class, ManaLeak.class})
 class ChangeOfHeartTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target creature cannot attack this turn")
     void targetCreatureCannotAttackThisTurn() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent guard = addCreatureReady(player1, new HonorGuard());
         Card changeOfHeart = new ChangeOfHeart();
         harness.setHand(player1, List.of(changeOfHeart));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
+        harness.castInstant(player1, 0, guard.getId());
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
@@ -37,12 +40,12 @@ class ChangeOfHeartTest extends BaseCardTest {
     @Test
     @DisplayName("The attack restriction expires at end of turn")
     void attackRestrictionExpiresAtEndOfTurn() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent guard = addCreatureReady(player1, new HonorGuard());
         Card changeOfHeart = new ChangeOfHeart();
         harness.setHand(player1, List.of(changeOfHeart));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
+        harness.castInstant(player1, 0, guard.getId());
         harness.passBothPriorities();
         advanceTurn();
         advanceTurn();
@@ -53,17 +56,55 @@ class ChangeOfHeartTest extends BaseCardTest {
     @Test
     @DisplayName("Buyback returns Change of Heart to its owner's hand as it resolves")
     void buybackReturnsSpellToHand() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent guard = addCreatureReady(player1, new HonorGuard());
         Card changeOfHeart = new ChangeOfHeart();
         harness.setHand(player1, List.of(changeOfHeart));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstantWithBuyback(player1, 0, bears.getId());
+        harness.castInstantWithBuyback(player1, 0, guard.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(changeOfHeart);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the targeted creature is prevented from attacking")
+    void onlyTargetedCreatureCannotAttack() {
+        Permanent target = addCreatureReady(player1, new HonorGuard());
+        addCreatureReady(player1, new HonorGuard());
+        Card changeOfHeart = new ChangeOfHeart();
+        harness.setHand(player1, List.of(changeOfHeart));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThatCode(() -> declareAttackers(List.of(1))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A countered buyback spell goes to its owner's graveyard")
+    void counteredBuybackSpellGoesToGraveyard() {
+        Permanent target = addCreatureReady(player1, new HonorGuard());
+        Card changeOfHeart = new ChangeOfHeart();
+        harness.setHand(player1, List.of(changeOfHeart));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.setHand(player2, List.of(new ManaLeak()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithBuyback(player1, 0, target.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, changeOfHeart.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(changeOfHeart);
+        harness.assertInGraveyard(player2, "Mana Leak");
     }
 
     @Test

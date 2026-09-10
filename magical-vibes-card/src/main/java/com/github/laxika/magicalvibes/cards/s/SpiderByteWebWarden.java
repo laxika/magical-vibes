@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "44")
+@CardRegistration(set = "OM1", collectorNumber = "26")
 public class SpiderByteWebWarden extends Card {
 
     public SpiderByteWebWarden() {

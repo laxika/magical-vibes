@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "52")
 @CardRegistration(set = "SPM", collectorNumber = "222")
+@CardRegistration(set = "OM1", collectorNumber = "74")
 public class BlackCatCunningThief extends Card {
 
     public BlackCatCunningThief() {

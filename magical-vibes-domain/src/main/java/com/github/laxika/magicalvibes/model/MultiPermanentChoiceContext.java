@@ -21,6 +21,10 @@ import java.util.UUID;
  */
 public sealed interface MultiPermanentChoiceContext {
 
+    /** Selects an optional group of player targets without reserving the controller as a decline sentinel. */
+    record EtbPlayerTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
+            implements MultiPermanentChoiceContext {}
+
     record RemoveCounterFromChosenPermanents(StackEntry resolvingEntry, CounterType counterType,
                                              PermanentPredicate permanentFilter)
             implements MultiPermanentChoiceContext {
@@ -282,9 +286,17 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
-    record ReturnTargetPermanentsToHand(CardEffect thenEffect) implements MultiPermanentChoiceContext {
+    record ReturnTargetPermanentsToHand(CardEffect thenEffect, int requiredCount) implements MultiPermanentChoiceContext {
+        public ReturnTargetPermanentsToHand(CardEffect thenEffect) {
+            this(thenEffect, 0);
+        }
+
+        public ReturnTargetPermanentsToHand(int requiredCount) {
+            this(null, requiredCount);
+        }
+
         public ReturnTargetPermanentsToHand() {
-            this(null);
+            this(null, 0);
         }
     }
 
@@ -923,6 +935,17 @@ public sealed interface MultiPermanentChoiceContext {
         public EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandChoice {
             playerIds = java.util.List.copyOf(playerIds);
             selectedIds = java.util.List.copyOf(selectedIds);
+        }
+    }
+
+    /** Consuming Tide: the current player chose the nonland permanent they keep. */
+    record EachPlayerChoosesNonlandPermanentThenReturnRestChoice(
+            java.util.List<UUID> playerIds, int playerIndex,
+            java.util.List<UUID> keptIds, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesNonlandPermanentThenReturnRestChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            keptIds = java.util.List.copyOf(keptIds);
         }
     }
 

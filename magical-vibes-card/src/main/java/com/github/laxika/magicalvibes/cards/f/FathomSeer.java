@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "62")
+@CardRegistration(set = "DD2", collectorNumber = "3")
 public class FathomSeer extends Card {
 
     public FathomSeer() {

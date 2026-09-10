@@ -8,21 +8,36 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.Set;
 
 /**
- * Grants flashback to matching cards in the controller's graveyard.
- * In a spell slot the grant lasts until end of turn; in a static slot it lasts while
- * the source permanent remains on the battlefield. A {@code null} flashback cost means the
- * card's mana cost.
+ * Grants flashback to matching cards in a graveyard. Unless {@code allGraveyards} is true,
+ * the grant applies only to the source controller's graveyard. In a spell slot the grant lasts
+ * until end of turn; in a static slot it lasts while the source remains active. A {@code null}
+ * flashback cost means the card's mana cost.
  */
-public record GrantFlashbackToGraveyardCardsEffect(CardPredicate filter, String flashbackCost)
+public record GrantFlashbackToGraveyardCardsEffect(CardPredicate filter, String flashbackCost,
+                                                   boolean allGraveyards)
         implements CardEffect {
 
     public GrantFlashbackToGraveyardCardsEffect(Set<CardType> cardTypes) {
         this(new CardAnyOfPredicate(cardTypes.stream()
                 .map(type -> (CardPredicate) new CardTypePredicate(type))
-                .toList()), null);
+                .toList()), null, false);
+    }
+
+    public GrantFlashbackToGraveyardCardsEffect(Set<CardType> cardTypes, boolean allGraveyards) {
+        this(new CardAnyOfPredicate(cardTypes.stream()
+                .map(type -> (CardPredicate) new CardTypePredicate(type))
+                .toList()), null, allGraveyards);
     }
 
     public GrantFlashbackToGraveyardCardsEffect(CardPredicate filter) {
-        this(filter, null);
+        this(filter, null, false);
+    }
+
+    public GrantFlashbackToGraveyardCardsEffect(CardPredicate filter, String flashbackCost) {
+        this(filter, flashbackCost, false);
+    }
+
+    public GrantFlashbackToGraveyardCardsEffect(CardPredicate filter, boolean allGraveyards) {
+        this(filter, null, allGraveyards);
     }
 }

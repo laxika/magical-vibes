@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "42")
+@CardRegistration(set = "OM1", collectorNumber = "37")
 public class SchoolDaze extends Card {
 
     public SchoolDaze() {

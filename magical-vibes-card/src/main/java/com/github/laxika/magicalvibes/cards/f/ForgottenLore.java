@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "237")
+@CardRegistration(set = "ME2", collectorNumber = "164")
 public class ForgottenLore extends Card {
 
     public ForgottenLore() {

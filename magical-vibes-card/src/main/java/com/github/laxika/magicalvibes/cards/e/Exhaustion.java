@@ -32,7 +32,7 @@ public class Exhaustion extends Card {
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsLandPredicate()
-                ))
+                )), 1, true
         ));
     }
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicat
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "120")
+@CardRegistration(set = "OM1", collectorNumber = "119")
 public class TerrificTeamUp extends Card {
 
     public TerrificTeamUp() {

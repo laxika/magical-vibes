@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "151")
 @CardRegistration(set = "ICE", collectorNumber = "117")
+@CardRegistration(set = "ME2", collectorNumber = "82")
 public class CloakOfConfusion extends Card {
 
     public CloakOfConfusion() {

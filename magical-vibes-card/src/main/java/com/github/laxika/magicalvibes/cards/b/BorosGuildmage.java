@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "242")
+@CardRegistration(set = "HOP", collectorNumber = "99")
 public class BorosGuildmage extends Card {
 
     public BorosGuildmage() {

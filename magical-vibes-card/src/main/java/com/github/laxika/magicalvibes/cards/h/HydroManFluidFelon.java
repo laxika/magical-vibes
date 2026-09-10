@@ -24,6 +24,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "33")
 @CardRegistration(set = "SPM", collectorNumber = "250")
+@CardRegistration(set = "OM1", collectorNumber = "27")
 public class HydroManFluidFelon extends Card {
 
     public HydroManFluidFelon() {

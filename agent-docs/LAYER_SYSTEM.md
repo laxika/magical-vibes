@@ -125,6 +125,12 @@ State these explicitly because the old accumulator got them wrong:
 
 ## 5. Target computation model
 
+Flanking multiplicity is tracked separately from keyword membership in
+`CharacteristicState.flankingInstances`. Printed flanking seeds one instance; each layer grant
+adds one, and ability removal clears the count. One-shot flanking grants use their floating
+layer effect without also seeding the legacy keyword bucket. Combat blocking queues one
+non-targeting trigger per surviving instance against a blocker without flanking.
+
 A whole-battlefield, layer-by-layer pass replacing the per-permanent
 `computeStaticBonus` accumulator:
 

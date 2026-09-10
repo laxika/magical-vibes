@@ -37,6 +37,10 @@ import java.util.function.Consumer;
 @Slf4j
 @Service
 public class AutoPassService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
 
     private final GameQueryService gameQueryService;
     private final GameActionAvailabilityService actionAvailabilityService;
@@ -347,6 +351,7 @@ public class AutoPassService {
     }
 
     private boolean shouldStopForAvailableAction(GameData gameData, UUID priorityHolder) {
+        if (gameData.planechase != null && planechaseService.canOfferRoll(gameData, priorityHolder)) return true;
         List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, priorityHolder);
         if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
             return true;

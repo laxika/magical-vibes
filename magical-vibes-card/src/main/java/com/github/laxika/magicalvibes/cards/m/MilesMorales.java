@@ -30,6 +30,7 @@ import java.util.List;
 @CardRegistration(set = "SPM", collectorNumber = "200")
 @CardRegistration(set = "SPM", collectorNumber = "211")
 @CardRegistration(set = "SPM", collectorNumber = "234")
+@CardRegistration(set = "OM1", collectorNumber = "102")
 public class MilesMorales extends Card {
 
     public MilesMorales() {

@@ -81,7 +81,7 @@ public class SacrificeCreatureThenMassDamageEqualToPowerEffectHandler implements
     public void resolveAfterChoice(GameData gameData, Permanent chosen,
                                    PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower context) {
         int power = Math.max(0, gameQueryService.getEffectivePower(gameData, chosen));
-        permanentRemovalService.removePermanentToGraveyard(gameData, chosen);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, chosen);
 
         String playerName = gameData.playerIdToName.get(context.controllerId());
         gameLogService.append(gameData,

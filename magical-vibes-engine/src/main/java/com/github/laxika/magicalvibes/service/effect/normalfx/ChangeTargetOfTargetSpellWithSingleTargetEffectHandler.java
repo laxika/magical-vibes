@@ -25,6 +25,7 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TargetRedirectionSupport targetRedirectionSupport;
+    private final PsychicBattleSupport psychicBattleSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,28 +49,34 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
             return;
         }
 
-        if (!targetSpell.isSingleTarget()) {
+        ChangeTargetOfTargetSpellWithSingleTargetEffect redirectEffect =
+                (ChangeTargetOfTargetSpellWithSingleTargetEffect) effect;
+        List<UUID> occurrences = psychicBattleSupport.targetIds(targetSpell);
+        boolean onlySource = !occurrences.isEmpty()
+                && occurrences.stream().allMatch(id -> Objects.equals(id, sourcePermanentId));
+        if (!targetSpell.isSingleTarget() && !(redirectEffect.requiresSourceTarget() && onlySource)) {
             
             gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(), " no longer has a single target)."));
             return;
         }
 
-        ChangeTargetOfTargetSpellWithSingleTargetEffect redirectEffect =
-                (ChangeTargetOfTargetSpellWithSingleTargetEffect) effect;
         if (redirectEffect.requiresSourceTarget()
-                && !Objects.equals(sourcePermanentId, targetSpell.getTargetId())) {
+                && !onlySource) {
             gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(),
                     " doesn't target this creature)."));
             return;
         }
 
         boolean creatureTargetsOnly = redirectEffect.creatureTargetsOnly();
-        if (creatureTargetsOnly && !isCreatureId(gameData, targetSpell.getTargetId())) {
+        if (creatureTargetsOnly && (occurrences.isEmpty() || !isCreatureId(gameData, occurrences.getFirst()))) {
             gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(), " doesn't target a creature)."));
             return;
         }
 
-        List<UUID> validNewTargets = targetRedirectionSupport.collectValidNewTargets(gameData, targetSpell);
+        boolean multipleOccurrences = !targetSpell.isSingleTarget();
+        List<UUID> validNewTargets = multipleOccurrences
+                ? psychicBattleSupport.collectLegalAlternatives(gameData, targetSpell, 0)
+                : targetRedirectionSupport.collectValidNewTargets(gameData, targetSpell);
         if (creatureTargetsOnly) {
             validNewTargets = validNewTargets.stream().filter(id -> isCreatureId(gameData, id)).toList();
         } else if (redirectEffect.playerTargetsOnly()) {
@@ -80,7 +87,8 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(targetSpell.getCard().getId()));
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(
+                targetSpell.getCard().getId(), multipleOccurrences ? 0 : null));
         playerInputService.beginPermanentChoice(
                 gameData,
                 controllerId,

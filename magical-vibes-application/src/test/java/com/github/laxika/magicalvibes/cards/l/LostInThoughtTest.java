@@ -98,7 +98,6 @@ class LostInThoughtTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(aura);
 
         harness.activateAbility(player1, 2, 0, null, null);
-        harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

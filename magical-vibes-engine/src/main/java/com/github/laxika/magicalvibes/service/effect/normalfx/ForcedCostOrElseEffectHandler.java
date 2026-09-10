@@ -633,8 +633,11 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost counterCost) {
-            // "Cumulative upkeep — Put a -1/-1 counter on this creature" (Aboroth): the payment only
-            // touches the source, so it can never be unpayable — the controller just chooses.
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null || !canPutCounterOnPermanent(gameData, source, counterCost.counterType())) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
             if (e.optional()) {
                 gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
                         entry.getCard(), entry.getControllerId(), List.of(e),

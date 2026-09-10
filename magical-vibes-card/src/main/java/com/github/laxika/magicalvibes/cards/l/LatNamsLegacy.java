@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleCardsFromHandIntoLibra
 
 @CardRegistration(set = "ALL", collectorNumber = "30a")
 @CardRegistration(set = "ALL", collectorNumber = "30b")
+@CardRegistration(set = "CST", collectorNumber = "13")
+@CardRegistration(set = "CST", collectorNumber = "30b")
+@CardRegistration(set = "ME2", collectorNumber = "52")
 public class LatNamsLegacy extends Card {
 
     public LatNamsLegacy() {

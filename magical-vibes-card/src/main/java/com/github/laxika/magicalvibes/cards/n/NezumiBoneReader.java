@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "127")
+@CardRegistration(set = "PHUK", collectorNumber = "50")
 public class NezumiBoneReader extends Card {
 
     public NezumiBoneReader() {

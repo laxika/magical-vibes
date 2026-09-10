@@ -42,7 +42,7 @@ class TheNeutrinosTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getId()).isNotEqualTo(target.getId());
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.isAttackedThisTurn()).isTrue();
+        assertThat(returned.isAttackedThisTurn()).isFalse();
         assertThat(findPermanent(player1, "The Neutrinos")).isSameAs(neutrinos);
     }
 

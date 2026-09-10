@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "123")
+@CardRegistration(set = "ME2", collectorNumber = "86")
 public class DriftOfTheDead extends Card {
 
     public DriftOfTheDead() {

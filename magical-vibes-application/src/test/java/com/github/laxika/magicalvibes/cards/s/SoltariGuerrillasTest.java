@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SoltariGuerrillas.class, HornedTurtle.class, SoltariFootSoldier.class})
 class SoltariGuerrillasTest extends BaseCardTest {
 
     @Test
     @DisplayName("Unblocked combat damage to the opponent is dealt to the target creature instead")
     void redirectsCombatDamageToTargetCreature() {
-        Permanent guerrillas = addReady(player1, new SoltariGuerrillas());
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
         Permanent destination = addReadyStats(player2, 2, 2);
         int lifeBefore = gd.getLife(player2.getId());
 
@@ -35,7 +38,7 @@ class SoltariGuerrillasTest extends BaseCardTest {
     @Test
     @DisplayName("Only the next combat damage event is redirected; later damage hits the opponent")
     void redirectsOnlyTheNextDamageEvent() {
-        Permanent guerrillas = addReady(player1, new SoltariGuerrillas());
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
         Permanent destination = addReadyStats(player2, 4, 4);
 
         harness.activateAbility(player1, indexOf(player1, guerrillas), null, destination.getId());
@@ -53,7 +56,7 @@ class SoltariGuerrillasTest extends BaseCardTest {
     @Test
     @DisplayName("A player is an illegal target for the ability")
     void playerCannotBeTargeted() {
-        Permanent guerrillas = addReady(player1, new SoltariGuerrillas());
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, indexOf(player1, guerrillas), null, player2.getId()))
@@ -63,7 +66,7 @@ class SoltariGuerrillasTest extends BaseCardTest {
     @Test
     @DisplayName("The redirect shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
-        Permanent guerrillas = addReady(player1, new SoltariGuerrillas());
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
         Permanent destination = addReadyStats(player2, 4, 4);
 
         harness.activateAbility(player1, indexOf(player1, guerrillas), null, destination.getId());
@@ -78,6 +81,63 @@ class SoltariGuerrillasTest extends BaseCardTest {
         assertThat(gd.sourceNextCombatDamageToOpponentRedirectShields).isEmpty();
     }
 
+    @Test
+    @DisplayName("The target may be a creature controlled by the activating player")
+    void redirectsToControllerCreature() {
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
+        Permanent destination = addReadyStats(player1, 2, 2);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, indexOf(player1, guerrillas), null, destination.getId());
+        harness.passBothPriorities();
+
+        attackUnblocked(guerrillas);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(destination);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(destination.getCard());
+    }
+
+    @Test
+    @DisplayName("Combat damage dealt to a blocker does not consume the redirect")
+    void blockedCombatDamageDoesNotConsumeRedirect() {
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
+        Permanent blocker = addCreatureReady(player2, new SoltariFootSoldier());
+        Permanent destination = addReadyStats(player2, 4, 4);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, indexOf(player1, guerrillas), null, destination.getId());
+        harness.passBothPriorities();
+
+        guerrillas.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, guerrillas))));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+
+        attackUnblocked(guerrillas);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(destination);
+    }
+
+    @Test
+    @DisplayName("Shadow prevents a non-shadow creature from blocking")
+    void shadowPreventsNonShadowCreatureFromBlocking() {
+        Permanent guerrillas = addCreatureReady(player1, new SoltariGuerrillas());
+        guerrillas.setAttacking(true);
+        addCreatureReady(player2, new HornedTurtle());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot block");
+    }
+
     private void attackUnblocked(Permanent attacker) {
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -85,15 +145,8 @@ class SoltariGuerrillasTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addReadyStats(Player player, int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
+        HornedTurtle card = new HornedTurtle();
         card.setPower(power);
         card.setToughness(toughness);
         Permanent perm = new Permanent(card);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -58,9 +59,26 @@ public class BattlefieldEntryService {
 
     public void putLandOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                        Zone landPlayZone) {
+        if (beginLandCardNameChoice(gameData, controllerId, permanent, landPlayZone)) {
+            return;
+        }
         placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
                 placementService.snapshotEnterTappedTypes(gameData), List.of(), 0, false, List.of(),
                 0, null, null, landPlayZone));
+    }
+
+    private boolean beginLandCardNameChoice(GameData gameData, UUID controllerId,
+                                            Permanent permanent, Zone landPlayZone) {
+        if (permanent.getCard() == null || permanent.isFaceDown() || permanent.getChosenName() != null
+                || !permanent.getCard().hasType(CardType.LAND)) {
+            return false;
+        }
+        ChooseCardNameOnEnterEffect effect = permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+                .stream().filter(ChooseCardNameOnEnterEffect.class::isInstance)
+                .map(ChooseCardNameOnEnterEffect.class::cast).findFirst().orElse(null);
+        return effect != null && playerInputService.beginCardNameChoice(gameData, controllerId,
+                permanent.getCard(), effect.excludedTypes(), false, effect.nonbasicLandOnly(),
+                null, effect.requiredType(), landPlayZone);
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
@@ -137,6 +155,9 @@ public class BattlefieldEntryService {
                        Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
                        int convokeCreatureCount) {
+        if (beginLandCardNameChoice(gameData, controllerId, permanent, null)) {
+            return;
+        }
         boolean needsDualNameChoice = permanent.getCard() != null
                 && permanent.getChosenName() == null
                 && permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -263,6 +284,12 @@ public class BattlefieldEntryService {
             int exiledCount, int countersPerCard) {
         interactionService.applyAsEntersExileCounters(
                 gameData, controllerId, enteringPermanentId, exiledCount, countersPerCard);
+    }
+
+    public void applyAsEntersPlusOnePlusOneCounters(
+            GameData gameData, UUID controllerId, UUID enteringPermanentId, int count) {
+        interactionService.applyAsEntersPlusOnePlusOneCounters(
+                gameData, controllerId, enteringPermanentId, count);
     }
 
     public void applyAsEntersChosenCounterType(

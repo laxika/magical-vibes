@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M19", collectorNumber = "26")
+@CardRegistration(set = "OGW", collectorNumber = "26")
 public class MakeAStand extends Card {
 
     public MakeAStand() {

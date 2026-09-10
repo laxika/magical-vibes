@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "124")
 @CardRegistration(set = "SPM", collectorNumber = "269")
+@CardRegistration(set = "OM1", collectorNumber = "125")
 public class BiorganicCarapace extends Card {
 
     public BiorganicCarapace() {

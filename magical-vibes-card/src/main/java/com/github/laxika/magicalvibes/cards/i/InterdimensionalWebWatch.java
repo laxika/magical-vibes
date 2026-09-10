@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "165")
 @CardRegistration(set = "SPM", collectorNumber = "278")
+@CardRegistration(set = "OM1", collectorNumber = "172")
 public class InterdimensionalWebWatch extends Card {
 
     public InterdimensionalWebWatch() {

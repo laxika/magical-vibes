@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardHandThenDrawEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "105")
+@CardRegistration(set = "TMT", collectorNumber = "237")
 public class RaphaelsTechnique extends Card {
 
     public RaphaelsTechnique() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "54")
+@CardRegistration(set = "DDF", collectorNumber = "71")
 public class Thoughtcast extends Card {
 
     public Thoughtcast() {

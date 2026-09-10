@@ -40,7 +40,7 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
 
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)
+            if (se.getTargetableId().equals(targetCardId)
                     && se.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
                 targetEntry = se;
                 break;
@@ -50,14 +50,14 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
             log.info("Game {} - Copy target triggered ability no longer on stack", gameData.id);
             return;
         }
-        if (targetEntry.getCard().isCantBeCopied()) {
+        if (targetEntry.getCard() != null && targetEntry.getCard().isCantBeCopied()) {
             log.info("Game {} - Target triggered ability cannot be copied", gameData.id);
             return;
         }
 
         // The copy keeps the original source, but is controlled by the effect's controller.
         UUID copyControllerId = entry.getControllerId();
-        Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
+        Card copyCard = targetEntry.getCard() == null ? null : copySupport.createCopyCard(targetEntry.getCard());
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
         copyEntry.setTargetFilter(targetEntry.getTargetFilter());
@@ -73,10 +73,9 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
 
         copySupport.addCopyToStack(gameData, copyEntry);
 
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A copy of ", targetEntry.getCard(), "'s triggered ability is created."));
+        gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
         log.info("Game {} - copy of {}'s triggered ability created",
-                gameData.id, targetEntry.getCard().getName());
+                gameData.id, targetEntry.getDescription());
 
         // "You may choose new targets for the copy." Single-target only; multi-target keeps originals.
         boolean singleTarget = targetEntry.getTargetId() != null
@@ -87,8 +86,8 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
                     copyControllerId,
                     List.of(new CopyTriggeredAbilityRetargetEffect()),
                     "Choose a new target for the copy of "
-                            + targetEntry.getCard().getName() + "'s triggered ability?",
-                    copyCard.getId()
+                            + targetEntry.getDescription() + "'s triggered ability?",
+                    copyEntry.getTargetableId()
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);
         }

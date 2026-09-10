@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "94")
+@CardRegistration(set = "VOW", collectorNumber = "91")
 public class WretchedThrong extends Card {
 
     public WretchedThrong() {

@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "171")
 @CardRegistration(set = "SPM", collectorNumber = "280")
+@CardRegistration(set = "OM1", collectorNumber = "171")
 public class PeterParkersCamera extends Card {
 
     public PeterParkersCamera() {

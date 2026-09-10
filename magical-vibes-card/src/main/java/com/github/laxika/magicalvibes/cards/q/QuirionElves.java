@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "MIR", collectorNumber = "234")
 @CardRegistration(set = "INV", collectorNumber = "203")
 @CardRegistration(set = "BTD", collectorNumber = "60")
+@CardRegistration(set = "DDE", collectorNumber = "39")
 public class QuirionElves extends Card {
 
     public QuirionElves() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "258")
 @CardRegistration(set = "SUM", collectorNumber = "208")
+@CardRegistration(set = "3ED", collectorNumber = "208")
 public class Lifelace extends Card {
 
     public Lifelace() {

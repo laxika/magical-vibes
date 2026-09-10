@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "174")
+@CardRegistration(set = "OM1", collectorNumber = "173")
 public class SpiderMobile extends Card {
 
     public SpiderMobile() {

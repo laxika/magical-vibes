@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "5ED", collectorNumber = "408")
 @CardRegistration(set = "4ED", collectorNumber = "358")
 @CardRegistration(set = "SUM", collectorNumber = "280")
+@CardRegistration(set = "ME1", collectorNumber = "173")
+@CardRegistration(set = "3ED", collectorNumber = "280")
 public class WinterOrb extends Card {
 
     public WinterOrb() {

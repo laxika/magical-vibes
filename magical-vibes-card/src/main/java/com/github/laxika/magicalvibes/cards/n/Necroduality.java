@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "79")
 @CardRegistration(set = "INR", collectorNumber = "365")
+@CardRegistration(set = "VOW", collectorNumber = "70")
 public class Necroduality extends Card {
 
     public Necroduality() {

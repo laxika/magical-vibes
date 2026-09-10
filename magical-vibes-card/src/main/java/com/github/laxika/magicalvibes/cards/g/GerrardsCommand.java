@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLS", collectorNumber = "109")
+@CardRegistration(set = "DDE", collectorNumber = "53")
 public class GerrardsCommand extends Card {
 
     public GerrardsCommand() {

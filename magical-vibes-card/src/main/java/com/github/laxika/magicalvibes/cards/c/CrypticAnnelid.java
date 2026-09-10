@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "34")
+@CardRegistration(set = "DDI", collectorNumber = "15")
 public class CrypticAnnelid extends Card {
 
     public CrypticAnnelid() {

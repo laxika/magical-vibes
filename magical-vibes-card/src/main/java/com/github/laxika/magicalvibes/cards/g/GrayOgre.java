@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "4ED", collectorNumber = "200")
 @CardRegistration(set = "SUM", collectorNumber = "157")
+@CardRegistration(set = "3ED", collectorNumber = "157")
 public class GrayOgre extends Card {
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "94")
 @CardRegistration(set = "SPM", collectorNumber = "264")
+@CardRegistration(set = "OM1", collectorNumber = "92")
 public class SpinneretAndSpiderling extends Card {
 
     public SpinneretAndSpiderling() {

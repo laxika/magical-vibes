@@ -35,6 +35,7 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
             sourcePermanentId = entry.getSourcePermanentSnapshot().getId();
         }
         if (sourcePermanentId == null) {
+            entry.setEventValue(0);
             return;
         }
 
@@ -45,10 +46,12 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
                         || entry.getControllerId().equals(exiled.ownerId())))
                 .toList();
 
+        int returnedCount = 0;
         for (ExiledCardEntry exiled : toReturn) {
             if (!gameData.removeFromExile(exiled.card().getId())) {
                 continue;
             }
+            returnedCount++;
             UUID ownerId = exiled.ownerId();
             gameData.addCardToHand(ownerId, exiled.card());
             gameLogService.append(gameData, GameLog.textCardText(
@@ -56,5 +59,6 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
             log.info("Game {} - {} returns {} from exile to its owner's hand via {}",
                     gameData.id, gameData.playerIdToName.get(ownerId), exiled.card().getName(), entry.getCard().getName());
         }
+        entry.setEventValue(returnedCount);
     }
 }

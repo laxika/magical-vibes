@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "31")
+@CardRegistration(set = "OM1", collectorNumber = "47")
 public class FlyingOctobot extends Card {
 
     public FlyingOctobot() {

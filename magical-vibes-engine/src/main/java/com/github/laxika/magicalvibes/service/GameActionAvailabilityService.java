@@ -156,6 +156,10 @@ public class GameActionAvailabilityService {
                         || !PotentialManaService.meetsRequiredSourceCounters(ability, perm)) {
                     continue;
                 }
+                if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+                    payable.add(i);
+                    continue;
+                }
                 ManaPool pool = fullPool;
                 if (gameQueryService.isLand(gameData, perm)) {
                     pool = new VirtualManaPool(fullPool);
@@ -183,9 +187,10 @@ public class GameActionAvailabilityService {
                 soaCtx.addAll(perm.getGrantedSubtypes());
                 Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, perm)
                         ? soaCtx : Set.of();
+                boolean colorlessPermanentContext = gameQueryService.getEffectiveColors(gameData, perm).isEmpty();
                 if (manaCost.canPay(pool, 0, artifactCtx, myrCtx, false, false, false, null,
                         soaCtx, false, artifactCtx, false, false, Set.of(), creatureSourceSoaCtx,
-                        powerstoneCtx)) {
+                        powerstoneCtx, colorlessPermanentContext)) {
                     payable.add(i);
                 }
             }
@@ -313,6 +318,13 @@ public class GameActionAvailabilityService {
     private boolean isCardPlayableForFace(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                           int extraConvokeMana, int additionalGenericCost,
                                           SpellPlayabilityContext ctx, boolean targetsAlreadyDeclared) {
+        if (card.getType() != null && card.getType().isPlanar()) return false;
+        if ((card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                && !pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(true);
+        }
         if (card.getCastingOption(ForetellCast.class).isPresent()
                 && pool.getForetellSpellOnlyManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
@@ -394,6 +406,21 @@ public class GameActionAvailabilityService {
                     : new ManaPool(pool);
             pool.promoteCreatureOrEnchantmentSpellOnlyMana();
         }
+        if (card.hasType(CardType.ENCHANTMENT)
+                && pool.getEnchantmentOrRoomUnlockOrTurnFaceUpManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
+        }
+        if (card.hasType(CardType.ENCHANTMENT)
+                && card.getSubtypes().contains(CardSubtype.ROOM)
+                && pool.getRoomSpellsOrUnlocksManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteRoomSpellsOrUnlocksMana();
+        }
         if ((card.getManaValue() >= 5
                 || card.getParsedManaCost() != null && card.getParsedManaCost().hasX())
                 && pool.getManaValueAtLeastFiveOrXOnlyManaTotal() > 0) {
@@ -465,7 +492,7 @@ public class GameActionAvailabilityService {
         ExileNCardsFromGraveyardCost exileCost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).stream()
                 .filter(ExileNCardsFromGraveyardCost.class::isInstance)
                 .findFirst().orElse(null);
-        if (exileCost != null) {
+        if (exileCost != null && !exileCost.onlyFromGraveyard()) {
             List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
             long matchingCount = graveyard.stream()
                     .filter(c -> (exileCost.requiredType() == null || c.hasType(exileCost.requiredType()))
@@ -473,6 +500,24 @@ public class GameActionAvailabilityService {
                             || predicateEvaluationService.matchesCardPredicate(c, exileCost.predicate(), null)))
                     .count();
             if (matchingCount < exileCost.count()) {
+                return false;
+            }
+        }
+
+        ExileNCardsFromGraveyardOrPayManaCost exileOrPayCost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(ExileNCardsFromGraveyardOrPayManaCost.class::isInstance)
+                .map(ExileNCardsFromGraveyardOrPayManaCost.class::cast)
+                .findFirst().orElse(null);
+        if (exileOrPayCost != null) {
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
+            long matchingCount = graveyard.stream()
+                    .filter(c -> (exileOrPayCost.requiredType() == null || c.hasType(exileOrPayCost.requiredType()))
+                            && (exileOrPayCost.predicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(c, exileOrPayCost.predicate(), null)))
+                    .count();
+            if (matchingCount < exileOrPayCost.count()
+                    && !castingCostService.canPayExileNCardsOrPayManaOption(
+                    gameData, playerId, card, exileOrPayCost, pool)) {
                 return false;
             }
         }
@@ -609,6 +654,7 @@ public class GameActionAvailabilityService {
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
         boolean manaValueAtLeastFour = card.getManaValue() >= 4;
+        boolean colorlessSpellOrPermanentAbilityContext = gameQueryService.getEffectiveCardColors(gameData, card).isEmpty();
         if (!subtypeOrLegendaryCreatureContext.isEmpty()
                 && paymentPool.getSubtypeOrLegendaryCreatureManaTotal(subtypeOrLegendaryCreatureContext) > 0) {
             ManaPool promoted = new ManaPool(paymentPool);
@@ -618,6 +664,14 @@ public class GameActionAvailabilityService {
             }
             paymentPool = promoted;
         }
+        if (card.hasKeyword(Keyword.DEVOID) && pool.getDevoidSpellOnlyManaTotal() > 0) {
+            if (paymentPool == pool) {
+                paymentPool = new ManaPool(pool);
+            }
+            for (ManaColor color : ManaColor.values()) {
+                paymentPool.add(color, pool.getDevoidSpellOnlyMana(color));
+            }
+        }
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen
                 || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
@@ -625,13 +679,13 @@ public class GameActionAvailabilityService {
                 || !subtypeOrPlaneswalkerSpellContext.isEmpty()
                 || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty()
                 || !subtypeOrLegendaryCreatureContext.isEmpty()
-                || powerstoneContext;
+                || powerstoneContext || colorlessSpellOrPermanentAbilityContext;
         return hasRestricted
                 ? totalCost.canPay(paymentPool, kickerXValue, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen,
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
                 subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
-                subtypeSpellOnlyContext)
+                subtypeSpellOnlyContext, colorlessSpellOrPermanentAbilityContext)
                 : totalCost.canPay(pool, kickerXValue);
     }
 
@@ -678,6 +732,7 @@ public class GameActionAvailabilityService {
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
             return (castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+                    || castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)
                     || castingCostService.canPayCollectEvidenceAlternativeCost(gameData, playerId, card)
                     || castingCostService.canAffordWebSlingingCost(
                             gameData, playerId, card, pool, additionalGenericCost))
@@ -801,6 +856,7 @@ public class GameActionAvailabilityService {
         // Legendary-spell-only mana (Untaidake, the Cloud Keeper) can pay for any legendary spell.
         boolean legendarySpellOnly = card.getSupertypes().contains(CardSupertype.LEGENDARY);
         boolean manaValueAtLeastFour = card.getManaValue() >= 4;
+        boolean colorlessSpellOrPermanentAbilityContext = gameQueryService.getEffectiveCardColors(gameData, card).isEmpty();
         if (!subtypeOrLegendaryCreatureContext.isEmpty()
                 && paymentPool.getSubtypeOrLegendaryCreatureManaTotal(subtypeOrLegendaryCreatureContext) > 0) {
             ManaPool promoted = new ManaPool(paymentPool);
@@ -810,12 +866,21 @@ public class GameActionAvailabilityService {
             }
             paymentPool = promoted;
         }
+        if (card.hasKeyword(Keyword.DEVOID) && pool.getDevoidSpellOnlyManaTotal() > 0) {
+            if (paymentPool == pool) {
+                paymentPool = new ManaPool(pool);
+            }
+            for (ManaColor color : ManaColor.values()) {
+                paymentPool.add(color, pool.getDevoidSpellOnlyMana(color));
+            }
+        }
         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly || legendarySpellOnly || manaValueAtLeastFour
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty()
                 || !subtypeSpellOnlyContext.isEmpty()
                 || !subtypeOrPlaneswalkerSpellContext.isEmpty()
                 || !subtypeCreatureSourceSpellOrAbilityContext.isEmpty()
-                || !subtypeOrLegendaryCreatureContext.isEmpty() || powerstoneContext;
+                || !subtypeOrLegendaryCreatureContext.isEmpty() || powerstoneContext
+                || colorlessSpellOrPermanentAbilityContext;
         for (ManaCost cost : candidateCosts) {
             cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card, cost, ctx.costSnapshot(), false);
@@ -825,7 +890,7 @@ public class GameActionAvailabilityService {
                 instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext,
                 creatureSpellOnly, false, legendarySpellOnly, manaValueAtLeastFour,
                     subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
-                    powerstoneContext, subtypeSpellOnlyContext)
+                    powerstoneContext, subtypeSpellOnlyContext, colorlessSpellOrPermanentAbilityContext)
                     : cost.canPayWithAdditionalGenericCost(paymentPool, 0, effectiveAdditionalCost);
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
@@ -1031,19 +1096,7 @@ public class GameActionAvailabilityService {
 
     private boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card,
                                                 Keyword ability, Zone sourceZone) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof SpellCastingAbilityGrantingEffect grant
-                        && grant.grantedAbility() == ability
-                        && grant.appliesToSourceZone(sourceZone)
-                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card, ability, sourceZone);
     }
 
     public List<Integer> getPlayableGraveyardLandIndices(GameData gameData, UUID playerId) {
@@ -1408,6 +1461,10 @@ public class GameActionAvailabilityService {
                     : cardHasFlashback
                     ? cost.canPayFlashbackFromGraveyard(finalPaymentPool, additionalCost)
                     : cost.canPayFromGraveyard(finalPaymentPool, additionalCost);
+            if (!cardHasFlashback && !isDisturb && !isHarmonize && graveyardAlternateManaCost == null) {
+                canPayMana |= castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(
+                        gameData, playerId, castHalf);
+            }
             if (isHarmonize) {
                 canPayMana = canPayMana || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                         .filter(permanent -> !permanent.isTapped() && gameQueryService.isCreature(gameData, permanent))

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,24 +13,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZhangFeiFierceWarrior.class, ForestBear.class})
 class ZhangFeiFierceWarriorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Horsemanship: Zhang Fei can't be blocked by a creature without horsemanship")
     void cannotBeBlockedByCreatureWithoutHorsemanship() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new ForestBear());
 
-        Permanent zhangFei = new Permanent(new ZhangFeiFierceWarrior());
-        zhangFei.setSummoningSick(false);
+        Permanent zhangFei = addCreatureReady(player1, new ZhangFeiFierceWarrior());
         zhangFei.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(zhangFei);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(zhangFei);
@@ -43,19 +36,11 @@ class ZhangFeiFierceWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Horsemanship: Zhang Fei can be blocked by a creature with horsemanship")
     void canBeBlockedByCreatureWithHorsemanship() {
-        Permanent blocker = new Permanent(new ZhangFeiFierceWarrior());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new ZhangFeiFierceWarrior());
 
-        Permanent zhangFei = new Permanent(new ZhangFeiFierceWarrior());
-        zhangFei.setSummoningSick(false);
+        Permanent zhangFei = addCreatureReady(player1, new ZhangFeiFierceWarrior());
         zhangFei.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(zhangFei);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(zhangFei);
@@ -68,16 +53,9 @@ class ZhangFeiFierceWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Vigilance: Zhang Fei does not tap when declared as attacker")
     void vigilancePreventsTapWhenAttacking() {
-        Permanent zhangFei = new Permanent(new ZhangFeiFierceWarrior());
-        zhangFei.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(zhangFei);
+        Permanent zhangFei = addCreatureReady(player1, new ZhangFeiFierceWarrior());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(zhangFei.isTapped()).isFalse();
     }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "144")
 @CardRegistration(set = "M10", collectorNumber = "104")
 @CardRegistration(set = "STH", collectorNumber = "62")
+@CardRegistration(set = "DPA", collectorNumber = "26")
 public class Megrim extends Card {
 
     public Megrim() {

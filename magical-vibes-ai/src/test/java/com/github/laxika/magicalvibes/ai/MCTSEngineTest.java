@@ -99,6 +99,9 @@ class MCTSEngineTest {
     @DisplayName("Budget of 100 completes within reasonable time")
     void budgetCompletesInTime() {
         harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, inertLibrary());
+        harness.setLibrary(player2, inertLibrary());
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
@@ -109,10 +112,7 @@ class MCTSEngineTest {
         long elapsed = System.currentTimeMillis() - start;
 
         assertThat(action).isNotNull();
-        // Guards against a search that never terminates, not against slowness: a 100-iteration
-        // budget measures ~33s on a developer machine, and the other searches in this class are
-        // the same order, so a bound tight enough to catch a regression here would just track
-        // hardware. 120s remains a hang guard without failing under heavily contended CI workers.
+        assertThat(engine.getLastSearchIterations()).isBetween(1, 100);
         assertThat(elapsed).isLessThan(120000);
     }
 

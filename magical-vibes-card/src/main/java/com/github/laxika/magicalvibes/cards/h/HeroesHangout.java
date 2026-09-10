@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "79")
+@CardRegistration(set = "OM1", collectorNumber = "79")
 public class HeroesHangout extends Card {
 
     public HeroesHangout() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "95")
+@CardRegistration(set = "OM1", collectorNumber = "84")
 public class StegronTheDinosaurMan extends Card {
 
     public StegronTheDinosaurMan() {

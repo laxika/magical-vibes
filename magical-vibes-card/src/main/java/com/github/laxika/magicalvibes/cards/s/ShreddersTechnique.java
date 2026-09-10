@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "77")
+@CardRegistration(set = "TMT", collectorNumber = "232")
 public class ShreddersTechnique extends Card {
 
     public ShreddersTechnique() {

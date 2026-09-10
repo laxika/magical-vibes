@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "140")
+@CardRegistration(set = "OM1", collectorNumber = "160")
 public class RhinoBarrelingBrute extends Card {
 
     public RhinoBarrelingBrute() {

@@ -31,7 +31,7 @@ public class TargetSpellControllerLooksAtHandEffectHandler implements NormalEffe
     private UUID findTargetSpellControllerId(GameData gameData, UUID targetCardId) {
         if (targetCardId == null) return null;
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getCard().getId().equals(targetCardId)) {
+            if (stackEntry.getTargetableId().equals(targetCardId)) {
                 return stackEntry.getControllerId();
             }
         }

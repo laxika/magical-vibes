@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 
 import java.util.List;
 
@@ -20,18 +21,12 @@ public class SkyshroudElf extends Card {
                 List.of(new AwardManaEffect(ManaColor.GREEN)),
                 "{T}: Add {G}."
         ));
-        // "{1}: Add {R} or {W}." — modelled as two separate mana abilities, one per colour.
+        // "{1}: Add {R} or {W}."
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new AwardManaEffect(ManaColor.RED)),
-                "{1}: Add {R}."
-        ));
-        addActivatedAbility(new ActivatedAbility(
-                false,
-                "{1}",
-                List.of(new AwardManaEffect(ManaColor.WHITE)),
-                "{1}: Add {W}."
+                List.of(new AwardManaOfColorsEffect(List.of(ManaColor.RED, ManaColor.WHITE))),
+                "{1}: Add {R} or {W}."
         ));
     }
 }

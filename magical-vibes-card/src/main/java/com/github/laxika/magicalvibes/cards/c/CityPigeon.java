@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "4")
+@CardRegistration(set = "OM1", collectorNumber = "5")
 public class CityPigeon extends Card {
 
     public CityPigeon() {

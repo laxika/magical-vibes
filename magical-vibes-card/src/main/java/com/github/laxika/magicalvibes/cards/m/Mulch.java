@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "ISD", collectorNumber = "196")
 @CardRegistration(set = "STH", collectorNumber = "110")
 @CardRegistration(set = "TPR", collectorNumber = "181")
+@CardRegistration(set = "VOW", collectorNumber = "210")
 public class Mulch extends Card {
 
     public Mulch() {

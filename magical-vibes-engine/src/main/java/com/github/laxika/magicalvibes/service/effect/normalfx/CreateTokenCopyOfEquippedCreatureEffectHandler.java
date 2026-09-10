@@ -44,6 +44,9 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
                         : entry.getSourcePermanentId();
                 Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, equipmentPermanentId);
                 if (sourcePermanent == null) {
+                    sourcePermanent = entry.getSourcePermanentSnapshot();
+                }
+                if (sourcePermanent == null) {
                     log.info("Game {} - Source equipment no longer on battlefield", gameData.id);
                     return;
                 }
@@ -62,8 +65,8 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
 
                 Card sourceCard = equippedCreature.getCard();
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId(), true);
-                int totalCopies = e.amount() * tokenMultiplier;
+                int totalCopies = gameQueryService.getTokenCreationAmount(
+                        gameData, entry.getControllerId(), e.amount(), sourceCard.getSubtypes(), true);
                 for (int copy = 0; copy < totalCopies; copy++) {
                     // Create a token that's a copy of the equipped creature (copying all copiable values per CR 707.2)
                     Card tokenCard = new Card();

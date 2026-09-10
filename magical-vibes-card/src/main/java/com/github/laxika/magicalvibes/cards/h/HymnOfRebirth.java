@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "ICE", collectorNumber = "295")
+@CardRegistration(set = "ME1", collectorNumber = "146")
 public class HymnOfRebirth extends Card {
 
     public HymnOfRebirth() {

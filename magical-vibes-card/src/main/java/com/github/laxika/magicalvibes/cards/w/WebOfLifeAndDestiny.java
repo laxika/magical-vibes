@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "122")
 @CardRegistration(set = "SPM", collectorNumber = "268")
+@CardRegistration(set = "OM1", collectorNumber = "120")
 public class WebOfLifeAndDestiny extends Card {
 
     public WebOfLifeAndDestiny() {

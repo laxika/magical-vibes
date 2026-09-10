@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "147")
 @CardRegistration(set = "SPM", collectorNumber = "199")
+@CardRegistration(set = "OM1", collectorNumber = "143")
 public class SPDrPilotedByPeni extends Card {
 
     public SPDrPilotedByPeni() {

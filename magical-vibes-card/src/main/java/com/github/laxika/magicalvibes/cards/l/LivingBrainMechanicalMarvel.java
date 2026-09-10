@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "167")
+@CardRegistration(set = "OM1", collectorNumber = "165")
 public class LivingBrainMechanicalMarvel extends Card {
 
     public LivingBrainMechanicalMarvel() {

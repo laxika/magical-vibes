@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "84")
+@CardRegistration(set = "OM1", collectorNumber = "82")
 public class MoltenManInfernoIncarnate extends Card {
 
     public MoltenManInfernoIncarnate() {

@@ -178,6 +178,7 @@ public class CombatService {
     public void clearCombatState(GameData gameData) {
         gameData.forEachBattlefield((playerId, battlefield) ->
                 battlefield.forEach(Permanent::clearCombatState));
+        gameData.declaredAttackerIdsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatDamagePendingIndices.clear();
         gameData.combatDamageBlockerAssignments.clear();
@@ -486,6 +487,9 @@ public class CombatService {
                 if (action.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
                     UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
                     if (controllerId != null) {
+                        if (gameQueryService.isCreature(gameData, perm)) {
+                            gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(controllerId);
+                        }
                         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
                     }
                 }

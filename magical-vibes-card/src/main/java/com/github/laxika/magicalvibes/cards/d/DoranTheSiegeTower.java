@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "247")
+@CardRegistration(set = "V11", collectorNumber = "3")
 public class DoranTheSiegeTower extends Card {
 
     public DoranTheSiegeTower() {

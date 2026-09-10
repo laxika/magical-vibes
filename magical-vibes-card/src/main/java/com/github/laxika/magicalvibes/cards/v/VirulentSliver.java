@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FUT", collectorNumber = "155")
+@CardRegistration(set = "H09", collectorNumber = "2")
 public class VirulentSliver extends Card {
 
     public VirulentSliver() {

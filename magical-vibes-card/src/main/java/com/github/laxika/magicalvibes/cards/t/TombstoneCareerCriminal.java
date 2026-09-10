@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "70")
+@CardRegistration(set = "OM1", collectorNumber = "63")
 public class TombstoneCareerCriminal extends Card {
 
     public TombstoneCareerCriminal() {

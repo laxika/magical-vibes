@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "120")
 @CardRegistration(set = "M13", collectorNumber = "199")
+@CardRegistration(set = "DDH", collectorNumber = "42")
 public class NicolBolasPlaneswalker extends Card {
 
     public NicolBolasPlaneswalker() {

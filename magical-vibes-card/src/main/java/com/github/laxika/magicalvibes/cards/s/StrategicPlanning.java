@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class StrategicPlanning extends Card {
 
     public StrategicPlanning() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1));
     }
 }

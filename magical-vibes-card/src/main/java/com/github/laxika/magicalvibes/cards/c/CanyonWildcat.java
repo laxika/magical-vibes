@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "181")
 @CardRegistration(set = "TMP", collectorNumber = "167")
 @CardRegistration(set = "TPR", collectorNumber = "127")
+@CardRegistration(set = "DDH", collectorNumber = "6")
 public class CanyonWildcat extends Card {
 
     public CanyonWildcat() {

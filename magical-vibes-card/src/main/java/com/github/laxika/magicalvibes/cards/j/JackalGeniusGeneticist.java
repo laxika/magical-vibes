@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "131")
 @CardRegistration(set = "SPM", collectorNumber = "272")
+@CardRegistration(set = "OM1", collectorNumber = "136")
 public class JackalGeniusGeneticist extends Card {
 
     public JackalGeniusGeneticist() {

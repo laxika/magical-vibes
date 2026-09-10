@@ -26,14 +26,19 @@ public class AttachSourceEquipmentToChosenPermanentEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
-        Permanent equipment = entry.getSourcePermanentId() == null
-                ? null
-                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (equipment == null) {
-            equipment = equipSupport.findEquipmentByCardId(gameData, entry.getCard().getId());
+        if (entry.getChosenPermanentId() == null) {
+            return;
         }
-        if (target == null || equipment == null || !equipSupport.attachEquipment(gameData, equipment, target)) {
+
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        Permanent equipment = entry.getSourcePermanentId() == null
+                ? equipSupport.findEquipmentByCardId(gameData, entry.getCard().getId())
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (equipment == null || !equipSupport.attachEquipment(gameData, equipment, target)) {
             return;
         }
 

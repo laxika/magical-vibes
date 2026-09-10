@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "8")
+@CardRegistration(set = "CST", collectorNumber = "3")
+@CardRegistration(set = "CST", collectorNumber = "8")
+@CardRegistration(set = "ME2", collectorNumber = "22")
 public class KjeldoranHomeGuard extends Card {
 
     private static final CreateTokenEffect DESERTER_TOKEN = new CreateTokenEffect(

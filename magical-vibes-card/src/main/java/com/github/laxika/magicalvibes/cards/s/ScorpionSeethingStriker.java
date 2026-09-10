@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "64")
+@CardRegistration(set = "OM1", collectorNumber = "68")
 public class ScorpionSeethingStriker extends Card {
 
     public ScorpionSeethingStriker() {

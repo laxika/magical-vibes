@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,7 +23,8 @@ public class ReturnOfTheNightstalkers extends Card {
         // Return all Nightstalker permanent cards from your graveyard to the battlefield.
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(new CardSubtypePredicate(CardSubtype.NIGHTSTALKER))
+                .filter(new CardAllOfPredicate(List.of(new CardSubtypePredicate(CardSubtype.NIGHTSTALKER),
+                        new CardIsPermanentPredicate())))
                 .returnAll(true)
                 .build());
         // Then destroy all Swamps you control.

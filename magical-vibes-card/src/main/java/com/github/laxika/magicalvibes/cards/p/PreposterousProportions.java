@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "FDN", collectorNumber = "109")
+@CardRegistration(set = "FDN", collectorNumber = "338")
+@CardRegistration(set = "FDN", collectorNumber = "400")
+@CardRegistration(set = "FDN", collectorNumber = "472")
 public class PreposterousProportions extends Card {
 
     public PreposterousProportions() {

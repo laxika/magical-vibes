@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "149")
+@CardRegistration(set = "FDN", collectorNumber = "303")
 public class YouthfulValkyrie extends Card {
 
     public YouthfulValkyrie() {

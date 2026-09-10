@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "222")
+@CardRegistration(set = "DPA", collectorNumber = "72")
 public class JaggedScarArchers extends Card {
 
     public JaggedScarArchers() {

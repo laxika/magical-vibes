@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "65")
+@CardRegistration(set = "OM1", collectorNumber = "67")
 public class ScorpionsSting extends Card {
 
     public ScorpionsSting() {

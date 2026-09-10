@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "HML", collectorNumber = "35")
+@CardRegistration(set = "ME2", collectorNumber = "57")
 public class Narwhal extends Card {
 
     public Narwhal() {

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ICE", collectorNumber = "150")
+@CardRegistration(set = "ME2", collectorNumber = "104")
 public class MinionOfLeshrac extends Card {
 
     public MinionOfLeshrac() {

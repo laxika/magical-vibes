@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "73")
+@CardRegistration(set = "OM1", collectorNumber = "54")
 public class VenomsHunger extends Card {
 
     public VenomsHunger() {

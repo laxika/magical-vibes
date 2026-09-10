@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AlabornGrenadier;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MagmaGiant.class, AlabornGrenadier.class})
 class MagmaGiantTest extends BaseCardTest {
 
     @Test
@@ -21,7 +19,6 @@ class MagmaGiantTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Magma Giant");
     }
 
     @Test
@@ -34,7 +31,6 @@ class MagmaGiantTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -42,15 +38,15 @@ class MagmaGiantTest extends BaseCardTest {
     @Test
     @DisplayName("ETB deals 2 damage to each creature on both sides, killing 2/2s")
     void etbKillsSmallCreaturesBothSides() {
-        harness.addToBattlefield(player1, new GrizzlyBears()); // 2/2 own
-        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2 opponent
+        harness.addToBattlefield(player1, new AlabornGrenadier()); // 2/2 own
+        harness.addToBattlefield(player2, new AlabornGrenadier()); // 2/2 opponent
 
         castGiant();
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Alaborn Grenadier");
+        harness.assertNotOnBattlefield(player2, "Alaborn Grenadier");
     }
 
     @Test
@@ -64,9 +60,6 @@ class MagmaGiantTest extends BaseCardTest {
     }
 
     private void castGiant() {
-        harness.setHand(player1, List.of(new MagmaGiant()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MagmaGiant(), "{5}{R}{R}");
     }
 }

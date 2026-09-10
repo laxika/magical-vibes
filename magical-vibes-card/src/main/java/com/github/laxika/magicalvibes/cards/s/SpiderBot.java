@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "SPM", collectorNumber = "173")
+@CardRegistration(set = "OM1", collectorNumber = "174")
 public class SpiderBot extends Card {
 
     public SpiderBot() {

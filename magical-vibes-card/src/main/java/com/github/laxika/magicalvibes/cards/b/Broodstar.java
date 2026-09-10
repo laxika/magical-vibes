@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "31")
+@CardRegistration(set = "HOP", collectorNumber = "8")
 public class Broodstar extends Card {
 
     public Broodstar() {

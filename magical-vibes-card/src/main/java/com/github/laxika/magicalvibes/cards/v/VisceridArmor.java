@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "41a")
 @CardRegistration(set = "ALL", collectorNumber = "41b")
+@CardRegistration(set = "ME2", collectorNumber = "72")
 public class VisceridArmor extends Card {
 
     public VisceridArmor() {

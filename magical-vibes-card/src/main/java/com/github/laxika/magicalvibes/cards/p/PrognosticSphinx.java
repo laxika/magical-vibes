@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "60")
+@CardRegistration(set = "CP1", collectorNumber = "1")
 public class PrognosticSphinx extends Card {
 
     public PrognosticSphinx() {

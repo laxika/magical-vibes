@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 
 @CardRegistration(set = "JUD", collectorNumber = "71")
+@CardRegistration(set = "PHUK", collectorNumber = "44")
+@CardRegistration(set = "PHUK", collectorNumber = "55")
 public class RatsFeast extends Card {
 
     public RatsFeast() {

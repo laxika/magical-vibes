@@ -146,7 +146,22 @@ class DiscardTriggerCollectorServiceTest {
         });
     }
 
-    // ===== Helpers =====
+    @Test
+    void cyclingQueuesKeywordGrantForItsSource() {
+        Permanent source = createPermanent("Cycling observer");
+        var effect = new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF);
+        var context = new TriggerContext.Cycle(player2Id, createCard("Cycled card"));
+
+        boolean collected = registry.dispatch(
+                match(source, player1Id, effect), EffectSlot.ON_ANY_PLAYER_CYCLES, effect, context);
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        });
+    }
 
     private static Card createCard(String name) {
         Card card = new Card();
@@ -236,7 +251,7 @@ class DiscardTriggerCollectorServiceTest {
             int lifeBefore = gd.getLife(player2Id);
 
             when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
                     .thenReturn(2);
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
@@ -334,7 +349,7 @@ class DiscardTriggerCollectorServiceTest {
             var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
 
             when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
                     .thenReturn(2);
 
             registry.dispatch(
@@ -354,7 +369,7 @@ class DiscardTriggerCollectorServiceTest {
             int lifeBefore = gd.getLife(player2Id);
 
             when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
                     .thenReturn(2);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
 
@@ -374,7 +389,7 @@ class DiscardTriggerCollectorServiceTest {
             var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
 
             when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
                     .thenReturn(2);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
             // canPlayerGetPoisonCounters defaults to false
@@ -396,7 +411,7 @@ class DiscardTriggerCollectorServiceTest {
             int lifeBefore = gd.getLife(player2Id);
 
             when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(0);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(0), any()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(0), any(), eq(false), any(UUID.class), any(Card.class)))
                     .thenReturn(0);
 
             registry.dispatch(
@@ -417,7 +432,7 @@ class DiscardTriggerCollectorServiceTest {
             int lifeBefore = gd.getLife(player2Id);
 
             when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
                     .thenReturn(2);
             // canPlayerLifeChange defaults to false — life can't change
 

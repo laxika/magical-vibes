@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.model.condition;
 
-/** True when the controller's currently attacking creatures have total power at least the threshold. */
+/** True when the currently attacking creatures have total effective power at least {@code threshold}. */
 public record AttackingCreaturesTotalPowerAtLeast(int threshold) implements Condition {
 
     @Override

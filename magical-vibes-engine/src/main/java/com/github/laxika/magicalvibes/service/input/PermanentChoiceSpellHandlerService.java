@@ -113,7 +113,7 @@ public class PermanentChoiceSpellHandlerService {
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
         StackEntry targetSpell = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(retarget.spellCardId())) {
+            if (se.getTargetableId().equals(retarget.spellCardId())) {
                 targetSpell = se;
                 break;
             }
@@ -121,7 +121,11 @@ public class PermanentChoiceSpellHandlerService {
         if (targetSpell == null) {
             log.info("Game {} - Target spell no longer on stack for retarget", gameData.id);
         } else {
-            targetSpell.setTargetId(permanentId);
+            if (retarget.targetIndex() != null) {
+                psychicBattleSupport.replaceTarget(targetSpell, retarget.targetIndex(), permanentId);
+            } else {
+                targetSpell.setTargetId(permanentId);
+            }
             String spellName = targetSpell.isCopy()
                     ? "Copy of " + targetSpell.getCard().getName()
                     : targetSpell.getCard().getName();
@@ -296,14 +300,24 @@ public class PermanentChoiceSpellHandlerService {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
-            if (ect.genericCostReduction() > 0) {
+            if (ect.genericCostReduction() > 0 || ect.payManaCost()) {
                 try {
-                    spellCastingService.playCardFromExileAsResolutionCast(gameData,
-                            new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
-                            ect.cardToCast().getId(), 0, permanentId);
+                    Player player = new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId()));
+                    if (ect.payManaCost()) {
+                        spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
+                                ect.cardToCast().getId(), 0, permanentId, ect.copy());
+                    } else {
+                        spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
+                                ect.cardToCast().getId(), 0, permanentId);
+                    }
                 } catch (IllegalStateException ex) {
-                    gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
-                    log.info("Game {} - reduced-cost exile cast of {} could not be completed",
+                    if (ect.genericCostReduction() > 0) {
+                        gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
+                    }
+                    if (ect.payManaCost() && ect.copy()) {
+                        gameData.removeFromExile(ect.cardToCast().getId());
+                    }
+                    log.info("Game {} - exile cast of {} could not be completed",
                             gameData.id, ect.cardToCast().getName());
                 }
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -361,6 +375,14 @@ public class PermanentChoiceSpellHandlerService {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
+            if (ect.payManaCost() && ect.copy()) {
+                gameData.removeFromExile(ect.cardToCast().getId());
+                gameData.interaction.clearPermanentChoiceContext();
+                gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
+                        "'s target is no longer valid and the copy ceases to exist."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             graveyardService.addCardToGraveyard(gameData, ect.controllerId(), ect.cardToCast());
             gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(), "'s target is no longer valid. It is put into the graveyard."));
             log.info("Game {} - {} cast-from-exile target no longer exists", gameData.id, ect.cardToCast().getName());
@@ -401,6 +423,8 @@ public class PermanentChoiceSpellHandlerService {
                 gameData.spellsGrantedHasteOnEntry.remove(card.getId());
                 if (ect.genericCostReduction() > 0 || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.exilePlayCostModifiers.remove(card.getId());
+                } else if (ect.payManaCost() && ect.copy()) {
+                    gameData.removeFromExile(card.getId());
                 } else if (!ect.copy()) {
                     graveyardService.addCardToGraveyard(gameData, ect.controllerId(), card);
                 }
@@ -414,7 +438,7 @@ public class PermanentChoiceSpellHandlerService {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen,
                     ect.genericCostReduction(), ect.resolutionCast(), ect.lifeLossAfterCast(),
-                    ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()));
+                    ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard(), ect.payManaCost()));
             playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.").build());
@@ -435,13 +459,23 @@ public class PermanentChoiceSpellHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        if (ect.genericCostReduction() > 0) {
+        if (ect.genericCostReduction() > 0 || ect.payManaCost()) {
             try {
-                spellCastingService.playCardFromExileAsResolutionCast(gameData,
-                        new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
-                        card.getId(), 0, chosen);
+                Player player = new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId()));
+                if (ect.payManaCost()) {
+                    spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
+                            card.getId(), 0, chosen, ect.copy());
+                } else {
+                    spellCastingService.playCardFromExileAsResolutionCast(gameData, player,
+                            card.getId(), 0, chosen);
+                }
             } catch (IllegalStateException ex) {
-                gameData.exilePlayCostModifiers.remove(card.getId());
+                if (ect.genericCostReduction() > 0) {
+                    gameData.exilePlayCostModifiers.remove(card.getId());
+                }
+                if (ect.payManaCost() && ect.copy()) {
+                    gameData.removeFromExile(card.getId());
+                }
                 log.info("Game {} - reduced-cost multi-target exile cast of {} could not be completed",
                         gameData.id, card.getName());
             }
@@ -689,7 +723,7 @@ public class PermanentChoiceSpellHandlerService {
         if (playerName != null) return playerName;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetId)) return se.getCard().getName();
+            if (se.getTargetableId().equals(targetId)) return se.getDescription();
         }
 
         for (UUID pid : gameData.orderedPlayerIds) {

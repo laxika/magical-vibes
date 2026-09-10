@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "79")
+@CardRegistration(set = "DD2", collectorNumber = "55")
+@CardRegistration(set = "PD2", collectorNumber = "26")
 public class Fireblast extends Card {
 
     public Fireblast() {

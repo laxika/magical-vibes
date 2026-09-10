@@ -153,30 +153,39 @@ public class TurnFaceUpCopyService {
                 turnProgressionService.resolveAutoPass(gameData);
                 return;
             }
-            boolean targetsSpell = effects.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
-            boolean targetsPlayer = effects.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-            boolean targetsPermanent = effects.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-            if (targetsSpell) {
-                StackEntryPredicate spellFilter = null;
-                boolean includeAbilities = false;
-                if (source.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {
-                    spellFilter = filter.predicate();
-                    includeAbilities = TriggerCollectionService.predicateContainsHasTarget(filter.predicate());
-                }
-                gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                        source.getCard(), controllerId, effects, spellFilter, includeAbilities, source.getId()));
-            } else if (targetsPlayer || targetsPermanent) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        source.getCard(), controllerId, effects, !targetsPermanent,
-                        source.getCard().getTargetFilter(), 0, source.getId()));
+            boolean usesMultiTargetSelection = effects.stream()
+                    .anyMatch(source.getCard()::hasEffectTargetIndex)
+                    && (source.getCard().getSpellTargets().size() > 1
+                    || triggerCollectionService.needsSlotBySlotTargetSelection(source.getCard()));
+            if (usesMultiTargetSelection) {
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        source.getCard(), controllerId, effects, source.getId(), List.of(), 0, 0));
             } else {
-                gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
-                        com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                        source.getCard(), controllerId, source.getCard().getName() + "'s ability",
-                        effects, source.getId(), List.of()));
+                boolean targetsSpell = effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
+                boolean targetsPlayer = effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                boolean targetsPermanent = effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                if (targetsSpell) {
+                    StackEntryPredicate spellFilter = null;
+                    boolean includeAbilities = false;
+                    if (source.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {
+                        spellFilter = filter.predicate();
+                        includeAbilities = TriggerCollectionService.predicateContainsHasTarget(filter.predicate());
+                    }
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                            source.getCard(), controllerId, effects, spellFilter, includeAbilities, source.getId()));
+                } else if (targetsPlayer || targetsPermanent) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            source.getCard(), controllerId, effects, !targetsPermanent,
+                            source.getCard().getTargetFilter(), 0, source.getId()));
+                } else {
+                    gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
+                            com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                            source.getCard(), controllerId, source.getCard().getName() + "'s ability",
+                            effects, source.getId(), List.of()));
+                }
             }
         }
         if (resolveAutoPass) {

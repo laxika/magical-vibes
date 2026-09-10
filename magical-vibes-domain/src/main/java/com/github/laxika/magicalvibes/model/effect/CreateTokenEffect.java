@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -39,7 +40,8 @@ public record CreateTokenEffect(
         boolean legendary,
         int initialPlusOnePlusOneCounters,
         Set<Keyword> grantedKeywordsUntilEndOfTurn,
-        Set<CardSupertype> supertypes
+        Set<CardSupertype> supertypes,
+        TargetFilter tokenTargetFilter
 ) implements TokenCreatingEffect, CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
 
     @Override
@@ -88,10 +90,11 @@ public record CreateTokenEffect(
                              Map<EffectSlot, CardEffect> tokenEffects, List<ActivatedAbility> tokenAbilities,
                              boolean exileAtEndOfCombat, boolean exileAtEndStep, boolean legendary,
                              int initialPlusOnePlusOneCounters, Set<Keyword> grantedKeywordsUntilEndOfTurn) {
-        this(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords,
+        this(primaryType, new Fixed(amount), tokenName, new Fixed(power), new Fixed(toughness), color, colors,
+                subtypes, keywords,
                 additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities,
                 exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters,
-                grantedKeywordsUntilEndOfTurn, Set.of());
+                grantedKeywordsUntilEndOfTurn, Set.of(), null);
     }
 
     /** Canonical shape with a fixed token count and explicit supertypes. */
@@ -106,7 +109,7 @@ public record CreateTokenEffect(
         this(primaryType, new Fixed(amount), tokenName, new Fixed(power), new Fixed(toughness), color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, null);
     }
 
     /** Copy of this blueprint with a different (already-evaluated) token count, all other fields preserved. */
@@ -114,7 +117,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, new Fixed(newAmount), tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);
     }
 
     /** Copy of this blueprint with a different tapped state, all other fields preserved. */
@@ -122,7 +125,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, newTapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);
     }
 
     /**
@@ -134,7 +137,16 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, new Fixed(newPower), new Fixed(newToughness),
                 color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);
+    }
+
+    /** Copy of this blueprint with the target filter for a targeted token ability. */
+    public CreateTokenEffect withTokenTargetFilter(TargetFilter newTokenTargetFilter) {
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors,
+                subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes,
+                newTokenTargetFilter);
     }
 
     /**
@@ -146,7 +158,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors, subtypes,
                 keywords, additionalTypes, tappedAndAttacking, tapped, newTokenEffects, tokenAbilities,
                 exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter);
     }
 
     /** Canonical shape with a dynamic token count and printed power/toughness */
@@ -160,7 +172,7 @@ public record CreateTokenEffect(
         this(primaryType, amount, tokenName, new Fixed(power), new Fixed(toughness), color, colors, subtypes,
                 keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities,
                 exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters,
-                grantedKeywordsUntilEndOfTurn, Set.of());
+                grantedKeywordsUntilEndOfTurn, Set.of(), null);
     }
 
     /** Backward-compatible canonical shape for dynamic power and toughness without supertypes. */
@@ -175,7 +187,22 @@ public record CreateTokenEffect(
         this(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords,
                 additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities,
                 exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters,
-                grantedKeywordsUntilEndOfTurn, Set.of());
+                grantedKeywordsUntilEndOfTurn, Set.of(), null);
+    }
+
+    /** Backward-compatible canonical shape for dynamic power and toughness with supertypes. */
+    public CreateTokenEffect(CardType primaryType, DynamicAmount amount, String tokenName,
+                             DynamicAmount power, DynamicAmount toughness, CardColor color,
+                             Set<CardColor> colors, List<CardSubtype> subtypes, Set<Keyword> keywords,
+                             Set<CardType> additionalTypes, boolean tappedAndAttacking, boolean tapped,
+                             Map<EffectSlot, CardEffect> tokenEffects,
+                             List<ActivatedAbility> tokenAbilities, boolean exileAtEndOfCombat,
+                             boolean exileAtEndStep, boolean legendary, int initialPlusOnePlusOneCounters,
+                             Set<Keyword> grantedKeywordsUntilEndOfTurn, Set<CardSupertype> supertypes) {
+        this(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords,
+                additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities,
+                exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters,
+                grantedKeywordsUntilEndOfTurn, supertypes, null);
     }
 
     /** Single-color creature token (existing pattern) */
@@ -423,6 +450,11 @@ public record CreateTokenEffect(
      * "{1}, {T}, Discard a card, Sacrifice this token: Draw a card."
      */
     public static CreateTokenEffect ofBloodToken(int amount) {
+        return ofBloodToken(new Fixed(amount));
+    }
+
+    /** Dynamically many Blood tokens, with the standard Blood activated ability. */
+    public static CreateTokenEffect ofBloodToken(DynamicAmount amount) {
         return ofArtifactToken(amount, "Blood", List.of(CardSubtype.BLOOD),
                 List.of(new ActivatedAbility(
                         true, "{1}",

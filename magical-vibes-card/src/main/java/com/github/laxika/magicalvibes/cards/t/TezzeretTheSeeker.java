@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "60")
+@CardRegistration(set = "DDF", collectorNumber = "39")
 public class TezzeretTheSeeker extends Card {
 
     public TezzeretTheSeeker() {

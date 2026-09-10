@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "75")
+@CardRegistration(set = "OM1", collectorNumber = "81")
 public class AngryRabble extends Card {
 
     public AngryRabble() {

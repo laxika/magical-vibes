@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "13")
+@CardRegistration(set = "OM1", collectorNumber = "12")
 public class SilverSableMercenaryLeader extends Card {
 
     public SilverSableMercenaryLeader() {

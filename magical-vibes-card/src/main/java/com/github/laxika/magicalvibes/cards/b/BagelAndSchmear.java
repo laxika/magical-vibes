@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "161")
+@CardRegistration(set = "OM1", collectorNumber = "170")
 public class BagelAndSchmear extends Card {
 
     public BagelAndSchmear() {

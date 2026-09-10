@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 
 @CardRegistration(set = "SPM", collectorNumber = "139")
+@CardRegistration(set = "OM1", collectorNumber = "142")
 public class PumpkinBombardment extends Card {
 
     public PumpkinBombardment() {

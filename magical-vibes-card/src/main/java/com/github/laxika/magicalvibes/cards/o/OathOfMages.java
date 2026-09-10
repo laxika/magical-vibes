@@ -18,7 +18,7 @@ public class OathOfMages extends Card {
         // life than they do and is their opponent. The first player may have this enchantment deal
         // 1 damage to the second player.
         target(new PlayerPredicateTargetFilter(
-                new PlayerHasMoreLifeThanControllerPredicate(),
+                new PlayerHasMoreLifeThanControllerPredicate(true),
                 "Target player must be an opponent who has more life than you"
         )).addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new MayEffect(
                 new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER),

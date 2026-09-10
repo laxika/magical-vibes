@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "178")
+@CardRegistration(set = "V11", collectorNumber = "5")
 public class KreshTheBloodbraided extends Card {
 
     public KreshTheBloodbraided() {

@@ -1,43 +1,36 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
+import com.github.laxika.magicalvibes.cards.p.PygmyTroll;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ManaBreach.class, CityOfTraitors.class, PygmyTroll.class})
 class ManaBreachTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a spell prompts the caster to return a land they control")
     void castingPromptsCasterToBounceLand() {
         harness.addToBattlefield(player1, new ManaBreach());
-        harness.addToBattlefield(player1, new Island());
-        UUID islandId = harness.getPermanentId(player1, "Island");
+        UUID landId = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors()).getId();
 
-        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PygmyTroll(), "{1}{G}");
         // Resolve the Mana Breach triggered ability
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(islandId);
+                .containsExactly(landId);
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.BounceCreature.class);
     }
@@ -46,20 +39,15 @@ class ManaBreachTest extends BaseCardTest {
     @DisplayName("Chosen land is returned to its owner's hand")
     void chosenLandReturnsToHand() {
         harness.addToBattlefield(player1, new ManaBreach());
-        harness.addToBattlefield(player1, new Island());
-        UUID islandId = harness.getPermanentId(player1, "Island");
+        UUID landId = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors()).getId();
 
-        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PygmyTroll(), "{1}{G}");
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, islandId);
+        harness.handlePermanentChosen(player1, landId);
 
-        GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player1, "Island");
-        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "City of Traitors");
+        harness.assertInHand(player1, "City of Traitors");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
@@ -67,27 +55,21 @@ class ManaBreachTest extends BaseCardTest {
     @DisplayName("The caster chooses which of their lands to return")
     void casterChoosesAmongLands() {
         harness.addToBattlefield(player1, new ManaBreach());
-        harness.addToBattlefield(player1, new Island());
-        harness.addToBattlefield(player1, new Forest());
-        UUID islandId = harness.getPermanentId(player1, "Island");
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID firstLandId = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors()).getId();
+        UUID secondLandId = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors()).getId();
 
-        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PygmyTroll(), "{1}{G}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactlyInAnyOrder(islandId, forestId);
+                .containsExactlyInAnyOrder(firstLandId, secondLandId);
 
-        harness.handlePermanentChosen(player1, forestId);
+        harness.handlePermanentChosen(player1, secondLandId);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(islandId))
-                .noneMatch(p -> p.getId().equals(forestId));
-        harness.assertInHand(player1, "Forest");
+                .anyMatch(p -> p.getId().equals(firstLandId))
+                .noneMatch(p -> p.getId().equals(secondLandId));
+        harness.assertInHand(player1, "City of Traitors");
     }
 
     @Test
@@ -95,13 +77,9 @@ class ManaBreachTest extends BaseCardTest {
     void noLandsNoBounce() {
         harness.addToBattlefield(player1, new ManaBreach());
 
-        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new PygmyTroll(), "{1}{G}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
@@ -109,20 +87,52 @@ class ManaBreachTest extends BaseCardTest {
     @DisplayName("Triggers for every player — the opponent bounces their own land")
     void opponentCastingBouncesOpponentsLand() {
         harness.addToBattlefield(player1, new ManaBreach());
-        harness.addToBattlefield(player2, new Island());
-        UUID islandId = harness.getPermanentId(player2, "Island");
-
-        harness.setHand(player2, List.of(new CounselOfTheSoratami()));
-        harness.addMana(player2, ManaColor.BLUE, 3);
+        UUID landId = harness.addToBattlefieldAndReturn(player2, new CityOfTraitors()).getId();
 
         harness.forceActivePlayer(player2);
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new PygmyTroll(), "{1}{G}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(islandId);
+                .containsExactly(landId);
+
+        harness.handlePermanentChosen(player2, landId);
+
+        harness.assertNotOnBattlefield(player2, "City of Traitors");
+        harness.assertInHand(player2, "City of Traitors");
+    }
+
+    @Test
+    @DisplayName("Only lands are offered when the caster controls other permanents")
+    void nonlandsAreNotBounceChoices() {
+        harness.addToBattlefield(player1, new ManaBreach());
+        UUID landId = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors()).getId();
+        harness.addToBattlefield(player1, new PygmyTroll());
+
+        harness.castFromHand(player1, new PygmyTroll(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(landId);
+    }
+
+    @Test
+    @DisplayName("A controlled land is returned to its owner's hand")
+    void controlledLandReturnsToOwnerHand() {
+        harness.addToBattlefield(player1, new ManaBreach());
+        CityOfTraitors land = new CityOfTraitors();
+        land.setOwnerId(player1.getId());
+        UUID landId = harness.addToBattlefieldAndReturn(player2, land).getId();
+
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new PygmyTroll(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, landId);
+
+        harness.assertNotOnBattlefield(player2, "City of Traitors");
+        harness.assertInHand(player1, "City of Traitors");
+        harness.assertNotInHand(player2, "City of Traitors");
     }
 }

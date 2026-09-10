@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "60")
 @CardRegistration(set = "SPM", collectorNumber = "258")
+@CardRegistration(set = "OM1", collectorNumber = "55")
 public class ParkerLuck extends Card {
 
     public ParkerLuck() {

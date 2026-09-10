@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "144")
+@CardRegistration(set = "ME1", collectorNumber = "180")
 public class ThawingGlaciers extends Card {
 
     public ThawingGlaciers() {

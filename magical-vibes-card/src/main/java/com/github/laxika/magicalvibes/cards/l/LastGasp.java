@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "93")
+@CardRegistration(set = "SOS", collectorNumber = "86")
 public class LastGasp extends Card {
 
     public LastGasp() {

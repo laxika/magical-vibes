@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "FEM", collectorNumber = "165")
 @CardRegistration(set = "FEM", collectorNumber = "166")
 @CardRegistration(set = "FEM", collectorNumber = "168")
+@CardRegistration(set = "ME1", collectorNumber = "135")
 public class ThornThallid extends Card {
 
     public ThornThallid() {

@@ -10,9 +10,20 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param kind      what is skipped, and therefore which queue the skip lands on
  * @param recipient whose occurrence is skipped
+ * @param allCombatPhasesOfNextTurn whether to skip every combat of the affected player's next turn
  */
-public record SkipNextEffect(SkipKind kind, SkipRecipient recipient)
+public record SkipNextEffect(SkipKind kind, SkipRecipient recipient, boolean allCombatPhasesOfNextTurn)
         implements CombatDamageTriggerContextEffect {
+
+    public SkipNextEffect(SkipKind kind, SkipRecipient recipient) {
+        this(kind, recipient, false);
+    }
+
+    public SkipNextEffect {
+        if (allCombatPhasesOfNextTurn && kind != SkipKind.COMBAT_PHASE) {
+            throw new IllegalArgumentException("All-combat duration requires combat phases");
+        }
+    }
 
     /** "You skip your next …" — queued on the resolving controller, targeting nothing. */
     public SkipNextEffect(SkipKind kind) {

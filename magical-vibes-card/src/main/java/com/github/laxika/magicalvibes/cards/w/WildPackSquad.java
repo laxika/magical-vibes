@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "23")
+@CardRegistration(set = "OM1", collectorNumber = "11")
 public class WildPackSquad extends Card {
 
     public WildPackSquad() {

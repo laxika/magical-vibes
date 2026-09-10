@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "138")
+@CardRegistration(set = "OM1", collectorNumber = "128")
 public class ProwlerClawedThief extends Card {
 
     public ProwlerClawedThief() {

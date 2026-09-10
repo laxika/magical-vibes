@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 @CardRegistration(set = "M20", collectorNumber = "45")
 @CardRegistration(set = "IKO", collectorNumber = "40")
 @CardRegistration(set = "DTK", collectorNumber = "45")
+@CardRegistration(set = "BFZ", collectorNumber = "69")
 public class Anticipate extends Card {
 
     public Anticipate() {

@@ -56,7 +56,7 @@ public class SacrificeEnchantedCreatureEffectHandler implements NormalEffectHand
         log.info("Game {} - {} sacrificed by {}", gameData.id,
                 enchantedCreature.getCard().getName(), entry.getCard().getName());
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, enchantedCreature);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchantedCreature);
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

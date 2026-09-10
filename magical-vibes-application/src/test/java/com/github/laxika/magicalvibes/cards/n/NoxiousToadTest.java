@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,15 +16,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NoxiousToad.class, GrizzlyBears.class})
 class NoxiousToadTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Noxious Toad dies, its death trigger goes on the stack")
     void deathTriggerGoesOnStack() {
-        harness.addToBattlefield(player1, new NoxiousToad());
-
         setupCombatWhereToadDies();
-        harness.passBothPriorities(); // Combat damage — Toad dies
+        resolveCombat();
 
         harness.assertInGraveyard(player1, "Noxious Toad");
         assertThat(gd.stack).hasSize(1);
@@ -35,11 +34,10 @@ class NoxiousToadTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the death trigger makes each opponent discard a card")
     void eachOpponentDiscardsACard() {
-        harness.addToBattlefield(player1, new NoxiousToad());
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
 
         setupCombatWhereToadDies();
-        harness.passBothPriorities(); // Combat damage — Toad dies
+        resolveCombat();
         harness.passBothPriorities(); // Resolve death trigger
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -54,37 +52,41 @@ class NoxiousToadTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Death trigger does not make its controller discard a card")
+    void controllerDoesNotDiscard() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        setupCombatWhereToadDies();
+        resolveCombat();
+        harness.passBothPriorities(); // Resolve death trigger
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Noxious Toad");
+    }
+
+    @Test
     @DisplayName("Death trigger with an empty opponent hand requires no discard")
     void emptyOpponentHand() {
-        harness.addToBattlefield(player1, new NoxiousToad());
         harness.setHand(player2, new ArrayList<>());
 
         setupCombatWhereToadDies();
-        harness.passBothPriorities(); // Combat damage — Toad dies
+        resolveCombat();
         harness.passBothPriorities(); // Resolve death trigger
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
     }
 
-    // ===== Helpers =====
-
     private void setupCombatWhereToadDies() {
-        Permanent toadPerm = findPermanent(player1, "Noxious Toad");
-        toadPerm.setSummoningSick(false);
+        Permanent toadPerm = addCreatureReady(player1, new NoxiousToad());
         toadPerm.setAttacking(true);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(5);
-        bigBear.setToughness(5);
-        Permanent blockerPerm = new Permanent(bigBear);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "211")
+@CardRegistration(set = "HOP", collectorNumber = "120")
 public class MyrEnforcer extends Card {
 
     public MyrEnforcer() {

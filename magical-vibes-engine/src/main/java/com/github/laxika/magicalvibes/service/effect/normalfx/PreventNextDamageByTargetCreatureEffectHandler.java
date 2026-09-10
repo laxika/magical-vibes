@@ -40,10 +40,12 @@ public class PreventNextDamageByTargetCreatureEffectHandler implements NormalEff
             return;
         }
 
-        gameData.sourceNextDamageToAnyTargetShields.add(
-                SourceNextDamageToAnyTargetShield.withLifeGain(targetId, controllerId));
+        boolean gainLife = ((PreventNextDamageByTargetCreatureEffect) effect).gainLife();
+        gameData.sourceNextDamageToAnyTargetShields.add(gainLife
+                ? SourceNextDamageToAnyTargetShield.withLifeGain(targetId, controllerId)
+                : new SourceNextDamageToAnyTargetShield(targetId));
         gameLogService.append(gameData, GameLog.textCardText(
                 "The next time ", target.getCard(), " would deal damage this turn, it is prevented. "
-                        + "The controller gains life equal to the damage prevented."));
+                        + (gainLife ? "The controller gains life equal to the damage prevented." : "")));
     }
 }

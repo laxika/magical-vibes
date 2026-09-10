@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "SPM", collectorNumber = "144")
+@CardRegistration(set = "OM1", collectorNumber = "131")
 public class ShriekTreblemaker extends Card {
 
     public ShriekTreblemaker() {

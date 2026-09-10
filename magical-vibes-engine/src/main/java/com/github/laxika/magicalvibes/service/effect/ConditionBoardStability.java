@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
+import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -48,6 +49,9 @@ public final class ConditionBoardStability {
             // current mana-cost strings are included in the board fingerprint.
             case DevotionToColorAtLeast ignored -> true;
             case DevotionToColorsAtLeast ignored -> true;
+            // Graveyard contents and the card identities/types they carry are hashed by the board
+            // fingerprint, so creature-card thresholds can safely participate in layer 4.
+            case GraveyardCardThreshold ignored -> true;
             case NotControllerTurn ignored -> true;
             case NotCondition c -> readsOnlyFingerprintedState(c.inner());
             case AllConditions c -> allStable(c.conditions());

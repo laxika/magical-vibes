@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "119")
+@CardRegistration(set = "OM1", collectorNumber = "117")
 public class SupportiveParents extends Card {
 
     public SupportiveParents() {

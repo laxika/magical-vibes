@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmon
 
 @CardRegistration(set = "SPM", collectorNumber = "133")
 @CardRegistration(set = "SPM", collectorNumber = "273")
+@CardRegistration(set = "OM1", collectorNumber = "127")
 public class KravenTheHunter extends Card {
 
     public KravenTheHunter() {

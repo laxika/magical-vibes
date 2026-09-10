@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ModifyFlashbackCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ModifyMorphCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceNonHandSpellCastCostEffect;
@@ -57,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingE
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ReduceRoomUnlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
@@ -69,6 +72,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -174,9 +178,43 @@ class CastingCostServiceTest {
         };
     }
 
+    @Test
+    void enduringStoryFreeEquipRequiresDesignationAndFirstActivation() {
+        Card source = new Card();
+        source.addEffect(EffectSlot.STATIC,
+                new com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect());
+        Permanent permanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(permanent);
+        ActivatedAbility equip = new EquipActivatedAbility("{2}");
+
+        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isFalse();
+        gd.playersWithEnduringStory.add(player1Id);
+        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isTrue();
+        gd.playersWhoActivatedEquipAbilityThisTurn.add(player1Id);
+        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isFalse();
+        gd.playersWhoActivatedEquipAbilityThisTurn.clear();
+        when(gameQueryService.hasLostAllAbilities(gd, permanent)).thenReturn(true);
+        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isFalse();
+    }
+
     @Nested
     @DisplayName("getCastCostModifier — handler-dispatched cost modifiers")
     class GetCastCostModifierTests {
+
+        @Test
+        void appliesRoomUnlockReductionToGenericManaOnly() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceRoomUnlockCostEffect(1));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            Card room = new Card();
+            room.setRoomDoorManaCosts(List.of("{4}{U}", "{2}{W}"));
+
+            var cost = svc.getRoomUnlockCost(gd, player1Id, room, 0);
+
+            assertThat(cost.getGenericCost()).isEqualTo(3);
+            assertThat(cost.getColoredCosts()).containsEntry(ManaColor.BLUE, 1);
+        }
 
         @Test
         @DisplayName("Applies dash cost reduction only to the controller's dash casts")
@@ -353,6 +391,27 @@ class CastingCostServiceTest {
 
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, 0, false)).isZero();
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, 0, true)).isEqualTo(-1);
+        }
+
+        @Test
+        @DisplayName("Applies morph cost modifiers with the correct player scope")
+        void appliesMorphCostModifiersWithScope() {
+            Card globalTax = new Card();
+            globalTax.addEffect(EffectSlot.STATIC,
+                    new ModifyMorphCostEffect(2, CostModificationScope.ALL));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(globalTax));
+
+            Card ownReduction = new Card();
+            ownReduction.addEffect(EffectSlot.STATIC,
+                    new ModifyMorphCostEffect(-1, CostModificationScope.SELF));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(ownReduction));
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+            Card morphCard = new Card();
+
+            assertThat(svc.getMorphCostModifier(gd, player1Id, morphCard, snapshot)).isEqualTo(1);
+            assertThat(svc.getMorphCostModifier(gd, player2Id, morphCard, snapshot)).isEqualTo(2);
+            assertThat(svc.getCastCostModifier(gd, player1Id, morphCard, snapshot)).isZero();
         }
 
         @Test
@@ -1093,7 +1152,8 @@ class CastingCostServiceTest {
 
             when(gameQueryService.findPermanentById(gd, dinosaur.getId())).thenReturn(dinosaur);
             when(gameQueryService.findPermanentController(gd, dinosaur.getId())).thenReturn(player1Id);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, dinosaur, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(dinosaur), eq(predicate), any(FilterContext.class))).thenReturn(true);
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, stomp, List.of(dinosaur.getId())))
                     .isEqualTo(2);
@@ -1161,9 +1221,33 @@ class CastingCostServiceTest {
             gd.playerBattlefields.get(player2Id).add(tappedBear);
 
             when(gameQueryService.findPermanentById(gd, tappedBear.getId())).thenReturn(tappedBear);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, tappedBear, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(tappedBear), eq(predicate), any(FilterContext.class))).thenReturn(true);
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, response, List.of(tappedBear.getId())))
+                    .isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Indexed reduction applies when a later target matches")
+        void indexedPermanentReductionApplies() {
+            var predicate = new PermanentColorInPredicate(Set.of(CardColor.BLUE));
+            Card mark = new Card();
+            mark.setName("Hunter's Mark");
+            mark.setType(CardType.INSTANT);
+            mark.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+                            predicate, 3, false, 1));
+
+            Permanent source = new Permanent(new Card());
+            Permanent blueTarget = new Permanent(new Card());
+
+            when(gameQueryService.findPermanentById(gd, blueTarget.getId())).thenReturn(blueTarget);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(blueTarget), eq(predicate), any(FilterContext.class))).thenReturn(true);
+
+            assertThat(svc.computeTargetBasedCostReduction(
+                    gd, player1Id, mark, List.of(source.getId(), blueTarget.getId())))
                     .isEqualTo(3);
         }
 

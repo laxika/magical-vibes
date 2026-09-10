@@ -38,9 +38,12 @@ public class MiracleMayCastEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        String cost = card.getCastingOption(MiracleCast.class)
-                .map(MiracleCast::manaCostString)
-                .orElse(null);
+        String cost = ((MiracleMayCastEffect) effect).miracleCost();
+        if (cost == null) {
+            cost = card.getCastingOption(MiracleCast.class)
+                    .map(MiracleCast::manaCostString)
+                    .orElse(null);
+        }
         if (cost == null) {
             log.warn("Game {} - {} has no miracle cost", gameData.id, card.getName());
             return;

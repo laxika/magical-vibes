@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "185")
+@CardRegistration(set = "OM1", collectorNumber = "185")
 public class SuburbanSanctuary extends Card {
 
     public SuburbanSanctuary() {

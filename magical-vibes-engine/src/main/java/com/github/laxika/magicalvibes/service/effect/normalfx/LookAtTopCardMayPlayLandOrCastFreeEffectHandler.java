@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPlayLandOrCastFreeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
@@ -24,9 +23,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LookAtTopCardMayPlayLandOrCastFreeEffectHandler implements NormalEffectHandlerBean {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

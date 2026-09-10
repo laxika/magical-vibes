@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "SPM", collectorNumber = "66")
 @CardRegistration(set = "SPM", collectorNumber = "242")
 @CardRegistration(set = "SPM", collectorNumber = "243")
+@CardRegistration(set = "OM1", collectorNumber = "69")
 public class TheSoulStone extends Card {
 
     public TheSoulStone() {

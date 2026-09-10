@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "SUM", collectorNumber = "194")
+@CardRegistration(set = "3ED", collectorNumber = "194")
 public class Fastbond extends Card {
 
     public Fastbond() {

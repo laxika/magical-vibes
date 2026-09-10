@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardAndPutCounterOnSou
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "143")
+@CardRegistration(set = "OM1", collectorNumber = "141")
 public class ScarletSpiderKaine extends Card {
 
     public ScarletSpiderKaine() {

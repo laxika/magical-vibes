@@ -68,7 +68,7 @@ public class RegisterDrawCardsAtNextUpkeepEffectHandler implements NormalEffectH
             return null;
         }
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (se.getTargetableId().equals(targetCardId)) {
                 return se.getControllerId();
             }
         }

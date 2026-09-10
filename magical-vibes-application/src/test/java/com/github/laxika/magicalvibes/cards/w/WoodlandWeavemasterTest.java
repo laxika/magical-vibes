@@ -109,6 +109,7 @@ class WoodlandWeavemasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SkyshroudElf());
 
         harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }

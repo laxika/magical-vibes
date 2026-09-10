@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "126")
 @CardRegistration(set = "SPM", collectorNumber = "270")
+@CardRegistration(set = "OM1", collectorNumber = "129")
 public class CheeringCrowd extends Card {
 
     public CheeringCrowd() {

@@ -36,6 +36,23 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class EndTurnEffectHandlerTest {
 
+    @Test
+    void endingExtraTurnExpiresOnlyItsOwnDelayedLoss() {
+        Card source = new Card();
+        var thisTurn = new com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep(player1Id, source, 1, 7L);
+        var laterTurn = new com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep(player1Id, source, 1, 8L);
+        var nextEndStep = new com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep(player1Id, source, 1);
+        gd.currentExtraTurnSequence = 7L;
+        gd.queueDelayedAction(thisTurn);
+        gd.queueDelayedAction(laterTurn);
+        gd.queueDelayedAction(nextEndStep);
+
+        turnSupport.skipToCleanupStep(gd);
+
+        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep.class))
+                .containsExactly(laterTurn, nextEndStep);
+    }
+
     @Mock private CombatService combatService;
     @Mock private GameLogService gameLogService;
     @Mock private CreatureControlService creatureControlService;

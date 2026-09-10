@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "91")
+@CardRegistration(set = "OM1", collectorNumber = "94")
 public class SpiderIslanders extends Card {
 
     public SpiderIslanders() {

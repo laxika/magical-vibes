@@ -15,6 +15,7 @@ import java.util.List;
  * exiles the card itself, so it resolves immediately without using the stack (CR 605.1a).</p>
  */
 @CardRegistration(set = "ALL", collectorNumber = "89")
+@CardRegistration(set = "ME2", collectorNumber = "159")
 public class ElvishSpiritGuide extends Card {
 
     public ElvishSpiritGuide() {

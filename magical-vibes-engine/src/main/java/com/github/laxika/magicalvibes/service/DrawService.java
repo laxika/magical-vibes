@@ -40,10 +40,14 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.IslandSanctuaryEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardThenBottomRestEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
@@ -54,10 +58,12 @@ import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomSupport;
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
@@ -72,6 +78,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.UbaMaskDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -103,6 +110,9 @@ import java.util.stream.IntStream;
 @Component
 public class DrawService {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
     private final ExileService exileService;
     private final GameLogService gameLogService;
@@ -295,13 +305,30 @@ public class DrawService {
             return;
         }
 
+        Permanent exileTopCardsSource = findExileTopCardsMayPlayThisTurnDrawReplacementSource(gameData, playerId);
+        if (exileTopCardsSource != null) {
+            resolveExileTopCardsMayPlayThisTurnDrawReplacement(gameData, playerId, exileTopCardsSource);
+            return;
+        }
+
+        Permanent exileTopCardSource = findExileTopCardFaceDownInsteadOfDrawSource(gameData, playerId);
+        if (exileTopCardSource != null) {
+            resolveExileTopCardFaceDownInsteadOfDraw(gameData, playerId, exileTopCardSource);
+            return;
+        }
+
         MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
         if (maySkipDrawSource != null) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     maySkipDrawSource.card(),
                     playerId,
                     List.of(new ReplaceSingleDrawEffect(playerId, maySkipDrawSource.kind())),
-                    "Skip this draw with " + maySkipDrawSource.card().getName() + "?"
+                    maySkipDrawSource.kind() == DrawReplacementKind.PARALLEL_THOUGHTS
+                            ? "Replace this draw with " + maySkipDrawSource.card().getName() + "?"
+                            : "Skip this draw with " + maySkipDrawSource.card().getName() + "?",
+                    null,
+                    null,
+                    maySkipDrawSource.sourcePermanentId()
             ));
             return;
         }
@@ -326,7 +353,17 @@ public class DrawService {
             if (pendingPileDraws.isEmpty()) {
                 gameData.pendingNextDrawFromExiledPile.remove(playerId);
             }
-            resolveNextDrawFromExiledPile(gameData, playerId, pileSourceId);
+            resolveDrawFromExiledPile(gameData, playerId, pileSourceId);
+            return;
+        }
+
+        // Ring of Ma'rûf — one queued activation replaces one draw with a card from outside the game.
+        Integer pendingOutsideGame = gameData.pendingNextDrawFromOutsideGame.remove(playerId);
+        if (pendingOutsideGame != null) {
+            if (pendingOutsideGame > 1) {
+                gameData.pendingNextDrawFromOutsideGame.put(playerId, pendingOutsideGame - 1);
+            }
+            resolveNextDrawFromOutsideGame(gameData, playerId);
             return;
         }
 
@@ -824,6 +861,46 @@ public class DrawService {
         return null;
     }
 
+    private Permanent findExileTopCardFaceDownInsteadOfDrawSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance);
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    /** Replaces the controller's draw with a face-down exile tracked with the source permanent. */
+    private void resolveExileTopCardFaceDownInsteadOfDraw(
+            GameData gameData, UUID playerId, Permanent source) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + "'s draw is replaced; ", source.getCard(), " exiles nothing."));
+            return;
+        }
+
+        Card exiled = deck.removeFirst();
+        exileService.exileCardFaceDown(gameData, playerId, exiled, source.getId());
+
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + " exiles a card face down with ")
+                .card(source.getCard())
+                .text(" instead of drawing.")
+                .build());
+        log.info("Game {} - {} exiles the top card of their library face down with {} instead of drawing",
+                gameData.id, playerName, source.getCard().getName());
+    }
+
     /** Shared Fate replaces the draw with a face-down exile from the opponent's library. */
     private void resolveSharedFateDrawReplacement(GameData gameData, UUID playerId, Permanent source) {
         UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
@@ -858,13 +935,13 @@ public class DrawService {
             if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof MaySkipDrawReplacementEffect replacement) {
-                    return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind());
+                    return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
                 }
             }
             if (gameData.currentStep == TurnStep.DRAW) {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW)) {
                     if (effect instanceof IslandSanctuaryEffect replacement) {
-                        return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind());
+                        return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
                     }
                 }
             }
@@ -872,7 +949,7 @@ public class DrawService {
         return null;
     }
 
-    private record MaySkipDrawSource(Card card, DrawReplacementKind kind) {
+    private record MaySkipDrawSource(Card card, DrawReplacementKind kind, UUID sourcePermanentId) {
     }
 
     private Permanent findUbaMaskSource(GameData gameData) {
@@ -1390,7 +1467,7 @@ public class DrawService {
      * put into its owner's hand instead of the draw. The draw is replaced either way — an empty pile
      * simply means nothing is put into a hand (no card is drawn, no draw triggers fire).
      */
-    private void resolveNextDrawFromExiledPile(GameData gameData, UUID playerId, UUID pileSourceId) {
+    public void resolveDrawFromExiledPile(GameData gameData, UUID playerId, UUID pileSourceId) {
         var top = gameData.topOfExilePile(pileSourceId);
         if (top == null) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
@@ -1405,6 +1482,30 @@ public class DrawService {
                 " from the exiled pile into their hand instead of drawing."));
         log.info("Game {} - {} puts {} from the exiled pile into their hand instead of drawing",
                 gameData.id, ownerName, top.card().getName());
+    }
+
+    /** Ring of Ma'rûf's replaced draw: choose a card from outside the game and put it into hand. */
+    private void resolveNextDrawFromOutsideGame(GameData gameData, UUID playerId) {
+        List<Card> sideboard = gameData.playerSideboards.getOrDefault(playerId, List.of());
+        String playerName = gameData.playerIdToName.get(playerId);
+        if (sideboard.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " has no card outside the game to put into their hand instead of drawing."));
+            return;
+        }
+
+        String prompt = "Choose a card you own from outside the game to put into your hand.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(playerId, new ArrayList<>(sideboard))
+                        .reveals(false)
+                        .canFailToFind(false)
+                        .remainingCount(1)
+                        .destination(LibrarySearchDestination.HAND)
+                        .shuffleAfterSelection(false)
+                        .sourceSideboard(true)
+                        .build(),
+                prompt,
+                false));
     }
 
     private void resolveNextDrawLookAtTop(GameData gameData, UUID playerId, int x) {
@@ -1522,7 +1623,8 @@ public class DrawService {
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
 
         checkControllerDrawTriggers(gameData, playerId, drawn);
-        checkOpponentDrawTriggers(gameData, playerId);
+        checkOpponentDrawTriggers(gameData, playerId, drawn);
+        checkPlanarDrawTriggers(gameData, playerId, drawn);
         checkEnchantedPlayerDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
         checkRevealFirstDrawTriggers(gameData, playerId, drawn);
@@ -1539,14 +1641,18 @@ public class DrawService {
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
             return;
         }
-        if (drawn.getCastingOption(MiracleCast.class).isEmpty()) {
+        String miracleCost = drawn.getCastingOption(MiracleCast.class)
+                .map(MiracleCast::manaCostString)
+                .orElseGet(() -> gameQueryService.findGrantedMiracleCost(gameData, drawingPlayerId, drawn)
+                        .orElse(null));
+        if (miracleCost == null) {
             return;
         }
 
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 drawn,
                 drawingPlayerId,
-                List.of(new MiracleRevealEffect()),
+                List.of(new MiracleRevealEffect(miracleCost)),
                 "Reveal " + drawn.getName() + " for its miracle ability?"
         ));
         log.info("Game {} - offering miracle reveal for {}", gameData.id, drawn.getName());
@@ -1685,16 +1791,18 @@ public class DrawService {
                     }
 
                     if (firstDraw.revealBeforeChoice()) {
-                        String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-                        gameLogService.append(gameData, GameLog.builder()
-                                .text(drawerName + " reveals ")
-                                .card(drawn)
-                                .text(" with ")
-                                .card(perm.getCard())
-                                .text(".")
-                                .build());
+                        logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
                     }
                     effect = firstDraw.effectFor(drawn);
+                    if (effect == null) {
+                        continue;
+                    }
+                } else if (effect instanceof DrawRevealTriggerEffect drawReveal) {
+                    if (drawn == null) {
+                        continue;
+                    }
+                    logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
+                    effect = drawReveal.effectFor(drawn);
                     if (effect == null) {
                         continue;
                     }
@@ -1757,6 +1865,12 @@ public class DrawService {
                     log.info("Game {} - {} controller-draw permanent-target trigger queued",
                             gameData.id, perm.getCard().getName());
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                            perm.getCard(), drawingPlayerId, new ArrayList<>(List.of(effect)), "draw", perm.getId()));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1809,9 +1923,26 @@ public class DrawService {
 
     private void checkEmblemDrawTriggers(GameData gameData, UUID drawingPlayerId) {
         for (Emblem emblem : gameData.emblems) {
-            if (!emblem.controllerId().equals(drawingPlayerId)) continue;
             for (CardEffect effect : emblem.staticEffects()) {
-                if (effect instanceof ExileTargetOpponentPermanentOnDrawEffect) {
+                if (effect instanceof EmblemControllerLosesLifeOnAnyPlayerDrawEffect lifeTrigger) {
+                    Card source = emblem.sourceCard();
+                    if (source == null) continue;
+                    String description = source.getName() + "'s emblem";
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source,
+                            emblem.controllerId(),
+                            description,
+                            new ArrayList<>(List.of(
+                                    new LoseLifeEffect(lifeTrigger.amount(), LoseLifeRecipient.CONTROLLER)
+                            ))
+                    );
+                    entry.setNonTargeting(true);
+                    gameData.stack.add(entry);
+                    gameLogService.append(gameData, GameLog.text(description + " triggers."));
+                    log.info("Game {} - {} triggers when a player draws", gameData.id, description);
+                } else if (emblem.controllerId().equals(drawingPlayerId)
+                        && effect instanceof ExileTargetOpponentPermanentOnDrawEffect) {
                     gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
                             "Teferi's emblem",
                             emblem.controllerId(),
@@ -1840,6 +1971,10 @@ public class DrawService {
     }
 
     public void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        checkOpponentDrawTriggers(gameData, drawingPlayerId, null);
+    }
+
+    private void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerId.equals(drawingPlayerId)) return;
@@ -1850,7 +1985,16 @@ public class DrawService {
 
                 for (CardEffect authoredEffect : drawEffects) {
                     CardEffect effect = authoredEffect;
-                    if (effect instanceof DrawTriggerEffect drawTrigger) {
+                    if (effect instanceof DrawRevealTriggerEffect drawReveal) {
+                        if (drawn == null) {
+                            continue;
+                        }
+                        logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
+                        effect = drawReveal.effectFor(drawn);
+                        if (effect == null) {
+                            continue;
+                        }
+                    } else if (effect instanceof DrawTriggerEffect drawTrigger) {
                         effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                         if (effect == null) continue;
                     }
@@ -1873,6 +2017,65 @@ public class DrawService {
                 }
             }
         });
+    }
+
+    private void checkPlanarDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
+        if (gameData.planechase == null || drawn == null || gameData.planechase.controllerId == null) {
+            return;
+        }
+
+        UUID planarControllerId = gameData.planechase.controllerId;
+        EffectSlot slot = planarControllerId.equals(drawingPlayerId)
+                ? EffectSlot.ON_CONTROLLER_DRAWS : EffectSlot.ON_OPPONENT_DRAWS;
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+
+        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+            Card card = object.getCard();
+            List<CardEffect> drawEffects = card.getEffects(slot);
+            for (CardEffect authoredEffect : drawEffects) {
+                CardEffect effect = authoredEffect;
+                if (effect instanceof DrawRevealTriggerEffect drawReveal) {
+                    logDrawReveal(gameData, drawingPlayerId, drawn, card);
+                    effect = drawReveal.effectFor(drawn);
+                    if (effect == null) {
+                        continue;
+                    }
+                } else if (effect instanceof DrawTriggerEffect drawTrigger) {
+                    effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
+                    if (effect == null) {
+                        continue;
+                    }
+                }
+
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(card, planarControllerId, may);
+                    continue;
+                }
+
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        planarControllerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)));
+                entry.setTargetId(drawingPlayerId);
+                entry.setSourcePlanarObject(object.copy());
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} planar draw trigger pushed onto stack", gameData.id, card.getName());
+            }
+        }
+    }
+
+    private void logDrawReveal(GameData gameData, UUID drawingPlayerId, Card drawn, Card sourceCard) {
+        String drawerName = gameData.playerIdToName.get(drawingPlayerId);
+        gameLogService.append(gameData, GameLog.builder()
+                .text(drawerName + " reveals ")
+                .card(drawn)
+                .text(" with ")
+                .card(sourceCard)
+                .text(".")
+                .build());
     }
 
     public void checkEnchantedPlayerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
@@ -1912,4 +2115,60 @@ public class DrawService {
             }
         });
     }
+    private Permanent findExileTopCardsMayPlayThisTurnDrawReplacementSource(GameData gameData,
+                                                                             UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::isInstance)
+                    .map(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::cast)
+                    .anyMatch(effect -> !effect.withoutPayingManaCost());
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    private void resolveExileTopCardsMayPlayThisTurnDrawReplacement(GameData gameData, UUID playerId,
+                                                                      Permanent source) {
+        ExileTopCardsMayPlayThisTurnDrawReplacementEffect replacement = source.getCard()
+                .getEffects(EffectSlot.STATIC).stream()
+                .filter(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::isInstance)
+                .map(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::cast)
+                .filter(effect -> !effect.withoutPayingManaCost())
+                .findFirst()
+                .orElse(null);
+        if (replacement == null) {
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + "'s library is empty; ", source.getCard(), " exiles nothing."));
+            return;
+        }
+
+        int count = Math.min(amountEvaluationService.evaluate(gameData, replacement.count(),
+                new com.github.laxika.magicalvibes.service.effect.AmountContext(
+                        playerId, source, null, 0, 0)), deck.size());
+        for (int i = 0; i < count; i++) {
+            Card exiled = deck.removeFirst();
+            exileService.exileCard(gameData, playerId, exiled);
+            gameData.exilePlayPermissions.put(exiled.getId(), playerId);
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+        }
+
+        gameLogService.append(gameData, GameLog.textCardText(
+                playerName + " exiles " + count + " card" + (count == 1 ? "" : "s")
+                        + " from the top of their library with ", source.getCard(),
+                " instead of drawing and may play them this turn."));
+    }
+
 }

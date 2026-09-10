@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "117")
+@CardRegistration(set = "OM1", collectorNumber = "101")
 public class SpidersManHeroicHorde extends Card {
 
     public SpidersManHeroicHorde() {

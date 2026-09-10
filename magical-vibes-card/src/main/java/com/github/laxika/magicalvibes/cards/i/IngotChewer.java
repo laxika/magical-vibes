@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "180")
+@CardRegistration(set = "DD2", collectorNumber = "45")
 public class IngotChewer extends Card {
 
     public IngotChewer() {

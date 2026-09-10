@@ -70,6 +70,10 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class GameViewProjectionFactory {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseViewService planarViews;
+
 
     private final CardViewFactory cardViewFactory;
     private final GameLogViewFactory gameLogViewFactory;
@@ -181,7 +185,8 @@ public class GameViewProjectionFactory {
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
-                    potentialPayableAbilityIndices, speeds, gameData.dayNight
+                    potentialPayableAbilityIndices, speeds, gameData.dayNight,
+                    gameData.planechase == null ? null : planarViews.create(gameData, playerId)
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -300,15 +305,9 @@ public class GameViewProjectionFactory {
         return result;
     }
 
-    /** Face-down battlefield creatures revealed to a player by a turn-scoped permission. */
+    /** Face-down battlefield creatures revealed to a player by a static or turn-scoped permission. */
     Map<UUID, CardView> collectFaceDownPermanentReveals(GameData data, UUID viewerId) {
-        boolean hasStaticPermission = data.playerBattlefields.getOrDefault(viewerId, List.of()).stream()
-                .filter(permanent -> !permanent.isFaceDown()
-                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                        && !gameQueryService.computeStaticBonus(data, permanent).losesAllAbilities())
-                .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
-                        data, permanent, LookAtFaceDownCreaturesEffect.class));
-        if (!data.playersWhoMayLookAtFaceDownCreaturesThisTurn.contains(viewerId) && !hasStaticPermission) {
+        if (!gameQueryService.mayLookAtOpposingFaceDownCreatures(data, viewerId)) {
             return Map.of();
         }
 
@@ -461,6 +460,16 @@ public class GameViewProjectionFactory {
         // LookAtTopCardOfOwnLibraryEffect / AllowCastFromTopOfLibraryEffect and temporary
         // top-library permissions = private, only visible to the controller.
         Set<UUID> revealedPlayerIds = new HashSet<>();
+        if (data.planechase != null) {
+            for (var planar : data.planechase.faceUp) {
+                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed
+                            && topCardRevealed.allPlayers()) {
+                        revealedPlayerIds.addAll(data.orderedPlayerIds);
+                    }
+                }
+            }
+        }
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> deck = data.playerDecks.get(pid);
             if (pid.equals(viewerId)
@@ -472,7 +481,9 @@ public class GameViewProjectionFactory {
                     && freePlayCardId.equals(deck.getFirst().getId())) {
                 revealedPlayerIds.add(pid);
             }
-            if (pid.equals(viewerId) && data.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(pid)) {
+            if ((castingPermissionService.hasLibraryTopPermission(data, viewerId, pid)
+                    || (pid.equals(viewerId) && data.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(pid)))
+                    && deck != null && !deck.isEmpty()) {
                 revealedPlayerIds.add(pid);
             }
 
@@ -589,7 +600,7 @@ public class GameViewProjectionFactory {
         Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
 
-        // Collect card IDs castable via AllowCastFromCardsExiledWithSourceEffect
+        // Collect card IDs playable via static exile permissions
         Set<UUID> castableFromExileWithSource = castingPermissionService.getCastableExiledCardIds(gameData, playerId);
         Set<UUID> anyManaTypeIds = castingPermissionService.getAnyManaTypeExiledCardIds(gameData, playerId);
         Set<UUID> snowManaAsAnyColorIds = gameData.exiledCards.stream()
@@ -602,6 +613,12 @@ public class GameViewProjectionFactory {
         List<Card> exiledCards = new ArrayList<>(gameData.getPlayerExiledCards(playerId));
         Set<UUID> alreadyIncluded = new HashSet<>();
         for (Card c : exiledCards) alreadyIncluded.add(c.getId());
+        for (Card card : gameData.playerSideboards.getOrDefault(playerId, List.of())) {
+            if (gameData.outsideGamePlayPermissions.contains(card.getId())
+                    && alreadyIncluded.add(card.getId())) {
+                exiledCards.add(card);
+            }
+        }
         for (UUID cardId : castableFromExileWithSource) {
             if (!alreadyIncluded.contains(cardId)) {
                 ExiledCardEntry entry = gameData.findExiledCard(cardId);
@@ -648,7 +665,20 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteCreatureOrEnchantmentSpellOnlyMana();
             }
+            if (card.hasType(CardType.ENCHANTMENT)
+                    && cardPool.getEnchantmentOrRoomUnlockOrTurnFaceUpManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
+            }
+            if (card.hasType(CardType.ENCHANTMENT)
+                    && card.getSubtypes().contains(CardSubtype.ROOM)
+                    && cardPool.getRoomSpellsOrUnlocksManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteRoomSpellsOrUnlocksMana();
+            }
             ExiledCardEntry exiledEntry = gameData.findExiledCard(card.getId());
+            boolean fromOutsideGame = exiledEntry == null
+                    && gameData.outsideGamePlayPermissions.contains(card.getId());
             ForetellCast foretellCast = card.getCastingOption(ForetellCast.class).orElse(null);
             ManaCost foretoldCost = gameData.foretoldCardCosts.get(card.getId());
             if (foretoldCost == null && foretellCast != null && foretellCast.manaCostString() != null) {
@@ -667,7 +697,7 @@ public class GameViewProjectionFactory {
                 continue;
             }
 
-            boolean hasPermission = castingPermissionService.hasExilePlayPermission(gameData, playerId, card.getId())
+            boolean hasPermission = fromOutsideGame || castingPermissionService.hasExilePlayPermission(gameData, playerId, card.getId())
                     || castableFromExileWithSource.contains(card.getId())
                     || foretellPermission;
             boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
@@ -696,7 +726,8 @@ public class GameViewProjectionFactory {
             if (card.getManaCost() == null
                     || castingPermissionService.isSpellLimitReached(gameData, playerId, card)
                     || cantCastDueToAttackExile) continue;
-            if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE, playerId)) continue;
+            if (!fromOutsideGame && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE, playerId)) continue;
+            if (fromOutsideGame && !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) continue;
             if (castingPermissionService.isSpellRestricted(gameData, playerId, card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
@@ -711,6 +742,16 @@ public class GameViewProjectionFactory {
                             && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
+                boolean canPayManaValueLifeAlternative = !foretellPermission
+                        && castingPermissionService.hasManaValueLifeAlternativeFromExiledWithSource(
+                        gameData, playerId, card.getId())
+                        && gameData.getLife(playerId) >= card.getManaValue()
+                        && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                        && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+                if (canPayManaValueLifeAlternative) {
+                    playable.add(exileCardView(gameData, playerId, card));
+                    continue;
+                }
                 if (!foretellPermission
                         && (castingPermissionService.hasFreeCastFromExiledWithSource(gameData, playerId, card.getId())
                         || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card))) {
@@ -834,8 +875,8 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        boolean canPlayLandFromTop = castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId);
-        List<Card> deck = gameData.playerDecks.get(playerId);
+        UUID libraryOwnerId = castingPermissionService.findLibraryTopOwner(gameData, playerId);
+        List<Card> deck = libraryOwnerId == null ? null : gameData.playerDecks.get(libraryOwnerId);
         if (deck == null || deck.isEmpty()) {
             return playable;
         }
@@ -848,7 +889,7 @@ public class GameViewProjectionFactory {
             boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
             boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-            if ((freeTopPlay || lifeTopPlay || canPlayLandFromTop)
+            if ((freeTopPlay || lifeTopPlay || castingPermissionService.canPlayLandsFromTopOfLibrary(gameData, playerId))
                     && isActivePlayer
                     && isMainPhase
                     && castingPermissionService.canPlayLandNow(gameData, playerId, topCard)) {
@@ -1015,7 +1056,8 @@ public class GameViewProjectionFactory {
                 getStackViews(data),
                 getGraveyardViews(data, playerId),
                 getSpeeds(data),
-                data.dayNight
+                data.dayNight,
+                data.planechase == null ? null : planarViews.create(data, playerId)
         );
     }
 

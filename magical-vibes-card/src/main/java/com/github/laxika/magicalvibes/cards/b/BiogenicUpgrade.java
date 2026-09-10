@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermane
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RNA", collectorNumber = "123")
+@CardRegistration(set = "FDN", collectorNumber = "553")
 public class BiogenicUpgrade extends Card {
 
     public BiogenicUpgrade() {

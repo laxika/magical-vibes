@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -20,6 +21,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachOneOfEquipmentToSamuraiEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -44,6 +47,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -139,6 +143,67 @@ class LibraryChoiceHandlerServiceTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
+    }
+
+    @Test
+    void choosingFromLookedAtCardsDoesNotPubliclyNameTheSelection() {
+        Card selected = createCard("Private selection", CardType.CREATURE);
+        Card remaining = createCard("Private remainder", CardType.LAND);
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player1Id, List.of(selected, remaining), List.of(selected.getId(), remaining.getId()),
+                false, true, false, true, false, 0, null, 1, "Choose.",
+                false, 1, false).withRevealSelected(false));
+
+        service.handleLibraryRevealChoice(gd, player1, List.of(selected.getId()));
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(selected);
+        verify(gameLogService, never()).append(eq(gd),
+                argThat((com.github.laxika.magicalvibes.model.GameLogEntry entry) ->
+                        entry.plainText().contains("Private selection")));
+    }
+
+    @Test
+    void simultaneousCloakingUsesFaceDownEntryAndTriggers() {
+        Card creature = createCard("Creature", CardType.CREATURE);
+        Card land = createCard("Land", CardType.LAND);
+        List<Card> cards = List.of(creature, land);
+        List<UUID> ids = cards.stream().map(Card::getId).toList();
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player1Id, cards, ids, false, false, false, true, false,
+                0, null, 2, "Choose.", false, 2, false, null, false,
+                true, false, null, false, true));
+
+        service.handleLibraryRevealChoice(gd, player1, ids);
+
+        verify(battlefieldEntryService, times(2)).putPermanentOntoBattlefield(
+                eq(gd), eq(player1Id), argThat(perm -> perm.isCloaked() && perm.isFaceDown()),
+                any(Set.class), any(List.class), isNull());
+        verify(battlefieldEntryService).processFaceDownCreatureETBTriggers(gd, player1Id, creature);
+        verify(battlefieldEntryService).processFaceDownCreatureETBTriggers(gd, player1Id, land);
+        verify(battlefieldEntryService, never()).handleCreatureEnteredBattlefield(
+                any(), any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void simultaneousSelectionPassesEnteredPermanentsToFollowUp() {
+        Card equipment = createCard("Equipment", CardType.ARTIFACT);
+        List<UUID> ids = List.of(equipment.getId());
+        gd.pendingEffectResolutionEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                createCard("Source", CardType.CREATURE), player1Id, "Search", List.of());
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player1Id, List.of(equipment), ids, false, false, false, true, false,
+                0, null, 1, "Choose.", false, 0, false, null, false,
+                false, false, new AttachOneOfEquipmentToSamuraiEffect(), false, true));
+
+        service.handleLibraryRevealChoice(gd, player1, ids);
+
+        ArgumentCaptor<Permanent> entered = ArgumentCaptor.forClass(Permanent.class);
+        verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                eq(gd), eq(player1Id), entered.capture(), any(Set.class), any(List.class), isNull());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(new MayEffect(
+                new AttachOneOfEquipmentToSamuraiEffect(List.of(entered.getValue().getId())),
+                "Attach one of those Equipment to a Samurai you control?"));
     }
 
     @Nested

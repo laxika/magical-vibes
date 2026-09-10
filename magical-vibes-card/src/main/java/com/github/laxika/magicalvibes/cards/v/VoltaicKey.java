@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "219")
 @CardRegistration(set = "USG", collectorNumber = "314")
+@CardRegistration(set = "DDE", collectorNumber = "17")
 public class VoltaicKey extends Card {
 
     public VoltaicKey() {

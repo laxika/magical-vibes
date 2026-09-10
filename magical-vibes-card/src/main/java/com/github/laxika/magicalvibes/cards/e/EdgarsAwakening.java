@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "108")
+@CardRegistration(set = "VOW", collectorNumber = "110")
 public class EdgarsAwakening extends Card {
 
     public EdgarsAwakening() {

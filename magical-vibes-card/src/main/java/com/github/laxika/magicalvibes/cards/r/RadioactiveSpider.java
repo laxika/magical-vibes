@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SPM", collectorNumber = "111")
 @CardRegistration(set = "SPM", collectorNumber = "212")
 @CardRegistration(set = "SPM", collectorNumber = "285")
+@CardRegistration(set = "OM1", collectorNumber = "105")
 public class RadioactiveSpider extends Card {
 
     public RadioactiveSpider() {

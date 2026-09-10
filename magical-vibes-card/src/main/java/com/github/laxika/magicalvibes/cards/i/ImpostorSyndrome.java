@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "34")
 @CardRegistration(set = "SPM", collectorNumber = "251")
+@CardRegistration(set = "OM1", collectorNumber = "32")
 public class ImpostorSyndrome extends Card {
 
     public ImpostorSyndrome() {

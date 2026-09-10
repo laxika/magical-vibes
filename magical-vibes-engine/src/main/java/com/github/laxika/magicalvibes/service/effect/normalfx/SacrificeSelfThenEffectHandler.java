@@ -58,7 +58,7 @@ public class SacrificeSelfThenEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (!permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
             return;
         }
 

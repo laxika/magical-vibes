@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseNameExileTopRevealUntilNamedToHandEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "121")
+@CardRegistration(set = "ME2", collectorNumber = "85")
 public class DemonicConsultation extends Card {
 
     public DemonicConsultation() {

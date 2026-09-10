@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostUnlessRevealSubtypeEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "245")
+@CardRegistration(set = "DD1", collectorNumber = "19")
 public class WrensRunVanquisher extends Card {
 
     public WrensRunVanquisher() {

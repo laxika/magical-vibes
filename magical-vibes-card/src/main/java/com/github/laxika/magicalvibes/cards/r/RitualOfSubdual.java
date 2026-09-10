@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "261")
+@CardRegistration(set = "ME2", collectorNumber = "174")
 public class RitualOfSubdual extends Card {
 
     public RitualOfSubdual() {

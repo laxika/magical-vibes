@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "116")
+@CardRegistration(set = "OM1", collectorNumber = "100")
 public class SpiderRexDaringDino extends Card {
 
     public SpiderRexDaringDino() {

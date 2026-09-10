@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class YavimayaGranger extends Card {
 
     public YavimayaGranger() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{2}{G}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
                         "Search your library for a basic land card?"));

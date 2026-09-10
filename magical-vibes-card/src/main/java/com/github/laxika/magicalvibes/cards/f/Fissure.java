@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "194")
 @CardRegistration(set = "DRK", collectorNumber = "63")
+@CardRegistration(set = "ME1", collectorNumber = "93")
 public class Fissure extends Card {
 
     public Fissure() {

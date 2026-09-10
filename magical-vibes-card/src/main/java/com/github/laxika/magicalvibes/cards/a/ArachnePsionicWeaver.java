@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "2")
 @CardRegistration(set = "SPM", collectorNumber = "245")
+@CardRegistration(set = "OM1", collectorNumber = "23")
 public class ArachnePsionicWeaver extends Card {
 
     public ArachnePsionicWeaver() {

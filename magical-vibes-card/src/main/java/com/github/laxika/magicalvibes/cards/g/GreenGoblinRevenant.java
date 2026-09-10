@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "130")
+@CardRegistration(set = "OM1", collectorNumber = "149")
 public class GreenGoblinRevenant extends Card {
 
     public GreenGoblinRevenant() {

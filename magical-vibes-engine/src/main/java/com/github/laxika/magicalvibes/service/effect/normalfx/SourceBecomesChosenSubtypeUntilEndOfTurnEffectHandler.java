@@ -6,7 +6,11 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -47,8 +51,16 @@ public class SourceBecomesChosenSubtypeUntilEndOfTurnEffectHandler implements No
             return;
         }
 
-        source.setTransientCreatureTypeOverride(chosenSubtype);
-        source.getTransientCreatureTypeOverrides().clear();
+        var typeChange = (SourceBecomesChosenSubtypeUntilEndOfTurnEffect) effect;
+        if (typeChange.retainOtherTypes()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), source.getId(), entry.getControllerId(),
+                    new GrantSubtypeEffect(chosenSubtype, GrantScope.TARGET),
+                    source.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+        } else {
+            source.setTransientCreatureTypeOverride(chosenSubtype);
+            source.getTransientCreatureTypeOverrides().clear();
+        }
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())
                 .text(" becomes a " + chosenSubtype.getDisplayName() + " until end of turn.")

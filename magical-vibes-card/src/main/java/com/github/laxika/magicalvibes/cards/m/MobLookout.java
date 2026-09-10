@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "136")
+@CardRegistration(set = "OM1", collectorNumber = "147")
 public class MobLookout extends Card {
 
     public MobLookout() {

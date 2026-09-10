@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MBS", collectorNumber = "11")
 @CardRegistration(set = "MRD", collectorNumber = "11")
 @CardRegistration(set = "9ED", collectorNumber = "25")
+@CardRegistration(set = "FDN", collectorNumber = "498")
 public class LeoninSkyhunter extends Card {
 }

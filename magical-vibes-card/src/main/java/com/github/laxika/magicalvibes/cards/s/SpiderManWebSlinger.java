@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "16")
+@CardRegistration(set = "OM1", collectorNumber = "9")
 public class SpiderManWebSlinger extends Card {
 
     public SpiderManWebSlinger() {

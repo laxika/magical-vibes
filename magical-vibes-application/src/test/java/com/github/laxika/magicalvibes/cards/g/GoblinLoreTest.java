@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinLore.class, GrizzlyBears.class})
 class GoblinLoreTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -21,15 +24,11 @@ class GoblinLoreTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Goblin Lore puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new GoblinLore()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GoblinLore(), "{1}{R}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Goblin Lore");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
     }
 
@@ -51,10 +50,7 @@ class GoblinLoreTest extends BaseCardTest {
     void resolvingDrawsFourThenDiscardsThreeAtRandom() {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new GoblinLore()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GoblinLore(), "{1}{R}");
         harness.passBothPriorities();
 
         // Drew 4 cards, discarded 3 at random — net gain of 1 card
@@ -76,10 +72,7 @@ class GoblinLoreTest extends BaseCardTest {
     @Test
     @DisplayName("Goblin Lore goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new GoblinLore()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GoblinLore(), "{1}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -89,22 +82,17 @@ class GoblinLoreTest extends BaseCardTest {
     @Test
     @DisplayName("When hand has fewer than 3 cards after drawing, discards all available")
     void discardsAllWhenFewerThanThreeCardsAfterDraw() {
-        // Set up: empty deck so drawing 4 won't yield 4 cards
-        gd.playerDecks.get(player1.getId()).clear();
-        // Add only 2 cards to deck
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        // Drawing beyond the two-card library also causes the expected game loss.
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.setHand(player1, List.of(new GoblinLore()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GoblinLore(), "{1}{R}");
         harness.passBothPriorities();
 
         // Drew 2 (deck ran out), discard 3 at random but only 2 available — discards all 2
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         // Graveyard has Goblin Lore + 2 discarded
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
 

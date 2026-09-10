@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeTurnedFaceUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -44,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCards
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
@@ -84,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToCreaturesOfChosenParityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenColorToPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
@@ -383,12 +386,19 @@ public final class LayerClassifier {
         map.put(RemoveKeywordEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(RemoveProtectionFromColorUntilEndOfTurnEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(LosesAllAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(CantBeTurnedFaceUpEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(LosesAllNonManaAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantActivatedAbilityEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantEffectEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(IncreaseDevotionEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(SuspectedEffect.class, fixed(Layer.L6_ABILITIES));
-        map.put(GrantStaticEffectToSourceEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GrantStaticEffectToSourceEffect.class, new Entry(Set.of(Layer.L6_ABILITIES, Layer.L7B_SET_PT),
+                (effect, fromOwnStaticSlot) -> {
+                    GrantStaticEffectToSourceEffect grant = (GrantStaticEffectToSourceEffect) effect;
+                    return grant.staticEffect() instanceof SetBasePowerToughnessToAmountEffect
+                            ? new LayerClassification(Set.of(Layer.L6_ABILITIES, Layer.L7B_SET_PT), false, false)
+                            : new LayerClassification(Set.of(Layer.L6_ABILITIES), false, false);
+                }));
         map.put(GrantHexproofFromOwnColorsEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantHexproofToChosenPlaneswalkerTypeEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantTriggeredAbilityEffect.class, fixed(Layer.L6_ABILITIES));
@@ -399,6 +409,7 @@ public final class LayerClassifier {
         map.put(ProtectionFromMulticoloredEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromMonocoloredEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromChosenColorEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GrantProtectionFromChosenColorToPermanentsEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantProtectionFromChosenTypeToOwnCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantKeywordToCreaturesOfChosenParityEffect.class, fixed(Layer.L6_ABILITIES));
         // Self ability-scans (Cairn Wanderer family) carry the CDA flag as a modeling decision
@@ -422,6 +433,8 @@ public final class LayerClassifier {
         map.put(GainActivatedAbilitiesOfChosenPermanentEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfCreaturesWithCounterEffect.class,
+                fixed(Layer.L6_ABILITIES));
+        map.put(GainActivatedAbilitiesOfOwnCreaturesEffect.class,
                 fixed(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfTopLibraryCardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));

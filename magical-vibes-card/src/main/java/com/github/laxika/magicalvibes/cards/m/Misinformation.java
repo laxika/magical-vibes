@@ -15,6 +15,7 @@ import java.util.List;
  * chosen in is the order they are stacked (last chosen ends up on top).
  */
 @CardRegistration(set = "ALL", collectorNumber = "56")
+@CardRegistration(set = "ME2", collectorNumber = "105")
 public class Misinformation extends Card {
 
     public Misinformation() {

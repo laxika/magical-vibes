@@ -44,7 +44,7 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
         // Locate the target spell on the stack. If it's gone (illegal target), the whole spell fizzles.
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (se.getTargetableId().equals(targetCardId)) {
                 targetEntry = se;
                 break;
             }
