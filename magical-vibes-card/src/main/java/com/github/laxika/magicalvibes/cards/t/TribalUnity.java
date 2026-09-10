@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesOfChosenSubtypeEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "294")
+@CardRegistration(set = "HOP", collectorNumber = "80")
 public class TribalUnity extends Card {
 
     public TribalUnity() {

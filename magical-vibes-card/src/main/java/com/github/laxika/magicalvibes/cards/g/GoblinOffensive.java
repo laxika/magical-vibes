@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "192")
 @CardRegistration(set = "ATH", collectorNumber = "37")
+@CardRegistration(set = "HOP", collectorNumber = "56")
 public class GoblinOffensive extends Card {
 
     public GoblinOffensive() {

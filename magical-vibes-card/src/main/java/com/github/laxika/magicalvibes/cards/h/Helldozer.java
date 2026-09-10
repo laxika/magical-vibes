@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "88")
+@CardRegistration(set = "HOP", collectorNumber = "30")
 public class Helldozer extends Card {
 
     public Helldozer() {

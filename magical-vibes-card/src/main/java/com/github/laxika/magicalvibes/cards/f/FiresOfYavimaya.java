@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "246")
+@CardRegistration(set = "HOP", collectorNumber = "87")
 public class FiresOfYavimaya extends Card {
 
     public FiresOfYavimaya() {

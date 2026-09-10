@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "22")
+@CardRegistration(set = "HOP", collectorNumber = "3")
 public class KorSanctifiers extends Card {
 
     public KorSanctifiers() {

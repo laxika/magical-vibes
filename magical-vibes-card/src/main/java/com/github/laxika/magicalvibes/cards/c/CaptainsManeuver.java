@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "92")
+@CardRegistration(set = "HOP", collectorNumber = "85")
 public class CaptainsManeuver extends Card {
 
     public CaptainsManeuver() {

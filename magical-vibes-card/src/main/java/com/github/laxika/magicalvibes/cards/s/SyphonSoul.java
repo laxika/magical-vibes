@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "BRB", collectorNumber = "86")
 @CardRegistration(set = "ONS", collectorNumber = "176")
 @CardRegistration(set = "LEG", collectorNumber = "118")
+@CardRegistration(set = "HOP", collectorNumber = "43")
 public class SyphonSoul extends Card {
 
     public SyphonSoul() {
