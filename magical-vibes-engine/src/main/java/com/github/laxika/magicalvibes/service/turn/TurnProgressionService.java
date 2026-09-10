@@ -746,6 +746,7 @@ public class TurnProgressionService {
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();
+        gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.clear();
         gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();
         gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
@@ -779,6 +780,7 @@ public class TurnProgressionService {
 
         gameData.forEachPermanent((playerId, p) -> {
             p.setAttackedThisTurn(false);
+            p.setAttacksThisTurn(0);
             p.setBlockedThisTurn(false);
             p.setBecomeTargetCounterUsedThisTurn(false);
             p.setBackupAbilityCopyUsedThisTurn(false);

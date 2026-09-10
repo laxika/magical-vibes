@@ -106,6 +106,8 @@ public class GameData {
     public final Set<UUID> playersWhoActedDuringTheirLastTurn = ConcurrentHashMap.newKeySet();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
+    /** Card ids of spells that were kicked when cast, grouped by caster for the current turn. */
+    private final Map<UUID, Set<UUID>> kickedSpellsCastThisTurn = new ConcurrentHashMap<>();
     /** Whether any spell was cast for its Warp cost this turn. */
     public boolean spellWarpedThisTurn;
     public final Map<UUID, List<StackEntry>> crimeCandidatesThisTurn = new ConcurrentHashMap<>();
@@ -209,6 +211,8 @@ public class GameData {
     /** Players who controlled a permanent that received a +1/+1 counter this turn. */
     public final Set<UUID> playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
     public final Set<UUID> permanentsThatReceivedPlusOnePlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
+    /** Per-player count of +1/+1 counters put on creatures they controlled this turn. */
+    public final Map<UUID, Integer> plusOnePlusOneCountersPutOnControlledCreaturesThisTurn = new ConcurrentHashMap<>();
     /** Players who sacrificed at least one permanent this turn. */
     public final Set<UUID> playersWhoSacrificedPermanentsThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who sacrificed at least one artifact this turn. */
@@ -477,6 +481,8 @@ public class GameData {
     public PermanentPredicate combatDamageExemptPredicate;
     public UUID combatDamageExemptControllerId;
     public boolean allPermanentsEnterTappedThisTurn;
+    /** Per-player filters for permanents that enter tapped under that player's control this turn. */
+    public final Map<UUID, Set<PermanentPredicate>> permanentEnterTappedFiltersThisTurn = new ConcurrentHashMap<>();
     /**
      * Per-player count of additional +1/+1 counters that creatures entering under that player's
      * control receive for the rest of this turn (Zameck Guildmage). Turn-long replacement effect
@@ -2997,6 +3003,12 @@ public class GameData {
      */
     public void recordSpellCast(UUID playerId, Card card) {
         spellsCastThisTurn.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
+        if (stack.stream().anyMatch(entry -> entry.getCard() != null
+                && entry.getCard().getId().equals(card.getId())
+                && entry.wasKicked())) {
+            kickedSpellsCastThisTurn.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(card.getId());
+        }
         recordPlayerActionDuringOwnTurn(playerId);
         spellCastOrderThisTurn.add(card.getId());
         mostRecentSpellCastThisTurn = card;
@@ -3571,6 +3583,10 @@ public class GameData {
         return Collections.unmodifiableList(spellsCastThisTurn.getOrDefault(playerId, List.of()));
     }
 
+    public Set<UUID> getKickedSpellsCastThisTurn(UUID playerId) {
+        return Collections.unmodifiableSet(kickedSpellsCastThisTurn.getOrDefault(playerId, Set.of()));
+    }
+
     /**
      * Returns the spell most recently cast by any player this turn, or {@code null} if no spell has
      * been cast yet.
@@ -3601,6 +3617,7 @@ public class GameData {
         target.clear();
         spellsCastThisTurn.forEach((id, spells) -> target.put(id, spells.size()));
         spellsCastThisTurn.clear();
+        kickedSpellsCastThisTurn.clear();
         spellCastOrderThisTurn.clear();
         mostRecentSpellCastThisTurn = null;
         spellWarpedThisTurn = false;
@@ -4210,6 +4227,11 @@ public class GameData {
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.combatDamageExemptControllerId = this.combatDamageExemptControllerId;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
+        this.permanentEnterTappedFiltersThisTurn.forEach((playerId, filters) -> {
+            Set<PermanentPredicate> copiedFilters = ConcurrentHashMap.newKeySet();
+            copiedFilters.addAll(filters);
+            copy.permanentEnterTappedFiltersThisTurn.put(playerId, copiedFilters);
+        });
         copy.additionalEnterCountersThisTurn.putAll(this.additionalEnterCountersThisTurn);
         copy.additionalEnterCountersUntilNextTurn.putAll(this.additionalEnterCountersUntilNextTurn);
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
@@ -4434,6 +4456,8 @@ public class GameData {
         copy.playersWhoPlayedOrCastFromOutsideHandThisTurn.addAll(this.playersWhoPlayedOrCastFromOutsideHandThisTurn);
         copy.permanentsThatReceivedPlusOnePlusOneCountersThisTurn
                 .addAll(this.permanentsThatReceivedPlusOnePlusOneCountersThisTurn);
+        copy.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn
+                .putAll(this.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn);
         copy.permanentsThatAttackedBattlesThisTurn.addAll(this.permanentsThatAttackedBattlesThisTurn);
         copy.playersWithHexproofThisTurn.addAll(this.playersWithHexproofThisTurn);
         copy.playersWithShroudThisTurn.addAll(this.playersWithShroudThisTurn);
@@ -4559,6 +4583,10 @@ public class GameData {
         copy.playersWhoActedDuringTheirLastTurn.addAll(this.playersWhoActedDuringTheirLastTurn);
         this.spellsCastThisTurn.forEach((k, v) ->
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
+        this.kickedSpellsCastThisTurn.forEach((k, v) ->
+                copy.kickedSpellsCastThisTurn.put(k, ConcurrentHashMap.newKeySet()));
+        this.kickedSpellsCastThisTurn.forEach((k, v) ->
+                copy.kickedSpellsCastThisTurn.get(k).addAll(v));
         copy.spellWarpedThisTurn = this.spellWarpedThisTurn;
         copy.spellCastOrderThisTurn.addAll(this.spellCastOrderThisTurn);
         copy.mostRecentSpellCastThisTurn = this.mostRecentSpellCastThisTurn;

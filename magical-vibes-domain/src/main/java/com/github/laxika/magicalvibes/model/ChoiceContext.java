@@ -74,6 +74,8 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record KickedSpellManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record TreasureManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)

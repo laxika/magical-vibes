@@ -27,7 +27,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForImprintedCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensForExiledCardsWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCounterPTEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithTotalDyingCreaturesPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
@@ -258,6 +260,30 @@ public class DeathTriggerCollectorService {
                 t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), counters,
                 t.grantedKeywordsUntilEndOfTurn(), t.supertypes());
 
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(resolved))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenWithDyingSourceCounterPTEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handleCreateTokenWithDyingSourceCounterPT(TriggerMatchContext match,
+            CreateTokenWithDyingSourceCounterPTEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+
+        CreateTokenWithDyingSourceCounterPTEffect resolved =
+                new CreateTokenWithDyingSourceCounterPTEffect(
+                        effect.tokenTemplate(),
+                        Map.of(CounterType.PLUS_ONE_PLUS_ONE,
+                                dyingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)));
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sd.dyingCard(),
@@ -3201,6 +3227,37 @@ public class DeathTriggerCollectorService {
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new CreateTokenForImprintedCardOwnerEffect(frozen))),
+                match.permanent().getId(),
+                List.of()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokensForExiledCardsWithSourceEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleSelfLeavesCreateTokensForExiledCardsWithSource(TriggerMatchContext match,
+            CreateTokensForExiledCardsWithSourceEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        boolean hasExiledCard;
+        synchronized (match.gameData().exiledCards) {
+            hasExiledCard = match.gameData().exiledCards.stream()
+                    .anyMatch(exiled -> match.permanent().getId().equals(exiled.sourcePermanentId()));
+        }
+        if (!hasExiledCard) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new CreateTokensForExiledCardsWithSourceEffect(
+                        effect.tokenEffect(), match.permanent().getId()))),
                 match.permanent().getId(),
                 List.of()
         );

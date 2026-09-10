@@ -249,6 +249,7 @@ public class TurnCleanupService {
         gameData.combatDamageExemptPredicate = null;
         gameData.combatDamageExemptControllerId = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
+        gameData.permanentEnterTappedFiltersThisTurn.clear();
         gameData.additionalEnterCountersThisTurn.clear();
         gameData.skippedStepOrPhasesThisTurn.clear();
         gameData.preventDamageFromColors.clear();

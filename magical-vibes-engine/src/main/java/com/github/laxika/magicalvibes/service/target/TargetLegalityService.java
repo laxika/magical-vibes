@@ -318,7 +318,8 @@ public class TargetLegalityService {
                             && returnEffect.minTargets() == 0)
                     || effects.stream().anyMatch(effect ->
                     effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
-                            && returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS)
+                            && (returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS
+                            || returnEffect.dynamicMaxTargets() != null && returnEffect.minTargets() == 0))
                     || xValue != null && xValue == 0 && effects.stream()
                     .anyMatch(effect -> effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect
                             && ((ReturnTargetCardsFromGraveyardToBattlefieldEffect) effect).xScaled());
@@ -2010,8 +2011,15 @@ public class TargetLegalityService {
     public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
                                               Permanent sourcePermanent, SpellTarget group,
                                               boolean giftPromised) {
+        return getEffectiveMaxTargetsForGroup(
+                gameData, card, controllerId, sourcePermanent, group, false, giftPromised);
+    }
+
+    public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
+                                              Permanent sourcePermanent, SpellTarget group,
+                                              boolean kicked, boolean giftPromised) {
         return effectiveGroupMaxTargets(
-                gameData, controllerId, sourcePermanent, group, 0, false, giftPromised);
+                gameData, controllerId, sourcePermanent, group, 0, kicked, giftPromised);
     }
 
     public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
@@ -2146,6 +2154,16 @@ public class TargetLegalityService {
             }
             return;
         }
+        if (constraint == MultiTargetConstraint.DIFFERENT_MANA_VALUES) {
+            Set<Integer> manaValues = new HashSet<>();
+            for (UUID targetId : targetIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, targetId);
+                if (card != null && !manaValues.add(card.getManaValue())) {
+                    throw new IllegalStateException("Chosen cards must have different mana values");
+                }
+            }
+            return;
+        }
         if (constraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET) {
             validateControlledByFirstTarget(gameData, targetIds);
             return;
@@ -2228,7 +2246,8 @@ public class TargetLegalityService {
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
-                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND -> {
+                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
+                         DIFFERENT_MANA_VALUES -> {
                         // Handled by early returns above.
                     }
                 }

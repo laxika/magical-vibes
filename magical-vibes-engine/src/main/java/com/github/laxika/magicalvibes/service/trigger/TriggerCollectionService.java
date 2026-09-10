@@ -250,6 +250,44 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires +1/+1 counter triggers on cards in the controlled creature's controller's graveyard. */
+    public void checkGraveyardAllyPlusOnePlusOneCountersPutOnCreatureTriggers(
+            GameData gameData, Permanent creature, UUID creatureControllerId, int amount) {
+        if (creature == null || creatureControllerId == null || amount <= 0
+                || !gameQueryService.isCreature(gameData, creature)) {
+            return;
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(creatureControllerId);
+        if (graveyard == null) {
+            return;
+        }
+
+        for (Card card : new ArrayList<>(graveyard)) {
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE);
+            if (effects == null || effects.isEmpty()) {
+                continue;
+            }
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(card, creatureControllerId, may);
+                } else {
+                    gameData.enqueueTrigger(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            creatureControllerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))));
+                }
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} graveyard trigger queued on +1/+1 counter placement",
+                        gameData.id, card.getName());
+            }
+        }
+    }
+
     public void checkLoyaltyCounterRemovalTriggers(GameData gameData) {
         gameData.forEachPermanent((controllerId, permanent) -> {
             int amount = permanent.drainLoyaltyCountersRemovedSinceTriggerCheck();
@@ -1293,9 +1331,11 @@ public class TriggerCollectionService {
                     // Carry the spell's X onto the trigger so "reveal the top X cards" (Genesis Hydra)
                     // sees the value locked in on cast (CR 601.2b); 0 for spells without {X}.
                     int selfCastX = 0;
+                    boolean selfCastKicked = false;
                     for (StackEntry se : gameData.stack) {
                         if (se.getCard().getId().equals(spellCard.getId())) {
                             selfCastX = se.getXValue();
+                            selfCastKicked = se.wasKicked();
                             break;
                         }
                     }
@@ -1307,6 +1347,7 @@ public class TriggerCollectionService {
                             new ArrayList<>(selfCastTriggeredEffects),
                             selfCastX
                     );
+                    selfCastTrigger.setKicked(selfCastKicked);
                     if (selfCastTriggeredEffects.stream()
                             .anyMatch(TriggeringSpellReferencingEffect.class::isInstance)) {
                         selfCastTrigger.setTriggeringCardId(spellCard.getId());
@@ -3040,6 +3081,8 @@ public class TriggerCollectionService {
             collectAnotherAllyPermanentBecomesTargetOfOpponentTriggers(
                     gameData, targetPermanent, controllerId, spellEntry);
             collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, spellEntry);
+            collectAllyCreatureBecomesTargetOfOpponentSpellTriggers(
+                    gameData, targetPermanent, controllerId, spellEntry);
             collectAllyCreatureOrCreatureSpellBecomesTargetOfOpponentTriggers(
                     gameData, targetPermanent, controllerId, spellEntry);
             collectAnyCreatureBecomesTargetTriggers(gameData, targetPermanent, spellEntry);
@@ -3396,6 +3439,7 @@ public class TriggerCollectionService {
                     null,
                     source.getId()
             );
+            entry.setSourcePermanentSnapshot(new Permanent(source));
             gameData.stack.add(entry);
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
@@ -3913,6 +3957,52 @@ public class TriggerCollectionService {
                         "'s triggered ability triggers."));
             }
             log.info("Game {} - {} ally-creature-becomes-target-of-opponent trigger queued",
+                    gameData.id, source.getCard().getName());
+        }
+    }
+
+    /**
+     * Checks the spell-only opponent-target trigger slot. This is separate from the
+     * spell-or-ability slot because cards such as Swarm Shambler do not trigger from abilities.
+     */
+    private void collectAllyCreatureBecomesTargetOfOpponentSpellTriggers(
+            GameData gameData, Permanent targetPermanent, UUID creatureControllerId, StackEntry spellEntry) {
+        if (!targetPermanent.getCard().hasType(CardType.CREATURE)) return;
+        if (creatureControllerId.equals(spellEntry.getControllerId())) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(creatureControllerId);
+        if (battlefield == null) return;
+
+        for (Permanent source : battlefield) {
+            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
+                    EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, source, EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL));
+            if (effects.isEmpty()) continue;
+
+            List<CardEffect> resolvedEffects = new ArrayList<>();
+            for (CardEffect effect : effects) {
+                CardEffect resolved = resolveTriggeringPermanentConditional(
+                        gameData, source, creatureControllerId, targetPermanent, effect);
+                if (resolved != null) {
+                    resolvedEffects.add(resolved);
+                }
+            }
+            if (resolvedEffects.isEmpty()) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    creatureControllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    resolvedEffects,
+                    null,
+                    source.getId()
+            );
+            gameData.stack.add(entry);
+
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} ally-creature-becomes-target-of-opponent-spell trigger queued",
                     gameData.id, source.getCard().getName());
         }
     }
@@ -10250,6 +10340,16 @@ public class TriggerCollectionService {
                 for (CardEffect effect : effects) {
                     CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringLand, gameData, landControllerId);
                     if (resolved == null) continue;
+
+                    if (resolved instanceof ConditionalEffect conditional
+                            && conditional.interveningIf()
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                    ConditionContext.forCard(card, landControllerId)
+                                            .withTriggeringCard(enteringLand))) {
+                        log.info("Game {} - {} graveyard landfall trigger skipped ({}) not met",
+                                gameData.id, card.getName(), conditional.conditionName());
+                        continue;
+                    }
 
                     if (resolved instanceof MayEffect may) {
                         gameData.queueMayAbility(card, landControllerId, may);

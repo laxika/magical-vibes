@@ -26,6 +26,15 @@ public record FightTargetsEffect(int firstTargetGroup, int secondTargetGroup,
         this(firstTargetGroup, secondTargetGroup, null, null);
     }
 
+    /**
+     * Creates a fight effect whose two groups are the target-filter groups declared for its mode.
+     * The effect must be the first effect in that mode's {@code targetFilters} list; the cast path
+     * binds it to the first group and the handler reads the following group as the second target.
+     */
+    public static FightTargetsEffect forModeTargetFilters() {
+        return new FightTargetsEffect(-1, -1);
+    }
+
     /** Creates a fight effect with targets captured by a reflexive ability. */
     public FightTargetsEffect(UUID firstTargetId, UUID secondTargetId) {
         this(0, 1, firstTargetId, secondTargetId);

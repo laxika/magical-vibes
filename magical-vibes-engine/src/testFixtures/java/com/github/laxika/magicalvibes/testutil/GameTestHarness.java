@@ -1186,6 +1186,16 @@ public class GameTestHarness {
                 xValue, targetId, targetIds);
     }
 
+    public void castModalSorceryWithModesForXAndDamageAssignments(Player player, int cardIndex,
+                                                                  int choicesRequired,
+                                                                  int[] modeIndices, int xValue,
+                                                                  Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playModalXCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
+                xValue, null, List.of(), damageAssignments);
+    }
+
     /**
      * Cast a variable-count modal {@code {X}} sorcery ("choose one or more", e.g. Clan Defiance)
      * with per-mode targets in chosen-mode order.

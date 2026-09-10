@@ -47,8 +47,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record AttachControlledEquipmentToTargetCreature(UUID targetCreatureId, UUID controllerId,
-                                                     Card sourceCard, List<UUID> equipmentPermanentIds)
+                                                     Card sourceCard, List<UUID> equipmentPermanentIds,
+                                                     boolean unattachAtNextEndStep)
             implements PermanentChoiceContext {
+        public AttachControlledEquipmentToTargetCreature(UUID targetCreatureId, UUID controllerId,
+                                                          Card sourceCard, List<UUID> equipmentPermanentIds) {
+            this(targetCreatureId, controllerId, sourceCard, equipmentPermanentIds, true);
+        }
+
         public AttachControlledEquipmentToTargetCreature {
             equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
         }

@@ -228,6 +228,7 @@ public class BattlefieldPlacementService {
             applyAllPermanentsEnterTapped(gameData, permanent);
             applyGlobalFilteredEnterTappedEffects(gameData, permanent);
             applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
+            applyTurnScopedFilteredEnterTappedEffects(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
             applyControlledPermanentsEnterUntapped(gameData, controllerId, permanent);
             applyControlledLandsEnterUntapped(gameData, controllerId, permanent);
@@ -763,6 +764,17 @@ public class BattlefieldPlacementService {
         }
     }
 
+    private void applyTurnScopedFilteredEnterTappedEffects(GameData gameData, UUID enteringControllerId,
+                                                            Permanent enteringPermanent) {
+        for (PermanentPredicate filter : gameData.permanentEnterTappedFiltersThisTurn
+                .getOrDefault(enteringControllerId, Set.of())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, enteringPermanent, filter)) {
+                enteringPermanent.tap();
+                return;
+            }
+        }
+    }
+
     private void applyControlledLandsEnterUntapped(GameData gameData, UUID enteringControllerId,
                                                    Permanent enteringPermanent) {
         if (!enteringPermanent.getCard().hasType(CardType.LAND)) {
@@ -1150,13 +1162,15 @@ public class BattlefieldPlacementService {
                     continue;
                 }
 
-                if (permanent.getChosenSubtype() == null && isChosenSubtypeDependent(enterWith)) continue;
+                if (!matchesEnterWithCountersPredicate(gameData, controllerId, card, enterWith)
+                        || (permanent.getChosenSubtype() == null && isChosenSubtypeDependent(enterWith))) continue;
                 applyEnterWithCountersEffect(gameData, controllerId, permanent, enterWith, xValue,
                         repeatedAdditionalCosts, convokeCreatureCount, card);
             }
         }
 
-        if (additionalEnterWithCounters != null) {
+        if (additionalEnterWithCounters != null
+                && matchesEnterWithCountersPredicate(gameData, controllerId, card, additionalEnterWithCounters)) {
             applyEnterWithCountersEffect(gameData, controllerId, permanent, additionalEnterWithCounters,
                     xValue, repeatedAdditionalCosts, convokeCreatureCount, card);
         }
@@ -1188,7 +1202,9 @@ public class BattlefieldPlacementService {
 
         int countersBefore = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (effect instanceof EnterWithCountersEffect enterWith && isChosenSubtypeDependent(enterWith)) {
+            if (effect instanceof EnterWithCountersEffect enterWith
+                    && matchesEnterWithCountersPredicate(gameData, controllerId, permanent.getCard(), enterWith)
+                    && isChosenSubtypeDependent(enterWith)) {
                 applyEnterWithCountersEffect(gameData, controllerId, permanent, enterWith, 0,
                         List.of(), 0, permanent.getCard());
             }
@@ -1219,6 +1235,13 @@ public class BattlefieldPlacementService {
             count++;
         }
         applyEntryCounters(gameData, controllerId, permanent, enterWith.type(), count);
+    }
+
+    private boolean matchesEnterWithCountersPredicate(GameData gameData, UUID controllerId, Card card,
+                                                      EnterWithCountersEffect enterWith) {
+        return enterWith.cardPredicate() == null
+                || predicateEvaluationService.matchesCardPredicate(
+                card, enterWith.cardPredicate(), null, gameData, controllerId);
     }
 
     private void applyDiscardEntryCounters(GameData gameData, UUID controllerId, Permanent permanent,

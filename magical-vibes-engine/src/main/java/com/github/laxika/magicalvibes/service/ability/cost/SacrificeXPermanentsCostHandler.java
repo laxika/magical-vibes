@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
@@ -23,16 +24,26 @@ public class SacrificeXPermanentsCostHandler implements PermanentChoiceCostHandl
     private final int xValue;
     private final UUID sourcePermanentId;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
     private final PermanentSacrificeAction sacrificeAction;
 
     public SacrificeXPermanentsCostHandler(SacrificeXPermanentsCost cost, int xValue,
                                            PredicateEvaluationService predicateEvaluationService,
                                            PermanentSacrificeAction sacrificeAction,
                                            UUID sourcePermanentId) {
+        this(cost, xValue, predicateEvaluationService, null, sacrificeAction, sourcePermanentId);
+    }
+
+    public SacrificeXPermanentsCostHandler(SacrificeXPermanentsCost cost, int xValue,
+                                           PredicateEvaluationService predicateEvaluationService,
+                                           GameQueryService gameQueryService,
+                                           PermanentSacrificeAction sacrificeAction,
+                                           UUID sourcePermanentId) {
         this.cost = cost;
         this.xValue = xValue;
         this.sourcePermanentId = sourcePermanentId;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.gameQueryService = gameQueryService;
         this.sacrificeAction = sacrificeAction;
     }
 
@@ -59,6 +70,8 @@ public class SacrificeXPermanentsCostHandler implements PermanentChoiceCostHandl
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> matchesFilter(gameData, p))
+                .filter(p -> gameQueryService == null
+                        || gameQueryService.canSacrificePermanentForCosts(gameData, p))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -67,6 +80,9 @@ public class SacrificeXPermanentsCostHandler implements PermanentChoiceCostHandl
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
         if (!matchesFilter(gameData, chosen)) {
             throw new IllegalStateException("Permanent does not match the required predicate");
+        }
+        if (gameQueryService != null && !gameQueryService.canSacrificePermanentForCosts(gameData, chosen)) {
+            throw new IllegalStateException("This permanent cannot be sacrificed as a cost");
         }
         sacrificeAction.sacrifice(gameData, player, chosen);
     }

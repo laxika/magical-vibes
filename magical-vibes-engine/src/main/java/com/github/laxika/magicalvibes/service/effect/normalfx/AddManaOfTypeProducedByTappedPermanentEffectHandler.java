@@ -31,6 +31,12 @@ public class AddManaOfTypeProducedByTappedPermanentEffectHandler implements Norm
             return;
         }
 
+        AddManaOfTypeProducedByTappedPermanentEffect trigger =
+                (AddManaOfTypeProducedByTappedPermanentEffect) effect;
+        if (trigger.requiredColor() != null && trigger.requiredColor() != manaColor) {
+            return;
+        }
+
         ManaPool pool = gameData.playerManaPools.get(entry.getControllerId());
         if (pool == null) {
             return;

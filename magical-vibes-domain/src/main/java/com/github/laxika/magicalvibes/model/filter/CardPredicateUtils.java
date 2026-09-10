@@ -37,6 +37,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasSourceChosenSubtypePredicate p) {
             return p.creatureOnly() ? "creature card of the chosen type" : "card of the chosen type";
         }
+        if (predicate instanceof CardSharesCreatureTypeWithSourcePredicate) {
+            return "card that shares a creature type with it";
+        }
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
         }
@@ -48,6 +51,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardHasManaAbilityPredicate) {
             return "card with a mana ability";
+        }
+        if (predicate instanceof CardHasKickerPredicate) {
+            return "card with kicker";
         }
         if (predicate instanceof CardIsAuraPredicate) {
             return "Aura card";
@@ -99,6 +105,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate) {
             return "card with mana value at most the number of permanent cards in your graveyard";
+        }
+        if (predicate instanceof CardManaValueAtMostControlledLandsPredicate) {
+            return "card with mana value at most the number of lands you control";
         }
         if (predicate instanceof CardManaValueLessThanSourceLoyaltyPredicate) {
             return "card with mana value less than this planeswalker's loyalty";

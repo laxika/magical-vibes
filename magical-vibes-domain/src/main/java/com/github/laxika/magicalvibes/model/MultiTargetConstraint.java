@@ -59,5 +59,7 @@ public enum MultiTargetConstraint {
     /** At most one selected card may be assigned to each color. */
     AT_MOST_ONE_PER_COLOR,
     /** The chosen targets must have different names. */
-    DIFFERENT_NAMES
+    DIFFERENT_NAMES,
+    /** The chosen cards must have different mana values. */
+    DIFFERENT_MANA_VALUES
 }

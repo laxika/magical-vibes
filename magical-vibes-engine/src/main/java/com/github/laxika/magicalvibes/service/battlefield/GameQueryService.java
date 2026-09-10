@@ -143,6 +143,7 @@ import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFrom
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackWithoutTappingPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
@@ -193,6 +194,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.SelfAllZoneSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardSubtypeGrantingEffect;
@@ -779,7 +781,8 @@ public class GameQueryService {
     public boolean cardHasSubtype(Card card, CardSubtype subtype, GameData gameData, UUID cardOwnerId) {
         if (card.getSubtypes().contains(subtype)) return true;
         if (card.hasType(CardType.CREATURE) && isCreatureSubtype(subtype)
-                && hasSelfAllCreatureTypesEffect(card)) return true;
+                && (hasSelfAllCreatureTypesEffect(card)
+                || selfAllZoneGrantedSubtypes(card).contains(subtype))) return true;
         if (gameData == null || cardOwnerId == null) return false;
         if (!card.hasType(CardType.CREATURE)) return false;
         if (computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId).contains(subtype)) {
@@ -820,6 +823,9 @@ public class GameQueryService {
                 if (isCreatureSubtype(subtype)) subtypes.add(subtype);
             }
         }
+        if (card.hasType(CardType.CREATURE)) {
+            subtypes.addAll(selfAllZoneGrantedSubtypes(card));
+        }
         if (gameData != null && cardOwnerId != null && card.hasType(CardType.CREATURE)) {
             subtypes.addAll(computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId));
             if (isCardInGraveyard(gameData, cardOwnerId, card)) {
@@ -833,6 +839,16 @@ public class GameQueryService {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(effect -> effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
                         && grant.scope() == GrantScope.SELF);
+    }
+
+    private List<CardSubtype> selfAllZoneGrantedSubtypes(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(SelfAllZoneSubtypeGrantingEffect.class::isInstance)
+                .map(SelfAllZoneSubtypeGrantingEffect.class::cast)
+                .flatMap(effect -> effect.grantedSubtypes().stream())
+                .filter(this::isCreatureSubtype)
+                .distinct()
+                .toList();
     }
 
     /**
@@ -1035,11 +1051,39 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if players may pay life or sacrifice creatures as a cost of casting a
-     * spell or activating an ability (i.e. no {@link PlayersCantPayLifeOrSacrificeCreaturesEffect}
-     * is present on any battlefield). Costs demanded by a resolving effect are never restricted.
+     * spell or activating an ability (i.e. neither the creature-only nor the nonland-permanent
+     * restriction is present on any battlefield). Costs demanded by a resolving effect are never
+     * restricted.
      */
     public boolean canPayLifeOrSacrificeCreaturesForCosts(GameData gameData) {
+        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
+                && !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class);
+    }
+
+    /**
+     * Returns whether a creature sacrifice is allowed by the creature-only cost restriction.
+     * This deliberately does not include Yasharn's nonland-permanent restriction, because a land
+     * creature remains a legal sacrifice under Yasharn.
+     */
+    public boolean canSacrificeCreaturesForCosts(GameData gameData) {
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class);
+    }
+
+    /**
+     * Returns whether {@code permanent} may be sacrificed as a cost. The permanent's current
+     * characteristics are used, so a land creature is still permitted by Yasharn while a nonland
+     * creature is not.
+     */
+    public boolean canSacrificePermanentForCosts(GameData gameData, Permanent permanent) {
+        if (permanent == null) {
+            return false;
+        }
+        if (anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect.class)
+                && !isLand(gameData, permanent)) {
+            return false;
+        }
+        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class)
+                || !isCreature(gameData, permanent);
     }
 
     /** Returns whether the player controls a static effect that replaces life payments. */

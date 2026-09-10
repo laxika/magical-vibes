@@ -54,6 +54,9 @@ public enum ManaSpendRestriction {
     CREATURE_SPELL_ONLY,
     CREATURE_OR_ENCHANTMENT_SPELL_ONLY,
 
+    /** Spendable only to cast kicked spells (Elfhame Druid, Throne of Makindi). */
+    KICKED_SPELLS,
+
     /** Spendable only to cast multicolored spells (Pillar of the Paruns). */
     MULTICOLORED_SPELLS,
 

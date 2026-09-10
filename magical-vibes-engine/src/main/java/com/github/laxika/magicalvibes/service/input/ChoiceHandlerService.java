@@ -205,6 +205,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.KickedSpellManaColorChoice ctx) {
+            handleKickedSpellManaColorChosen(gameData, player, colorName, ctx, colorChoice.options());
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.PersistentManaColorChoice ctx) {
             handlePersistentManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
             return;
@@ -1408,6 +1413,19 @@ public class ChoiceHandlerService {
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleKickedSpellManaColorChosen(GameData gameData, Player player, String colorName,
+                                                  ChoiceContext.KickedSpellManaColorChoice ctx,
+                                                  List<String> options) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+        gameData.playerManaPools.get(ctx.playerId()).addKickedOnlyMana(manaColor, ctx.amount());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -3916,6 +3934,8 @@ public class ChoiceHandlerService {
                         if (controllerId != null) {
                             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
                         }
+                        permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                                gameData, to, moved, player.getId());
                     }
                 }
                 gameLogService.append(gameData, GameLog.builder()
@@ -3961,6 +3981,8 @@ public class ChoiceHandlerService {
                             if (controllerId != null) {
                                 gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
                             }
+                            permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                                    gameData, to, moved, player.getId());
                         }
                     }
                 }
@@ -4005,6 +4027,8 @@ public class ChoiceHandlerService {
                     if (controllerId != null) {
                         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
                     }
+                    permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
+                            gameData, to, countersToPlace, player.getId());
                 }
             }
             gameLogService.append(gameData, GameLog.builder()

@@ -31,10 +31,10 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
         boolean hasCapturedTargets = e.secondTargetId() != null;
         List<UUID> firstGroup = hasCapturedTargets
                 ? e.firstTargetId() == null ? List.of() : List.of(e.firstTargetId())
-                : entry.targetsForGroup(e.firstTargetGroup());
+                : entry.targetsForGroup(firstTargetGroup(entry, e));
         List<UUID> secondGroup = hasCapturedTargets
                 ? List.of(e.secondTargetId())
-                : entry.targetsForGroup(e.secondTargetGroup());
+                : entry.targetsForGroup(secondTargetGroup(entry, e));
         if (firstGroup.isEmpty() || secondGroup.isEmpty()) {
             return; // Optional target not chosen ("up to one") — no fight happens
         }
@@ -47,6 +47,26 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
         fightSupport.fight(gameData, entry,
                 gameQueryService.findPermanentById(gameData, firstGroup.getFirst()),
                 gameQueryService.findPermanentById(gameData, secondGroup.getFirst()));
+    }
+
+    private int firstTargetGroup(StackEntry entry, FightTargetsEffect effect) {
+        if (effect.firstTargetGroup() >= 0) {
+            return effect.firstTargetGroup();
+        }
+        return boundTargetGroup(entry, effect);
+    }
+
+    private int secondTargetGroup(StackEntry entry, FightTargetsEffect effect) {
+        if (effect.secondTargetGroup() >= 0) {
+            return effect.secondTargetGroup();
+        }
+        int firstGroup = boundTargetGroup(entry, effect);
+        return firstGroup < 0 ? -1 : firstGroup + 1;
+    }
+
+    private int boundTargetGroup(StackEntry entry, FightTargetsEffect effect) {
+        var targetingCard = entry.getTargetingCard();
+        return targetingCard == null ? -1 : targetingCard.getEffectTargetIndex(effect);
     }
 
     private boolean areCapturedTargetsLegal(GameData gameData, StackEntry entry,

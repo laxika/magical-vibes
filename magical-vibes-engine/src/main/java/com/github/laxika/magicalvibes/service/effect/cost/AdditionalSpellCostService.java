@@ -175,7 +175,7 @@ public class AdditionalSpellCostService {
     public record ExtractedCosts(
             boolean sacrificeAllCreatures,
             boolean sacrificeAllPermanents,
-            boolean sacrificeCreature,
+            SacrificeCreatureCost sacrificeCreatureCost,
             SacrificeCreatureOrDiscardCardOrPayLifeCost sacrificeCreatureOrDiscardCardOrPayLifeCost,
             CasualtyCost casualtyCost,
             SacrificePermanentOrPayManaCost sacrificePermanentOrPayManaCost,
@@ -231,7 +231,7 @@ public class AdditionalSpellCostService {
 
         /** True when the spell has an additional cost that is not charged per extra mode. */
         public boolean hasNonEscalateCost() {
-            return sacrificeAllCreatures || sacrificeAllPermanents || sacrificeCreature
+            return sacrificeAllCreatures || sacrificeAllPermanents || sacrificeCreatureCost != null
                     || sacrificeCreatureOrDiscardCardOrPayLifeCost != null || casualtyCost != null
                     || sacrificePermanentCost != null || exileCreatureCost != null
                     || sacrificeMultiplePermanentsCost != null
@@ -256,6 +256,10 @@ public class AdditionalSpellCostService {
                     || tieredManaCost != null
                     || spreeAdditionalManaCost != null || waterbendCost != null
                     || forageOrPayManaCost != null;
+        }
+
+        public boolean sacrificeCreature() {
+            return sacrificeCreatureCost != null;
         }
 
         /** True when the spell has any per-extra-mode cost. */
@@ -395,7 +399,7 @@ public class AdditionalSpellCostService {
     public ExtractedCosts extractAndRemove(List<CardEffect> effects) {
         boolean sacAllCreatures = effects.removeIf(SacrificeAllCreaturesYouControlCost.class::isInstance);
         boolean sacAllPermanents = effects.removeIf(SacrificeAllPermanentsYouControlCost.class::isInstance);
-        boolean sacCreature = effects.removeIf(SacrificeCreatureCost.class::isInstance);
+        SacrificeCreatureCost sacCreature = removeFirst(effects, SacrificeCreatureCost.class);
         SacrificeCreatureOrDiscardCardOrPayLifeCost sacCreatureOrDiscardOrPayLife =
                 removeFirst(effects, SacrificeCreatureOrDiscardCardOrPayLifeCost.class);
         CasualtyCost casualtyCost = removeFirst(effects, CasualtyCost.class);
@@ -566,17 +570,17 @@ public class AdditionalSpellCostService {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
         List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
-        // Angel of Jubilation: life payments and creature sacrifices are unavailable as cast costs.
+        // Battlefield static effects may prohibit life payments or particular permanent sacrifices.
         boolean lifeAndSacAllowed = gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             switch (effect) {
                 case SacrificeCreatureCost ignored -> {
-                    if (!lifeAndSacAllowed) return false;
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
+                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p)
+                            && gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
                 }
                 case SacrificeCreatureOrDiscardCardOrPayLifeCost cost -> {
-                    boolean hasCreature = lifeAndSacAllowed
-                            && battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p));
+                    boolean hasCreature = battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
+                            && gameQueryService.canSacrificePermanentForCosts(gameData, p));
                     boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
                             new DiscardCardTypeCost(null, null)).isEmpty();
                     boolean canPayLife = lifeAndSacAllowed && gameData.getLife(playerId) >= cost.lifeAmount();
@@ -587,14 +591,14 @@ public class AdditionalSpellCostService {
                 case SacrificePermanentOrPayManaCost cost -> {
                     boolean hasPermanent = battlefield.stream().anyMatch(p ->
                             predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
-                                    && (lifeAndSacAllowed || !gameQueryService.isCreature(gameData, p)));
+                                    && gameQueryService.canSacrificePermanentForCosts(gameData, p));
                     if (!hasPermanent && !canAffordSacrificeOrPayManaOption(gameData, playerId, card, cost)) {
                         return false;
                     }
                 }
                 case SacrificeCreatureOrPayManaCost cost -> {
-                    boolean hasCreature = lifeAndSacAllowed
-                            && battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p));
+                    boolean hasCreature = battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
+                            && gameQueryService.canSacrificePermanentForCosts(gameData, p));
                     if (!hasCreature && !canAffordSacrificeOrPayManaOption(gameData, playerId, card,
                             new SacrificePermanentOrPayManaCost(
                                     cost.manaCost(), new PermanentIsCreaturePredicate(), "a creature"))) {
@@ -609,7 +613,7 @@ public class AdditionalSpellCostService {
                 case SacrificePermanentOrDiscardCardCost cost -> {
                     boolean hasPermanent = battlefield.stream().anyMatch(p ->
                             predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
-                                    && (!gameQueryService.isCreature(gameData, p) || lifeAndSacAllowed));
+                                    && gameQueryService.canSacrificePermanentForCosts(gameData, p));
                     boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
                             new DiscardCardTypeCost(null, null)).isEmpty();
                     if (!hasPermanent && !hasDiscard) return false;
@@ -637,7 +641,7 @@ public class AdditionalSpellCostService {
                             new DiscardCardTypeCost(null, null)).isEmpty();
                     boolean hasPermanent = battlefield.stream().anyMatch(p ->
                             predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
-                                    && (lifeAndSacAllowed || !gameQueryService.isCreature(gameData, p)));
+                                    && gameQueryService.canSacrificePermanentForCosts(gameData, p));
                     if (!hasDiscard && !hasPermanent) {
                         return false;
                     }
@@ -668,11 +672,13 @@ public class AdditionalSpellCostService {
                 }
                 case SacrificePermanentCost cost -> {
                     if (battlefield.stream().noneMatch(p ->
-                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) return false;
+                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
+                                    && gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
                 }
                 case SacrificeMultiplePermanentsCost cost -> {
                     long matching = battlefield.stream()
                             .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                            .filter(p -> gameQueryService.canSacrificePermanentForCosts(gameData, p))
                             .count();
                     if (matching < cost.count()) return false;
                 }
@@ -744,7 +750,7 @@ public class AdditionalSpellCostService {
                     boolean canSacrifice = battlefield.stream()
                             .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
                                     gameData, p, cost.filter()))
-                            .anyMatch(p -> !gameQueryService.isCreature(gameData, p) || lifeAndSacAllowed);
+                            .anyMatch(p -> gameQueryService.canSacrificePermanentForCosts(gameData, p));
                     if (!canPayLife && !canSacrifice) return false;
                 }
                 case PayLifeOrPayManaCost cost -> {
@@ -760,9 +766,13 @@ public class AdditionalSpellCostService {
                 case TieredManaCost ignored -> { }
                 case EscalateSacrificeCost ignored -> { }
                 case EscalateTapCost ignored -> { }
-                // Sacrificing all creatures / permanents you control is legal with zero.
-                case SacrificeAllCreaturesYouControlCost ignored -> { }
-                case SacrificeAllPermanentsYouControlCost ignored -> { }
+                case SacrificeAllCreaturesYouControlCost ignored -> {
+                    if (battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
+                            && !gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
+                }
+                case SacrificeAllPermanentsYouControlCost ignored -> {
+                    if (battlefield.stream().anyMatch(p -> !gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
+                }
                 // Discarding your entire hand is legal with an empty hand.
                 case DiscardHandCost ignored -> { }
                 // "Discard X cards" is payable with X = 0, so it never blocks a cast on its own;
@@ -921,6 +931,16 @@ public class AdditionalSpellCostService {
     public void validateAll(GameData gameData, Player player, Card card,
                             ExtractedCosts costs, CostSelection selection, Integer announcedXValue,
                             boolean waterbendPaid, Integer resolvedCollectEvidenceMinimumManaValue) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
+        if (costs.sacrificeAllCreatures()
+                && battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
+                && !gameQueryService.canSacrificePermanentForCosts(gameData, p))) {
+            throw new IllegalStateException("Players can't sacrifice creatures to cast " + card.getName());
+        }
+        if (costs.sacrificeAllPermanents()
+                && battlefield.stream().anyMatch(p -> !gameQueryService.canSacrificePermanentForCosts(gameData, p))) {
+            throw new IllegalStateException("Players can't sacrifice nonland permanents to cast " + card.getName());
+        }
         if (costs.payLifeCost() != null) {
             validatePayLifeCost(gameData, player, card, costs.payLifeCost());
         }
@@ -1061,7 +1081,7 @@ public class AdditionalSpellCostService {
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, costs.sacrificePermanentCost().filter()));
         }
         if (costs.exileCreatureCost() != null) {
-            validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
+            validateSinglePermanentCost(gameData, player, card, selection.sacrificePermanentId(),
                     "a creature", p -> gameQueryService.isCreature(gameData, p));
         }
         if (costs.sacrificeMultiplePermanentsCost() != null) {
@@ -1413,7 +1433,7 @@ public class AdditionalSpellCostService {
      * Angel of Jubilation: a creature sacrifice can't be used as a cost of casting a spell.
      */
     private void validateCanSacrificeCreatureForCost(GameData gameData, Card card) {
-        if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
+        if (!gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             throw new IllegalStateException("Players can't sacrifice creatures to cast " + card.getName());
         }
     }
@@ -1663,14 +1683,30 @@ public class AdditionalSpellCostService {
     public Permanent validateSingleSacrificeCost(GameData gameData, Player player, Card sourceCard,
                                                  UUID sacrificePermanentId, String typeDescription,
                                                  Predicate<Permanent> typeCheck) {
-        if (sacrificePermanentId == null) {
+        Permanent toSacrifice = validateSinglePermanentCost(gameData, player, sourceCard,
+                sacrificePermanentId, typeDescription, typeCheck);
+        if (!gameQueryService.canSacrificePermanentForCosts(gameData, toSacrifice)) {
+            if (gameQueryService.isCreature(gameData, toSacrifice)
+                    && !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
+                throw new IllegalStateException("Players can't sacrifice creatures to cast " + sourceCard.getName());
+            }
+            throw new IllegalStateException("Players can't sacrifice nonland permanents to cast " + sourceCard.getName());
+        }
+        return toSacrifice;
+    }
+
+    /** Validates the common lookup, control, and type checks for a permanent cost. */
+    public Permanent validateSinglePermanentCost(GameData gameData, Player player, Card sourceCard,
+                                                 UUID permanentId, String typeDescription,
+                                                 Predicate<Permanent> typeCheck) {
+        if (permanentId == null) {
             throw new IllegalStateException("Must sacrifice " + typeDescription + " to cast " + sourceCard.getName());
         }
-        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacrificePermanentId);
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
         if (toSacrifice == null) {
             throw new IllegalStateException("Sacrifice target not found on battlefield");
         }
-        UUID controllerId = gameQueryService.findPermanentController(gameData, sacrificePermanentId);
+        UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
         if (!player.getId().equals(controllerId)) {
             throw new IllegalStateException("Can only sacrifice permanents you control");
         }

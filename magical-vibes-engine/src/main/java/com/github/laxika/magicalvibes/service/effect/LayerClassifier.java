@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatur
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToCreaturesOfChosenParityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToAllNonlandPermanentsEffect;
@@ -245,6 +246,7 @@ public final class LayerClassifier {
 
         // Layer 4 — type-changing effects (card types, subtypes, supertypes).
         map.put(GrantSubtypeEffect.class, fixed(Layer.L4_TYPE));
+        map.put(GrantSubtypesToSelfEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantAllCreatureTypesToOwnCreaturesEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeToOwnNonlandPermanentsEffect.class, fixed(Layer.L4_TYPE));

@@ -200,6 +200,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeDefendingPlayerChoosesCardFromGraveyardResume) {
+            gameData.graveyardTargetOperation.resolutionTimeDefendingPlayerChoosesCardFromGraveyardResume = false;
+            Card chosen = cardPool.get(cardIndex);
+            gameData.graveyardTargetOperation.defendingPlayerChoosesCardFromGraveyardChosenCardId = chosen.getId();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses ", chosen, " from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.resolutionTimeOpponentChoosesCardToHandResume) {
             gameData.graveyardTargetOperation.resolutionTimeOpponentChoosesCardToHandResume = false;
             Card chosen = cardPool.get(cardIndex);
@@ -1422,6 +1432,16 @@ public class GraveyardChoiceHandlerService {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null && !names.add(card.getName())) {
                     throw new IllegalStateException("Chosen cards must have different names");
+                }
+            }
+        }
+        if (pendingCard != null
+                && pendingCard.getMultiTargetConstraint() == MultiTargetConstraint.DIFFERENT_MANA_VALUES) {
+            Set<Integer> manaValues = new HashSet<>();
+            for (UUID cardId : cardIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null && !manaValues.add(card.getManaValue())) {
+                    throw new IllegalStateException("Chosen cards must have different mana values");
                 }
             }
         }

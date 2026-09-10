@@ -404,8 +404,10 @@ public class PermanentChoiceBattlefieldHandlerService {
                 && context.equipmentPermanentIds().contains(equipmentId)
                 && gameQueryService.isCreature(gameData, creature)
                 && equipSupport.attachEquipment(gameData, equipment, creature)) {
-            gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(
-                    context.controllerId(), equipmentId, context.sourceCard()));
+            if (context.unattachAtNextEndStep()) {
+                gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(
+                        context.controllerId(), equipmentId, context.sourceCard()));
+            }
             gameLogService.append(gameData,
                     GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
         }

@@ -1298,7 +1298,7 @@ public class ManaCost {
             return canPay(rewritten, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
         }
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
-        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
+        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyManaTotal() : 0;
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             int available = pool.get(entry.getKey());
@@ -1314,8 +1314,8 @@ public class ManaCost {
             if (entry.getKey() == ManaColor.RED) {
                 available += extraRed;
             }
-            if (entry.getKey() == ManaColor.GREEN) {
-                available += extraGreen;
+            if (kickedOnlyGreenContext) {
+                available += pool.getKickedOnlyMana(entry.getKey());
             }
             if (available < entry.getValue()) {
                 return false;
@@ -1357,10 +1357,13 @@ public class ManaCost {
             remaining += extraRed - restrictedRedUsedForColored;
         }
         if (kickedOnlyGreenContext) {
-            int greenNeeded = coloredCosts.getOrDefault(ManaColor.GREEN, 0);
-            int regularGreen = pool.get(ManaColor.GREEN);
-            int kickedOnlyGreenUsedForColored = Math.max(0, greenNeeded - regularGreen);
-            remaining += extraGreen - kickedOnlyGreenUsedForColored;
+            int kickedOnlyManaUsedForColored = 0;
+            for (ManaColor color : ManaColor.values()) {
+                int coloredNeeded = coloredCosts.getOrDefault(color, 0);
+                int regular = pool.get(color);
+                kickedOnlyManaUsedForColored += Math.max(0, coloredNeeded - regular);
+            }
+            remaining += extraGreen - kickedOnlyManaUsedForColored;
         }
         remaining += xCostOnlyAvailable(pool);
 
@@ -1380,8 +1383,9 @@ public class ManaCost {
                 }
                 if (color == ManaColor.RED) {
                     amount += extraRed;
-                } else if (color == ManaColor.GREEN) {
-                    amount += extraGreen;
+                }
+                if (kickedOnlyGreenContext) {
+                    amount += pool.getKickedOnlyMana(color);
                 }
                 available.put(color, amount - coloredCosts.getOrDefault(color, 0));
             }
@@ -1436,7 +1440,7 @@ public class ManaCost {
                     instantSorceryOnlyColorlessContext, powerstoneContext);
         }
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
-        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
+        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyManaTotal() : 0;
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             int available = pool.get(entry.getKey());
@@ -1452,8 +1456,8 @@ public class ManaCost {
             if (entry.getKey() == ManaColor.RED) {
                 available += extraRed;
             }
-            if (entry.getKey() == ManaColor.GREEN) {
-                available += extraGreen;
+            if (kickedOnlyGreenContext) {
+                available += pool.getKickedOnlyMana(entry.getKey());
             }
             if (available < entry.getValue()) {
                 return false;
@@ -1497,10 +1501,13 @@ public class ManaCost {
             remaining += extraRed - restrictedRedUsedForColored;
         }
         if (kickedOnlyGreenContext) {
-            int greenNeeded = coloredCosts.getOrDefault(ManaColor.GREEN, 0);
-            int regularGreen = pool.get(ManaColor.GREEN);
-            int kickedOnlyGreenUsedForColored = Math.max(0, greenNeeded - regularGreen);
-            remaining += extraGreen - kickedOnlyGreenUsedForColored;
+            int kickedOnlyManaUsedForColored = 0;
+            for (ManaColor color : ManaColor.values()) {
+                int coloredNeeded = coloredCosts.getOrDefault(color, 0);
+                int regular = pool.get(color);
+                kickedOnlyManaUsedForColored += Math.max(0, coloredNeeded - regular);
+            }
+            remaining += extraGreen - kickedOnlyManaUsedForColored;
         }
         remaining += xCostOnlyAvailable(pool);
 
@@ -1520,8 +1527,9 @@ public class ManaCost {
                 }
                 if (color == ManaColor.RED) {
                     amount += extraRed;
-                } else if (color == ManaColor.GREEN) {
-                    amount += extraGreen;
+                }
+                if (kickedOnlyGreenContext) {
+                    amount += pool.getKickedOnlyMana(color);
                 }
                 available.put(color, amount - coloredCosts.getOrDefault(color, 0));
             }
@@ -1880,7 +1888,7 @@ public class ManaCost {
         boolean creatureSpellManaValueAtLeastFourOrXContext = creatureSpellOnlyContext
                 && (manaValueAtLeastFourContext || hasX());
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
-        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
+        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyManaTotal() : 0;
 
         // Check each colored cost can be paid from combined sources
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
@@ -1917,8 +1925,8 @@ public class ManaCost {
             if (entry.getKey() == ManaColor.RED) {
                 available += extraRed;
             }
-            if (entry.getKey() == ManaColor.GREEN) {
-                available += extraGreen;
+            if (kickedOnlyGreenContext) {
+                available += pool.getKickedOnlyMana(entry.getKey());
             }
             if (available < entry.getValue()) {
                 return false;
@@ -2023,8 +2031,9 @@ public class ManaCost {
                 }
                 if (color == ManaColor.RED) {
                     amount += extraRed;
-                } else if (color == ManaColor.GREEN) {
-                    amount += extraGreen;
+                }
+                if (kickedOnlyGreenContext) {
+                    amount += pool.getKickedOnlyMana(color);
                 }
                 available.put(color, amount - coloredCosts.getOrDefault(color, 0));
             }
@@ -2592,8 +2601,8 @@ public class ManaCost {
             if (restrictedRedContext && color == ManaColor.RED) {
                 amount += pool.getRestrictedRed();
             }
-            if (kickedOnlyGreenContext && color == ManaColor.GREEN) {
-                amount += pool.getKickedOnlyGreen();
+            if (kickedOnlyGreenContext) {
+                amount += pool.getKickedOnlyMana(color);
             }
             available.put(color, amount);
         }
@@ -2666,10 +2675,10 @@ public class ManaCost {
                 pool.removeRestrictedRed(fromRestrictedRed);
                 remaining -= fromRestrictedRed;
             }
-            if (kickedOnlyGreenContext && color == ManaColor.GREEN && remaining > 0) {
-                int fromKickedGreen = Math.min(remaining, pool.getKickedOnlyGreen());
-                pool.removeKickedOnlyGreen(fromKickedGreen);
-                remaining -= fromKickedGreen;
+            if (kickedOnlyGreenContext && remaining > 0) {
+                int fromKicked = Math.min(remaining, pool.getKickedOnlyMana(color));
+                pool.removeKickedOnlyMana(color, fromKicked);
+                remaining -= fromKicked;
             }
             if (artifactContext && remaining > 0) {
                 if (!artifactAbilityOnlyContext) {
@@ -2736,7 +2745,7 @@ public class ManaCost {
             applyWhiteAsAnyColorWithoutRestriction(pool);
         }
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
-        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
+        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyManaTotal() : 0;
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
@@ -2746,9 +2755,10 @@ public class ManaCost {
                     // Prefer spending restricted mana first (more restricted = use first)
                     pool.removeRestrictedRed(1);
                     extraRed--;
-                } else if (kickedOnlyGreenContext && entry.getKey() == ManaColor.GREEN && extraGreen > 0) {
-                    // Prefer spending kicked-only green first (more restricted = use first)
-                    pool.removeKickedOnlyGreen(1);
+                } else if (kickedOnlyGreenContext
+                        && pool.getKickedOnlyMana(entry.getKey()) > 0 && extraGreen > 0) {
+                    // Prefer spending kicked-only mana first (more restricted = use first)
+                    pool.removeKickedOnlyMana(entry.getKey(), 1);
                     extraGreen--;
                 } else if (artifactContext && pool.getArtifactSpellOnlyMana(entry.getKey()) > 0) {
                     pool.removeArtifactSpellOnlyMana(entry.getKey(), 1);
@@ -2847,10 +2857,10 @@ public class ManaCost {
             remainingGeneric -= fromRestricted;
         }
 
-        // Spend kicked-only green for generic costs
+        // Spend kicked-only mana for generic costs
         if (kickedOnlyGreenContext && remainingGeneric > 0) {
             int fromRestricted = Math.min(remainingGeneric, extraGreen);
-            pool.removeKickedOnlyGreen(fromRestricted);
+            pool.removeKickedOnlyMana(fromRestricted);
             remainingGeneric -= fromRestricted;
         }
 
@@ -2894,7 +2904,7 @@ public class ManaCost {
             applyWhiteAsAnyColorWithoutRestriction(pool);
         }
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
-        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
+        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyManaTotal() : 0;
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
@@ -2903,8 +2913,9 @@ public class ManaCost {
                 } else if (restrictedRedContext && entry.getKey() == ManaColor.RED && extraRed > 0) {
                     pool.removeRestrictedRed(1);
                     extraRed--;
-                } else if (kickedOnlyGreenContext && entry.getKey() == ManaColor.GREEN && extraGreen > 0) {
-                    pool.removeKickedOnlyGreen(1);
+                } else if (kickedOnlyGreenContext
+                        && pool.getKickedOnlyMana(entry.getKey()) > 0 && extraGreen > 0) {
+                    pool.removeKickedOnlyMana(entry.getKey(), 1);
                     extraGreen--;
                 } else if (artifactContext && pool.getArtifactSpellOnlyMana(entry.getKey()) > 0) {
                     pool.removeArtifactSpellOnlyMana(entry.getKey(), 1);
@@ -2978,7 +2989,7 @@ public class ManaCost {
         }
         if (kickedOnlyGreenContext && remainingGeneric > 0) {
             int fromRestricted = Math.min(remainingGeneric, extraGreen);
-            pool.removeKickedOnlyGreen(fromRestricted);
+            pool.removeKickedOnlyMana(fromRestricted);
             remainingGeneric -= fromRestricted;
         }
 
@@ -3222,7 +3233,7 @@ public class ManaCost {
         boolean creatureSpellManaValueAtLeastFourOrXContext = creatureSpellOnlyContext
                 && (manaValueAtLeastFourContext || hasX());
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
-        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
+        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyManaTotal() : 0;
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
@@ -3251,8 +3262,9 @@ public class ManaCost {
                 } else if (restrictedRedContext && entry.getKey() == ManaColor.RED && extraRed > 0) {
                     pool.removeRestrictedRed(1);
                     extraRed--;
-                } else if (kickedOnlyGreenContext && entry.getKey() == ManaColor.GREEN && extraGreen > 0) {
-                    pool.removeKickedOnlyGreen(1);
+                } else if (kickedOnlyGreenContext
+                        && pool.getKickedOnlyMana(entry.getKey()) > 0 && extraGreen > 0) {
+                    pool.removeKickedOnlyMana(entry.getKey(), 1);
                     extraGreen--;
                 } else if (artifactAbilityOnlyContext && pool.getArtifactAbilityOnlyMana(entry.getKey()) > 0) {
                     pool.removeArtifactAbilityOnlyMana(entry.getKey(), 1);
@@ -3527,7 +3539,7 @@ public class ManaCost {
 
         if (kickedOnlyGreenContext && remainingGeneric > 0) {
             int fromRestricted = Math.min(remainingGeneric, extraGreen);
-            pool.removeKickedOnlyGreen(fromRestricted);
+            pool.removeKickedOnlyMana(fromRestricted);
             remainingGeneric -= fromRestricted;
         }
 

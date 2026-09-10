@@ -153,6 +153,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreate
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestToughness;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.Coven;
+import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardPutIntoYourGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardsPutIntoGraveyardThisTurnAtLeast;
@@ -232,6 +233,7 @@ import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
+import com.github.laxika.magicalvibes.model.condition.OpponentControlsNoPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
@@ -455,6 +457,8 @@ public class ConditionEvaluationService {
                     devotionToColorsAtLeast(gameData, ctx, c);
             case Coven ignored ->
                     isCovenMet(gameData, ctx);
+            case FullParty ignored ->
+                    AmountEvaluationService.partySize(gameData, ctx.controllerId(), gameQueryService) == 4;
             case Morbid ignored ->
                     gameQueryService.isMorbidMet(gameData);
             case ArtifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn ignored ->
@@ -1316,6 +1320,8 @@ public class ConditionEvaluationService {
                     aPlayerHasMoreCardsInHandThanEachOtherPlayer(gameData);
             case OpponentControlsMoreLands ignored ->
                     gameQueryService.anyOpponentControlsMoreLands(gameData, ctx.controllerId());
+            case OpponentControlsNoPermanent c ->
+                    opponentControlsNoMatchingPermanent(gameData, ctx, c.filter());
             case OpponentControlsPermanentCount c ->
                     opponentControlsAtLeastMatchingPermanents(gameData, ctx, c.minCount(), c.filter());
             case ChosenColorStrictlyMostCommonAmongOpponentNontokens ignored -> {
@@ -2104,6 +2110,29 @@ public class ConditionEvaluationService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             if (battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean opponentControlsNoMatchingPermanent(GameData gameData, ConditionContext ctx,
+                                                         PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return false;
+        Boolean layeredResult = gameQueryService.withQueryScope(gameData,
+                () -> opponentControlsNoMatchingPermanentUnscoped(gameData, ctx, filter));
+        return layeredResult != null
+                ? layeredResult
+                : opponentControlsNoMatchingPermanentUnscoped(gameData, ctx, filter);
+    }
+
+    private boolean opponentControlsNoMatchingPermanentUnscoped(GameData gameData, ConditionContext ctx,
+                                                                 PermanentPredicate filter) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null
+                    || battlefield.stream().noneMatch(p -> matchesPermanent(gameData, p, filter, ctx))) {
                 return true;
             }
         }

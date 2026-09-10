@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SNC", collectorNumber = "263")
 @CardRegistration(set = "SNC", collectorNumber = "272")
 @CardRegistration(set = "SNC", collectorNumber = "273")
+@CardRegistration(set = "ZNR", collectorNumber = "266")
+@CardRegistration(set = "ZNR", collectorNumber = "268")
 @CardRegistration(set = "TLA", collectorNumber = "282")
 @CardRegistration(set = "MKM", collectorNumber = "277")
 @CardRegistration(set = "MKM", collectorNumber = "278")
@@ -314,6 +316,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "FRF", collectorNumber = "177")
 @CardRegistration(set = "DTK", collectorNumber = "250")
 @CardRegistration(set = "DTK", collectorNumber = "251")
+@CardRegistration(set = "ZNR", collectorNumber = "267")
 public class Plains extends Card {
 
     public Plains() {

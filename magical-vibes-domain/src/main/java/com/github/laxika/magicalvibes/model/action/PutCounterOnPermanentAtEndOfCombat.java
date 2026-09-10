@@ -24,22 +24,24 @@ public record PutCounterOnPermanentAtEndOfCombat(
         int amount,
         boolean alsoTap,
         CreateTokenEffect tokenForController,
-        UUID requiredSourcePermanentId
+        UUID requiredSourcePermanentId,
+        UUID placingPlayerId
 ) implements DelayedAction {
 
     /** Counter only (Greater Werewolf). */
     public PutCounterOnPermanentAtEndOfCombat(UUID permanentId, CounterType counterType, int amount) {
-        this(permanentId, counterType, amount, false, null, null);
+        this(permanentId, counterType, amount, false, null, null, null);
     }
 
     /** Counter plus optional tap (Dread Wight). */
     public PutCounterOnPermanentAtEndOfCombat(UUID permanentId, CounterType counterType, int amount,
                                                boolean alsoTap, UUID requiredSourcePermanentId) {
-        this(permanentId, counterType, amount, alsoTap, null, requiredSourcePermanentId);
+        this(permanentId, counterType, amount, alsoTap, null, requiredSourcePermanentId, null);
     }
 
     public PutCounterOnPermanentAtEndOfCombat(UUID permanentId, CounterType counterType, int amount,
                                                boolean alsoTap, CreateTokenEffect tokenForController) {
-        this(permanentId, counterType, amount, alsoTap, tokenForController, null);
+        this(permanentId, counterType, amount, alsoTap, tokenForController, null, null);
     }
+
 }

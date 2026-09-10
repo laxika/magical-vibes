@@ -4154,19 +4154,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     record PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                             String label, String cardName,
-                                             CounterType enterWithCounter, boolean grantHaste,
-                                             boolean returnToHandAtEndStep)
+                                               String label, String cardName,
+                                               CounterType enterWithCounter, int enterWithCounterCount,
+                                               boolean grantHaste,
+                                               boolean returnToHandAtEndStep)
             implements PendingInteraction {
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                String label, String cardName) {
-            this(playerId, validCardIds, label, cardName, null, false, false);
+                                                 String label, String cardName) {
+            this(playerId, validCardIds, label, cardName, null, 0, false, false);
         }
 
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                String label, String cardName,
-                                                CounterType enterWithCounter) {
-            this(playerId, validCardIds, label, cardName, enterWithCounter, false, false);
+                                                 String label, String cardName,
+                                                 CounterType enterWithCounter) {
+            this(playerId, validCardIds, label, cardName, enterWithCounter,
+                    enterWithCounter == null ? 0 : 1, false, false);
         }
 
         public PutCardFromHandOrGraveyardChoice {

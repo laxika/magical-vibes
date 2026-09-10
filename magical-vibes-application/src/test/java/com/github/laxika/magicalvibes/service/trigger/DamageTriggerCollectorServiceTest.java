@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -137,6 +138,50 @@ class DamageTriggerCollectorServiceTest {
     private TriggerMatchContext match(Permanent perm, UUID controllerId,
             com.github.laxika.magicalvibes.model.effect.CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Test
+    @DisplayName("does not queue a combat-only planeswalker trigger for noncombat damage")
+    void doesNotQueueCombatOnlyPlaneswalkerTriggerForNoncombatDamage() {
+        Permanent watcher = createPermanent("Zagras, Thief of Heartbeats");
+        Permanent source = createPermanent("Prodigal Pyromancer");
+        Permanent planeswalker = createPermanent("Test Planeswalker");
+        var effect = TriggeringPermanentConditionalEffect.combatDamageOnly(
+                new DestroyTargetPermanentEffect());
+        var ctx = new TriggerContext.CreatureDealsDamageToPlaneswalker(
+                source, planeswalker.getId(), 1, false);
+
+        when(gameQueryService.isCreature(gd, source)).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(watcher, player1Id, effect),
+                EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER, effect, ctx);
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("queues a combat-only planeswalker trigger for combat damage")
+    void queuesCombatOnlyPlaneswalkerTriggerForCombatDamage() {
+        Permanent watcher = createPermanent("Zagras, Thief of Heartbeats");
+        Permanent source = createPermanent("Grizzly Bears");
+        Permanent planeswalker = createPermanent("Test Planeswalker");
+        var effect = TriggeringPermanentConditionalEffect.combatDamageOnly(
+                new DestroyTargetPermanentEffect());
+        var ctx = new TriggerContext.CreatureDealsDamageToPlaneswalker(
+                source, planeswalker.getId(), 2, true);
+
+        when(gameQueryService.isCreature(gd, source)).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(watcher, player1Id, effect),
+                EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(planeswalker.getId());
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
     }
 
     @Test

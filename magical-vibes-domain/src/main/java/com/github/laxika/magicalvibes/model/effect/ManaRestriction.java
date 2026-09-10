@@ -437,7 +437,7 @@ public sealed interface ManaRestriction {
     record KickedCosts() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addKickedOnlyGreen(amount);
+            pool.addKickedOnlyMana(color, amount);
         }
 
         @Override

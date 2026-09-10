@@ -7,22 +7,34 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * The wrapped effect fires only if the triggering permanent matches {@code predicate}.
  * Controller-scoped enter triggers use the default constructor; the any-controller form is for
  * {@code ON_ANY_PERMANENT_ENTERS_BATTLEFIELD} abilities that watch permanents entering under any
- * player's control.
+ * player's control. {@code combatDamageOnly} restricts the damage-to-planeswalker trigger to
+ * combat damage when enabled.
  */
 public record TriggeringPermanentConditionalEffect(
         PermanentPredicate predicate,
         CardEffect wrapped,
         boolean anyController,
-        boolean combatOpponent
+        boolean combatOpponent,
+        boolean combatDamageOnly
 ) implements CardEffect, CombatOpponentReferencingEffect {
 
     public TriggeringPermanentConditionalEffect(PermanentPredicate predicate, CardEffect wrapped) {
-        this(predicate, wrapped, false, false);
+        this(predicate, wrapped, false, false, false);
     }
 
     public TriggeringPermanentConditionalEffect(PermanentPredicate predicate, CardEffect wrapped,
                                                 boolean anyController) {
-        this(predicate, wrapped, anyController, false);
+        this(predicate, wrapped, anyController, false, false);
+    }
+
+    public TriggeringPermanentConditionalEffect(PermanentPredicate predicate, CardEffect wrapped,
+                                                boolean anyController, boolean combatOpponent) {
+        this(predicate, wrapped, anyController, combatOpponent, false);
+    }
+
+    /** Creates an unfiltered trigger that matches only combat-damage events. */
+    public static TriggeringPermanentConditionalEffect combatDamageOnly(CardEffect wrapped) {
+        return new TriggeringPermanentConditionalEffect(null, wrapped, false, false, true);
     }
 
     @Override

@@ -171,10 +171,13 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
 
                     // Planeswalker tokens enter with loyalty counters and no summoning sickness
                     if (tokenCard.getType() == CardType.PLANESWALKER) {
-                        tokenPermanent.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty() != null ? tokenCard.getLoyalty() : 0);
+                        int startingLoyalty = e.startingLoyaltyOverride() != null
+                                ? e.startingLoyaltyOverride()
+                                : tokenCard.getLoyalty() != null ? tokenCard.getLoyalty() : 0;
+                        tokenPermanent.setCounterCount(CounterType.LOYALTY, startingLoyalty);
                         tokenPermanent.setSummoningSick(false);
                     }
-                    if (e.tappedAndAttacking()) {
+                    if (e.tapped() || e.tappedAndAttacking()) {
                         tokenPermanent.tap();
                     }
 
