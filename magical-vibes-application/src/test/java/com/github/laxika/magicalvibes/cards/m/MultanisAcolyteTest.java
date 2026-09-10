@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,15 +11,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MultanisAcolyte.class, MultanisPresence.class})
 class MultanisAcolyteTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering the battlefield draws a card")
     void enteringTheBattlefieldDrawsACard() {
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new MultanisPresence()));
         castAndResolveMultanisAcolyte();
 
-        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Multani's Presence");
     }
 
     @Test
@@ -56,9 +56,7 @@ class MultanisAcolyteTest extends BaseCardTest {
     }
 
     private void castAndResolveMultanisAcolyte() {
-        harness.setHand(player1, List.of(new MultanisAcolyte()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0, 0);
+        harness.castFromHand(player1, new MultanisAcolyte(), "{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

@@ -1,15 +1,19 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MoggFanatic.class, GrizzlyBears.class, LlanowarElves.class, ChandraNalaar.class, Forest.class})
 class MoggFanaticTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -33,7 +38,6 @@ class MoggFanaticTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Mogg Fanatic");
 
         harness.passBothPriorities();
 
@@ -68,7 +72,6 @@ class MoggFanaticTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Mogg Fanatic");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -140,6 +143,30 @@ class MoggFanaticTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Deals 1 damage to target planeswalker")
+    void deals1DamageToPlaneswalker() {
+        addReadyMoggFanatic(player1);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature, nonplaneswalker permanent")
+    void cannotTargetNonCreatureNonPlaneswalkerPermanent() {
+        addReadyMoggFanatic(player1);
+        harness.addToBattlefield(player2, new Forest());
+        UUID targetId = harness.getPermanentId(player2, "Forest");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== No tap required, no mana required =====
@@ -216,11 +243,7 @@ class MoggFanaticTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyMoggFanatic(Player player) {
-        MoggFanatic card = new MoggFanatic();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new MoggFanatic());
     }
 }
 

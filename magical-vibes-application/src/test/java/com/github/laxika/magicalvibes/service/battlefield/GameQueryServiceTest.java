@@ -126,6 +126,17 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
+    @Test
+    void landCountUsesCurrentPermanentTypes() {
+        Permanent creature = addPermanent(player1Id, createCreature("Changed land", 2, 2, CardColor.GREEN));
+        GameQueryService query = org.mockito.Mockito.spy(gqs);
+        org.mockito.Mockito.doReturn(true).when(query).isLand(gd, creature);
+
+        assertThat(query.controlsMoreLandsThan(gd, player1Id, player2Id)).isTrue();
+
+        org.mockito.Mockito.doReturn(false).when(query).isLand(gd, creature);
+        assertThat(query.controlsMoreLandsThan(gd, player1Id, player2Id)).isFalse();
+    }
 
     @Test
     void faceDownCreatureLosesItsPrintedUnblockability() {

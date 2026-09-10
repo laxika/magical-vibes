@@ -156,6 +156,7 @@ public class PlayedCardNameTriggerCollectorService {
      * via exact-class registration.
      */
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_ANOTHER_LAND)
     private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (effect instanceof TriggeringCardConditionalEffect) {

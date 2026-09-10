@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZhaoRuthlessAdmiral.class, CruelEdict.class, GrizzlyBears.class})
+@CardUsed({ZhaoRuthlessAdmiral.class, DiabolicEdict.class, GrizzlyBears.class})
 class ZhaoRuthlessAdmiralTest extends BaseCardTest {
 
     @Test
@@ -67,9 +67,9 @@ class ZhaoRuthlessAdmiralTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player.getId());
+        harness.castInstant(player1, 0, player.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player, sacrificed.getId());
         harness.passBothPriorities();

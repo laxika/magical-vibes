@@ -300,6 +300,9 @@ public class GameService {
                     ax.playerId().equals(player.getId());
             case PendingInteraction.TurnFaceUpXValueChoice tfu ->
                     tfu.playerId().equals(player.getId());
+            case PendingInteraction.MultiPermanentChoice mc ->
+                    mc.playerId().equals(player.getId())
+                            && mc.context() instanceof com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.FadeAwayKeep;
             case null, default -> false;
         };
     }
@@ -1878,6 +1881,10 @@ public class GameService {
                 // CR 509.1e: only mana abilities allowed during blocker declaration
                 if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
                     throw new IllegalStateException("Only mana abilities can be activated during blocker declaration");
+                }
+            } else if (isMayCostManaPayment(gameData, player)) {
+                if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
+                    throw new IllegalStateException("Only mana abilities can be activated while paying a cost");
                 }
             } else {
                 requirePriority(gameData, player);

@@ -81,6 +81,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * battlefield by an effect.
      */
     ON_CONTROLLER_PLAYS_LAND,
+    /** Triggers when the controller plays a land other than the source permanent. */
+    ON_CONTROLLER_PLAYS_ANOTHER_LAND,
     /**
      * "Whenever an opponent plays a land" — the opponent-side mirror of
      * {@link #ON_CONTROLLER_PLAYS_LAND}: fired at the actual land-play sites only, NOT when a land
@@ -1129,6 +1131,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkControllerActivatesAbilityTriggers}, driven from
      *  {@code ActivatedAbilityExecutionService.completeActivationAfterCosts}. */
     ON_CONTROLLER_ACTIVATES_ABILITY,
+    /** Triggers whenever an opponent of this permanent's controller activates an activated ability
+     *  (including mana abilities) of a permanent. Fires on every permanent NOT controlled by the
+     *  activating player that has this slot. Wrap the effect in
+     *  {@code TriggeringPermanentConditionalEffect} to filter by the permanent whose ability was
+     *  activated. Checked in {@code TriggerCollectionService.checkOpponentActivatesAbilityTriggers}. */
+    ON_OPPONENT_ACTIVATES_ABILITY,
     /** Triggers whenever the controller activates an exhaust ability. */
     ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY,
     /** Triggers whenever this creature saddles a Mount or crews a Vehicle during its controller's

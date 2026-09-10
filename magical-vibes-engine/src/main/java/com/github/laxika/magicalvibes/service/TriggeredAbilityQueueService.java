@@ -810,12 +810,12 @@ public class TriggeredAbilityQueueService {
                             null,
                             pending.sourcePermanentId()));
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                            "'s attack trigger triggers without a target."));
+                            "'s triggered ability triggers without a target."));
                     log.info("Game {} - {} attack trigger pushed without a target",
                             gameData.id, pending.sourceCard().getName());
                 } else {
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                            "'s attack trigger has no valid targets."));
+                            "'s triggered ability has no valid targets."));
                     log.info("Game {} - {} attack trigger skipped (no valid targets)",
                             gameData.id, pending.sourceCard().getName());
                 }
@@ -838,7 +838,7 @@ public class TriggeredAbilityQueueService {
             }
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                    "'s attack trigger - choose " + targetDescription + "."));
+                    "'s triggered ability - choose " + targetDescription + "."));
             log.info("Game {} - {} attack trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
@@ -2162,6 +2162,7 @@ public class TriggeredAbilityQueueService {
                     pending.sourceAlternateCostAtTrigger();
             gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
                     pending.sourcePowerAtTrigger();
+            gameData.graveyardTargetOperation.triggeringPermanentId = pending.triggeringPermanentId();
             // ETB source permanent (for intervening-if / attach); find by card id on the controller's BF
             List<Permanent> bf = gameData.playerBattlefields.get(pending.controllerId());
             if (bf != null) {
@@ -2238,6 +2239,7 @@ public class TriggeredAbilityQueueService {
                 List.of());
         entry.setNonTargeting(true);
         entry.setAlternateCost(pending.sourceAlternateCostAtTrigger());
+        entry.setTriggeringPermanentId(pending.triggeringPermanentId());
         gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.text(description + " triggers targeting no cards."));
         log.info("Game {} - {} triggered ability pushed onto stack with 0 graveyard targets",

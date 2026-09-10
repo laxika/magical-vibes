@@ -1781,51 +1781,53 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
                                        Integer sourcePowerAtTrigger,
-                                       boolean sourceAlternateCostAtTrigger)
+                                       boolean sourceAlternateCostAtTrigger,
+                                       UUID triggeringPermanentId)
     implements PermanentChoiceContext {
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
                                            Integer sourcePowerAtTrigger) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
-                    sourcePowerAtTrigger, false);
+                    sourcePowerAtTrigger, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue, int maxCount) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount, null, false);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, null, 0, 0, 0, null, false);
+            this(sourceCard, controllerId, effects, null, 0, 0, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0, 0, null, false);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0, 0, null, false);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null, false);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            int xValue) {
-            this(sourceCard, controllerId, effects, null, 0, xValue, 0, null, false);
+            this(sourceCard, controllerId, effects, null, 0, xValue, 0, null, false, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue,
                                            boolean sourceAlternateCostAtTrigger) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null,
-                    sourceAlternateCostAtTrigger);
+                    sourceAlternateCostAtTrigger, null);
         }
+
     }
 
     /** "Sacrifice a [permanent]. If you do, [effect]." (e.g. The First Eruption chapter III). */

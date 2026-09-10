@@ -286,6 +286,12 @@ public class BattlefieldEntryService {
                 gameData, controllerId, enteringPermanentId, exiledCount, countersPerCard);
     }
 
+    public void applyAsEntersPlusOnePlusOneCounters(
+            GameData gameData, UUID controllerId, UUID enteringPermanentId, int count) {
+        interactionService.applyAsEntersPlusOnePlusOneCounters(
+                gameData, controllerId, enteringPermanentId, count);
+    }
+
     public void applyAsEntersChosenCounterType(
             GameData gameData, UUID controllerId, UUID enteringPermanentId,
             CounterType counterType, int count) {

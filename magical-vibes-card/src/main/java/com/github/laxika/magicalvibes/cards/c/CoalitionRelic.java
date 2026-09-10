@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "161")
+@CardRegistration(set = "DDE", collectorNumber = "54")
 public class CoalitionRelic extends Card {
 
     public CoalitionRelic() {

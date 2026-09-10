@@ -28,8 +28,7 @@ class RepentanceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -43,10 +42,23 @@ class RepentanceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Wall of Swords");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent wall = findPermanent(player2, "Wall of Swords");
+        assertThat(wall.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Repentance can target a creature its caster controls")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new WallOfSwords());
+        harness.setHand(player1, List.of(new Repentance()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        UUID targetId = harness.getPermanentId(player1, "Wall of Swords");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        Permanent wall = findPermanent(player1, "Wall of Swords");
         assertThat(wall.getMarkedDamage()).isEqualTo(3);
     }
 

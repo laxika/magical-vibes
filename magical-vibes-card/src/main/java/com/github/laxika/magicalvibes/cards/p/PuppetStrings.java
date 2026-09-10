@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "304")
+@CardRegistration(set = "DDE", collectorNumber = "22")
 public class PuppetStrings extends Card {
 
     public PuppetStrings() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "303")
+@CardRegistration(set = "ATQ", collectorNumber = "42")
 public class BronzeTablet extends Card {
 
     public BronzeTablet() {

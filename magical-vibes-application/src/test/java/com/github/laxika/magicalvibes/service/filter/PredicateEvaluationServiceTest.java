@@ -314,6 +314,18 @@ class PredicateEvaluationServiceTest {
     // ===== matchesCardPredicate =====
 
     @Test
+    void fixedPlayerControllerPredicateRechecksControl() {
+        Permanent permanent = addPermanent(player2Id, new Card());
+        var predicate = new com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate(player2Id);
+        assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isTrue();
+
+        gd.playerBattlefields.get(player2Id).remove(permanent);
+        gd.playerBattlefields.get(player1Id).add(permanent);
+
+        assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
+    }
+
+    @Test
     void spellCastPredicateRecognizesXInManaCost() {
         Card card = new Card();
         card.setManaCost("{X}{G}");
@@ -1151,6 +1163,18 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsColorlessPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsColorlessPredicate works in static filter evaluation")
+        void colorlessPredicateMatchesInStaticFilterEvaluation() {
+            Permanent colorless = addPermanent(player1Id, createCreature("Ornithopter", 0, 2, null));
+            Permanent colored = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(evaluator.matchesStaticFilter(colorless, new PermanentIsColorlessPredicate(),
+                    FilterContext.of(gd))).isTrue();
+            assertThat(evaluator.matchesStaticFilter(colored, new PermanentIsColorlessPredicate(),
+                    FilterContext.of(gd))).isFalse();
         }
 
         @Test

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -20,13 +20,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Forest.class, GrizzlyBears.class, TimeEbb.class})
+@CardUsed({Forest.class, WindDrake.class, TimeEbb.class})
 class TimeEbbTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Time Ebb targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsOnStack() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WindDrake());
         UUID targetId = target.getId();
 
         TimeEbb timeEbb = new TimeEbb();
@@ -61,7 +61,7 @@ class TimeEbbTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Time Ebb puts target creature on top of its owner's library")
     void resolvingPutsTargetCreatureOnTopOfOwnersLibrary() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WindDrake());
         UUID targetId = target.getId();
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
@@ -88,7 +88,7 @@ class TimeEbbTest extends BaseCardTest {
     @Test
     @DisplayName("Time Ebb fizzles if the target is removed before resolution")
     void fizzlesIfTargetRemovedBeforeResolution() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WindDrake());
         UUID targetId = target.getId();
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 

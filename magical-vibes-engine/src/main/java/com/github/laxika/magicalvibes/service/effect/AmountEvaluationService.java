@@ -245,7 +245,7 @@ public class AmountEvaluationService {
             case Fixed f ->
                     f.value();
             case FixedIfCondition a ->
-                    conditionEvaluationService.isMet(gameData, a.condition(), conditionContext(ctx))
+                    conditionEvaluationService.isMet(gameData, a.condition(), conditionContext(gameData, ctx))
                             ? a.amount() : a.otherwise();
             case FixedIfControlMoreCreaturesThanEachOtherPlayer a ->
                     controlsMoreCreaturesThanEachOtherPlayer(gameData, ctx) ? a.amount() : a.otherwise();
@@ -576,7 +576,9 @@ public class AmountEvaluationService {
                             : gameData.playerManaPools.get(ctx.controllerId())
                                     .getColoredManaTotals().getOrDefault(a.color(), 0);
             case LastDiscardedCardManaValue ignored ->
-                    gameData.lastDiscardedCardManaValue;
+                    ctx.stackEntry() != null && ctx.stackEntry().getDiscardedCardSnapshot() != null
+                            ? ctx.stackEntry().getDiscardedCardSnapshot().getManaValue()
+                            : gameData.lastDiscardedCardManaValue;
             case GreatestDiscardedCardManaValue ignored ->
                     gameData.greatestDiscardedCardManaValue;
             case LastMilledCardColorSymbols a ->
@@ -661,12 +663,16 @@ public class AmountEvaluationService {
      * Most cast-time flags are not part of an amount context and read as false; madness is carried
      * because some divided amounts differ when a spell is cast using it.
      */
-    private ConditionContext conditionContext(AmountContext ctx) {
+    private ConditionContext conditionContext(GameData gameData, AmountContext ctx) {
+        UUID triggeringPermanentId = ctx.stackEntry() == null
+                ? null : ctx.stackEntry().getTriggeringPermanentId();
+        Card triggeringCard = ctx.stackEntry() == null
+                ? null : gameQueryService.findCardById(gameData, ctx.stackEntry().getTriggeringCardId());
         return new ConditionContext(ctx.controllerId(),
                 ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                 ctx.sourcePermanent(), ctx.sourceCard(), false, false, false, ctx.madness(), false,
-                null, ctx.xValue(), ctx.targetPermanentId(), null, ctx.staticEvaluation(), false,
-                null, null, null).withEventValue(ctx.eventValue());
+                null, ctx.xValue(), ctx.targetPermanentId(), triggeringCard, ctx.staticEvaluation(), false,
+                triggeringPermanentId, null, null).withEventValue(ctx.eventValue());
     }
 
     private int chosenPermanentEffectivePower(GameData gameData, AmountContext ctx) {
@@ -1580,7 +1586,7 @@ public class AmountEvaluationService {
         if (battlefield == null) return 0;
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().hasType(CardType.LAND)) {
+            if (gameQueryService.isLand(gameData, permanent)) {
                 count++;
             }
         }
@@ -2205,6 +2211,8 @@ public class AmountEvaluationService {
             case CONTROLLER -> playerId.equals(ctx.controllerId());
             case OPPONENTS -> !playerId.equals(ctx.controllerId());
             case ANY_PLAYER -> true;
+            case CHOSEN_PLAYER -> ctx.sourcePermanent() != null
+                    && playerId.equals(ctx.sourcePermanent().getRememberedTargetPlayerId());
             // The target channel carries the target player's id for player-targeting effects.
             case TARGET_PLAYER -> playerId.equals(targetPlayerId(gameData, ctx));
             case DEFENDING_PLAYER -> playerId.equals(defendingPlayerId(gameData, ctx));

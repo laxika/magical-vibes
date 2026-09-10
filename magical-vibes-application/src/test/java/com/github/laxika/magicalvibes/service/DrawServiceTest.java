@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -264,6 +266,25 @@ class DrawServiceTest {
 
         assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class))
                 .isNotNull();
+    }
+
+    @Test
+    void emblemAnyPlayerDrawTriggerQueuesLifeLossForItsController() {
+        Card source = createCard("Ob Nixilis Reignited", CardType.ENCHANTMENT);
+        gd.emblems.add(new Emblem(player1Id,
+                List.of(new EmblemControllerLosesLifeOnAnyPlayerDrawEffect(2)), source));
+
+        sut.checkControllerDrawTriggers(gd, player2Id);
+        sut.checkControllerDrawTriggers(gd, player1Id);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).allSatisfy(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getEffectsToResolve())
+                    .containsExactly(new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER));
+        });
     }
 
     @Test

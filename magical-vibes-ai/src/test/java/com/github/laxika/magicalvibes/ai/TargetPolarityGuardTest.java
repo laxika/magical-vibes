@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromColorlessSourcesEffect;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -138,6 +139,9 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd,
                 new PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect(), aiPlayerId))
+                .isEqualTo(TargetPolarity.BENEFICIAL);
+        assertThat(classifier.classify(gd,
+                new PreventAllDamageToTargetFromColorlessSourcesEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd,
                 new RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect(List.of()), aiPlayerId))

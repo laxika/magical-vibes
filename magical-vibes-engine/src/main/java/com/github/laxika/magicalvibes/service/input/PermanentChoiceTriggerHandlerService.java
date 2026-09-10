@@ -128,6 +128,11 @@ public class PermanentChoiceTriggerHandlerService {
             }
         }
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
+        Permanent triggeringPermanent = stt.triggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, stt.triggeringPermanentId());
+        if (triggeringPermanent != null) {
+            entry.setTriggeringCardId(triggeringPermanent.getCard().getId());
+        }
         entry.setSourcePermanentSnapshot(stt.sourcePermanentSnapshot());
         entry.setSourcePlanarObject(stt.planarSource());
         entry.setEventValue(stt.spellManaSpentX());
@@ -1327,6 +1332,7 @@ public class PermanentChoiceTriggerHandlerService {
                 upt.sourcePermanentId()
         );
         entry.setActivePlayerId(upt.choosingPlayerId());
+        entry.setTargetFilter(upt.targetFilter());
         pushTriggeredEntry(gameData, entry);
 
         String playerName = gameData.playerIdToName.get(playerId);

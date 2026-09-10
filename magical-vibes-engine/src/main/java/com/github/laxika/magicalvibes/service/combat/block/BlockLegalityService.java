@@ -107,7 +107,8 @@ public class BlockLegalityService {
             if (source.isAttached()) {
                 attachedByHostId.computeIfAbsent(source.getAttachedTo(), id -> new ArrayList<>(1)).add(source);
             }
-            if (!source.isFaceDown()) {
+            if (!source.isFaceDown() && !source.isLosesAllAbilitiesUntilEndOfTurn()
+                        && !gameQueryService.computeStaticBonus(gameData, source).losesAllAbilities()) {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof BlockingRestrictionEffect restriction) {
                         addGlobalBlockRestriction(globalBlockRestrictions, restriction,
@@ -159,9 +160,10 @@ public class BlockLegalityService {
         List<Permanent> defenders = defenderBattlefield == null ? List.of() : defenderBattlefield;
         Set<CardSubtype> defenderCardSubtypes = EnumSet.noneOf(CardSubtype.class);
         for (Permanent defender : defenders) {
-            defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
             if (gameQueryService.isLand(gameData, defender)) {
                 defenderCardSubtypes.addAll(gameQueryService.effectiveBasicLandTypes(gameData, defender));
+            } else {
+                defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
             }
         }
         return new BlockLegalityContext(gameData, defenders, globalBlockRestrictions,

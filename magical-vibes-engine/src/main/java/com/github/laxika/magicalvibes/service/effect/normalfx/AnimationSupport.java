@@ -140,6 +140,9 @@ public class AnimationSupport {
             targetIds = List.of(enchantedId);
         } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
             targetIds = List.of(entry.getSourcePermanentId());
+        } else if (effect.scope() == GrantScope.TARGET && !entry.getTargetIds().isEmpty()
+                && entry.targetsForResolvingEffectGroup() != null) {
+            targetIds = entry.targetsForResolvingEffectGroup();
         } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
                 && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
             targetIds = entry.getTargetIds();
@@ -515,7 +518,10 @@ public class AnimationSupport {
      */
     public void animatePermanentTarget(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         List<UUID> targetIds;
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
+        if (effect.scope() == GrantScope.TARGET && !entry.getTargetIds().isEmpty()
+                && entry.targetsForResolvingEffectGroup() != null) {
+            targetIds = entry.targetsForResolvingEffectGroup();
+        } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
                 && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
             targetIds = entry.getTargetIds();
         } else if (entry.getTargetId() != null) {

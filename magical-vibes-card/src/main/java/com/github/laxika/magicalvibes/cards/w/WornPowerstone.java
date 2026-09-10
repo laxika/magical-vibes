@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "318")
+@CardRegistration(set = "DDE", collectorNumber = "24")
 public class WornPowerstone extends Card {
 
     public WornPowerstone() {

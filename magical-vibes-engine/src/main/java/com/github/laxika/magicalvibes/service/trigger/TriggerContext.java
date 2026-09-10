@@ -533,7 +533,8 @@ public sealed interface TriggerContext {
                              UUID artifactControllerId,
                              Card artifactCard,
                              int artifactManaValue,
-                             Map<CounterType, Integer> artifactCounters) implements TriggerContext {
+                             Map<CounterType, Integer> artifactCounters,
+                             boolean wasSacrificed) implements TriggerContext {
 
         public ArtifactGraveyard {
             artifactCounters = Map.copyOf(artifactCounters);
@@ -551,6 +552,13 @@ public sealed interface TriggerContext {
         public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId,
                                  Card artifactCard, int artifactManaValue) {
             this(graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue, Map.of());
+        }
+
+        public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId,
+                                 Card artifactCard, int artifactManaValue,
+                                 Map<CounterType, Integer> artifactCounters) {
+            this(graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue,
+                    artifactCounters, false);
         }
     }
 

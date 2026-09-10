@@ -1299,6 +1299,11 @@ public class ValidTargetService {
             }
         }
 
+        if (gameQueryService.cantBeTargetedByAbilityFromCardType(
+                gameData, perm, sourceCard, null, controllerId, CardType.ARTIFACT)) {
+            return false;
+        }
+
         // Hexproof from color (blocks opponent's abilities of the specified color)
         Set<CardColor> effectiveSourceColors = targetLegalityService.effectiveSourceColors(gameData, sourceCard);
         if (effectiveSourceColors.size() == 1

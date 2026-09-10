@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,52 +16,48 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VolrathsCurse.class, BottleGnomes.class})
 class VolrathsCurseTest extends BaseCardTest {
 
-    /**
-     * Adds {@code count} filler creatures to {@code playerId}'s battlefield. The sacrifice ability
-     * is activated by a player who does not control the Aura, and the activation API addresses such
-     * a permanent by an index that must fall outside the activator's own battlefield — the filler
-     * pushes the Curse to a high enough index.
-     */
-    private void addFillers(java.util.UUID playerId, int count) {
+    /** Adds ready Bottle Gnomes so an opponent-controlled Aura is at a predictable index. */
+    private void addFillers(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Permanent filler = new Permanent(new GrizzlyBears());
-            filler.setSummoningSick(false);
-            gd.playerBattlefields.get(playerId).add(filler);
+            addCreatureReady(player, new BottleGnomes());
         }
     }
 
     @Test
     @DisplayName("Enchanted creature cannot attack")
     void enchantedCreatureCannotAttack() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(gnomes.getId());
 
-        Permanent curse = new Permanent(new VolrathsCurse());
-        curse.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(curse);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+    @Test
+    @DisplayName("Enchanted creature cannot block")
+    void enchantedCreatureCannotBlock() {
+        addCreatureReady(player2, new BottleGnomes());
+        Permanent blocker = addCreatureReady(player1, new BottleGnomes());
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(blocker.getId());
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Enchanted creature cannot activate its abilities")
     void enchantedCreatureCannotActivateAbilities() {
-        Permanent gnomes = new Permanent(new BottleGnomes());
-        gnomes.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gnomes);
-
-        Permanent curse = new Permanent(new VolrathsCurse());
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
         curse.setAttachedTo(gnomes.getId());
-        gd.playerBattlefields.get(player2.getId()).add(curse);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -70,23 +67,20 @@ class VolrathsCurseTest extends BaseCardTest {
     @Test
     @DisplayName("The enchanted creature's controller sacrifices a permanent to unlock its abilities this turn")
     void sacrificingAPermanentIgnoresTheCurse() {
-        Permanent gnomes = new Permanent(new BottleGnomes());
-        gnomes.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gnomes);
-        Permanent fountain = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player1.getId()).add(fountain);
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent sacrificeTarget = addCreatureReady(player1, new BottleGnomes());
 
-        addFillers(player2.getId(), 2);
-        Permanent curse = new Permanent(new VolrathsCurse());
+        addFillers(player2, 2);
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
         curse.setAttachedTo(gnomes.getId());
-        gd.playerBattlefields.get(player2.getId()).add(curse);
 
         harness.activateAbility(player1, 2, 0, null, null);
-        harness.handlePermanentChosen(player1, fountain.getId());
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
         harness.passBothPriorities();
 
         assertThat(curse.isAuraEffectsIgnoredThisTurn()).isTrue();
-        harness.assertInGraveyard(player1, "Fountain of Youth");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card == sacrificeTarget.getCard());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -96,19 +90,15 @@ class VolrathsCurseTest extends BaseCardTest {
     @Test
     @DisplayName("The ignore effect wears off at end of turn")
     void ignoreEffectWearsOffAtEndOfTurn() {
-        Permanent gnomes = new Permanent(new BottleGnomes());
-        gnomes.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gnomes);
-        Permanent fountain = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player1.getId()).add(fountain);
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent sacrificeTarget = addCreatureReady(player1, new BottleGnomes());
 
-        addFillers(player2.getId(), 2);
-        Permanent curse = new Permanent(new VolrathsCurse());
+        addFillers(player2, 2);
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
         curse.setAttachedTo(gnomes.getId());
-        gd.playerBattlefields.get(player2.getId()).add(curse);
 
         harness.activateAbility(player1, 2, 0, null, null);
-        harness.handlePermanentChosen(player1, fountain.getId());
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
         harness.passBothPriorities();
         assertThat(curse.isAuraEffectsIgnoredThisTurn()).isTrue();
 
@@ -125,42 +115,46 @@ class VolrathsCurseTest extends BaseCardTest {
     @Test
     @DisplayName("Ignoring the Curse lets the enchanted creature attack")
     void ignoringTheCurseLetsTheCreatureAttack() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-        Permanent fountain = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player1.getId()).add(fountain);
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent sacrificeTarget = addCreatureReady(player1, new BottleGnomes());
 
-        addFillers(player2.getId(), 2);
-        Permanent curse = new Permanent(new VolrathsCurse());
-        curse.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(curse);
+        addFillers(player2, 2);
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(gnomes.getId());
 
-        harness.forceActivePlayer(player1);
         harness.activateAbility(player1, 2, 0, null, null);
-        harness.handlePermanentChosen(player1, fountain.getId());
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
-        assertThat(bears.isAttacking()).isTrue();
+        assertThat(gnomes.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a permanent to ignore the Curse takes effect without using the stack")
+    void sacrificingAPermanentToIgnoreTheCurseIsImmediate() {
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent sacrificeTarget = addCreatureReady(player1, new BottleGnomes());
+
+        addFillers(player2, 2);
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(gnomes.getId());
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(curse.isAuraEffectsIgnoredThisTurn()).isTrue();
     }
 
     @Test
     @DisplayName("The Aura's controller may not activate the sacrifice ability")
     void auraControllerCannotActivateSacrificeAbility() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        Permanent curse = new Permanent(new VolrathsCurse());
-        curse.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(curse);
-        Permanent fountain = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(fountain);
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(gnomes.getId());
+        addCreatureReady(player2, new BottleGnomes());
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -168,15 +162,50 @@ class VolrathsCurseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The sacrifice permission can be used only once each turn")
+    void sacrificePermissionCanBeUsedOnlyOnceEachTurn() {
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent firstSacrificeTarget = addCreatureReady(player1, new BottleGnomes());
+
+        addFillers(player2, 2);
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(gnomes.getId());
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.handlePermanentChosen(player1, firstSacrificeTarget.getId());
+        harness.passBothPriorities();
+
+        addCreatureReady(player1, new BottleGnomes());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller may sacrifice the Aura itself")
+    void enchantedCreatureControllerMaySacrificeTheAuraItself() {
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        addCreatureReady(player1, new BottleGnomes());
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new VolrathsCurse());
+        curse.setAttachedTo(gnomes.getId());
+        addCreatureReady(player1, new BottleGnomes());
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.handlePermanentChosen(player1, curse.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent == curse);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card == curse.getCard());
+    }
+
+    @Test
     @DisplayName("{1}{U} returns the Aura to its owner's hand, freeing the creature")
     void bounceAbilityReturnsAuraToHand() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        Permanent curse = new Permanent(new VolrathsCurse());
-        curse.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(curse);
+        Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
+        curse.setAttachedTo(gnomes.getId());
 
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.activateAbility(player2, 0, 1, null, null);
@@ -184,13 +213,8 @@ class VolrathsCurseTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Volrath's Curse"));
+                .anyMatch(card -> card == curse.getCard());
 
-        // With the Aura gone the creature can be declared as an attacker again.
-        harness.forceActivePlayer(player1);
-        harness.beginAttackerDeclarationInput();
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
     }
 }

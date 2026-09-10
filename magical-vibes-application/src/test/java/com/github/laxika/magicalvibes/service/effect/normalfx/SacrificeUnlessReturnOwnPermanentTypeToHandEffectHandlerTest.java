@@ -28,7 +28,7 @@ class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandlerTest extends Abstr
 
                 resolveEffect(gd, entry, effect);
 
-                verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
+                verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, source);
             }
 
             @Test
@@ -46,7 +46,7 @@ class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandlerTest extends Abstr
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.pendingMayAbilities).isNotEmpty();
-                verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+                verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
             }
 
             @Test
@@ -58,7 +58,7 @@ class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandlerTest extends Abstr
 
                 resolveEffect(gd, entry, effect);
 
-                verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+                verify(permanentRemovalService, never()).sacrificePermanentToGraveyard(any(), any());
                 assertThat(gd.pendingMayAbilities).isEmpty();
             }
 }

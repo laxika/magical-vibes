@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "STH", collectorNumber = "136")
+@CardRegistration(set = "DDE", collectorNumber = "28")
 public class HornetCannon extends Card {
 
     public HornetCannon() {

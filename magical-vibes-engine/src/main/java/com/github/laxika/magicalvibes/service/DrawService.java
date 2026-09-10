@@ -43,8 +43,11 @@ import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.IslandSanctuaryEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardThenBottomRestEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
@@ -61,7 +64,6 @@ import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLose
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
@@ -1921,9 +1923,26 @@ public class DrawService {
 
     private void checkEmblemDrawTriggers(GameData gameData, UUID drawingPlayerId) {
         for (Emblem emblem : gameData.emblems) {
-            if (!emblem.controllerId().equals(drawingPlayerId)) continue;
             for (CardEffect effect : emblem.staticEffects()) {
-                if (effect instanceof ExileTargetOpponentPermanentOnDrawEffect) {
+                if (effect instanceof EmblemControllerLosesLifeOnAnyPlayerDrawEffect lifeTrigger) {
+                    Card source = emblem.sourceCard();
+                    if (source == null) continue;
+                    String description = source.getName() + "'s emblem";
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source,
+                            emblem.controllerId(),
+                            description,
+                            new ArrayList<>(List.of(
+                                    new LoseLifeEffect(lifeTrigger.amount(), LoseLifeRecipient.CONTROLLER)
+                            ))
+                    );
+                    entry.setNonTargeting(true);
+                    gameData.stack.add(entry);
+                    gameLogService.append(gameData, GameLog.text(description + " triggers."));
+                    log.info("Game {} - {} triggers when a player draws", gameData.id, description);
+                } else if (emblem.controllerId().equals(drawingPlayerId)
+                        && effect instanceof ExileTargetOpponentPermanentOnDrawEffect) {
                     gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
                             "Teferi's emblem",
                             emblem.controllerId(),

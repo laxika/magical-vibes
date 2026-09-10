@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.g.GoblinWelder;
+import com.github.laxika.magicalvibes.cards.w.WeatherseedElf;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,22 +14,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EngineeredPlague.class, GoblinWelder.class, WeatherseedElf.class})
 class EngineeredPlagueTest extends BaseCardTest {
 
-    private static Card createCreature(String name, CardSubtype... subtypes) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setSubtypes(List.of(subtypes));
-        return card;
-    }
-
     private Permanent addPlague(CardSubtype chosen) {
-        Permanent plague = new Permanent(new EngineeredPlague());
+        Permanent plague = harness.addToBattlefieldAndReturn(player1, new EngineeredPlague());
         plague.setChosenSubtype(chosen);
-        gd.playerBattlefields.get(player1.getId()).add(plague);
         return plague;
     }
 
@@ -42,9 +33,7 @@ class EngineeredPlagueTest extends BaseCardTest {
         harness.passBothPriorities();          // resolve -> subtype choice pends
         harness.handleListChoice(player1, "GOBLIN");
 
-        Card goblin = createCreature("Goblin Piker", CardSubtype.GOBLIN);
-        harness.addToBattlefield(player1, goblin);
-        Permanent goblinPerm = findPermanent(player1, "Goblin Piker");
+        Permanent goblinPerm = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
 
         var bonus = gqs.computeStaticBonus(gd, goblinPerm);
         assertThat(bonus.power()).isEqualTo(-1);
@@ -54,11 +43,9 @@ class EngineeredPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("Own creatures of the chosen type get -1/-1")
     void weakensOwnCreaturesOfChosenType() {
-        Card goblin = createCreature("Goblin Piker", CardSubtype.GOBLIN);
-        harness.addToBattlefield(player1, goblin);
+        Permanent goblinPerm = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
         addPlague(CardSubtype.GOBLIN);
 
-        Permanent goblinPerm = findPermanent(player1, "Goblin Piker");
         var bonus = gqs.computeStaticBonus(gd, goblinPerm);
         assertThat(bonus.power()).isEqualTo(-1);
         assertThat(bonus.toughness()).isEqualTo(-1);
@@ -67,11 +54,9 @@ class EngineeredPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's creatures of the chosen type also get -1/-1")
     void weakensOpponentCreaturesOfChosenType() {
-        Card goblin = createCreature("Goblin Piker", CardSubtype.GOBLIN);
-        harness.addToBattlefield(player2, goblin);
+        Permanent goblinPerm = harness.addToBattlefieldAndReturn(player2, new GoblinWelder());
         addPlague(CardSubtype.GOBLIN);
 
-        Permanent goblinPerm = findPermanent(player2, "Goblin Piker");
         var bonus = gqs.computeStaticBonus(gd, goblinPerm);
         assertThat(bonus.power()).isEqualTo(-1);
         assertThat(bonus.toughness()).isEqualTo(-1);
@@ -80,11 +65,9 @@ class EngineeredPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures of a different type are not affected")
     void doesNotAffectOtherTypes() {
-        Card elf = createCreature("Llanowar Elves", CardSubtype.ELF);
-        harness.addToBattlefield(player1, elf);
+        Permanent elfPerm = harness.addToBattlefieldAndReturn(player1, new WeatherseedElf());
         addPlague(CardSubtype.GOBLIN);
 
-        Permanent elfPerm = findPermanent(player1, "Llanowar Elves");
         var bonus = gqs.computeStaticBonus(gd, elfPerm);
         assertThat(bonus.power()).isEqualTo(0);
         assertThat(bonus.toughness()).isEqualTo(0);
@@ -93,14 +76,23 @@ class EngineeredPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("The -1/-1 disappears when Engineered Plague leaves the battlefield")
     void effectRemovedWhenPlagueLeaves() {
-        Card goblin = createCreature("Goblin Piker", CardSubtype.GOBLIN);
-        harness.addToBattlefield(player1, goblin);
+        Permanent goblinPerm = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
         Permanent plague = addPlague(CardSubtype.GOBLIN);
 
-        Permanent goblinPerm = findPermanent(player1, "Goblin Piker");
         assertThat(gqs.computeStaticBonus(gd, goblinPerm).power()).isEqualTo(-1);
 
         gd.playerBattlefields.get(player1.getId()).remove(plague);
         assertThat(gqs.computeStaticBonus(gd, goblinPerm).power()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("A creature with the chosen type among multiple types is affected")
+    void matchesAnyCreatureSubtype() {
+        Permanent goblinPerm = harness.addToBattlefieldAndReturn(player1, new GoblinWelder());
+        addPlague(CardSubtype.ARTIFICER);
+
+        var bonus = gqs.computeStaticBonus(gd, goblinPerm);
+        assertThat(bonus.power()).isEqualTo(-1);
+        assertThat(bonus.toughness()).isEqualTo(-1);
     }
 }

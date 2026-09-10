@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
+import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -744,18 +745,35 @@ public class GameSimulator {
         }
         Integer discardIndex = computeDiscardCostIndex(gd, playerId, card);
         List<Integer> discardIndices = computeDiscardCostIndices(gd, playerId, card, pc.handIndex(), pc.xValue());
+        UUID chosenAdditionalCostObjectId = computeOpponentOwnedExiledCard(gd, playerId, card);
         if (exileIndices != null || sacrificeId != null || discardIndex != null || discardIndices != null
                 || !multiSacrificeIds.isEmpty()
                 || !imposedSacrificeIds.isEmpty()
-                || beholdSelection.permanentId() != null || beholdSelection.handCardIndex() != null) {
+                || beholdSelection.permanentId() != null || beholdSelection.handCardIndex() != null
+                || chosenAdditionalCostObjectId != null) {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
                     null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices,
                     false, discardIndex, discardIndices, imposedSacrificeIds, multiSacrificeIds,
                     List.of(), false,
-                    beholdSelection.permanentId(), beholdSelection.handCardIndex());
+                    beholdSelection.permanentId(), beholdSelection.handCardIndex(), List.of(), List.of(),
+                    null, null, chosenAdditionalCostObjectId);
         } else {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
         }
+    }
+
+    private UUID computeOpponentOwnedExiledCard(GameData gd, UUID playerId, Card card) {
+        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(PutOpponentOwnedExiledCardIntoGraveyardCost.class::isInstance);
+        if (!requiresChoice) {
+            return null;
+        }
+        return gd.exiledCards.stream()
+                .filter(exiled -> gd.playerIds.contains(exiled.ownerId()))
+                .filter(exiled -> !playerId.equals(exiled.ownerId()))
+                .map(exiled -> exiled.card().getId())
+                .findFirst()
+                .orElse(null);
     }
 
     private BeholdSelection computeBeholdSelection(GameData gd, UUID playerId, Card card) {

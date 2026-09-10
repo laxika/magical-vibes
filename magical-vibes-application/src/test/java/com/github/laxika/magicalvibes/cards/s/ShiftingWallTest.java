@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ShiftingWall.class)
 class ShiftingWallTest extends BaseCardTest {
 
     @Test
@@ -19,7 +21,7 @@ class ShiftingWallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShiftingWall()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.castArtifact(player1, 0, 3);
         harness.passBothPriorities();
 
         Permanent wall = findPermanent(player1, "Shifting Wall");
@@ -33,7 +35,7 @@ class ShiftingWallTest extends BaseCardTest {
     void xZeroDies() {
         harness.setHand(player1, List.of(new ShiftingWall()));
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castArtifact(player1, 0, 0);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Shifting Wall");

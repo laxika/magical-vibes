@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INV", collectorNumber = "229")
+@CardRegistration(set = "DDE", collectorNumber = "58")
 public class ArmadilloCloak extends Card {
 
     public ArmadilloCloak() {

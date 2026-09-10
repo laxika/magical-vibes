@@ -115,6 +115,10 @@ public final class AiInteractionStrategies {
         register(new PutCardFromHandOrGraveyardChoiceAiStrategy());
         register(new NivMizzetColorPairChoiceAiStrategy());
         register(new FaceUpExiledCardChoiceAiStrategy());
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice.class, 2));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.OblivionSowerLandChoice.class, 0));
         register(new ETBExiledCardTargetChoiceAiStrategy());
     }
 

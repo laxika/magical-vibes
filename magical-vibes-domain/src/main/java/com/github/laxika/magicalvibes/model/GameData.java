@@ -544,6 +544,8 @@ public class GameData {
     public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
     /** Target IDs to colors whose damage is prevented to that target until end of turn. */
     public final Map<UUID, Set<CardColor>> colorDamagePreventionUntilEndOfTurn = new ConcurrentHashMap<>();
+    /** Target IDs to which damage from colorless sources is prevented until end of turn. */
+    public final Set<UUID> colorlessDamagePreventionUntilEndOfTurn = ConcurrentHashMap.newKeySet();
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
     public PendingGemstoneCavernsChoice pendingGemstoneCavernsChoice;
     /** Tariff: players (APNAP order) still to be processed after the one currently being resolved. */
@@ -857,6 +859,8 @@ public class GameData {
     /** Whether the current upkeep step was inserted after the turn's first upkeep. */
     public boolean currentUpkeepIsAdditional;
     public int additionalCombatMainPhasePairs;
+    /** The ordinary phase to resume after the inserted combat/main phase pairs. */
+    public TurnStep additionalCombatMainPhasePairsReturnStep;
     /** Additional combat phases with NO additional main phase (e.g. Finest Hour), queued after the
      *  current combat phase and consumed when leaving END_OF_COMBAT. Reset at the start of each turn. */
     public int additionalCombatPhasesOnly;
@@ -943,6 +947,9 @@ public class GameData {
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Players whose opponents' creatures cannot deal damage this turn (Thwart the Enemy). */
     public final Set<UUID> playersWithDamageFromOpponentCreaturesPrevented = ConcurrentHashMap.newKeySet();
+    /** Players whose targeted opponent's creatures cannot deal combat damage this turn (Encircling Fissure). */
+    public final Set<UUID> playersWithCombatDamageFromTargetOpponentCreaturesPrevented =
+            ConcurrentHashMap.newKeySet();
     /** Players for whom damage from matching source permanents is prevented this turn. */
     public final Map<UUID, Set<PermanentPredicate>> playersWithDamageFromMatchingSourcesPrevented =
             new ConcurrentHashMap<>();
@@ -4619,6 +4626,7 @@ public class GameData {
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
         copy.cardEnteringGraveyardByCycling = this.cardEnteringGraveyardByCycling;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
+        copy.additionalCombatMainPhasePairsReturnStep = this.additionalCombatMainPhasePairsReturnStep;
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
         copy.onlyLandCreaturesCanAttackThisCombat = this.onlyLandCreaturesCanAttackThisCombat;
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
@@ -4670,6 +4678,8 @@ public class GameData {
                 .addAll(this.playersWithProtectionFromEverythingUntilNextTurn);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.playersWithDamageFromOpponentCreaturesPrevented.addAll(this.playersWithDamageFromOpponentCreaturesPrevented);
+        copy.playersWithCombatDamageFromTargetOpponentCreaturesPrevented
+                .addAll(this.playersWithCombatDamageFromTargetOpponentCreaturesPrevented);
         this.playersWithDamageFromMatchingSourcesPrevented.forEach((k, v) ->
                 copy.playersWithDamageFromMatchingSourcesPrevented.put(k, new HashSet<>(v)));
         this.playerNextDamageFromMatchingSourcesPrevented.forEach((k, v) ->
@@ -4721,6 +4731,7 @@ public class GameData {
             copied.addAll(colors);
             copy.colorDamagePreventionUntilEndOfTurn.put(targetId, copied);
         });
+        copy.colorlessDamagePreventionUntilEndOfTurn.addAll(this.colorlessDamagePreventionUntilEndOfTurn);
         this.handsRevealedWhileSourceOnBattlefield.forEach((sourceId, playerIds) -> {
             Set<UUID> copied = ConcurrentHashMap.newKeySet();
             copied.addAll(playerIds);
@@ -5184,6 +5195,8 @@ public class GameData {
         copy.graveyardTargetOperation.sourcePermanentId = this.graveyardTargetOperation.sourcePermanentId;
         copy.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
                 this.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
+        copy.graveyardTargetOperation.triggeringPermanentId =
+                this.graveyardTargetOperation.triggeringPermanentId;
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null
                 ? null : new ArrayList<>(this.graveyardTargetOperation.permanentTargetIds);
@@ -5257,6 +5270,8 @@ public class GameData {
                 this.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId;
         copy.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId =
                 this.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId;
+        copy.graveyardTargetOperation.asEntersOpponentExileToGraveyard =
+                this.graveyardTargetOperation.asEntersOpponentExileToGraveyard;
 
         copy.queenKaylaBinKroogOperation.active = this.queenKaylaBinKroogOperation.active;
         copy.queenKaylaBinKroogOperation.controllerId = this.queenKaylaBinKroogOperation.controllerId;

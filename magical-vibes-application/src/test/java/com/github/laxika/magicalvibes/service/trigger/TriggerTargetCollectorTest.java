@@ -100,6 +100,21 @@ class TriggerTargetCollectorTest {
     }
 
     @Test
+    void excludesPermanentsProtectedFromTheTriggeredAbility() {
+        Permanent protectedPermanent = new Permanent(new Card());
+        Permanent legalPermanent = new Permanent(new Card());
+        gd.playerBattlefields.get(player2Id).addAll(List.of(protectedPermanent, legalPermanent));
+        org.mockito.Mockito.when(targetLegalityService.checkTriggeredPermanentTargetableReason(
+                gd, protectedPermanent, sourceCard, player1Id))
+                .thenReturn(java.util.Optional.of("Shroud"));
+
+        var result = collector.collect(gd, List.of(new DestroyTargetPermanentEffect()), null,
+                player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
+
+        assertThat(result.validTargets()).containsExactly(legalPermanent.getId());
+    }
+
+    @Test
     @DisplayName("Player-only effect with no target filter yields every player")
     void playerOnlyNoFilterYieldsAllPlayers() {
         List<CardEffect> effects = List.of(new MillEffect(1, MillRecipient.TARGET_PLAYER));

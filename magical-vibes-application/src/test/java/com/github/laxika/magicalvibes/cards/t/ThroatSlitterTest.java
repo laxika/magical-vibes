@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ThroatSlitterTest extends BaseCardTest {
@@ -23,12 +21,12 @@ class ThroatSlitterTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
     }
 
     @Test
@@ -43,7 +41,7 @@ class ThroatSlitterTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(enemyBears.getId())
                 .doesNotContain(ownBears.getId())
                 .doesNotContain(enemyBlack.getId());

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "59")
+@CardRegistration(set = "DDE", collectorNumber = "2")
 public class CarrionFeeder extends Card {
 
     public CarrionFeeder() {

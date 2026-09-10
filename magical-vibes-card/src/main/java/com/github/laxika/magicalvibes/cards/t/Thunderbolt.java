@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "AVR", collectorNumber = "159")
 @CardRegistration(set = "WTH", collectorNumber = "115")
 @CardRegistration(set = "BTD", collectorNumber = "48")
+@CardRegistration(set = "PD2", collectorNumber = "19")
 public class Thunderbolt extends Card {
 
     public Thunderbolt() {

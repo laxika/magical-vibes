@@ -1,16 +1,23 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FieldOfSouls;
+import com.github.laxika.magicalvibes.cards.m.MoggConscripts;
+import com.github.laxika.magicalvibes.cards.w.WindsOfRath;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpiritMirror.class, FieldOfSouls.class, MoggConscripts.class, WindsOfRath.class})
 class SpiritMirrorTest extends BaseCardTest {
 
     @Test
@@ -22,7 +29,6 @@ class SpiritMirrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Reflection");
-        assertThat(token).isNotNull();
         assertThat(token.getEffectivePower()).isEqualTo(2);
         assertThat(token.getEffectiveToughness()).isEqualTo(2);
     }
@@ -46,7 +52,7 @@ class SpiritMirrorTest extends BaseCardTest {
     @DisplayName("An opponent's Reflection token also stops the trigger")
     void opponentReflectionStopsTrigger() {
         addMirror(player1);
-        Permanent mirror2 = addMirror(player2);
+        addMirror(player2);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -56,7 +62,19 @@ class SpiritMirrorTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(countPermanents(player1, "Reflection")).isZero();
-        assertThat(mirror2).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Two upkeep triggers create only one Reflection token")
+    void simultaneousTriggersCreateOnlyOneReflection() {
+        addMirror(player1);
+        addMirror(player1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Reflection")).isEqualTo(1);
     }
 
     @Test
@@ -72,6 +90,24 @@ class SpiritMirrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Reflection")).isZero();
+    }
+
+    @Test
+    @DisplayName("{0} ability can destroy an opponent's Reflection")
+    void abilityDestroysOpponentsReflection() {
+        addMirror(player1);
+        addMirror(player2);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        Permanent token = findPermanent(player2, "Reflection");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, token.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Reflection")).isZero();
     }
 
     @Test
@@ -96,12 +132,33 @@ class SpiritMirrorTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Reflection creature")
     void cannotTargetNonReflection() {
         addMirror(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new MoggConscripts());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A non-Reflection token does not prevent the upkeep trigger")
+    void nonReflectionTokenDoesNotStopTrigger() {
+        addMirror(player1);
+        harness.addToBattlefield(player1, new FieldOfSouls());
+        harness.addToBattlefield(player1, new MoggConscripts());
+        harness.setHand(player1, List.of(new WindsOfRath()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.forceActivePlayer(player1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Reflection")).isEqualTo(1);
     }
 
     private Permanent addMirror(Player player) {

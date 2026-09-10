@@ -149,6 +149,19 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ActivatedAbilityExecutionService {
+    private final com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry effectHandlerRegistry;
+
+    /** Performs a paid special action immediately, without activation triggers or a stack entry. */
+    public void performSpecialAction(GameData gameData, Player player, Permanent source, ActivatedAbility action) {
+        StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(), player.getId(),
+                action.getDescription(), action.getEffects(), null, source.getId());
+        for (CardEffect effect : action.getEffects()) {
+            if (effect instanceof CostEffect) continue;
+            effectHandlerRegistry.getHandler(effect).resolve(gameData, entry, effect);
+        }
+        gameData.priorityPassedBy.clear();
+        stateBasedActionService.performStateBasedActions(gameData);
+    }
 
     private final DamagePreventionService damagePreventionService;
     private final DrawService drawService;
@@ -411,6 +424,12 @@ public class ActivatedAbilityExecutionService {
         if (battlefield == null) {
             throw new IllegalStateException("Invalid battlefield");
         }
+        UUID activatedPermanentControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        TriggerCollectionService.PreCostActivationTriggers preCostActivationTriggers =
+                ability.isSpecialAction()
+                        ? new TriggerCollectionService.PreCostActivationTriggers(List.of(), List.of())
+                        : triggerCollectionService.collectNonTapActivationTriggersBeforeCosts(
+                        gameData, playerId, ability, permanent, activatedPermanentControllerId);
 
         UUID effectiveTargetId = targetId;
         if (effectiveTargetId == null && (targetIds == null || targetIds.isEmpty()) && targetZone == null) {
@@ -585,7 +604,7 @@ public class ActivatedAbilityExecutionService {
             if (sacrificeSelfCost.get().trackPower()) {
                 effectiveXValue = Math.max(0, gameQueryService.getEffectivePower(gameData, permanent));
             }
-            permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent);
             triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), permanent.getCard());
         }
 
@@ -598,7 +617,7 @@ public class ActivatedAbilityExecutionService {
             Permanent equipment = gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
             if (equipment != null) {
                 sacrificedEquipmentCard = equipment.getCard();
-                permanentRemovalService.removePermanentToGraveyard(gameData, equipment);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, equipment);
             }
         }
 
@@ -649,11 +668,23 @@ public class ActivatedAbilityExecutionService {
             gameData.stack.subList(stackBeforeCosts, gameData.stack.size()).clear();
         }
 
+        if (ability.isSpecialAction()) {
+            performSpecialAction(gameData, player, permanent, ability);
+            gameData.stack.addAll(deferredTapTriggers);
+            gameData.stack.addAll(deferredCostTriggers);
+            return;
+        }
+
         // "Whenever you activate an ability of ..." triggers (e.g. Ceaseless Searblades). Collected
         // here so they end up ON TOP of the activated ability (non-mana), or deferred to the next
         // priority window alongside cost triggers (mana abilities, per CR 603.3).
         int stackBeforeActivationTriggers = gameData.stack.size();
-        triggerCollectionService.checkControllerActivatesAbilityTriggers(gameData, playerId, permanent, ability);
+        triggerCollectionService.checkControllerActivatesAbilityTriggers(
+                gameData, playerId, permanent, ability, activatedPermanentControllerId,
+                preCostActivationTriggers.effects());
+        triggerCollectionService.checkOpponentActivatesAbilityTriggers(
+                gameData, playerId, permanent, ability, activatedPermanentControllerId,
+                preCostActivationTriggers.effects());
         if (ability.isExhaustAbility()) {
             triggerCollectionService.checkControllerActivatesExhaustAbilityTriggers(gameData, playerId);
             triggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard(gameData, playerId);
@@ -760,7 +791,10 @@ public class ActivatedAbilityExecutionService {
             // wait until the next time a player would receive priority before going
             // on the stack.  This prevents them from blocking sorcery-speed spell
             // casting when a mana ability is activated to pay for a spell.
-            if (!deferredTapTriggers.isEmpty() || !deferredCostTriggers.isEmpty() || !deferredActivationTriggers.isEmpty()) {
+            if (!preCostActivationTriggers.entries().isEmpty()
+                    || !deferredTapTriggers.isEmpty() || !deferredCostTriggers.isEmpty()
+                    || !deferredActivationTriggers.isEmpty()) {
+                gameData.pendingManaAbilityTriggers.addAll(preCostActivationTriggers.entries());
                 gameData.pendingManaAbilityTriggers.addAll(deferredTapTriggers);
                 gameData.pendingManaAbilityTriggers.addAll(deferredCostTriggers);
                 gameData.pendingManaAbilityTriggers.addAll(deferredActivationTriggers);
@@ -812,11 +846,14 @@ public class ActivatedAbilityExecutionService {
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
         triggerCollectionService.checkCrimeTriggers(gameData, abilityEntry);
         triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
-                gameData, playerId, abilityEntry, ability, permanent);
+                gameData, playerId, abilityEntry, ability, permanent, activatedPermanentControllerId,
+                preCostActivationTriggers.effects());
         // "Whenever an opponent activates a non-mana ability" triggers (Harsh Mentor). Reached only on
         // the non-mana path, so the "if it isn't a mana ability" clause is satisfied automatically.
         triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
-                gameData, playerId, abilityEntry, ability, permanent);
+                gameData, playerId, abilityEntry, ability, permanent, activatedPermanentControllerId,
+                preCostActivationTriggers.effects());
+        gameData.stack.addAll(preCostActivationTriggers.entries());
         // Add "whenever you activate an ability" triggers ON TOP so they resolve first (per CR rules)
         gameData.stack.addAll(deferredActivationTriggers);
         // Add "becomes tapped" triggers ON TOP of the ability so they resolve first (per CR rules)
@@ -1596,7 +1633,7 @@ public class ActivatedAbilityExecutionService {
                         permanent.getId(), playerId, permanent.getCard(),
                         sacrifice.currentControllerSacrifices()));
             } else if (effect instanceof SacrificeSelfEffect
-                    && permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                    && permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
                 permanentRemovalService.removeOrphanedAuras(gameData);

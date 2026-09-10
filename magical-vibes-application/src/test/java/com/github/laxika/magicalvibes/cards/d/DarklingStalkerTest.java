@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(DarklingStalker.class)
 class DarklingStalkerTest extends BaseCardTest {
 
     @Test
@@ -22,6 +24,28 @@ class DarklingStalkerTest extends BaseCardTest {
 
         assertThat(stalker.getRegenerationShield()).isEqualTo(1);
         assertThat(stalker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Regeneration shield saves Darkling Stalker from lethal combat damage")
+    void regenerationShieldSavesFromLethalCombatDamage() {
+        Permanent stalker = addCreatureReady(player1, new DarklingStalker());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        stalker.setBlocking(true);
+        stalker.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new DarklingStalker());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Darkling Stalker");
+        assertThat(stalker.isTapped()).isTrue();
+        assertThat(stalker.isBlocking()).isFalse();
+        assertThat(stalker.getRegenerationShield()).isZero();
     }
 
     @Test

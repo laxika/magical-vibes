@@ -314,7 +314,7 @@ class SpellCastingServiceTest {
         when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
                 .thenReturn(true);
-        when(permanentRemovalService.removePermanentToGraveyard(gd, artifact)).thenReturn(true);
+        when(permanentRemovalService.sacrificePermanentToGraveyard(gd, artifact)).thenReturn(true);
 
         svc.playCard(gd, player1, 0, null, target.getId(), null, null, null, false, artifact.getId());
 
@@ -343,12 +343,12 @@ class SpellCastingServiceTest {
         when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
                 .thenReturn(true);
-        when(permanentRemovalService.removePermanentToGraveyard(gd, artifact)).thenReturn(true);
+        when(permanentRemovalService.sacrificePermanentToGraveyard(gd, artifact)).thenReturn(true);
 
         svc.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
                 List.of(), null, artifact.getId());
 
-        verify(permanentRemovalService).removePermanentToGraveyard(gd, artifact);
+        verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, artifact);
         assertThat(gd.stack).hasSize(1);
     }
 

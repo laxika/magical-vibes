@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenSourcePreventionScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOnTopOfLibraryCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
@@ -20,9 +21,10 @@ public class Penance extends Card {
                 null,
                 List.of(
                         new PutCardFromHandOnTopOfLibraryCost(),
-                        PreventDamageFromChosenSourceEffect.nextDamageToYou(
+                        new PreventDamageFromChosenSourceEffect(
+                                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_ANY_TARGET, false, false,
                                 new PermanentColorInPredicate(Set.of(CardColor.BLACK, CardColor.RED)),
-                                "black or red")),
+                                "black or red", false, false, false, false)),
                 "Put a card from your hand on top of your library: The next time a black or red source "
                         + "of your choice would deal damage this turn, prevent that damage."
         ));

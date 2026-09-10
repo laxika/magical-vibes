@@ -1137,6 +1137,14 @@ public class GameTestHarness {
                 null, null, List.of(), List.of(), null, null, chosenObjectId);
     }
 
+    public void castSorceryWithChosenAdditionalCostObject(Player player, int cardIndex, UUID targetId,
+                                                          UUID chosenObjectId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
+                null, null, List.of(), List.of(), null, null, chosenObjectId);
+    }
+
     public void castInstantWithRepeatedCosts(Player player, int cardIndex, UUID targetId,
                                               List<String> repeatedAdditionalCosts) {
         ensurePriority(player);

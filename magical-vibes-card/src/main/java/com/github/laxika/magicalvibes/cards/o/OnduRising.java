@@ -1,0 +1,49 @@
+package com.github.laxika.magicalvibes.cards.o;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedAttackerKeywordEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+import java.util.List;
+import java.util.Set;
+
+@CardRegistration(set = "BFZ", collectorNumber = "41")
+public class OnduRising extends Card {
+
+    @java.lang.Override
+    public int getMinTargetsWhenCastForAlternateCost() {
+        return 1;
+    }
+
+    public OnduRising() {
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{W}"))));
+
+        addEffect(EffectSlot.SPELL,
+                new RegisterDelayedAttackerKeywordEffect(Set.of(Keyword.LIFELINK)));
+
+        target(TargetFilters.landYouControl(), 0, 1)
+                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                        new CastForAlternateCost(),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)))
+                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                        new CastForAlternateCost(),
+                        new AnimatePermanentsEffect(
+                                0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), null,
+                                Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.PERMANENT)));
+    }
+}

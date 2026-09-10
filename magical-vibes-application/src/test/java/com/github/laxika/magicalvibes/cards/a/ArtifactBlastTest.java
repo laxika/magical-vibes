@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArtifactBlast.class, GrizzlyBears.class, Millstone.class})
+@CardUsed({ArtifactBlast.class, Millstone.class, GrizzlyBears.class})
 class ArtifactBlastTest extends BaseCardTest {
 
     @Test
@@ -32,11 +32,12 @@ class ArtifactBlastTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Millstone");
         harness.assertNotOnBattlefield(player1, "Millstone");
+        harness.assertInGraveyard(player2, "Artifact Blast");
     }
 
     @Test
-    @DisplayName("Cannot target a nonartifact spell")
-    void cannotTargetNonartifactSpell() {
+    @DisplayName("Cannot target a nonartifact creature spell")
+    void cannotTargetNonartifactCreatureSpell() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);

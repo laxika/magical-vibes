@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.FightingDrake;
+import com.github.laxika.magicalvibes.cards.f.Fireslinger;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Safeguard.class, FightingDrake.class, Fireslinger.class, Forest.class})
 class SafeguardTest extends BaseCardTest {
 
     @Test
@@ -22,7 +25,7 @@ class SafeguardTest extends BaseCardTest {
     void preventsCombatDamageToPlayer() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new Safeguard());
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, new FightingDrake());
 
         activateSafeguard(attacker);
         resolveCombat(player2);
@@ -34,7 +37,7 @@ class SafeguardTest extends BaseCardTest {
     @DisplayName("Only combat damage is prevented, not all damage")
     void combatDamageOnly() {
         harness.addToBattlefield(player1, new Safeguard());
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, new FightingDrake());
 
         activateSafeguard(attacker);
 
@@ -46,7 +49,7 @@ class SafeguardTest extends BaseCardTest {
     @DisplayName("Prevention is cleared at end of turn")
     void preventionClearedAtEndOfTurn() {
         harness.addToBattlefield(player1, new Safeguard());
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, new FightingDrake());
 
         activateSafeguard(attacker);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -57,6 +60,24 @@ class SafeguardTest extends BaseCardTest {
         harness.passBothPriorities(); // POSTCOMBAT_MAIN -> END_STEP
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Targeted creature can still deal noncombat damage")
+    void noncombatDamageIsNotPrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Safeguard());
+        Permanent fireslinger = harness.addToBattlefieldAndReturn(player2, new Fireslinger());
+        fireslinger.setSummoningSick(false);
+
+        activateSafeguard(fireslinger);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -80,8 +101,7 @@ class SafeguardTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, com.github.laxika.magicalvibes.model.Card card) {
-        harness.addToBattlefield(owner, card);
-        Permanent attacker = findPermanent(owner, card.getName());
+        Permanent attacker = harness.addToBattlefieldAndReturn(owner, card);
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());

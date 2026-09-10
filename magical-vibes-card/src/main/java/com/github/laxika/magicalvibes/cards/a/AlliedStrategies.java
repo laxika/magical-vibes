@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "PLS", collectorNumber = "20")
+@CardRegistration(set = "DDE", collectorNumber = "63")
 public class AlliedStrategies extends Card {
 
     public AlliedStrategies() {

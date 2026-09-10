@@ -38,16 +38,16 @@ class SunderShamanTest extends BaseCardTest {
         Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
-        harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.validIds()).containsExactlyInAnyOrder(enemyArtifact.getId(), enemyEnchantment.getId())
                 .doesNotContain(ownArtifact.getId(), enemyCreature.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(enemyEnchantment.getId()));
+        harness.handlePermanentChosen(player1, enemyEnchantment.getId());
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Cindervines");
         harness.assertInGraveyard(player2, "Cindervines");
