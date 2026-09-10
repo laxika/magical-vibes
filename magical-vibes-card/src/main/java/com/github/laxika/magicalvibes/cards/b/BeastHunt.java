@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "158")
+@CardRegistration(set = "HOP", collectorNumber = "68")
 public class BeastHunt extends Card {
 
     public BeastHunt() {

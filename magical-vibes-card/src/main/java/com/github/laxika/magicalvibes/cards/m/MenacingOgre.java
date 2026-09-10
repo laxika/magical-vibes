@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GoblinGameEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "219")
+@CardRegistration(set = "HOP", collectorNumber = "59")
 public class MenacingOgre extends Card {
 
     public MenacingOgre() {

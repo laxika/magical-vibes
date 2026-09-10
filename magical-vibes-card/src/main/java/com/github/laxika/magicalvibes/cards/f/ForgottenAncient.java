@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "120")
+@CardRegistration(set = "HOP", collectorNumber = "73")
 public class ForgottenAncient extends Card {
 
     public ForgottenAncient() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsPowerToAttackedTargetEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "57")
+@CardRegistration(set = "HOP", collectorNumber = "91")
 public class MageSlayer extends Card {
 
     public MageSlayer() {

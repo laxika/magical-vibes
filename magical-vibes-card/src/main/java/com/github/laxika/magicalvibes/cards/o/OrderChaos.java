@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "132")
+@CardRegistration(set = "HOP", collectorNumber = "104")
 public class OrderChaos extends Card {
 
     public OrderChaos() {
