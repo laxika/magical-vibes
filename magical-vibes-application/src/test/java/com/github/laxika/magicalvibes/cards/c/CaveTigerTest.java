@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CaveTiger.class, GorillaWarrior.class})
 class CaveTigerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Becoming blocked creates a becomes-blocked trigger")
     void becomingBlockedCreatesTrigger() {
-        Permanent tiger = addReadyTiger(player1);
+        Permanent tiger = addCreatureReady(player1, new CaveTiger());
         tiger.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GorillaWarrior());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -35,9 +37,9 @@ class CaveTigerTest extends BaseCardTest {
     @Test
     @DisplayName("When blocked Cave Tiger gets +1/+1 until end of turn")
     void blockedGivesPlusOnePlusOne() {
-        Permanent tiger = addReadyTiger(player1);
+        Permanent tiger = addCreatureReady(player1, new CaveTiger());
         tiger.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GorillaWarrior());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -52,10 +54,10 @@ class CaveTigerTest extends BaseCardTest {
     @Test
     @DisplayName("Blocked by two creatures still only gets +1/+1")
     void multipleBlockersStillOneBoost() {
-        Permanent tiger = addReadyTiger(player1);
+        Permanent tiger = addCreatureReady(player1, new CaveTiger());
         tiger.setAttacking(true);
-        addReadyBears(player2);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GorillaWarrior());
+        addCreatureReady(player2, new GorillaWarrior());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -71,7 +73,7 @@ class CaveTigerTest extends BaseCardTest {
     @Test
     @DisplayName("If unblocked no becomes-blocked trigger is created")
     void unblockedCreatesNoTrigger() {
-        Permanent tiger = addReadyTiger(player1);
+        Permanent tiger = addCreatureReady(player1, new CaveTiger());
         tiger.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -82,16 +84,25 @@ class CaveTigerTest extends BaseCardTest {
         assertThat(tiger.getToughnessModifier()).isZero();
     }
 
-    private Permanent addReadyTiger(Player player) {
-        Permanent permanent = new Permanent(new CaveTiger());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
+    @Test
+    @DisplayName("The boost wears off at end of turn")
+    void boostWearsOffAtEndOfTurn() {
+        Permanent tiger = addCreatureReady(player1, new CaveTiger());
+        tiger.setAttacking(true);
+        addCreatureReady(player2, new GorillaWarrior());
 
-    private void addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(tiger.getPowerModifier()).isEqualTo(1);
+        assertThat(tiger.getToughnessModifier()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(tiger.getPowerModifier()).isZero();
+        assertThat(tiger.getToughnessModifier()).isZero();
     }
 }

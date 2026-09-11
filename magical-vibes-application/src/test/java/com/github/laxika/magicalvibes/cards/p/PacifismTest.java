@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Pacifism.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({Pacifism.class, GorillaWarrior.class, WornPowerstone.class})
 class PacifismTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -25,7 +25,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Pacifism puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player2, new GorillaWarrior());
         Pacifism pacifism = new Pacifism();
 
         harness.setHand(player1, List.of(pacifism));
@@ -42,7 +42,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Pacifism attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player2, new GorillaWarrior());
         Pacifism pacifism = new Pacifism();
 
         harness.setHand(player1, List.of(pacifism));
@@ -61,7 +61,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast Pacifism without enough mana")
     void cannotCastWithoutEnoughMana() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player2, new GorillaWarrior());
 
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -76,7 +76,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Creature enchanted with Pacifism cannot be declared as attacker")
     void enchantedCreatureCannotAttack() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new GorillaWarrior());
 
         attachPacifism(player2, bearsPerm);
 
@@ -88,8 +88,8 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Pacified creature is excluded from attackable creature indices")
     void pacifiedCreatureNotInAttackableIndices() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
-        Permanent freeBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new GorillaWarrior());
+        addCreatureReady(player1, new GorillaWarrior());
 
         attachPacifism(player2, bearsPerm);
 
@@ -110,11 +110,11 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Creature enchanted with Pacifism cannot be declared as blocker")
     void enchantedCreatureCannotBlock() {
-        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockerPerm = addCreatureReady(player2, new GorillaWarrior());
 
         attachPacifism(player1, blockerPerm);
 
-        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new GorillaWarrior());
         atkPerm.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -127,12 +127,12 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Pacified creature is excluded from blockable creature indices")
     void pacifiedCreatureNotInBlockableIndices() {
-        Permanent pacifiedPerm = addCreatureReady(player2, new GrizzlyBears());
-        Permanent freePerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent pacifiedPerm = addCreatureReady(player2, new GorillaWarrior());
+        Permanent freePerm = addCreatureReady(player2, new GorillaWarrior());
 
         attachPacifism(player1, pacifiedPerm);
 
-        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new GorillaWarrior());
         atkPerm.setAttacking(true);
 
         assertThat(harness.getCombatBlockService().getBlockableCreatureIndices(gd, player2.getId()))
@@ -151,7 +151,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can attack again after Pacifism is removed")
     void creatureCanAttackAfterPacifismRemoved() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new GorillaWarrior());
 
         Permanent pacifismPerm = attachPacifism(player2, bearsPerm);
 
@@ -167,11 +167,11 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can block again after Pacifism is removed")
     void creatureCanBlockAfterPacifismRemoved() {
-        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blockerPerm = addCreatureReady(player2, new GorillaWarrior());
 
         Permanent pacifismPerm = attachPacifism(player1, blockerPerm);
 
-        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new GorillaWarrior());
         atkPerm.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -193,7 +193,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Pacifism can be cast on own creature")
     void canCastOnOwnCreature() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new GorillaWarrior());
         Pacifism pacifism = new Pacifism();
 
         harness.setHand(player1, List.of(pacifism));
@@ -213,7 +213,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Pacifism fizzles to graveyard if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player2, new GorillaWarrior());
         Pacifism pacifism = new Pacifism();
 
         harness.setHand(player1, List.of(pacifism));
@@ -236,7 +236,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature with Pacifism")
     void canTargetCreature() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GorillaWarrior());
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -248,7 +248,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Pacifism")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -262,7 +262,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Player with only pacified creatures can declare no attackers")
     void canDeclareNoAttackersWithOnlyPacifiedCreatures() {
-        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player1, new GorillaWarrior());
 
         attachPacifism(player2, bearsPerm);
 
@@ -274,7 +274,7 @@ class PacifismTest extends BaseCardTest {
     @Test
     @DisplayName("Pacifism is put into its owner's graveyard when its enchanted creature leaves")
     void goesToGraveyardWhenEnchantedCreatureLeaves() {
-        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bearsPerm = addCreatureReady(player2, new GorillaWarrior());
         Pacifism pacifism = new Pacifism();
         harness.setHand(player1, List.of(pacifism));
         harness.addMana(player1, ManaColor.WHITE, 2);

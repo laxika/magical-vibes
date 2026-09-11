@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PouncingJaguar;
 import com.github.laxika.magicalvibes.cards.t.Telepathy;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeasonedMarshal.class, PouncingJaguar.class, Telepathy.class})
 class SeasonedMarshalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking queues attack trigger for creature target selection")
     void attackingQueuesTargetSelection() {
-        addReadyMarshal(player1);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new SeasonedMarshal());
+        addCreatureReady(player2, new PouncingJaguar());
 
         declareAttackers(player1, List.of(0));
 
@@ -33,35 +34,45 @@ class SeasonedMarshalTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting attack may taps target opponent creature")
     void acceptingMayTapsOpponentCreature() {
-        addReadyMarshal(player1);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new SeasonedMarshal());
+        Permanent jaguar = addCreatureReady(player2, new PouncingJaguar());
 
-        attackChooseTargetAndAccept(bears);
+        attackChooseTargetAndAccept(jaguar);
 
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(jaguar.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting attack may taps a creature controlled by the attacker")
+    void acceptingMayTapsOwnCreature() {
+        addCreatureReady(player1, new SeasonedMarshal());
+        Permanent jaguar = addCreatureReady(player1, new PouncingJaguar());
+
+        attackChooseTargetAndAccept(jaguar);
+
+        assertThat(jaguar.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Declining attack may leaves target creature untapped")
     void decliningMayLeavesTargetUntapped() {
-        addReadyMarshal(player1);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new SeasonedMarshal());
+        Permanent jaguar = addCreatureReady(player2, new PouncingJaguar());
 
         declareAttackers(player1, List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, jaguar.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(bears.isTapped()).isFalse();
+        assertThat(jaguar.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Attack trigger rejects noncreature targets")
     void attackTriggerRejectsNoncreatureTargets() {
-        addReadyMarshal(player1);
-        harness.addToBattlefield(player2, new Telepathy());
-        Permanent telepathy = gd.playerBattlefields.get(player2.getId()).getFirst();
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new SeasonedMarshal());
+        Permanent telepathy = harness.addToBattlefieldAndReturn(player2, new Telepathy());
+        addCreatureReady(player2, new PouncingJaguar());
 
         declareAttackers(player1, List.of(0));
 
@@ -75,12 +86,5 @@ class SeasonedMarshalTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-    }
-
-    private Permanent addReadyMarshal(Player player) {
-        Permanent perm = new Permanent(new SeasonedMarshal());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BlanchwoodTreefolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AlbinoTroll.class, BlanchwoodTreefolk.class})
 class AlbinoTrollTest extends BaseCardTest {
 
     @Test
@@ -36,10 +38,8 @@ class AlbinoTrollTest extends BaseCardTest {
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new HillGiant());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new BlanchwoodTreefolk());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -49,6 +49,17 @@ class AlbinoTrollTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Albino Troll");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Echo does not trigger during an opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveTroll();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Albino Troll");
     }
 
     @Test
@@ -85,10 +96,7 @@ class AlbinoTrollTest extends BaseCardTest {
     }
 
     private Permanent addTrollReady() {
-        Permanent troll = new Permanent(new AlbinoTroll());
-        troll.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(troll);
-        return troll;
+        return addCreatureReady(player1, new AlbinoTroll());
     }
 
     private void castAndResolveTroll() {

@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinMatron.class, GoblinKing.class, Island.class})
+@CardUsed({GoblinMatron.class, GoblinPatrol.class, Island.class})
 class GoblinMatronTest extends BaseCardTest {
 
     @Test
@@ -30,10 +28,11 @@ class GoblinMatronTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .isNotEmpty()
-                .allMatch(c -> c.getSubtypes().contains(CardSubtype.GOBLIN));
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards())
+                .containsExactly(gd.playerDecks.get(player1.getId()).getFirst());
+        assertThat(search.params().reveals()).isTrue();
     }
 
     @Test
@@ -47,13 +46,13 @@ class GoblinMatronTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().cards().getFirst().getName();
+        Card chosenCard = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().getFirst();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals(chosenName));
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosenCard);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(chosenCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -71,6 +70,20 @@ class GoblinMatronTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Accepting the may ability with no Goblin card finds nothing")
+    void acceptingMayWithNoGoblinFindsNothing() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Island()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private void setupAndCast() {
         harness.setHand(player1, List.of(new GoblinMatron()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -79,8 +92,6 @@ class GoblinMatronTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GoblinKing(), new Island()));
+        harness.setLibrary(player1, List.of(new GoblinPatrol(), new Island()));
     }
 }

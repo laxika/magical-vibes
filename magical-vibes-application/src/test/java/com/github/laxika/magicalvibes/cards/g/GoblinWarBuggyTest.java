@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +11,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(GoblinWarBuggy.class)
 class GoblinWarBuggyTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Haste allows Goblin War Buggy to attack the turn it enters")
+    void hasteAllowsAttackingTheTurnItEnters() {
+        castAndResolveGoblinWarBuggy();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
 
     @Test
     @DisplayName("Declining echo sacrifices Goblin War Buggy at its next upkeep")
@@ -45,11 +58,19 @@ class GoblinWarBuggyTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Goblin War Buggy");
     }
 
+    @Test
+    @DisplayName("Echo does not trigger during an opponent's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveGoblinWarBuggy();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Goblin War Buggy");
+    }
+
     private void castAndResolveGoblinWarBuggy() {
-        harness.setHand(player1, List.of(new GoblinWarBuggy()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0, 0);
+        harness.castFromHand(player1, new GoblinWarBuggy(), "{1}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Goblin War Buggy");

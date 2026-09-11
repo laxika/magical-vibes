@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DriftingDjinn.class, CoralMerfolk.class})
 class DriftingDjinnTest extends BaseCardTest {
 
     @Test
@@ -27,6 +29,7 @@ class DriftingDjinnTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Drifting Djinn");
+        assertThat(gameLogContains("pays {1}{U}")).isTrue();
     }
 
     @Test
@@ -42,10 +45,35 @@ class DriftingDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting without enough mana still sacrifices Drifting Djinn")
+    void acceptingWithoutEnoughManaSacrificesIt() {
+        harness.addToBattlefield(player1, new DriftingDjinn());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Drifting Djinn");
+        assertThat(gameLogContains("pays {1}{U}")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        harness.addToBattlefield(player1, new DriftingDjinn());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Drifting Djinn");
+    }
+
+    @Test
     @DisplayName("Cycling discards Drifting Djinn and draws one")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new DriftingDjinn()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CoralMerfolk()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateHandAbility(player1, 0, null);
@@ -53,6 +81,7 @@ class DriftingDjinnTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Drifting Djinn");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Coral Merfolk");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
