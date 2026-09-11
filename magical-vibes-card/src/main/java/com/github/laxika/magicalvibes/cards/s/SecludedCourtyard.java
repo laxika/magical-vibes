@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "267")
+@CardRegistration(set = "NEO", collectorNumber = "275")
 public class SecludedCourtyard extends Card {
 
     public SecludedCourtyard() {

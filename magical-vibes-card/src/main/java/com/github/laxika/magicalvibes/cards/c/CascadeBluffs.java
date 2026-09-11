@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "175")
+@CardRegistration(set = "EXP", collectorNumber = "32")
 public class CascadeBluffs extends Card {
 
     public CascadeBluffs() {

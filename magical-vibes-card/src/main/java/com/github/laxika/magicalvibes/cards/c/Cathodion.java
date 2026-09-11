@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "149")
 @CardRegistration(set = "USG", collectorNumber = "287")
+@CardRegistration(set = "MM2", collectorNumber = "203")
 public class Cathodion extends Card {
 
     public Cathodion() {

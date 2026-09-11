@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEachColorToHandEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "102")
+@CardRegistration(set = "V16", collectorNumber = "3")
 public class Conflux extends Card {
 
     public Conflux() {

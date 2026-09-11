@@ -29,7 +29,10 @@ public class UnattachEquipmentEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UnattachEquipmentEffect unattachEffect = (UnattachEquipmentEffect) effect;
-        Permanent equipment = gameQueryService.findPermanentById(gameData, unattachEffect.equipmentId());
+        UUID equipmentId = unattachEffect.equipmentId() != null
+                ? unattachEffect.equipmentId()
+                : entry.getSourcePermanentId();
+        Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
         if (equipment == null || equipment.getAttachedTo() == null) {
             return;
         }

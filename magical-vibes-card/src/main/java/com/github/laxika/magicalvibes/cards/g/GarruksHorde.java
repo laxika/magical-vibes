@@ -11,6 +11,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M12", collectorNumber = "176")
 @CardRegistration(set = "M14", collectorNumber = "173")
+@CardRegistration(set = "W17", collectorNumber = "24")
 public class GarruksHorde extends Card {
 
     public GarruksHorde() {

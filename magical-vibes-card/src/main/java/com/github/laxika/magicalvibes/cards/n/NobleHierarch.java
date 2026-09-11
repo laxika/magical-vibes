@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "87")
+@CardRegistration(set = "MM2", collectorNumber = "151")
 public class NobleHierarch extends Card {
 
     public NobleHierarch() {

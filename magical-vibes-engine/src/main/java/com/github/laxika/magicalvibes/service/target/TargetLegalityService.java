@@ -479,7 +479,12 @@ public class TargetLegalityService {
                 // and matching the filter.
                 // A dynamic cap (Reap) is computed and enforced at cast time by the multi-graveyard
                 // choice itself — there is no fixed number to check against here.
-                if (returnCardsEffect.dynamicMaxTargets() == null
+                if (returnCardsEffect.xScaled()) {
+                    int effectiveXValue = xValue == null ? 0 : xValue;
+                    if (targetCardIds.size() != effectiveXValue) {
+                        throw new IllegalStateException("Must target exactly " + effectiveXValue + " cards");
+                    }
+                } else if (returnCardsEffect.dynamicMaxTargets() == null
                         && targetCardIds.size() > returnCardsEffect.maxTargets()) {
                     throw new IllegalStateException("Cannot target more than "
                             + returnCardsEffect.maxTargets() + " cards");

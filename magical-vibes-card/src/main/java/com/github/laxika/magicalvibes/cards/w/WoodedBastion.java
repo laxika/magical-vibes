@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "281")
+@CardRegistration(set = "EXP", collectorNumber = "30")
 public class WoodedBastion extends Card {
 
     public WoodedBastion() {

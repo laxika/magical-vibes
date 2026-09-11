@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "272")
+@CardRegistration(set = "MM2", collectorNumber = "232")
 public class Sunforger extends Card {
 
     public Sunforger() {

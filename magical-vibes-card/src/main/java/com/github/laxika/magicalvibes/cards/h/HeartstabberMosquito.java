@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ZEN", collectorNumber = "97")
+@CardRegistration(set = "DDP", collectorNumber = "52")
 public class HeartstabberMosquito extends Card {
 
     public HeartstabberMosquito() {

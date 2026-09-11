@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "97")
+@CardRegistration(set = "DDP", collectorNumber = "45")
 public class BloodriteInvoker extends Card {
 
     public BloodriteInvoker() {

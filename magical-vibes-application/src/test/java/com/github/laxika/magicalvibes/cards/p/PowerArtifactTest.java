@@ -18,6 +18,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PowerArtifactTest extends BaseCardTest {
 
     @Test
+    void stackedReductionsKeepOneManaMinimum() {
+        Permanent artifact = castOnArtifact();
+        castPowerArtifact(artifact);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Reduces the enchanted artifact's activated ability by two generic mana")
     void reducesEnchantedArtifactAbility() {
         Permanent artifact = castOnArtifact();
