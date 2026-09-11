@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "141")
+@CardRegistration(set = "MM2", collectorNumber = "204")
 public class ChimericMass extends Card {
 
     public ChimericMass() {

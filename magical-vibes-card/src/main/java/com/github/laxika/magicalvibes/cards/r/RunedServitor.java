@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 @CardRegistration(set = "ORI", collectorNumber = "238")
 @CardRegistration(set = "ROE", collectorNumber = "224")
 @CardRegistration(set = "DDF", collectorNumber = "42")
+@CardRegistration(set = "MM2", collectorNumber = "226")
 @CardRegistration(set = "DDP", collectorNumber = "66")
 public class RunedServitor extends Card {
 

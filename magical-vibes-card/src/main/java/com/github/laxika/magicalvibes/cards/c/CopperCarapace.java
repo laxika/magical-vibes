@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "MBS", collectorNumber = "102")
+@CardRegistration(set = "MM2", collectorNumber = "205")
 public class CopperCarapace extends Card {
 
     public CopperCarapace() {

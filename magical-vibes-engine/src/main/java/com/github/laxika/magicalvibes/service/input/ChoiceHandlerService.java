@@ -1907,7 +1907,9 @@ public class ChoiceHandlerService {
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
                 ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId());
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);

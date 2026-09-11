@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "97")
+@CardRegistration(set = "MM2", collectorNumber = "70")
 public class WingsOfVelisVel extends Card {
 
     public WingsOfVelisVel() {

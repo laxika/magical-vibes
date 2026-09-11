@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  * rather than an ETB trigger.
  */
 @CardRegistration(set = "M12", collectorNumber = "144")
+@CardRegistration(set = "MM2", collectorNumber = "116")
 @CardRegistration(set = "DDL", collectorNumber = "52")
 public class GorehornMinotaurs extends Card {
 

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "SHM", collectorNumber = "77")
+@CardRegistration(set = "MM2", collectorNumber = "96")
 public class SickleRipper extends Card {
 
     public SickleRipper() {
