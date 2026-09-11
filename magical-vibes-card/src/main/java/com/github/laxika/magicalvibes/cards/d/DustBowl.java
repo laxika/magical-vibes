@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "316")
+@CardRegistration(set = "EXP", collectorNumber = "37")
 public class DustBowl extends Card {
 
     public DustBowl() {
