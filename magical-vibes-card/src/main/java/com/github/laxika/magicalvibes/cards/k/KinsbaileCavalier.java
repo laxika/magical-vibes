@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "15")
+@CardRegistration(set = "DDG", collectorNumber = "17")
 public class KinsbaileCavalier extends Card {
 
     public KinsbaileCavalier() {

@@ -53,6 +53,27 @@ class WorldlyTutorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing a creature that is not initially on top puts it on top")
+    void choosingCreatureNotInitiallyOnTopPutsOnTop() {
+        Card nonCreatureAbove = new Disenchant();
+        Card creature = new FeralShadow();
+        Card nonCreatureBelow = new Island();
+        List<Card> deck = List.of(nonCreatureAbove, creature, nonCreatureBelow);
+        harness.setLibrary(player1, deck);
+
+        cast();
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(creature);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(deck);
+    }
+
+    @Test
     @DisplayName("Failing to find is allowed")
     void failToFindIsAllowed() {
         List<Card> deck = setupLibrary();
@@ -78,6 +99,19 @@ class WorldlyTutorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a search interaction")
+    void emptyLibraryNoInteraction() {
+        harness.setLibrary(player1, List.of());
+
+        cast();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("it is empty. Library is shuffled.")).isTrue();
     }
 
     private void cast() {

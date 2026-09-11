@@ -256,7 +256,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
     private void resolveTargetOpponentCards(GameData gameData, StackEntry entry,
                                             ExileGraveyardCardsEffect effect) {
-        List<UUID> targetCardIds = entry.getTargetCardIds();
+        List<UUID> targetCardIds = entry.getTargetCardIdsForEffect(effect);
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
 
         if (targetCardIds == null || targetCardIds.isEmpty()) {

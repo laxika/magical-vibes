@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 @CardRegistration(set = "4ED", collectorNumber = "178")
 @CardRegistration(set = "5ED", collectorNumber = "212")
 @CardRegistration(set = "LEG", collectorNumber = "135")
+@CardRegistration(set = "ME3", collectorNumber = "88")
 public class BloodLust extends Card {
 
     public BloodLust() {

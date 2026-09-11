@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "327")
+@CardRegistration(set = "DDG", collectorNumber = "35")
 public class Grasslands extends Card {
 
     public Grasslands() {

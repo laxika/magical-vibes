@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "83")
+@CardRegistration(set = "PD3", collectorNumber = "18")
 public class SickeningDreams extends Card {
 
     public SickeningDreams() {

@@ -31,7 +31,8 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
                                                 PermanentPredicate predicate,
                                                 PermanentPredicate targetPredicate,
                                                 boolean regenerateIfSurvives,
-                                                PermanentPredicate resolutionCondition) implements CardEffect {
+                                                PermanentPredicate resolutionCondition)
+        implements CardEffect {
 
     public PutCounterOnTargetPermanentEffect(CounterType counterType) {
         this(counterType, new Fixed(1), null, null, false, null);

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeDistinctNamePermanentsCost;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ public class DistinctNamePermanentSacrificeCostHandler implements PermanentChoic
 
     private final SacrificeDistinctNamePermanentsCost cost;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
     private final PermanentSacrificeAction sacrificeAction;
     private final List<UUID> chosenSoFar;
 
@@ -25,8 +27,17 @@ public class DistinctNamePermanentSacrificeCostHandler implements PermanentChoic
                                                      PredicateEvaluationService predicateEvaluationService,
                                                      PermanentSacrificeAction sacrificeAction,
                                                      List<UUID> chosenSoFar) {
+        this(cost, predicateEvaluationService, null, sacrificeAction, chosenSoFar);
+    }
+
+    public DistinctNamePermanentSacrificeCostHandler(SacrificeDistinctNamePermanentsCost cost,
+                                                     PredicateEvaluationService predicateEvaluationService,
+                                                     GameQueryService gameQueryService,
+                                                     PermanentSacrificeAction sacrificeAction,
+                                                     List<UUID> chosenSoFar) {
         this.cost = cost;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.gameQueryService = gameQueryService;
         this.sacrificeAction = sacrificeAction;
         this.chosenSoFar = new ArrayList<>(chosenSoFar == null ? List.of() : chosenSoFar);
     }
@@ -114,6 +125,8 @@ public class DistinctNamePermanentSacrificeCostHandler implements PermanentChoic
         return battlefield.stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, cost.filter()))
+                .filter(permanent -> gameQueryService == null
+                        || gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
                 .toList();
     }
 

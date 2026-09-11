@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSource
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "14")
+@CardRegistration(set = "DDG", collectorNumber = "23")
 public class HarmsWay extends Card {
 
     public HarmsWay() {

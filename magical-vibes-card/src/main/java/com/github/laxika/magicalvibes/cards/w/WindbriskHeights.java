@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayin
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "281")
+@CardRegistration(set = "V12", collectorNumber = "15")
 public class WindbriskHeights extends Card {
 
     public WindbriskHeights() {

@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySacrificePermanentForCounterSourceEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport;
@@ -41,15 +44,15 @@ public class MaySacrificePermanentForCounterSourceHandler implements MayEffectHa
             List<UUID> matchingIds = maySacrificeForCounterSupport.matchingPermanentIds(
                     gameData, controllerId, sourcePermanentId, effect.filter());
             if (matchingIds.size() == 1) {
-                maySacrificeForCounterSupport.sacrificeThenAddCounter(
-                        gameData, controllerId, matchingIds.getFirst(), sourcePermanentId);
+                addCountersAfterSacrifice(gameData, controllerId, matchingIds.getFirst(), sourcePermanentId, effect);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }
             if (matchingIds.size() > 1) {
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.MaySacrificeForCounterOnSource(
-                                controllerId, sourcePermanentId, ability.sourceCard()));
+                                controllerId, sourcePermanentId, ability.sourceCard(),
+                                CounterType.PLUS_ONE_PLUS_ONE, effect.counterAmount()));
                 playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds,
                         "Choose " + effect.description() + " to sacrifice.");
                 return;
@@ -57,5 +60,22 @@ public class MaySacrificePermanentForCounterSourceHandler implements MayEffectHa
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void addCountersAfterSacrifice(GameData gameData, UUID controllerId, UUID permanentId,
+                                            UUID sourcePermanentId,
+                                            MaySacrificePermanentForCounterSourceEffect effect) {
+        if (effect.counterAmount() instanceof SacrificedPermanentPower) {
+            maySacrificeForCounterSupport.sacrificeThenAddCountersEqualToPower(
+                    gameData, controllerId, permanentId, sourcePermanentId,
+                    CounterType.PLUS_ONE_PLUS_ONE);
+        } else if (effect.counterAmount() instanceof Fixed fixed) {
+            maySacrificeForCounterSupport.sacrificeThenAddCounters(
+                    gameData, controllerId, permanentId, sourcePermanentId,
+                    CounterType.PLUS_ONE_PLUS_ONE, fixed.value());
+        } else {
+            throw new IllegalArgumentException("Unsupported counter amount for may-sacrifice effect: "
+                    + effect.counterAmount().getClass().getSimpleName());
+        }
     }
 }

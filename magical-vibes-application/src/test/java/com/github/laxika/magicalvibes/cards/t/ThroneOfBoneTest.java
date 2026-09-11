@@ -78,6 +78,48 @@ class ThroneOfBoneTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
+    @Test
+    @DisplayName("Each Throne of Bone triggers independently for one black spell")
+    void eachThroneTriggersIndependently() {
+        harness.addToBattlefield(player1, new ThroneOfBone());
+        harness.addToBattlefield(player1, new ThroneOfBone());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
+
+        assertThat(gd.stack.stream()
+                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && e.getCard().getName().equals("Throne of Bone")))
+                .hasSize(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Trigger resolves after Throne of Bone leaves the battlefield")
+    void triggerResolvesAfterThroneOfBoneLeavesBattlefield() {
+        var throne = harness.addToBattlefieldAndReturn(player1, new ThroneOfBone());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, throne));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
     // ===== Opponent casts black spell =====
 
     @Test

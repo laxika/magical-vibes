@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentsOfTargetAtEndOfCombatEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "296")
+@CardRegistration(set = "ME3", collectorNumber = "156")
 public class KjeldoranFrostbeast extends Card {
 
     public KjeldoranFrostbeast() {

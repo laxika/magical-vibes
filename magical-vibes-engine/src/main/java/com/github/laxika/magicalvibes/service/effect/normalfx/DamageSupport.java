@@ -414,6 +414,12 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
+        if (!targetDamageUnpreventable
+                && gameQueryService.isDamageFromNamedPlanePreventedForControlledPermanent(
+                gameData, entry, targetControllerId)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
         Permanent effectiveDamageSource = damageSource;
         if (effectiveDamageSource == null && entry != null && entry.getSourcePermanentId() != null) {
             effectiveDamageSource = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -484,7 +490,7 @@ public class DamageSupport {
                 gameData.recordQualifyingDamageControllerToPermanent(target.getId(), sourceControllerId);
             }
             gameData.recordDamageDealtBySource(
-                    damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(), damage);
+                    damageSourceKey(entry, damageSource), damage);
             UUID sourceId = damageSource != null ? damageSource.getId() : entry.getSourcePermanentId();
             gameData.recordDamageSourceControlledBy(
                     sourceId != null ? sourceId : entry.getCard().getId(), sourceControllerId);
@@ -900,9 +906,10 @@ public class DamageSupport {
     public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
         if (entry.getSourcePermanentId() == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
+        if (source != null && (gameQueryService.isPreventedFromDealingDamage(gameData, source)
+                || gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
                 || gameQueryService.isDamageByCreaturePrevented(gameData, source)
-                || gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId())) return true;
+                || gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId()))) return true;
         // Defang / Heart of Light: an aura can blank all damage dealt by the enchanted permanent,
         // including damage from its own activated and triggered abilities.
         return source != null
@@ -1080,7 +1087,7 @@ public class DamageSupport {
                             entry.getSourcePermanentId(), damageDealt, null, pwControllerId,
                             targetPermanent.getId(), entry);
                     queueEnchantedCreatureDealsDamageTrigger(gameData, entry, sourcePermanent, damageDealt);
-                    gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), damageDealt);
+                    gameData.recordDamageDealtBySource(damageSourceKey(entry, sourcePermanent), damageDealt);
                     gameData.recordDamageSourceControlledBy(
                             entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getCard().getId(),
                             entry.getControllerId());
@@ -1598,7 +1605,7 @@ public class DamageSupport {
                 gameData.recordDamageToPlayer(playerId, effectiveDamage, artifactDamage);
                 gameData.recordNoncombatDamageToPlayer(playerId, effectiveDamage);
                 recordSorcerySpellDamage(gameData, entry, effectiveDamage);
-                gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), effectiveDamage);
+                gameData.recordDamageDealtBySource(damageSourceId, effectiveDamage);
                 gameData.recordDamageSourceControlledBy(damageSourceId, sourceControllerId);
                 gameData.recordDamageRecipientBySource(entry.getSourcePermanentId(), playerId);
                 entry.recordPlayerDealtDamage(playerId);
@@ -1846,6 +1853,7 @@ public class DamageSupport {
                     boolean artifactSource = sourcePermanent != null
                             && gameQueryService.isArtifact(gameData, sourcePermanent);
                     gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
+                    gameData.recordDamageDealtBySource(redirect.damageSourceId(), redirectEffective);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
                     triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
                             gameData, targetId, redirectEffective);
@@ -1861,6 +1869,7 @@ public class DamageSupport {
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
+                    gameData.recordDamageDealtBySource(redirect.damageSourceId(), effectiveDamage);
                     damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
                     // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle
                     // destination that many defense counters (CR 120.3h); a permanent that is also

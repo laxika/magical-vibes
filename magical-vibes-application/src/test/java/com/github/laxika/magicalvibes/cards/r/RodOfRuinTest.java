@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AjaniMentorOfHeroes;
+import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -225,6 +227,21 @@ class RodOfRuinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @CardUsed({AwakenedSkyclave.class, InvasionOfZendikar.class})
+    @Test
+    @DisplayName("Deals 1 damage to a target battle")
+    void deals1DamageToBattle() {
+        addReadyRod(player1);
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, battle.getId());
+        harness.passBothPriorities();
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(1);
     }
 
     @Test

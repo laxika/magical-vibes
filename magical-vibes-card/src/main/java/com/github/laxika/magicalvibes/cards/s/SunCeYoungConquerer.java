@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PTK", collectorNumber = "55")
+@CardRegistration(set = "ME3", collectorNumber = "52")
 public class SunCeYoungConquerer extends Card {
 
     public SunCeYoungConquerer() {

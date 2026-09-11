@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "62")
+@CardRegistration(set = "PD3", collectorNumber = "12")
 public class CabalTherapy extends Card {
 
     public CabalTherapy() {

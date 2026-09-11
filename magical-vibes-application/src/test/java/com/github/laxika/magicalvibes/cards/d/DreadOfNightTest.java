@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
+import com.github.laxika.magicalvibes.cards.c.CelestialDawn;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudCondor;
 import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DreadOfNight.class, ArmoredPegasus.class, SkyshroudCondor.class, SoltariFootSoldier.class})
+@CardUsed({ArmoredPegasus.class, CelestialDawn.class, DreadOfNight.class, Opalescence.class, SkyshroudCondor.class, SoltariFootSoldier.class})
 class DreadOfNightTest extends BaseCardTest {
 
     @Test
@@ -93,5 +95,18 @@ class DreadOfNightTest extends BaseCardTest {
         // Back to base 1/2
         assertThat(gqs.getEffectivePower(gd, pegasus)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, pegasus)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({CelestialDawn.class, Opalescence.class})
+    @DisplayName("A white Dread of Night that becomes a creature affects itself")
+    void affectsItselfWhenItBecomesWhiteCreature() {
+        Permanent dread = harness.addToBattlefieldAndReturn(player1, new DreadOfNight());
+        harness.addToBattlefield(player1, new CelestialDawn());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, dread)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, dread)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, dread)).isEqualTo(0);
     }
 }

@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "244")
+@CardRegistration(set = "DDG", collectorNumber = "15")
 public class WiltLeafCavaliers extends Card {
 }

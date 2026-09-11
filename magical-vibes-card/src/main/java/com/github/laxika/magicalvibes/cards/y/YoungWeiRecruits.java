@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "PTK", collectorNumber = "94")
+@CardRegistration(set = "ME3", collectorNumber = "84")
 public class YoungWeiRecruits extends Card {
 
     public YoungWeiRecruits() {

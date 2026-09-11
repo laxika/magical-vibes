@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "126")
+@CardRegistration(set = "PC2", collectorNumber = "32")
 public class DarkHatchling extends Card {
 
     public DarkHatchling() {

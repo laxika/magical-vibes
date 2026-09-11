@@ -24,6 +24,6 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldEffectHandler implements N
                 (PutCardFromHandOrGraveyardOntoBattlefieldEffect) effect;
         support.beginChoice(gameData, entry.getControllerId(), putEffect.predicate(), putEffect.label(),
                 entry.getCard().getId(), entry.getCard().getName(), putEffect.enterWithCounter(),
-                putEffect.grantHaste(), putEffect.returnToHandAtEndStep());
+                putEffect.enterWithCounterCount(), putEffect.grantHaste(), putEffect.returnToHandAtEndStep());
     }
 }

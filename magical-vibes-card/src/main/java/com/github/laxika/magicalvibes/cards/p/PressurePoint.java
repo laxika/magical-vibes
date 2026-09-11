@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KLD", collectorNumber = "23")
 @CardRegistration(set = "FRF", collectorNumber = "21")
+@CardRegistration(set = "ZNR", collectorNumber = "33")
 public class PressurePoint extends Card {
 
     public PressurePoint() {

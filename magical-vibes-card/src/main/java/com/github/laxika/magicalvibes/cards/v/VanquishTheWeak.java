@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "127")
 @CardRegistration(set = "MOM", collectorNumber = "129")
+@CardRegistration(set = "ZNR", collectorNumber = "131")
 public class VanquishTheWeak extends Card {
 
     public VanquishTheWeak() {

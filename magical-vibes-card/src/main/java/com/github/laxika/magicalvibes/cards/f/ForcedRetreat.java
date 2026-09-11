@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PTK", collectorNumber = "44")
+@CardRegistration(set = "ME3", collectorNumber = "37")
 public class ForcedRetreat extends Card {
 
     public ForcedRetreat() {

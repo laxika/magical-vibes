@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 
 @CardRegistration(set = "LEG", collectorNumber = "193")
+@CardRegistration(set = "ME3", collectorNumber = "127")
 public class LivingPlane extends Card {
 
     public LivingPlane() {

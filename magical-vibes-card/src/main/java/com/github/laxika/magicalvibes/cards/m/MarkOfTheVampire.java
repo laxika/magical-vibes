@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "XLN", collectorNumber = "113")
 @CardRegistration(set = "M13", collectorNumber = "99")
 @CardRegistration(set = "M14", collectorNumber = "105")
+@CardRegistration(set = "DDK", collectorNumber = "29")
 public class MarkOfTheVampire extends Card {
 
     public MarkOfTheVampire() {
