@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "65")
+@CardRegistration(set = "ME3", collectorNumber = "86")
 public class AnabaAncestor extends Card {
 
     public AnabaAncestor() {

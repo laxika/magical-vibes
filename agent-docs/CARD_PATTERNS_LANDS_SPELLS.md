@@ -308,6 +308,7 @@ on what the mana may pay for.
 | Steal artifact (temp) | `m/MetallicMastery.java` | GainControlOfTargetPermanentUntilEndOfTurn + untap + haste + PermanentIsArtifactPredicate filter |
 | Steal Equipment, attach to your creature, then unattach on control loss | `s/StolenUniform.java` | Two target groups: creature you control, then Equipment; bind `GainControlOfTargetEffect(END_OF_TURN)` and `RegisterControlLossUnattachTriggerEffect()` to the Equipment group, and use `AttachTargetEquipmentToTargetCreatureEffect.creatureFirst()` for the flat target order |
 | Steal creature (permanent, tap ability, power check) | `b/BeguilerOfWills.java` | Tap ability + GainControlOfTargetEffect(PERMANENT) + PermanentAllOfPredicate(PermanentIsCreaturePredicate, PermanentPowerAtMostControlledCreatureCountPredicate) target filter — gain control of creature with power <= your creature count |
+| Steal creature while tapped (source-relative power condition) | `o/OldManOfTheSea.java` | MayNotUntapDuringUntapStepEffect + tap ability + `GainControlOfTargetEffect.whileSourceRemainsTappedAndTargetMatches(...)` with `PermanentPowerAtMostSourcePowerPredicate` — control ends when the target's power exceeds the source's |
 | Extra turn | `t/TimeStretch.java` | ExtraTurnEffect |
 | Extra combat | `r/RelentlessAssault.java` | AdditionalCombatMainPhaseEffect |
 | Mill half library (spell) | `t/Traumatize.java` | MillHalfLibraryEffect(false) |

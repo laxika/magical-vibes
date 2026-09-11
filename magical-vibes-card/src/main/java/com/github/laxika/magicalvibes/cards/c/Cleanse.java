@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LEG", collectorNumber = "5")
+@CardRegistration(set = "ME3", collectorNumber = "5")
 public class Cleanse extends Card {
 
     public Cleanse() {
