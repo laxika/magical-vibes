@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByBushidoEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostByAttackCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureByColorCountEffect;
@@ -471,6 +472,7 @@ public final class LayerClassifier {
         map.put(BoostTargetCreatureEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostByOtherCreaturesWithSameNameEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostByBushidoEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostByAttackCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostBySharedCreatureTypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostEquippedCreatureOfEnchantedEquipmentEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect.class, fixed(Layer.L7C_MODIFY_PT));

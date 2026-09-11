@@ -123,6 +123,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnP
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtNoncombatDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisCombatPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisOrLastTurnPredicate;
@@ -2058,6 +2059,11 @@ public class PredicateEvaluationService {
                         || (noncombatVictims != null && !noncombatVictims.isEmpty())
                         || (damagedCreatures != null && !damagedCreatures.isEmpty());
             }
+            case PermanentDealtCombatDamageToPlayerThisCombatPredicate ignored ->
+                    gameData != null
+                            && gameData.combatDamageToPlayersThisCombat
+                            .containsKey(permanent.getId())
+                            && !gameData.combatDamageToPlayersThisCombat.get(permanent.getId()).isEmpty();
             case PermanentDealtDamageToSourceControllerThisTurnPredicate ignored -> {
                 if (sourceControllerId == null || gameData == null) {
                     yield false;
@@ -2315,6 +2321,12 @@ public class PredicateEvaluationService {
             case PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate ignored ->
                     hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersStatic(permanent, context);
             case PermanentInCombatWithSourcePredicate ignored -> inCombatWithSourceStatic(permanent, context);
+            case PermanentDealtCombatDamageToPlayerThisCombatPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null
+                        && !gameData.combatDamageToPlayersThisCombat
+                        .getOrDefault(permanent.getId(), java.util.Set.of()).isEmpty();
+            }
             case PermanentHasSameNameAsSourcePredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceCardId = context == null ? null : context.sourceCardId();

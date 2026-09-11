@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "276")
+@CardRegistration(set = "PC2", collectorNumber = "116")
 public class DimirAqueduct extends Card {
 
     public DimirAqueduct() {

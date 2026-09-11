@@ -5295,6 +5295,7 @@ public class AbilityActivationService {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities;
         if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                || gameQueryService.hasLostAllAbilities(gameData, permanent)
                 || permanent.isFaceDown()) {
             // Permanent has lost all its own abilities; only static-granted abilities remain
             abilities = permanent.getCard().getActivatedAbilities().stream()

@@ -701,8 +701,7 @@ public class MiscTriggerCollectorService {
     private boolean handleEnchantedPermanentTapDamage(TriggerMatchContext match,
             DealDamageToPlayersEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
-        // TRIGGERING_PERMANENT_CONTROLLER reads entry.getTargetId(); bake it to the tapped land's controller.
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -710,7 +709,10 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(e)),
                 ept.tappedPermanentControllerId(),
                 match.permanent().getId()
-        ));
+        );
+        entry.setTriggeringPermanentId(ept.tappedPermanent().getId());
+        entry.setTriggeringPermanentControllerId(ept.tappedPermanentControllerId());
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to damage enchanted permanent's controller",
                 match.gameData().id, match.permanent().getCard().getName());

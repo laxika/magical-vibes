@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DKA", collectorNumber = "142")
+@CardRegistration(set = "DDK", collectorNumber = "1")
 public class SorinLordOfInnistrad extends Card {
 
     public SorinLordOfInnistrad() {

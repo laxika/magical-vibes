@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToB
 
 @CardRegistration(set = "M11", collectorNumber = "168")
 @CardRegistration(set = "M21", collectorNumber = "177")
+@CardRegistration(set = "PC2", collectorNumber = "62")
 public class Cultivate extends Card {
 
     public Cultivate() {

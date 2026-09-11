@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RampageEffect;
 
 @CardRegistration(set = "CHR", collectorNumber = "79")
 @CardRegistration(set = "LEG", collectorNumber = "244")
+@CardRegistration(set = "ME3", collectorNumber = "161")
 public class MarhaultElsdragon extends Card {
 
     public MarhaultElsdragon() {

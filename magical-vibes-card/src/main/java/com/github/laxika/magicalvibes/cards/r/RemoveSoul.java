@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "CHR", collectorNumber = "25")
 @CardRegistration(set = "S99", collectorNumber = "49")
 @CardRegistration(set = "LEG", collectorNumber = "72")
+@CardRegistration(set = "ME3", collectorNumber = "47")
 public class RemoveSoul extends Card {
 
     public RemoveSoul() {

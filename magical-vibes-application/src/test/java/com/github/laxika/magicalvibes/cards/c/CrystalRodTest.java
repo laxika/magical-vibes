@@ -45,6 +45,40 @@ class CrystalRodTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Crystal Rods trigger independently for one blue spell")
+    void multipleCrystalRodsTriggerIndependently() {
+        harness.addToBattlefield(player1, new CrystalRod());
+        harness.addToBattlefield(player1, new CrystalRod());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new AirElemental(), "{3}{U}{U}");
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack.stream()
+                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && e.getCard().getName().equals("Crystal Rod")))
+                .hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
     @DisplayName("Controller casts blue spell, declines may ability, no life gain")
     void controllerCastsBlueSpellAndDeclines() {
         harness.addToBattlefield(player1, new CrystalRod());

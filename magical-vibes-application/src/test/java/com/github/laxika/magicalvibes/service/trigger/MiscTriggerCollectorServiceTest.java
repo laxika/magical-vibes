@@ -132,6 +132,20 @@ class MiscTriggerCollectorServiceTest {
     private TriggerCollectorRegistry registry;
 
     @Test
+    void enchantedTapDamagePreservesTriggeringPermanent() {
+        Permanent aura = createPermanent("Damage aura");
+        Permanent land = createPermanent("Tapped land");
+        var effect = new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
+
+        registry.dispatch(match(aura, player1Id, effect), EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+                effect, new TriggerContext.EnchantedPermanentTap(land, player2Id));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(land.getId());
+        assertThat(gd.stack.getFirst().getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+    }
+
+    @Test
     void cardsLeavingGraveyardQueueTargetChoiceBeforeTrigger() {
         Permanent source = createPermanent("Hardened Academic");
         var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);

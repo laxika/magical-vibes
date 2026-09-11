@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "134")
+@CardRegistration(set = "PC2", collectorNumber = "75")
 public class QuietDisrepair extends Card {
 
     public QuietDisrepair() {

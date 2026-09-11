@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MerfolkWindrobber.class, GrizzlyBears.class})
+@CardUsed({MerfolkWindrobber.class, GrizzlyBears.class, AirElemental.class})
 class MerfolkWindrobberTest extends BaseCardTest {
 
     @Test
@@ -39,7 +40,7 @@ class MerfolkWindrobberTest extends BaseCardTest {
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(topCard));
         addCreatureReady(player1, new MerfolkWindrobber());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new AirElemental());
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();

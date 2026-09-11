@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  * rather than an ETB trigger. Lifelink comes from the Scryfall-loaded keywords.
  */
 @CardRegistration(set = "M12", collectorNumber = "115")
+@CardRegistration(set = "DDK", collectorNumber = "15")
 public class VampireOutcasts extends Card {
 
     public VampireOutcasts() {

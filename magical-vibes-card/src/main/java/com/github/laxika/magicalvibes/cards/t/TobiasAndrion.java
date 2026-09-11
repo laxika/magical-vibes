@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "CHR", collectorNumber = "87")
 @CardRegistration(set = "LEG", collectorNumber = "264")
+@CardRegistration(set = "ME3", collectorNumber = "181")
 public class TobiasAndrion extends Card {
 
     public TobiasAndrion() {

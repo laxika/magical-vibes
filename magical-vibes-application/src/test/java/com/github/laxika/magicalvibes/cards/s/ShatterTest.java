@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.j.JackalPup;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.cards.l.LotusPetal;
 import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Shatter.class, LotusPetal.class, MetallicSliver.class, JackalPup.class})
+@CardUsed({GrizzlyBears.class, JayemdaeTome.class, LotusPetal.class, MetallicSliver.class, Shatter.class})
 class ShatterTest extends BaseCardTest {
 
     @Test
@@ -99,13 +102,12 @@ class ShatterTest extends BaseCardTest {
     @Test
     @DisplayName("Shatter fizzles when target is removed before resolution")
     void fizzlesWhenTargetRemoved() {
-        harness.addToBattlefield(player2, new LotusPetal());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JayemdaeTome());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Lotus Petal");
-        harness.castInstant(player1, 0, targetId);
-        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
+        harness.castInstant(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, target));
 
         harness.passBothPriorities();
 
@@ -115,13 +117,27 @@ class ShatterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target a creature with Shatter")
-    void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new JackalPup());
+    @DisplayName("Shatter does not destroy an indestructible artifact")
+    void indestructibleArtifactSurvives() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new JayemdaeTome());
+        artifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID creatureId = harness.getPermanentId(player2, "Jackal Pup");
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
+
+        harness.assertOnBattlefield(player2, "Jayemdae Tome");
+        harness.assertNotInGraveyard(player2, "Jayemdae Tome");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature with Shatter")
+    void cannotTargetCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }

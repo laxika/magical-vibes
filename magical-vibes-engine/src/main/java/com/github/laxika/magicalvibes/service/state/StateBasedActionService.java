@@ -126,6 +126,11 @@ public class StateBasedActionService {
             log.warn("Game {} - state-based actions did not converge after {} passes", gameData.id, passes);
         }
 
+        // Re-evaluate source-linked control conditions after the state has settled. This also
+        // handles effects whose duration depends on a changing characteristic, such as Old Man
+        // of the Sea's target-power restriction.
+        creatureControlService.reconcileControl(gameData);
+
         // CR 704.5j — the legend rule is a state-based action, but performing it needs a player
         // choice, so it can't run synchronously inside the pass loop. Prompt only when no other
         // input flow is active or queued (a second begin would clobber it); a deferred violation
@@ -610,6 +615,7 @@ public class StateBasedActionService {
 
     // CR 704.5b — player who attempted to draw from an empty library loses the game
     private void checkEmptyLibraryLoss(GameData gameData) {
+        if (gameData.deferPlayerLossCheck) return;
         if (gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) return;
 
         for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {

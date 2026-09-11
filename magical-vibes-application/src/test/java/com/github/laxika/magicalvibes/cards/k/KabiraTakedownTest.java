@@ -22,6 +22,7 @@ class KabiraTakedownTest extends BaseCardTest {
     @Test
     void dealsDamageEqualToCreaturesControlled() {
         harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castTakedown(target);
 

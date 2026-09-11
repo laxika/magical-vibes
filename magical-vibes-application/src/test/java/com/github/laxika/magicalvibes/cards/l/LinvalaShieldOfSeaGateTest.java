@@ -41,7 +41,7 @@ class LinvalaShieldOfSeaGateTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated")
-                .hasMessageContaining("Linvala, Shield of Sea Gate");
+                .hasMessageContaining("detained");
     }
 
     @Test

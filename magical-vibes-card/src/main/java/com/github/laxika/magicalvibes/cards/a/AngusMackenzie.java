@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "217")
+@CardRegistration(set = "ME3", collectorNumber = "141")
 public class AngusMackenzie extends Card {
 
     public AngusMackenzie() {

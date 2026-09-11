@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "364")
+@CardRegistration(set = "ME3", collectorNumber = "216")
+@CardRegistration(set = "ME3", collectorNumber = "217")
+@CardRegistration(set = "ME3", collectorNumber = "218")
 @CardRegistration(set = "DDF", collectorNumber = "35")
 @CardRegistration(set = "DDF", collectorNumber = "36")
 @CardRegistration(set = "DDF", collectorNumber = "37")
@@ -16,6 +19,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDI", collectorNumber = "38")
 @CardRegistration(set = "DDI", collectorNumber = "39")
 @CardRegistration(set = "DDI", collectorNumber = "40")
+@CardRegistration(set = "DDK", collectorNumber = "38")
+@CardRegistration(set = "DDK", collectorNumber = "39")
+@CardRegistration(set = "DDK", collectorNumber = "40")
 @CardRegistration(set = "DDC", collectorNumber = "28")
 @CardRegistration(set = "DDG", collectorNumber = "39")
 @CardRegistration(set = "DDG", collectorNumber = "40")
@@ -370,6 +376,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "HOP", collectorNumber = "144")
 @CardRegistration(set = "HOP", collectorNumber = "145")
 @CardRegistration(set = "HOP", collectorNumber = "146")
+@CardRegistration(set = "PC2", collectorNumber = "132")
+@CardRegistration(set = "PC2", collectorNumber = "133")
+@CardRegistration(set = "PC2", collectorNumber = "134")
+@CardRegistration(set = "PC2", collectorNumber = "135")
+@CardRegistration(set = "PC2", collectorNumber = "136")
 public class Plains extends Card {
 
     public Plains() {
