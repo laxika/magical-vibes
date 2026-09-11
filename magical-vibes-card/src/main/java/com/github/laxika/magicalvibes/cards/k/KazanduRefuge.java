@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "217")
 @CardRegistration(set = "DDH", collectorNumber = "35")
+@CardRegistration(set = "DDL", collectorNumber = "71")
 public class KazanduRefuge extends Card {
 
     public KazanduRefuge() {
