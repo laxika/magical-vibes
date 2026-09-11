@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "103")
 @CardRegistration(set = "DD2", collectorNumber = "38")
+@CardRegistration(set = "JVC", collectorNumber = "38")
 public class PyreCharger extends Card {
 
     public PyreCharger() {
