@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "178")
+@CardRegistration(set = "MMA", collectorNumber = "121")
 public class LavaSpike extends Card {
 
     public LavaSpike() {

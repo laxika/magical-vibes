@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "134")
+@CardRegistration(set = "MMA", collectorNumber = "92")
 public class Peppersmoke extends Card {
 
     public Peppersmoke() {

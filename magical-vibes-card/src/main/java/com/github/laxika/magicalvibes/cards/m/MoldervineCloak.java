@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "173")
+@CardRegistration(set = "MMA", collectorNumber = "155")
 public class MoldervineCloak extends Card {
 
     public MoldervineCloak() {

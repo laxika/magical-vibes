@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardFromExileIntoOwnersLibraryEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "136")
+@CardRegistration(set = "MMA", collectorNumber = "159")
 public class Riftsweeper extends Card {
 
     public Riftsweeper() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "211")
 @CardRegistration(set = "HOP", collectorNumber = "120")
+@CardRegistration(set = "MMA", collectorNumber = "209")
 public class MyrEnforcer extends Card {
 
     public MyrEnforcer() {

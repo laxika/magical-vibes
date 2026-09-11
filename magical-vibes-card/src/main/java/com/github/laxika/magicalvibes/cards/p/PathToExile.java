@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "15")
 @CardRegistration(set = "DDI", collectorNumber = "23")
+@CardRegistration(set = "MMA", collectorNumber = "25")
 public class PathToExile extends Card {
 
     public PathToExile() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "104")
+@CardRegistration(set = "MMA", collectorNumber = "125")
 public class PyromancersSwath extends Card {
 
     public PyromancersSwath() {
