@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "40")
 @CardRegistration(set = "DD2", collectorNumber = "2")
+@CardRegistration(set = "JVC", collectorNumber = "2")
 public class MartyrOfFrost extends Card {
 
     public MartyrOfFrost() {

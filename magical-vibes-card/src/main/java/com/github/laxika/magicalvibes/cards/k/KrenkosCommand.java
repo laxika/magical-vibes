@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "139")
+@CardRegistration(set = "DDN", collectorNumber = "25")
 public class KrenkosCommand extends Card {
 
     public KrenkosCommand() {

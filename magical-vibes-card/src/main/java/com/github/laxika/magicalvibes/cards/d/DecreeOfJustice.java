@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SCG", collectorNumber = "8")
+@CardRegistration(set = "DDO", collectorNumber = "7")
 public class DecreeOfJustice extends Card {
 
     public DecreeOfJustice() {

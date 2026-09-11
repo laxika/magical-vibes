@@ -235,7 +235,9 @@ public class LibraryChoiceHandlerService {
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
         List<Card> sourceZone;
-        if (sourceCards != null && followUp.selectedCardFollowUp() != null) {
+        if (sourceCards != null && (followUp.selectedCardFollowUp() != null
+                || (destination == LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND
+                && reorderRemainingToBottom))) {
             sourceZone = sourceCards;
         } else {
             sourceZone = librarySearch.sourceSideboard()
@@ -290,6 +292,14 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND
+                    && reorderRemainingToBottom) {
+                handleExileFaceDownAndMayCastOrPutIntoHandChoice(
+                        gameData, player, cardIndex, canFailToFind, searchCards, sourceCards, deck,
+                        deckOwnerId, filterCardTypes, librarySearch.mayCastManaValueAtMost());
+                return;
+            }
+
             // Aladdin's Lamp: keep the chosen card on top, rest to bottom in a random order, then draw it.
             if (destination == LibrarySearchDestination.DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM) {
                 handleDrawChosenRestToBottomRandom(gameData, cardIndex, searchCards, sourceCards, deck, deckOwnerId);
@@ -316,9 +326,13 @@ public class LibraryChoiceHandlerService {
                 } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
                         || destination == LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM
                         || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM
+                        || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM
                         || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard,
                             librarySearch.sourcePermanentId());
+                    if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM) {
+                        gameData.exiledCardsWithHatchingCounters.add(chosenCard.getId());
+                    }
                     if (followUp != null && followUp.imprintSourcePermanentId() != null) {
                         exileService.setImprintedCardOnPermanent(gameData,
                                 followUp.imprintSourcePermanentId(), chosenCard);
@@ -422,6 +436,9 @@ public class LibraryChoiceHandlerService {
                 } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM) {
                     logEntry = GameLog.text(player.getUsername()
                             + " exiles a card face down and puts the rest on the bottom of the library in any order.");
+                } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM) {
+                    logEntry = GameLog.text(player.getUsername()
+                            + " exiles a card face down with a hatching counter and puts the rest on the bottom of the library in any order.");
                 } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     logEntry = GameLog.text(player.getUsername()
                             + " exiles a card face down and puts the rest into the graveyard.");
@@ -774,13 +791,18 @@ public class LibraryChoiceHandlerService {
 
         if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND) {
             exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null);
-            if (shuffleAfterSelection) {
+            if (sourceCards != null && reorderRemainingToBottom) {
+                Collections.shuffle(sourceCards);
+                deck.addAll(sourceCards);
+            } else if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
 
             Integer maxManaValue = librarySearch.mayCastManaValueAtMost();
             boolean mayCast = maxManaValue != null
-                    && !chosenCard.hasType(CardType.LAND)
+                    && (filterCardTypes == null || filterCardTypes.isEmpty()
+                    || filterCardTypes.contains(chosenCard.getType())
+                    || chosenCard.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains))
                     && chosenCard.getManaValue() <= maxManaValue;
             if (mayCast) {
                 Card sourceCard = gameData.pendingEffectResolutionEntry != null
@@ -1534,7 +1556,8 @@ public class LibraryChoiceHandlerService {
                 case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
                         EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, EXILE_FOR_MAY_CAST,
                         EXILE_FOR_MAY_CAST_WITH_NORMAL_COST -> "into exile";
-                case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM -> "into exile face down";
+                case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,
+                        EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM -> "into exile face down";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");
                 case EXILE_PLAYABLE_ANY_NUMBER -> throw new IllegalStateException(
@@ -1627,7 +1650,8 @@ public class LibraryChoiceHandlerService {
                 && selectedCardFollowUp.predicate() != null
                 && gameData.pendingEffectResolutionEntry != null
                 && predicateEvaluationService.matchesCardPredicate(
-                        chosenCard, selectedCardFollowUp.predicate(), null, gameData, playerId)) {
+                        chosenCard, selectedCardFollowUp.predicate(), null, gameData, playerId, null, null,
+                        gameData.pendingEffectResolutionEntry.getXValue())) {
             if (selectedCardFollowUp.useSelectedCardManaValue()) {
                 gameData.pendingEffectResolutionEntry.setEventValue(chosenCard.getManaValue());
             }
@@ -3509,6 +3533,56 @@ public class LibraryChoiceHandlerService {
                     List.of(new MayPlayExiledCardWithoutPayingManaCostEffect()),
                     "Cast " + chosenCard.getName() + " without paying its mana cost?",
                     chosenCard.getId()));
+        }
+
+        finishSearchAndResume(gameData);
+    }
+
+    private void handleExileFaceDownAndMayCastOrPutIntoHandChoice(
+            GameData gameData, Player player, int cardIndex, boolean canFailToFind,
+            List<Card> searchCards, List<Card> sourceCards, List<Card> deck, UUID deckOwnerId,
+            Set<CardType> castableTypes, Integer maxManaValue) {
+        Card chosenCard = null;
+        if (cardIndex == -1) {
+            if (!canFailToFind) {
+                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
+        } else {
+            chosenCard = searchCards.get(cardIndex);
+            Card selectedCard = chosenCard;
+            sourceCards.removeIf(card -> card.getId().equals(selectedCard.getId()));
+            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null);
+        }
+
+        if (!sourceCards.isEmpty()) {
+            Collections.shuffle(sourceCards);
+            deck.addAll(sourceCards);
+        }
+
+        if (chosenCard != null) {
+            boolean mayCast = maxManaValue != null
+                    && (castableTypes == null || castableTypes.isEmpty()
+                    || castableTypes.contains(chosenCard.getType())
+                    || chosenCard.getAdditionalTypes().stream().anyMatch(castableTypes::contains))
+                    && chosenCard.getManaValue() <= maxManaValue;
+            if (mayCast) {
+                Card sourceCard = gameData.pendingEffectResolutionEntry != null
+                        ? gameData.pendingEffectResolutionEntry.getCard() : chosenCard;
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        sourceCard,
+                        player.getId(),
+                        List.of(new MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect()),
+                        "Cast " + chosenCard.getName()
+                                + " without paying its mana cost? If you don't, put it into your hand.",
+                        chosenCard.getId()));
+            } else {
+                gameData.removeFromExile(chosenCard.getId());
+                gameData.addCardToHand(deckOwnerId, chosenCard);
+            }
+
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles a card face down", chosenCard,
+                    mayCast ? "." : " and puts it into their hand."));
         }
 
         finishSearchAndResume(gameData);

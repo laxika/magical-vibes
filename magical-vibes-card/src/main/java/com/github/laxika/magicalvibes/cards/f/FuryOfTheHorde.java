@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "81")
+@CardRegistration(set = "DDN", collectorNumber = "30")
 public class FuryOfTheHorde extends Card {
 
     public FuryOfTheHorde() {

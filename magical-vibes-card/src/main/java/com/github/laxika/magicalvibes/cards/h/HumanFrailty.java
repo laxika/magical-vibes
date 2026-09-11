@@ -17,6 +17,7 @@ import java.util.List;
  * Destroy target Human creature.
  */
 @CardRegistration(set = "AVR", collectorNumber = "109")
+@CardRegistration(set = "DDQ", collectorNumber = "61")
 public class HumanFrailty extends Card {
 
     public HumanFrailty() {

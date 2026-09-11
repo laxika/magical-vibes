@@ -1607,7 +1607,8 @@ public class DamageSupport {
                 recordSorcerySpellDamage(gameData, entry, effectiveDamage);
                 gameData.recordDamageDealtBySource(damageSourceId, effectiveDamage);
                 gameData.recordDamageSourceControlledBy(damageSourceId, sourceControllerId);
-                gameData.recordDamageRecipientBySource(entry.getSourcePermanentId(), playerId);
+                gameData.recordDamageDealtBySourceToPlayer(
+                        entry.getSourcePermanentId(), playerId, effectiveDamage);
                 entry.recordPlayerDealtDamage(playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
                 if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
@@ -1771,6 +1772,8 @@ public class DamageSupport {
                         ? gameQueryService.isArtifact(gameData, sourcePermanent)
                         : redirect.sourceCard() != null && redirect.sourceCard().hasType(CardType.ARTIFACT);
                 gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
+                gameData.recordDamageDealtBySourceToPlayer(
+                        redirect.sourcePermanentId(), targetId, redirectEffective);
                 gameData.recordDamageRecipientBySource(redirect.sourcePermanentId(), targetId);
                 triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
                         gameData, targetId, redirectEffective);
@@ -1853,6 +1856,8 @@ public class DamageSupport {
                     boolean artifactSource = sourcePermanent != null
                             && gameQueryService.isArtifact(gameData, sourcePermanent);
                     gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
+                    gameData.recordDamageDealtBySourceToPlayer(
+                            redirect.damageSourceId(), targetId, redirectEffective);
                     gameData.recordDamageDealtBySource(redirect.damageSourceId(), redirectEffective);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
                     triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(

@@ -1572,6 +1572,11 @@ public class LayerSystemService {
             }
             case SetCardTypesEffect set -> {
                 manage(board, instance);
+                if (set.scope() == GrantScope.SELF
+                        && set.duration() == EffectDuration.WHILE_ATTACHED
+                        && (instance.source() == null || !instance.source().permanent().isAttached())) {
+                    return;
+                }
                 for (PermanentSlot target : scopeTargets(gameData, instance, set.scope(), null, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideCardTypes(set.cardTypes());
                     record(board, instance, target, new L4Contribution(

@@ -82,7 +82,8 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        if (e.thenEffect() == null || returned.isEmpty()) {
+        if (e.thenEffect() == null
+                || returned.isEmpty() && !e.resolveThenEffectIfNoPermanentReturned()) {
             return;
         }
 

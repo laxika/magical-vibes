@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "8ED", collectorNumber = "29")
 @CardRegistration(set = "TPR", collectorNumber = "18")
 @CardRegistration(set = "BRB", collectorNumber = "44")
+@CardRegistration(set = "DDN", collectorNumber = "50")
 public class MasterDecoy extends Card {
 
     public MasterDecoy() {
