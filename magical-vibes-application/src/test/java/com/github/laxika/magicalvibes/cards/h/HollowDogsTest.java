@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,18 +12,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HollowDogs.class})
 class HollowDogsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
     void attackPutsTriggerOnStack() {
-        addCreatureReady(player1, new HollowDogs());
+        Permanent dogs = addCreatureReady(player1, new HollowDogs());
 
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).anyMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && e.getCard().getName().equals("Hollow Dogs"));
+                        && dogs.getId().equals(e.getSourcePermanentId()));
     }
 
     @Test
@@ -38,6 +40,19 @@ class HollowDogsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the attacking creature gets the attack boost")
+    void onlyAttackingCreatureGetsBoost() {
+        Permanent attackingDogs = addCreatureReady(player1, new HollowDogs());
+        Permanent restingDogs = addCreatureReady(player1, new HollowDogs());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attackingDogs.getPowerModifier()).isEqualTo(2);
+        assertThat(restingDogs.getPowerModifier()).isEqualTo(0);
+    }
+
+    @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent dogs = addCreatureReady(player1, new HollowDogs());
@@ -47,9 +62,7 @@ class HollowDogsTest extends BaseCardTest {
 
         assertThat(dogs.getPowerModifier()).isEqualTo(2);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(dogs.getPowerModifier()).isEqualTo(0);
         assertThat(dogs.getToughnessModifier()).isEqualTo(0);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "125")
 @CardRegistration(set = "MMA", collectorNumber = "140")
+@CardRegistration(set = "DDR", collectorNumber = "4")
 public class CitanulWoodreaders extends Card {
 
     public CitanulWoodreaders() {

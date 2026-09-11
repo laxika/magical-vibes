@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayin
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "270")
+@CardRegistration(set = "DDR", collectorNumber = "29")
 public class MosswortBridge extends Card {
 
     public MosswortBridge() {

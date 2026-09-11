@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,8 +7,10 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(Vebulid.class)
 class VebulidTest extends BaseCardTest {
 
     @Test
@@ -54,6 +56,19 @@ class VebulidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent vebulid = addReadyVebulid(player1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(vebulid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNull();
+    }
+
+    @Test
     @DisplayName("Attacking destroys Vebulid at end of combat")
     void attackingDestroysItAtEndOfCombat() {
         Permanent vebulid = castVebulid(player1);
@@ -69,9 +84,10 @@ class VebulidTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking schedules Vebulid for end-of-combat destruction")
     void blockingSchedulesDestruction() {
-        Permanent attacker = addReady(player1, new GiantSpider());
+        Permanent attacker = addReadyVebulid(player1);
         attacker.setAttacking(true);
         Permanent vebulid = addReadyVebulid(player2);
+        vebulid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -83,7 +99,13 @@ class VebulidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(vebulid.getId()));
+                .anyMatch(action -> action.permanentId().equals(vebulid.getId())
+                        && action.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Vebulid");
+        harness.assertInGraveyard(player2, "Vebulid");
     }
 
     private Permanent castVebulid(Player player) {
@@ -95,15 +117,8 @@ class VebulidTest extends BaseCardTest {
     }
 
     private Permanent addReadyVebulid(Player player) {
-        Permanent vebulid = addReady(player, new Vebulid());
+        Permanent vebulid = addCreatureReady(player, new Vebulid());
         vebulid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         return vebulid;
-    }
-
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

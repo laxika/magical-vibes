@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,20 +13,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(MobileFort.class)
 class MobileFortTest extends BaseCardTest {
 
     private Permanent addFortReady() {
-        Permanent perm = new Permanent(new MobileFort());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
-    }
-
-    private void beginAttackers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
+        return addCreatureReady(player1, new MobileFort());
     }
 
     @Test
@@ -35,9 +25,7 @@ class MobileFortTest extends BaseCardTest {
     void cannotAttackWithDefender() {
         addFortReady();
 
-        beginAttackers();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -46,7 +34,7 @@ class MobileFortTest extends BaseCardTest {
     @DisplayName("Ability gives +3/-1 and lets Mobile Fort attack this turn")
     void abilityBoostsAndAllowsAttack() {
         Permanent fort = addFortReady();
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new MobileFort());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -56,8 +44,7 @@ class MobileFortTest extends BaseCardTest {
         assertThat(fort.getEffectivePower()).isEqualTo(3);
         assertThat(fort.getEffectiveToughness()).isEqualTo(5);
 
-        beginAttackers();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(fort.isAttacking()).isTrue();
     }
@@ -69,12 +56,14 @@ class MobileFortTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
-        assertThat(fort.getPowerModifier()).isEqualTo(3);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        harness.passBothPriorities();
+
+        assertThat(fort.getEffectivePower()).isEqualTo(3);
+        assertThat(fort.getEffectiveToughness()).isEqualTo(5);
     }
 
     @Test
@@ -85,19 +74,42 @@ class MobileFortTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(fort.getPowerModifier()).isEqualTo(3);
+        assertThat(fort.getEffectivePower()).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(fort.getPowerModifier()).isEqualTo(0);
-        assertThat(fort.getToughnessModifier()).isEqualTo(0);
+        assertThat(fort.getEffectivePower()).isEqualTo(0);
+        assertThat(fort.getEffectiveToughness()).isEqualTo(6);
 
-        beginAttackers();
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Once-per-turn limit resets on the next turn")
+    void oncePerTurnLimitResetsOnNextTurn() {
+        Permanent fort = addFortReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(fort.getEffectivePower()).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+
+        assertThat(fort.getEffectivePower()).isEqualTo(0);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(fort.getEffectivePower()).isEqualTo(3);
+        assertThat(fort.getEffectiveToughness()).isEqualTo(5);
     }
 
     @Test

@@ -211,6 +211,7 @@ public enum CardSet {
     SET_DDO("DDO"),
     SET_DDP("DDP"),
     SET_DDQ("DDQ"),
+    SET_DDR("DDR"),
     SET_DDS("DDS"),
     SET_DVD("DVD"),
     SET_DPA("DPA"),

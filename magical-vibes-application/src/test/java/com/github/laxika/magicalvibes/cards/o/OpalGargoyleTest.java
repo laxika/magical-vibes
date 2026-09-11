@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.p.PouncingCheetah;
+import com.github.laxika.magicalvibes.cards.w.WildDogs;
+import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OpalGargoyle.class, WildDogs.class, WornPowerstone.class})
 class OpalGargoyleTest extends BaseCardTest {
 
     private Permanent addOpalGargoyle() {
@@ -28,9 +28,11 @@ class OpalGargoyleTest extends BaseCardTest {
     }
 
     private void castOpponentCreature() {
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new WildDogs(), "{G}");
+    }
+
+    private void castOpponentFlashCreature() {
+        harness.castFromHand(player2, new PouncingCheetah(), "{2}{G}");
     }
 
     @Test
@@ -57,8 +59,7 @@ class OpalGargoyleTest extends BaseCardTest {
         prepareOpponentCast();
 
         castOpponentCreature();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         castOpponentCreature();
 
         assertThat(gd.stack).hasSize(1);
@@ -72,11 +73,41 @@ class OpalGargoyleTest extends BaseCardTest {
         Permanent opal = addOpalGargoyle();
         prepareOpponentCast();
 
-        harness.setHand(player2, List.of(new Spellbook()));
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, new WornPowerstone(), "{3}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.isEnchantment(gd, opal)).isTrue();
         assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opal Gargoyle does not trigger for its controller's creature spell")
+    void doesNotTriggerForControllerCreatureSpell() {
+        Permanent opal = addOpalGargoyle();
+
+        harness.castFromHand(player1, new WildDogs(), "{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.isEnchantment(gd, opal)).isTrue();
+        assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
+    @CardUsed(PouncingCheetah.class)
+    @DisplayName("A queued trigger does nothing once Opal Gargoyle is no longer an enchantment")
+    void queuedTriggerChecksEnchantmentAgainAtResolution() {
+        Permanent opal = addOpalGargoyle();
+        prepareOpponentCast();
+
+        castOpponentCreature();
+        castOpponentFlashCreature();
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+        assertThat(gd.gameLog.stream()
+                .map(entry -> entry.plainText())
+                .filter(log -> log.contains("becomes a 2/2 creature")))
+                .hasSize(1);
     }
 }

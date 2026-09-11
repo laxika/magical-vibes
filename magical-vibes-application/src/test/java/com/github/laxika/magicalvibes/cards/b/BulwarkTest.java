@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Bulwark.class, Forest.class})
 class BulwarkTest extends BaseCardTest {
 
     @Test
@@ -47,6 +49,23 @@ class BulwarkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Evaluates the hand-size difference when the trigger resolves")
+    void evaluatesHandSizeDifferenceAtResolution() {
+        harness.addToBattlefield(player1, new Bulwark());
+        harness.setHand(player1, cards(5));
+        harness.setHand(player2, cards(2));
+        int lifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player1, cards(1));
+        harness.setHand(player2, cards(3));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
     @DisplayName("Triggers during the controller's upkeep")
     void triggersDuringControllerUpkeep() {
         harness.addToBattlefield(player1, new Bulwark());
@@ -61,7 +80,20 @@ class BulwarkTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new Bulwark());
+        harness.setHand(player1, cards(3));
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private List<Card> cards(int count) {
-        return Stream.generate(GrizzlyBears::new).limit(count).map(Card.class::cast).toList();
+        return Stream.generate(Forest::new).limit(count).map(Card.class::cast).toList();
     }
 }

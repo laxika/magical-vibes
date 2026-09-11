@@ -468,6 +468,7 @@ class CombatAttackServiceTest extends BaseCardTest {
 
         @Test
         @DisplayName("CR 508.1a: Okk needs a strictly greater-power attacker beside it")
+        @CardUsed({CrawWurm.class, HillGiant.class, Okk.class})
         void greaterPowerRestrictionNeedsABiggerAttacker() {
             // Okk is 4/4; Hill Giant (3/3) is not enough, Craw Wurm (6/4) is.
             Permanent okk = addCreatureReady(player1, new Okk());

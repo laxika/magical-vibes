@@ -1,20 +1,18 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VeilOfBirds.class, DarkRitual.class})
 class VeilOfBirdsTest extends BaseCardTest {
 
     private Permanent addVeilOfBirds() {
@@ -33,8 +31,7 @@ class VeilOfBirdsTest extends BaseCardTest {
         Permanent veil = addVeilOfBirds();
         prepareOpponentCast();
 
-        harness.setHand(player2, List.of(new Spellbook()));
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, veil)).isTrue();
@@ -53,8 +50,7 @@ class VeilOfBirdsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new Spellbook()));
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.isEnchantment(gd, veil)).isTrue();
@@ -67,19 +63,32 @@ class VeilOfBirdsTest extends BaseCardTest {
         Permanent veil = addVeilOfBirds();
         prepareOpponentCast();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
+        resolveAllTriggers();
 
         prepareOpponentCast();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.isCreature(gd, veil)).isTrue();
         assertThat(gqs.isEnchantment(gd, veil)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only one queued trigger transforms it")
+    void onlyOneQueuedTriggerTransformsIt() {
+        Permanent veil = addVeilOfBirds();
+        prepareOpponentCast();
+
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, veil)).isTrue();
+        assertThat(gqs.isEnchantment(gd, veil)).isFalse();
+        assertThat(gd.gameLog.stream()
+                .map(entry -> entry.plainText())
+                .filter(log -> log.contains("becomes a 1/1 creature")))
+                .hasSize(1);
     }
 }
