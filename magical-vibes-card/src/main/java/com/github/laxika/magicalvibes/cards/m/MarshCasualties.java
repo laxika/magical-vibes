@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "101")
+@CardRegistration(set = "DDM", collectorNumber = "69")
 public class MarshCasualties extends Card {
 
     public MarshCasualties() {

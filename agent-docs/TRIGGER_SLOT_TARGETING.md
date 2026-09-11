@@ -703,7 +703,7 @@ Controller end-step effects bound to multiple declared target groups are queued 
 
 ## Planar event slots
 
-`PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED` and `ENCOUNTER_TRIGGERED` are collected by `PlanechaseService`. Targeted payloads reuse `SpellTargetTriggerAnyTarget` with a planar source snapshot. Never resolve a target-requiring encounter before its choice, or let phenomenon state-based actions skip that choice. See [PLANECHASE.md](PLANECHASE.md).
+`PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED` and `ENCOUNTER_TRIGGERED` are collected by `PlanechaseService`. Single-target payloads reuse `SpellTargetTriggerAnyTarget` with a planar source snapshot; optional or multi-target groups use the slot-by-slot target walker. Never resolve a target-requiring encounter before its choice, or let phenomenon state-based actions skip that choice. See [PLANECHASE.md](PLANECHASE.md).
 
 `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY` is collected by `GraveyardService` when the
 source zone is the library. It includes non-mill moves such as Call of the Wild; use
@@ -712,3 +712,11 @@ source zone is the library. It includes non-mill moves such as Call of the Wild;
 Optional multi-target groups consisting of player targets use
 `MultiPermanentChoiceContext.EtbPlayerTargetGroup` when the controller is a legal target.
 An empty selection ends the group, leaving the controller available as an actual target.
+
+End-of-combat planar abilities with multiple declared target groups use the same slot-by-slot
+walker as ETB token triggers. A dependent constraint can filter later groups from the first
+target's combat-damage recipients; `GameData.combatDamageToPlayersThisCombat` supplies the
+current-combat relationship and the legality check must be repeated when the ability resolves.
+When a planar slot contains one standalone single-target effect bound to a later declared group,
+the planar trigger path uses that group's filter directly rather than walking unrelated groups
+belonging to the plane's other abilities.

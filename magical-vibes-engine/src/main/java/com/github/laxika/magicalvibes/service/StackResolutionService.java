@@ -334,6 +334,8 @@ public class StackResolutionService {
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
         // Bloodthirst granted while the spell was on the stack (Bloodlord of Vaasgoth).
         perm.setGrantedBloodthirst(entry.getGrantedBloodthirst());
+        // Devour granted while the spell was on the stack (Jund).
+        perm.setGrantedDevour(entry.getGrantedDevour());
         entry.getGrantedTriggeredEffectsOnEntry().forEach((slot, effects) ->
                 effects.forEach(effect -> perm.addTemporaryTriggeredEffect(slot, effect)));
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "202")
+@CardRegistration(set = "DDL", collectorNumber = "8")
 public class TruefirePaladin extends Card {
 
     public TruefirePaladin() {

@@ -2201,6 +2201,10 @@ public class TargetLegalityService {
             validateControlledByFirstTarget(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT) {
+            validateControlledByPlayerDamagedByFirstTargetThisCombat(gameData, targetIds);
+            return;
+        }
         if (constraint == MultiTargetConstraint.ATTACHED_TO_FIRST_TARGET) {
             validateAttachedToFirstTarget(gameData, targetIds);
             return;
@@ -2278,7 +2282,9 @@ public class TargetLegalityService {
                             throw new IllegalStateException("Chosen permanents must share a card type");
                         }
                     }
-                    case CONTROLLED_BY_FIRST_TARGET, ATTACHED_TO_FIRST_TARGET, BLOCKED_BY_FIRST_TARGET,
+                    case CONTROLLED_BY_FIRST_TARGET,
+                         CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT,
+                         ATTACHED_TO_FIRST_TARGET, BLOCKED_BY_FIRST_TARGET,
                          AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
@@ -2550,6 +2556,22 @@ public class TargetLegalityService {
         }
     }
 
+    private void validateControlledByPlayerDamagedByFirstTargetThisCombat(
+            GameData gameData, List<UUID> targetIds) {
+        if (targetIds.size() < 2) {
+            return;
+        }
+        Set<UUID> damagedPlayerIds = gameData.combatDamageToPlayersThisCombat
+                .getOrDefault(targetIds.getFirst(), Set.of());
+        for (int i = 1; i < targetIds.size(); i++) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, targetIds.get(i));
+            if (!damagedPlayerIds.contains(controllerId)) {
+                throw new IllegalStateException(
+                        "Target must be controlled by a player dealt combat damage by the first target this combat");
+            }
+        }
+    }
+
     private UUID controllerForMultiTargetConstraint(GameData gameData, UUID targetId) {
         if (gameData.playerIds.contains(targetId)) {
             return targetId;
@@ -2734,6 +2756,19 @@ public class TargetLegalityService {
                 for (int i = 0; i < declaredTargetIds.size(); i++) {
                     UUID targetControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i));
                     if (targetLegal[i] && !java.util.Objects.equals(requiredControllerId, targetControllerId)) {
+                        targetLegal[i] = false;
+                        entry.markTargetIllegal(i);
+                    }
+                }
+            }
+            if (multiTargetConstraint
+                    == MultiTargetConstraint.CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT
+                    && targetLegal.length > 0) {
+                Set<UUID> damagedPlayerIds = gameData.combatDamageToPlayersThisCombat
+                        .getOrDefault(declaredTargetIds.getFirst(), Set.of());
+                for (int i = 1; i < declaredTargetIds.size(); i++) {
+                    UUID controllerId = gameQueryService.findPermanentController(gameData, declaredTargetIds.get(i));
+                    if (targetLegal[i] && (!targetLegal[0] || !damagedPlayerIds.contains(controllerId))) {
                         targetLegal[i] = false;
                         entry.markTargetIllegal(i);
                     }

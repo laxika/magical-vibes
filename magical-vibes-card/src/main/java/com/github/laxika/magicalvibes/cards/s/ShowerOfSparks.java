@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "USG", collectorNumber = "217")
 @CardRegistration(set = "BRB", collectorNumber = "71")
+@CardRegistration(set = "DDL", collectorNumber = "61")
 public class ShowerOfSparks extends Card {
 
     public ShowerOfSparks() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "146")
+@CardRegistration(set = "MMA", collectorNumber = "103")
 public class WarrenPilferers extends Card {
 
     public WarrenPilferers() {

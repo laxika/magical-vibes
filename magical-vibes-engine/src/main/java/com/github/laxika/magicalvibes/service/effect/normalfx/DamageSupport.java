@@ -414,6 +414,12 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return 0;
         }
+        if (!targetDamageUnpreventable
+                && gameQueryService.isDamageFromNamedPlanePreventedForControlledPermanent(
+                gameData, entry, targetControllerId)) {
+            gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return 0;
+        }
         Permanent effectiveDamageSource = damageSource;
         if (effectiveDamageSource == null && entry != null && entry.getSourcePermanentId() != null) {
             effectiveDamageSource = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

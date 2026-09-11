@@ -390,21 +390,24 @@ public class AsEntersInteractionService {
         // Devour (CR 702.82a): "As this creature enters, you may sacrifice any number of creatures.
         // It enters with N times that many +1/+1 counters on it." As-enters replacement, resolved
         // before ETB triggers. Prompt the controller to sacrifice any of their other creatures.
+        List<Permanent> enteringBattlefieldForDevour = gameData.playerBattlefields.get(controllerId);
+        Permanent devourEnteringPermanent = enteringBattlefieldForDevour.get(enteringBattlefieldForDevour.size() - 1);
         DevourEffect devour = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof DevourEffect)
                 .map(e -> (DevourEffect) e)
                 .findFirst().orElse(null);
+        if (devour == null && devourEnteringPermanent.getGrantedDevour() > 0) {
+            devour = new DevourEffect(devourEnteringPermanent.getGrantedDevour());
+        }
         if (devour != null) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
-            List<UUID> sacrificeable = bf.stream()
-                    .filter(p -> p != justEntered && gameQueryService.isCreature(gameData, p))
+            List<UUID> sacrificeable = enteringBattlefieldForDevour.stream()
+                    .filter(p -> p != devourEnteringPermanent && gameQueryService.isCreature(gameData, p))
                     .map(Permanent::getId)
                     .toList();
             if (!sacrificeable.isEmpty()) {
                 playerInputService.beginMultiPermanentChoice(gameData, controllerId,
                         new ArrayList<>(sacrificeable), sacrificeable.size(),
-                        new MultiPermanentChoiceContext.DevourSacrifice(justEntered.getId(), devour.multiplier(),
+                        new MultiPermanentChoiceContext.DevourSacrifice(devourEnteringPermanent.getId(), devour.multiplier(),
                                 controllerId, card, targetId, wasCastFromHand, etbMode, kicked),
                         card.getName() + " — Devour: sacrifice any number of creatures.");
                 return;

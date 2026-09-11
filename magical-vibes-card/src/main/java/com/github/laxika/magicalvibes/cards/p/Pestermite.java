@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffe
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "78")
+@CardRegistration(set = "MMA", collectorNumber = "59")
 public class Pestermite extends Card {
 
     public Pestermite() {
