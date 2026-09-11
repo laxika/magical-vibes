@@ -1865,7 +1865,7 @@ public class GameData {
     }
 
     /** Tracks how much damage each source dealt this turn, to every recipient (players, planeswalkers,
-     *  battles and creatures; combat and noncombat alike). Maps source permanent UUID → total damage.
+     *  battles and creatures; combat and noncombat alike). Maps permanent or spell source UUID to total damage.
      *  Used by "if [this] has dealt N or more damage this turn" (Chandra, Fire of Kaladesh).
      *  Cleared at turn cleanup. */
     public final Map<UUID, Integer> damageDealtThisTurnBySource = new ConcurrentHashMap<>();
@@ -1873,7 +1873,7 @@ public class GameData {
     /** Tracks actual damage dealt by each sorcery spell cast this turn, keyed by card UUID. */
     public final Map<UUID, Integer> sorcerySpellDamageDealtThisTurn = new ConcurrentHashMap<>();
 
-    /** Tracks source permanent objects that have dealt damage at least once. */
+    /** Tracks source objects that have dealt damage at least once. */
     public final Set<UUID> permanentsThatHaveDealtDamage = ConcurrentHashMap.newKeySet();
 
     /** Tracks every player or permanent that each source permanent has dealt damage to this game. */
@@ -1882,8 +1882,7 @@ public class GameData {
     /** Tracks distinct damage sources by the player who controlled them when they dealt damage this turn. */
     public final Map<UUID, Set<UUID>> damageSourcesControlledByPlayerThisTurn = new ConcurrentHashMap<>();
 
-    /** Records that {@code sourcePermanentId} dealt {@code amount} damage this turn. No-op when the
-     *  source permanent is unknown or the amount is non-positive. */
+    /** Records damage by a permanent or spell source. No-op for unknown sources or non-positive damage. */
     public void recordDamageDealtBySource(UUID sourcePermanentId, int amount) {
         if (sourcePermanentId == null || amount <= 0) {
             return;

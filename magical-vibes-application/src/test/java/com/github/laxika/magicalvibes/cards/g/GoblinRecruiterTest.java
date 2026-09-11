@@ -141,6 +141,7 @@ class GoblinRecruiterTest extends BaseCardTest {
     @DisplayName("Searching triggers an opponent's library-search ability")
     void searchTriggersOpponentSearchAbility() {
         harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.addToBattlefield(player1, new WindDrake());
         harness.setLife(player1, 20);
         harness.setLibrary(player1, List.of(new GoblinHero(), new WindDrake()));
 

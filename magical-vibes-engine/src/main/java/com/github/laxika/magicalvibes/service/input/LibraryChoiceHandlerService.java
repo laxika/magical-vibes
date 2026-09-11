@@ -1228,16 +1228,17 @@ public class LibraryChoiceHandlerService {
 
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE
                 || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
-            if (filterPredicate != null) {
-                exileService.exileCard(gameData, playerId, chosenCard);
+            boolean faceUp = filterPredicate != null
+                    || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP;
+            if (faceUp) {
+                exileService.exileCard(gameData, deckOwnerId, chosenCard);
             } else {
-                exileService.exileCardFaceDown(gameData, playerId, chosenCard, null);
+                exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null, playerId);
             }
             gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
             if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
                 // Grinning Totem: permission lasts only until the searcher's next upkeep; an unplayed
-                // card is put into its (real) owner's graveyard then. The card is exiled under the
-                // searcher's zone, but its owner for graveyard purposes is the searched library's owner.
+                // card is put into its owner's graveyard then.
                 Card sourceCard = (sourceCards != null && !sourceCards.isEmpty()) ? sourceCards.getFirst() : null;
                 gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextUpkeep(
                         playerId, chosenCard.getId(), deckOwnerId, sourceCard));
@@ -1247,7 +1248,7 @@ public class LibraryChoiceHandlerService {
             }
 
             String logMsg = player.getUsername()
-                    + (filterPredicate != null ? " exiles a card." : " exiles a card face down.")
+                    + (faceUp ? " exiles a card." : " exiles a card face down.")
                     + (shuffleAfterSelection ? " Library is shuffled." : "");
             gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} exiles {} from library search (with play permission)", gameData.id, player.getUsername(), chosenCard.getName());

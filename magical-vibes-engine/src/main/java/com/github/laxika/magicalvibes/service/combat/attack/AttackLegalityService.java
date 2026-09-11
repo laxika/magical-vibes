@@ -335,7 +335,7 @@ public class AttackLegalityService {
         boolean[] restricted = {false};
         UUID creatureController = gameData.findControllerOf(creature);
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 return;
             }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {

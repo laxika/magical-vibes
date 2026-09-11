@@ -127,6 +127,16 @@ class AbilityActivationServiceTest {
     private UUID player1Id;
     private UUID player2Id;
 
+    @Test
+    void removedPrintedAbilitiesAreUnavailableForActivation() {
+        Card card = createArtifactWithOnceOnlyAbility();
+        Permanent permanent = new Permanent(card);
+        when(gameQueryService.computeStaticBonus(gameData, permanent)).thenReturn(EMPTY_BONUS);
+        when(gameQueryService.hasLostAllAbilities(gameData, permanent)).thenReturn(true);
+
+        assertThat(service.getEffectiveActivatedAbilities(gameData, permanent)).isEmpty();
+    }
+
     @BeforeEach
     void setUp() {
         player1Id = UUID.randomUUID();

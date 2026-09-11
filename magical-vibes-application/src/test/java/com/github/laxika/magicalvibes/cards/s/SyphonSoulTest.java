@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pariah;
+import com.github.laxika.magicalvibes.cards.u.UrzasArmor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,6 +21,42 @@ class SyphonSoulTest extends BaseCardTest {
     private void castSyphonSoul() {
         harness.castFromHand(player1, new SyphonSoul(), "{2}{B}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed(UrzasArmor.class)
+    void gainsOnlyUnpreventedDamage() {
+        harness.addToBattlefield(player2, new UrzasArmor());
+
+        castSyphonSoul();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @CardUsed(FurnaceOfRath.class)
+    void gainsLifeForMultipliedDamage() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+
+        castSyphonSoul();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @CardUsed({Pariah.class, GrizzlyBears.class})
+    void gainsLifeWhenDamageIsRedirectedToCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
+        pariah.setAttachedTo(creature.getId());
+
+        castSyphonSoul();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 22);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

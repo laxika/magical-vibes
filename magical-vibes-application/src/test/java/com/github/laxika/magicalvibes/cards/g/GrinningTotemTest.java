@@ -50,7 +50,7 @@ class GrinningTotemTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chosen card is exiled under the caster with play permission and cleanup scheduled")
+    @DisplayName("Chosen card keeps its owner in exile with play permission and cleanup scheduled")
     void exilesChosenCardWithPlayPermissionAndSchedulesCleanup() {
         Card swamp = new Swamp();
         gd.playerDecks.get(player2.getId()).clear();
@@ -59,8 +59,8 @@ class GrinningTotemTest extends BaseCardTest {
         activateGrinningTotem();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        // Card is exiled under the caster's zone, face up, with play permission.
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
+        // Exile preserves ownership; the searching player receives play permission.
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
         assertThat(gd.findExiledCard(swamp.getId()).faceDown()).isFalse();
         assertThat(gd.exilePlayPermissions.get(swamp.getId())).isEqualTo(player1.getId());
@@ -95,7 +95,7 @@ class GrinningTotemTest extends BaseCardTest {
         harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
 
         // Card leaves exile, loses permission, and enters its owner's (player2's) graveyard.
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getId().equals(swamp.getId()));
         assertThat(gd.exilePlayPermissions).doesNotContainKey(swamp.getId());
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -117,7 +117,7 @@ class GrinningTotemTest extends BaseCardTest {
         gd.activePlayerId = player2.getId();
         harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
 
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
         assertThat(gd.exilePlayPermissions.get(swamp.getId())).isEqualTo(player1.getId());
         assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).hasSize(1);

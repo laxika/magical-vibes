@@ -11683,6 +11683,7 @@ public class TriggerCollectionService {
                 );
                 entry.setTriggeringCardId(enteringLand.getId());
                 entry.setTriggeringPermanentId(enteringPermanentId);
+                entry.setTriggeringPermanentControllerId(landControllerId);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
