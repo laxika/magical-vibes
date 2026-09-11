@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M11", collectorNumber = "85")
 @CardRegistration(set = "M13", collectorNumber = "83")
 @CardRegistration(set = "ROE", collectorNumber = "98")
+@CardRegistration(set = "DDP", collectorNumber = "46")
 public class BloodthroneVampire extends Card {
 
     public BloodthroneVampire() {

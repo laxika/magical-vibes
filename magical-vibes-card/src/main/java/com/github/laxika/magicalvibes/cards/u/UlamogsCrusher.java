@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "13")
+@CardRegistration(set = "DDP", collectorNumber = "44")
 public class UlamogsCrusher extends Card {
 
     public UlamogsCrusher() {

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "68")
 @CardRegistration(set = "ONS", collectorNumber = "170")
+@CardRegistration(set = "DDP", collectorNumber = "57")
 public class Smother extends Card {
 
     public Smother() {

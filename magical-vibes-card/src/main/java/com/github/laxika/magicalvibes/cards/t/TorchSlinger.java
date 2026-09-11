@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ZEN", collectorNumber = "151")
+@CardRegistration(set = "DDP", collectorNumber = "63")
 public class TorchSlinger extends Card {
 
     public TorchSlinger() {
