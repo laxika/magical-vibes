@@ -276,6 +276,7 @@ class LandTapTriggerCollectorServiceTest {
             Permanent overgrowth = createPermanent("Overgrowth");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             overgrowth.setAttachedTo(forest.getId());
+            when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player1Id);
             var effect = new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, 2));
             var ctx = new TriggerContext.LandTap(player1Id, forest.getId());
 
@@ -334,6 +335,7 @@ class LandTapTriggerCollectorServiceTest {
             Permanent fertileGround = createPermanent("Fertile Ground");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             fertileGround.setAttachedTo(forest.getId());
+            when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player1Id);
             var effect = new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect());
             var ctx = new TriggerContext.LandTap(player1Id, forest.getId());
 
@@ -354,6 +356,7 @@ class LandTapTriggerCollectorServiceTest {
             Permanent dawnsReflection = createPermanent("Dawn's Reflection");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             dawnsReflection.setAttachedTo(forest.getId());
+            when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player1Id);
             var effect = new AddManaOnEnchantedLandTapEffect(
                     new AwardManaOfColorsEffect(ManaColor.COLORS, 2));
             var ctx = new TriggerContext.LandTap(player1Id, forest.getId());

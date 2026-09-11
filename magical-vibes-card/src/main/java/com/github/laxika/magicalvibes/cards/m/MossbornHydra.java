@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "107")
+@CardRegistration(set = "FDN", collectorNumber = "337")
+@CardRegistration(set = "FDN", collectorNumber = "399")
+@CardRegistration(set = "FDN", collectorNumber = "471")
 public class MossbornHydra extends Card {
 
     public MossbornHydra() {

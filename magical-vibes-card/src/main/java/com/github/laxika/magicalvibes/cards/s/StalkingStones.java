@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "TMP", collectorNumber = "327")
 @CardRegistration(set = "MRD", collectorNumber = "284")
 @CardRegistration(set = "TPR", collectorNumber = "245")
+@CardRegistration(set = "DDF", collectorNumber = "75")
 public class StalkingStones extends Card {
 
     public StalkingStones() {

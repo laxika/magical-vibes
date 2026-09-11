@@ -59,6 +59,11 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         List<Permanent> plusOneTargets = new ArrayList<>();
         Map<Permanent, Integer> minusOneTargets = new LinkedHashMap<>();
         for (Permanent p : new ArrayList<>(battlefield)) {
+            if (e.excludeTargets()
+                    && (p.getId().equals(entry.getTargetId())
+                        || entry.getDeclaredTargetIds().contains(p.getId()))) {
+                continue;
+            }
             if (!predicateEvaluationService.matchesPermanentPredicate(p, e.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
             if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE
@@ -74,6 +79,8 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
             permanentCounterSupport.notifyCountersPlaced(gameData, entry, p, placed);
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && placed > 0) {
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                        gameData, p, entry.getControllerId());
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                         gameData, p, placed);
                 plusOneTargets.add(p);

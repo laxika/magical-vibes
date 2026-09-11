@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 /**
  * Capability interface for effects that deal a single evaluated amount of damage to one
@@ -29,6 +30,14 @@ public interface DamageDealingEffect extends CardEffect {
 
     /** Whether this effect can deal its damage to players. */
     boolean canDamagePlayers();
+
+    /**
+     * Optional target filter used when this damage effect is a target-selecting triggered
+     * ability and the card has no cast-time target declaration.
+     */
+    default TargetFilter triggeredTargetFilter() {
+        return null;
+    }
 
     /**
      * Whether this effect deals damage to its own controller. Consumers use this descriptive fact

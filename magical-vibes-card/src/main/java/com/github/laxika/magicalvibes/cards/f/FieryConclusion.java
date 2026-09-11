@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "ORI", collectorNumber = "144")
 @CardRegistration(set = "RAV", collectorNumber = "122")
+@CardRegistration(set = "PC2", collectorNumber = "42")
 public class FieryConclusion extends Card {
 
     public FieryConclusion() {

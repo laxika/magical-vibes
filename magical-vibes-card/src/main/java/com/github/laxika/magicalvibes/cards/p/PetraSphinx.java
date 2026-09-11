@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "10")
 @CardRegistration(set = "LEG", collectorNumber = "30")
+@CardRegistration(set = "ME1", collectorNumber = "23")
 public class PetraSphinx extends Card {
 
     public PetraSphinx() {

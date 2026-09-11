@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "RIX", collectorNumber = "114")
 @CardRegistration(set = "SUM", collectorNumber = "175")
 @CardRegistration(set = "DKM", collectorNumber = "20")
+@CardRegistration(set = "3ED", collectorNumber = "175")
 public class Shatter extends Card {
 
     public Shatter() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "12")
+@CardRegistration(set = "V11", collectorNumber = "14")
 public class UlamogTheInfiniteGyre extends Card {
 
     public UlamogTheInfiniteGyre() {

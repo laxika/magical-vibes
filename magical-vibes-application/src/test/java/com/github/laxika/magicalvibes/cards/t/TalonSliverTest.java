@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
+import com.github.laxika.magicalvibes.cards.w.WingedSliver;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TalonSliver.class, WingedSliver.class, LowlandGiant.class})
 class TalonSliverTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,7 @@ class TalonSliverTest extends BaseCardTest {
     @DisplayName("Grants first strike to another Sliver you control")
     void grantsFirstStrikeToOtherSliver() {
         addCreatureReady(player1, new TalonSliver());
-        Permanent otherSliver = addCreatureReady(player1, new BonescytheSliver());
+        Permanent otherSliver = addCreatureReady(player1, new WingedSliver());
 
         assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -33,7 +35,7 @@ class TalonSliverTest extends BaseCardTest {
     @DisplayName("Grants first strike to an opponent's Sliver too")
     void grantsFirstStrikeToOpponentSliver() {
         addCreatureReady(player1, new TalonSliver());
-        Permanent opponentSliver = addCreatureReady(player2, new BonescytheSliver());
+        Permanent opponentSliver = addCreatureReady(player2, new WingedSliver());
 
         assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -42,8 +44,8 @@ class TalonSliverTest extends BaseCardTest {
     @DisplayName("Does not grant first strike to a non-Sliver creature")
     void doesNotGrantToNonSliver() {
         addCreatureReady(player1, new TalonSliver());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new LowlandGiant());
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

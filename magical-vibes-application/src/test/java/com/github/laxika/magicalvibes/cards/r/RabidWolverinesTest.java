@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RabidWolverines.class, RagingGoblin.class})
 class RabidWolverinesTest extends BaseCardTest {
 
     @Test
@@ -19,7 +21,7 @@ class RabidWolverinesTest extends BaseCardTest {
     void oneBlockerGivesPlusOne() {
         Permanent wolverines = addWolverinesReady(player1);
         wolverines.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new RagingGoblin());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -34,8 +36,8 @@ class RabidWolverinesTest extends BaseCardTest {
     void twoBlockersGivePlusTwo() {
         Permanent wolverines = addWolverinesReady(player1);
         wolverines.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new RagingGoblin());
+        addCreatureReady(player2, new RagingGoblin());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -46,6 +48,28 @@ class RabidWolverinesTest extends BaseCardTest {
 
         assertThat(wolverines.getPowerModifier()).isEqualTo(2);
         assertThat(wolverines.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boost wears off at the end of the turn")
+    void boostWearsOffAtEndOfTurn() {
+        Permanent wolverines = addWolverinesReady(player1);
+        wolverines.setAttacking(true);
+        addCreatureReady(player2, new RagingGoblin());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(wolverines.getPowerModifier()).isEqualTo(1);
+        assertThat(wolverines.getToughnessModifier()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(wolverines.getPowerModifier()).isZero();
+        assertThat(wolverines.getToughnessModifier()).isZero();
     }
 
     @Test

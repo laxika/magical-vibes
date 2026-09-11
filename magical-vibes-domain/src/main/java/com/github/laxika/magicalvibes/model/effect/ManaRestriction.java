@@ -11,7 +11,7 @@ import java.util.Set;
  * Spending restriction attached to mana produced by {@link AwardRestrictedManaEffect}. Each case
  * routes the produced mana into the matching {@link ManaPool} bucket. The spend side (ManaCost
  * payment, view serialization) keys on those typed buckets, not on this spec, so a restriction is a
- * pure routing key — the buckets remain the load-bearing store of restricted mana.
+ * pure routing key â€” the buckets remain the load-bearing store of restricted mana.
  */
 public sealed interface ManaRestriction {
 
@@ -58,6 +58,17 @@ public sealed interface ManaRestriction {
     }
 
     /** Mana spendable only to cast noncreature spells. */
+    record InstantSorceryOrClassLevel() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addInstantSorceryOrClassLevelOnlyMana(color, amount);
+        }
+        @Override
+        public String description() {
+            return "instant or sorcery spells or Class levels only";
+        }
+    }
+
     record NoncreatureSpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -302,7 +313,7 @@ public sealed interface ManaRestriction {
     }
 
     /**
-     * Colorless mana spendable only to cast legendary spells — any spell with the legendary supertype
+     * Colorless mana spendable only to cast legendary spells â€” any spell with the legendary supertype
      * (Untaidake, the Cloud Keeper). Spell-only: it cannot pay activation costs.
      */
     record LegendarySpells() implements ManaRestriction {
@@ -343,11 +354,37 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells with devoid. */
+    record DevoidSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addDevoidSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells with devoid only";
+        }
+    }
+
+    /** Mana spendable only to cast colorless spells, activate colorless permanent abilities, or pay costs containing {C}. */
+    record ColorlessSpellsOrPermanentAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addColorlessSpellOrPermanentAbilityMana(amount);
+        }
+
+        @Override
+        public String description() {
+            return "colorless spells, colorless permanent abilities, or costs containing {C} only";
+        }
+    }
+
     /**
      * Mana spendable only to cast creature spells of the given subtype (Gnarlroot Trapper: "Add
      * {G}. Spend this mana only to cast an Elf creature spell."). Routes into the per-subtype
-     * creature-spell bucket shared with {@link AwardAnyColorChosenSubtypeCreatureManaEffect}, so —
-     * unlike {@link SubtypeSpells} — it cannot pay for noncreature spells of that subtype or for
+     * creature-spell bucket shared with {@link AwardAnyColorChosenSubtypeCreatureManaEffect}, so â€”
+     * unlike {@link SubtypeSpells} â€” it cannot pay for noncreature spells of that subtype or for
      * activated abilities.
      */
     record SubtypeCreatureSpells(CardSubtype subtype) implements ManaRestriction {
@@ -437,7 +474,7 @@ public sealed interface ManaRestriction {
     record KickedCosts() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addKickedOnlyGreen(amount);
+            pool.addKickedOnlyMana(color, amount);
         }
 
         @Override
@@ -508,4 +545,42 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast enchantment spells, unlock a Room door, or turn a permanent face up. */
+    record EnchantmentOrRoomUnlockOrTurnFaceUp() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addEnchantmentOrRoomUnlockOrTurnFaceUpMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "enchantment spells, unlocking a Room door, or turning a permanent face up only";
+        }
+    }
+
+    /** Mana spendable only to cast Room spells or unlock Room doors. */
+    record RoomSpellsOrUnlocks() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addRoomSpellsOrUnlocksMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "Room spells or unlocking Room doors only";
+        }
+    }
+
+    /** Mana spendable only to turn permanents face up. */
+    record TurnPermanentsFaceUp() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addTurnPermanentsFaceUpMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "turning permanents face up only";
+        }
+    }
 }

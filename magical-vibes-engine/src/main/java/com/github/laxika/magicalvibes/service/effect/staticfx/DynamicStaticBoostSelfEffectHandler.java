@@ -34,7 +34,9 @@ public class DynamicStaticBoostSelfEffectHandler implements StaticEffectHandlerB
                 && boost.scope() != GrantScope.ALL_CREATURES_INCLUDING_SELF) {
             return;
         }
-        AmountContext amountContext = AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
+        AmountContext amountContext = boost.amountsFromTarget()
+                ? AmountContext.forStaticEffect(context.target(), context.gameData().findControllerOf(context.target()))
+                : AmountContext.forStaticEffect(context.source(), context.sourceControllerId());
         accumulator.addPower(amountEvaluationService.evaluate(
                 context.gameData(), boost.powerBoost(), amountContext));
         accumulator.addToughness(amountEvaluationService.evaluate(

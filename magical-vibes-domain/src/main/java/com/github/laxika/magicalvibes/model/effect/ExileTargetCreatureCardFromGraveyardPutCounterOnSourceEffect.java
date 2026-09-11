@@ -7,11 +7,16 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 /**
  * Exile target creature card from a graveyard, then put a +1/+1 counter on the source creature.
  */
-public record ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect() implements CardEffect {
+public record ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect(
+        GraveyardSearchScope scope) implements CardEffect {
+
+    public ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect() {
+        this(GraveyardSearchScope.ALL_GRAVEYARDS);
+    }
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.graveyardCards(
-                new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.ALL_GRAVEYARDS));
+                new CardTypePredicate(CardType.CREATURE), scope));
     }
 }

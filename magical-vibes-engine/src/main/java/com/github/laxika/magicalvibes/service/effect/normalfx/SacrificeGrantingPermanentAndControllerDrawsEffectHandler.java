@@ -44,7 +44,7 @@ public class SacrificeGrantingPermanentAndControllerDrawsEffectHandler implement
         }
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, grantingPermanentId);
-        if (!permanentRemovalService.removePermanentToGraveyard(gameData, grantingPermanent)) {
+        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, grantingPermanent)) {
             return;
         }
 

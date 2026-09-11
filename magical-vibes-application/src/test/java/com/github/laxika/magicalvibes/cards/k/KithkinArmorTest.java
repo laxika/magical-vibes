@@ -1,32 +1,45 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.d.DuskriderFalcon;
+import com.github.laxika.magicalvibes.cards.h.HeavyBallista;
+import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.t.Thunderbolt;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({
+        KithkinArmor.class,
+        BenalishKnight.class,
+        DuskriderFalcon.class,
+        HeavyBallista.class,
+        RedwoodTreefolk.class,
+        Thunderbolt.class
+})
 class KithkinArmorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature can't be blocked by a creature with power 3")
     void cannotBeBlockedByPowerThree() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         attacker.setAttacking(true);
         attachArmor(attacker);
 
-        Permanent blocker = addReadyStats(player2, 3, 3);
+        Permanent blocker = addCreatureReady(player2, new RedwoodTreefolk());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
                 .isInstanceOf(IllegalStateException.class);
@@ -35,13 +48,13 @@ class KithkinArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature can be blocked by a creature with power 2")
     void canBeBlockedByPowerTwo() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         attacker.setAttacking(true);
         attachArmor(attacker);
 
-        Permanent blocker = addReadyStats(player2, 2, 2);
+        Permanent blocker = addCreatureReady(player2, new BenalishKnight());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, attacker);
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -50,92 +63,136 @@ class KithkinArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing the Aura prevents the chosen source's next damage to the enchanted creature")
     void preventsNextDamageFromChosenSource() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent armor = attachArmor(bears);
-        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        Permanent enchanted = addCreatureReady(player1, new RedwoodTreefolk());
+        enchanted.setAttacking(true);
+        Permanent armor = attachArmor(enchanted);
+        Permanent ballista = addCreatureReady(player2, new HeavyBallista());
 
-        harness.activateAbility(player1, indexOf(player1, armor), null, null);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, pyromancer.getId());
+        chooseDamageSource(armor, ballista.getId());
 
         harness.assertInGraveyard(player1, "Kithkin Armor");
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
 
-        harness.activateAbility(player2, indexOf(player2, pyromancer), null, bears.getId());
+        harness.activateAbility(player2, indexOf(player2, ballista), null, enchanted.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(enchanted.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("The shield only covers the enchanted creature, not other permanents")
     void shieldDoesNotCoverOtherCreatures() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent armor = attachArmor(bears);
-        Permanent other = addReadyStats(player1, 3, 3);
-        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        Permanent enchanted = addCreatureReady(player1, new RedwoodTreefolk());
+        enchanted.setAttacking(true);
+        Permanent armor = attachArmor(enchanted);
+        Permanent other = addCreatureReady(player1, new RedwoodTreefolk());
+        other.setAttacking(true);
+        Permanent ballista = addCreatureReady(player2, new HeavyBallista());
 
-        harness.activateAbility(player1, indexOf(player1, armor), null, null);
+        chooseDamageSource(armor, ballista.getId());
+
+        harness.activateAbility(player2, indexOf(player2, ballista), null, other.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, pyromancer.getId());
 
-        harness.activateAbility(player2, indexOf(player2, pyromancer), null, other.getId());
+        assertThat(other.getMarkedDamage()).isEqualTo(2);
+
+        ballista.untap();
+        harness.activateAbility(player2, indexOf(player2, ballista), null, enchanted.getId());
         harness.passBothPriorities();
 
-        assertThat(other.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+        assertThat(enchanted.getMarkedDamage()).isZero();
+        assertThat(other.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Only the next damage event from the chosen source is prevented")
     void onlyTheNextDamageEventIsPrevented() {
-        Permanent bears = addReadyStats(player1, 4, 4);
-        Permanent armor = attachArmor(bears);
-        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        Permanent enchanted = addCreatureReady(player1, new RedwoodTreefolk());
+        enchanted.setAttacking(true);
+        Permanent armor = attachArmor(enchanted);
+        Permanent ballista = addCreatureReady(player2, new HeavyBallista());
 
-        harness.activateAbility(player1, indexOf(player1, armor), null, null);
+        chooseDamageSource(armor, ballista.getId());
+
+        harness.activateAbility(player2, indexOf(player2, ballista), null, enchanted.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, pyromancer.getId());
+        assertThat(enchanted.getMarkedDamage()).isZero();
 
-        harness.activateAbility(player2, indexOf(player2, pyromancer), null, bears.getId());
-        harness.passBothPriorities();
-        assertThat(bears.getMarkedDamage()).isZero();
-
-        pyromancer.untap();
-        harness.activateAbility(player2, indexOf(player2, pyromancer), null, bears.getId());
+        ballista.untap();
+        harness.activateAbility(player2, indexOf(player2, ballista), null, enchanted.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(enchanted.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Damage from a different source is not prevented")
     void otherSourceIsNotPrevented() {
-        Permanent bears = addReadyStats(player1, 4, 4);
-        Permanent armor = attachArmor(bears);
-        Permanent chosen = addCreatureReady(player2, new ProdigalPyromancer());
-        Permanent otherPyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        Permanent enchanted = addCreatureReady(player1, new RedwoodTreefolk());
+        enchanted.setAttacking(true);
+        Permanent armor = attachArmor(enchanted);
+        Permanent chosen = addCreatureReady(player2, new HeavyBallista());
+        Permanent other = addCreatureReady(player2, new HeavyBallista());
 
-        harness.activateAbility(player1, indexOf(player1, armor), null, null);
+        chooseDamageSource(armor, chosen.getId());
+
+        harness.activateAbility(player2, indexOf(player2, other), null, enchanted.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, chosen.getId());
 
-        harness.activateAbility(player2, indexOf(player2, otherPyromancer), null, bears.getId());
+        assertThat(enchanted.getMarkedDamage()).isEqualTo(2);
+
+        chosen.untap();
+        harness.activateAbility(player2, indexOf(player2, chosen), null, enchanted.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+        assertThat(enchanted.getMarkedDamage()).isEqualTo(2);
     }
 
-    private Permanent addReadyStats(Player player, int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
-        card.setPower(power);
-        card.setToughness(toughness);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("An Aura can enchant only a creature")
+    void cannotEnchantPlayer() {
+        harness.setHand(player1, List.of(new KithkinArmor()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot target players");
+    }
+
+    @Test
+    @DisplayName("The shield also prevents damage from a spell source")
+    void preventsDamageFromSpellSource() {
+        Permanent enchanted = addCreatureReady(player1, new DuskriderFalcon());
+        Permanent armor = attachArmor(enchanted);
+        Thunderbolt thunderbolt = new Thunderbolt();
+
+        harness.setHand(player2, List.of(thunderbolt));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, 1, enchanted.getId());
+
+        chooseDamageSource(armor, thunderbolt.getId());
+        harness.passBothPriorities();
+
+        assertThat(enchanted.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Duskrider Falcon");
+    }
+
+    @Test
+    @DisplayName("The shield prevents combat damage from the chosen attacker")
+    void preventsCombatDamageFromChosenAttacker() {
+        Permanent enchanted = addCreatureReady(player1, new RedwoodTreefolk());
+        Permanent armor = attachArmor(enchanted);
+        Permanent attacker = addCreatureReady(player2, new BenalishKnight());
+
+        chooseDamageSource(armor, attacker.getId());
+
+        declareAttackers(player2, List.of(indexOf(player2, attacker)));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, enchanted), indexOf(player2, attacker))));
+        harness.passBothPriorities();
+
+        assertThat(enchanted.getMarkedDamage()).isZero();
     }
 
     private int indexOf(Player player, Permanent perm) {
@@ -155,10 +212,9 @@ class KithkinArmorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
     }
 
-    private void beginDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    private void chooseDamageSource(Permanent armor, UUID sourceId) {
+        harness.activateAbility(player1, indexOf(player1, armor), null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, sourceId);
     }
 }

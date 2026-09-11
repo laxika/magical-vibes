@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "94")
 @CardRegistration(set = "ICE", collectorNumber = "72")
+@CardRegistration(set = "ME1", collectorNumber = "37")
 public class Hydroblast extends Card {
 
     public Hydroblast() {

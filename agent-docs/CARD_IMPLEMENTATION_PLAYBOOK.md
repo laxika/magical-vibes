@@ -544,6 +544,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new ControllerLifeAtMost(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new EachPlayerLifeAtMost(threshold), wrapped)` | - | yes | yes (upkeep) | "if each player has N or less life" (Cryptolith Fragment, 10) |
 | `ConditionalEffect(new GainedLifeThisTurn(), wrapped)` | yes | yes | yes (end step) |
+| `ConditionalEffect(new PlusOnePlusOneCounterPutOnCreatureThisTurn(), wrapped)` | yes | yes | - | controller put a +1/+1 counter on a permanent while it was a creature this turn; the event remains true if that permanent later leaves, loses its counters, or stops being a creature |
 | `ConditionalEffect(new ControllerDealtDamageThisTurn(minimum), wrapped)` | - | yes | yes (end step) | "if you were dealt N or more damage this turn" (Boarded Window, 4) — reads `GameData.damageDealtToPlayersThisTurn` for the controller, any source |
 | `ConditionalEffect(new Metalcraft(), wrapped)` | yes | yes | yes (graveyard upkeep) |
 | `ConditionalEffect(new Morbid(), wrapped)` | - | yes | yes (end step) |
@@ -581,6 +582,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new AnyOf(List.of(a, b, ...)), wrapped)` | yes | yes | yes (ETB) | compound intervening-if OR — met when at least one inner condition holds (Desert's Hold: `ControlsPermanent(DESERT)` or `GraveyardCardThreshold(1, DESERT)`) |
 | `ConditionalEffect(new AttacksAlone(), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new MinimumAttackers(minimumAttackers), wrapped)` | - | yes | yes (attack) |
+| `ConditionalEffect(new ExactlyAttackers(attackerCount), wrapped)` | - | yes | yes (attack) | exact declared attacker count, snapshotted when the attack trigger is collected |
 | `ConditionalEffect(new HasAttacker(predicate), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` | yes | yes | yes (upkeep) | counts **nontoken** cards only — a token that reaches a graveyard ceases to exist, so it can never be one of the "N or more … cards". Mortal Combat: `(20, new CardTypePredicate(CardType.CREATURE))` + `WinGameEffect()` |
 | `ConditionalEffect(new SourceCardInGraveyard(), wrapped)` | - | yes | yes (graveyard triggers) | intervening-if for abilities that trigger from a graveyard ("... if this card is in your graveyard, ..."): true while the source card object is still in its controller's graveyard. Vengeful Pharaoh |

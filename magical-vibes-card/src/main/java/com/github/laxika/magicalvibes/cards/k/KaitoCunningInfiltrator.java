@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "44")
+@CardRegistration(set = "FDN", collectorNumber = "358")
+@CardRegistration(set = "FDN", collectorNumber = "418")
+@CardRegistration(set = "FDN", collectorNumber = "424")
+@CardRegistration(set = "FDN", collectorNumber = "434")
 public class KaitoCunningInfiltrator extends Card {
 
     public KaitoCunningInfiltrator() {

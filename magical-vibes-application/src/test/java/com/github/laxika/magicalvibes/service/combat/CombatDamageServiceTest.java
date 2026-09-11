@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
@@ -22,6 +23,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -91,6 +94,7 @@ class CombatDamageServiceTest {
     @Mock private CombatAttackService combatAttackService;
     @Mock private CombatTriggerService combatTriggerService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
     private CombatDamageService combatDamageService;
 
@@ -127,7 +131,7 @@ class CombatDamageServiceTest {
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 gameLogService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class),
+                grantedTriggeredAbilitySupport,
                 lifeSupport,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService.class),
                 combatAttackService, combatTriggerService,
@@ -207,6 +211,12 @@ class CombatDamageServiceTest {
      * controller lookups, redirect, and win condition. Requires stubCombatSetup().
      */
     private void stubDamageResolution() {
+        lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true), any(), anyBoolean()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applySourceNextCombatDamageToControllerShield(
+                eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
         when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(), any(), any()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gameData), anyInt()))
@@ -509,6 +519,29 @@ class CombatDamageServiceTest {
             stubCombatSetup();
             stubDamageResolution();
             stubBlockedCombat();
+        }
+
+        @Test
+        void grantedDamageTriggerSurvivesItsSourceDyingInCombat() {
+            Permanent attacker = addAttacker("Small attacker", 1, 1);
+            Permanent blocker = addBlocker("Large blocker", 2, 4, 0);
+            var effect = new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect(true);
+            when(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    eq(gameData), any(Permanent.class), any(EffectSlot.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(1) == attacker
+                            && invocation.getArgument(2) == EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE
+                            && gameData.playerBattlefields.get(player1Id).contains(attacker)
+                            ? List.of(effect) : List.of());
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            assertThat(gameData.playerBattlefields.get(player1Id)).doesNotContain(attacker);
+            assertThat(gameData.stack).anySatisfy(entry -> {
+                assertThat(entry.getSourcePermanentId()).isEqualTo(attacker.getId());
+                assertThat(entry.getTargetId()).isEqualTo(blocker.getId());
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.isNonTargeting()).isTrue();
+            });
         }
 
         @Test
@@ -1224,6 +1257,23 @@ class CombatDamageServiceTest {
             perm.setAttacking(true);
             gameData.playerBattlefields.get(player1Id).add(perm);
             return perm;
+        }
+
+        @Test
+        @DisplayName("Choose-unused combat-damage modes queue a triggered modal interaction")
+        void chooseUnusedCombatDamageModesQueueModalInteraction() {
+            ChooseOneEffect.ChooseOneOption option = new ChooseOneEffect.ChooseOneOption(
+                    "Draw a card", new DrawCardEffect());
+            addAttackerWithEffect("Silent Hallcreeper", 1, 1,
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    new ChooseModeNotYetChosenEffect(List.of(option)));
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            assertThat(gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)).isTrue();
+            assertThat(gameData.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class).consumeModes())
+                    .isTrue();
+            assertThat(gameData.stack).isEmpty();
         }
 
         @Test

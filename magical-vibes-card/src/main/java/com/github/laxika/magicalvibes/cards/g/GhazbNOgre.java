@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsContro
 
 @CardRegistration(set = "5ED", collectorNumber = "298")
 @CardRegistration(set = "CHR", collectorNumber = "65")
+@CardRegistration(set = "ME1", collectorNumber = "120")
 public class GhazbNOgre extends Card {
 
     public GhazbNOgre() {

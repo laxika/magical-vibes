@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat.block;
 import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HedronFieldsOfAgadeem;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LightOfDay;
 import com.github.laxika.magicalvibes.cards.m.MaraudingBoneslasher;
@@ -12,6 +13,8 @@ import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.t.TrainingDrone;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +34,35 @@ import static org.assertj.core.api.Assertions.assertThat;
  * here rather than only surfacing as a wrong list of offered blockers deep inside
  * {@code CombatBlockService.getBlockableCreatureIndices} or the AI's blocker search.
  */
+@CardUsed({
+        AesthirGlider.class,
+        Forest.class,
+        GrizzlyBears.class,
+        HedronFieldsOfAgadeem.class,
+        LeoninScimitar.class,
+        LightOfDay.class,
+        MaraudingBoneslasher.class,
+        MasakoTheHumorless.class,
+        Pacifism.class,
+        ScatheZombies.class,
+        TrainingDrone.class
+})
 class BlockLegalityServiceTest extends BaseCardTest {
+    @Test
+    void globalBlockRestrictionStopsWhenItsSourceLosesAbilities() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new LightOfDay());
+        var card = new com.github.laxika.magicalvibes.model.Card();
+        card.setType(com.github.laxika.magicalvibes.model.CardType.CREATURE);
+        card.setColor(com.github.laxika.magicalvibes.model.CardColor.BLACK);
+        card.setPower(2);
+        card.setToughness(2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, card);
+        assertThat(bls.canBlock(gd, creature)).isFalse();
+
+        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        assertThat(bls.canBlock(gd, creature)).isTrue();
+    }
 
     @Test
     @DisplayName("An untapped creature can block")
@@ -107,7 +138,6 @@ class BlockLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(AesthirGlider.class)
     @DisplayName("A face-down creature does not have its printed can't-block restriction")
     void faceDownCreatureCanBlockDespitePrintedRestriction() {
         Permanent glider = addCreatureReady(player2, new AesthirGlider());
@@ -174,6 +204,18 @@ class BlockLegalityServiceTest extends BaseCardTest {
 
         assertThat(bls.canBlock(gd, zombies)).isFalse();
         assertThat(bls.canBlock(gd, bears)).isTrue();
+    }
+
+    @Test
+    void faceUpPlanarGlobalCantAttackOrBlockRestrictionStopsBlocking() {
+        gd.planechase = new PlanechaseState();
+        gd.planechase.controllerId = player1.getId();
+        gd.planechase.faceUp.add(new PlanarObject(new HedronFieldsOfAgadeem(), gd.nextTimestamp()));
+
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setPowerModifier(5);
+
+        assertThat(bls.canBlock(gd, blocker)).isFalse();
     }
 
     @Test

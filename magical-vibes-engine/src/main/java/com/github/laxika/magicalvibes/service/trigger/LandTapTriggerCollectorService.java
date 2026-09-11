@@ -206,7 +206,10 @@ public class LandTapTriggerCollectorService {
         }
 
         var gameData = match.gameData();
-        UUID tappingPlayerId = lt.tappingPlayerId();
+        UUID tappingPlayerId = gameQueryService.findPermanentController(gameData, lt.tappedLandId());
+        if (tappingPlayerId == null) {
+            return false;
+        }
         String playerName = gameData.playerIdToName.get(tappingPlayerId);
         var sourceCard = match.permanent().getCard();
         String cardName = sourceCard.getName();
@@ -322,6 +325,10 @@ public class LandTapTriggerCollectorService {
     private boolean handleAddOneOfEachManaType(TriggerMatchContext match,
             AddOneOfEachManaTypeProducedByLandEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        Card sourceCard = match.sourceCard() != null
+                ? match.sourceCard()
+                : match.permanent() != null ? match.permanent().getCard() : null;
+        String sourceName = sourceCard != null ? sourceCard.getName() : "Planar ability";
         // Vorinclex fires only for the controller's own lands; Mana Flare is symmetric.
         if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
 
@@ -332,7 +339,8 @@ public class LandTapTriggerCollectorService {
                         match.gameData(), tappedLand, trigger.landFilter())) return false;
 
         if (trigger.matchesImprintedCardName()) {
-            Card imprintedCard = match.gameData().getImprintedCard(match.permanent().getCard());
+            if (sourceCard == null) return false;
+            Card imprintedCard = match.gameData().getImprintedCard(sourceCard);
             if (imprintedCard == null
                     || !imprintedCard.getName().equals(tappedLand.getCard().getName())) {
                 return false;
@@ -342,10 +350,9 @@ public class LandTapTriggerCollectorService {
         if (lt.producedColors().isEmpty()
                 && match.gameData().interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(), lt.tappingPlayerId(),
-                    match.permanent().getCard().getName() + "'s mana ability",
+                    sourceCard, lt.tappingPlayerId(), sourceName + "'s mana ability",
                     new ArrayList<>(List.of(new AddManaOfTypeProducedByTappedPermanentEffect())),
-                    null, match.permanent().getId());
+                    null, match.permanent() == null ? null : match.permanent().getId());
             entry.setNonTargeting(true);
             match.gameData().pendingManaAbilityTriggers.add(entry);
             return true;
@@ -363,6 +370,13 @@ public class LandTapTriggerCollectorService {
 
         ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
         producedColors.forEach(pool::add);
+
+        if (sourceCard == null) {
+            gameLogService.append(match.gameData(), GameLog.text(
+                    match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                            + " adds 1 additional mana of each type produced by the land."));
+            return true;
+        }
 
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
@@ -487,6 +501,40 @@ public class LandTapTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
                         + " adds 1 additional " + producedColor.name().toLowerCase() + " mana."));
+        return true;
+    }
+
+    @CollectsTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleAddManaOfTypeProducedByLand(TriggerMatchContext match,
+            AddManaOfTypeProducedByTappedPermanentEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        if (!match.controllerId().equals(lt.tappingPlayerId())) return false;
+
+        if (lt.producedColors().isEmpty()
+                && match.gameData().interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    lt.tappingPlayerId(),
+                    match.permanent().getCard().getName() + "'s mana ability",
+                    new ArrayList<>(List.of((CardEffect) trigger)),
+                    null,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            match.gameData().pendingManaAbilityTriggers.add(entry);
+            return true;
+        }
+
+        ManaColor requiredColor = trigger.requiredColor();
+        if (requiredColor == null || !lt.producedColors().contains(requiredColor)) {
+            return false;
+        }
+
+        match.gameData().playerManaPools.get(lt.tappingPlayerId()).add(requiredColor);
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                        + " adds 1 additional " + requiredColor.name().toLowerCase() + " mana."));
         return true;
     }
 

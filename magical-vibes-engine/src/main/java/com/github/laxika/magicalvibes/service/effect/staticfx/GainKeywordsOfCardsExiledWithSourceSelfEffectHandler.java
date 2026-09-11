@@ -40,7 +40,7 @@ public class GainKeywordsOfCardsExiledWithSourceSelfEffectHandler implements Sta
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        for (Card card : context.gameData().getCardsExiledByPermanent(context.source().getId())) {
+        for (Card card : context.gameData().getCardsExiledByPermanent(context.sourceId())) {
             for (Keyword keyword : card.getKeywords()) {
                 if (WATCHED_KEYWORDS.contains(keyword)) {
                     accumulator.addKeyword(keyword);

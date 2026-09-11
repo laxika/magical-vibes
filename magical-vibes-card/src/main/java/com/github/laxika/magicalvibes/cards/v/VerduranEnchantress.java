@@ -18,14 +18,13 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "280")
 @CardRegistration(set = "5ED", collectorNumber = "337")
 @CardRegistration(set = "SUM", collectorNumber = "223")
+@CardRegistration(set = "3ED", collectorNumber = "223")
 public class VerduranEnchantress extends Card {
 
     public VerduranEnchantress() {
         // Whenever you cast an enchantment spell, you may draw a card.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardTypePredicate(CardType.ENCHANTMENT),
-                        List.of(new DrawCardEffect())),
-                "Draw a card?"
-        ));
+                        List.of(new MayEffect(new DrawCardEffect(), "Draw a card?"))));
     }
 }

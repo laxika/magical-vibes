@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CharcoalDiamond.class})
 class CharcoalDiamondTest extends BaseCardTest {
@@ -18,10 +17,7 @@ class CharcoalDiamondTest extends BaseCardTest {
     @Test
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
-        harness.setHand(player1, List.of(new CharcoalDiamond()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new CharcoalDiamond(), "{2}");
         harness.passBothPriorities();
 
         Permanent diamond = findPermanent(player1, "Charcoal Diamond");
@@ -39,6 +35,17 @@ class CharcoalDiamondTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isGreaterThanOrEqualTo(1);
         assertThat(diamond.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent diamond = harness.addToBattlefieldAndReturn(player1, new CharcoalDiamond());
+        diamond.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 
 }

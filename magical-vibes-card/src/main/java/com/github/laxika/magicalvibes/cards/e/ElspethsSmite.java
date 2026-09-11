@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInstea
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MOM", collectorNumber = "13")
+@CardRegistration(set = "FDN", collectorNumber = "493")
 public class ElspethsSmite extends Card {
 
     public ElspethsSmite() {

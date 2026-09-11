@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.List;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Component;
 public class NinjutsuEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final CloneService cloneService;
     private final GameLogService gameLogService;
 
     @Override
@@ -48,6 +50,10 @@ public class NinjutsuEffectHandler implements NormalEffectHandlerBean {
         Card card = entry.getCard();
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (card == null || hand == null || !hand.remove(card)) {
+            return;
+        }
+
+        if (cloneService.prepareNinjutsuCloneReplacementEffect(gameData, controllerId, card, e.attackTargetId())) {
             return;
         }
 

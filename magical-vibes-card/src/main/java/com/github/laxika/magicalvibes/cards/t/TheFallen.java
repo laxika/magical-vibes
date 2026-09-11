@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToOpponentsAndPlane
 
 @CardRegistration(set = "CHR", collectorNumber = "38")
 @CardRegistration(set = "DRK", collectorNumber = "53")
+@CardRegistration(set = "ME1", collectorNumber = "69")
 public class TheFallen extends Card {
 
     public TheFallen() {

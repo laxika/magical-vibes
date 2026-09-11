@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "185")
+@CardRegistration(set = "PC2", collectorNumber = "67")
+@CardRegistration(set = "TD2", collectorNumber = "61")
 public class MitoticSlime extends Card {
 
     public MitoticSlime() {

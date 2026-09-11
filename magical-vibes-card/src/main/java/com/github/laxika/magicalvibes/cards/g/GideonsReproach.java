@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "19")
+@CardRegistration(set = "BFZ", collectorNumber = "30")
 public class GideonsReproach extends Card {
 
     public GideonsReproach() {

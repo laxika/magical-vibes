@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "263")
 @CardRegistration(set = "BTD", collectorNumber = "63")
+@CardRegistration(set = "ME1", collectorNumber = "129")
 public class ShamblingStrider extends Card {
 
     public ShamblingStrider() {

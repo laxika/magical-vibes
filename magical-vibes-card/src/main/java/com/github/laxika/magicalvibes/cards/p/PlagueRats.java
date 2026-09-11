@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "188")
 @CardRegistration(set = "4ED", collectorNumber = "154")
 @CardRegistration(set = "SUM", collectorNumber = "123")
+@CardRegistration(set = "3ED", collectorNumber = "123")
 public class PlagueRats extends Card {
 
     public PlagueRats() {

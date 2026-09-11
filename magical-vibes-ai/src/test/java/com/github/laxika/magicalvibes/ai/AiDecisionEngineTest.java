@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
 import com.github.laxika.magicalvibes.cards.a.AshlingsCommand;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
@@ -67,6 +68,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.CardUsedExtension;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -89,8 +92,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @Tag("scryfall")
+@ExtendWith(CardUsedExtension.class)
 class AiDecisionEngineTest {
 
     private GameTestHarness harness;
@@ -896,15 +901,16 @@ class AiDecisionEngineTest {
     // ===== Creature-targeting spell validation =====
 
     @Test
+    @CardUsed({AngelicBlessing.class, AirElemental.class, AlabornTrooper.class, Plains.class})
     @DisplayName("AI casts Angelic Blessing targeting own creature, not a land")
     void castsAngelicBlessingTargetingCreatureNotLand() {
         giveAiPriority();
         giveAiPlains(3);
 
         // AI has a creature on the battlefield
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+        Permanent trooper = new Permanent(new AlabornTrooper());
+        trooper.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(trooper);
 
         harness.setHand(aiPlayer, List.of(new AngelicBlessing()));
 
@@ -912,11 +918,12 @@ class AiDecisionEngineTest {
 
         // AI should cast Angelic Blessing targeting the creature, not a Plains
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Angelic Blessing");
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(AngelicBlessing.class);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(trooper.getId());
     }
 
     @Test
+    @CardUsed({AngelicBlessing.class, AirElemental.class, Plains.class})
     @DisplayName("AI does not cast Angelic Blessing when no creatures on battlefield")
     void doesNotCastAngelicBlessingWithoutCreatures() {
         giveAiPriority();
@@ -2334,6 +2341,7 @@ class AiDecisionEngineTest {
         }
 
         private EasyAiDecisionEngine createEngine() {
+            when(mockGameQueryService.getMaxLandsThisTurn(mockGd, mockAiPlayer.getId())).thenReturn(1);
             AiTestPlayabilityStub.installPotentialManaService(
                     mockGameActionAvailabilityService, mockGameQueryService);
             EasyAiDecisionEngine engine = new EasyAiDecisionEngine(

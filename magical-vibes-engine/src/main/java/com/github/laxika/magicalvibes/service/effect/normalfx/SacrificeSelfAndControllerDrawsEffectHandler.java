@@ -50,7 +50,7 @@ public class SacrificeSelfAndControllerDrawsEffectHandler implements NormalEffec
         }
 
         UUID sourceController = gameQueryService.findPermanentController(gameData, self.getId());
-        if (!permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
             return;
         }
 

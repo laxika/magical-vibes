@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "130")
+@CardRegistration(set = "PHUK", collectorNumber = "7")
+@CardRegistration(set = "PHUK", collectorNumber = "31")
 public class DirtyWererat extends Card {
 
     public DirtyWererat() {

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EyeSpy.class, GrizzlyBears.class, Plains.class})
 class EyeSpyTest extends BaseCardTest {
 
     // ===== Accepted: top card goes to target player's graveyard =====
@@ -72,6 +75,23 @@ class EyeSpyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
     }
 
+    @Test
+    @DisplayName("May put a land card into target player's graveyard")
+    void putsLandCardIntoTargetGraveyardWhenAccepted() {
+        harness.setHand(player1, List.of(new EyeSpy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        Card topCard = new Plains();
+        harness.setLibrary(player2, List.of(topCard));
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(topCard);
+    }
+
     // ===== Empty library: no prompt, spell resolves =====
 
     @Test
@@ -86,6 +106,8 @@ class EyeSpyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 }

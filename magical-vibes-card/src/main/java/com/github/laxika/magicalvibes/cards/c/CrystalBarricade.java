@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToCreaturesEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "7")
+@CardRegistration(set = "FDN", collectorNumber = "296")
+@CardRegistration(set = "FDN", collectorNumber = "365")
+@CardRegistration(set = "FDN", collectorNumber = "444")
 public class CrystalBarricade extends Card {
 
     public CrystalBarricade() {

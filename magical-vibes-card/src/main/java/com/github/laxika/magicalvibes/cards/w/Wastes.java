@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "309")
+@CardRegistration(set = "OGW", collectorNumber = "183")
+@CardRegistration(set = "OGW", collectorNumber = "184")
 public class Wastes extends Card {
 
     public Wastes() {

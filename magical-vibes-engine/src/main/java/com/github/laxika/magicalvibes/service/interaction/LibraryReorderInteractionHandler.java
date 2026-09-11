@@ -28,6 +28,9 @@ import java.util.UUID;
 @Component
 public class LibraryReorderInteractionHandler implements InteractionHandler<PendingInteraction.LibraryReorder> {
 
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechase;
     private final GameLogService gameLogService;
     private final WarpWorldService warpWorldService;
     private final InputCompletionService inputCompletionService;
@@ -86,9 +89,59 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
             }
         }
 
+        if (interaction.planarDeck()) {
+            if (gameData.planechase == null) {
+                throw new IllegalStateException("No planar deck is active");
+            }
+            for (int i = 0; i < count; i++) {
+                gameData.planechase.deck.add(reorderCards.get(cardOrder.get(i)));
+            }
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " puts " + count + " cards on the bottom of the planar deck."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (interaction.planar()) {
+            var departing = List.copyOf(gameData.planechase.faceUp);
+            gameData.interaction.clearAwaitingInput();
+            planechase.finishPlaneswalk(gameData, cardOrder.stream().map(departing::get).toList());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // Apply the reorder: replace top N cards of deck with the reordered ones
         UUID reorderDeckOwnerId = interaction.deckOwnerId() != null ? interaction.deckOwnerId() : player.getId();
         List<Card> deck = gameData.playerDecks.get(reorderDeckOwnerId);
+
+        if (interaction.topCardIds() != null) {
+            Set<UUID> topCardIds = new HashSet<>(interaction.topCardIds());
+            Set<UUID> reorderCardIds = reorderCards.stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
+            if (topCardIds.size() != interaction.topCardIds().size()
+                    || !reorderCardIds.containsAll(topCardIds)) {
+                throw new IllegalStateException("Invalid top-card partition");
+            }
+
+            List<Card> orderedCards = cardOrder.stream().map(reorderCards::get).toList();
+            List<Card> topCards = orderedCards.stream()
+                    .filter(card -> topCardIds.contains(card.getId()))
+                    .toList();
+            List<Card> bottomCards = orderedCards.stream()
+                    .filter(card -> !topCardIds.contains(card.getId()))
+                    .toList();
+            deck.addAll(0, topCards);
+            deck.addAll(bottomCards);
+
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts "
+                    + topCards.size() + " card(s) on top and " + bottomCards.size()
+                    + " card(s) on the bottom of their library."));
+            log.info("Game {} - {} partitioned {} cards between the top and bottom of their library",
+                    gameData.id, player.getUsername(), orderedCards.size());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         if (interaction.toBottom()) {
             for (int i = 0; i < count; i++) {

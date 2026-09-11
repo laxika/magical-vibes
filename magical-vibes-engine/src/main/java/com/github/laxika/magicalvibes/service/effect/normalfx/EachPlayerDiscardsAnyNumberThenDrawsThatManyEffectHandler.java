@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsAnyNumberThenDrawsThatManyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
+import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
@@ -19,8 +22,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link EachPlayerDiscardsAnyNumberThenDrawsThatManyEffect} (Flux): in APNAP order,
- * each player chooses how many cards to discard (0 through their hand size), discards exactly
- * that many, then draws that many, before the next player takes their turn.
+ * each player chooses how many cards to discard (0 through their hand size) and selects them.
+ * After all choices, the selected cards are discarded and each player draws their discarded count.
  *
  * <p>The flow is driven one player at a time and re-runs on every interaction completion. Each
  * player's turn is a two-phase interaction: an {@link PendingInteraction.XValueChoice} for the
@@ -37,6 +40,8 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final GameQueryService gameQueryService;
+    private final ObjectProvider<CardChoiceHandlerService> cardChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,13 +59,15 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
             state.pendingDraw = 0;
             state.currentPlayerId = null;
             state.remaining.clear();
+            state.deferDiscards = true;
+            state.selectedDiscards.clear();
             state.remaining.addLast(gameData.activePlayerId);
             for (UUID playerId : gameData.orderedPlayerIds) {
                 if (!playerId.equals(gameData.activePlayerId)) {
                     state.remaining.addLast(playerId);
                 }
             }
-            beginNextPlayer(gameData, cardName);
+            beginNextPlayer(gameData, entry, cardName);
             return;
         }
 
@@ -73,27 +80,24 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
 
             if (chosenCount <= 0) {
                 gameLogService.append(gameData, GameLog.text(playerName + " discards 0 cards for " + cardName + "."));
-                beginNextPlayer(gameData, cardName);
+                beginNextPlayer(gameData, entry, cardName);
                 return;
             }
 
-            state.pendingDraw = chosenCount;
+            if (!gameQueryService.canEffectCauseDiscard(gameData, playerId, entry.getControllerId())) {
+                beginNextPlayer(gameData, entry, cardName);
+                return;
+            }
             gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
-            // Re-run this effect once the discard completes so we can draw and advance.
+            // Re-run this effect once selection completes to advance to the next player.
             gameData.rerunCurrentEffectAfterInteraction = true;
             playerInteractionSupport.resolveDiscardCards(gameData, playerId, chosenCount, DiscardFollowUp.NONE);
             return;
         }
 
-        // Re-entry after the current player's discard completed: draw that many, then advance.
+        // Re-entry after selection: advance without revealing or moving the chosen cards.
         gameData.rerunCurrentEffectAfterInteraction = false;
-        UUID playerId = state.currentPlayerId;
-        int drawCount = state.pendingDraw;
-        state.pendingDraw = 0;
-        playerInteractionSupport.applyDrawCards(gameData, playerId, drawCount);
-        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
-                + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + "."));
-        beginNextPlayer(gameData, cardName);
+        beginNextPlayer(gameData, entry, cardName);
     }
 
     /**
@@ -101,7 +105,7 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
      * hand is empty. When no players remain, clears the flow so effect resolution can continue to
      * the spell's remaining effects (Flux's "Draw a card").
      */
-    private void beginNextPlayer(GameData gameData, String cardName) {
+    private void beginNextPlayer(GameData gameData, StackEntry entry, String cardName) {
         EachPlayerRummageState state = gameData.eachPlayerRummage;
         while (!state.remaining.isEmpty()) {
             UUID nextPlayerId = state.remaining.pollFirst();
@@ -117,6 +121,15 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
                     new PendingInteraction.XValueChoice(nextPlayerId, hand.size(), prompt, cardName));
             return;
         }
+        var discardedCounts = cardChoiceHandlerServiceProvider.getObject().discardCollectedCards(
+                gameData, List.copyOf(state.selectedDiscards), entry.getControllerId());
         state.reset();
+        for (UUID playerId : gameData.orderedPlayerIds.stream()
+                .sorted(java.util.Comparator.comparing(id -> !id.equals(gameData.activePlayerId))).toList()) {
+            int drawCount = discardedCounts.getOrDefault(playerId, 0);
+            if (drawCount > 0) {
+                playerInteractionSupport.applyDrawCards(gameData, playerId, drawCount);
+            }
+        }
     }
 }

@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FlowstoneShambler;
+import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +18,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrimalRage.class, FlowstoneShambler.class, SkyshroudFalcon.class})
 class PrimalRageTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Primal Rage puts it on the stack as an enchantment spell")
@@ -33,38 +32,46 @@ class PrimalRageTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Primal Rage");
+        assertThat(entry.getCard()).isInstanceOf(PrimalRage.class);
     }
 
     @Test
     @DisplayName("Creatures you control gain trample")
     void ownCreaturesGainTrample() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new FlowstoneShambler());
         harness.addToBattlefield(player1, new PrimalRage());
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
     @DisplayName("Opponent creatures do not gain trample")
     void opponentCreaturesDoNotGainTrample() {
-        Permanent opponentBears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new FlowstoneShambler());
         harness.addToBattlefield(player1, new PrimalRage());
 
-        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering under your control gain trample")
+    void creaturesEnteringAfterSourceGainTrample() {
+        harness.addToBattlefield(player1, new PrimalRage());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new FlowstoneShambler());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
     @DisplayName("Trample bonus is removed when Primal Rage leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new PrimalRage());
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        Permanent creature = addCreatureReady(player1, new FlowstoneShambler());
+        Permanent rage = harness.addToBattlefieldAndReturn(player1, new PrimalRage());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Primal Rage"));
+        gd.playerBattlefields.get(player1.getId()).remove(rage);
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -73,10 +80,10 @@ class PrimalRageTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new PrimalRage());
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new FlowstoneShambler());
         attacker.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2, new FugitiveWizard());
+        Permanent blocker = addCreatureReady(player2, new SkyshroudFalcon());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1);
 
@@ -92,12 +99,5 @@ class PrimalRageTest extends BaseCardTest {
         ));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-    }
-
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

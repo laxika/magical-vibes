@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "4ED", collectorNumber = "65")
+@CardRegistration(set = "3ED", collectorNumber = "54")
 @CardRegistration(set = "5ED", collectorNumber = "77")
 @CardRegistration(set = "6ED", collectorNumber = "61")
 @CardRegistration(set = "7ED", collectorNumber = "67")
@@ -18,6 +19,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "S00", collectorNumber = "12")
 @CardRegistration(set = "BTD", collectorNumber = "6")
 @CardRegistration(set = "SUM", collectorNumber = "54")
+@CardRegistration(set = "DD2", collectorNumber = "24")
+@CardRegistration(set = "ME2", collectorNumber = "44")
 public class Counterspell extends Card {
 
     public Counterspell() {

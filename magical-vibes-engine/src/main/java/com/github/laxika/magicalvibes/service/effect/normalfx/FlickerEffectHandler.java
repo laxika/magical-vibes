@@ -88,6 +88,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             case SELF -> resolveSelfAtStep(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolvePlayersPermanentsAtStep(gameData, entry, e);
             case CONTROLLERS_PERMANENTS -> resolveControllersPermanentsAtStep(gameData, entry, e);
+            case ALL_PLAYERS_PERMANENTS -> resolveAllPlayersPermanentsAtStep(gameData, entry, e);
             case ENCHANTED_CREATURE_AND_AURAS -> resolveEnchantedCreatureAndAurasAtStep(gameData, entry, e);
         }
     }
@@ -158,6 +159,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
             UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
             UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+            entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
             List<Card> cards = target.cardsLeavingBattlefield();
             permanentRemovalService.removePermanentToExile(gameData, target);
             cardsByOwner.computeIfAbsent(ownerId, id -> new ArrayList<>()).addAll(cards);
@@ -260,6 +262,52 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentId(entry.getSourcePermanentId());
         return predicateEvaluationService.matchesPermanentPredicate(permanent, effect.filter(), context);
+    }
+
+    private void resolveAllPlayersPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId());
+        List<Permanent> toExile = new ArrayList<>();
+        gameData.forEachPermanent((ignoredControllerId, permanent) -> {
+            if (predicateEvaluationService.matchesPermanentPredicate(permanent, e.filter(), context)) {
+                toExile.add(permanent);
+            }
+        });
+        exileAllPlayersPermanentsAtStep(gameData, entry, e, toExile);
+    }
+
+    private void exileAllPlayersPermanentsAtStep(
+            GameData gameData, StackEntry entry, FlickerEffect e, List<Permanent> toExile) {
+        if (toExile.isEmpty()) {
+            return;
+        }
+
+        Map<UUID, List<Card>> cardsByOwner = new LinkedHashMap<>();
+        for (Permanent permanent : toExile) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), controllerId);
+            List<Card> cards = permanent.cardsLeavingBattlefield();
+            permanentRemovalService.removePermanentToExile(gameData, permanent);
+            cardsByOwner.computeIfAbsent(ownerId, id -> new ArrayList<>()).addAll(cards);
+            gameLogService.append(gameData, GameLog.cardThen(cards.getFirst(),
+                    " is exiled. It will return at the beginning of the next "
+                            + e.returnStep().getDisplayName().toLowerCase() + "."));
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        for (Map.Entry<UUID, List<Card>> group : cardsByOwner.entrySet()) {
+            List<Card> cards = group.getValue();
+            gameData.queueDelayedAction(new PendingExileReturn(
+                    cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
+                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
+                    false, e.grantHaste(), false, false, null, null, false,
+                    e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
+                    e.counterTypeOnReturn(), e.counterAmountOnReturn()));
+        }
+        log.info("Game {} - {} exiles {} permanents; they return at next {}",
+                gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
     }
 
     private void exileControllersPermanentsAtStep(
@@ -413,7 +461,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             GameData gameData, StackEntry entry, FlickerEffect e, Permanent target,
             UUID returnControllerOverride) {
         UUID previousControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), previousControllerId);
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(),
+                target.getCard().getOwnerId() != null ? target.getCard().getOwnerId() : previousControllerId);
         UUID returnControllerId = returnControllerOverride != null
                 ? returnControllerOverride
                 : e.returnUnderController() ? entry.getControllerId() : ownerId;
@@ -438,6 +487,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         gameData.removeFromExile(card.getId());
         Permanent returned = new Permanent(card);
         returned.setEnteredFromExile(true);
+        if (e.tapOnImmediateReturn()) {
+            returned.tap();
+        }
         if (e.returnAttacking()) {
             UUID attackTargetId = entry.getAttackedTargetId();
             if (attackTargetId == null && entry.getSourcePermanentId() != null) {

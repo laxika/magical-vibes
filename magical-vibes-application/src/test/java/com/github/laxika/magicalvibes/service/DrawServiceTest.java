@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemControllerLosesLifeOnAnyPlayerDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -61,6 +63,35 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DrawServiceTest {
+
+    @Test
+    void emptyLibraryLossWaitsUntilResolutionFinishes() {
+        gd.playerDecks.put(player1Id, new ArrayList<>());
+        gd.deferPlayerLossCheck = true;
+
+        sut.performDrawCard(gd, player1Id);
+
+        assertThat(gd.playersAttemptedDrawFromEmptyLibrary).contains(player1Id);
+        verify(gameOutcomeService, never()).resolveLoss(any(), any(), any());
+        verify(gameOutcomeService, never()).declareWinner(any(), any());
+    }
+
+    @Test
+    void anotherPlayersDrawInstructionWaitsBehindCurrentReplacement() {
+        Card abundance = createCard("Abundance", CardType.ENCHANTMENT);
+        abundance.addEffect(EffectSlot.STATIC, new AbundanceDrawReplacementEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(abundance));
+        Card first = createCard("First", CardType.CREATURE);
+        Card second = createCard("Second", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(first, second)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+
+        sut.resolveDrawCards(gd, player1Id, 2);
+        sut.resolveDrawCards(gd, player2Id, 2);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingCardDraws).containsExactly(player1Id, player2Id, player2Id);
+    }
 
     @Test
     void multipleDrawsWaitForEachReplacementChoice() {
@@ -264,6 +295,25 @@ class DrawServiceTest {
 
         assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class))
                 .isNotNull();
+    }
+
+    @Test
+    void emblemAnyPlayerDrawTriggerQueuesLifeLossForItsController() {
+        Card source = createCard("Ob Nixilis Reignited", CardType.ENCHANTMENT);
+        gd.emblems.add(new Emblem(player1Id,
+                List.of(new EmblemControllerLosesLifeOnAnyPlayerDrawEffect(2)), source));
+
+        sut.checkControllerDrawTriggers(gd, player2Id);
+        sut.checkControllerDrawTriggers(gd, player1Id);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).allSatisfy(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getEffectsToResolve())
+                    .containsExactly(new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER));
+        });
     }
 
     @Test

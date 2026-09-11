@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "93")
+@CardRegistration(set = "FDN", collectorNumber = "332")
+@CardRegistration(set = "FDN", collectorNumber = "394")
+@CardRegistration(set = "FDN", collectorNumber = "468")
 public class SearslicerGoblin extends Card {
 
     public SearslicerGoblin() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 
 @CardRegistration(set = "ALL", collectorNumber = "105")
 @CardRegistration(set = "DKM", collectorNumber = "32")
+@CardRegistration(set = "ME1", collectorNumber = "140")
 public class YavimayaAnts extends Card {
 
     public YavimayaAnts() {

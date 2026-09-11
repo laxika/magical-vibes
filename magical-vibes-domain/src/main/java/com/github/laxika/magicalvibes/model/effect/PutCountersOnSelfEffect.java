@@ -4,38 +4,48 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
- * Put one or more counters of the specified type on this permanent. The count is either a fixed
+ * Put one or more counters of the specified type on this source object. The count is either a fixed
  * {@code count} or, when {@code amount} is non-null, a {@link DynamicAmount} resolved at
  * resolution time (e.g. {@code XValue} for "{X}: Put X tower counters on this enchantment").
+ * For a planar ability, the source object is the face-up {@code PlanarObject} rather than a
+ * battlefield permanent.
  * The optional damage-source exclusion is used by outbound damage triggers whose wording says
  * "another source".
  */
 public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount,
-                                      boolean targetsPlayer, boolean excludeDamageSource)
+                                      boolean targetsPlayer, boolean excludeDamageSource,
+                                      boolean hasExternalPermanentTarget)
         implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect, EndStepPlayerTargetedEffect {
 
     public PutCountersOnSelfEffect(CounterType counterType) {
-        this(counterType, 1, null, false, false);
+        this(counterType, 1, null, false, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, int count) {
-        this(counterType, count, null, false, false);
+        this(counterType, count, null, false, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, DynamicAmount amount) {
-        this(counterType, 0, amount, false, false);
+        this(counterType, 0, amount, false, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, DynamicAmount amount, boolean targetsPlayer) {
-        this(counterType, 0, amount, targetsPlayer, false);
+        this(counterType, 0, amount, targetsPlayer, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, boolean excludeDamageSource) {
-        this(counterType, 1, null, false, excludeDamageSource);
+        this(counterType, 1, null, false, excludeDamageSource, false);
+    }
+
+    public static PutCountersOnSelfEffect targeted(CounterType counterType) {
+        return new PutCountersOnSelfEffect(counterType, 1, null, false, false, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
+        if (hasExternalPermanentTarget) {
+            return TargetSpec.benign(TargetPredicates.permanent());
+        }
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player())
                 : new TargetSpec(null, false, null, true, 1);
     }

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "261")
+@CardRegistration(set = "DDE", collectorNumber = "20")
 public class PhyrexianTotem extends Card {
 
     public PhyrexianTotem() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -65,16 +66,17 @@ public class RevealUntilLandToBattlefieldRestToGraveyardEffectHandler implements
 
         if (foundLand != null) {
             revealedCards.remove(foundLand);
-            Permanent permanent = new Permanent(foundLand);
+            Permanent permanent = new Permanent(foundLand, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(foundLand, playerName));
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, foundLand, null, false);
         } else {
             gameLogService.append(gameData, GameLog.text(
                     playerName + " reveals their entire library - no land card was found."));
         }
 
         for (Card card : revealedCards) {
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
         }
 
         log.info("Game {} - {} reveals {} cards, land found={}",

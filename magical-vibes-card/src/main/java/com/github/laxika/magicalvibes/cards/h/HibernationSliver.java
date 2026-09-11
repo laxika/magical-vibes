@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "128")
 @CardRegistration(set = "TPR", collectorNumber = "209")
+@CardRegistration(set = "H09", collectorNumber = "12")
 public class HibernationSliver extends Card {
 
     public HibernationSliver() {

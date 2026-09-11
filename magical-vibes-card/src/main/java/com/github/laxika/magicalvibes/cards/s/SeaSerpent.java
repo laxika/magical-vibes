@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "118")
 @CardRegistration(set = "4ED", collectorNumber = "98")
 @CardRegistration(set = "SUM", collectorNumber = "78")
+@CardRegistration(set = "3ED", collectorNumber = "78")
 public class SeaSerpent extends Card {
 
     public SeaSerpent() {

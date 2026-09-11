@@ -17,16 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DrySpell.class, AysenBureaucrats.class, BeastWalkers.class, ApocalypseChime.class})
+@CardUsed({ApocalypseChime.class, AysenBureaucrats.class, BeastWalkers.class, DrySpell.class})
 class DrySpellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Dry Spell puts it on the stack as a sorcery")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new DrySpell()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -39,10 +36,8 @@ class DrySpellTest extends BaseCardTest {
     void dealsOneDamageToEachCreature() {
         var dyingCreature = harness.addToBattlefieldAndReturn(player1, new AysenBureaucrats());
         var survivingCreature = harness.addToBattlefieldAndReturn(player2, new BeastWalkers());
-        harness.setHand(player1, List.of(new DrySpell()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -57,10 +52,8 @@ class DrySpellTest extends BaseCardTest {
     void dealsOneDamageToEachPlayer() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new DrySpell()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -71,10 +64,8 @@ class DrySpellTest extends BaseCardTest {
     @Test
     void doesNotDamageNoncreaturePermanents() {
         var artifact = harness.addToBattlefieldAndReturn(player1, new ApocalypseChime());
-        harness.setHand(player1, List.of(new DrySpell()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DrySpell(), "{1}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);

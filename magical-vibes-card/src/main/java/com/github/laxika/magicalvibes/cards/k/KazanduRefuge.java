@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "217")
+@CardRegistration(set = "DDH", collectorNumber = "35")
+@CardRegistration(set = "PC2", collectorNumber = "121")
 public class KazanduRefuge extends Card {
 
     public KazanduRefuge() {

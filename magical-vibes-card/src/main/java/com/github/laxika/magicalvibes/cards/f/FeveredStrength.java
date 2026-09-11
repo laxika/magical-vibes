@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 
 @CardRegistration(set = "ALL", collectorNumber = "50a")
 @CardRegistration(set = "ALL", collectorNumber = "50b")
+@CardRegistration(set = "ME3", collectorNumber = "66")
 public class FeveredStrength extends Card {
 
     public FeveredStrength() {

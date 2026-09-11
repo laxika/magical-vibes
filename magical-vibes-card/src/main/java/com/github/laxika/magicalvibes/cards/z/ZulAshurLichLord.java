@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "77")
+@CardRegistration(set = "FDN", collectorNumber = "326")
+@CardRegistration(set = "FDN", collectorNumber = "389")
+@CardRegistration(set = "FDN", collectorNumber = "464")
 public class ZulAshurLichLord extends Card {
 
     public ZulAshurLichLord() {

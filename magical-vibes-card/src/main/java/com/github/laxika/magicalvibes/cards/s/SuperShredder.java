@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "83")
+@CardRegistration(set = "TMT", collectorNumber = "217")
+@CardRegistration(set = "TMT", collectorNumber = "285")
+@CardRegistration(set = "TMT", collectorNumber = "295")
 public class SuperShredder extends Card {
 
     public SuperShredder() {

@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ThalakosLowlands.class)
 class ThalakosLowlandsTest extends BaseCardTest {
 
     @Test
@@ -55,6 +55,25 @@ class ThalakosLowlandsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A colored activation only keeps the activated land tapped")
+    void coloredActivationOnlySkipsSourceLand() {
+        Permanent activatedLowlands = addReadyLowlands(player1);
+        Permanent otherLowlands = addReadyLowlands(player1);
+        otherLowlands.tap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.performUntapStep(player1);
+
+        assertThat(activatedLowlands.isTapped()).isTrue();
+        assertThat(activatedLowlands.getSkipUntapCount()).isZero();
+        assertThat(otherLowlands.isTapped()).isFalse();
+
+        harness.performUntapStep(player1);
+
+        assertThat(activatedLowlands.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("The land stays tapped through the next untap step, then untaps the turn after")
     void staysTappedForOneUntapStep() {
         Permanent lowlands = addReadyLowlands(player1);
@@ -74,18 +93,14 @@ class ThalakosLowlandsTest extends BaseCardTest {
 
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(nextActivePlayer, TurnStep.UPKEEP);
     }
 
     private Permanent addReadyLowlands(Player player) {
-        harness.addToBattlefield(player, new ThalakosLowlands());
-        Permanent perm = gd.playerBattlefields.get(player.getId()).getLast();
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ThalakosLowlands());
         perm.setSummoningSick(false);
         return perm;
     }

@@ -14,9 +14,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link MillTwoRepeatIfSharedColorEffect} (Grindstone). Mills two cards at a time and
- * repeats while exactly the two cards put into the graveyard this way share a color. Cards that a
- * replacement effect kept out of the graveyard are not "milled this way", so they cannot continue
- * the loop.
+ * repeats while any two cards milled this way share a color, including cards moved to exile
+ * by a replacement effect.
  */
 @Slf4j
 @Component
@@ -39,18 +38,22 @@ public class MillTwoRepeatIfSharedColorEffectHandler implements NormalEffectHand
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         while (deck != null && !deck.isEmpty()) {
-            List<Card> milled = graveyardService.resolveMillPlayer(gameData, targetPlayerId, 2);
+            List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(gameData, targetPlayerId, 2);
             if (!shareAColor(milled)) {
                 return;
             }
         }
     }
 
-    /** True only when exactly two cards reached the graveyard and they have a color in common. */
+    /** Mill modifiers can make the batch larger than two cards. */
     private boolean shareAColor(List<Card> milled) {
-        if (milled.size() != 2) {
-            return false;
+        for (int i = 0; i < milled.size(); i++) {
+            for (int j = i + 1; j < milled.size(); j++) {
+                if (milled.get(i).getColors().stream().anyMatch(milled.get(j).getColors()::contains)) {
+                    return true;
+                }
+            }
         }
-        return milled.getFirst().getColors().stream().anyMatch(milled.get(1).getColors()::contains);
+        return false;
     }
 }

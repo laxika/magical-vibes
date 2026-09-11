@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveya
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "72")
+@CardRegistration(set = "FDN", collectorNumber = "324")
+@CardRegistration(set = "FDN", collectorNumber = "388")
+@CardRegistration(set = "FDN", collectorNumber = "463")
 public class TinybonesBaubleBurglar extends Card {
 
     public TinybonesBaubleBurglar() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "136")
+@CardRegistration(set = "ME2", collectorNumber = "224")
 public class WhirlingCatapult extends Card {
 
     public WhirlingCatapult() {

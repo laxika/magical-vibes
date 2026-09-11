@@ -6,8 +6,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * of your library until you exile a nonland card that costs less. You may cast it without paying its
  * mana cost. Put the exiled cards on the bottom of your library in a random order."
  *
- * <p>Placed in the {@code ON_SELF_CAST} slot, this is queued as a plain triggered ability by
- * {@code TriggerCollectionService.checkSpellCastTriggers} (the generic self-cast branch) under the
+ * <p>Placed in the {@code ON_SELF_CAST} slot, or in a cascade-granting marker slot, this is queued
+ * as a plain triggered ability by {@code TriggerCollectionService.checkSpellCastTriggers} under the
  * caster, then resolved by {@code CascadeEffectHandler}: it digs the library until it exiles a
  * nonland card whose mana value is less than the cascade spell's mana value, then reuses the
  * {@link com.github.laxika.magicalvibes.model.LibrarySearchDestination#CAST_WITHOUT_PAYING} flow to

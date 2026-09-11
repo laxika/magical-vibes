@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -46,6 +47,19 @@ class BalduvianHordeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Accepting with multiple cards discards exactly one without a card choice")
+    void acceptingWithMultipleCardsDiscardsExactlyOneWithoutChoice() {
+        castBalduvianHordeWithCardsInHand(new StormCrow(), new StormCrow());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Balduvian Horde");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
     // ===== Decline — sacrifice =====
 
     @Test
@@ -84,8 +98,12 @@ class BalduvianHordeTest extends BaseCardTest {
      * discard is deterministic, resolving through to the may ability prompt.
      */
     private void castBalduvianHordeWithCardInHand() {
+        castBalduvianHordeWithCardsInHand(new StormCrow());
+    }
+
+    private void castBalduvianHordeWithCardsInHand(Card... cards) {
         harness.castFromHand(player1, new BalduvianHorde(), "{2}{R}{R}");
-        harness.setHand(player1, List.of(new StormCrow()));
+        harness.setHand(player1, List.of(cards));
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → may ability prompt
 

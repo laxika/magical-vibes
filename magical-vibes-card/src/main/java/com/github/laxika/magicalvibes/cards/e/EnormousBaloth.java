@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "10E", collectorNumber = "263")
 @CardRegistration(set = "M10", collectorNumber = "180")
+@CardRegistration(set = "LGN", collectorNumber = "125")
 public class EnormousBaloth extends Card {
 }

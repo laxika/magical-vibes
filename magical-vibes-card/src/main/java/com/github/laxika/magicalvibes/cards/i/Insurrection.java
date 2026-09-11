@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "213")
+@CardRegistration(set = "HOP", collectorNumber = "57")
 public class Insurrection extends Card {
 
     public Insurrection() {

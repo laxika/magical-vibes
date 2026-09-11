@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -43,21 +45,35 @@ public class CopySupport {
     }
 
     public StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId, UUID targetId) {
+        return createCopyStackEntry(source, copyCard, controllerId, targetId, source.getTargetZone(),
+                source.getTargetCardIds() != null ? new ArrayList<>(source.getTargetCardIds()) : null);
+    }
+
+    public StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId,
+                                            UUID targetId, Zone targetZone) {
+        List<UUID> targetCardIds = targetZone == Zone.GRAVEYARD && targetId != null
+                ? List.of(targetId) : List.of();
+        return createCopyStackEntry(source, copyCard, controllerId, targetId, targetZone, targetCardIds);
+    }
+
+    private StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId,
+                                             UUID targetId, Zone targetZone, List<UUID> targetCardIds) {
         StackEntry copy = new StackEntry(
                 source.getEntryType(),
                 copyCard,
                 controllerId,
-                "Copy of " + source.getCard().getName(),
+                "Copy of " + source.getDescription(),
                 new ArrayList<>(source.getEffectsToResolve()),
                 source.getXValue(),
                 targetId,
                 source.getSourcePermanentId(),
                 source.getDamageAssignments(),
-                source.getTargetZone(),
-                source.getTargetCardIds() != null ? new ArrayList<>(source.getTargetCardIds()) : null,
+                targetZone,
+                targetCardIds,
                 source.getTargetIds() != null ? new ArrayList<>(source.getTargetIds()) : null
         );
         copy.setCopy(true);
+        copy.setSourcePlanarObject(source.getSourcePlanarObject() == null ? null : source.getSourcePlanarObject().copy());
         copy.setKicked(source.isKicked());
         copy.setTargetFilters(source.getTargetFilters());
         copy.getGrantedKeywordsOnEntry().addAll(source.getGrantedKeywordsOnEntry());
@@ -100,6 +116,9 @@ public class CopySupport {
         copy.setCardText(original.getCardText());
         copy.setPower(original.getPower());
         copy.setToughness(original.getToughness());
+        if (original.getRoomDoorManaCosts().size() == 2) {
+            copy.setRoomDoorManaCosts(original.getRoomDoorManaCosts());
+        }
         Set<Keyword> copiedKeywords = original.getKeywords().isEmpty()
                 ? EnumSet.noneOf(Keyword.class)
                 : EnumSet.copyOf(original.getKeywords());

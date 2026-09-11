@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "308")
 @CardRegistration(set = "ONS", collectorNumber = "310")
+@CardRegistration(set = "DD1", collectorNumber = "25")
 public class SlateOfAncestry extends Card {
 
     public SlateOfAncestry() {

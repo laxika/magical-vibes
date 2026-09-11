@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.f.FontOfAgonies;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
+import com.github.laxika.magicalvibes.cards.p.Prosperity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -125,6 +127,32 @@ class ZursWeirdingTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed(Prosperity.class)
+    void multiCardDrawIsReplacedOneCardAtATime() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.setHand(player1, List.of(new Prosperity()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player2, List.of(new AirElemental(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castAndResolveSorcery(player1, 0, 2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertInHand(player2, "Forest");
     }
 
     @Test

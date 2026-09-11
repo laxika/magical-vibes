@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "110")
+@CardRegistration(set = "CP2", collectorNumber = "5")
 public class WhipOfErebos extends Card {
 
     public WhipOfErebos() {

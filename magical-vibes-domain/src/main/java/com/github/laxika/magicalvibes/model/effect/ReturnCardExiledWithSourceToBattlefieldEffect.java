@@ -19,17 +19,18 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public record ReturnCardExiledWithSourceToBattlefieldEffect(
         CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
         boolean enterTapped, boolean enterAttacking,
-        boolean returnAtRandom, boolean targeted, int additionalPlusOnePlusOneCounters)
+        boolean returnAtRandom, boolean targeted, int additionalPlusOnePlusOneCounters,
+        boolean onlyCardsOwnedByController)
         implements CardEffect {
 
     public ReturnCardExiledWithSourceToBattlefieldEffect() {
-        this(null, false, null, false, false, false, false, 0);
+        this(null, false, null, false, false, false, false, 0, false);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
                                                          boolean requiresManaValueEqualsX,
                                                          CardSubtype grantedSubtype) {
-        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false, false, false, 0);
+        this(filter, requiresManaValueEqualsX, grantedSubtype, false, false, false, false, 0, false);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(CardPredicate filter,
@@ -38,14 +39,14 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
                                                          boolean enterTapped,
                                                          boolean enterAttacking) {
         this(filter, requiresManaValueEqualsX, grantedSubtype,
-                enterTapped, enterAttacking, false, false, 0);
+                enterTapped, enterAttacking, false, false, 0, false);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(
             CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
             boolean enterTapped, boolean enterAttacking, boolean returnAtRandom) {
         this(filter, requiresManaValueEqualsX, grantedSubtype,
-                enterTapped, enterAttacking, returnAtRandom, false, 0);
+                enterTapped, enterAttacking, returnAtRandom, false, 0, false);
     }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(
@@ -53,14 +54,20 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
             boolean enterTapped, boolean enterAttacking, boolean targeted,
             int additionalPlusOnePlusOneCounters) {
         this(filter, requiresManaValueEqualsX, grantedSubtype, enterTapped, enterAttacking,
-                false, targeted, additionalPlusOnePlusOneCounters);
+                false, targeted, additionalPlusOnePlusOneCounters, false);
     }
 
     public static ReturnCardExiledWithSourceToBattlefieldEffect targetedCreature(
             boolean enterTapped, int additionalPlusOnePlusOneCounters) {
         return new ReturnCardExiledWithSourceToBattlefieldEffect(
                 new CardTypePredicate(CardType.CREATURE), false, null,
-                enterTapped, false, false, true, additionalPlusOnePlusOneCounters);
+                enterTapped, false, false, true, additionalPlusOnePlusOneCounters, false);
+    }
+
+    /** Returns one source-tracked card owned by the ability controller. */
+    public static ReturnCardExiledWithSourceToBattlefieldEffect ownedByController() {
+        return new ReturnCardExiledWithSourceToBattlefieldEffect(
+                null, false, null, false, false, false, false, 0, true);
     }
 
     @Override

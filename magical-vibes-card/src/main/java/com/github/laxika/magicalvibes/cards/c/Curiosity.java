@@ -16,6 +16,6 @@ public class Curiosity extends Card {
     public Curiosity() {
         target(TargetFilters.creature())
                 // Whenever enchanted creature deals damage to an opponent, you may draw a card.
-                .addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+                .addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

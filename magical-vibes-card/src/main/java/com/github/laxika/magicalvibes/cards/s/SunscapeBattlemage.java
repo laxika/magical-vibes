@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "16")
+@CardRegistration(set = "DDE", collectorNumber = "40")
 public class SunscapeBattlemage extends Card {
 
     public SunscapeBattlemage() {

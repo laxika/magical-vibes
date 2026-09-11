@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveya
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "51")
+@CardRegistration(set = "FDN", collectorNumber = "314")
+@CardRegistration(set = "FDN", collectorNumber = "380")
+@CardRegistration(set = "FDN", collectorNumber = "457")
 public class SphinxOfForgottenLore extends Card {
 
     public SphinxOfForgottenLore() {

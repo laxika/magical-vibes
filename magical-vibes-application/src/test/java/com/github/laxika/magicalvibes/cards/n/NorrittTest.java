@@ -26,8 +26,10 @@ class NorrittTest extends BaseCardTest {
 
     private void runEndStep() {
         harness.forceStep(TurnStep.END_STEP);
+        gd.interaction.clearAwaitingInput();
         harness.inMutationScope(
                 () -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleEndStepTriggers(gd));
+        resolveAllTriggers();
     }
 
     @Test

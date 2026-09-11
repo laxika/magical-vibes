@@ -45,7 +45,9 @@ public class ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffectHandler
             return;
         }
 
-        if (!graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard)) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (!graveyardReturnSupport.exileCardFromAnyGraveyard(
+                gameData, targetCardId, targetCard, sourcePermanentId)) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
@@ -55,7 +57,6 @@ public class ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffectHandler
         gameLogService.append(gameData,
                 GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
-        UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (source != null) {

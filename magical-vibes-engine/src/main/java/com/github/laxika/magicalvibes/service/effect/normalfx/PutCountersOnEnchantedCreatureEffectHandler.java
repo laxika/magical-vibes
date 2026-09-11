@@ -11,9 +11,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link PutCountersOnEnchantedCreatureEffect}: places the counters on the creature the
- * source Aura was attached to. The creature id was captured onto the stack entry at activation
- * (see {@code AttachedPermanentSelfTargetingEffect}), so a bounce or sacrifice cost that already
- * detached the Aura does not stop the counters from landing.
+ * source Aura currently enchants. If the Aura has left the battlefield, the captured attachment
+ * supplies its last known enchanted creature.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,10 +30,12 @@ public class PutCountersOnEnchantedCreatureEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCountersOnEnchantedCreatureEffect) effect;
 
-        if (entry.getTargetId() == null) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        var enchantedId = source == null ? entry.getTargetId() : source.getAttachedTo();
+        if (enchantedId == null) {
             return;
         }
-        Permanent creature = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent creature = gameQueryService.findPermanentById(gameData, enchantedId);
         if (creature == null) {
             return;
         }

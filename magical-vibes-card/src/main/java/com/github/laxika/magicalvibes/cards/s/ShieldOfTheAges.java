@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "335")
+@CardRegistration(set = "ME1", collectorNumber = "165")
 public class ShieldOfTheAges extends Card {
 
     public ShieldOfTheAges() {

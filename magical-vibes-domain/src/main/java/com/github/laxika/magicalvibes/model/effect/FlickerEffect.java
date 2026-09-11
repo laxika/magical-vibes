@@ -60,7 +60,34 @@ public record FlickerEffect(
         int counterAmountOnReturn,
         Set<CardSubtype> bonusSubtypes,
         boolean returnFaceDown,
-        boolean returnAttacking) implements AttachedPermanentSelfTargetingEffect {
+        boolean returnAttacking, boolean tapOnImmediateReturn) implements AttachedPermanentSelfTargetingEffect {
+    public FlickerEffect(
+        FlickerScope scope,
+        PermanentPredicate filter,
+        ReturnTiming timing,
+        TurnStep returnStep,
+        boolean returnTapped,
+        CardSubtype bonusSubtype,
+        CardEffect bonusEffect,
+        int plusOnePlusOneCountersOnReturn,
+        boolean returnUnderController,
+        boolean grantHaste,
+        boolean returnAtOwnerNextEndStep,
+        boolean plusOnePlusOneCountersOnlyOnCreatures,
+        int loyaltyCountersOnPlaneswalkersOnReturn,
+        boolean addCounterIfReturnedUnderControllerOtherwiseTap,
+        Set<Keyword> grantedKeywordsOnReturn,
+        boolean chooseAnyNumber,
+        boolean returnAtControllerNextStep,
+        boolean addAdditionalEndStepIfFirst,
+        CounterType counterTypeOnReturn,
+        int counterAmountOnReturn,
+        Set<CardSubtype> bonusSubtypes,
+        boolean returnFaceDown,
+        boolean returnAttacking) {
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect, plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste, returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkersOnReturn, addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn, chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst, counterTypeOnReturn, counterAmountOnReturn, bonusSubtypes, returnFaceDown, returnAttacking, false);
+    }
+
 
     public FlickerEffect {
         grantedKeywordsOnReturn = grantedKeywordsOnReturn == null
@@ -292,6 +319,13 @@ public record FlickerEffect(
                 returnStep, false, null, null, 0, false, true);
     }
 
+    /** Exile every permanent matching {@code filter} and return them at the requested step. */
+    public static FlickerEffect exileAllPlayersPermanentsReturnAtStep(
+            PermanentPredicate filter, TurnStep returnStep) {
+        return new FlickerEffect(FlickerScope.ALL_PLAYERS_PERMANENTS, filter, ReturnTiming.AT_STEP,
+                returnStep, false, null, null, 0, false, false);
+    }
+
     /** Exile any number of matching permanents you control and return them at the requested step. */
     public static FlickerEffect exileControllersAnyNumberPermanentsReturnAtStep(
             PermanentPredicate filter, TurnStep returnStep, boolean returnAtControllerNextStep) {
@@ -304,6 +338,13 @@ public record FlickerEffect(
     public static FlickerEffect flickerTarget() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
+    /** Exile target permanent, then return it tapped under its owner's control. */
+    public static FlickerEffect flickerTargetReturningTapped() {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true);
     }
 
     /** Exile a target permanent matching {@code filter}, immediately return it under its owner's control. */
@@ -339,7 +380,7 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetUnderYourControlTappedAndAttacking() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, true, null, null, 0, true, false,
-                false, false, 0, false, Set.of(), false, false, false, true);
+                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true);
     }
 
     /** Immediate flicker that returns the permanent with {@code counters} +1/+1 counters (Daydream). */

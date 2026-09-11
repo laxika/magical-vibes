@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "147")
+@CardRegistration(set = "TMT", collectorNumber = "209")
 public class FootNinjas extends Card {
 
     public FootNinjas() {

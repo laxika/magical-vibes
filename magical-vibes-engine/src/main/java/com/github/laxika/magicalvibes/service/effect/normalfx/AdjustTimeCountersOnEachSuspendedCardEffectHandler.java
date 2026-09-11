@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Component
@@ -35,6 +36,10 @@ public class AdjustTimeCountersOnEachSuspendedCardEffectHandler implements Norma
             ExiledCardEntry exiledEntry = gameData.findExiledCard(cardId);
             Integer timeCounters = gameData.exiledCardTimeCounters.get(cardId);
             if (exiledEntry == null || exiledEntry.faceDown() || timeCounters == null || timeCounters <= 0) {
+                continue;
+            }
+            if (adjustment.controllerOwnedOnly()
+                    && !Objects.equals(entry.getControllerId(), exiledEntry.ownerId())) {
                 continue;
             }
 

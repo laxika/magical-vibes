@@ -1,10 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrayOgre;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
-import java.util.UUID;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GlacialCrevasses;
@@ -22,10 +17,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionRed.class, BalduvianBarbarians.class, BalduvianBears.class, CentaurArcher.class, GlacialCrevasses.class, Incinerate.class, OrcishCannoneers.class, GrayOgre.class, GrizzlyBears.class, LightningBolt.class, OrcishArtillery.class})
+@CardUsed({CircleOfProtectionRed.class, BalduvianBarbarians.class, BalduvianBears.class, CentaurArcher.class, GlacialCrevasses.class, Incinerate.class, OrcishCannoneers.class})
 class CircleOfProtectionRedTest extends BaseCardTest {
 
     @Test
@@ -116,6 +112,28 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.assertLife(player1, 17);
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
+    }
+
+    @Test
+    @DisplayName("Damage from the chosen source to another player does not consume the shield")
+    void damageToAnotherPlayerDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent redSource = addReadyRedCreature(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, redSource.getId());
+
+        redSource.setAttacking(true);
+        resolveCombat(player1);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(redSource.getId()));
     }
 
     @Test
@@ -236,6 +254,33 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
+    @Test
+    @DisplayName("A permanent spell remains the chosen source after it resolves")
+    void preventsDamageFromPermanentSpellAfterItResolves() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        OrcishCannoneers cannoneersSpell = new OrcishCannoneers();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, cannoneersSpell, "{1}{R}{R}");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, cannoneersSpell.getId());
+        harness.passBothPriorities();
+
+        Permanent cannoneers = findPermanent(player2, "Orcish Cannoneers");
+        cannoneers.setSummoningSick(false);
+        int cannoneersIndex = gd.playerBattlefields.get(player2.getId()).indexOf(cannoneers);
+        harness.activateAbility(player2, cannoneersIndex, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
     private Permanent addReadyCircle(Player player) {
         return addCreatureReady(player, new CircleOfProtectionRed());
     }
@@ -265,17 +310,17 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new CircleOfProtectionRed());
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        Incinerate incinerate = new Incinerate();
+        harness.setHand(player2, List.of(incinerate));
+        harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castInstant(player2, 0, player1.getId());
-        UUID spellId = gd.stack.get(0).getCard().getId();
         harness.passPriority(player2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-        harness.handlePermanentChosen(player1, spellId);
+        harness.handlePermanentChosen(player1, incinerate.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

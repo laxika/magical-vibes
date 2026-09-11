@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MercenaryKnight.class, Forest.class, GrizzlyBears.class})
 class MercenaryKnightTest extends BaseCardTest {
 
     @Test
@@ -40,12 +41,30 @@ class MercenaryKnightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only creature cards are offered for the discard")
+    void onlyCreatureCardsCanBeDiscarded() {
+        harness.castFromHand(player1, new MercenaryKnight(), "{2}{B}");
+        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
+                .containsExactly(1);
+
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Mercenary Knight");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
     @DisplayName("Auto-sacrifices when controller has no creature cards in hand")
     void autoSacrificesWithNoCreatureInHand() {
-        harness.setHand(player1, List.of(new MercenaryKnight()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MercenaryKnight(), "{2}{B}");
         harness.setHand(player1, List.of(new Forest(), new Forest()));
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
@@ -61,10 +80,7 @@ class MercenaryKnightTest extends BaseCardTest {
      * to the may ability prompt.
      */
     private void castKnightWithCreatureInHand() {
-        harness.setHand(player1, List.of(new MercenaryKnight()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MercenaryKnight(), "{2}{B}");
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → may ability prompt

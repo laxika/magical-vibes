@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(ThopterSquadron.class)
 class ThopterSquadronTest extends BaseCardTest {
 
     @Test
@@ -62,25 +63,21 @@ class ThopterSquadronTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing another Thopter puts a +1/+1 counter on Thopter Squadron")
     void sacrificingAnotherThopterAddsCounter() {
-        Permanent foundry = harness.addToBattlefieldAndReturn(player1, new ThopterFoundry());
-        Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.activateAbility(player1, indexOf(player1, foundry), 0, null, null);
-        harness.handlePermanentChosen(player1, spellbook.getId());
-        harness.passBothPriorities();
-
         Permanent squadron = addReadySquadron(player1);
-        Permanent token = findThopterToken();
+        Permanent sacrificedThopter = addReadySquadron(player1);
+        Permanent remainingThopter = addReadySquadron(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, indexOf(player1, squadron), 1, null, null);
+        harness.handlePermanentChosen(player1, sacrificedThopter.getId());
         harness.passBothPriorities();
 
         assertThat(squadron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificedThopter);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(remainingThopter);
         harness.assertOnBattlefield(player1, "Thopter Squadron");
     }
 
@@ -96,11 +93,40 @@ class ThopterSquadronTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Activated abilities can only be activated at sorcery speed")
+    void activatedAbilitiesRequireSorcerySpeed() {
+        Permanent squadron = addReadySquadron(player1);
+        addReadySquadron(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, squadron), 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, squadron), 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("The token ability cannot be activated without a +1/+1 counter")
+    void tokenAbilityRequiresPlusOneCounter() {
+        Permanent squadron = addReadySquadron(player1);
+        squadron.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, squadron), 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+    }
+
     private Permanent addReadySquadron(Player player) {
-        Permanent squadron = new Permanent(new ThopterSquadron());
-        squadron.setSummoningSick(false);
+        Permanent squadron = addCreatureReady(player, new ThopterSquadron());
         squadron.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        gd.playerBattlefields.get(player.getId()).add(squadron);
         return squadron;
     }
 

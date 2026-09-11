@@ -46,6 +46,8 @@ class SlogurkTheOverslimeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
         harness.passBothPriorities();
 

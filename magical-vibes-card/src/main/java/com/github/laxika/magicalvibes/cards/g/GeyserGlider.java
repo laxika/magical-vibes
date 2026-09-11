@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "ZEN", collectorNumber = "124")
+@CardRegistration(set = "DDI", collectorNumber = "56")
 public class GeyserGlider extends Card {
 
     public GeyserGlider() {

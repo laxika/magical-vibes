@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CinderWall.class, BenalishInfantry.class})
 class CinderWallTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Cinder Wall blocks, it schedules itself for end-of-combat destruction")
     void blockingSchedulesSelfDestruction() {
-        Permanent attacker = addReadySpider(player1); // green, 2/4
+        Permanent attacker = addCreatureReady(player1, new BenalishInfantry());
         attacker.setAttacking(true);
-        Permanent cinderWall = addReadyCinderWall(player2);
+        Permanent cinderWall = addCreatureReady(player2, new CinderWall());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -35,6 +37,7 @@ class CinderWallTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(a -> a.permanentId().equals(cinderWall.getId()));
+        harness.assertOnBattlefield(player2, "Cinder Wall");
     }
 
     @Test
@@ -43,16 +46,15 @@ class CinderWallTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent attacker = addReadySpider(player1); // 2/4: deals 2, Cinder Wall (3 toughness) survives damage
+        Permanent attacker = addCreatureReady(player1, new BenalishInfantry());
         attacker.setAttacking(true);
-        addReadyCinderWall(player2);
+        addCreatureReady(player2, new CinderWall());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Resolve the trigger, then advance through end of combat
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player2, "Cinder Wall");
         harness.assertInGraveyard(player2, "Cinder Wall");
@@ -61,30 +63,14 @@ class CinderWallTest extends BaseCardTest {
     @Test
     @DisplayName("Cinder Wall that never blocks is not scheduled for destruction")
     void notDestroyedWhenItDoesNotBlock() {
-        Permanent attacker = addReadySpider(player1);
+        Permanent attacker = addCreatureReady(player1, new BenalishInfantry());
         attacker.setAttacking(true);
-        addReadyCinderWall(player2);
+        addCreatureReady(player2, new CinderWall());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of()); // Cinder Wall stays back
 
         harness.passBothPriorities();
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
-    }
-
-    // ===== Helpers =====
-
-    private Permanent addReadyCinderWall(Player player) {
-        Permanent perm = new Permanent(new CinderWall());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadySpider(Player player) {
-        Permanent perm = new Permanent(new GiantSpider());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

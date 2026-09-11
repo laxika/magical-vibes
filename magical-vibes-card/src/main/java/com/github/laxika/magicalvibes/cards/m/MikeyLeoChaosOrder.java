@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "158")
+@CardRegistration(set = "TMT", collectorNumber = "200")
+@CardRegistration(set = "TMT", collectorNumber = "247")
 public class MikeyLeoChaosOrder extends Card {
 
     public MikeyLeoChaosOrder() {

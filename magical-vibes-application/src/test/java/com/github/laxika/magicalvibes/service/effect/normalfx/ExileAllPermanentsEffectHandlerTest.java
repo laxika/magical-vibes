@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.action.DimensionalBreachUpkeepReturn;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -230,5 +231,30 @@ class ExileAllPermanentsEffectHandlerTest {
 
                 verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
+            }
+
+            @Test
+            @DisplayName("Tracks exiled permanents and registers the repeating upkeep return")
+            void tracksPermanentsForDimensionalBreach() {
+                Card creatureCard = createCreatureCard("Bear");
+                Permanent creature = addPermanent(player1Id, creatureCard);
+
+                Card sourceCard = createSorceryCard("Dimensional Breach");
+                PermanentPredicate filter = new PermanentIsCreaturePredicate();
+                ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter, true, true);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                        List.of(effect), 0, (UUID) null, null
+                );
+
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(creature), eq(filter), any()))
+                        .thenReturn(true);
+
+                exileAllPermanentsHandler.resolve(gd, entry, effect);
+
+                verify(permanentRemovalService).removePermanentToExile(gd, creature, sourceCard.getId());
+                assertThat(gd.getDelayedActions(DimensionalBreachUpkeepReturn.class))
+                        .extracting(DimensionalBreachUpkeepReturn::sourceCard)
+                        .containsExactly(sourceCard);
             }
 }

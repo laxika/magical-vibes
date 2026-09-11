@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -45,8 +46,13 @@ public class TargetValidationService {
     }
 
     public Optional<String> checkEffectTargets(List<CardEffect> effects, TargetValidationContext context) {
+        return checkEffectTargets(effects, context, false);
+    }
+
+    public Optional<String> checkEffectTargets(List<CardEffect> effects, TargetValidationContext context,
+                                               boolean teamworkCostPaid) {
         for (CardEffect effect : effects) {
-            CardEffect effectToValidate = unwrapTargetingEffect(effect);
+            CardEffect effectToValidate = unwrapTargetingEffect(effect, teamworkCostPaid);
             // The declarative TargetSpec interpreter runs FIRST for every context (it lives in the
             // service, not as a scanned @ValidatesTarget bean, so contexts that build the registry
             // outside Spring still get it). A registered class validator, when present, runs after
@@ -74,13 +80,15 @@ public class TargetValidationService {
      * rules such as an optional graveyard target also need the concrete effect's extra targeting
      * flags (for example {@code ReturnCardFromGraveyardEffect.upTo()}).
      */
-    private static CardEffect unwrapTargetingEffect(CardEffect effect) {
+    private static CardEffect unwrapTargetingEffect(CardEffect effect, boolean teamworkCostPaid) {
         CardEffect unwrapped = effect;
         while (true) {
             if (unwrapped instanceof ConditionalEffect conditional) {
                 unwrapped = conditional.wrapped();
             } else if (unwrapped instanceof ConditionalReplacementEffect replacement) {
-                unwrapped = replacement.baseEffect();
+                unwrapped = replacement.condition() instanceof TeamworkCostPaid
+                        ? (teamworkCostPaid ? replacement.upgradedEffect() : replacement.baseEffect())
+                        : replacement.baseEffect();
             } else {
                 return unwrapped;
             }

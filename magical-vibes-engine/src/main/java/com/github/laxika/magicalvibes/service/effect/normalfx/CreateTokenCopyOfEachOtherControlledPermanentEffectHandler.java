@@ -71,7 +71,7 @@ public class CreateTokenCopyOfEachOtherControlledPermanentEffectHandler
             Card sourceCard = sourcePermanent.getCard();
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
-                        sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
+                        sourceCard, copyEffect.copyEffect());
                 if (sourceCard.getType() == CardType.PLANESWALKER) {
                     tokenCard.setLoyalty(sourceCard.getLoyalty());
                 }

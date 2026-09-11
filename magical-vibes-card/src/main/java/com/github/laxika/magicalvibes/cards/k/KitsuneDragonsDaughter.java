@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "41")
+@CardRegistration(set = "TMT", collectorNumber = "262")
 public class KitsuneDragonsDaughter extends Card {
 
     public KitsuneDragonsDaughter() {

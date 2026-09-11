@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "63")
+@CardRegistration(set = "PC2", collectorNumber = "43")
+@CardRegistration(set = "DDG", collectorNumber = "76")
 public class FieryFall extends Card {
 
     public FieryFall() {

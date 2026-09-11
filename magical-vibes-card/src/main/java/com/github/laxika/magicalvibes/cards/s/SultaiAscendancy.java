@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "203")
+@CardRegistration(set = "CP2", collectorNumber = "3")
 public class SultaiAscendancy extends Card {
 
     public SultaiAscendancy() {

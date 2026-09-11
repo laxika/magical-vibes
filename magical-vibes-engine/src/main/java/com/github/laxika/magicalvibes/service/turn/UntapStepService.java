@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,13 +18,14 @@ import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntap
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PlayersSkipUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCountersInsteadOfUntappingEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapStepReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -30,6 +33,7 @@ import com.github.laxika.magicalvibes.service.effect.UntapPreventionSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +42,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -63,6 +68,7 @@ public class UntapStepService {
     private final PhasingService phasingService;
     private final PermanentRemovalService permanentRemovalService;
     private final UntapPreventionSupport untapPreventionSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final TriggerCollectionService triggerCollectionService;
     private final DayNightService dayNightService;
 
@@ -172,6 +178,25 @@ public class UntapStepService {
         phasingService.applyPhasing(gameData, activePlayerId);
         dayNightService.checkAtUntap(gameData, activePlayerId);
 
+        var untapRestrictions = gameData.matchingPermanentUntapRestrictions.remove(activePlayerId);
+        Set<UUID> restrictedPermanentIds = new java.util.HashSet<>();
+        if (untapRestrictions != null) {
+            for (var restriction : untapRestrictions) {
+                for (Permanent permanent : gameData.playerBattlefields.getOrDefault(activePlayerId, List.of())) {
+                    if (restriction.filter() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, restriction.filter())) {
+                        restrictedPermanentIds.add(permanent.getId());
+                    }
+                }
+                if (restriction.untapSteps() > 1) {
+                    gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
+                            activePlayerId, id -> new ArrayList<>()).add(
+                            new SkipNextUntapEffect(
+                                    restriction.scope(), restriction.filter(), restriction.untapSteps() - 1, true));
+                }
+            }
+        }
+
         // A permanent that phased out is treated as though it does not exist (CR 702.26b), so an
         // attachment that was kept from following it out (Spatial Binding) is now attached to
         // nothing and belongs in its owner's graveyard (CR 303.4c) — the official Spatial Binding
@@ -234,7 +259,7 @@ public class UntapStepService {
                 if (skipsNextUntap) {
                     // Decrement skip counter but don't untap this step (e.g. Vorinclex)
                     p.setSkipUntapCount(p.getSkipUntapCount() - 1);
-                } else if (blockedByStorageMatrix || blockedByStaticOrb) {
+                } else if (blockedByStorageMatrix || blockedByStaticOrb || restrictedPermanentIds.contains(p.getId())) {
                     // Storage Matrix / untap cap: not selected to untap — stays tapped this step
                 } else if (cannotBecomeUntapped) {
                     // A hard prevention effect such as Blossombind also suppresses optional untap choices.
@@ -245,7 +270,7 @@ public class UntapStepService {
                         && !hasMatchingDoesntUntap && !hasParalyzationLock && !hasCounterLock) {
                     // Freyalise's Winds: the untap is replaced by removing all counters of the
                     // named type, so the permanent stays tapped this step.
-                    if (!removeCountersInsteadOfUntapping(gameData, p)) {
+                    if (!replaceUntap(gameData, p, activePlayerId)) {
                         if (tapUntapSupport.untapPermanent(gameData, p)) {
                             untappedDuringStep.add(p);
                         }
@@ -393,12 +418,15 @@ public class UntapStepService {
     }
 
     /**
-     * Returns {@code true} if any permanent (any controller) carries a
+     * Returns {@code true} if any permanent (any controller) or face-up planar card carries a
      * {@link PlayersSkipUntapStepEffect}. While true, each player's untap step is skipped entirely
      * (no phasing, no untapping) — see {@link #untapPermanents} with {@code skipUntapStep=true}.
      */
     public boolean playersSkipUntapStepApplies(GameData gameData) {
-        return gameData.anyPermanentMatches(p ->
+        boolean planarEffectApplies = gameData.planechase != null && gameData.planechase.faceUp.stream()
+                .anyMatch(object -> object.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof PlayersSkipUntapStepEffect));
+        return planarEffectApplies || gameData.anyPermanentMatches(p ->
                 !gameQueryService.hasLostAllAbilities(gameData, p)
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof PlayersSkipUntapStepEffect));
@@ -509,40 +537,81 @@ public class UntapStepService {
     }
 
     /**
-     * Applies any {@link RemoveCountersInsteadOfUntappingEffect} in force (Freyalise's Winds) to a
-     * tapped permanent that is about to untap during its controller's untap step: all counters of
-     * the named type are removed from it and it stays tapped.
+     * Applies an untap-step replacement from a battlefield or face-up planar source.
      *
      * @return {@code true} if the untap was replaced, {@code false} if the permanent should untap
      */
-    private boolean removeCountersInsteadOfUntapping(GameData gameData, Permanent permanent) {
-        if (!permanent.isTapped()) {
-            return false;
-        }
-        List<CounterType> replaced = new ArrayList<>();
-        gameData.forEachPermanent((pid, source) -> {
-            for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (e instanceof RemoveCountersInsteadOfUntappingEffect replacement
-                        && permanent.getCounterCount(replacement.counterType()) > 0) {
-                    replaced.add(replacement.counterType());
+    private boolean replaceUntap(GameData gameData, Permanent permanent, UUID permanentControllerId) {
+        final boolean[] replaced = {false};
+        gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
+            if (replaced[0]) {
+                return;
+            }
+            for (Permanent source : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, source)) {
+                    continue;
+                }
+                if (applyUntapReplacement(gameData, permanent, permanentControllerId,
+                        source.getCard(), sourceControllerId)) {
+                    replaced[0] = true;
+                    return;
                 }
             }
         });
-        if (replaced.isEmpty()) {
-            return false;
-        }
-        for (CounterType counterType : replaced) {
-            int removed = permanent.getCounterCount(counterType);
-            permanent.setCounterCount(counterType, 0);
-            if (counterType == CounterType.OIL) {
-                gameData.recordOilCounterRemoved(permanent, removed);
+        if (!replaced[0] && gameData.planechase != null) {
+            UUID sourceControllerId = gameData.planechase.controllerId;
+            for (PlanarObject source : gameData.planechase.faceUp) {
+                if (applyUntapReplacement(gameData, permanent, permanentControllerId,
+                        source.getCard(), sourceControllerId)) {
+                    replaced[0] = true;
+                    break;
+                }
             }
         }
-        gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
-                " doesn't untap; its counters are removed instead."));
-        log.info("Game {} - {} does not untap; counters {} removed instead",
-                gameData.id, permanent.getCard().getName(), replaced);
-        return true;
+        return replaced[0];
+    }
+
+    private boolean applyUntapReplacement(GameData gameData, Permanent permanent,
+                                          UUID permanentControllerId, Card sourceCard,
+                                          UUID sourceControllerId) {
+        for (CardEffect effect : sourceCard.getEffects(EffectSlot.STATIC)) {
+            if (!(effect instanceof UntapStepReplacementEffect replacement)) {
+                continue;
+            }
+            if (replacement.sourceControllerOnly()
+                    && !Objects.equals(sourceControllerId, permanentControllerId)) {
+                continue;
+            }
+            PermanentPredicate filter = replacement.filter();
+            if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(
+                    permanent, filter,
+                    FilterContext.of(gameData)
+                            .withSourceCardId(sourceCard.getId())
+                            .withSourceControllerId(sourceControllerId))) {
+                continue;
+            }
+            if (!replacement.removesCounters()) {
+                permanentCounterSupport.placeCounterOnPermanent(gameData, null, permanent,
+                        replacement.counterType(), replacement.replacementCount());
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
+                        " doesn't untap; counters are put on it instead."));
+                return true;
+            }
+            if (permanent.getCounterCount(replacement.counterType()) <= 0) {
+                continue;
+            }
+            int removed = permanent.getCounterCount(replacement.counterType());
+            permanent.setCounterCount(replacement.counterType(), 0);
+            if (replacement.counterType() == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(permanent, removed);
+            }
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
+                    " doesn't untap; its counters are removed instead."));
+            log.info("Game {} - {} does not untap; counters {} removed instead",
+                    gameData.id, permanent.getCard().getName(), replacement.counterType());
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -584,7 +653,8 @@ public class UntapStepService {
     }
 
     private boolean matchingStaticPreventsUntap(GameData gameData, Permanent permanent) {
-        return gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+        return gameData.anyPermanentMatches(source -> !gameQueryService.hasLostAllAbilities(gameData, source)
+                && source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof MatchingPermanentsDoesntUntapEffect lock
                         // Source-relative filters (An-Zerrin Ruins' chosen creature type) need the
                         // locking permanent as the filter's source, not just the game state.

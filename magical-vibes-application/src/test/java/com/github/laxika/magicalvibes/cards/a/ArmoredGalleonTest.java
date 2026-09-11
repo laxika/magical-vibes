@@ -2,11 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArmoredGalleon.class, Island.class})
 class ArmoredGalleonTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -53,16 +53,9 @@ class ArmoredGalleonTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player2, new Island());
 
-        Permanent galleon = new Permanent(new ArmoredGalleon());
-        galleon.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(galleon);
+        addCreatureReady(player1, new ArmoredGalleon());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         // Combat auto-advances; 5/4 deals 5 damage when unblocked
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
@@ -71,16 +64,19 @@ class ArmoredGalleonTest extends BaseCardTest {
     @Test
     @DisplayName("Armored Galleon cannot attack when defending player does not control an Island")
     void cannotAttackWhenDefenderDoesNotControlIsland() {
-        Permanent galleon = new Permanent(new ArmoredGalleon());
-        galleon.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(galleon);
+        addCreatureReady(player1, new ArmoredGalleon());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+    @Test
+    @DisplayName("Armored Galleon cannot attack when only its controller controls an Island")
+    void cannotAttackWhenOnlyControllerControlsIsland() {
+        harness.addToBattlefield(player1, new Island());
+        addCreatureReady(player1, new ArmoredGalleon());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

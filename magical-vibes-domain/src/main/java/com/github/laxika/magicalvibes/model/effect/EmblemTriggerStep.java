@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** The step an {@link EmblemStepTriggerEffect} fires in. */
+/** The step or phase an {@link EmblemStepTriggerEffect} fires in. */
 public enum EmblemTriggerStep {
 
     /** "At the beginning of your upkeep, …" */
@@ -19,5 +19,7 @@ public enum EmblemTriggerStep {
     BEGINNING_OF_COMBAT,
 
     /** "At the beginning of your end step, …" */
-    END_STEP
+    END_STEP,
+    /** At the end of the first combat phase on your turn. */
+    END_OF_FIRST_COMBAT
 }

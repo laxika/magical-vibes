@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "2a")
 @CardRegistration(set = "ALL", collectorNumber = "2b")
+@CardRegistration(set = "ME2", collectorNumber = "12")
 public class ErrandOfDuty extends Card {
 
     public ErrandOfDuty() {

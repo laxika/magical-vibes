@@ -40,6 +40,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @Service
 @RequiredArgsConstructor
 public class StateBasedActionService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
 
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
@@ -68,6 +72,10 @@ public class StateBasedActionService {
     private static final int MAX_SBA_PASSES = 100;
 
     public void performStateBasedActions(GameData gameData) {
+        if (graveyardService.hasPendingRegenerationChoice(gameData)) {
+            graveyardService.processPendingRegenerationChoice(gameData);
+            return;
+        }
         triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
         initializeSpeedForPlayers(gameData);
 
@@ -80,8 +88,10 @@ public class StateBasedActionService {
         boolean anyPerformed;
         int passes = 0;
         do {
-            anyPerformed = enforceCounterLimits(gameData);
+            anyPerformed = gameData.planechase != null && planechaseService.checkPhenomena(gameData);
+            anyPerformed |= enforceCounterLimits(gameData);
             anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
+            if (graveyardService.hasPendingRegenerationChoice(gameData)) return;
             anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
             // CR 704.5a — player with 0 or less life loses the game
@@ -115,6 +125,11 @@ public class StateBasedActionService {
         if (passes >= MAX_SBA_PASSES) {
             log.warn("Game {} - state-based actions did not converge after {} passes", gameData.id, passes);
         }
+
+        // Re-evaluate source-linked control conditions after the state has settled. This also
+        // handles effects whose duration depends on a changing characteristic, such as Old Man
+        // of the Sea's target-power restriction.
+        creatureControlService.reconcileControl(gameData);
 
         // CR 704.5j — the legend rule is a state-based action, but performing it needs a player
         // choice, so it can't run synchronously inside the pass loop. Prompt only when no other
@@ -194,8 +209,10 @@ public class StateBasedActionService {
             gameData.spellsWithPlotOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
+            gameData.exiledCardsWithCroakCounters.remove(cardId);
             gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayPermissionSourcePermanents.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
@@ -313,6 +330,17 @@ public class StateBasedActionService {
         });
 
         boolean replacementPerformed = false;
+        int activeIndex = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
+        for (int offset = 0; offset < gameData.orderedPlayerIds.size(); offset++) {
+            UUID playerId = gameData.orderedPlayerIds.get(
+                    (activeIndex + offset) % gameData.orderedPlayerIds.size());
+            for (DeathEntry candidate : lethalDamageCandidates) {
+                if (playerId.equals(gameQueryService.findPermanentController(gameData, candidate.permanent().getId()))) {
+                    graveyardService.prepareRegenerationChoice(gameData, candidate.permanent());
+                }
+            }
+        }
+        if (graveyardService.hasPendingRegenerationChoice(gameData)) return false;
         for (DeathEntry candidate : lethalDamageCandidates) {
             if (graveyardService.tryRegenerate(gameData, candidate.permanent())) {
                 replacementPerformed = true;
@@ -320,6 +348,7 @@ public class StateBasedActionService {
                 toDie.add(candidate);
             }
         }
+        if (graveyardService.hasPendingRegenerationChoice(gameData)) return false;
 
         // CR 704.5h spans "since the last state-based check" and this pass is that check:
         // consume the deathtouch memory so survivors (indestructible, regenerated) aren't
@@ -586,6 +615,7 @@ public class StateBasedActionService {
 
     // CR 704.5b — player who attempted to draw from an empty library loses the game
     private void checkEmptyLibraryLoss(GameData gameData) {
+        if (gameData.deferPlayerLossCheck) return;
         if (gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) return;
 
         for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {

@@ -44,34 +44,123 @@ public record ConditionContext(
         boolean waterbendCostPaid,
         boolean giftPromised,
         boolean revealCardFromHandCostPaid,
-        boolean controlledDragonAsCast,
-        boolean controlledModifiedCreatureAsCast
+        boolean controlledDragonAsCast
+, boolean treasureManaSpentToActivate, boolean teamworkCostPaid, boolean controlledModifiedCreatureAsCast) {
+    public ConditionContext(
+        UUID controllerId,
+        UUID sourcePermanentId,
+        Permanent sourcePermanent,
+        Card sourceCard,
+        boolean kicked,
+        boolean buyback,
+        boolean prowl,
+        boolean madness,
+        boolean castForForetell,
+        boolean overloaded,
+        Zone sourceZone,
+        int xValue,
+        UUID targetId,
+        Card triggeringCard,
+        boolean staticEvaluation,
+        boolean putCounterCostPaid,
+        boolean beholdCostPaid,
+        UUID triggeringPermanentId,
+        Integer triggeringPermanentPowerAtTrigger,
+        Card sacrificedCard,
+        List<String> repeatedAdditionalCosts,
+        boolean alternateCost,
+        boolean spectacle,
+        boolean controlledMountAsCast,
+        boolean controlledFaerieAsCast,
+        boolean collectEvidenceCostPaid,
+        boolean castDuringMainPhase,
+        int eventValue,
+        boolean waterbendCostPaid,
+        boolean giftPromised,
+        boolean revealCardFromHandCostPaid,
+        boolean controlledDragonAsCast
+, boolean treasureManaSpentToActivate, boolean teamworkCostPaid) {
+        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue, waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, false);
+    }
+
+    public ConditionContext(
+        UUID controllerId,
+        UUID sourcePermanentId,
+        Permanent sourcePermanent,
+        Card sourceCard,
+        boolean kicked,
+        boolean buyback,
+        boolean prowl,
+        boolean madness,
+        boolean castForForetell,
+        boolean overloaded,
+        Zone sourceZone,
+        int xValue,
+        UUID targetId,
+        Card triggeringCard,
+        boolean staticEvaluation,
+        boolean putCounterCostPaid,
+        boolean beholdCostPaid,
+        UUID triggeringPermanentId,
+        Integer triggeringPermanentPowerAtTrigger,
+        Card sacrificedCard,
+        List<String> repeatedAdditionalCosts,
+        boolean alternateCost,
+        boolean spectacle,
+        boolean controlledMountAsCast,
+        boolean controlledFaerieAsCast,
+        boolean collectEvidenceCostPaid,
+        boolean castDuringMainPhase,
+        int eventValue,
+        boolean waterbendCostPaid,
+        boolean giftPromised,
+        boolean revealCardFromHandCostPaid,
+        boolean controlledDragonAsCast
+, boolean treasureManaSpentToActivate) {
+        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue, waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, false);
+    }
+
+        public ConditionContext(
+        UUID controllerId,
+        UUID sourcePermanentId,
+        Permanent sourcePermanent,
+        Card sourceCard,
+        boolean kicked,
+        boolean buyback,
+        boolean prowl,
+        boolean madness,
+        boolean castForForetell,
+        boolean overloaded,
+        Zone sourceZone,
+        int xValue,
+        UUID targetId,
+        Card triggeringCard,
+        boolean staticEvaluation,
+        boolean putCounterCostPaid,
+        boolean beholdCostPaid,
+        UUID triggeringPermanentId,
+        Integer triggeringPermanentPowerAtTrigger,
+        Card sacrificedCard,
+        List<String> repeatedAdditionalCosts,
+        boolean alternateCost,
+        boolean spectacle,
+        boolean controlledMountAsCast,
+        boolean controlledFaerieAsCast,
+        boolean collectEvidenceCostPaid,
+        boolean castDuringMainPhase,
+        int eventValue,
+        boolean waterbendCostPaid,
+        boolean giftPromised,
+        boolean revealCardFromHandCostPaid,
+        boolean controlledDragonAsCast
 ) {
+            this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue, waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast, false);
+        }
+
     public ConditionContext {
         repeatedAdditionalCosts = repeatedAdditionalCosts == null
                 ? List.of()
                 : List.copyOf(repeatedAdditionalCosts);
-    }
-
-    public ConditionContext(
-            UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent, Card sourceCard,
-            boolean kicked, boolean buyback, boolean prowl, boolean madness,
-            boolean castForForetell, boolean overloaded, Zone sourceZone, int xValue,
-            UUID targetId, Card triggeringCard, boolean staticEvaluation,
-            boolean putCounterCostPaid, boolean beholdCostPaid, UUID triggeringPermanentId,
-            Integer triggeringPermanentPowerAtTrigger, Card sacrificedCard,
-            List<String> repeatedAdditionalCosts, boolean alternateCost, boolean spectacle,
-            boolean controlledMountAsCast, boolean controlledFaerieAsCast,
-            boolean collectEvidenceCostPaid, boolean castDuringMainPhase, int eventValue,
-            boolean waterbendCostPaid, boolean giftPromised, boolean revealCardFromHandCostPaid,
-            boolean controlledDragonAsCast) {
-        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl,
-                madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
-                staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
-                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
-                alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast,
-                collectEvidenceCostPaid, castDuringMainPhase, eventValue, waterbendCostPaid,
-                giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast, false);
     }
 
     public ConditionContext(
@@ -169,7 +258,7 @@ public record ConditionContext(
         this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl,
                 madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
-                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, false);
+                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, false, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -273,7 +362,7 @@ public record ConditionContext(
                 entry.isCollectEvidenceCostPaid(),
                 entry.isCastDuringMainPhase(), entry.getEventValue(), entry.isWaterbendCostPaid(),
                 entry.isGiftPromised(), entry.isRevealCardFromHandCostPaid(),
-                entry.isControlledDragonAsCast(), entry.isControlledModifiedCreatureAsCast());
+                entry.isControlledDragonAsCast(), entry.getActivationTreasureManaSpent() > 0 || entry.isActivationUsedTreasureMana(), entry.isTeamworkCostPaid(), entry.isControlledModifiedCreatureAsCast());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
@@ -357,7 +446,18 @@ public record ConditionContext(
                 copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost,
                 spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid,
                 castDuringMainPhase, copiedEventValue, waterbendCostPaid, giftPromised,
-                revealCardFromHandCostPaid, controlledDragonAsCast, controlledModifiedCreatureAsCast);
+                revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast);
+    }
+
+    public ConditionContext withTeamworkCostPaid(boolean paid) {
+        return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue,
+                targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid,
+                triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard,
+                repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast,
+                controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
+                waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
+                treasureManaSpentToActivate, paid, controlledModifiedCreatureAsCast);
     }
 
     public ConditionContext withEventValue(int newEventValue) {

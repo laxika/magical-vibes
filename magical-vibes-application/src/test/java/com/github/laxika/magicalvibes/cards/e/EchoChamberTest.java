@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
+import com.github.laxika.magicalvibes.cards.r.RootwaterHunter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,57 +16,64 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EchoChamber.class, LowlandGiant.class, RootwaterHunter.class})
 class EchoChamberTest extends BaseCardTest {
 
     @Test
     @DisplayName("Opponent picks one of their creatures and the controller gets a hasty token copy")
     void opponentChoosesCreatureToCopy() {
         setupEchoChamberOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent hunter = harness.addToBattlefieldAndReturn(player2, new RootwaterHunter());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new LowlandGiant());
 
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.OpponentChoosesCreatureTheyControlToCopy.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrder(hunter.getId(), giant.getId());
 
-        harness.handlePermanentChosen(player2, spider.getId());
+        harness.handlePermanentChosen(player2, hunter.getId());
+        harness.passBothPriorities();
 
         Permanent token = tokenCopy();
-        assertThat(token.getCard().getName()).isEqualTo("Giant Spider");
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
         // The token is the controller's, not the choosing opponent's.
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+
+        int opponentLifeBefore = gd.getLife(player2.getId());
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(token), null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
     }
 
     @Test
-    @DisplayName("The choice auto-resolves when the opponent controls exactly one creature")
-    void singleCreatureIsCopiedWithoutPrompt() {
+    @DisplayName("The opponent chooses the sole legal target during activation")
+    void singleCreatureIsChosenDuringActivation() {
         setupEchoChamberOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new GiantSpider());
+        Permanent hunter = harness.addToBattlefieldAndReturn(player2, new RootwaterHunter());
 
         harness.activateAbility(player1, 0, null, null);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handlePermanentChosen(player2, hunter.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(tokenCopy().getCard().getName()).isEqualTo("Giant Spider");
+        assertThat(tokenCopy()).isNotNull();
     }
 
     @Test
-    @DisplayName("Nothing happens when the opponent controls no creature")
+    @DisplayName("The ability cannot be activated when the opponent controls no creature")
     void noCreatureToCopy() {
         setupEchoChamberOnMyTurn(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("target");
     }
 
     @Test
@@ -77,9 +83,10 @@ class EchoChamberTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         setupEchoChamberOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new GiantSpider());
+        Permanent hunter = harness.addToBattlefieldAndReturn(player2, new RootwaterHunter());
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player2, hunter.getId());
         harness.passBothPriorities();
         assertThat(tokenCopy()).isNotNull();
 
@@ -97,7 +104,7 @@ class EchoChamberTest extends BaseCardTest {
     void cannotActivateAtInstantSpeed() {
         setupEchoChamberOnMyTurn(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player2);
-        harness.addToBattlefield(player2, new GiantSpider());
+        harness.addToBattlefield(player2, new RootwaterHunter());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

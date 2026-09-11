@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.e.ElvishArchers;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Conquer.class, Disenchant.class, Forest.class, BalduvianBears.class})
+@CardUsed({Conquer.class, Disenchant.class, ElvishArchers.class, Forest.class})
 class ConquerTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -132,12 +132,12 @@ class ConquerTest extends BaseCardTest {
     @DisplayName("Cannot target a non-land permanent with Conquer")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player2, new Forest()); // valid target so the spell is playable
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ElvishArchers());
 
         harness.setHand(player1, List.of(new Conquer()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }

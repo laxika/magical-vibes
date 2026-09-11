@@ -34,7 +34,7 @@ public class StackEntryViewFactory {
      * Creates a StackEntryView with additional granted subtypes applied to creature spells.
      */
     public StackEntryView create(StackEntry entry, List<CardSubtype> grantedSubtypes) {
-        CardView cardView = grantedSubtypes.isEmpty()
+        CardView cardView = entry.getCard() == null ? null : grantedSubtypes.isEmpty()
                 ? cardViewFactory.create(entry.getCard())
                 : cardViewFactory.create(entry.getCard(), grantedSubtypes);
         return new StackEntryView(
@@ -42,7 +42,7 @@ public class StackEntryViewFactory {
                 cardView,
                 entry.getControllerId(),
                 entry.getDescription(),
-                entry.getCard().getId(),
+                entry.getTargetableId(),
                 SPELL_TYPES.contains(entry.getEntryType()),
                 entry.getTargetId()
         );

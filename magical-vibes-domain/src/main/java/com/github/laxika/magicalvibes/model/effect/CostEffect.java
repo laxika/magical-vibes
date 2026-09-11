@@ -22,6 +22,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public interface CostEffect extends CardEffect {
 
     /**
+     * True when paying this cost puts one card an opponent owns from exile into that player's
+     * graveyard.
+     */
+    default boolean putsOpponentOwnedExiledCardIntoGraveyard() {
+        return false;
+    }
+
+    /**
      * True when paying this cost taps the permanent that granted the activated ability rather
      * than the permanent activating it.
      */

@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.w.WeiInfantry;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FireBowman.class, WeiInfantry.class})
 class FireBowmanTest extends BaseCardTest {
 
     @Test
@@ -27,16 +32,30 @@ class FireBowmanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
+    @DisplayName("Deals 1 damage to target creature, destroying a 2/1")
     void deals1DamageDestroying1Toughness() {
         setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new WeiInfantry());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.getPermanentId(player2, "Wei Infantry");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Wei Infantry");
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("Deals 1 damage to target planeswalker")
+    void deals1DamageToPlaneswalker() {
+        setupOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
 
     @Test
@@ -47,12 +66,25 @@ class FireBowmanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Fire Bowman");
+        harness.assertInGraveyard(player1, "Fire Bowman");
     }
 
     @Test
     @DisplayName("Cannot activate once attackers have been declared")
     void cannotActivateAfterAttackersDeclared() {
         setupOnMyTurn(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+    }
+
+    @Test
+    @DisplayName("Cannot activate during a later combat phase")
+    void cannotActivateDuringLaterCombatPhase() {
+        setupOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+        gd.combatPhasesThisTurn = 2;
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "12")
+@CardRegistration(set = "TMT", collectorNumber = "223")
 public class TheLastRoninsTechnique extends Card {
 
     public TheLastRoninsTechnique() {

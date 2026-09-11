@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 
 @CardRegistration(set = "ALA", collectorNumber = "168")
+@CardRegistration(set = "DDH", collectorNumber = "53")
 public class FireFieldOgre extends Card {
 
     public FireFieldOgre() {

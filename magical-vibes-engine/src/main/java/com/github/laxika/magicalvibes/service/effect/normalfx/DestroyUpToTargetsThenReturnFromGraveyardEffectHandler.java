@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUpToTargetsThenReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -43,6 +45,9 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         List<UUID> targetIds = entry.getTargetIds();
+        if ((targetIds == null || targetIds.isEmpty()) && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
         if (targetIds == null || targetIds.isEmpty()) {
             return;
         }
@@ -89,6 +94,11 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
             }
             permanent.setEnteredFromGraveyardOwnerId(controllerId);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+
+            if (((DestroyUpToTargetsThenReturnFromGraveyardEffect) effect).sacrificeAtEndStep()) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+            }
 
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", card, " onto the battlefield from a graveyard."));

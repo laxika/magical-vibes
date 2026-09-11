@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +47,7 @@ public class SearchLibraryForSubtypeCardsToTopEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
+        LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
 
         String label = ((SearchLibraryForSubtypeCardsToTopEffect) effect).subtype().getDisplayName();
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -59,6 +61,7 @@ public class SearchLibraryForSubtypeCardsToTopEffectHandler implements NormalEff
         CardSubtypePredicate filter =
                 new CardSubtypePredicate(((SearchLibraryForSubtypeCardsToTopEffect) effect).subtype());
         List<Card> matching = deck.stream()
+                .limit(librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId))
                 .filter(c -> predicateEvaluationService.matchesCardPredicate(c, filter, null, gameData, controllerId))
                 .toList();
 

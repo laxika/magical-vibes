@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,6 +17,6 @@ public class EliteJavelineer extends Card {
         // attacking creature, so the card carries a target filter that routes the block trigger
         // through the targeting pipeline (see CombatBlockService).
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.ON_BLOCK, new DealDamageToTargetCreatureEffect(1));
+                .addEffect(EffectSlot.ON_BLOCK, new DealDamageToTargetCreatureEffect(1), TriggerMode.ONCE_PER_BLOCK);
     }
 }

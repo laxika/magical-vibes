@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +14,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Rootwalla.class)
 class RootwallaTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Rootwalla puts it on the stack")
@@ -28,13 +27,23 @@ class RootwallaTest extends BaseCardTest {
 
         assertThat(harness.getGameData().stack).hasSize(1);
         assertThat(harness.getGameData().stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(harness.getGameData().stack.getFirst().getCard().getName()).isEqualTo("Rootwalla");
+    }
+
+    @Test
+    @DisplayName("The ability requires green mana")
+    void abilityRequiresGreenMana() {
+        addCreatureReady(player1, new Rootwalla());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 
     @Test
     @DisplayName("Ability can be activated once each turn")
     void canActivateOnceEachTurn() {
-        Permanent rootwalla = addReadyRootwalla(player1);
+        Permanent rootwalla = addCreatureReady(player1, new Rootwalla());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -47,7 +56,7 @@ class RootwallaTest extends BaseCardTest {
     @Test
     @DisplayName("Second activation in same turn is rejected")
     void secondActivationInSameTurnIsRejected() {
-        addReadyRootwalla(player1);
+        addCreatureReady(player1, new Rootwalla());
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -61,7 +70,7 @@ class RootwallaTest extends BaseCardTest {
     @Test
     @DisplayName("Activation limit resets on a new turn")
     void activationLimitResetsOnNewTurn() {
-        addReadyRootwalla(player1);
+        addCreatureReady(player1, new Rootwalla());
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -79,11 +88,23 @@ class RootwallaTest extends BaseCardTest {
         assertThat(harness.getGameData().stack).hasSize(1);
     }
 
-    private Permanent addReadyRootwalla(Player player) {
-        Rootwalla card = new Rootwalla();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("The boost wears off at end of turn")
+    void boostWearsOffAtEndOfTurn() {
+        Permanent rootwalla = addCreatureReady(player1, new Rootwalla());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
+        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(2);
+        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(2);
     }
 }

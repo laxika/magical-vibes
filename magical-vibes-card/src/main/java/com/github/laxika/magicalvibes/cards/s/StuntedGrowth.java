@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ICE", collectorNumber = "266")
+@CardRegistration(set = "ME2", collectorNumber = "179")
 public class StuntedGrowth extends Card {
 
     public StuntedGrowth() {

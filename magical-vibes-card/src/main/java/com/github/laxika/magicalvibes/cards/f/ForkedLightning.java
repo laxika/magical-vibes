@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "POR", collectorNumber = "130")
+@CardRegistration(set = "ME3", collectorNumber = "100")
 public class ForkedLightning extends Card {
 
     public ForkedLightning() {

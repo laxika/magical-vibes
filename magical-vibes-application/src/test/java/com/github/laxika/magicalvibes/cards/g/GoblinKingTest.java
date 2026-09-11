@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinKing.class, GoblinBalloonBrigade.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({GoblinKing.class, GoblinDiggingTeam.class, GrizzlyBears.class, Mountain.class})
 class GoblinKingTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -46,7 +46,7 @@ class GoblinKingTest extends BaseCardTest {
     @Test
     @DisplayName("Other Goblin creatures get +1/+1 and mountainwalk")
     void buffsOtherGoblins() {
-        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinDiggingTeam());
         harness.addToBattlefield(player1, new GoblinKing());
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
@@ -79,7 +79,7 @@ class GoblinKingTest extends BaseCardTest {
     @DisplayName("Buffs opponent's Goblin creatures too")
     void buffsOpponentGoblins() {
         harness.addToBattlefield(player1, new GoblinKing());
-        Permanent opponentGoblin = harness.addToBattlefieldAndReturn(player2, new GoblinBalloonBrigade());
+        Permanent opponentGoblin = harness.addToBattlefieldAndReturn(player2, new GoblinDiggingTeam());
 
         assertThat(gqs.getEffectivePower(gd, opponentGoblin)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentGoblin)).isEqualTo(2);
@@ -106,7 +106,7 @@ class GoblinKingTest extends BaseCardTest {
     void twoKingsStackBonuses() {
         harness.addToBattlefield(player1, new GoblinKing());
         harness.addToBattlefield(player1, new GoblinKing());
-        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinDiggingTeam());
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
@@ -118,7 +118,7 @@ class GoblinKingTest extends BaseCardTest {
     @DisplayName("Bonus is removed when Goblin King leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         Permanent king = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
-        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinDiggingTeam());
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
 
@@ -132,7 +132,7 @@ class GoblinKingTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Goblin King resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinDiggingTeam());
         harness.castFromHand(player1, new GoblinKing(), "{1}{R}{R}");
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
@@ -148,7 +148,7 @@ class GoblinKingTest extends BaseCardTest {
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new GoblinKing());
-        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinDiggingTeam());
 
         goblin.setPowerModifier(goblin.getPowerModifier() + 5);
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(7);
@@ -168,7 +168,7 @@ class GoblinKingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinKing());
         harness.addToBattlefield(player2, new Mountain());
 
-        Permanent goblinAttacker = addCreatureReady(player1, new GoblinBalloonBrigade());
+        Permanent goblinAttacker = addCreatureReady(player1, new GoblinDiggingTeam());
         goblinAttacker.setAttacking(true);
 
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
@@ -187,7 +187,7 @@ class GoblinKingTest extends BaseCardTest {
     void mountainwalkAllowsBlockingWithoutMountain() {
         harness.addToBattlefield(player1, new GoblinKing());
 
-        Permanent goblinAttacker = addCreatureReady(player1, new GoblinBalloonBrigade());
+        Permanent goblinAttacker = addCreatureReady(player1, new GoblinDiggingTeam());
         goblinAttacker.setAttacking(true);
 
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
@@ -227,7 +227,7 @@ class GoblinKingTest extends BaseCardTest {
         Permanent king = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
         harness.addToBattlefield(player2, new Mountain());
 
-        Permanent goblinAttacker = addCreatureReady(player1, new GoblinBalloonBrigade());
+        Permanent goblinAttacker = addCreatureReady(player1, new GoblinDiggingTeam());
 
         // Verify mountainwalk is present
         assertThat(gqs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isTrue();

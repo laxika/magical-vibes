@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "MBS", collectorNumber = "32")
+@CardRegistration(set = "TD2", collectorNumber = "15")
 public class SpireSerpent extends Card {
 
     public SpireSerpent() {

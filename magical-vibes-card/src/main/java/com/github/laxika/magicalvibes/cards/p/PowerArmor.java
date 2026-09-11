@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "309")
+@CardRegistration(set = "DDE", collectorNumber = "62")
 public class PowerArmor extends Card {
 
     public PowerArmor() {

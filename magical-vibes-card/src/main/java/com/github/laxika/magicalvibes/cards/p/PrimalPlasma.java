@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "59")
+@CardRegistration(set = "DDI", collectorNumber = "16")
+@CardRegistration(set = "PC2", collectorNumber = "23")
 public class PrimalPlasma extends Card {
 
     public PrimalPlasma() {

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ULG", collectorNumber = "49")
+@CardRegistration(set = "DDE", collectorNumber = "5")
 public class BoneShredder extends Card {
 
     public BoneShredder() {

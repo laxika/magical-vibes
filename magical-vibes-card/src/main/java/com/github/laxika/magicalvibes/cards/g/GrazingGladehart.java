@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "163")
+@CardRegistration(set = "DDH", collectorNumber = "11")
 public class GrazingGladehart extends Card {
 
     public GrazingGladehart() {

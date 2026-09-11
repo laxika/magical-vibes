@@ -274,6 +274,12 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, false, null, null, null);
     }
 
+    /** "Prevent all damage that would be dealt by target creature for as long as the source remains on the battlefield." */
+    public static PreventDamageEffect allByTargetCreatureWhileSourceRemains() {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_BY_TARGET_CREATURES_WHILE_SOURCE_REMAINS, null, false, null, null, null);
+    }
+
     /** "Prevent all combat damage target creature(s) would deal this turn" (Foxfire, Inquisitor's Snare). */
     public static PreventDamageEffect allCombatByTargetCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, true, null, null, null);
@@ -287,6 +293,13 @@ public record PreventDamageEffect(
     /** "Prevent all damage that would be dealt this turn by creatures your opponents control" (Thwart the Enemy). */
     public static PreventDamageEffect allByOpponentCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_BY_OPPONENT_CREATURES, null, false, null, null, null);
+    }
+
+    /** "Prevent all combat damage that would be dealt this turn by creatures target opponent controls." */
+    public static PreventDamageEffect allCombatByTargetOpponentCreatures() {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_COMBAT_BY_TARGET_OPPONENT_CREATURES,
+                null, false, null, null, null);
     }
 
     /** "Prevent all damage that would be dealt by creatures this turn; you gain life equal to damage prevented this way." */
@@ -414,9 +427,11 @@ public record PreventDamageEffect(
                     ? TargetPredicates.creature()
                     : TargetPredicates.narrowPermanents(TargetPredicates.creature(), victimPredicate));
             case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());
-            case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES -> TargetSpec.benign(TargetPredicates.creature());
+            case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES,
+                 ALL_BY_TARGET_CREATURES_WHILE_SOURCE_REMAINS -> TargetSpec.benign(TargetPredicates.creature());
             case ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS -> TargetSpec.benign(
                     TargetPredicates.creature(), victimPredicate);
+            case ALL_COMBAT_BY_TARGET_OPPONENT_CREATURES -> TargetSpec.benign(TargetPredicates.player());
             case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN,
                  ALL_TO_AND_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> TargetSpec.benign(TargetPredicates.permanent());
             default -> TargetSpec.NONE;

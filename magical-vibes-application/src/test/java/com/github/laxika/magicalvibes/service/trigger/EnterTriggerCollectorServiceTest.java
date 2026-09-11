@@ -114,6 +114,26 @@ class EnterTriggerCollectorServiceTest {
     private GameData gd;
     private UUID player1Id;
 
+    @Test
+    void landDamageTriggerPreservesEnteringPermanentAndController() {
+        UUID opponentId = UUID.randomUUID();
+        gd.orderedPlayerIds.add(opponentId);
+        Card landCard = new Card();
+        landCard.setName("Entering land");
+        landCard.setType(CardType.LAND);
+        Permanent land = new Permanent(landCard);
+        gd.playerBattlefields.put(opponentId, new ArrayList<>(List.of(land)));
+        addAllyCreatureTrigger(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(2,
+                        com.github.laxika.magicalvibes.model.effect.DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
+
+        service.checkOpponentLandEntersTriggers(gd, opponentId, landCard);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(land.getId());
+        assertThat(gd.stack.getFirst().getTriggeringPermanentControllerId()).isEqualTo(opponentId);
+    }
+
     @BeforeEach
     void setUp() {
         lenient().when(gameQueryService.computeStaticBonus(any(GameData.class), any(Permanent.class), isNull()))
@@ -558,6 +578,51 @@ class EnterTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
         assertThat(gd.stack.getFirst().getTargetId()).isNull();
+    }
+
+    @Test
+    void anyCreatureMayChoiceBelongsToSourceController() {
+        UUID opponentId = UUID.randomUUID();
+        gd.orderedPlayerIds.add(opponentId);
+        gd.playerBattlefields.put(opponentId, new ArrayList<>());
+        MayEffect effect = new MayEffect(new GainLifeEffect(3), "Gain life?");
+        addAllyCreatureTrigger(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, effect);
+        Permanent source = gd.playerBattlefields.get(player1Id).getFirst();
+        Card entering = enteringCreature(2, 2);
+        gd.playerBattlefields.get(opponentId).add(new Permanent(entering));
+
+        service.checkAnyCreatureEntersTriggers(gd, opponentId, entering);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        });
+    }
+
+    @Test
+    void enteringControllerTargetedMayQueuesTargetBeforeTheOptionalChoice() {
+        UUID opponentId = UUID.randomUUID();
+        gd.orderedPlayerIds.add(opponentId);
+        gd.playerBattlefields.put(opponentId, new ArrayList<>());
+        MayEffect effect = new MayEffect(
+                com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect.fromEnteringPermanent(
+                        new com.github.laxika.magicalvibes.model.amount.SourcePower()),
+                "Deal damage?", null, com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);
+        addAllyCreatureTrigger(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, effect);
+        Card entering = enteringCreature(3, 3);
+        Permanent permanent = new Permanent(entering);
+        gd.playerBattlefields.get(opponentId).add(permanent);
+
+        service.checkAnyCreatureEntersTriggers(gd, opponentId, entering);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        PermanentChoiceContext.EntersTriggerTarget choice =
+                gd.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.enteringPermanentId()).isEqualTo(permanent.getId());
+        assertThat(choice.sourceIsEnteringPermanent()).isTrue();
     }
 
     @Test

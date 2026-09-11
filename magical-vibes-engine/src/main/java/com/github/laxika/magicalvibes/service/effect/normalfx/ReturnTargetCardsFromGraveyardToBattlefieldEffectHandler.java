@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -39,6 +41,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private final PermanentCounterSupport permanentCounterSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,7 +62,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                                           ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         List<GraveyardCard> cardsToReturn = new ArrayList<>();
         int totalManaValue = 0;
-        for (UUID targetCardId : entry.getTargetCardIds()) {
+        for (UUID targetCardId : targets(entry, effect)) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
             if (graveyardOwnerId == null) {
                 continue;
@@ -119,7 +122,18 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
 
     public void resolveForController(GameData gameData, StackEntry entry, CardEffect effect,
                                      UUID graveyardOwnerId) {
-        resolveForController(gameData, entry, effect, graveyardOwnerId, entry.getTargetCardIds());
+        resolveForController(gameData, entry, effect, graveyardOwnerId, targets(entry, effect));
+    }
+
+    private List<UUID> targets(StackEntry entry, CardEffect effect) {
+        List<UUID> graveyardTargets = entry.getTargetCardIdsForEffect(effect);
+        if (!graveyardTargets.isEmpty() || entry.getTargetCardIdsByEffect().containsKey(effect)) {
+            return graveyardTargets;
+        }
+        List<UUID> bound = entry.targetsForBoundEffectGroup(effect);
+        if (bound != null) return bound;
+        Integer group = entry.getResolvingEffectTargetGroup();
+        return group != null ? entry.targetsForGroup(group) : entry.targetsForEffect(effect);
     }
 
     public void resolveForController(GameData gameData, StackEntry entry, CardEffect effect,
@@ -135,6 +149,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 : null;
         List<Card> cardsToReturn = new ArrayList<>();
         int totalManaValue = 0;
+        int maxTotalManaValue = e.maxTotalManaValue();
+        if (e.dynamicMaxTotalManaValue() != null) {
+            maxTotalManaValue = Math.max(0, amountEvaluationService.evaluate(
+                    gameData, e.dynamicMaxTotalManaValue(), AmountContext.forStackEntry(entry, null)));
+        }
         for (UUID targetCardId : targetCardIds) {
             Card card = graveyard.stream()
                     .filter(graveyardCard -> graveyardCard.getId().equals(targetCardId))
@@ -144,7 +163,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                     && predicateEvaluationService.matchesCardPredicate(card, e.filter(), entry.getCard().getId(),
                     gameData, graveyardOwnerId, null, null, entry.getXValue())
                     && (!e.hasTotalManaValueCap()
-                    || totalManaValue + card.getManaValue() <= e.maxTotalManaValue())) {
+                    || totalManaValue + card.getManaValue() <= maxTotalManaValue)) {
                 cardsToReturn.add(card);
                 totalManaValue += card.getManaValue();
             }

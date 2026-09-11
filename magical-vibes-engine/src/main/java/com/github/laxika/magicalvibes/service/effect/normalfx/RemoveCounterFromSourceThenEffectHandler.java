@@ -65,10 +65,11 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
         if (e.counterType() == CounterType.ANY) {
             var options = java.util.Arrays.stream(CounterType.values())
                     .filter(type -> type != CounterType.ANY && type != CounterType.SILVER
-                            && source.getCounterCount(type) > 0)
+                            && source.getCounterCount(type) >= e.count())
                     .map(type -> new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
-                            "Remove a " + permanentCounterSupport.counterTypeName(type) + " counter",
-                            new RemoveCounterFromSourceThenEffect(type, e.thenEffect(), e.onlyIfLastCounterRemoved())))
+                            "Remove " + e.count() + " " + permanentCounterSupport.counterTypeName(type) + " counters",
+                            new RemoveCounterFromSourceThenEffect(type, e.count(), e.thenEffect(),
+                                    e.onlyIfLastCounterRemoved())))
                     .toList();
             if (options.size() > 1) {
                 playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
@@ -77,18 +78,19 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 return;
             }
         }
-        CounterType counterType = findCounterType(source, e.counterType());
+        CounterType counterType = findCounterType(source, e.counterType(), e.count());
         if (counterType == null) {
             return;
         }
 
-        source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
+        source.setCounterCount(counterType, source.getCounterCount(counterType) - e.count());
         if (counterType == CounterType.OIL) {
-            gameData.recordOilCounterRemoved(source, 1);
+            gameData.recordOilCounterRemoved(source, e.count());
         }
         gameLogService.append(gameData, GameLog.builder().card(source.getCard())
-                .text(" removes a ").text(permanentCounterSupport.counterTypeName(counterType))
-                .text(" counter.").build());
+                .text(" removes ").text(e.count() == 1 ? "a " : e.count() + " ")
+                .text(permanentCounterSupport.counterTypeName(counterType))
+                .text(e.count() == 1 ? " counter." : " counters.").build());
 
         if (!e.onlyIfLastCounterRemoved() || source.getCounterCount(counterType) == 0) {
             beginReflexiveTrigger(gameData, entry, e.thenEffect());
@@ -117,7 +119,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
             return;
         }
 
-        gameData.stack.add(new StackEntry(
+        StackEntry reflexive = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 entry.getCard(),
                 entry.getControllerId(),
@@ -129,7 +131,9 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 null,
                 null,
                 null,
-                null));
+                null);
+        reflexive.setTriggeringCardId(entry.getTriggeringCardId());
+        gameData.stack.add(reflexive);
     }
 
     private void beginBattlefieldReflexiveTrigger(GameData gameData, StackEntry entry,
@@ -220,8 +224,8 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
     }
 
     private void putGraveyardTargetedReflexiveTriggerOnStack(GameData gameData, StackEntry entry,
-                                                              CardEffect thenEffect, UUID targetCardId) {
-        gameData.stack.add(new StackEntry(
+                                                     CardEffect thenEffect, UUID targetCardId) {
+        StackEntry reflexive = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 entry.getCard(),
                 entry.getControllerId(),
@@ -233,7 +237,9 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 null,
                 Zone.GRAVEYARD,
                 null,
-                null));
+                null);
+        reflexive.setTriggeringCardId(entry.getTriggeringCardId());
+        gameData.stack.add(reflexive);
     }
 
     private void putPlayerTargetedReflexiveTriggerOnStack(GameData gameData, StackEntry entry,
@@ -248,15 +254,15 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 entry.getSourcePermanentId()));
     }
 
-    private CounterType findCounterType(Permanent source, CounterType requestedType) {
+    private CounterType findCounterType(Permanent source, CounterType requestedType, int count) {
         if (requestedType != CounterType.ANY) {
-            return source.getCounterCount(requestedType) > 0 ? requestedType : null;
+            return source.getCounterCount(requestedType) >= count ? requestedType : null;
         }
         for (CounterType counterType : CounterType.values()) {
             if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
                 continue;
             }
-            if (source.getCounterCount(counterType) > 0) {
+            if (source.getCounterCount(counterType) >= count) {
                 return counterType;
             }
         }

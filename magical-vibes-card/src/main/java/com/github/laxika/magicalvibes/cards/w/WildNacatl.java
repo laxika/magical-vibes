@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ALA", collectorNumber = "152")
+@CardRegistration(set = "DDH", collectorNumber = "4")
 public class WildNacatl extends Card {
 
     public WildNacatl() {

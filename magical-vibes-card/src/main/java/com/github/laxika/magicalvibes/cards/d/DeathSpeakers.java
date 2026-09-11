@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "24")
 @CardRegistration(set = "HML", collectorNumber = "7")
+@CardRegistration(set = "ME1", collectorNumber = "7")
 public class DeathSpeakers extends Card {
 
     public DeathSpeakers() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "84")
+@CardRegistration(set = "FDN", collectorNumber = "515")
 public class StormFleetSpy extends Card {
 
     public StormFleetSpy() {

@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.ModalOptionView;
@@ -158,6 +159,10 @@ public class CardViewFactory {
                 .map(PayLifeOrPayManaCost.class::cast)
                 .findFirst()
                 .orElse(null);
+        Card additionalCostCard = card.getCastingOption(AdventureCast.class).isPresent()
+                && card.getBackFaceCard() != null ? card.getBackFaceCard() : card;
+        boolean additionalSacrificeCreature = additionalCostCard.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(SacrificeCreatureCost.class::isInstance);
 
         // Prepare cards keep their front face on the battlefield and print the prepare spell inset,
         // so the spell is projected as a nested view rather than as a face the client flips to.
@@ -296,6 +301,7 @@ public class CardViewFactory {
                 creatureTypeChoices,
                 additionalCost != null ? additionalCost.lifeAmount() : 0,
                 additionalCost != null ? additionalCost.manaCost() : null,
+                additionalSacrificeCreature,
                 collectEvidenceAlternativeCost != null,
                 collectEvidenceAlternativeCost != null ? collectEvidenceAlternativeCost.minimumManaValue() : 0,
                 prepareSpellView);

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "306")
+@CardRegistration(set = "SCG", collectorNumber = "131")
 public class Upwelling extends Card {
 
     public Upwelling() {

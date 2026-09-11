@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "47")
+@CardRegistration(set = "LGN", collectorNumber = "20")
 public class StarlightInvoker extends Card {
 
     public StarlightInvoker() {

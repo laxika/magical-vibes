@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "193")
 @CardRegistration(set = "WTH", collectorNumber = "91")
+@CardRegistration(set = "HOP", collectorNumber = "48")
 public class BogardanFirefiend extends Card {
 
     public BogardanFirefiend() {

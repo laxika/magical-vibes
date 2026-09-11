@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "51")
+@CardRegistration(set = "H09", collectorNumber = "3")
 public class AmoeboidChangeling extends Card {
 
     public AmoeboidChangeling() {

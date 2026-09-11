@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HighGround.class, GrizzlyBears.class})
 class HighGroundTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -31,7 +32,6 @@ class HighGroundTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("High Ground");
     }
 
     @Test
@@ -44,7 +44,8 @@ class HighGroundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "High Ground");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof HighGround);
     }
 
     // ===== Blocking: one creature blocks two attackers =====
@@ -54,31 +55,16 @@ class HighGroundTest extends BaseCardTest {
     void creatureCanBlockTwoAttackers() {
         harness.addToBattlefield(player2, new HighGround());
 
-        // Player2 has one creature (blocker)
-        GrizzlyBears blocker = new GrizzlyBears();
-        Permanent blockerPerm = new Permanent(blocker);
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        // Player1 has two attacking creatures
-        GrizzlyBears attacker1 = new GrizzlyBears();
-        Permanent atkPerm1 = new Permanent(attacker1);
-        atkPerm1.setSummoningSick(false);
+        Permanent atkPerm1 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm1);
 
-        GrizzlyBears attacker2 = new GrizzlyBears();
-        Permanent atkPerm2 = new Permanent(attacker2);
-        atkPerm2.setSummoningSick(false);
+        Permanent atkPerm2 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        // Blocker is at index 1 (High Ground at 0), attackers at indices 0 and 1
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(1, 0),
                 new BlockerAssignment(1, 1)
@@ -89,33 +75,50 @@ class HighGroundTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("High Ground lets each creature you control block an additional creature")
+    void eachControlledCreatureCanBlockAnAdditionalCreature() {
+        harness.addToBattlefield(player2, new HighGround());
+        Permanent blocker1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
+        attacker1.setAttacking(true);
+        Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
+        attacker2.setAttacking(true);
+        Permanent attacker3 = addCreatureReady(player1, new GrizzlyBears());
+        attacker3.setAttacking(true);
+        Permanent attacker4 = addCreatureReady(player1, new GrizzlyBears());
+        attacker4.setAttacking(true);
+
+        List<Permanent> defenderBattlefield = gd.playerBattlefields.get(player2.getId());
+        List<Permanent> attackerBattlefield = gd.playerBattlefields.get(player1.getId());
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(defenderBattlefield.indexOf(blocker1), attackerBattlefield.indexOf(attacker1)),
+                new BlockerAssignment(defenderBattlefield.indexOf(blocker1), attackerBattlefield.indexOf(attacker2)),
+                new BlockerAssignment(defenderBattlefield.indexOf(blocker2), attackerBattlefield.indexOf(attacker3)),
+                new BlockerAssignment(defenderBattlefield.indexOf(blocker2), attackerBattlefield.indexOf(attacker4))
+        ));
+
+        assertThat(blocker1.getBlockingTargets()).containsExactlyInAnyOrder(
+                attackerBattlefield.indexOf(attacker1), attackerBattlefield.indexOf(attacker2));
+        assertThat(blocker2.getBlockingTargets()).containsExactlyInAnyOrder(
+                attackerBattlefield.indexOf(attacker3), attackerBattlefield.indexOf(attacker4));
+    }
+
+    @Test
     @DisplayName("Without High Ground, creature cannot block two attackers")
     void cannotBlockTwoWithoutHighGround() {
-        // Player2 has one creature (blocker) but NO High Ground
-        GrizzlyBears blocker = new GrizzlyBears();
-        Permanent blockerPerm = new Permanent(blocker);
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        // Player1 has two attacking creatures
-        GrizzlyBears attacker1 = new GrizzlyBears();
-        Permanent atkPerm1 = new Permanent(attacker1);
-        atkPerm1.setSummoningSick(false);
+        Permanent atkPerm1 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm1);
 
-        GrizzlyBears attacker2 = new GrizzlyBears();
-        Permanent atkPerm2 = new Permanent(attacker2);
-        atkPerm2.setSummoningSick(false);
+        Permanent atkPerm2 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        // Blocker at index 0, attackers at indices 0 and 1
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(0, 1)
@@ -129,23 +132,13 @@ class HighGroundTest extends BaseCardTest {
     void cannotBlockSameAttackerTwice() {
         harness.addToBattlefield(player2, new HighGround());
 
-        GrizzlyBears blocker = new GrizzlyBears();
-        Permanent blockerPerm = new Permanent(blocker);
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        GrizzlyBears attacker = new GrizzlyBears();
-        Permanent atkPerm = new Permanent(attacker);
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        // Blocker at index 1 (High Ground at 0), attacker at index 0
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(1, 0),
                 new BlockerAssignment(1, 0)
@@ -159,26 +152,15 @@ class HighGroundTest extends BaseCardTest {
     void cannotExceedMaxBlocks() {
         harness.addToBattlefield(player2, new HighGround());
 
-        GrizzlyBears blocker = new GrizzlyBears();
-        Permanent blockerPerm = new Permanent(blocker);
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        // Three attackers
         for (int i = 0; i < 3; i++) {
-            GrizzlyBears atk = new GrizzlyBears();
-            Permanent atkPerm = new Permanent(atk);
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        // Blocker at index 1 tries to block all 3 attackers — max is 2 (1 + 1 from High Ground)
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(1, 0),
                 new BlockerAssignment(1, 1),
@@ -194,25 +176,15 @@ class HighGroundTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HighGround());
         harness.addToBattlefield(player2, new HighGround());
 
-        GrizzlyBears blocker = new GrizzlyBears();
-        Permanent blockerPerm = new Permanent(blocker);
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         for (int i = 0; i < 3; i++) {
-            GrizzlyBears atk = new GrizzlyBears();
-            Permanent atkPerm = new Permanent(atk);
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        // Blocker at index 2 (two High Grounds at 0, 1), attackers at 0, 1, 2
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(2, 0),
                 new BlockerAssignment(2, 1),
@@ -230,45 +202,28 @@ class HighGroundTest extends BaseCardTest {
     void blockerDealsDamageToBothAttackers() {
         harness.addToBattlefield(player2, new HighGround());
 
-        // 4/4 blocker blocks two 2/2 attackers — blocker survives, both attackers die
         GrizzlyBears bigBlocker = new GrizzlyBears();
         bigBlocker.setPower(4);
         bigBlocker.setToughness(4);
-        Permanent blockerPerm = new Permanent(bigBlocker);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, bigBlocker);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
         blockerPerm.addBlockingTarget(1);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        GrizzlyBears atk1 = new GrizzlyBears();
-        Permanent atkPerm1 = new Permanent(atk1);
-        atkPerm1.setSummoningSick(false);
+        Permanent atkPerm1 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm1);
 
-        GrizzlyBears atk2 = new GrizzlyBears();
-        Permanent atkPerm2 = new Permanent(atk2);
-        atkPerm2.setSummoningSick(false);
+        Permanent atkPerm2 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // CR 510.1d — the 4/4 blocks 2 attackers, so its controller divides its 4 combat damage:
-        // 2 to each 2/2 kills both.
         harness.handleCombatDamageAssigned(player2,
                 gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm),
                 java.util.Map.of(atkPerm1.getId(), 2, atkPerm2.getId(), 2));
 
-        // 4/4 blocker deals 4 damage to first attacker (kills 2/2), remaining to second (kills 2/2)
-        // Both 2/2 attackers deal 2+2=4 damage to blocker → 4/4 blocker dies
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blockerPerm.getCard());
     }
 
     @Test
@@ -276,49 +231,34 @@ class HighGroundTest extends BaseCardTest {
     void bigBlockerSurvivesTwoSmallAttackers() {
         harness.addToBattlefield(player2, new HighGround());
 
-        // 5/5 blocker blocks two 1/1 attackers — blocker survives, both attackers die
         GrizzlyBears bigBlocker = new GrizzlyBears();
         bigBlocker.setPower(5);
         bigBlocker.setToughness(5);
-        Permanent blockerPerm = new Permanent(bigBlocker);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, bigBlocker);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
         blockerPerm.addBlockingTarget(1);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         GrizzlyBears small1 = new GrizzlyBears();
         small1.setPower(1);
         small1.setToughness(1);
-        Permanent atkPerm1 = new Permanent(small1);
-        atkPerm1.setSummoningSick(false);
+        Permanent atkPerm1 = addCreatureReady(player1, small1);
         atkPerm1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm1);
 
         GrizzlyBears small2 = new GrizzlyBears();
         small2.setPower(1);
         small2.setToughness(1);
-        Permanent atkPerm2 = new Permanent(small2);
-        atkPerm2.setSummoningSick(false);
+        Permanent atkPerm2 = addCreatureReady(player1, small2);
         atkPerm2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // CR 510.1d — the 5/5 blocks 2 attackers, so its controller divides its 5 combat damage;
-        // 1 to each 1/1 is lethal (the surplus can pile on either attacker).
         harness.handleCombatDamageAssigned(player2,
                 gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm),
                 java.util.Map.of(atkPerm1.getId(), 4, atkPerm2.getId(), 1));
 
-        // Both 1/1 attackers should be dead
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        // 5/5 blocker takes only 2 damage total — survives
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blockerPerm);
     }
 
     @Test
@@ -327,33 +267,18 @@ class HighGroundTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HighGround());
         harness.setLife(player2, 20);
 
-        // Two 2/2 attackers, one blocked by a 2/2, one unblocked
-        GrizzlyBears blocker = new GrizzlyBears();
-        Permanent blockerPerm = new Permanent(blocker);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0); // Blocks only first attacker
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        GrizzlyBears atk1 = new GrizzlyBears();
-        Permanent atkPerm1 = new Permanent(atk1);
-        atkPerm1.setSummoningSick(false);
+        Permanent atkPerm1 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm1);
 
-        GrizzlyBears atk2 = new GrizzlyBears();
-        Permanent atkPerm2 = new Permanent(atk2);
-        atkPerm2.setSummoningSick(false);
+        Permanent atkPerm2 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Only unblocked attacker deals damage to player
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
@@ -362,35 +287,20 @@ class HighGroundTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking limit reverts when High Ground is removed from battlefield")
     void effectStopsWhenRemoved() {
-        harness.addToBattlefield(player2, new HighGround());
+        Permanent highGround = harness.addToBattlefieldAndReturn(player2, new HighGround());
 
-        GrizzlyBears blocker = new GrizzlyBears();
-        Permanent blockerPerm = new Permanent(blocker);
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        GrizzlyBears atk1 = new GrizzlyBears();
-        Permanent atkPerm1 = new Permanent(atk1);
-        atkPerm1.setSummoningSick(false);
+        Permanent atkPerm1 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm1);
 
-        GrizzlyBears atk2 = new GrizzlyBears();
-        Permanent atkPerm2 = new Permanent(atk2);
-        atkPerm2.setSummoningSick(false);
+        Permanent atkPerm2 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm2);
 
-        // Remove High Ground before declaring blockers
-        gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("High Ground"));
+        gd.playerBattlefields.get(player2.getId()).remove(highGround);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        // Without High Ground, blocker at index 0 can only block one attacker
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(0, 1)
@@ -404,32 +314,18 @@ class HighGroundTest extends BaseCardTest {
     @Test
     @DisplayName("High Ground does not grant additional blocks to opponent's creatures")
     void doesNotAffectOpponent() {
-        // Player1 has High Ground, but player2 is the defender
         harness.addToBattlefield(player1, new HighGround());
 
-        GrizzlyBears blocker = new GrizzlyBears();
-        Permanent blockerPerm = new Permanent(blocker);
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        GrizzlyBears atk1 = new GrizzlyBears();
-        Permanent atkPerm1 = new Permanent(atk1);
-        atkPerm1.setSummoningSick(false);
+        Permanent atkPerm1 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm1);
 
-        GrizzlyBears atk2 = new GrizzlyBears();
-        Permanent atkPerm2 = new Permanent(atk2);
-        atkPerm2.setSummoningSick(false);
+        Permanent atkPerm2 = addCreatureReady(player1, new GrizzlyBears());
         atkPerm2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
-        // Player2 doesn't have High Ground — cannot multi-block
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 1),
                 new BlockerAssignment(0, 2)

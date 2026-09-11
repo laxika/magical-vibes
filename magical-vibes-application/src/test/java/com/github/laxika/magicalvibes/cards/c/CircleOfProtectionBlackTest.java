@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AdarkarUnicorn;
+import com.github.laxika.magicalvibes.cards.b.BadMoon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KrovikanHorror;
-import com.github.laxika.magicalvibes.cards.p.Pestilence;
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
-import com.github.laxika.magicalvibes.cards.a.AdarkarUnicorn;
 import com.github.laxika.magicalvibes.cards.m.MoorFiend;
+import com.github.laxika.magicalvibes.cards.p.Pestilence;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.cards.t.TouchOfDeath;
 import com.github.laxika.magicalvibes.cards.w.WitheringWisps;
@@ -24,12 +24,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionBlack.class, AdarkarUnicorn.class, MoorFiend.class, TouchOfDeath.class, WitheringWisps.class, SnowCoveredSwamp.class, GrizzlyBears.class, KrovikanHorror.class, Pestilence.class, ScatheZombies.class})
+@CardUsed({AdarkarUnicorn.class, BadMoon.class, CircleOfProtectionBlack.class, GrizzlyBears.class, KrovikanHorror.class, MoorFiend.class, Pestilence.class, SnowCoveredSwamp.class, TouchOfDeath.class, WitheringWisps.class})
 class CircleOfProtectionBlackTest extends BaseCardTest {
 
     private static final String PESTILENCE_MANA_COST = "{2}{B}{B}";
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, MoorFiend.class, AdarkarUnicorn.class})
     @DisplayName("Resolving the ability prompts for a black source choice")
     void resolvingAbilityPromptsForBlackSource() {
         addReadyCircle(player1);
@@ -47,6 +48,7 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, MoorFiend.class})
     @DisplayName("Choosing a black source records a one-shot prevention shield")
     void choosingBlackSourceRecordsShield() {
         addReadyCircle(player1);
@@ -62,6 +64,7 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, MoorFiend.class})
     @DisplayName("Prevents the next combat damage from the chosen source and consumes the shield")
     void preventsNextCombatDamageAndConsumesShield() {
         harness.setLife(player1, 20);
@@ -81,6 +84,7 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, TouchOfDeath.class})
     @DisplayName("Prevents the next noncombat damage from a chosen black spell")
     void preventsNextNoncombatDamageFromChosenBlackSpell() {
         harness.setLife(player1, 20);
@@ -108,6 +112,7 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, MoorFiend.class})
     @DisplayName("Only the chosen source is prevented; a different black source still deals damage")
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
@@ -130,6 +135,7 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, WitheringWisps.class, SnowCoveredSwamp.class})
     @DisplayName("Prevents only the next damage event from the chosen source")
     void preventsOnlyNextDamageEventFromChosenSource() {
         harness.setLife(player1, 20);
@@ -154,6 +160,7 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, AdarkarUnicorn.class})
     @DisplayName("Non-black permanents are not valid source choices")
     void nonBlackSourceNotValid() {
         addReadyCircle(player1);
@@ -169,6 +176,24 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, BadMoon.class})
+    @DisplayName("A black permanent is a valid source even when it cannot deal damage")
+    void blackPermanentNeedNotDealDamage() {
+        addReadyCircle(player1);
+        Permanent badMoon = harness.addToBattlefieldAndReturn(player2, new BadMoon());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(badMoon.getId());
+    }
+
+    @Test
+    @CardUsed({CircleOfProtectionBlack.class, MoorFiend.class})
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         addReadyCircle(player1);
@@ -193,7 +218,12 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
         return addCreatureReady(player, new CircleOfProtectionBlack());
     }
 
+    private Permanent addReadyBlackDamageSource(Player player) {
+        return addCreatureReady(player, new KrovikanHorror());
+    }
+
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, KrovikanHorror.class, GrizzlyBears.class})
     @DisplayName("Prevents the next noncombat damage from the chosen black source")
     void preventsNextNoncombatDamageAndConsumesShield() {
         harness.setLife(player1, 20);
@@ -216,6 +246,33 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CircleOfProtectionBlack.class, Pestilence.class, MoorFiend.class})
+    @DisplayName("Prevention only applies to damage dealt to the protected player")
+    void onlyPreventsDamageToController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent pestilence = harness.addToBattlefieldAndReturn(player2, new Pestilence());
+        Permanent creature = addCreatureReady(player1, new MoorFiend());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, pestilence.getId());
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        int pestilenceIndex = gd.playerBattlefields.get(player2.getId()).indexOf(pestilence);
+        harness.activateAbility(player2, pestilenceIndex, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CircleOfProtectionBlack.class, Pestilence.class})
     @DisplayName("A permanent spell remains the chosen source after it resolves")
     void preventsDamageFromPermanentSpellAfterItResolves() {
         harness.setLife(player1, 20);
@@ -242,11 +299,38 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
-    private Permanent addReadyBlackCreature(Player player) {
-        return addCreatureReady(player, new ScatheZombies());
+    @Test
+    @DisplayName("Damage from the chosen source to another player does not consume the shield")
+    void damageToAnotherPlayerDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent horror = addReadyBlackDamageSource(player2);
+        Permanent firstFodder = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondFodder = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, horror.getId());
+
+        int horrorIndex = gd.playerBattlefields.get(player2.getId()).indexOf(horror);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.activateAbility(player2, horrorIndex, null, player2.getId());
+        harness.handlePermanentChosen(player2, firstFodder.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(horror.getId()));
+
+        harness.activateAbility(player2, horrorIndex, null, player1.getId());
+        harness.handlePermanentChosen(player2, secondFodder.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
-    private Permanent addReadyBlackDamageSource(Player player) {
-        return addCreatureReady(player, new KrovikanHorror());
-    }
 }

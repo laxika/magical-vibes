@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "94")
 @CardRegistration(set = "TSB", collectorNumber = "87")
+@CardRegistration(set = "DDE", collectorNumber = "42")
 public class ThornscapeBattlemage extends Card {
 
     public ThornscapeBattlemage() {

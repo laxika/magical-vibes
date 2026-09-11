@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "7")
+@CardRegistration(set = "PC2", collectorNumber = "5")
 public class CelestialAncient extends Card {
 
     public CelestialAncient() {

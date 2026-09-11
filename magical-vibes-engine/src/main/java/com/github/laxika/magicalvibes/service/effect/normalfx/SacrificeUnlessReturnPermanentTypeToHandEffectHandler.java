@@ -41,7 +41,7 @@ public class SacrificeUnlessReturnPermanentTypeToHandEffectHandler implements No
 
         if (validPermanents.isEmpty()) {
             if (sourcePermanent != null) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
                 gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is sacrificed because there is no "
                         + e.permanentType().name().toLowerCase() + " to return."));
                 log.info("Game {} - {} sacrificed (no {}s to return)", gameData.id, sourceCard.getName(),

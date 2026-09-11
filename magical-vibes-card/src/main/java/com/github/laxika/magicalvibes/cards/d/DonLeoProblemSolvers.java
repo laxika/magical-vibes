@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMT", collectorNumber = "143")
+@CardRegistration(set = "TMT", collectorNumber = "242")
 public class DonLeoProblemSolvers extends Card {
 
     public DonLeoProblemSolvers() {

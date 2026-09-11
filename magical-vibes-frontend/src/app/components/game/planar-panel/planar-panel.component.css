@@ -1,0 +1,21 @@
+:host { container-type: inline-size; display: block; flex: 0 0 auto; min-width: 0; }
+.planar-panel { display: flex; gap: 1rem; padding: .75rem 1rem; color: #e7dfce; background: #222a30; border-block: 1px solid #62717a; }
+.planes { display: flex; flex: 1; gap: 1rem; overflow-x: auto; min-width: 0; }
+.plane { flex: 1 0 260px; max-width: 600px; }
+summary { font: 600 1.1rem Georgia, serif; cursor: pointer; }
+.plane-type, .deck-count { color: #bcc6cd; font-size: .75rem; }
+.plane-type { margin-top: .35rem; }
+.plane-text { white-space: pre-line; font-size: .8rem; line-height: 1.5; margin: .4rem 0; max-width: 75ch; }
+.planar-controls { display: flex; flex-direction: column; justify-content: center; gap: .4rem; min-width: 160px; }
+button { display: flex; justify-content: space-between; gap: .75rem; padding: .7rem; background: #354953; border: 1px solid #96aeb8; color: #fff; border-radius: 4px; cursor: pointer; }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, summary:focus-visible { outline: 2px solid #e3c885; outline-offset: 3px; }
+output { min-height: 1.2em; color: #e3c885; font-weight: 600; }
+.waiting { font-size: .8rem; }
+.counter { padding-right: .75rem; font-size: .75rem; }
+@container (max-width: 600px) {
+  .planar-panel { flex-direction: column; padding: .5rem; gap: .5rem; }
+  .plane { flex-basis: 85%; }
+  .planar-controls { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; }
+  button { min-height: 44px; }
+}

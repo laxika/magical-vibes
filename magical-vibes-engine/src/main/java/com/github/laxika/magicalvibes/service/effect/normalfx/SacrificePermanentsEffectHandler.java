@@ -282,16 +282,21 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 continue;
             }
 
-            if (matching.size() <= count) {
+            if (matching.size() <= count && !e.simultaneousChoices()) {
                 // No choice needed — mark all for simultaneous sacrifice
                 matching.stream().map(Permanent::getId).forEach(autoSacrificeIds::add);
             } else {
                 // Player must choose — add to queue
                 List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
-                choosers.add(new PendingForcedSacrifice(playerId, count, matchingIds));
+                choosers.add(new PendingForcedSacrifice(playerId, Math.min(count, matchingIds.size()), matchingIds));
             }
         }
 
+        if (e.simultaneousChoices()
+                && choosers.stream().allMatch(choice -> choice.validPermanentIds().size() <= choice.count())) {
+            choosers.forEach(choice -> autoSacrificeIds.addAll(choice.validPermanentIds()));
+            choosers.clear();
+        }
         if (choosers.isEmpty()) {
             // All players auto-resolved — sacrifice everything now
             destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);

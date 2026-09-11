@@ -89,7 +89,7 @@ public class SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler
             throw new IllegalStateException("No pending resolution for sacrifice choice");
         }
 
-        if (!permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
+        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice)) {
             return;
         }
 

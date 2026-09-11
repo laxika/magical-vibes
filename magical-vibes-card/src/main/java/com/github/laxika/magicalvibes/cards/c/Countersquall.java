@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "CON", collectorNumber = "103")
+@CardRegistration(set = "DDH", collectorNumber = "59")
 public class Countersquall extends Card {
 
     public Countersquall() {

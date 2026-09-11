@@ -22,6 +22,8 @@ import java.util.List;
 @CardRegistration(set = "ONE", collectorNumber = "92")
 @CardRegistration(set = "MID", collectorNumber = "98")
 @CardRegistration(set = "DTK", collectorNumber = "98")
+@CardRegistration(set = "DDC", collectorNumber = "46")
+@CardRegistration(set = "PD3", collectorNumber = "13")
 public class Duress extends Card {
 
     public Duress() {

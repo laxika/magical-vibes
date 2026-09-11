@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "162")
+@CardRegistration(set = "TD2", collectorNumber = "74")
 public class GraftedExoskeleton extends Card {
 
     public GraftedExoskeleton() {

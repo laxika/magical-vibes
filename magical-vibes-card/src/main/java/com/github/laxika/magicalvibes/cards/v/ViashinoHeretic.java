@@ -18,7 +18,7 @@ public class ViashinoHeretic extends Card {
 
     public ViashinoHeretic() {
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 "{1}{R}",
                 List.of(new DestroyTargetPermanentThenEffect(
                         EventStat.MANA_VALUE,

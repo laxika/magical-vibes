@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -18,6 +19,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.EnumSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,21 +57,35 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                     return;
                 }
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(
-                        gameData, entry.getControllerId(), imprintedCard.hasType(CardType.CREATURE));
+                int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                        gameData, entry.getControllerId(), 1, imprintedCard.getSubtypes(), imprintedCard.hasType(CardType.CREATURE));
                 for (int copy = 0; copy < tokenMultiplier; copy++) {
                     // Create a token that's a copy of the imprinted card (copying all copiable values)
                     Card tokenCard = new Card();
                     tokenCard.setName(imprintedCard.getName());
                     tokenCard.setType(imprintedCard.getType());
-                    tokenCard.setAdditionalTypes(imprintedCard.getAdditionalTypes());
+                    Set<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
+                    if (imprintedCard.getAdditionalTypes() != null) {
+                        additionalTypes.addAll(imprintedCard.getAdditionalTypes());
+                    }
+                    additionalTypes.addAll(e.additionalTypes());
+                    tokenCard.setAdditionalTypes(additionalTypes);
                     tokenCard.setManaCost(imprintedCard.getManaCost() != null ? imprintedCard.getManaCost() : "");
                     tokenCard.setToken(true);
                     tokenCard.setColor(imprintedCard.getColor());
                     tokenCard.setSupertypes(imprintedCard.getSupertypes());
-                    tokenCard.setPower(imprintedCard.getPower());
-                    tokenCard.setToughness(imprintedCard.getToughness());
-                    tokenCard.setSubtypes(imprintedCard.getSubtypes());
+                    tokenCard.setPower(e.powerOverride() != null ? e.powerOverride() : imprintedCard.getPower());
+                    tokenCard.setToughness(e.toughnessOverride() != null ? e.toughnessOverride() : imprintedCard.getToughness());
+                    List<CardSubtype> subtypes = new ArrayList<>();
+                    if (imprintedCard.getSubtypes() != null) {
+                        subtypes.addAll(imprintedCard.getSubtypes());
+                    }
+                    for (CardSubtype subtype : e.additionalSubtypes()) {
+                        if (!subtypes.contains(subtype)) {
+                            subtypes.add(subtype);
+                        }
+                    }
+                    tokenCard.setSubtypes(subtypes);
                     tokenCard.setCardText(imprintedCard.getCardText());
                     tokenCard.setSetCode(imprintedCard.getSetCode());
                     tokenCard.setCollectorNumber(imprintedCard.getCollectorNumber());
@@ -92,11 +109,17 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                     for (ActivatedAbility ability : imprintedCard.getActivatedAbilities()) {
                         tokenCard.addActivatedAbility(ability);
                     }
+                    for (CardEffect additionalEffect : e.additionalEffects()) {
+                        tokenCard.addEffect(EffectSlot.STATIC, additionalEffect);
+                    }
                     tokenCard.copyTargetingFrom(imprintedCard);
                     tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                             gameData, entry.getControllerId(), tokenCard);
 
                     Permanent tokenPermanent = new Permanent(tokenCard);
+                    if (e.grantHasteUntilEndOfTurn()) {
+                        tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
+                    }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
                     // Conditionally schedule for exile at beginning of next end step
@@ -104,14 +127,15 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                         gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
                     }
 
-                    if (e.grantHaste()) {
+                    if (e.grantHaste() || e.grantHasteUntilEndOfTurn()) {
                         gameLogService.append(gameData, GameLog.textCardText(
                                 "A token copy of ", imprintedCard, " is created with haste."));
                     } else {
                         gameLogService.append(gameData, GameLog.textCardText(
                                 "A token copy of ", imprintedCard, " is created."));
                     }
-                    log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
+                    log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(),
+                            entry.getCard().getName());
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
                     // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.

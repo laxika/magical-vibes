@@ -1,142 +1,165 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.d.Disentomb;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.Recollect;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DeathsDuet;
+import com.github.laxika.magicalvibes.cards.n.Nausea;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Anarchist.class, DeathsDuet.class, Nausea.class, RagingGoblin.class})
 class AnarchistTest extends BaseCardTest {
 
     /**
-     * Casts Anarchist and resolves it onto the battlefield, then accepts the may ability.
+     * Casts Anarchist and resolves its creature spell, leaving its ETB target choice pending.
      */
-    private void castAndAcceptMay() {
+    private void castAnarchist() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Anarchist()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+        harness.castFromHand(player1, new Anarchist(), "{4}{R}");
+        harness.passBothPriorities();
     }
 
-    // ===== ETB may ability =====
+    /** Chooses the targeted sorcery and resolves the ETB ability to its may prompt. */
+    private void castAndChooseTarget(Card target) {
+        castAnarchist();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).contains(target.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+    }
+
+    /** Casts Anarchist, chooses its target, and accepts the may ability. */
+    private void castAndAcceptMay(Card target) {
+        castAndChooseTarget(target);
+        harness.handleMayAbilityChosen(player1, true);
+    }
 
     @Test
-    @DisplayName("Resolving Anarchist triggers may ability prompt")
-    void resolvingTriggersMayPrompt() {
-        harness.setGraveyard(player1, List.of(new Disentomb()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Anarchist()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    @DisplayName("Chooses the graveyard target before resolving Anarchist's may ability")
+    void choosesTargetBeforeMayPrompt() {
+        Card sorcery = new DeathsDuet();
+        harness.setGraveyard(player1, List.of(sorcery));
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        castAnarchist();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(sorcery.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
-    @DisplayName("Declining may ability does not return anything")
+    @DisplayName("Declining the may ability leaves the targeted sorcery in the graveyard")
     void decliningMaySkipsAbility() {
-        harness.setGraveyard(player1, List.of(new Disentomb()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Anarchist()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        Card sorcery = new DeathsDuet();
+        harness.setGraveyard(player1, List.of(sorcery));
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        castAndChooseTarget(sorcery);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Disentomb");
+        harness.assertInGraveyard(player1, "Death's Duet");
     }
 
-    // ===== Graveyard return =====
-
     @Test
-    @DisplayName("Returns sorcery card from graveyard to hand")
+    @DisplayName("Returns the targeted sorcery card from the graveyard to hand")
     void returnsSorceryFromGraveyardToHand() {
-        harness.setGraveyard(player1, List.of(new Disentomb()));
-        castAndAcceptMay();
+        Card sorcery = new DeathsDuet();
+        harness.setGraveyard(player1, List.of(sorcery));
 
-        // Inner effect resolved inline → graveyard choice
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        castAndAcceptMay(sorcery);
 
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        harness.assertInHand(player1, "Disentomb");
-        harness.assertNotInGraveyard(player1, "Disentomb");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Death's Duet");
+        harness.assertNotInGraveyard(player1, "Death's Duet");
     }
 
     @Test
-    @DisplayName("Chooses specific sorcery when multiple are in graveyard")
+    @DisplayName("Chooses a specific sorcery when multiple are in the graveyard")
     void choosesSpecificSorcery() {
-        harness.setGraveyard(player1, List.of(new Disentomb(), new Recollect()));
-        castAndAcceptMay();
+        Card firstSorcery = new DeathsDuet();
+        Card selectedSorcery = new Nausea();
+        harness.setGraveyard(player1, List.of(firstSorcery, selectedSorcery));
 
-        // Choose Recollect (index 1)
-        harness.handleGraveyardCardChosen(player1, 1);
+        castAnarchist();
 
-        harness.assertInHand(player1, "Recollect");
-        harness.assertInGraveyard(player1, "Disentomb");
-        harness.assertNotInGraveyard(player1, "Recollect");
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(firstSorcery.getId(), selectedSorcery.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(selectedSorcery.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Nausea");
+        harness.assertInGraveyard(player1, "Death's Duet");
+        harness.assertNotInGraveyard(player1, "Nausea");
     }
 
-    // ===== Filtering =====
-
     @Test
-    @DisplayName("Cannot return a non-sorcery card")
+    @DisplayName("Does not offer a non-sorcery card as a graveyard target")
     void cannotReturnNonSorcery() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Disentomb()));
-        castAndAcceptMay();
+        Card creature = new RagingGoblin();
+        Card sorcery = new DeathsDuet();
+        harness.setGraveyard(player1, List.of(creature, sorcery));
 
-        // Index 0 is Grizzly Bears (creature, not a sorcery) — not a valid choice
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
+        castAnarchist();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(sorcery.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Death's Duet");
+        harness.assertInGraveyard(player1, "Raging Goblin");
     }
 
     @Test
-    @DisplayName("No effect if graveyard has no sorcery cards")
+    @DisplayName("Does not put the ability on the stack when its controller has no sorcery target")
     void noEffectWithNoSorceriesInGraveyard() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        castAndAcceptMay();
+        harness.setGraveyard(player1, List.of(new RagingGoblin()));
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no sorcery card"));
+        castAnarchist();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Raging Goblin");
     }
 
     @Test
-    @DisplayName("Player can decline graveyard choice")
-    void playerCanDeclineGraveyardChoice() {
-        harness.setGraveyard(player1, List.of(new Disentomb()));
-        castAndAcceptMay();
+    @DisplayName("Does not target a sorcery in an opponent's graveyard")
+    void onlyTargetsOwnGraveyard() {
+        harness.setGraveyard(player2, List.of(new Nausea()));
 
-        harness.handleGraveyardCardChosen(player1, -1);
+        castAnarchist();
 
-        harness.assertInGraveyard(player1, "Disentomb");
-        harness.assertNotInHand(player1, "Disentomb");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Nausea");
     }
 }

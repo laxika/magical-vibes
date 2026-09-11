@@ -20,7 +20,7 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
         Set<CardType> additionalTypesOverride,
         Set<CardSubtype> additionalSubtypesOverride,
         Set<Keyword> additionalKeywordsOverride
-) implements CardEffect {
+) implements TemporaryCopyEffect {
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect {
         additionalSupertypesOverride = additionalSupertypesOverride == null

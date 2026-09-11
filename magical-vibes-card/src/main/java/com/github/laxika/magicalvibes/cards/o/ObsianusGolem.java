@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "303")
 @CardRegistration(set = "4ED", collectorNumber = "339")
 @CardRegistration(set = "SUM", collectorNumber = "268")
+@CardRegistration(set = "3ED", collectorNumber = "268")
 public class ObsianusGolem extends Card {
 }

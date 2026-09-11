@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "TSB", collectorNumber = "82")
+@CardRegistration(set = "LGN", collectorNumber = "130")
 public class KrosanCloudscraper extends Card {
 
     public KrosanCloudscraper() {

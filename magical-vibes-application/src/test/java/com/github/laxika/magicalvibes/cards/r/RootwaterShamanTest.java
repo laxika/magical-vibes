@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.c.CursedLand;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.l.LeafcrownDryad;
 import com.github.laxika.magicalvibes.cards.w.Wanderlust;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,10 +20,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RootwaterShaman.class, GrizzlyBears.class, Wanderlust.class})
 class RootwaterShamanTest extends BaseCardTest {
 
     @Test
+    @CardUsed({RootwaterShaman.class, GrizzlyBears.class, Wanderlust.class})
     @DisplayName("Enchant creature Aura can be cast at instant speed with Rootwater Shaman out")
     void enchantCreatureAuraGetsFlash() {
         harness.addToBattlefield(player1, new RootwaterShaman());
@@ -41,6 +43,7 @@ class RootwaterShamanTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({RootwaterShaman.class, GrizzlyBears.class, Wanderlust.class})
     @DisplayName("Enchant creature Aura can be cast during the opponent's turn")
     void enchantCreatureAuraCastableOnOpponentsTurn() {
         harness.addToBattlefield(player1, new RootwaterShaman());
@@ -60,7 +63,7 @@ class RootwaterShamanTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({CursedLand.class, Forest.class})
+    @CardUsed({RootwaterShaman.class, CursedLand.class, Forest.class})
     @DisplayName("Aura with enchant land does not gain flash")
     void enchantLandAuraDoesNotGetFlash() {
         harness.addToBattlefield(player1, new RootwaterShaman());
@@ -78,6 +81,7 @@ class RootwaterShamanTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({GrizzlyBears.class, Wanderlust.class})
     @DisplayName("Enchant creature Aura has no flash without Rootwater Shaman")
     void noFlashWithoutShaman() {
         Permanent host = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -94,6 +98,7 @@ class RootwaterShamanTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({RootwaterShaman.class, GrizzlyBears.class, Wanderlust.class})
     @DisplayName("Rootwater Shaman only grants flash to its controller")
     void onlyAffectsController() {
         harness.addToBattlefield(player2, new RootwaterShaman());
@@ -106,6 +111,88 @@ class RootwaterShamanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, host.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @CardUsed({RootwaterShaman.class, Humility.class, GrizzlyBears.class, Wanderlust.class})
+    @DisplayName("Rootwater Shaman's ability does not work after it loses all abilities")
+    void abilityDoesNotWorkAfterShamanLosesAllAbilities() {
+        harness.addToBattlefield(player1, new RootwaterShaman());
+        harness.addToBattlefield(player1, new Humility());
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new Wanderlust()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.getGameService().passPriority(harness.getGameData(), player2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, host.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @CardUsed({RootwaterShaman.class, GrizzlyBears.class, Wanderlust.class})
+    @DisplayName("Rootwater Shaman can cast an enchant creature Aura targeting an opponent's creature")
+    void enchantCreatureAuraCanTargetOpponentsCreature() {
+        harness.addToBattlefield(player1, new RootwaterShaman());
+        Permanent host = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new Wanderlust()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.castEnchantment(player1, 0, host.getId());
+
+        assertThat(harness.getGameData().stack).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({RootwaterShaman.class, GrizzlyBears.class, LeafcrownDryad.class})
+    @DisplayName("A non-flash bestow Aura can be cast at instant speed with Rootwater Shaman")
+    void bestowAuraGetsFlash() {
+        harness.addToBattlefield(player1, new RootwaterShaman());
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new LeafcrownDryad()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.castWithAlternateCost(player1, 0, host.getId());
+
+        assertThat(harness.getGameData().stack).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({GrizzlyBears.class, LeafcrownDryad.class})
+    @DisplayName("A non-flash bestow Aura cannot be cast at instant speed without a flash permission")
+    void bestowAuraNeedsFlashPermission() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new LeafcrownDryad()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.getGameService().passPriority(harness.getGameData(), player2);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, host.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

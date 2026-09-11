@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "304")
+@CardRegistration(set = "DDE", collectorNumber = "22")
 public class PuppetStrings extends Card {
 
     public PuppetStrings() {
@@ -16,7 +18,7 @@ public class PuppetStrings extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new TapOrUntapTargetPermanentEffect()),
+                List.of(new MayEffect(new TapOrUntapTargetPermanentEffect(), "You may tap or untap target creature.")),
                 "{2}, {T}: You may tap or untap target creature.",
                 TargetFilters.creature()
         ));

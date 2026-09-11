@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(KeeperOfTheLight.class)
 class KeeperOfTheLightTest extends BaseCardTest {
 
     @Test
@@ -21,6 +23,7 @@ class KeeperOfTheLightTest extends BaseCardTest {
 
         harness.assertLife(player1, 13);
         harness.assertLife(player2, 11);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(keeper.isTapped()).isTrue();
     }
 
@@ -40,6 +43,15 @@ class KeeperOfTheLightTest extends BaseCardTest {
     @DisplayName("Cannot activate without an opponent who has more life")
     void cannotActivateWithoutHigherLifeOpponent() {
         readyKeeper(10, 10);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate when the opponent has less life")
+    void cannotActivateWithLowerLifeOpponent() {
+        readyKeeper(10, 9);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

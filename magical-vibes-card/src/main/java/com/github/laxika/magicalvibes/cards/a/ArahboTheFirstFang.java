@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "2")
+@CardRegistration(set = "FDN", collectorNumber = "294")
+@CardRegistration(set = "FDN", collectorNumber = "363")
+@CardRegistration(set = "FDN", collectorNumber = "442")
 public class ArahboTheFirstFang extends Card {
 
     public ArahboTheFirstFang() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SUM", collectorNumber = "50")
+@CardRegistration(set = "3ED", collectorNumber = "50")
 public class Braingeyser extends Card {
 
     public Braingeyser() {

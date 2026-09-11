@@ -60,7 +60,8 @@ class PartyDudeTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(attacker.getId());
+        assertThat(choice.validPermanentIds()).containsExactly(attacker.getId());
+        assertThat(choice.validPlayerIds()).containsExactly(player1.getId());
 
         harness.setHand(player1, List.of(new Memnite(), new Memnite(), new Memnite(), new Memnite()));
         harness.handlePermanentChosen(player1, attacker.getId());

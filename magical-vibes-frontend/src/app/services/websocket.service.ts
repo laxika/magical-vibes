@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 
 export enum MessageType {
+  ROLL_PLANAR_DIE = 'ROLL_PLANAR_DIE',
+  ACTIVATE_PLANAR_ABILITY = 'ACTIVATE_PLANAR_ABILITY',
   LOGIN = 'LOGIN',
   CREATE_GAME = 'CREATE_GAME',
   JOIN_GAME = 'JOIN_GAME',
@@ -222,6 +224,7 @@ export interface Card {
   additionalCreatureTypeChoices?: string[];
   additionalCostLifePayment?: number;
   additionalCostManaCost?: string | null;
+  additionalSacrificeCreature?: boolean;
   alternateCostCollectEvidence?: boolean;
   alternateCostCollectEvidenceAmount?: number;
   /** SOS "Prepared": the spell printed inset on a prepare card's front face. Null for every other
@@ -309,7 +312,7 @@ export interface Permanent {
 
 export interface StackEntry {
   entryType: string;
-  card: Card;
+  card: Card | null;
   controllerId: string;
   description: string;
   cardId: string;
@@ -331,7 +334,20 @@ export function logText(text: string): GameLogEntry {
   return { segments: [{ type: 'text', text }] };
 }
 
+export interface PlanechaseView {
+  faceUp: { id: string; card: Card; counters: Record<string, number>; availableAbilityIndices?: number[] }[];
+  controllerId: string | null;
+  deckSize: number;
+  rollCost: number;
+  canRoll: boolean;
+  canPayRoll: boolean;
+  lastRoll: 'BLANK' | 'CHAOS' | 'PLANESWALKER' | null;
+  lastRollPlayerId: string | null;
+  rollSequence: number;
+}
+
 export interface Game {
+  planechase?: PlanechaseView | null;
   id: string;
   gameName: string;
   status: GameStatus;
@@ -362,6 +378,7 @@ export interface Game {
 }
 
 export interface LobbyGame {
+  planechase?: boolean;
   id: string;
   gameName: string;
   createdByUsername: string;
@@ -415,6 +432,7 @@ export interface LobbyGamesNotification {
 }
 
 export interface GameStateNotification {
+  planechase?: PlanechaseView | null;
   type: MessageType;
   status: GameStatus;
   activePlayerId: string;

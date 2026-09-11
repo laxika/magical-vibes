@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
@@ -39,8 +40,10 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ModifyFlashbackCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ModifyMorphCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceNonHandSpellCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceDashCostEffect;
@@ -59,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingE
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ReduceRoomUnlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
@@ -71,6 +75,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -147,6 +152,8 @@ class CastingCostServiceTest {
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
     }
 
     /**
@@ -176,9 +183,43 @@ class CastingCostServiceTest {
         };
     }
 
+    @Test
+    void enduringStoryFreeEquipRequiresDesignationAndFirstActivation() {
+        Card source = new Card();
+        source.addEffect(EffectSlot.STATIC,
+                new com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect());
+        Permanent permanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(permanent);
+        ActivatedAbility equip = new EquipActivatedAbility("{2}");
+
+        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isFalse();
+        gd.playersWithEnduringStory.add(player1Id);
+        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isTrue();
+        gd.playersWhoActivatedEquipAbilityThisTurn.add(player1Id);
+        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isFalse();
+        gd.playersWhoActivatedEquipAbilityThisTurn.clear();
+        when(gameQueryService.hasLostAllAbilities(gd, permanent)).thenReturn(true);
+        assertThat(svc.hasFreeEquipAbilityCost(gd, player1Id, equip)).isFalse();
+    }
+
     @Nested
     @DisplayName("getCastCostModifier — handler-dispatched cost modifiers")
     class GetCastCostModifierTests {
+
+        @Test
+        void appliesRoomUnlockReductionToGenericManaOnly() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceRoomUnlockCostEffect(1));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            Card room = new Card();
+            room.setRoomDoorManaCosts(List.of("{4}{U}", "{2}{W}"));
+
+            var cost = svc.getRoomUnlockCost(gd, player1Id, room, 0);
+
+            assertThat(cost.getGenericCost()).isEqualTo(3);
+            assertThat(cost.getColoredCosts()).containsEntry(ManaColor.BLUE, 1);
+        }
 
         @Test
         @DisplayName("Applies dash cost reduction only to the controller's dash casts")
@@ -358,6 +399,27 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Applies morph cost modifiers with the correct player scope")
+        void appliesMorphCostModifiersWithScope() {
+            Card globalTax = new Card();
+            globalTax.addEffect(EffectSlot.STATIC,
+                    new ModifyMorphCostEffect(2, CostModificationScope.ALL));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(globalTax));
+
+            Card ownReduction = new Card();
+            ownReduction.addEffect(EffectSlot.STATIC,
+                    new ModifyMorphCostEffect(-1, CostModificationScope.SELF));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(ownReduction));
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+            Card morphCard = new Card();
+
+            assertThat(svc.getMorphCostModifier(gd, player1Id, morphCard, snapshot)).isEqualTo(1);
+            assertThat(svc.getMorphCostModifier(gd, player2Id, morphCard, snapshot)).isEqualTo(2);
+            assertThat(svc.getCastCostModifier(gd, player1Id, morphCard, snapshot)).isZero();
+        }
+
+        @Test
         @DisplayName("Applies a zone-scoped reduction only to spells cast from that zone")
         void appliesZoneScopedReductionOnlyToMatchingSourceZone() {
             Card reducer = new Card();
@@ -379,6 +441,25 @@ class CastingCostServiceTest {
                     .isEqualTo(-1);
             assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.EXILE))
                     .isZero();
+        }
+
+        @Test
+        @DisplayName("Reduces spells cast from outside the hand but not spells cast from hand")
+        void appliesNonHandReductionOnlyOutsideHand() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceNonHandSpellCastCostEffect(1));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+            Card spell = new Card();
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{1}{R}");
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.GRAVEYARD))
+                    .isEqualTo(-1);
+            assertThat(svc.getCastCostModifier(gd, player1Id, spell, snapshot, false, 0, Zone.EXILE))
+                    .isEqualTo(-1);
         }
 
         @Test
@@ -1133,7 +1214,8 @@ class CastingCostServiceTest {
 
             when(gameQueryService.findPermanentById(gd, dinosaur.getId())).thenReturn(dinosaur);
             when(gameQueryService.findPermanentController(gd, dinosaur.getId())).thenReturn(player1Id);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, dinosaur, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(dinosaur), eq(predicate), any(FilterContext.class))).thenReturn(true);
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, stomp, List.of(dinosaur.getId())))
                     .isEqualTo(2);
@@ -1201,9 +1283,33 @@ class CastingCostServiceTest {
             gd.playerBattlefields.get(player2Id).add(tappedBear);
 
             when(gameQueryService.findPermanentById(gd, tappedBear.getId())).thenReturn(tappedBear);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, tappedBear, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(tappedBear), eq(predicate), any(FilterContext.class))).thenReturn(true);
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, response, List.of(tappedBear.getId())))
+                    .isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Indexed reduction applies when a later target matches")
+        void indexedPermanentReductionApplies() {
+            var predicate = new PermanentColorInPredicate(Set.of(CardColor.BLUE));
+            Card mark = new Card();
+            mark.setName("Hunter's Mark");
+            mark.setType(CardType.INSTANT);
+            mark.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+                            predicate, 3, false, 1));
+
+            Permanent source = new Permanent(new Card());
+            Permanent blueTarget = new Permanent(new Card());
+
+            when(gameQueryService.findPermanentById(gd, blueTarget.getId())).thenReturn(blueTarget);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(blueTarget), eq(predicate), any(FilterContext.class))).thenReturn(true);
+
+            assertThat(svc.computeTargetBasedCostReduction(
+                    gd, player1Id, mark, List.of(source.getId(), blueTarget.getId())))
                     .isEqualTo(3);
         }
 
@@ -1234,6 +1340,39 @@ class CastingCostServiceTest {
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, spell, List.of(bear.getId())))
                     .isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Battlefield source-relative reduction applies only to the source permanent")
+        void battlefieldSourceRelativeReductionAppliesOnlyToSource() {
+            var predicate = new PermanentIsSourcePermanentPredicate();
+            Card sourceCard = new Card();
+            sourceCard.addEffect(EffectSlot.STATIC,
+                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+                            predicate, 2, true));
+            Permanent source = new Permanent(sourceCard);
+            Permanent other = new Permanent(new Card());
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(other);
+
+            Card spell = new Card();
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            when(gameQueryService.findPermanentById(gd, other.getId())).thenReturn(other);
+            when(gameQueryService.findPermanentController(gd, source.getId())).thenReturn(player1Id);
+            when(gameQueryService.findPermanentController(gd, other.getId())).thenReturn(player1Id);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), eq(predicate), any(FilterContext.class)))
+                    .thenAnswer(invocation -> {
+                        Permanent candidate = invocation.getArgument(0);
+                        FilterContext context = invocation.getArgument(2);
+                        return context.sourcePermanentSnapshot() != null
+                                && context.sourcePermanentSnapshot().getId().equals(candidate.getId());
+                    });
+
+            assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, spell, List.of(source.getId())))
+                    .isEqualTo(2);
+            assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, spell, List.of(other.getId())))
+                    .isZero();
         }
 
         @Test
@@ -1689,8 +1828,25 @@ class CastingCostServiceTest {
             Card spell = spellWith(new SacrificeCreatureCost());
             Permanent creature = new Permanent(graveyardCard("Bear", CardType.CREATURE));
             gd.playerBattlefields.get(player1Id).add(creature);
-            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gd)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gd, creature)).thenReturn(false);
 
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+        }
+
+        @Test
+        void sacrificePermanentUsesSpecificRestrictionWhenLifePaymentsAreProhibited() {
+            var filter = new PermanentIsCreaturePredicate();
+            Card spell = spellWith(new SacrificePermanentCost(filter, "a creature"));
+            Permanent creature = new Permanent(graveyardCard("Land creature", CardType.CREATURE));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gd)).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, creature, filter)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gd, creature)).thenReturn(true);
+
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            when(gameQueryService.canSacrificePermanentForCosts(gd, creature)).thenReturn(false);
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
         }
 

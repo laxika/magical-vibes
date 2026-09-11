@@ -42,14 +42,9 @@ public class CreateTokenCopyOfReturnedPermanentEffectHandler implements NormalEf
             return;
         }
 
-        UUID originalTargetId = entry.getTargetId();
-        entry.setTargetId(returnedPermanent.getId());
-        try {
-            tokenCopyHandler.resolve(gameData, entry, new CreateTokenCopyOfTargetPermanentEffect(
-                    List.of(), Set.of(), copyEffect.powerOverride(), copyEffect.toughnessOverride(), Map.of()));
-        } finally {
-            entry.setTargetId(originalTargetId);
-        }
+        tokenCopyHandler.resolveForTarget(gameData, entry, new CreateTokenCopyOfTargetPermanentEffect(
+                List.of(), Set.of(), copyEffect.powerOverride(), copyEffect.toughnessOverride(), Map.of()),
+                returnedPermanent.getId());
     }
 
     private boolean matchesCondition(GameData gameData, Permanent permanent, PermanentPredicate condition) {

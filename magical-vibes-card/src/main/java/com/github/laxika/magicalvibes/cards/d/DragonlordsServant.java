@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "138")
+@CardRegistration(set = "FDN", collectorNumber = "536")
 public class DragonlordsServant extends Card {
 
     public DragonlordsServant() {

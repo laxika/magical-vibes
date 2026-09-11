@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,6 +59,12 @@ public class BecomeCopyOfTargetPermanentUntilEndOfTurnEffectHandler implements N
                 (BecomeCopyOfTargetPermanentUntilEndOfTurnEffect) effect;
         permanentCopierService.applyCloneCopy(
                 targetPermanent, copySource, null, null, copyEffect.additionalTypes());
+        if (!copyEffect.removedSupertypes().isEmpty()) {
+            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            supertypes.addAll(targetPermanent.getCard().getSupertypes());
+            supertypes.removeAll(copyEffect.removedSupertypes());
+            targetPermanent.getCard().setSupertypes(supertypes);
+        }
         targetPermanent.setCopyUntilEndOfTurn(true);
 
         gameData.addFloatingEffect(new FloatingContinuousEffect(

@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SkyshroudElite.class, CityOfTraitors.class, Forest.class})
 class SkyshroudEliteTest extends BaseCardTest {
 
     @Test
@@ -19,7 +22,7 @@ class SkyshroudEliteTest extends BaseCardTest {
     @Test
     void getsPlusOnePlusTwoWhenOpponentControlsNonbasicLand() {
         harness.addToBattlefield(player1, new SkyshroudElite());
-        harness.addToBattlefield(player2, new ShivanReef());
+        harness.addToBattlefield(player2, new CityOfTraitors());
 
         assertStats(2, 3);
     }
@@ -35,7 +38,7 @@ class SkyshroudEliteTest extends BaseCardTest {
     @Test
     void ownNonbasicLandDoesNotGrantBonus() {
         harness.addToBattlefield(player1, new SkyshroudElite());
-        harness.addToBattlefield(player1, new ShivanReef());
+        harness.addToBattlefield(player1, new CityOfTraitors());
 
         assertStats(1, 1);
     }
@@ -43,11 +46,11 @@ class SkyshroudEliteTest extends BaseCardTest {
     @Test
     void losesBonusWhenOpponentNonbasicLandLeaves() {
         harness.addToBattlefield(player1, new SkyshroudElite());
-        harness.addToBattlefield(player2, new ShivanReef());
+        harness.addToBattlefield(player2, new CityOfTraitors());
 
         assertStats(2, 3);
 
-        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getCard() instanceof ShivanReef);
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getCard() instanceof CityOfTraitors);
 
         assertStats(1, 1);
     }

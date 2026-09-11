@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -12,16 +13,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, DynamicAmount amount,
                                                boolean appliesSymmetrically,
-                                               boolean preventsReductionBelowOneMana)
+                                               boolean preventsReductionBelowOneMana, boolean powerUpOnly)
         implements ActivatedAbilityCostReducingEffect {
 
     public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, DynamicAmount amount) {
-        this(predicate, amount, true, false);
+        this(predicate, amount, true, false, false);
     }
 
     public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, DynamicAmount amount,
                                             boolean appliesSymmetrically) {
-        this(predicate, amount, appliesSymmetrically, false);
+        this(predicate, amount, appliesSymmetrically, false, false);
     }
 
     public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int amount) {
@@ -31,7 +32,7 @@ public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, Dyn
     public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int amount,
                                             boolean appliesSymmetrically,
                                             boolean preventsReductionBelowOneMana) {
-        this(predicate, new Fixed(amount), appliesSymmetrically, preventsReductionBelowOneMana);
+        this(predicate, new Fixed(amount), appliesSymmetrically, preventsReductionBelowOneMana, false);
     }
 
     @Override
@@ -47,5 +48,18 @@ public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, Dyn
     @Override
     public DynamicAmount genericCostReductionAmount() {
         return amount instanceof Fixed ? null : amount;
+    }
+    public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int amount, boolean powerUpOnly) {
+        this(predicate, new Fixed(amount), !powerUpOnly, false, powerUpOnly);
+    }
+
+    @Override
+    public boolean appliesTo(ActivatedAbility ability) {
+        return !powerUpOnly || ability.isPowerUpAbility();
+    }
+
+    @Override
+    public boolean appliesSymmetrically() {
+        return appliesSymmetrically && !powerUpOnly;
     }
 }

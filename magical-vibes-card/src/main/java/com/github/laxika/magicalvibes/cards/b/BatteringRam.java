@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "4ED", collectorNumber = "297")
 @CardRegistration(set = "ITP", collectorNumber = "48")
 @CardRegistration(set = "RQS", collectorNumber = "47")
+@CardRegistration(set = "ATQ", collectorNumber = "41")
 public class BatteringRam extends Card {
 
     public BatteringRam() {

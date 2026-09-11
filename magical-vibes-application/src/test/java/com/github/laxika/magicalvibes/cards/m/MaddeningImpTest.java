@@ -1,18 +1,23 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
+import com.github.laxika.magicalvibes.cards.w.WallOfWonder;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MaddeningImp.class, GrizzlyBears.class, WallOfAir.class})
 class MaddeningImpTest extends BaseCardTest {
 
     /** player1 controls a ready Imp; it's player2's turn, in a step that precedes combat. */
@@ -24,9 +29,8 @@ class MaddeningImpTest extends BaseCardTest {
     }
 
     private void runEndStep() {
-        harness.forceStep(TurnStep.END_STEP);
-        harness.inMutationScope(
-                () -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleEndStepTriggers(gd));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 
@@ -43,15 +47,14 @@ class MaddeningImpTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("At end step, destroys non-Wall creatures that didn't attack; spares Walls, attackers, and newly-controlled creatures")
+    @DisplayName("At end step, destroys non-Wall creatures that didn't attack, including summoning-sick creatures")
     void destroysNonAttackersAtEndStep() {
         Permanent lazy = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttackedThisTurn(true);
         Permanent wall = addCreatureReady(player2, new WallOfAir());
-        Permanent fresh = new Permanent(new GrizzlyBears());
-        fresh.setSummoningSick(true);
-        gd.playerBattlefields.get(player2.getId()).add(fresh);
+        Permanent summoningSick = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).add(summoningSick);
 
         primeImp();
         harness.activateAbility(player1, 0, null, null);
@@ -60,9 +63,41 @@ class MaddeningImpTest extends BaseCardTest {
         runEndStep();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .doesNotContain(lazy)
-                .contains(attacker, wall, fresh);
+                .doesNotContain(lazy, summoningSick)
+                .contains(attacker, wall);
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @CardUsed(WallOfWonder.class)
+    @Test
+    @DisplayName("Does not require a Wall to attack even when it can attack this turn")
+    void doesNotRequireWallToAttack() {
+        Permanent wall = addCreatureReady(player2, new WallOfWonder());
+        primeImp();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of());
+        assertThat(wall.isAttackedThisTurn()).isFalse();
+    }
+
+    @CardUsed(RagingGoblin.class)
+    @Test
+    @DisplayName("Requires a hasty non-Wall creature entering later in the turn to attack if able")
+    void requiresLaterHastyCreatureToAttack() {
+        primeImp();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

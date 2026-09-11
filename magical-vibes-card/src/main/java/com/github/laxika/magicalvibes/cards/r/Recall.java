@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 @CardRegistration(set = "5ED", collectorNumber = "115")
 @CardRegistration(set = "CHR", collectorNumber = "24")
 @CardRegistration(set = "LEG", collectorNumber = "70")
+@CardRegistration(set = "ME3", collectorNumber = "46")
 public class Recall extends Card {
 
     public Recall() {

@@ -38,7 +38,7 @@ public class PutCounterOnSourceAtEndOfCombatEffectHandler implements NormalEffec
         }
         gameData.queueDelayedAction(new PutCounterOnPermanentAtEndOfCombat(
                 self.getId(), counterEffect.counterType(), counterEffect.amount(), false,
-                counterEffect.tokenForController()));
+                counterEffect.tokenForController(), null, entry.getControllerId()));
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(),
                 " will get " + counterEffect.amount() + " counter(s) at end of combat."));
     }

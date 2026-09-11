@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.DisturbCast;
 
 @CardRegistration(set = "INR", collectorNumber = "47")
 @CardRegistration(set = "INR", collectorNumber = "452")
+@CardRegistration(set = "VOW", collectorNumber = "40")
 public class TwinbladeGeist extends Card {
 
     public TwinbladeGeist() {

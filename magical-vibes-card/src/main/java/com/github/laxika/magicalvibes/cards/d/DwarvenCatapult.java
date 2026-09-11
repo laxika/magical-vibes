@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "220")
 @CardRegistration(set = "FEM", collectorNumber = "51")
+@CardRegistration(set = "ME1", collectorNumber = "91")
 public class DwarvenCatapult extends Card {
 
     public DwarvenCatapult() {

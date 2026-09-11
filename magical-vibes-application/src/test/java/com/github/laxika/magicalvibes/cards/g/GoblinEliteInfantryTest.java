@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.testutil.TestCards;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -26,10 +25,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @DisplayName("Casting Goblin Elite Infantry puts it on the stack")
     void castingPutsOnStack() {
         GoblinEliteInfantry card = new GoblinEliteInfantry();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{1}{R}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -41,10 +37,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @DisplayName("Resolving puts Goblin Elite Infantry onto the battlefield")
     void resolvingPutsOnBattlefield() {
         GoblinEliteInfantry card = new GoblinEliteInfantry();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{1}{R}");
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
@@ -132,6 +125,21 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An unblocked Goblin Elite Infantry does not trigger")
+    void unblockedGoblinDoesNotTrigger() {
+        Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
+        goblinPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(goblinPerm.getPowerModifier()).isZero();
+        assertThat(goblinPerm.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Blocking multiple creatures triggers only once")
     void blockTriggerFiresOnlyOnceWhenBlockingMultipleCreatures() {
         harness.addToBattlefield(player2, new HighGround());
@@ -162,8 +170,6 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
         Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
-        TestCards.mutableCard(goblinPerm).setPower(4);
-        TestCards.mutableCard(goblinPerm).setToughness(4);
         goblinPerm.setAttacking(true);
 
         addCreatureReady(player2, new GrizzlyBears());
@@ -207,6 +213,14 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         // NAP's trigger resolves first (LIFO)
         assertThat(gd.stack.get(0).getControllerId()).isEqualTo(player1.getId()); // AP (attacker)
         assertThat(gd.stack.get(1).getControllerId()).isEqualTo(player2.getId()); // NAP (blocker)
+
+        resolveAllTriggers();
+
+        assertThat(attackerGoblin.getPowerModifier()).isEqualTo(-1);
+        assertThat(attackerGoblin.getToughnessModifier()).isEqualTo(-1);
+        Permanent blockingGoblin = findPermanent(player2, "Goblin Elite Infantry");
+        assertThat(blockingGoblin.getPowerModifier()).isEqualTo(-1);
+        assertThat(blockingGoblin.getToughnessModifier()).isEqualTo(-1);
     }
 
     // ===== -1/-1 resets at end of turn =====

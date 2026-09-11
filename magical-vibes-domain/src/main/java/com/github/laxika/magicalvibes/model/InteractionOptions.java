@@ -63,11 +63,16 @@ public sealed interface InteractionOptions {
     }
 
     /** Pick between {@code minCount} and {@code maxCount} permanents and/or players by ID. */
-    record MultiPermanentPick(List<UUID> validIds, List<UUID> validPlayerIds,
+    record MultiPermanentPick(List<UUID> validIds, List<UUID> validPlayerIds, List<UUID> validCardIds,
                               int minCount, int maxCount) implements InteractionOptions {
 
         public MultiPermanentPick(List<UUID> validIds, int minCount, int maxCount) {
-            this(validIds, List.of(), minCount, maxCount);
+            this(validIds, List.of(), List.of(), minCount, maxCount);
+        }
+
+        public MultiPermanentPick(List<UUID> validIds, List<UUID> validPlayerIds,
+                                  int minCount, int maxCount) {
+            this(validIds, validPlayerIds, List.of(), minCount, maxCount);
         }
     }
 

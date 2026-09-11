@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "207")
 @CardRegistration(set = "RIX", collectorNumber = "183")
+@CardRegistration(set = "OGW", collectorNumber = "167")
 public class StriderHarness extends Card {
 
     public StriderHarness() {

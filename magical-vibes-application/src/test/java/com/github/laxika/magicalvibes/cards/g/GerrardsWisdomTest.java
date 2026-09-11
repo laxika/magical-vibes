@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GerrardsWisdom.class, GrizzlyBears.class})
 class GerrardsWisdomTest extends BaseCardTest {
 
     @Test
@@ -25,7 +26,7 @@ class GerrardsWisdomTest extends BaseCardTest {
                 new GrizzlyBears()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castInstant(player1, 0);
+        harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -36,10 +37,7 @@ class GerrardsWisdomTest extends BaseCardTest {
     @Test
     @DisplayName("Gains no life with an otherwise empty hand")
     void gainsNoLifeWithEmptyHand() {
-        harness.setHand(player1, List.of(new GerrardsWisdom()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new GerrardsWisdom(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

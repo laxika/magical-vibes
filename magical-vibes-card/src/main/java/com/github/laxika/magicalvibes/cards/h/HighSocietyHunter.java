@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "61")
+@CardRegistration(set = "FDN", collectorNumber = "320")
+@CardRegistration(set = "FDN", collectorNumber = "384")
+@CardRegistration(set = "FDN", collectorNumber = "461")
 public class HighSocietyHunter extends Card {
 
     public HighSocietyHunter() {

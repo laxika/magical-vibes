@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMat
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMilledCardToHandOrPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Resolves a mill followed by grouped resolution-time offers to return one matching card to hand.
+ * Resolves a mill followed by grouped resolution-time offers to return matching cards to hand.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSou
 
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PutCountersOnSourceEffectHandler putCountersOnSourceEffectHandler;
 
@@ -39,8 +42,12 @@ public class MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSou
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var millEffect = (MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSourceEffect) effect;
+        int count = Math.max(0, amountEvaluationService.evaluate(gameData, millEffect.count(),
+                AmountContext.forStackEntry(entry, null)));
+        int maxCount = Math.max(1, amountEvaluationService.evaluate(gameData, millEffect.maxCount(),
+                AmountContext.forStackEntry(entry, null)));
         List<Card> milled = graveyardService.resolveMillPlayer(
-                gameData, entry.getControllerId(), millEffect.count());
+                gameData, entry.getControllerId(), count);
 
         List<Card> eligibleCards = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
@@ -58,7 +65,7 @@ public class MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSou
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(),
                     entry.getControllerId(),
-                    List.of(new ReturnMilledCardToHandOrPutCounterOnSourceEffect(groupId)),
+                    List.of(new ReturnMilledCardToHandOrPutCounterOnSourceEffect(groupId, maxCount)),
                     "Put " + card.getName() + " into your hand?",
                     card.getId(),
                     null,

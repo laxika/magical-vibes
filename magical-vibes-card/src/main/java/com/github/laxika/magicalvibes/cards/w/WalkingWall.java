@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "346")
 @CardRegistration(set = "DKM", collectorNumber = "38")
+@CardRegistration(set = "ME1", collectorNumber = "172")
 public class WalkingWall extends Card {
 
     public WalkingWall() {

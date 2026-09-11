@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ICE", collectorNumber = "42")
+@CardRegistration(set = "ME3", collectorNumber = "18")
 public class LightningBlow extends Card {
 
     public LightningBlow() {

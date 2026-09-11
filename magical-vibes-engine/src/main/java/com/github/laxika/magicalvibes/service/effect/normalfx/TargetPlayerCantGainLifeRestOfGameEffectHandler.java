@@ -25,9 +25,11 @@ public class TargetPlayerCantGainLifeRestOfGameEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID playerId = entry.getTargetId();
-        if (playerId == null) return;
+        resolveForPlayer(gameData, entry.getTargetId());
+    }
 
+    public void resolveForPlayer(GameData gameData, UUID playerId) {
+        if (playerId == null || !gameData.playerIds.contains(playerId)) return;
         gameData.playersWhoCantGainLifeRestOfGame.add(playerId);
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " can't gain life for the rest of the game."));
     }

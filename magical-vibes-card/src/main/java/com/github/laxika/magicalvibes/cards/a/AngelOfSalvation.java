@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "1")
+@CardRegistration(set = "DDF", collectorNumber = "20")
 public class AngelOfSalvation extends Card {
 
     public AngelOfSalvation() {

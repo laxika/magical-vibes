@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,13 +49,23 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
             log.info("Game {} - Return+attach fizzles, card not in {}'s graveyard", gameData.id, playerName);
             return;
         }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCard.getId());
 
         // Remove from graveyard
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCard.getId());
 
         // Put onto the battlefield
         Permanent creature = new Permanent(dyingCard);
+        CounterType enterWithCounter = e.enterWithCounter();
+        if (enterWithCounter != null && e.enterWithCounterCount() > 0) {
+            creature.setCounterCount(enterWithCounter,
+                    creature.getCounterCount(enterWithCounter) + e.enterWithCounterCount());
+        }
+        creature.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, creature);
+        if (graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
+            graveyardReturnSupport.trackStolenCreature(gameData, creature.getId(), controllerId, graveyardOwnerId);
+        }
 
         
         gameLogService.append(gameData, GameLog.builder().card(dyingCard).text(" returns to the battlefield under " + playerName + "'s control.").build());

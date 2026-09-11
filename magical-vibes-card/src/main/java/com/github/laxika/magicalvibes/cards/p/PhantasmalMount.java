@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "88")
+@CardRegistration(set = "ME2", collectorNumber = "59")
 public class PhantasmalMount extends Card {
 
     public PhantasmalMount() {

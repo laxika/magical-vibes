@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.a.AngelicWall;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WakestoneGargoyle;
+import com.github.laxika.magicalvibes.cards.w.WallOfRazors;
+import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,21 +15,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RollingStones.class, WallOfRazors.class, WakestoneGargoyle.class, YouthfulKnight.class})
 class RollingStonesTest extends BaseCardTest {
 
     private void beginAttackers() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
+        harness.beginAttackerDeclarationInput();
     }
 
     @Test
     @DisplayName("Wall cannot attack without Rolling Stones (defender)")
     void wallCannotAttackWithoutRollingStones() {
-        harness.addToBattlefield(player1, new AngelicWall());
-        Permanent wall = gd.playerBattlefields.get(player1.getId()).getFirst();
-        wall.setSummoningSick(false);
+        addCreatureReady(player1, new WallOfRazors());
 
         beginAttackers();
 
@@ -40,15 +40,12 @@ class RollingStonesTest extends BaseCardTest {
     @Test
     @DisplayName("Wall can attack while its controller has Rolling Stones")
     void wallCanAttackWithRollingStones() {
-        harness.addToBattlefield(player1, new AngelicWall());
+        Permanent wall = addCreatureReady(player1, new WallOfRazors());
         harness.addToBattlefield(player1, new RollingStones());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent wall = findPermanent(player1, "Angelic Wall");
-        wall.setSummoningSick(false);
+        addCreatureReady(player2, new YouthfulKnight());
         int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
 
-        beginAttackers();
-        gs.declareAttackers(gd, player1, List.of(wallIndex));
+        declareAttackers(List.of(wallIndex));
 
         assertThat(wall.isAttacking()).isTrue();
     }
@@ -56,27 +53,37 @@ class RollingStonesTest extends BaseCardTest {
     @Test
     @DisplayName("Rolling Stones affects Wall creatures globally, even under another player")
     void wallCanAttackWhenOpponentControlsRollingStones() {
-        harness.addToBattlefield(player1, new AngelicWall());
+        Permanent wall = addCreatureReady(player1, new WallOfRazors());
         harness.addToBattlefield(player2, new RollingStones());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent wall = gd.playerBattlefields.get(player1.getId()).getFirst();
-        wall.setSummoningSick(false);
+        addCreatureReady(player2, new YouthfulKnight());
+        int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
 
-        beginAttackers();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(wallIndex));
 
         assertThat(wall.isAttacking()).isTrue();
     }
 
     @Test
+    @DisplayName("Rolling Stones does not let a non-Wall defender creature attack")
+    void nonWallDefenderCannotAttackWithRollingStones() {
+        Permanent gargoyle = addCreatureReady(player1, new WakestoneGargoyle());
+        harness.addToBattlefield(player1, new RollingStones());
+
+        beginAttackers();
+
+        int gargoyleIndex = gd.playerBattlefields.get(player1.getId()).indexOf(gargoyle);
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(gargoyleIndex)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
     @DisplayName("Wall cannot attack after Rolling Stones leaves the battlefield")
     void wallCannotAttackAfterRollingStonesRemoved() {
-        harness.addToBattlefield(player1, new AngelicWall());
-        harness.addToBattlefield(player1, new RollingStones());
-        Permanent wall = findPermanent(player1, "Angelic Wall");
-        wall.setSummoningSick(false);
+        Permanent wall = addCreatureReady(player1, new WallOfRazors());
+        Permanent rollingStones = harness.addToBattlefieldAndReturn(player1, new RollingStones());
 
-        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getName().equals("Rolling Stones"));
+        gd.playerBattlefields.get(player1.getId()).remove(rollingStones);
         int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
 
         beginAttackers();

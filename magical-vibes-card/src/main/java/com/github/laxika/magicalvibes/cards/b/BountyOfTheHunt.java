@@ -14,6 +14,8 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "85")
 @CardRegistration(set = "DKM", collectorNumber = "23")
+@CardRegistration(set = "CST", collectorNumber = "38")
+@CardRegistration(set = "ME2", collectorNumber = "154")
 public class BountyOfTheHunt extends Card {
 
     public BountyOfTheHunt() {

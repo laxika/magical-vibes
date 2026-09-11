@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -47,6 +48,25 @@ class AwardAnyColorManaEffectHandlerTest extends AbstractPlayerInteractionHandle
                 (ChoiceContext.ManaColorChoice) captor.getValue().context();
         assertThat(choice.amount()).isEqualTo(2);
         assertThat(choice.fixedColorOptions()).containsExactlyElementsOf(ManaColor.COLORS);
+    }
+
+    @Test
+    @DisplayName("Preserves the full amount when a subtype-restricted batch uses one color")
+    void sendsSingleColorSubtypeChoiceWithFullAmount() {
+        Card card = createCard("Woodland Weavemaster");
+        AwardAnyColorManaEffect effect = new AwardAnyColorManaEffect(
+                new Fixed(3), ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY, CardSubtype.ELF, false, false);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+        resolveEffect(gd, entry, effect);
+
+        ArgumentCaptor<PendingInteraction.ColorChoice> captor =
+                ArgumentCaptor.forClass(PendingInteraction.ColorChoice.class);
+        verify(interactionHandlerRegistry).begin(eq(gd), captor.capture());
+        ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice choice =
+                (ChoiceContext.SingleColorSubtypeSpellOrAbilityManaChoice) captor.getValue().context();
+        assertThat(choice.amount()).isEqualTo(3);
+        assertThat(choice.subtype()).isEqualTo(CardSubtype.ELF);
     }
 
     @Test

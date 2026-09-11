@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "224")
 @CardRegistration(set = "ICE", collectorNumber = "183")
+@CardRegistration(set = "ME2", collectorNumber = "124")
 public class Errantry extends Card {
 
     public Errantry() {

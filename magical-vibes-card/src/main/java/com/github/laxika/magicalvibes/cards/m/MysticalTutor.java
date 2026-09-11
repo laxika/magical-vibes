@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "83")
 @CardRegistration(set = "MIR", collectorNumber = "80")
+@CardRegistration(set = "V09", collectorNumber = "8")
 public class MysticalTutor extends Card {
 
     public MysticalTutor() {

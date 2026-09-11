@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "54")
 @CardRegistration(set = "INR", collectorNumber = "455")
+@CardRegistration(set = "VOW", collectorNumber = "49")
 public class BiolumeEgg extends Card {
 
     public BiolumeEgg() {
