@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "53")
 @CardRegistration(set = "DDM", collectorNumber = "11")
+@CardRegistration(set = "W17", collectorNumber = "13")
 public class StealerOfSecrets extends Card {
 
     public StealerOfSecrets() {
