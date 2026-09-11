@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "GTC", collectorNumber = "76")
+@CardRegistration(set = "DDM", collectorNumber = "44")
 public class ShadowAlleyDenizen extends Card {
 
     public ShadowAlleyDenizen() {
