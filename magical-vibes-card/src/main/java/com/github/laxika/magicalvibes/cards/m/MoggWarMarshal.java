@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "170")
 @CardRegistration(set = "DD1", collectorNumber = "45")
+@CardRegistration(set = "EVG", collectorNumber = "45")
 @CardRegistration(set = "MMA", collectorNumber = "122")
 public class MoggWarMarshal extends Card {
 
