@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  */
 @CardRegistration(set = "M12", collectorNumber = "144")
 @CardRegistration(set = "DDL", collectorNumber = "52")
+@CardRegistration(set = "DDS", collectorNumber = "38")
 public class GorehornMinotaurs extends Card {
 
     public GorehornMinotaurs() {
