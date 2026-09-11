@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "21")
+@CardRegistration(set = "MM2", collectorNumber = "14")
 public class DaybreakCoronet extends Card {
 
     public DaybreakCoronet() {

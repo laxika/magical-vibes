@@ -21,7 +21,7 @@ public class BiomancersFamiliar extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate())),
-                2));
+                2, true, true));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

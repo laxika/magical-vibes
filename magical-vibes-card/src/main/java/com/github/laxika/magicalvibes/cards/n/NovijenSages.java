@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCr
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "27")
+@CardRegistration(set = "MM2", collectorNumber = "53")
 public class NovijenSages extends Card {
 
     public NovijenSages() {

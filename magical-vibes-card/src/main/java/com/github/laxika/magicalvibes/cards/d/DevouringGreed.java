@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "110")
+@CardRegistration(set = "MM2", collectorNumber = "78")
 public class DevouringGreed extends Card {
 
     public DevouringGreed() {

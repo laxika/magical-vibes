@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "56")
+@CardRegistration(set = "MM2", collectorNumber = "43")
 @CardRegistration(set = "MMA", collectorNumber = "38")
 @CardRegistration(set = "MP2", collectorNumber = "11")
 public class CrypticCommand extends Card {

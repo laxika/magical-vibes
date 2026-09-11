@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "80")
 @CardRegistration(set = "M14", collectorNumber = "80")
+@CardRegistration(set = "MM2", collectorNumber = "69")
 public class WaterServant extends Card {
 
     public WaterServant() {
