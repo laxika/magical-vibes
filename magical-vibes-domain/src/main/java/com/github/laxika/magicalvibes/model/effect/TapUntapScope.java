@@ -22,6 +22,8 @@ public enum TapUntapScope {
      * controls. If you do, untap this creature." — Soldevi Golem).
      */
     SOURCE_PERMANENT,
+    /** The permanent whose event caused the triggered ability. */
+    TRIGGERING,
     /** The permanent the source aura is attached to. */
     ENCHANTED,
     /** Every permanent the controller controls that matches the predicate. */

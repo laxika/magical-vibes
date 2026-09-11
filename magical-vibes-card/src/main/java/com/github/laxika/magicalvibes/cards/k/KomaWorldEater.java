@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "121")
+@CardRegistration(set = "FDN", collectorNumber = "347")
+@CardRegistration(set = "FDN", collectorNumber = "408")
+@CardRegistration(set = "FDN", collectorNumber = "480")
 public class KomaWorldEater extends Card {
 
     public KomaWorldEater() {

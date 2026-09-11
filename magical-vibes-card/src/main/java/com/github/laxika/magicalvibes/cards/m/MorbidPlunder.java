@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MBS", collectorNumber = "47")
+@CardRegistration(set = "TD2", collectorNumber = "72")
 public class MorbidPlunder extends Card {
 
     public MorbidPlunder() {

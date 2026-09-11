@@ -39,8 +39,9 @@ import org.springframework.stereotype.Component;
  * <p>Collapses the former {@code SearchLibraryFor*} family (to-hand tutors, by-name searches,
  * to-top, creature-to-battlefield with MV/colour/subtype constraints, card-types-to-battlefield).
  * Reveal / fail-to-find behaviour is derived uniformly: a restricted search (non-null filter or a
- * mana-value bound) can fail to find, and reveals its pick for {@code HAND}/{@code TOP_OF_LIBRARY}
- * destinations; an unrestricted search does neither.
+ * mana-value bound) can fail to find, and reveals its pick for {@code HAND},
+ * {@code HAND_OR_GRAVEYARD}, or {@code TOP_OF_LIBRARY} destinations; an unrestricted search does
+ * neither.
  */
 @Component
 @RequiredArgsConstructor
@@ -76,8 +77,11 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
                            LibrarySearchFollowUp followUp, Integer totalManaValueBound) {
-        UUID controllerId = effect.searchPlayer() == LibrarySearchPlayer.ACTIVE_PLAYER
-                ? entry.getActivePlayerId() : entry.getControllerId();
+        UUID controllerId = switch (effect.searchPlayer()) {
+            case ACTIVE_PLAYER -> entry.getActivePlayerId();
+            case TRIGGERING_PERMANENT_CONTROLLER -> entry.getTriggeringPermanentControllerId();
+            case CONTROLLER -> entry.getControllerId();
+        };
         if (controllerId == null) return;
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) {
             insertNoCardFollowUp(gameData, entry, followUp);
@@ -141,12 +145,13 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             if (!librarySearchSupport.librarySearchCastableCards(gameData, controllerId).isEmpty()) {
                 LibrarySearchDestination destination = effect.destination();
                 String prompt = buildPrompt(baseDesc, destination, restricted, count,
-                        effect.requireDifferentNames());
+                        effect.requireDifferentNames(), effect.topLibraryPosition());
                 librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
                         LibrarySearchParams.builder(controllerId, new ArrayList<>())
                                 .remainingCount(count)
                                 .canFailToFind(true)
                                 .destination(destination)
+                                .topLibraryPosition(effect.topLibraryPosition())
                                 .filterPredicate(restricted ? filter : null)
                                 .requireDifferentNames(effect.requireDifferentNames())
                                 .manaValueBound(boundValue, bound != null && bound.exact())
@@ -180,13 +185,15 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         }
 
         LibrarySearchDestination destination = effect.destination();
-        String prompt = buildPrompt(baseDesc, destination, restricted, count, effect.requireDifferentNames());
+        String prompt = buildPrompt(baseDesc, destination, restricted, count, effect.requireDifferentNames(),
+                effect.topLibraryPosition());
 
         LibrarySearchParams.Builder params = LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
                         .remainingCount(count)
                         .reveals(reveals(restricted, destination))
                         .canFailToFind(restricted)
                         .destination(destination)
+                        .topLibraryPosition(effect.topLibraryPosition())
                         .filterPredicate(restricted ? filter : null)
                         .requireDifferentNames(effect.requireDifferentNames())
                         .manaValueBound(boundValue, bound != null && bound.exact())
@@ -263,21 +270,27 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private boolean reveals(boolean restricted, LibrarySearchDestination destination) {
         return restricted && (destination == LibrarySearchDestination.HAND
+                || destination == LibrarySearchDestination.HAND_OR_GRAVEYARD
                 || destination == LibrarySearchDestination.TOP_OF_LIBRARY);
     }
 
     private String buildPrompt(String desc, LibrarySearchDestination destination,
-                               boolean restricted, int count, boolean requireDifferentNames) {
+                               boolean restricted, int count, boolean requireDifferentNames,
+                               int topLibraryPosition) {
         String remaining = count > 1 ? " (" + count + " remaining)" : "";
         String distinct = requireDifferentNames ? " with a different name" : "";
         return switch (destination) {
             case HAND -> "Search your library for a " + desc + distinct
                     + (restricted ? " to reveal and put into your hand" : " to put into your hand")
                     + remaining + ".";
+            case HAND_OR_GRAVEYARD -> "Search your library for a " + desc
+                    + distinct + " to reveal and put into your hand or graveyard" + remaining + ".";
             case TOP_OF_LIBRARY -> "Search your library for a " + desc
                     + (restricted
-                            ? ", reveal it, then shuffle and put that card on top."
-                            : ", then shuffle and put that card on top.");
+                            ? ", reveal it, then shuffle and put that card "
+                                    + topLibraryPositionText(topLibraryPosition) + "."
+                            : ", then shuffle and put that card "
+                                    + topLibraryPositionText(topLibraryPosition) + ".");
             case EXILE -> "Search your library for a " + desc + " to exile" + remaining + ".";
             case EXILE_FOR_MAY_CAST -> "Search your library for a " + desc + " to exile" + remaining + ".";
             case EXILE_FOR_MAY_CAST_WITH_NORMAL_COST ->
@@ -294,6 +307,27 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             default -> count > 1
                     ? "Search your library for a " + desc + " to put onto the battlefield" + remaining + "."
                     : "Search your library for a " + desc + " and put it onto the battlefield.";
+        };
+    }
+
+    private String topLibraryPositionText(int position) {
+        return switch (position) {
+            case 0 -> "on top";
+            case 1 -> "second from the top";
+            case 2 -> "third from the top";
+            default -> {
+                int ordinal = position + 1;
+                int lastTwoDigits = ordinal % 100;
+                String suffix = lastTwoDigits >= 11 && lastTwoDigits <= 13
+                        ? "th"
+                        : switch (ordinal % 10) {
+                            case 1 -> "st";
+                            case 2 -> "nd";
+                            case 3 -> "rd";
+                            default -> "th";
+                        };
+                yield ordinal + suffix + " from the top";
+            }
         };
     }
 }

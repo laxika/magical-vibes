@@ -25,7 +25,7 @@ public class PutCountersOnStackEntryCardEffectHandler implements NormalEffectHan
         StackEntry sourceEntry = gameData.stack.stream()
                 .filter(candidate -> candidate.getEntryType() != StackEntryType.ACTIVATED_ABILITY)
                 .filter(candidate -> candidate.getCard() != null)
-                .filter(candidate -> candidate.getCard().getId().equals(entry.getSourceStackCardId()))
+                .filter(candidate -> candidate.getTargetableId().equals(entry.getSourceStackCardId()))
                 .findFirst()
                 .orElse(null);
         if (sourceEntry == null) {

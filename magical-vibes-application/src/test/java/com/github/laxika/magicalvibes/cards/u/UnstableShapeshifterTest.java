@@ -1,23 +1,24 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.j.JackalPup;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UnstableShapeshifter.class, JackalPup.class, WindDrake.class})
 class UnstableShapeshifterTest extends BaseCardTest {
 
     private Permanent putShapeshifter() {
-        Permanent shifter = new Permanent(new UnstableShapeshifter());
-        gd.playerBattlefields.get(player1.getId()).add(shifter);
-        return shifter;
+        return harness.addToBattlefieldAndReturn(player1, new UnstableShapeshifter());
     }
 
     @Test
@@ -25,15 +26,14 @@ class UnstableShapeshifterTest extends BaseCardTest {
     void becomesCopyOfEnteringCreature() {
         Permanent shifter = putShapeshifter();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // Grizzly Bears resolves, trigger goes on the stack
+        harness.castFromHand(player1, new WindDrake(), "{2}{U}");
+        harness.passBothPriorities(); // Wind Drake resolves, trigger goes on the stack
         harness.passBothPriorities(); // become-copy resolves
 
-        assertThat(shifter.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(shifter.getCard().getName()).isEqualTo("Wind Drake");
         assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, shifter, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -41,21 +41,19 @@ class UnstableShapeshifterTest extends BaseCardTest {
     void retainsAbilityAndCopiesAgain() {
         Permanent shifter = putShapeshifter();
 
-        harness.setHand(player1, List.of(new GrizzlyBears(), new HillGiant()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new JackalPup(), "{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(shifter.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(shifter.getCard().getName()).isEqualTo("Jackal Pup");
 
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new WindDrake(), "{2}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(shifter.getCard().getName()).isEqualTo("Hill Giant");
-        assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(3);
+        assertThat(shifter.getCard().getName()).isEqualTo("Wind Drake");
+        assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, shifter, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -63,25 +61,56 @@ class UnstableShapeshifterTest extends BaseCardTest {
     void copiesOpponentCreature() {
         Permanent shifter = putShapeshifter();
 
-        harness.setHand(player2, List.of(new HillGiant()));
-        harness.addMana(player2, ManaColor.RED, 4);
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new WindDrake(), "{2}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(shifter.getCard().getName()).isEqualTo("Hill Giant");
+        assertThat(shifter.getCard().getName()).isEqualTo("Wind Drake");
     }
 
     @Test
     @DisplayName("Does not trigger on itself entering")
     void doesNotTriggerOnItself() {
-        harness.setHand(player1, List.of(new UnstableShapeshifter()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new UnstableShapeshifter(), "{3}{U}");
         harness.passBothPriorities();
 
-        Permanent shifter = gd.playerBattlefields.get(player1.getId()).get(0);
+        Permanent shifter = findPermanent(player1, "Unstable Shapeshifter");
         assertThat(shifter.getCard().getName()).isEqualTo("Unstable Shapeshifter");
+    }
+
+    @Test
+    @DisplayName("Uses the entering creature's last-known information if it leaves before resolution")
+    void usesLastKnownInformationIfEnteringCreatureLeaves() {
+        Permanent shifter = putShapeshifter();
+
+        harness.castFromHand(player1, new WindDrake(), "{2}{U}");
+        harness.passBothPriorities();
+
+        Permanent entering = findPermanent(player1, "Wind Drake");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, entering));
+        harness.passBothPriorities();
+
+        assertThat(shifter.getCard().getName()).isEqualTo("Wind Drake");
+        assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, shifter, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Copies a creature's face-down characteristics")
+    void copiesFaceDownCharacteristics() {
+        Permanent shifter = putShapeshifter();
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new WindDrake());
+        entering.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.passBothPriorities();
+
+        assertThat(shifter.getCard().getName()).isNull();
+        assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveColors(gd, shifter)).isEmpty();
+        assertThat(gqs.hasKeyword(gd, shifter, Keyword.FLYING)).isFalse();
     }
 }

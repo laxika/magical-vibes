@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "17")
+@CardRegistration(set = "DDF", collectorNumber = "10")
 public class KorAeronaut extends Card {
 
     public KorAeronaut() {

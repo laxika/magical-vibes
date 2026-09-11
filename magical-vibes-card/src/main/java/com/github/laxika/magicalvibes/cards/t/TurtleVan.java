@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "181")
+@CardRegistration(set = "TMT", collectorNumber = "278")
 public class TurtleVan extends Card {
 
     public TurtleVan() {

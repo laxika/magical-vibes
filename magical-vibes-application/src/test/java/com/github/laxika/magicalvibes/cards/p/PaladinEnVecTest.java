@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.b.BogWraith;
+import com.github.laxika.magicalvibes.cards.b.Bandage;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.Terror;
+import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.cards.b.Bandage;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,30 +23,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PaladinEnVec.class, BogWraith.class, Bandage.class, GiantSpider.class, GrizzlyBears.class,
+        HillGiant.class, HolyStrength.class, Shock.class, Terror.class, UnholyStrength.class})
 class PaladinEnVecTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Paladin en-Vec puts it on the stack")
@@ -58,7 +37,7 @@ class PaladinEnVecTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Paladin en-Vec");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(PaladinEnVec.class);
     }
 
     @Test
@@ -72,8 +51,6 @@ class PaladinEnVecTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving puts Paladin en-Vec on the battlefield")
     void resolvingPutsOnBattlefield() {
@@ -84,7 +61,8 @@ class PaladinEnVecTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Paladin en-Vec");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof PaladinEnVec);
     }
 
     @Test
@@ -96,56 +74,41 @@ class PaladinEnVecTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent perm = findPermanent(player1, "Paladin en-Vec");
-        assertThat(perm.isSummoningSick()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof PaladinEnVec
+                        && permanent.isSummoningSick());
     }
-
-    // ===== First strike in combat =====
 
     @Test
     @DisplayName("First strike kills 2/2 blocker before it deals regular damage")
     void firstStrikeKillsBlockerBeforeRegularDamage() {
-        Permanent attacker = new Permanent(new PaladinEnVec());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new PaladinEnVec());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         // First strike kills Bears before it deals damage; Paladin survives
-        harness.assertOnBattlefield(player1, "Paladin en-Vec");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof PaladinEnVec);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof GrizzlyBears);
     }
-
-    // ===== Protection - blocking =====
 
     @Test
     @DisplayName("Black creature cannot block Paladin en-Vec")
     void blackCreatureCannotBlockPaladin() {
-        Permanent attacker = new Permanent(new PaladinEnVec());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new PaladinEnVec());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Black Knight", 2, 2, CardColor.BLACK));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new BogWraith());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -155,19 +118,12 @@ class PaladinEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("Red creature cannot block Paladin en-Vec")
     void redCreatureCannotBlockPaladin() {
-        Permanent attacker = new Permanent(new PaladinEnVec());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new PaladinEnVec());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Goblin Raider", 2, 1, CardColor.RED));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new HillGiant());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -177,127 +133,95 @@ class PaladinEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("Green creature can block Paladin en-Vec")
     void greenCreatureCanBlockPaladin() {
-        Permanent attacker = new Permanent(new PaladinEnVec());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new PaladinEnVec());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    // ===== Protection - combat damage =====
-
     @Test
     @DisplayName("Paladin takes no combat damage from black creature")
     void paladinTakesNoDamageFromBlack() {
         // Black 3/3 attacker, Paladin as blocker
-        Permanent attacker = new Permanent(createCreature("Black Knight", 3, 3, CardColor.BLACK));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BogWraith());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new PaladinEnVec());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new PaladinEnVec());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Paladin has first strike: deals 2 to Black Knight (3/3 survives)
-        // Black Knight's 3 regular damage to Paladin is prevented (protection)
+        // Paladin has first strike: deals 2 to Bog Wraith (3/3 survives)
+        // Bog Wraith's 3 regular damage to Paladin is prevented (protection)
         // Both survive
-        harness.assertOnBattlefield(player1, "Black Knight");
-        harness.assertOnBattlefield(player2, "Paladin en-Vec");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof BogWraith);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof PaladinEnVec);
     }
 
     @Test
     @DisplayName("Paladin takes no combat damage from red creature")
     void paladinTakesNoDamageFromRed() {
         // Red 3/3 attacker, Paladin as blocker
-        Permanent attacker = new Permanent(createCreature("Fire Elemental", 3, 3, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new HillGiant());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new PaladinEnVec());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new PaladinEnVec());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Both survive: Paladin deals 2 first strike (2 < 3), red creature's 3 damage is prevented
-        harness.assertOnBattlefield(player1, "Fire Elemental");
-        harness.assertOnBattlefield(player2, "Paladin en-Vec");
+        // Both survive: Paladin deals 2 first strike (2 < 3), Hill Giant's 3 damage is prevented
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof HillGiant);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof PaladinEnVec);
     }
 
     @Test
     @DisplayName("Paladin takes normal combat damage from green creature")
     void paladinTakesNormalDamageFromGreen() {
-        // Green 3/3 attacker, Paladin as blocker
-        Permanent attacker = new Permanent(createCreature("Big Green", 3, 3, CardColor.GREEN));
-        attacker.setSummoningSick(false);
+        // Giant Spider (2/4) attacker, Paladin as blocker
+        Permanent attacker = addCreatureReady(player1, new GiantSpider());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new PaladinEnVec());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new PaladinEnVec());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
-        // Paladin deals 2 first strike (2 < 3, green survives)
-        // Green deals 3 regular damage (3 >= 2, Paladin dies — no protection from green)
-        harness.assertOnBattlefield(player1, "Big Green");
-        harness.assertNotOnBattlefield(player2, "Paladin en-Vec");
-        harness.assertInGraveyard(player2, "Paladin en-Vec");
+        // Paladin deals 2 first strike (2 < 4, Giant Spider survives)
+        // Giant Spider deals 2 regular damage (2 >= 2, Paladin dies — no protection from green)
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof GiantSpider);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof PaladinEnVec);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof PaladinEnVec);
     }
-
-    // ===== Protection - targeting =====
 
     @Test
     @DisplayName("Cannot be targeted by black instant")
     void cannotBeTargetedByBlackInstant() {
-        Permanent paladin = new Permanent(new PaladinEnVec());
-        paladin.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(paladin);
+        Permanent paladin = addCreatureReady(player2, new PaladinEnVec());
 
         // Add valid target so spell is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Dark Banishing", CardColor.BLACK, "{B}")));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, paladin.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, paladin.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
@@ -305,19 +229,15 @@ class PaladinEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be targeted by red instant")
     void cannotBeTargetedByRedInstant() {
-        Permanent paladin = new Permanent(new PaladinEnVec());
-        paladin.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(paladin);
+        Permanent paladin = addCreatureReady(player2, new PaladinEnVec());
 
         // Add valid target so spell is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, paladin.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, paladin.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
     }
@@ -325,9 +245,7 @@ class PaladinEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("Can be targeted by white instant")
     void canBeTargetedByWhiteInstant() {
-        Permanent paladin = new Permanent(new PaladinEnVec());
-        paladin.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(paladin);
+        Permanent paladin = addCreatureReady(player1, new PaladinEnVec());
 
         harness.setHand(player1, List.of(new Bandage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -335,33 +253,21 @@ class PaladinEnVecTest extends BaseCardTest {
         harness.castInstant(player1, 0, paladin.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Bandage");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(Bandage.class);
     }
-
-    // ===== Protection - aura enchantment =====
 
     @Test
     @DisplayName("Cannot be enchanted by black aura")
     void cannotBeEnchantedByBlackAura() {
-        Permanent paladin = new Permanent(new PaladinEnVec());
-        paladin.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(paladin);
+        Permanent paladin = addCreatureReady(player2, new PaladinEnVec());
 
         // Add valid target so aura is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        Card blackAura = new Card();
-        blackAura.setName("Unholy Strength");
-        blackAura.setType(CardType.ENCHANTMENT);
-        blackAura.setManaCost("{B}");
-        blackAura.setColor(CardColor.BLACK);
-        blackAura.setSubtypes(List.of(CardSubtype.AURA));
-        harness.setHand(player1, List.of(blackAura));
+        harness.setHand(player1, List.of(new UnholyStrength()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, paladin.getId(), null))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, paladin.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
@@ -369,17 +275,15 @@ class PaladinEnVecTest extends BaseCardTest {
     @Test
     @DisplayName("Can be enchanted by white aura (Holy Strength)")
     void canBeEnchantedByWhiteAura() {
-        Permanent paladin = new Permanent(new PaladinEnVec());
-        paladin.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(paladin);
+        Permanent paladin = addCreatureReady(player1, new PaladinEnVec());
 
         harness.setHand(player1, List.of(new HolyStrength()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        gs.playCard(gd, player1, 0, 0, paladin.getId(), null);
+        harness.castEnchantment(player1, 0, paladin.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Holy Strength");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(HolyStrength.class);
     }
 }
 

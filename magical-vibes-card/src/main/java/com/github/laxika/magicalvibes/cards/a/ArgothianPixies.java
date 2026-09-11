@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreatu
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "CHR", collectorNumber = "57")
+@CardRegistration(set = "ATQ", collectorNumber = "29")
 public class ArgothianPixies extends Card {
 
     public ArgothianPixies() {

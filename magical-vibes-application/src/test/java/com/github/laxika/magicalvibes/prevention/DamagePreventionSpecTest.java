@@ -2,10 +2,14 @@ package com.github.laxika.magicalvibes.prevention;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -166,6 +170,21 @@ class DamagePreventionSpecTest extends BaseCardTest {
             // No charge left: the second Shock lands in full.
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         }
+
+        @Test
+        @DisplayName("Target-specific colorless prevention stops colorless damage")
+        void targetSpecificColorlessPreventionStopsColorlessDamage() {
+            Permanent bears = addCreature(player2);
+            gd.colorlessDamagePreventionUntilEndOfTurn.add(bears.getId());
+
+            harness.setHand(player1, List.of(colorlessDamageSpell()));
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.castInstant(player1, 0, bears.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+            assertThat(bears.getMarkedDamage()).isZero();
+        }
     }
 
     @Nested
@@ -207,5 +226,14 @@ class DamagePreventionSpecTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
+    }
+
+    private Card colorlessDamageSpell() {
+        Card card = new Card();
+        card.setName("Colorless Bolt");
+        card.setType(CardType.INSTANT);
+        card.setManaCost("{1}");
+        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+        return card;
     }
 }

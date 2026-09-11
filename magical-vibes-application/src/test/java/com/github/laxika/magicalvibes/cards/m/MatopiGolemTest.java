@@ -94,6 +94,7 @@ class MatopiGolemTest extends BaseCardTest {
 
         blockPantherWarriors(golem);
 
+        harness.handleListChoice(player1, "Regenerate and put a -1/-1 counter on it");
         Permanent regenerated = findPermanent(player1, "Matopi Golem");
         assertThat(regenerated.getRegenerationShield()).isEqualTo(1);
         assertThat(regenerated.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);

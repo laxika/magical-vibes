@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "200")
+@CardRegistration(set = "DDE", collectorNumber = "38")
 public class NomadicElf extends Card {
 
     public NomadicElf() {

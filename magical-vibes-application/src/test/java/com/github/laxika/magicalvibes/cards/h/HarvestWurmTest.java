@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GemstoneMine;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +14,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HarvestWurm.class, GemstoneMine.class, Forest.class, Plains.class})
 class HarvestWurmTest extends BaseCardTest {
 
     private void castHarvestWurm() {
-        harness.setHand(player1, List.of(new HarvestWurm()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HarvestWurm(), "{1}{G}");
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB
     }
@@ -34,7 +32,7 @@ class HarvestWurmTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices when the graveyard holds no basic land card")
     void autoSacrificesWithoutBasicLandInGraveyard() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new GemstoneMine()));
         castHarvestWurm();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -45,7 +43,7 @@ class HarvestWurmTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting returns the chosen basic land card and keeps Harvest Wurm")
     void acceptReturnsBasicLandAndKeepsWurm() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Plains()));
+        harness.setGraveyard(player1, List.of(new GemstoneMine(), new Forest(), new Plains()));
         castHarvestWurm();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -68,6 +66,18 @@ class HarvestWurmTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Forest"))).isTrue();
         harness.assertOnBattlefield(player1, "Harvest Wurm");
         harness.assertNotInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Does not use a basic land in an opponent's graveyard")
+    void doesNotUseOpponentsBasicLand() {
+        harness.setGraveyard(player2, List.of(new Forest()));
+        castHarvestWurm();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Harvest Wurm");
+        harness.assertInGraveyard(player1, "Harvest Wurm");
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DRK", collectorNumber = "44")
+@CardRegistration(set = "ME1", collectorNumber = "67")
 public class EaterOfTheDead extends Card {
 
     public EaterOfTheDead() {

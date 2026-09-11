@@ -16,7 +16,7 @@ public class CityOfTraitors extends Card {
 
     public CityOfTraitors() {
         // When you play another land, sacrifice this land.
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND, new SacrificeSelfEffect());
+        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_ANOTHER_LAND, new SacrificeSelfEffect());
 
         // {T}: Add {C}{C}.
         addActivatedAbility(new ActivatedAbility(

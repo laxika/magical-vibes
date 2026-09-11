@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreaturesWithTotalManaValueAtMostEffect;
 
 @CardRegistration(set = "DIS", collectorNumber = "90")
+@CardRegistration(set = "TD2", collectorNumber = "65")
 public class ProteanHulk extends Card {
 
     public ProteanHulk() {

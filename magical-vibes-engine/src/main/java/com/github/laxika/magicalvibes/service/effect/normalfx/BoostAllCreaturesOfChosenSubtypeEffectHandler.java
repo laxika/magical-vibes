@@ -3,12 +3,17 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -19,7 +24,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Resolves {@link BoostAllCreaturesOfChosenSubtypeEffect} by prompting for a creature type and
@@ -76,6 +83,16 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
                         permanent, subtypePredicate, filterContext)) {
                     permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
                     permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
+                    Set<Keyword> grantableKeywords = boost.keywords().stream()
+                            .filter(keyword -> !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword))
+                            .collect(Collectors.toSet());
+                    if (!grantableKeywords.isEmpty()) {
+                        permanent.getGrantedKeywords().addAll(grantableKeywords);
+                        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                                UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
+                                new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
+                                permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    }
                     affectedCount[0]++;
                 }
             }
@@ -83,8 +100,9 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(String.format(" gives %+d/%+d to %d creature(s) until end of turn.",
-                        powerBoost, toughnessBoost, affectedCount[0]))
+                .text(String.format(" gives %+d/%+d to %d creature(s)%s until end of turn.",
+                        powerBoost, toughnessBoost, affectedCount[0],
+                        boost.keywords().isEmpty() ? "" : " and grants " + boost.keywords()))
                 .build());
         log.info("Game {} - {} gives {}/{} to {} creatures of chosen subtype",
                 gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, affectedCount[0]);

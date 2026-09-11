@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
+import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -48,10 +49,11 @@ class PyroclasmTest extends BaseCardTest {
     @Test
     @DisplayName("Pyroclasm does not destroy creatures with toughness greater than 2")
     void doesNotDestroyCreaturesWithToughnessGreaterThanTwo() {
-        harness.addToBattlefield(player2, new GiantSpider());
+        Permanent giantSpider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
         harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
         harness.passBothPriorities();
 
+        assertThat(giantSpider.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
@@ -90,14 +92,15 @@ class PyroclasmTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(DarksteelSentinel.class)
+    @CardUsed(DarksteelMyr.class)
     @DisplayName("Indestructible creatures survive Pyroclasm")
     void indestructibleCreaturesSurvive() {
-        harness.addToBattlefield(player2, new DarksteelSentinel());
+        Permanent darksteelMyr = harness.addToBattlefieldAndReturn(player2, new DarksteelMyr());
         harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Darksteel Sentinel");
+        assertThat(darksteelMyr.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Darksteel Myr");
     }
 
     @Test

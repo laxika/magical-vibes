@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "INV", collectorNumber = "264")
+@CardRegistration(set = "DDH", collectorNumber = "61")
 public class Recoil extends Card {
 
     public Recoil() {

@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ReveredUnicorn.class)
 class ReveredUnicornTest extends BaseCardTest {
 
     @Test
@@ -46,5 +48,20 @@ class ReveredUnicornTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(unicorn);
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Leaving the battlefield by another means gains life for its age counters")
+    void leavingBattlefieldGainsLifeForAgeCounters() {
+        Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new ReveredUnicorn());
+        unicorn.setCounterCount(CounterType.AGE, 2);
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, unicorn));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Revered Unicorn");
+        harness.assertLife(player1, 22);
     }
 }

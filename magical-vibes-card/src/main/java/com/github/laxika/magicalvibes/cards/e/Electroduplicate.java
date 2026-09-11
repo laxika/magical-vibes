@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FDN", collectorNumber = "85")
+@CardRegistration(set = "FDN", collectorNumber = "328")
+@CardRegistration(set = "FDN", collectorNumber = "390")
+@CardRegistration(set = "FDN", collectorNumber = "465")
 public class Electroduplicate extends Card {
 
     public Electroduplicate() {

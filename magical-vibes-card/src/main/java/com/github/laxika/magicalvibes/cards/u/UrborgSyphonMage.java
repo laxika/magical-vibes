@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "139")
+@CardRegistration(set = "DDD", collectorNumber = "40")
 public class UrborgSyphonMage extends Card {
 
     public UrborgSyphonMage() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "5ED", collectorNumber = "128")
 @CardRegistration(set = "4ED", collectorNumber = "105")
 @CardRegistration(set = "SUM", collectorNumber = "84")
+@CardRegistration(set = "3ED", collectorNumber = "84")
 public class StealArtifact extends Card {
 
     public StealArtifact() {

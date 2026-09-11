@@ -310,7 +310,13 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
+            if (ability.triggeringPermanentId() != null && ability.sourceControllerId() != null) {
+                entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
+            }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
+            if (ability.xValue() != null) {
+                entry.setXValue(ability.xValue());
+            }
             gameData.stack.add(entry);
 
                 if (isPreTargetedPlayer) {
@@ -375,8 +381,14 @@ public class MayAbilityHandlerService {
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             entry.setEventValue(ability.eventValue());
             entry.setTriggeringPermanentId(ability.triggeringPermanentId());
+            if (ability.triggeringPermanentId() != null && ability.sourceControllerId() != null) {
+                entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
+            }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
             entry.setTriggeringCardId(ability.triggeringCardId());
+            if (ability.xValue() != null) {
+                entry.setXValue(ability.xValue());
+            }
 
             // Self-targeting effects need the source permanent's ID to resolve
             boolean needsSelfTarget = ability.effects().stream().anyMatch(e ->
@@ -411,7 +423,8 @@ public class MayAbilityHandlerService {
                     && discard.useEntryTarget())) {
                 entry.setNonTargeting(true);
             }
-            if (ability.effects().stream().anyMatch(e -> e instanceof OtherAttackingCreatureReferenceEffect)) {
+            if (ability.effects().stream().anyMatch(e -> e.usesEnteringPermanentReference()
+                    || e instanceof OtherAttackingCreatureReferenceEffect)) {
                 entry.setNonTargeting(true);
             }
             entry.setAttackedTargetId(ability.attackedTargetId());

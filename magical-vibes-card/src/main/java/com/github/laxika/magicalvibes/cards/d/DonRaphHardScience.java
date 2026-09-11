@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "144")
+@CardRegistration(set = "TMT", collectorNumber = "205")
+@CardRegistration(set = "TMT", collectorNumber = "243")
 public class DonRaphHardScience extends Card {
 
     public DonRaphHardScience() {

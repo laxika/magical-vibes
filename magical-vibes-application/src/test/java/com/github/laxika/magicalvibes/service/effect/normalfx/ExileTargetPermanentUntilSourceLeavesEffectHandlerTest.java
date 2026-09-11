@@ -63,6 +63,8 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.lenient().when(permanentRemovalService.removePermanentToExile(any(), any()))
+                .thenReturn(true);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -192,6 +194,7 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
             void fizzlesWhenTargetRemoved() {
                 UUID targetId = UUID.randomUUID();
                 Card sourceCard = createCreatureCard("Leonin Relic-Warder");
+                addPermanent(player1Id, sourceCard);
 
                 StackEntry entry = createEntry(sourceCard, player1Id, targetId);
 

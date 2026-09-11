@@ -11,7 +11,7 @@ public class Mortuary extends Card {
     public Mortuary() {
         // Whenever a creature is put into your graveyard from the battlefield, put that card on
         // top of your library.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addEffect(EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                 new PutTriggeringCardFromGraveyardOnTopOfLibraryEffect());
     }
 }

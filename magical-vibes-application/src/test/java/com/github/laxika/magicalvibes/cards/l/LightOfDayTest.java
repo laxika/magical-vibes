@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.s.Souldrinker;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,14 +18,14 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LightOfDay.class, GrizzlyBears.class, ScatheZombies.class})
+@CardUsed({LightOfDay.class, ScatheZombies.class, Souldrinker.class, TrainedArmodon.class})
 class LightOfDayTest extends BaseCardTest {
 
     @Test
     @DisplayName("Black creature cannot attack while Light of Day is on the battlefield")
     void blackCreatureCannotAttack() {
         harness.addToBattlefield(player1, new LightOfDay());
-        Permanent black = addCreatureReady(player1, new ScatheZombies());
+        Permanent black = addCreatureReady(player1, new Souldrinker());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(black);
         assertThatThrownBy(() -> declareAttackers(List.of(idx)))
@@ -36,21 +37,23 @@ class LightOfDayTest extends BaseCardTest {
     void nonBlackCreatureCanAttack() {
         harness.addToBattlefield(player1, new LightOfDay());
         harness.setLife(player2, 20);
-        Permanent nonBlack = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonblack = addCreatureReady(player1, new TrainedArmodon());
 
-        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(nonBlack);
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(nonblack);
         declareAttackers(List.of(idx));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
     @Test
     @DisplayName("Black creature cannot block while Light of Day is on the battlefield")
     void blackCreatureCannotBlock() {
         harness.addToBattlefield(player1, new LightOfDay());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new TrainedArmodon());
         attacker.setAttacking(true);
-        addCreatureReady(player2, new ScatheZombies());
+        addCreatureReady(player2, new Souldrinker());
+
+        prepareDeclareBlockers();
 
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         prepareDeclareBlockers();
@@ -63,9 +66,9 @@ class LightOfDayTest extends BaseCardTest {
     @DisplayName("Non-black creature blocks normally while Light of Day is on the battlefield")
     void nonBlackCreatureCanBlock() {
         harness.addToBattlefield(player1, new LightOfDay());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new TrainedArmodon());
         attacker.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new TrainedArmodon());
 
         prepareDeclareBlockers();
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -79,7 +82,7 @@ class LightOfDayTest extends BaseCardTest {
     void restrictionLiftsWhenLightOfDayLeaves() {
         Permanent lightOfDay = harness.addToBattlefieldAndReturn(player1, new LightOfDay());
         harness.setLife(player2, 20);
-        Permanent black = addCreatureReady(player1, new ScatheZombies());
+        Permanent black = addCreatureReady(player1, new Souldrinker());
 
         gd.playerBattlefields.get(player1.getId()).remove(lightOfDay);
 

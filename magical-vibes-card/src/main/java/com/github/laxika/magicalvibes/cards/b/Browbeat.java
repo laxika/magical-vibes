@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "TSB", collectorNumber = "56")
 @CardRegistration(set = "JUD", collectorNumber = "82")
+@CardRegistration(set = "HOP", collectorNumber = "50")
+@CardRegistration(set = "PD2", collectorNumber = "21")
+@CardRegistration(set = "DDK", collectorNumber = "66")
 public class Browbeat extends Card {
 
     public Browbeat() {

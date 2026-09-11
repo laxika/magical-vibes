@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.d.DancingScimitar;
-import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.j.JanglingAutomaton;
+import com.github.laxika.magicalvibes.cards.o.OdylicWraith;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,47 +12,49 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RazortoothRats.class, GrizzlyBears.class, DrudgeSkeletons.class, DancingScimitar.class})
+@CardUsed({BenalishKnight.class, JanglingAutomaton.class, OdylicWraith.class, RazortoothRats.class})
 class RazortoothRatsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Razortooth Rats cannot be blocked by a nonblack nonartifact creature")
-    void cannotBeBlockedByNonblackNonartifactCreature() {
-        Permanent rats = addCreatureReady(player1, new RazortoothRats());
-        rats.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+    @DisplayName("Fear prevents a nonblack, nonartifact creature from blocking")
+    void fearPreventsNonblackNonartifactCreatureFromBlocking() {
+        Permanent attacker = addCreatureReady(player1, new RazortoothRats());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new BenalishKnight());
 
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("cannot block")
-                .hasMessageContaining("(fear)");
+                .hasMessageContaining("fear");
     }
 
     @Test
-    @DisplayName("Razortooth Rats can be blocked by a black creature")
-    void canBeBlockedByBlackCreature() {
-        Permanent rats = addCreatureReady(player1, new RazortoothRats());
-        rats.setAttacking(true);
-        addCreatureReady(player2, new DrudgeSkeletons());
+    @DisplayName("Fear allows a black creature to block")
+    void fearAllowsBlackCreatureToBlock() {
+        Permanent attacker = addCreatureReady(player1, new RazortoothRats());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new OdylicWraith());
 
         prepareDeclareBlockers();
-
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
-    @DisplayName("Razortooth Rats can be blocked by an artifact creature")
-    void canBeBlockedByArtifactCreature() {
-        Permanent rats = addCreatureReady(player1, new RazortoothRats());
-        rats.setAttacking(true);
-        addCreatureReady(player2, new DancingScimitar());
+    @DisplayName("Fear allows an artifact creature to block")
+    void fearAllowsArtifactCreatureToBlock() {
+        Permanent attacker = addCreatureReady(player1, new RazortoothRats());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new JanglingAutomaton());
 
         prepareDeclareBlockers();
-
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

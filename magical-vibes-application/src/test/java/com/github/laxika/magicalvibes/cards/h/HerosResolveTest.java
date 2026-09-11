@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.c.CanopySpider;
+import com.github.laxika.magicalvibes.cards.c.CursedScroll;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,18 +16,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HerosResolve.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({CanopySpider.class, CursedScroll.class, GrizzlyBears.class, HerosResolve.class})
 class HerosResolveTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Hero's Resolve targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
 
         harness.setHand(player1, List.of(new HerosResolve()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, spider.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -35,51 +36,67 @@ class HerosResolveTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Hero's Resolve attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
 
         harness.setHand(player1, List.of(new HerosResolve()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castEnchantment(player1, 0, spider.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent aura = findPermanent(player1, "Hero's Resolve");
-        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Hero's Resolve")
+                        && spider.getId().equals(p.getAttachedTo()));
     }
 
     @Test
     @DisplayName("Enchanted creature gets +1/+5")
     void enchantedCreatureGetsBuff() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new HerosResolve());
-        aura.setAttachedTo(bears.getId());
+        aura.setAttachedTo(spider.getId());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Hero's Resolve can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new CanopySpider());
+
+        harness.setHand(player1, List.of(new HerosResolve()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, spider.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(8);
     }
 
     @Test
     @DisplayName("Creature returns to base stats when Hero's Resolve is removed")
     void effectsStopWhenRemoved() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new HerosResolve());
-        aura.setAttachedTo(bears.getId());
+        aura.setAttachedTo(spider.getId());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(8);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Hero's Resolve can enchant a creature an opponent controls")
-    void canEnchantOpponentsCreature() {
+    void attachesToOpponentsCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HerosResolve()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -111,13 +128,13 @@ class HerosResolveTest extends BaseCardTest {
     @Test
     @DisplayName("Hero's Resolve fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
 
         harness.setHand(player1, List.of(new HerosResolve()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castEnchantment(player1, 0, bears.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        harness.castEnchantment(player1, 0, spider.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(spider);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Hero's Resolve");
@@ -127,7 +144,7 @@ class HerosResolveTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Hero's Resolve")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CursedScroll());
         harness.setHand(player1, List.of(new HerosResolve()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 

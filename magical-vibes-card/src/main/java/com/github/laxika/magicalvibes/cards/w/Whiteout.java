@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "275")
+@CardRegistration(set = "ME2", collectorNumber = "185")
 public class Whiteout extends Card {
 
     public Whiteout() {

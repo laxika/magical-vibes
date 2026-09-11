@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTrigger
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -166,6 +168,9 @@ public class MayMiscHandlerService {
         if (accepted && sourcePermanent != null && !gameQueryService.cantBecomeUntapped(gameData, sourcePermanent)) {
             boolean wasTapped = sourcePermanent.isTapped();
             sourcePermanent.untap();
+            if (wasTapped) {
+                triggerCollectionService.checkBecomesUntappedTriggers(gameData, sourcePermanent);
+            }
             if (wasTapped && gameData.currentStep == TurnStep.UNTAP
                     && controllerId.equals(gameData.untapStepPlayerId)) {
                 gameData.untapStepUntappedPermanentCount++;
@@ -262,6 +267,15 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} skips draw step with {} and gains 2 life",
                     gameData.id, playerName, ability.sourceCard().getName());
 
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (effect.kind() == DrawReplacementKind.PARALLEL_THOUGHTS) {
+            drawService.resolveDrawFromExiledPile(gameData, drawingPlayerId, ability.sourcePermanentId());
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " replaces their draw with ",
+                    ability.sourceCard(), "."));
+            log.info("Game {} - {} replaces a draw with the Parallel Thoughts pile", gameData.id, playerName);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -684,6 +698,16 @@ public class MayMiscHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " begins the game with " , card, " on the battlefield."));
             log.info("Game {} - {} starts with {} on the battlefield (leyline)",
                     gameData.id, player.getUsername(), card.getName());
+
+            SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
+                    .map(SubtypeChoiceOnEnterEffect.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (subtypeChoice != null) {
+                playerInputService.beginPregameSubtypeChoice(gameData, controllerId, perm.getId(), subtypeChoice);
+                return;
+            }
         } else {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to put " , ability.sourceCard(), " on the battlefield."));
             log.info("Game {} - {} declines leyline placement for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());

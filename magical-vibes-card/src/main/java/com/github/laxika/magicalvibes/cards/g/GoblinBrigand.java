@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "190")
+@CardRegistration(set = "SCG", collectorNumber = "94")
 public class GoblinBrigand extends Card {
 
     public GoblinBrigand() {

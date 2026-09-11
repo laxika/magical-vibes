@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Slf4j
@@ -133,6 +134,11 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.matchAtUntap()) {
+            gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
+                    targetPlayerId, id -> new ArrayList<>()).add(e);
+        }
+
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield == null) return;
 
@@ -145,12 +151,13 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             if (e.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
 
-            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), e.untapSteps()));
+            if (!e.matchAtUntap()) {
+                p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), e.untapSteps()));
+            }
             count++;
         }
 
-        
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" prevents " + count + " permanent(s) from untapping during their controller's next untap step.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" prevents matching permanents from untapping during the target player's next untap step.").build());
         log.info("Game {} - {} skip next untap set on {} permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 

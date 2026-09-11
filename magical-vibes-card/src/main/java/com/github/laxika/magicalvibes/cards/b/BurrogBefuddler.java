@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STX", collectorNumber = "38")
+@CardRegistration(set = "FDN", collectorNumber = "504")
 public class BurrogBefuddler extends Card {
 
     public BurrogBefuddler() {

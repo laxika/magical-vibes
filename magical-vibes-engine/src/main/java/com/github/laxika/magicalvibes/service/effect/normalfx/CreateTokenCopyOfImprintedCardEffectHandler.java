@@ -57,8 +57,8 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                     return;
                 }
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(
-                        gameData, entry.getControllerId(), imprintedCard.hasType(CardType.CREATURE));
+                int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                        gameData, entry.getControllerId(), 1, imprintedCard.getSubtypes(), imprintedCard.hasType(CardType.CREATURE));
                 for (int copy = 0; copy < tokenMultiplier; copy++) {
                     // Create a token that's a copy of the imprinted card (copying all copiable values)
                     Card tokenCard = new Card();

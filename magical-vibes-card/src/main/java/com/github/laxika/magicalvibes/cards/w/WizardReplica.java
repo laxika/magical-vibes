@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "275")
+@CardRegistration(set = "HOP", collectorNumber = "129")
 public class WizardReplica extends Card {
 
     public WizardReplica() {

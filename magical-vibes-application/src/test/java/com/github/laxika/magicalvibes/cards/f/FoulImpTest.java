@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(FoulImp.class)
 class FoulImpTest extends BaseCardTest {
 
     @Test
@@ -18,7 +17,7 @@ class FoulImpTest extends BaseCardTest {
         castFoulImp();
         harness.passBothPriorities(); // resolve creature spell
 
-        harness.assertOnBattlefield(player1, "Foul Imp");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }
@@ -49,8 +48,6 @@ class FoulImpTest extends BaseCardTest {
     }
 
     private void castFoulImp() {
-        harness.setHand(player1, List.of(new FoulImp()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FoulImp(), "{B}{B}");
     }
 }

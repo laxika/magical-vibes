@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "CON", collectorNumber = "135")
+@CardRegistration(set = "OGW", collectorNumber = "161")
 public class BoneSaw extends Card {
 
     public BoneSaw() {

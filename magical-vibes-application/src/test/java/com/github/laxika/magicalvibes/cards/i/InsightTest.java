@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.Fog;
+import com.github.laxika.magicalvibes.cards.b.BayouDragonfly;
+import com.github.laxika.magicalvibes.cards.f.Firefly;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
+import com.github.laxika.magicalvibes.cards.m.MirrisGuile;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Insight.class, GrizzlyBears.class, HornedTurtle.class, Fog.class, Forest.class})
+@CardUsed({BayouDragonfly.class, Firefly.class, Forest.class, Insight.class, MirrisGuile.class})
 class InsightTest extends BaseCardTest {
 
     /** Player1 controls Insight; it is player2's (the opponent's) turn. */
@@ -30,9 +30,10 @@ class InsightTest extends BaseCardTest {
     @DisplayName("Opponent's green spell: you draw a card")
     void opponentGreenSpellDrawsCard() {
         setUpOpponentTurn();
+
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.castFromHand(player2, new BayouDragonfly(), "{1}{G}");
 
         // Draw trigger sits on top of the creature spell.
         assertThat(gd.stack).hasSize(2);
@@ -48,9 +49,10 @@ class InsightTest extends BaseCardTest {
     @DisplayName("Opponent's green noncreature spell: you draw a card")
     void opponentGreenNoncreatureSpellDrawsCard() {
         setUpOpponentTurn();
-        harness.castFromHand(player2, new Fog(), "{G}");
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castFromHand(player2, new MirrisGuile(), "{G}");
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -65,9 +67,10 @@ class InsightTest extends BaseCardTest {
     @DisplayName("Opponent's non-green spell does not trigger")
     void opponentNonGreenSpellDoesNotTrigger() {
         setUpOpponentTurn();
+
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castFromHand(player2, new HornedTurtle(), "{2}{U}");
+        harness.castFromHand(player2, new Firefly(), "{3}{R}");
 
         // Only the creature spell is on the stack — no triggered ability.
         assertThat(gd.stack).hasSize(1);
@@ -82,7 +85,8 @@ class InsightTest extends BaseCardTest {
     @DisplayName("Controller's own green spell does not trigger (only opponents' casts count)")
     void ownGreenSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new Insight());
-        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        harness.castFromHand(player1, new BayouDragonfly(), "{1}{G}");
 
         // Only the creature spell — no triggered ability.
         assertThat(gd.stack).hasSize(1);

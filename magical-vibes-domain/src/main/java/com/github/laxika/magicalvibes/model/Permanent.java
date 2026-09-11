@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,6 +29,8 @@ public class Permanent {
     @Setter private boolean bestow;
     /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
     @Setter private Card fullTextCopySourceCard;
+    /** Copiable characteristics before a layer-3 graveyard text change, including Clone effects. */
+    @Setter private Card fullTextCopyBaseCard;
     private boolean tapped;
     /** Whether this permanent was untapped before its controller's most recent untap step. */
     @Setter private boolean untappedAtTurnStart;
@@ -40,6 +43,8 @@ public class Permanent {
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     @Setter private UUID attackTarget;
     private boolean attackedThisTurn;
+    /** Number of times this permanent has been declared as an attacker this turn. */
+    @Setter private int attacksThisTurn;
     private boolean attackedThisCombat;
     /** Creatures that were tapped to pay this Vehicle's crew cost during the current turn. */
     private final Set<UUID> creaturesThatCrewedThisTurn = new HashSet<>();
@@ -169,6 +174,9 @@ public class Permanent {
     private final Set<String> chosenModeLabels = new HashSet<>();
     /** Labels of modes chosen this turn for a turn-scoped modal trigger. */
     private final Set<String> chosenModeLabelsThisTurn = new HashSet<>();
+    /** Room doors unlocked on this permanent, in door order. This state survives turn resets. */
+    @Getter(AccessLevel.NONE)
+    private final Set<Integer> unlockedRoomDoors = new HashSet<>();
     @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
     /** Player targeted by a linked enter-the-battlefield ability. */
@@ -659,6 +667,7 @@ public class Permanent {
         this.tapped = false;
         this.untappedAtTurnStart = true;
         this.attackedThisTurn = false;
+        this.attacksThisTurn = 0;
         this.attackedThisCombat = false;
         this.summoningSick = true;
     }
@@ -679,6 +688,7 @@ public class Permanent {
         this.originalCard = source.originalCard;
         this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
+        this.fullTextCopyBaseCard = source.fullTextCopyBaseCard;
         this.tapped = source.tapped;
         this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;
@@ -686,6 +696,7 @@ public class Permanent {
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
+        this.attacksThisTurn = source.attacksThisTurn;
         this.attackedThisCombat = source.attackedThisCombat;
         this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
         this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
@@ -732,6 +743,7 @@ public class Permanent {
         this.chosenNumber = source.chosenNumber;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
+        this.unlockedRoomDoors.addAll(source.unlockedRoomDoors);
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.rememberedTargetPlayerId = source.rememberedTargetPlayerId;
@@ -955,6 +967,12 @@ public class Permanent {
         }
     }
 
+    /** Removes all damage currently marked on this permanent and clears its deathtouch damage memory. */
+    public void healDamage() {
+        setMarkedDamage(0);
+        this.damagedByDeathtouch = false;
+    }
+
     /**
      * Records damage dealt by a specific source object and updates the total. {@code sourceId} may
      * be null when the source is unknown (total still increases; per-source map is unchanged).
@@ -1013,6 +1031,7 @@ public class Permanent {
         this.attacking = attacking;
         if (attacking) {
             this.attackedThisTurn = true;
+            this.attacksThisTurn++;
             this.attackedThisCombat = true;
             this.attackedDuringControllersCurrentTurn = true;
         }
@@ -1386,15 +1405,16 @@ public class Permanent {
         if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
         CounterType keywordCounter = switch (keyword) {
+            case HASTE -> CounterType.HASTE;
             case FLYING -> CounterType.FLYING;
             case FIRST_STRIKE -> CounterType.FIRST_STRIKE;
             case DOUBLE_STRIKE -> CounterType.DOUBLE_STRIKE;
             case DEATHTOUCH -> CounterType.DEATHTOUCH;
             case DECAYED -> CounterType.DECAYED;
             case LIFELINK -> CounterType.LIFELINK;
-            case VIGILANCE -> CounterType.VIGILANCE;
             case REACH -> CounterType.REACH;
             case TRAMPLE -> CounterType.TRAMPLE;
+            case VIGILANCE -> CounterType.VIGILANCE;
             case HEXPROOF -> CounterType.HEXPROOF;
             case INDESTRUCTIBLE -> CounterType.INDESTRUCTIBLE;
             case MENACE -> CounterType.MENACE;
@@ -1618,6 +1638,28 @@ public class Permanent {
         if (chosenColor != null) {
             this.chosenColors.add(chosenColor);
         }
+    }
+
+    public boolean isRoomDoorUnlocked(int doorIndex) {
+        return unlockedRoomDoors.contains(doorIndex);
+    }
+
+    public void unlockRoomDoor(int doorIndex) {
+        if (doorIndex < 0 || doorIndex > 1) {
+            throw new IllegalArgumentException("Invalid Room door index: " + doorIndex);
+        }
+        unlockedRoomDoors.add(doorIndex);
+    }
+
+    public void lockRoomDoor(int doorIndex) {
+        if (doorIndex < 0 || doorIndex > 1) {
+            throw new IllegalArgumentException("Invalid Room door index: " + doorIndex);
+        }
+        unlockedRoomDoors.remove(doorIndex);
+    }
+
+    public boolean isRoomFullyUnlocked() {
+        return unlockedRoomDoors.contains(0) && unlockedRoomDoors.contains(1);
     }
 
     /**

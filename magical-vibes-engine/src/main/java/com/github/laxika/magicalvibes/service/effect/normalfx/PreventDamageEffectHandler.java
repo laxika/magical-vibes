@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -99,6 +101,14 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameLogService.append(gameData, GameLog.text(
                         "All damage that would be dealt this turn by creatures controlled by the spell's controller's opponents is prevented."));
             }
+            case ALL_COMBAT_BY_TARGET_OPPONENT_CREATURES -> {
+                UUID targetId = entry.getTargetId();
+                if (targetId != null && gameData.playerIds.contains(targetId)) {
+                    gameData.playersWithCombatDamageFromTargetOpponentCreaturesPrevented.add(targetId);
+                }
+                gameLogService.append(gameData, GameLog.text(
+                        "All combat damage that would be dealt this turn by creatures controlled by the targeted opponent is prevented."));
+            }
             case ALL_TO_MATCHING_PERMANENTS -> {
                 gameData.allDamagePreventionPredicates.add(e.victimPredicate());
                 gameLogService.append(gameData, GameLog.text("All damage that would be dealt to the affected permanents this turn is prevented."));
@@ -127,6 +137,8 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             case ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS ->
                     allToTargetCreaturesAndAddPlusOnePlusOneCounters(gameData, entry, e);
             case ALL_BY_TARGET_CREATURES -> allByTargetCreatures(gameData, entry, e);
+            case ALL_BY_TARGET_CREATURES_WHILE_SOURCE_REMAINS ->
+                    allByTargetCreatureWhileSourceRemains(gameData, entry, e);
             case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> allByTargetPermanentUntilNextTurn(gameData, entry);
             case ALL_TO_AND_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN ->
                     allToAndByTargetPermanentUntilNextTurn(gameData, entry);
@@ -550,6 +562,36 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                     " would deal this turn is prevented."));
             log.info("Game {} - {} prevented from dealing {}damage this turn",
                     gameData.id, target.getCard().getName(), combatOnly ? "combat " : "");
+        }
+    }
+
+    private void allByTargetCreatureWhileSourceRemains(GameData gameData, StackEntry entry,
+                                                       PreventDamageEffect effect) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
+            return;
+        }
+
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if ((targetIds == null || targetIds.isEmpty()) && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        if (targetIds == null) {
+            return;
+        }
+
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null || !gameQueryService.isCreature(gameData, target)) {
+                continue;
+            }
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
+                    entry.getControllerId(), effect, target.getId(), null, null,
+                    EffectDuration.WHILE_SOURCE_REMAINS, 0));
+            gameLogService.append(gameData, GameLog.textCardText(
+                    "All damage ", target.getCard(),
+                    " would deal is prevented for as long as this source remains on the battlefield."));
         }
     }
 

@@ -142,7 +142,7 @@ class SeasonOfTheBurrowTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, modeIndex, targetId);
+        harness.castSorcery(player1, 0, modeIndex, List.of(targetId));
         harness.passBothPriorities();
     }
 

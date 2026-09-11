@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "185")
+@CardRegistration(set = "DD1", collectorNumber = "46")
+@CardRegistration(set = "DDG", collectorNumber = "52")
 public class MudbuttonTorchrunner extends Card {
 
     public MudbuttonTorchrunner() {

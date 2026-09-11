@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "151")
+@CardRegistration(set = "CP3", collectorNumber = "4")
 public class DromokaTheEternal extends Card {
 
     public DromokaTheEternal() {

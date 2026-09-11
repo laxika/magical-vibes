@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "50")
+@CardRegistration(set = "DD2", collectorNumber = "11")
 public class WaterspoutDjinn extends Card {
 
     private static final PermanentAllOfPredicate UNTAPPED_ISLAND = new PermanentAllOfPredicate(List.of(

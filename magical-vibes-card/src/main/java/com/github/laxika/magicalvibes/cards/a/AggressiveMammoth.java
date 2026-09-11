@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M19", collectorNumber = "302")
 @CardRegistration(set = "M20", collectorNumber = "337")
+@CardRegistration(set = "FDN", collectorNumber = "551")
 public class AggressiveMammoth extends Card {
 
     public AggressiveMammoth() {

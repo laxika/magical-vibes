@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PTK", collectorNumber = "68")
+@CardRegistration(set = "V11", collectorNumber = "1")
 public class CaoCaoLordOfWei extends Card {
 
     public CaoCaoLordOfWei() {

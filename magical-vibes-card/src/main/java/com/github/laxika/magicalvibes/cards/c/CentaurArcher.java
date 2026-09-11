@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "282")
+@CardRegistration(set = "ME1", collectorNumber = "142")
 public class CentaurArcher extends Card {
 
     public CentaurArcher() {

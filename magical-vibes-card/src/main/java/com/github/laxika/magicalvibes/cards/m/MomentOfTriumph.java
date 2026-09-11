@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RIX", collectorNumber = "15")
+@CardRegistration(set = "FDN", collectorNumber = "500")
 public class MomentOfTriumph extends Card {
 
     public MomentOfTriumph() {

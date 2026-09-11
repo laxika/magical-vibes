@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DwarvenBerserker;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -12,11 +12,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhantomWarrior.class, GrizzlyBears.class})
+@CardUsed({DwarvenBerserker.class, PhantomWarrior.class})
 class PhantomWarriorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -24,10 +26,7 @@ class PhantomWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Phantom Warrior puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new PhantomWarrior()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhantomWarrior(), "{1}{U}{U}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -37,10 +36,7 @@ class PhantomWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Phantom Warrior onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new PhantomWarrior()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhantomWarrior(), "{1}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -60,10 +56,7 @@ class PhantomWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Phantom Warrior enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new PhantomWarrior()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhantomWarrior(), "{1}{U}{U}");
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Phantom Warrior");
@@ -75,8 +68,8 @@ class PhantomWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Phantom Warrior cannot be blocked by a ground creature")
     void cannotBeBlockedByGroundCreature() {
-        // Player2 has Grizzly Bears as potential blocker
-        addCreatureReady(player2, new GrizzlyBears());
+        // Player2 has Dwarven Berserker as potential blocker
+        addCreatureReady(player2, new DwarvenBerserker());
 
         // Player1 has Phantom Warrior as attacker
         Permanent atkPerm = addCreatureReady(player1, new PhantomWarrior());
@@ -87,6 +80,21 @@ class PhantomWarriorTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A face-down Phantom Warrior can be blocked")
+    void faceDownPhantomWarriorCanBeBlocked() {
+        addCreatureReady(player2, new DwarvenBerserker());
+
+        Permanent attacker = addCreatureReady(player1, new PhantomWarrior());
+        attacker.setAttacking(true);
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
     }
 
     // ===== Deals combat damage when unblocked =====

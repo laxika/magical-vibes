@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ALL", collectorNumber = "65")
 @CardRegistration(set = "BTD", collectorNumber = "34")
 @CardRegistration(set = "DKM", collectorNumber = "10")
+@CardRegistration(set = "ME1", collectorNumber = "86")
 public class BalduvianHorde extends Card {
 
     public BalduvianHorde() {

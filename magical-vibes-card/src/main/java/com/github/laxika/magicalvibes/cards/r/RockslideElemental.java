@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "ALA", collectorNumber = "112")
+@CardRegistration(set = "HOP", collectorNumber = "63")
 public class RockslideElemental extends Card {
 
     public RockslideElemental() {

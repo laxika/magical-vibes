@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MistDragon;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VolcanicDragon.class, GrizzlyBears.class})
+@CardUsed({GrizzlyBears.class, MistDragon.class, VolcanicDragon.class})
 class VolcanicDragonTest extends BaseCardTest {
 
     @Test
@@ -23,8 +24,7 @@ class VolcanicDragonTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
+        harness.addToBattlefield(player2, new MistDragon());
         harness.castFromHand(player1, new VolcanicDragon(), "{4}{R}{R}");
         harness.passBothPriorities();
 

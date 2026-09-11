@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(VenerableMonk.class)
+@CardUsed({VenerableMonk.class})
 class VenerableMonkTest extends BaseCardTest {
 
     @Test

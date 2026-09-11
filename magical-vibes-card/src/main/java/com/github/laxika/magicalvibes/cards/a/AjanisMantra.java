@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "2")
+@CardRegistration(set = "DDH", collectorNumber = "22")
 public class AjanisMantra extends Card {
 
     public AjanisMantra() {

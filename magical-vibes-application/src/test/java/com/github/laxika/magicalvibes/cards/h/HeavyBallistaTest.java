@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeavyBallista.class, GrizzlyBears.class})
+@CardUsed({BenalishKnight.class, HeavyBallista.class})
 class HeavyBallistaTest extends BaseCardTest {
 
     @Test
@@ -24,10 +23,9 @@ class HeavyBallistaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(ballista.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Benalish Knight");
     }
 
     @Test
@@ -39,23 +37,34 @@ class HeavyBallistaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Benalish Knight");
     }
 
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
         addReadyBallista(player1);
-        Permanent nonCombat = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BenalishKnight());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonCombat.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Does not deal damage if the target stops attacking before resolution")
+    @DisplayName("Can target a blocking creature controlled by the ballista's controller")
+    void canTargetOwnBlockingCreature() {
+        addReadyBallista(player1);
+        Permanent blocker = addBlocker(player1);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Benalish Knight");
+    }
+
+    @Test
+    @DisplayName("Does not damage a target that stops attacking before resolution")
     void targetMustStillBeAttackingOnResolution() {
         addReadyBallista(player1);
         Permanent attacker = addAttacker(player2);
@@ -84,14 +93,14 @@ class HeavyBallistaTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner) {
-        Permanent attacker = addCreatureReady(owner, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(owner, new BenalishKnight());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         return attacker;
     }
 
     private Permanent addBlocker(Player owner) {
-        Permanent blocker = addCreatureReady(owner, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(owner, new BenalishKnight());
         blocker.setBlocking(true);
         return blocker;
     }

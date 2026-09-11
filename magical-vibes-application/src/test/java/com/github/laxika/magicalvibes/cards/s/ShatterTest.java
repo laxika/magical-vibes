@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.DancingScimitar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
+import com.github.laxika.magicalvibes.cards.l.LotusPetal;
+import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -21,17 +22,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Shatter.class, JayemdaeTome.class, DancingScimitar.class, GrizzlyBears.class})
+@CardUsed({GrizzlyBears.class, JayemdaeTome.class, LotusPetal.class, MetallicSliver.class, Shatter.class})
 class ShatterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Shatter puts it on the stack with target")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player2, new JayemdaeTome());
+        harness.addToBattlefield(player2, new LotusPetal());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Jayemdae Tome");
+        UUID targetId = harness.getPermanentId(player2, "Lotus Petal");
         harness.castInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -44,53 +45,53 @@ class ShatterTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Shatter destroys target artifact")
     void destroysArtifact() {
-        harness.addToBattlefield(player2, new JayemdaeTome());
+        harness.addToBattlefield(player2, new LotusPetal());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Jayemdae Tome");
+        UUID targetId = harness.getPermanentId(player2, "Lotus Petal");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Jayemdae Tome");
-        harness.assertInGraveyard(player2, "Jayemdae Tome");
+        harness.assertNotOnBattlefield(player2, "Lotus Petal");
+        harness.assertInGraveyard(player2, "Lotus Petal");
     }
 
     @Test
     @DisplayName("Can destroy own artifact with Shatter")
     void canDestroyOwnArtifact() {
-        harness.addToBattlefield(player1, new JayemdaeTome());
+        harness.addToBattlefield(player1, new LotusPetal());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player1, "Jayemdae Tome");
+        UUID targetId = harness.getPermanentId(player1, "Lotus Petal");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player1, "Jayemdae Tome");
-        harness.assertInGraveyard(player1, "Jayemdae Tome");
+        harness.assertNotOnBattlefield(player1, "Lotus Petal");
+        harness.assertInGraveyard(player1, "Lotus Petal");
     }
 
     @Test
     @DisplayName("Can target an artifact creature with Shatter")
     void canTargetArtifactCreature() {
-        harness.addToBattlefield(player2, new DancingScimitar());
+        harness.addToBattlefield(player2, new MetallicSliver());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Dancing Scimitar");
+        UUID targetId = harness.getPermanentId(player2, "Metallic Sliver");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Dancing Scimitar");
-        harness.assertInGraveyard(player2, "Dancing Scimitar");
+        harness.assertNotOnBattlefield(player2, "Metallic Sliver");
+        harness.assertInGraveyard(player2, "Metallic Sliver");
     }
 
     @Test
     @DisplayName("Shatter goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.addToBattlefield(player2, new JayemdaeTome());
+        harness.addToBattlefield(player2, new LotusPetal());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Jayemdae Tome");
+        UUID targetId = harness.getPermanentId(player2, "Lotus Petal");
         harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();

@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LlanowarSentinel.class, GrizzlyBears.class})
 class LlanowarSentinelTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Resolving Llanowar Sentinel creates may prompt")
@@ -89,22 +86,69 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (pays mana, shows search)
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(countSentinelsOnBattlefield()).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Choosing not to find leaves the matching Sentinel in the library")
+    void choosingNotToFindDoesNotPutSentinelOntoBattlefield() {
+        setupAndCast(5);
+        setupLibraryWithSentinels();
+
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("chooses not to take a card"));
+    }
+
+    @Test
+    @DisplayName("A Sentinel found by the ability can chain its own entry ability")
+    void foundSentinelCanChainEntryAbility() {
+        setupAndCast(9);
+        setupLibraryWithSentinels();
+
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.passBothPriorities(); // resolve the fetched Sentinel's entry ability
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
+
+        harness.passBothPriorities(); // resolve the second fetched Sentinel's entry ability
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countSentinelsOnBattlefield()).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     private void setupAndCast(int greenMana) {
-        harness.setHand(player1, List.of(new LlanowarSentinel()));
-        harness.addMana(player1, ManaColor.GREEN, greenMana);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LlanowarSentinel(), "{2}{G}");
+        harness.addMana(player1, ManaColor.GREEN, greenMana - 3);
     }
 
     private void setupLibraryWithSentinels() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new GrizzlyBears(),
                 new LlanowarSentinel(),
                 new LlanowarSentinel(),

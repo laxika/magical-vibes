@@ -6,19 +6,22 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +38,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
     private final PlayerInputService playerInputService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
 
     @Override
@@ -59,7 +63,8 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
                 return;
             }
 
-            if (hasSacrificeOption(gameData, ability.controllerId(), sourceControllerId)) {
+            if (hasSacrificeOption(gameData, ability.controllerId(), sourceControllerId,
+                    effect.sacrificeFilter(), ability)) {
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         ability.sourceCard(),
                         ability.controllerId(),
@@ -87,8 +92,9 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
             return;
         }
 
-        if (accepted && hasSacrificeOption(gameData, ability.controllerId(), sourceControllerId)) {
-            resolveSacrifice(gameData, ability, sourceControllerId);
+        if (accepted && hasSacrificeOption(gameData, ability.controllerId(), sourceControllerId,
+                effect.sacrificeFilter(), ability)) {
+            resolveSacrifice(gameData, ability, sourceControllerId, effect.sacrificeFilter());
             return;
         }
 
@@ -97,9 +103,9 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
     }
 
     private void resolveSacrifice(GameData gameData, PendingMayAbility ability,
-            UUID sourceControllerId) {
+            UUID sourceControllerId, PermanentPredicate sacrificeFilter) {
         var sacrifice = new SacrificePermanentsEffect(
-                1, new PermanentTruePredicate(), SacrificeRecipient.TARGET_PLAYER);
+                1, sacrificeFilter, SacrificeRecipient.TARGET_PLAYER);
         var sacrificeEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 ability.sourceCard(),
@@ -120,13 +126,21 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
         return hand != null && !hand.isEmpty();
     }
 
-    private boolean hasSacrificeOption(GameData gameData, UUID playerId, UUID sourceControllerId) {
+    private boolean hasSacrificeOption(GameData gameData, UUID playerId, UUID sourceControllerId,
+            PermanentPredicate sacrificeFilter, PendingMayAbility ability) {
         if (sourceControllerId == null
                 || !gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
             return false;
         }
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceCardId(ability.sourceCard().getId())
+                .withSourceControllerId(sourceControllerId)
+                .withSourcePermanentId(ability.sourcePermanentId())
+                .withSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
         return !destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)).isEmpty();
+                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                        && predicateEvaluationService.matchesPermanentPredicate(
+                                permanent, sacrificeFilter, context)).isEmpty();
     }
 
     private UUID sourceControllerId(GameData gameData, PendingMayAbility ability) {
@@ -139,7 +153,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
         return currentController != null ? currentController : ability.controllerId();
     }
 
-    private void dealDamage(GameData gameData, PendingMayAbility ability, int amount,
+    private void dealDamage(GameData gameData, PendingMayAbility ability, DynamicAmount amount,
             UUID sourceControllerId) {
         var damage = new DealDamageToPlayersEffect(amount, DamageRecipient.TARGET_PLAYER);
         var damageEntry = new StackEntry(

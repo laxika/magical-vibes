@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "137")
+@CardRegistration(set = "PD2", collectorNumber = "16")
 public class ChainLightning extends Card {
 
     public ChainLightning() {

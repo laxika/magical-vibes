@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "29")
+@CardRegistration(set = "ME1", collectorNumber = "14")
 public class HallowedGround extends Card {
 
     public HallowedGround() {

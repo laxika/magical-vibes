@@ -48,7 +48,7 @@ public class CounterUnlessSacrificesEffectHandler implements NormalEffectHandler
                         .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                                 gameData, permanent, sacrificeEffect.filter()))
                         .toList();
-        if (matchingPermanents.isEmpty()) {
+        if (matchingPermanents.size() < sacrificeEffect.requiredCount()) {
             counterSupport.counterSpell(gameData, entry, targetEntry);
             return;
         }

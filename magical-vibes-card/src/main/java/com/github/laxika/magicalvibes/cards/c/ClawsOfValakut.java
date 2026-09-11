@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WWK", collectorNumber = "75")
+@CardRegistration(set = "DDG", collectorNumber = "72")
 public class ClawsOfValakut extends Card {
 
     public ClawsOfValakut() {

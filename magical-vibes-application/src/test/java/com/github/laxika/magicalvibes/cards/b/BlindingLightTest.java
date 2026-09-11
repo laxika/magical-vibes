@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.e.EkunduGriffin;
-import com.github.laxika.magicalvibes.cards.m.MtendaLion;
-import com.github.laxika.magicalvibes.cards.s.SkyDiamond;
+import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
+import com.github.laxika.magicalvibes.cards.c.CoralEel;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlindingLight.class, EkunduGriffin.class, MtendaLion.class, SkyDiamond.class})
+@CardUsed({BlindingLight.class, ArmoredPegasus.class, CoralEel.class, Plains.class})
 class BlindingLightTest extends BaseCardTest {
 
     private BlindingLight castBlindingLight() {
@@ -24,20 +24,20 @@ class BlindingLightTest extends BaseCardTest {
     @Test
     @DisplayName("Taps nonwhite creatures on both sides")
     void tapsNonwhiteCreatures() {
-        Permanent p1Lion = harness.addToBattlefieldAndReturn(player1, new MtendaLion());
-        Permanent p2Lion = harness.addToBattlefieldAndReturn(player2, new MtendaLion());
+        Permanent p1Creature = harness.addToBattlefieldAndReturn(player1, new CoralEel());
+        Permanent p2Creature = harness.addToBattlefieldAndReturn(player2, new CoralEel());
 
         castBlindingLight();
 
-        assertThat(p1Lion.isTapped()).isTrue();
-        assertThat(p2Lion.isTapped()).isTrue();
+        assertThat(p1Creature.isTapped()).isTrue();
+        assertThat(p2Creature.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Does not tap white creatures")
     void doesNotTapWhiteCreatures() {
-        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player1, new EkunduGriffin());
-        Permanent nonwhiteCreature = harness.addToBattlefieldAndReturn(player1, new MtendaLion());
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player1, new ArmoredPegasus());
+        Permanent nonwhiteCreature = harness.addToBattlefieldAndReturn(player1, new CoralEel());
 
         castBlindingLight();
 
@@ -48,12 +48,12 @@ class BlindingLightTest extends BaseCardTest {
     @Test
     @DisplayName("Does not tap noncreature permanents")
     void doesNotTapNoncreaturePermanents() {
-        Permanent skyDiamond = harness.addToBattlefieldAndReturn(player1, new SkyDiamond());
-        Permanent nonwhiteCreature = harness.addToBattlefieldAndReturn(player1, new MtendaLion());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent nonwhiteCreature = harness.addToBattlefieldAndReturn(player1, new CoralEel());
 
         castBlindingLight();
 
-        assertThat(skyDiamond.isTapped()).isFalse();
+        assertThat(plains.isTapped()).isFalse();
         assertThat(nonwhiteCreature.isTapped()).isTrue();
     }
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "95")
 @CardRegistration(set = "CHR", collectorNumber = "22")
 @CardRegistration(set = "LEG", collectorNumber = "63")
+@CardRegistration(set = "ME1", collectorNumber = "41")
 public class Juxtapose extends Card {
 
     public Juxtapose() {

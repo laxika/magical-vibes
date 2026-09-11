@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionWhite;
 import com.github.laxika.magicalvibes.cards.d.DancingScimitar;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WoodenSphere;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Serenity.class, WoodenSphere.class, CircleOfProtectionWhite.class,
-        DancingScimitar.class, GrizzlyBears.class})
+@CardUsed({BenalishInfantry.class, CircleOfProtectionWhite.class, DancingScimitar.class, Serenity.class, SerrasBlessing.class, WoodenSphere.class})
 class SerenityTest extends BaseCardTest {
 
     private void advanceToUpkeepAndResolveTrigger(Player activePlayer) {
@@ -53,22 +52,22 @@ class SerenityTest extends BaseCardTest {
     @DisplayName("Does not destroy creatures")
     void doesNotDestroyCreatures() {
         harness.addToBattlefield(player1, new Serenity());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BenalishInfantry());
 
         advanceToUpkeepAndResolveTrigger(player1);
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Benalish Infantry");
     }
 
     @Test
     @DisplayName("Does not trigger on opponent's upkeep")
     void doesNotTriggerOnOpponentUpkeep() {
         harness.addToBattlefield(player1, new Serenity());
-        harness.addToBattlefield(player2, new CircleOfProtectionWhite());
+        harness.addToBattlefield(player2, new SerrasBlessing());
 
         advanceToUpkeepAndResolveTrigger(player2);
 
-        harness.assertOnBattlefield(player2, "Circle of Protection: White");
+        harness.assertOnBattlefield(player2, "Serra's Blessing");
         harness.assertOnBattlefield(player1, "Serenity");
     }
 }

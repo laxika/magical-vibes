@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionRed;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightOfDay;
+import com.github.laxika.magicalvibes.cards.r.RainOfGore;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SereneOffering.class, CircleOfProtectionRed.class, GrizzlyBears.class, LightOfDay.class})
+@CardUsed({CircleOfProtectionRed.class, LightOfDay.class, RainOfGore.class, SereneOffering.class, TrainedArmodon.class})
 class SereneOfferingTest extends BaseCardTest {
 
     private void castSereneOffering(UUID targetId) {
@@ -57,11 +58,26 @@ class SereneOfferingTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(RainOfGore.class)
+    @DisplayName("Destroys a life-gain replacement enchantment before gaining life")
+    void destroysReplacementBeforeGainingLife() {
+        harness.setLife(player1, 10);
+        harness.addToBattlefield(player2, new RainOfGore()); // {B}{R} -> mana value 2
+        UUID targetId = harness.getPermanentId(player2, "Rain of Gore");
+
+        castSereneOffering(targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Rain of Gore");
+        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(12);
+    }
+
+    @Test
     @DisplayName("Cannot target a non-enchantment permanent")
     void cannotTargetNonEnchantment() {
         harness.addToBattlefield(player2, new LightOfDay()); // legal target elsewhere
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new TrainedArmodon());
+        UUID targetId = harness.getPermanentId(player2, "Trained Armodon");
 
         harness.setHand(player1, List.of(new SereneOffering()));
         harness.addMana(player1, ManaColor.WHITE, 1);

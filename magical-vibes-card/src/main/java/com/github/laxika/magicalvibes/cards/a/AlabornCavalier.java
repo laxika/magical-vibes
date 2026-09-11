@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "P02", collectorNumber = "1")
+@CardRegistration(set = "DDG", collectorNumber = "18")
 public class AlabornCavalier extends Card {
 
     public AlabornCavalier() {

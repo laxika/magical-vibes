@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Doomsday.class, Shock.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({Doomsday.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class DoomsdayTest extends BaseCardTest {
 
     private void cast() {
@@ -146,7 +147,24 @@ class DoomsdayTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Half your life loss is rounded up")
+    @DisplayName("With five or more available cards, exactly five must be chosen")
+    void requiresExactlyFiveCardsWhenPoolIsLarge() {
+        List<Card> pool = List.of(
+                new Shock(), new GrizzlyBears(), new LlanowarElves(), new Shock(), new GrizzlyBears());
+        harness.setLibrary(player1, pool.subList(0, 3));
+        harness.setGraveyard(player1, pool.subList(3, 5));
+
+        cast();
+
+        PendingInteraction.DoomsdayChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DoomsdayChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.legalOptions())
+                .isEqualTo(new InteractionOptions.MultiCardPick(choice.validCardIds(), 5, 5));
+    }
+
+    @Test
+    @DisplayName("Half your life loss is rounded up and happens after the card choice")
     void halfLifeRoundedUp() {
         Card shock = new Shock();
         harness.setLibrary(player1, List.of(shock));
@@ -155,6 +173,7 @@ class DoomsdayTest extends BaseCardTest {
 
         cast();
 
+        harness.assertLife(player1, 7);
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.assertLife(player1, 3);
     }
@@ -175,6 +194,55 @@ class DoomsdayTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(ownLibrary.getId()));
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oppLibrary);
-        assertThat(gd.playerGraveyards.get(player2.getId())).contains(oppGraveyard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(oppGraveyard);
+    }
+
+    @Test
+    @DisplayName("An empty library and graveyard still cause the life loss without a choice")
+    void emptyZonesStillLoseHalfLifeWithoutChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setLife(player1, 20);
+
+        cast();
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Resolving combines library and graveyard into a mandatory choice")
+    void promptsChoiceOverLibraryAndGraveyard() {
+        Card shock = new Shock();
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        harness.setLibrary(player1, List.of(shock, bears));
+        harness.setGraveyard(player1, List.of(elves));
+
+        cast();
+
+        PendingInteraction.DoomsdayChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DoomsdayChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(shock.getId(), bears.getId(), elves.getId());
+        assertThat(choice.legalOptions())
+                .isEqualTo(new InteractionOptions.MultiCardPick(choice.validCardIds(), 3, 3));
+    }
+
+    @Test
+    @DisplayName("Keeping the only available card puts it on top without exiling it")
+    void keepSingleCard() {
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(shock));
+        harness.setGraveyard(player1, List.of());
+
+        cast();
+
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).containsExactly(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .doesNotContain(shock);
     }
 }

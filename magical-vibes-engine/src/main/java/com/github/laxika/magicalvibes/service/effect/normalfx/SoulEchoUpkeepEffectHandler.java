@@ -54,7 +54,7 @@ public class SoulEchoUpkeepEffectHandler implements NormalEffectHandlerBean {
 
         // "until your next upkeep" — whatever the opponent chose last upkeep ends here.
         if (self.getCounterCount(CounterType.ECHO) <= 0) {
-            if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+            if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
                 gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
                 permanentRemovalService.removeOrphanedAuras(gameData);

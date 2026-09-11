@@ -95,4 +95,33 @@ class PushPullTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castModalSorcery(player1, 0, PULL, List.of());
     }
+
+    @Test
+    void pullReturnsRemainingLegalTarget() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(first, second));
+        castPull();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.setGraveyard(player2, List.of(second));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(second.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getGrantedKeywords())
+                .contains(Keyword.HASTE);
+    }
+
+    @Test
+    void pullMayChooseNoTargets() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        castPull();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+    }
 }

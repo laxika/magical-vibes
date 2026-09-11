@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
+@CardUsed({StrawGolem.class, BenalishInfantry.class, MindStone.class, SteelGolem.class})
 class StrawGolemTest extends BaseCardTest {
 
     @Test
@@ -17,7 +17,7 @@ class StrawGolemTest extends BaseCardTest {
     void opponentCastingCreatureSpellSacrificesGolem() {
         harness.addToBattlefield(player1, new StrawGolem());
 
-        opponentCastsCreatureSpell();
+        opponentCastsCreatureSpell(new BenalishInfantry(), "{2}{W}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Straw Golem");
@@ -32,9 +32,7 @@ class StrawGolemTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Opt()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new MindStone(), "{2}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Straw Golem");
@@ -44,21 +42,32 @@ class StrawGolemTest extends BaseCardTest {
     @DisplayName("Controller casting a creature spell does not sacrifice Straw Golem")
     void controllerCastingCreatureSpellDoesNotSacrificeGolem() {
         harness.addToBattlefield(player1, new StrawGolem());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castCreature(player1, 0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new BenalishInfantry(), "{2}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Straw Golem");
     }
 
-    private void opponentCastsCreatureSpell() {
+    @Test
+    @DisplayName("An opponent casting an artifact creature spell sacrifices Straw Golem")
+    void opponentCastingArtifactCreatureSpellSacrificesGolem() {
+        harness.addToBattlefield(player1, new StrawGolem());
+
+        opponentCastsCreatureSpell(new SteelGolem(), "{3}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Straw Golem");
+        harness.assertInGraveyard(player1, "Straw Golem");
+    }
+
+    private void opponentCastsCreatureSpell(Card creature, String manaCost) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, creature, manaCost);
     }
 }

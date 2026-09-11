@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "144")
+@CardRegistration(set = "DDK", collectorNumber = "61")
 public class Geistflame extends Card {
 
     public Geistflame() {

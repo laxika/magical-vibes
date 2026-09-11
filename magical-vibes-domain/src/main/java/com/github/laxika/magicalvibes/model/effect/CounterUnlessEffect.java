@@ -20,6 +20,8 @@ public interface CounterUnlessEffect extends CardEffect {
         PAY_LIFE,
         /** Discard a card (e.g. the "Ward—Discard a card" variant). */
         DISCARD_CARD,
+        /** Discard a card or pay generic mana. */
+        DISCARD_CARD_OR_PAY_MANA,
         /** Discard the entire hand. */
         DISCARD_HAND,
         /** Sacrifice a permanent (e.g. Mishra, Tamer of Mak Fawa's ward). */
@@ -27,7 +29,9 @@ public interface CounterUnlessEffect extends CardEffect {
         /** Pay a generic mana amount, with untapped artifacts and creatures helping (waterbend ward). */
         PAY_WATERBEND,
         /** Collect evidence (e.g. Axebane Ferox's ward). */
-        COLLECT_EVIDENCE
+        COLLECT_EVIDENCE,
+        /** Get poison counters (e.g. The Serpent Society's ward). */
+        GET_POISON_COUNTERS
     }
 
     /** Which kind of ransom this effect demands. */
@@ -38,8 +42,10 @@ public interface CounterUnlessEffect extends CardEffect {
      * and {@link RansomKind#PAY_WATERBEND} the generic mana amount component (which may be overridden
      * at resolution when the effect uses an X or dynamic amount); for {@link RansomKind#PAY_LIFE} a dynamic amount may be evaluated at
      * resolution, so the concrete effect may return 0; for {@link RansomKind#DISCARD_CARD} the number
-     * of cards to discard (currently always 1), 0 for {@link RansomKind#DISCARD_HAND}, 1 for a
-     * permanent sacrifice, or the evidence threshold for {@link RansomKind#COLLECT_EVIDENCE}.
+     * of cards to discard (currently always 1), the generic mana amount for
+     * {@link RansomKind#DISCARD_CARD_OR_PAY_MANA}, 0 for {@link RansomKind#DISCARD_HAND}, 1 for a
+     * permanent sacrifice, the evidence threshold for {@link RansomKind#COLLECT_EVIDENCE}, or the
+     * number of poison counters for {@link RansomKind#GET_POISON_COUNTERS}.
      */
     int ransomMagnitude();
 }

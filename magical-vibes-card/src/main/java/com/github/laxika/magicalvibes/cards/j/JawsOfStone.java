@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "97")
+@CardRegistration(set = "DDG", collectorNumber = "77")
+@CardRegistration(set = "DDI", collectorNumber = "72")
 public class JawsOfStone extends Card {
 
     public JawsOfStone() {

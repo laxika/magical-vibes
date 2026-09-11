@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.Conversion;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MountainGoat.class, SnowCoveredMountain.class, BalduvianBears.class})
+@CardUsed({BalduvianBears.class, Conversion.class, Island.class, Mountain.class, MountainGoat.class, SnowCoveredMountain.class})
 class MountainGoatTest extends BaseCardTest {
 
     @Test
@@ -40,8 +41,50 @@ class MountainGoatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mountain Goat cannot be blocked when defending player's Mountain is tapped")
+    void cannotBeBlockedWhenDefenderControlsTappedMountain() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new SnowCoveredMountain());
+        mountain.tap();
+
+        Permanent blockerPerm = addCreatureReady(player2, new BalduvianBears());
+
+        Permanent atkPerm = addCreatureReady(player1, new MountainGoat());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Mountain Goat can be blocked when defending player does not control a Mountain")
     void canBeBlockedWhenDefenderDoesNotControlMountain() {
+        Permanent blockerPerm = addCreatureReady(player2, new BalduvianBears());
+
+        Permanent atkPerm = addCreatureReady(player1, new MountainGoat());
+        atkPerm.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @CardUsed(Island.class)
+    @DisplayName("Mountain Goat can be blocked when defending player controls a non-Mountain land")
+    void canBeBlockedWhenDefenderControlsNonMountainLand() {
+        harness.addToBattlefield(player2, new Island());
+
         Permanent blockerPerm = addCreatureReady(player2, new BalduvianBears());
 
         Permanent atkPerm = addCreatureReady(player1, new MountainGoat());

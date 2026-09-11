@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "80")
 @CardRegistration(set = "8ED", collectorNumber = "81")
 @CardRegistration(set = "M15", collectorNumber = "56")
+@CardRegistration(set = "LGN", collectorNumber = "38")
 public class FugitiveWizard extends Card {
 }

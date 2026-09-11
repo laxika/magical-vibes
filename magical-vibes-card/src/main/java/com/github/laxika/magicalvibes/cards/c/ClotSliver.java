@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "112")
 @CardRegistration(set = "TPR", collectorNumber = "85")
+@CardRegistration(set = "H09", collectorNumber = "5")
 public class ClotSliver extends Card {
 
     public ClotSliver() {

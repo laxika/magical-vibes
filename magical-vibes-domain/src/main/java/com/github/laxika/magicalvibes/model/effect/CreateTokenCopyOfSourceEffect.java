@@ -33,6 +33,9 @@ import java.util.Set;
  * @param initialCounters  counters placed on each token after it enters
  * @param tappedAndAttacking if true, the token enters tapped and attacking the same target as the source
  * @param additionalTypes card types added to the copy
+ * @param startingLoyaltyOverride starting loyalty for a planeswalker token, if non-null
+ * @param initialPlusOnePlusOneCounters +1/+1 counters with which each token enters
+ * @param tapped             if true, the token enters tapped without entering attacking
  */
 public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
                                             CardColor colorOverride, CardSubtype addedSubtype,
@@ -41,46 +44,64 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
                                             boolean grantHaste, boolean exileAtEndStep,
                                             Map<CounterType, DynamicAmount> initialCounters,
                                             boolean tappedAndAttacking,
-                                            Set<CardType> additionalTypes)
+                                            Set<CardType> additionalTypes,
+                                            Integer startingLoyaltyOverride,
+                                            boolean tapped, int initialPlusOnePlusOneCounters)
         implements CardEffect {
+        public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
+                                            CardColor colorOverride, CardSubtype addedSubtype,
+                                            boolean removeManaCost,
+                                            Integer powerOverride, Integer toughnessOverride,
+                                            boolean grantHaste, boolean exileAtEndStep,
+                                            Map<CounterType, DynamicAmount> initialCounters,
+                                            boolean tappedAndAttacking,
+                                            Set<CardType> additionalTypes) {
+            this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost, powerOverride, toughnessOverride, grantHaste, exileAtEndStep, initialCounters, tappedAndAttacking, additionalTypes, null, false, 0);
+        }
 
-    /** Backward-compatible: single copy, keeps legendary status, no transformation. */
+
+    /** Source copies that enter with the specified number of +1/+1 counters. */
+    public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount, int initialPlusOnePlusOneCounters) {
+        this(removeLegendary, new Fixed(amount), null, null, false, null, null, false, false,
+                Map.of(), false, Set.of(), null, false, initialPlusOnePlusOneCounters);
+    }
+
     public CreateTokenCopyOfSourceEffect() {
         this(false, new Fixed(1), null, null, false, null, null, false, false, Map.of(), false,
-                Set.of());
+                Set.of(), null, false, 0);
     }
 
     /** Backward-compatible: copies with an optional non-legendary flag and count, no transformation. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount) {
         this(removeLegendary, new Fixed(amount), null, null, false, null, null, false, false,
-                Map.of(), false, Set.of());
+                Map.of(), false, Set.of(), null, false, 0);
     }
 
     /** Source copy with a dynamically evaluated count. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount) {
         this(removeLegendary, amount, null, null, false, null, null, false, false, Map.of(), false,
-                Set.of());
+                Set.of(), null, false, 0);
     }
 
     /** Source copy with additional card types, such as an artifact copy of a creature. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
                                          Set<CardType> additionalTypes) {
         this(removeLegendary, new Fixed(amount), null, null, false, null, null, false, false, Map.of(), false,
-                additionalTypes);
+                additionalTypes, null, false, 0);
     }
 
     /** Plain source copy with optional haste and exile at the next end step. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
                                          boolean grantHaste, boolean exileAtEndStep) {
         this(removeLegendary, new Fixed(amount), null, null, false, null, null, grantHaste, exileAtEndStep,
-                Map.of(), false, Set.of());
+                Map.of(), false, Set.of(), null, false, 0);
     }
 
     /** Source copy with a dynamically evaluated count, optional haste, and next-end-step exile. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
                                          boolean grantHaste, boolean exileAtEndStep) {
         this(removeLegendary, amount, null, null, false, null, null, grantHaste, exileAtEndStep,
-                Map.of(), false, Set.of());
+                Map.of(), false, Set.of(), null, false, 0);
     }
 
     /** Creates a dynamic number of source copies that enter tapped and attacking. */
@@ -88,7 +109,14 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
                                                                     boolean exileAtEndStep) {
         return new CreateTokenCopyOfSourceEffect(
                 false, amount, null, null, false, null, null, false, exileAtEndStep, Map.of(), true,
-                Set.of());
+                Set.of(), null, false, 0);
+    }
+
+    /** Plain source copy with an explicit starting loyalty for planeswalker tokens. */
+    public static CreateTokenCopyOfSourceEffect withStartingLoyalty(boolean removeLegendary, int amount,
+                                                                   int startingLoyaltyOverride) {
+        return new CreateTokenCopyOfSourceEffect(removeLegendary, new Fixed(amount), null, null, false, null, null, false, false,
+                Map.of(), false, Set.of(), startingLoyaltyOverride, false, 0);
     }
 
     /** Embalm/Eternalize-style source copy with explicit power/toughness overrides. */
@@ -97,7 +125,7 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
                                          boolean removeManaCost, Integer powerOverride,
                                          Integer toughnessOverride) {
         this(removeLegendary, new Fixed(amount), colorOverride, addedSubtype, removeManaCost,
-                powerOverride, toughnessOverride, false, false, Map.of(), false, Set.of());
+                powerOverride, toughnessOverride, false, false, Map.of(), false, Set.of(), null, false, 0);
     }
 
     /** Embalm-style: color/subtype/no-mana-cost transform, keeps the source's P/T. */
@@ -105,7 +133,7 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
                                          CardColor colorOverride, CardSubtype addedSubtype,
                                          boolean removeManaCost) {
         this(removeLegendary, new Fixed(amount), colorOverride, addedSubtype, removeManaCost, null, null,
-                false, false, Map.of(), false, Set.of());
+                false, false, Map.of(), false, Set.of(), null, false, 0);
     }
 
     /** Plain source copy that enters tapped and attacking with counters copied from the source. */
@@ -113,6 +141,13 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
         return new CreateTokenCopyOfSourceEffect(
                 false, new Fixed(1), null, null, false, null, null, false, false,
                 Map.of(CounterType.PLUS_ONE_PLUS_ONE, new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)),
-                true, Set.of());
+                true, Set.of(), null, false, 0);
+    }
+
+    /** Creates source copies that enter tapped without becoming attacking. */
+    public static CreateTokenCopyOfSourceEffect tapped(int amount) {
+        return new CreateTokenCopyOfSourceEffect(
+                false, new Fixed(amount), null, null, false, null, null, false, false, Map.of(), false,
+                Set.of(), null, true, 0);
     }
 }

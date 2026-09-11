@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfEachOpp
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "153")
+@CardRegistration(set = "TMT", collectorNumber = "201")
+@CardRegistration(set = "TMT", collectorNumber = "245")
 public class KrangShredder extends Card {
 
     public KrangShredder() {

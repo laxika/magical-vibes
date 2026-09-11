@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "189")
+@CardRegistration(set = "OGW", collectorNumber = "141")
 public class PulseOfMurasa extends Card {
 
     public PulseOfMurasa() {

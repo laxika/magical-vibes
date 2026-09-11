@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "348")
+@CardRegistration(set = "ATQ", collectorNumber = "69")
 public class TawnossWand extends Card {
 
     public TawnossWand() {

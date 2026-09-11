@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -48,7 +49,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
+import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -742,18 +745,35 @@ public class GameSimulator {
         }
         Integer discardIndex = computeDiscardCostIndex(gd, playerId, card);
         List<Integer> discardIndices = computeDiscardCostIndices(gd, playerId, card, pc.handIndex(), pc.xValue());
+        UUID chosenAdditionalCostObjectId = computeOpponentOwnedExiledCard(gd, playerId, card);
         if (exileIndices != null || sacrificeId != null || discardIndex != null || discardIndices != null
                 || !multiSacrificeIds.isEmpty()
                 || !imposedSacrificeIds.isEmpty()
-                || beholdSelection.permanentId() != null || beholdSelection.handCardIndex() != null) {
+                || beholdSelection.permanentId() != null || beholdSelection.handCardIndex() != null
+                || chosenAdditionalCostObjectId != null) {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
                     null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices,
                     false, discardIndex, discardIndices, imposedSacrificeIds, multiSacrificeIds,
                     List.of(), false,
-                    beholdSelection.permanentId(), beholdSelection.handCardIndex());
+                    beholdSelection.permanentId(), beholdSelection.handCardIndex(), List.of(), List.of(),
+                    null, null, chosenAdditionalCostObjectId);
         } else {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
         }
+    }
+
+    private UUID computeOpponentOwnedExiledCard(GameData gd, UUID playerId, Card card) {
+        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(PutOpponentOwnedExiledCardIntoGraveyardCost.class::isInstance);
+        if (!requiresChoice) {
+            return null;
+        }
+        return gd.exiledCards.stream()
+                .filter(exiled -> gd.playerIds.contains(exiled.ownerId()))
+                .filter(exiled -> !playerId.equals(exiled.ownerId()))
+                .map(exiled -> exiled.card().getId())
+                .findFirst()
+                .orElse(null);
     }
 
     private BeholdSelection computeBeholdSelection(GameData gd, UUID playerId, Card card) {
@@ -762,23 +782,29 @@ public class GameSimulator {
                 .map(BeholdAndExileCost.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (cost == null) {
+        boolean chooseCreatureOrRevealCreatureCard = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(ChooseCreatureOrRevealCreatureCardCost.class::isInstance);
+        if (cost == null && !chooseCreatureOrRevealCreatureCard) {
             return new BeholdSelection(null, null);
         }
 
-        PermanentPredicate permanentFilter = new PermanentHasSubtypePredicate(cost.subtype());
+        PermanentPredicate permanentFilter = cost == null ? null : new PermanentHasSubtypePredicate(cost.subtype());
         for (Permanent permanent : gd.playerBattlefields.getOrDefault(playerId, List.of())) {
-            if (predicateEvaluationService.matchesPermanentPredicate(gd, permanent, permanentFilter)) {
+            if (chooseCreatureOrRevealCreatureCard
+                    ? gameQueryService.isCreature(gd, permanent)
+                    : predicateEvaluationService.matchesPermanentPredicate(gd, permanent, permanentFilter)) {
                 return new BeholdSelection(permanent.getId(), null);
             }
         }
 
-        CardSubtypePredicate cardFilter = new CardSubtypePredicate(cost.subtype());
+        CardSubtypePredicate cardFilter = cost == null ? null : new CardSubtypePredicate(cost.subtype());
         List<Card> hand = gd.playerHands.getOrDefault(playerId, List.of());
         for (int i = 0; i < hand.size(); i++) {
             Card candidate = hand.get(i);
             if (!candidate.getId().equals(card.getId())
-                    && predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId())) {
+                    && (chooseCreatureOrRevealCreatureCard
+                    ? candidate.hasType(CardType.CREATURE)
+                    : predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId()))) {
                 return new BeholdSelection(null, i);
             }
         }
@@ -1306,6 +1332,7 @@ public class GameSimulator {
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
+                    || effect instanceof TeamworkCost
                     || effect instanceof WaterbendCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
@@ -1384,6 +1411,24 @@ public class GameSimulator {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == fixed.value() ? chosen : List.of();
+            }
+            if (effect instanceof TeamworkCost cost) {
+                int totalPower = 0;
+                List<UUID> chosen = new ArrayList<>();
+                List<Permanent> candidates = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> gameQueryService.isCreature(gd, p))
+                        .sorted(Comparator.comparingInt(
+                                (Permanent p) -> gameQueryService.getEffectivePower(gd, p)).reversed())
+                        .toList();
+                for (Permanent candidate : candidates) {
+                    chosen.add(candidate.getId());
+                    totalPower += gameQueryService.getEffectivePower(gd, candidate);
+                    if (totalPower >= cost.requiredPower()) {
+                        return chosen;
+                    }
+                }
+                return List.of();
             }
             if (effect instanceof ReturnAnyNumberOfPermanentsToHandCost cost) {
                 return battlefield.stream()

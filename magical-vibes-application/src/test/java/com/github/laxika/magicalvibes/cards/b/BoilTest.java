@@ -1,17 +1,17 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Boil.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class})
+@CardUsed({Boil.class, Island.class, LowlandGiant.class, Mountain.class, Plains.class})
 class BoilTest extends BaseCardTest {
 
     @Test
@@ -32,12 +32,13 @@ class BoilTest extends BaseCardTest {
     void doesNotDestroyNonIslands() {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        castBoilAndResolve();
+        harness.addToBattlefield(player1, new LowlandGiant());
+        harness.castFromHand(player1, new Boil(), "{3}{R}");
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Mountain");
         harness.assertOnBattlefield(player1, "Plains");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Lowland Giant");
     }
 
     @Test

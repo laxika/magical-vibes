@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KusariGama.class, KeenEyedArchers.class, GrizzlyBears.class, HillGiant.class})
 class KusariGamaTest extends BaseCardTest {
 
     @Test
@@ -53,21 +55,21 @@ class KusariGamaTest extends BaseCardTest {
         addKusariGama(player1).setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
-        // A 4/4 blocker survives the 2 combat damage; a second hit of 2 would kill it.
-        blockAttacker(player2, new SerraAngel(), 0);
+        // A 3/3 blocker survives the 2 combat damage; a second hit of 2 would kill it.
+        blockAttacker(player2, new HillGiant(), 0);
         addCreatureReady(player2, new KeenEyedArchers());
 
         resolveCombatDamage();
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Serra Angel");
+        harness.assertOnBattlefield(player2, "Hill Giant");
         harness.assertInGraveyard(player2, "Keen-Eyed Archers");
     }
 
     @Test
     @DisplayName("No trigger when the damaged creature is not blocking")
     void noTriggerWhenDamagedCreatureIsNotBlocking() {
-        Permanent blocker = addCreatureReady(player1, new SerraAngel());
+        Permanent blocker = addCreatureReady(player1, new HillGiant());
         addKusariGama(player1).setAttachedTo(blocker.getId());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);

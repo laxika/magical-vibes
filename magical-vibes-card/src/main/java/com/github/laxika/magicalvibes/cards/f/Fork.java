@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "SUM", collectorNumber = "153")
+@CardRegistration(set = "3ED", collectorNumber = "153")
 public class Fork extends Card {
 
     public Fork() {

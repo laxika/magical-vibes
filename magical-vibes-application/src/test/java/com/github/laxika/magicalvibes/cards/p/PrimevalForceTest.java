@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,13 +14,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrimevalForce.class, Forest.class, Island.class})
 class PrimevalForceTest extends BaseCardTest {
-
-    private long forestsControlledBy(UUID playerId) {
-        return gd.playerBattlefields.get(playerId).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .count();
-    }
 
     private void castPrimevalForce() {
         harness.setHand(player1, List.of(new PrimevalForce()));
@@ -41,7 +38,7 @@ class PrimevalForceTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Primeval Force");
         harness.assertInGraveyard(player1, "Primeval Force");
         // The Forests are untouched.
-        assertThat(forestsControlledBy(player1.getId())).isEqualTo(2);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
     }
 
     @Test
@@ -69,7 +66,7 @@ class PrimevalForceTest extends BaseCardTest {
 
         // All three Forests sacrificed without a further choice; Primeval Force stays.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(forestsControlledBy(player1.getId())).isEqualTo(0);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(0);
         harness.assertOnBattlefield(player1, "Primeval Force");
     }
 
@@ -95,7 +92,7 @@ class PrimevalForceTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, forestIds);
 
         // Three Forests sacrificed, one remains; Primeval Force stays.
-        assertThat(forestsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Primeval Force");
     }
 
@@ -111,7 +108,7 @@ class PrimevalForceTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Primeval Force");
         harness.assertInGraveyard(player1, "Primeval Force");
-        assertThat(forestsControlledBy(player1.getId())).isEqualTo(3);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(3);
     }
 
     @Test
@@ -125,6 +122,21 @@ class PrimevalForceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Primeval Force");
         harness.assertInGraveyard(player1, "Primeval Force");
-        assertThat(forestsControlledBy(player2.getId())).isEqualTo(3);
+        assertThat(countPermanents(player2, "Forest")).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Non-Forest lands don't satisfy the requirement")
+    void nonForestLandsDontCount() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        castPrimevalForce();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Primeval Force");
+        harness.assertInGraveyard(player1, "Primeval Force");
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Island");
     }
 }

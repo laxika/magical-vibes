@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "5DN", collectorNumber = "27")
+@CardRegistration(set = "DD2", collectorNumber = "28")
 public class Condescend extends Card {
 
     public Condescend() {

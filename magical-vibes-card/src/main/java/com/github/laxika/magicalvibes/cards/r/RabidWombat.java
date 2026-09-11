@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 @CardRegistration(set = "5ED", collectorNumber = "319")
 @CardRegistration(set = "CHR", collectorNumber = "67")
 @CardRegistration(set = "LEG", collectorNumber = "198")
+@CardRegistration(set = "ME1", collectorNumber = "126")
 public class RabidWombat extends Card {
 
     public RabidWombat() {

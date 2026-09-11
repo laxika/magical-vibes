@@ -41,12 +41,19 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             UUID sourceCardId, String sourceCardName, CounterType enterWithCounter) {
         beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName,
-                enterWithCounter, false, false);
+                enterWithCounter, enterWithCounter == null ? 0 : 1, false, false);
     }
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             UUID sourceCardId, String sourceCardName, CounterType enterWithCounter,
                             boolean grantHaste, boolean returnToHandAtEndStep) {
+        beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName,
+                enterWithCounter, enterWithCounter == null ? 0 : 1, grantHaste, returnToHandAtEndStep);
+    }
+
+    public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
+                            UUID sourceCardId, String sourceCardName, CounterType enterWithCounter,
+                            int enterWithCounterCount, boolean grantHaste, boolean returnToHandAtEndStep) {
         List<UUID> validCardIds = new ArrayList<>();
         addMatchingCardIds(validCardIds, gameData.playerHands.get(playerId), predicate,
                 sourceCardId, gameData, playerId);
@@ -58,7 +65,7 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PutCardFromHandOrGraveyardChoice(
-                        playerId, validCardIds, label, sourceCardName, enterWithCounter,
+                        playerId, validCardIds, label, sourceCardName, enterWithCounter, enterWithCounterCount,
                         grantHaste, returnToHandAtEndStep));
     }
 
@@ -69,12 +76,19 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
                             CounterType enterWithCounter) {
         applyChoice(gameData, playerId, chosenCardId, sourceCardName,
-                enterWithCounter, false, false);
+                enterWithCounter, enterWithCounter == null ? 0 : 1, false, false);
     }
 
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
                             CounterType enterWithCounter, boolean grantHaste,
                             boolean returnToHandAtEndStep) {
+        applyChoice(gameData, playerId, chosenCardId, sourceCardName,
+                enterWithCounter, enterWithCounter == null ? 0 : 1, grantHaste, returnToHandAtEndStep);
+    }
+
+    public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
+                            CounterType enterWithCounter, int enterWithCounterCount,
+                            boolean grantHaste, boolean returnToHandAtEndStep) {
         Card chosen = removeCard(gameData.playerHands.get(playerId), chosenCardId);
         String zone = "hand";
         if (chosen == null) {
@@ -90,8 +104,8 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
         }
 
         Permanent permanent = new Permanent(chosen);
-        if (enterWithCounter != null) {
-            permanent.setCounterCount(enterWithCounter, 1);
+        if (enterWithCounter != null && enterWithCounterCount > 0) {
+            permanent.setCounterCount(enterWithCounter, enterWithCounterCount);
         }
         if (grantHaste) {
             permanent.getGrantedKeywords().add(Keyword.HASTE);

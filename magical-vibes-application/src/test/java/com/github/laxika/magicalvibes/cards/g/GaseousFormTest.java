@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Malignus;
 import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -16,8 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GaseousForm.class, GrizzlyBears.class, Island.class, MerfolkOfThePearlTrident.class,
-        ProdigalSorcerer.class, Shock.class})
+@CardUsed({GaseousForm.class, GrizzlyBears.class, Island.class, Malignus.class, MerfolkOfThePearlTrident.class, ProdigalSorcerer.class, Shock.class})
 class GaseousFormTest extends BaseCardTest {
 
     // ===== Targeting restriction =====
@@ -35,19 +35,36 @@ class GaseousFormTest extends BaseCardTest {
     }
 
     @Test
-    void resolvingAttachesToTargetCreature() {
+    @DisplayName("Resolved Gaseous Form prevents combat damage from the enchanted creature")
+    void resolvedGaseousFormPreventsCombatDamageFromEnchantedCreature() {
+        harness.setLife(player1, 20);
+
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        GaseousForm gaseousForm = new GaseousForm();
-        harness.setHand(player1, List.of(gaseousForm));
+        harness.setHand(player1, List.of(new GaseousForm()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard() == gaseousForm
-                        && p.isAttached()
-                        && p.getAttachedTo().equals(bears.getId()));
+        bears.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Gaseous Form cannot prevent combat damage dealt by Malignus")
+    void cannotPreventDamageThatCannotBePrevented() {
+        harness.setLife(player1, 20);
+
+        Permanent malignus = addCreatureReady(player2, new Malignus());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GaseousForm());
+        aura.setAttachedTo(malignus.getId());
+        malignus.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 10);
     }
 
     @Test

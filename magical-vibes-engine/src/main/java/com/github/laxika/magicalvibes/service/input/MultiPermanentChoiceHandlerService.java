@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromTwoCreaturesThenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnNControlledPermanentsToHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnUpToNControlledPermanentsToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.WormsOfTheEarthEffectHandler;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import lombok.RequiredArgsConstructor;
@@ -98,6 +99,7 @@ public class MultiPermanentChoiceHandlerService {
     private final ChooseTwoCreaturesByPowerDifferenceEffectHandler chooseTwoCreaturesByPowerDifferenceEffectHandler;
     private final RemoveCounterFromTwoCreaturesThenEffectHandler removeCounterFromTwoCreaturesThenEffectHandler;
     private final ReturnNControlledPermanentsToHandEffectHandler returnNControlledPermanentsToHandEffectHandler;
+    private final ReturnUpToNControlledPermanentsToHandEffectHandler returnUpToNControlledPermanentsToHandEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler distinctTokenCopyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -105,6 +107,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
             attachAnyNumberOfControlledEquipmentHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .ChooseEquipmentToUnattachEffectHandler chooseEquipmentToUnattachEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .DestroyUpToOneAttachedPermanentEffectHandler destroyUpToOneAttachedPermanentHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PutMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler putMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler;
@@ -193,8 +197,10 @@ public class MultiPermanentChoiceHandlerService {
         UUID playerId = player.getId();
         List<UUID> validIds = multiPermanentChoice.validIds();
         List<UUID> validPlayerIds = multiPermanentChoice.validPlayerIds();
+        List<UUID> validCardIds = multiPermanentChoice.validCardIds();
         Set<UUID> validSelectionIds = new HashSet<>(validIds);
         validSelectionIds.addAll(validPlayerIds);
+        validSelectionIds.addAll(validCardIds);
         int maxCount = multiPermanentChoice.maxCount();
 
         if (permanentIds == null) {
@@ -208,6 +214,16 @@ public class MultiPermanentChoiceHandlerService {
         // — a permanent that died between prompt and answer is an ordinary race.
         if (permanentIds.size() > maxCount) {
             throw new IllegalStateException("Too many permanents selected: " + permanentIds.size() + " > " + maxCount);
+        }
+        if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.FadeAwayKeep keep) {
+            var pool = new com.github.laxika.magicalvibes.model.ManaPool(gameData.playerManaPools.get(playerId));
+            var cost = new com.github.laxika.magicalvibes.model.ManaCost(keep.manaCost());
+            for (int i = 0; i < permanentIds.size(); i++) {
+                if (!cost.canPay(pool)) {
+                    throw new IllegalStateException("Not enough mana to pay for the selected creatures");
+                }
+                cost.pay(pool);
+            }
         }
 
         Set<UUID> uniqueIds = new HashSet<>(permanentIds);
@@ -237,6 +253,12 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand choice
+                && choice.requiredCount() > 0
+                && permanentIds.size() != choice.requiredCount()) {
+            throw new IllegalStateException("Exactly " + choice.requiredCount()
+                    + " permanents must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsPermanent
                 && permanentIds.size() != 1) {
@@ -529,6 +551,8 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
             abilityActivationService.completeActivatedAbilityExileArtifactsCostChoice(
                     gameData, player, exileArtifactsContext, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup ctx) {
+            triggerHandler.handleEtbPlayerTargetGroup(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets ctx) {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {
@@ -567,6 +591,9 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.AttachAnyNumberOfControlledEquipmentToTargetCreature ctx) {
             attachAnyNumberOfControlledEquipmentHandler.completeChoice(gameData, playerId, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.UnattachEquipmentFromControlledCreature ctx) {
+            chooseEquipmentToUnattachEffectHandler.completeChoice(gameData, permanentIds, ctx);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures) {
             handleSacrificeAttackingCreature(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackCost) {
@@ -597,6 +624,8 @@ public class MultiPermanentChoiceHandlerService {
             handleReturnAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnNControlledPermanentsToHand ctx) {
             handleReturnNControlledPermanentsToHand(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ReturnUpToNControlledPermanentsToHand ctx) {
+            handleReturnUpToNControlledPermanentsToHand(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber ctx) {
             if (flickerEffectHandler.completeAnyNumberChoice(gameData, permanentIds, ctx)
                     && !gameData.interaction.isAwaitingInput()) {
@@ -621,6 +650,8 @@ public class MultiPermanentChoiceHandlerService {
             handleOwnPermanentCounterPlacement(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayer ctx) {
             handleOwnPermanentCounterPlacementByPlayer(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayerWithChosenReference ctx) {
+            handleOwnPermanentCounterPlacementByPlayerWithChosenReference(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OpponentCreatureCounterPlacement ctx) {
             handleOpponentCreatureCounterPlacement(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference ctx) {
@@ -882,7 +913,7 @@ public class MultiPermanentChoiceHandlerService {
             UUID sourceController = source == null ? null
                     : gameQueryService.findPermanentController(gameData, sourcePermId);
             if (source != null && playerId.equals(sourceController)) {
-                if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {
+                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, source)) {
                     triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, source.getCard());
                     gameLogService.append(gameData, GameLog.isSacrificed(source.getCard()));
                     log.info("Game {} - {} sacrificed for combat damage trigger", gameData.id, source.getCard().getName());
@@ -1124,7 +1155,7 @@ public class MultiPermanentChoiceHandlerService {
             if (target != null) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
                 String ownerName = controllerId != null ? gameData.playerIdToName.get(controllerId) : "Unknown";
-                if (permanentRemovalService.removePermanentToGraveyard(gameData, target)) {
+                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, target)) {
                     if (controllerId != null) {
                         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId, target.getCard());
                     }
@@ -1150,7 +1181,7 @@ public class MultiPermanentChoiceHandlerService {
                         break;
                     }
                 }
-                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
                 String ownerName = ownerId != null ? gameData.playerIdToName.get(ownerId) : "Unknown";
                 gameLogService.append(gameData, GameLog.playerSacrifices(ownerName, creature.getCard()));
                 log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, creature.getCard().getName());
@@ -1168,7 +1199,7 @@ public class MultiPermanentChoiceHandlerService {
                     || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
                 throw new IllegalStateException("A selected permanent is no longer controlled by the attacker");
             }
-            if (permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+            if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(
                         gameData, playerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.playerSacrifices(playerName, permanent.getCard()));
@@ -1472,6 +1503,17 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    private void handleReturnUpToNControlledPermanentsToHand(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.ReturnUpToNControlledPermanentsToHand context) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No pending effect resolution entry");
+        }
+        returnUpToNControlledPermanentsToHandEffectHandler.completeChoice(gameData, permanentIds, context, entry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds,
                                        MultiPermanentChoiceContext.ForcedSacrifice context) {
         boolean simultaneousFlow = context.simultaneousFlow()
@@ -1538,12 +1580,11 @@ public class MultiPermanentChoiceHandlerService {
     private void handleForcedDestroy(GameData gameData, List<UUID> permanentIds,
                                      MultiPermanentChoiceContext.ForcedDestroy context) {
         // Chosen permanents are destroyed simultaneously (regeneration/indestructible apply).
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                destructionSupport.tryDestroyAndLog(gameData, perm, context.sourceName());
-            }
-        }
+        List<Permanent> permanents = permanentIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        destructionSupport.destroyBatch(gameData, permanents, context.sourceName(), false);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
@@ -1716,7 +1757,9 @@ public class MultiPermanentChoiceHandlerService {
         CardEffect branch = sacrificed == context.requiredCount()
                 ? context.sacrificedEffect()
                 : context.elseEffect();
-        entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(branch));
+        if (branch != null) {
+            entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(branch));
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
@@ -1822,6 +1865,8 @@ public class MultiPermanentChoiceHandlerService {
                                                    MultiPermanentChoiceContext.ChooseCreatureRestCantBlock context) {
         UUID targetPlayerId = context.targetPlayerId();
         UUID keptId = permanentIds.isEmpty() ? null : permanentIds.getFirst();
+        com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerChoosesCreatureRestCantBlockEffectHandler
+                .restrictOtherCreatures(gameData, targetPlayerId, keptId);
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         int count = 0;
@@ -1846,7 +1891,7 @@ public class MultiPermanentChoiceHandlerService {
     private void handleChooseCreaturesToAttackNextTurn(GameData gameData, List<UUID> permanentIds,
                                                        MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn context) {
         UUID targetPlayerId = context.targetPlayerId();
-        gameData.chosenAttackersNextTurn.put(targetPlayerId, Set.copyOf(permanentIds));
+        gameData.restrictAttackersNextTurn(targetPlayerId, Set.copyOf(permanentIds));
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         gameLogService.append(gameData, GameLog.text(playerName + " chooses " + permanentIds.size()
@@ -1963,6 +2008,23 @@ public class MultiPermanentChoiceHandlerService {
         if (!permanentIds.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
             if (target != null) {
+                StackEntry placementEntry = new StackEntry(gameData.pendingEffectResolutionEntry);
+                placementEntry.setControllerId(context.placingPlayerId());
+                permanentCounterSupport.placeCounterOnPermanent(gameData, placementEntry, target,
+                        context.counterType(), context.count());
+            }
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleOwnPermanentCounterPlacementByPlayerWithChosenReference(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayerWithChosenReference context) {
+        if (!permanentIds.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null) {
+                gameData.pendingEffectResolutionEntry.setChosenPermanentId(target.getId());
                 StackEntry placementEntry = new StackEntry(gameData.pendingEffectResolutionEntry);
                 placementEntry.setControllerId(context.placingPlayerId());
                 permanentCounterSupport.placeCounterOnPermanent(gameData, placementEntry, target,
@@ -2541,13 +2603,17 @@ public class MultiPermanentChoiceHandlerService {
 
         int totalPower = 0;
         int totalToughness = 0;
+        List<Permanent> sacrificed = new ArrayList<>();
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null) {
                 totalPower += gameQueryService.getEffectivePower(gameData, perm);
                 totalToughness += gameQueryService.getEffectiveToughness(gameData, perm);
-                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                sacrificed.add(perm);
             }
+        }
+        for (Permanent perm : sacrificed) {
+            destructionSupport.sacrificeAndLog(gameData, perm, playerId);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 

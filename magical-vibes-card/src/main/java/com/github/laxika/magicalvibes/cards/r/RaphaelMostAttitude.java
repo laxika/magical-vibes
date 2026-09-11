@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "101")
+@CardRegistration(set = "TMT", collectorNumber = "199")
 public class RaphaelMostAttitude extends Card {
 
     public RaphaelMostAttitude() {

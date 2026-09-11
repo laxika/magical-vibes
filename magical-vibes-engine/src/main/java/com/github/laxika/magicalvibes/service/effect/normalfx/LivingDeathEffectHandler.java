@@ -35,6 +35,7 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
     private final DestructionSupport destructionSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,22 +45,27 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Map<UUID, List<Card>> exiledByPlayer = new LinkedHashMap<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) {
-                continue;
-            }
-
-            List<Card> creatureCards = graveyard.stream()
-                    .filter(card -> card.hasType(CardType.CREATURE))
-                    .toList();
-            List<Card> exiled = new ArrayList<>();
-            for (Card card : creatureCards) {
-                if (graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, card.getId(), card)) {
-                    exiled.add(card);
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+                if (graveyard == null) {
+                    continue;
                 }
+
+                List<Card> creatureCards = graveyard.stream()
+                        .filter(card -> card.hasType(CardType.CREATURE))
+                        .toList();
+                List<Card> exiled = new ArrayList<>();
+                for (Card card : creatureCards) {
+                    if (graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, card.getId(), card)) {
+                        exiled.add(card);
+                    }
+                }
+                exiledByPlayer.put(playerId, exiled);
             }
-            exiledByPlayer.put(playerId, exiled);
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
         List<UUID> creatureIdsToSacrifice = new ArrayList<>();

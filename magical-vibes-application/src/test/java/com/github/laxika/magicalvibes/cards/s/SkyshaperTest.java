@@ -1,56 +1,70 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Skyshaper.class, RagingGoblin.class})
 class SkyshaperTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing Skyshaper gives your creatures flying until end of turn")
     void sacrificesSourceAndGrantsFlyingToOwnCreatures() {
         addSkyshaper();
-        Permanent ownCreature = addReadyCreature(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent ownCreature = addCreatureReady(player1, new RagingGoblin());
+        Permanent opponentCreature = addCreatureReady(player2, new RagingGoblin());
+        Permanent otherArtifact = harness.addToBattlefieldAndReturn(player1, new Skyshaper());
 
         activateSkyshaper();
 
         harness.assertInGraveyard(player1, "Skyshaper");
-        assertThat(ownCreature.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(opponentCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherArtifact, Keyword.FLYING)).isFalse();
     }
 
     @Test
     @DisplayName("Skyshaper's flying grant wears off at end of turn")
     void flyingWearsOffAtEndOfTurn() {
         addSkyshaper();
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new RagingGoblin());
 
         activateSkyshaper();
-        assertThat(ownCreature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Skyshaper grants flying to creatures present at resolution only")
+    void snapshotsCreaturesAtResolution() {
+        addSkyshaper();
+        Permanent presentAtActivation = addCreatureReady(player1, new RagingGoblin());
+
+        harness.activateAbility(player1, indexOf("Skyshaper"), null, null);
+        Permanent presentAtResolution = addCreatureReady(player1, new RagingGoblin());
+        harness.passBothPriorities();
+
+        Permanent enteringAfterResolution = addCreatureReady(player1, new RagingGoblin());
+
+        assertThat(gqs.hasKeyword(gd, presentAtActivation, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, presentAtResolution, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteringAfterResolution, Keyword.FLYING)).isFalse();
     }
 
     private void addSkyshaper() {
         harness.addToBattlefield(player1, new Skyshaper());
-    }
-
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addToBattlefield(player, new GrizzlyBears());
-        Permanent creature = findPermanent(player, "Grizzly Bears");
-        creature.setSummoningSick(false);
-        return creature;
     }
 
     private void activateSkyshaper() {

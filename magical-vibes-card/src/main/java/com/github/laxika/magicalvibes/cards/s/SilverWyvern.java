@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 
@@ -20,12 +20,12 @@ public class SilverWyvern extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new ChangeTargetOfTargetSpellWithSingleTargetEffect(true)),
+                List.of(ChangeTargetOfTargetSpellWithSingleTargetEffect.sourceCreatureTargetsOnly()),
                 "{U}: Change the target of target spell or ability that targets only Silver Wyvern. The new target must be a creature.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
                                 new StackEntryHasTargetPredicate(),
-                                new StackEntryIsSingleTargetPredicate(),
+                                new StackEntryTargetsOnlySingleCreaturePredicate(),
                                 new StackEntryTargetsSourcePredicate()
                         )),
                         "Target must be a spell or ability with only Silver Wyvern as its target."

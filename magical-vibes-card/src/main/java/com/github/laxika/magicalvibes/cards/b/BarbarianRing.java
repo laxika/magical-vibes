@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "313")
+@CardRegistration(set = "PD2", collectorNumber = "28")
 public class BarbarianRing extends Card {
 
     public BarbarianRing() {

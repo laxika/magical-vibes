@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HiddenHorror.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({Forest.class, GrizzlyBears.class, HiddenHorror.class, LlanowarElves.class})
 class HiddenHorrorTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -29,14 +28,13 @@ class HiddenHorrorTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Hidden Horror");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(HiddenHorror.class);
     }
 
     @Test
     @DisplayName("Resolving puts Hidden Horror on battlefield with ETB trigger on stack")
     void resolvingPutsOnBattlefieldWithEtbOnStack() {
         harness.castFromHand(player1, new HiddenHorror(), "{1}{B}{B}");
-
         harness.passBothPriorities();
 
         // Hidden Horror is on the battlefield
@@ -45,7 +43,7 @@ class HiddenHorrorTest extends BaseCardTest {
         // ETB triggered ability is on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Hidden Horror");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(HiddenHorror.class);
     }
 
     // ===== ETB with creature card in hand — accept discard =====
@@ -140,6 +138,22 @@ class HiddenHorrorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the controller's hand can pay the creature discard requirement")
+    void ignoresCreatureCardsInOpponentsHand() {
+        harness.castFromHand(player1, new HiddenHorror(), "{1}{B}{B}");
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        harness.passBothPriorities(); // resolve creature spell → ETB on stack
+        harness.passBothPriorities(); // resolve ETB → auto-sacrifice
+
+        harness.assertNotOnBattlefield(player1, "Hidden Horror");
+        harness.assertInGraveyard(player1, "Hidden Horror");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Auto-sacrifices when controller has empty hand")
     void autoSacrificesWithEmptyHand() {
         harness.castFromHand(player1, new HiddenHorror(), "{1}{B}{B}");
@@ -150,6 +164,20 @@ class HiddenHorrorTest extends BaseCardTest {
         // Auto-sacrificed
         harness.assertNotOnBattlefield(player1, "Hidden Horror");
         harness.assertInGraveyard(player1, "Hidden Horror");
+    }
+
+    @Test
+    @DisplayName("Creature cards in an opponent's hand do not satisfy the discard requirement")
+    void opponentCreatureDoesNotSatisfyDiscardRequirement() {
+        harness.castFromHand(player1, new HiddenHorror(), "{1}{B}{B}");
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hidden Horror");
+        harness.assertInGraveyard(player1, "Hidden Horror");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     // ===== Filtered discard — only creature cards =====

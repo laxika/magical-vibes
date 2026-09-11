@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -70,6 +71,52 @@ class JestersScepterTest extends BaseCardTest {
                 .extracting(card -> card.getId())
                 .contains(exiledShock.getId(), shockSpell.getId());
         assertThat(scepter.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The paid card still matches after the Scepter leaves the battlefield")
+    void countersMatchingSpellAfterSourceLeaves() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new JestersScepter());
+        Shock exiledShock = new Shock();
+        gd.addToExile(player2.getId(), exiledShock, scepter.getId());
+        Shock spell = new Shock();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.activateAbility(player1, 0, null, spell.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(scepter);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).contains(exiledShock.getId(), spell.getId());
+    }
+
+    @Test
+    @DisplayName("A different matching card left in exile cannot replace the card paid")
+    void doesNotCounterWhenPaidCardHasDifferentName() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new JestersScepter());
+        Shock exiledShock = new Shock();
+        GiantGrowth paidCard = new GiantGrowth();
+        gd.addToExile(player2.getId(), exiledShock, scepter.getId());
+        gd.addToExile(player2.getId(), paidCard, scepter.getId());
+        Shock spell = new Shock();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(paidCard.getId()));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.getCardsExiledByPermanent(scepter.getId())).containsExactly(exiledShock);
+        harness.assertInGraveyard(player2, "Giant Growth");
     }
 
     @Test

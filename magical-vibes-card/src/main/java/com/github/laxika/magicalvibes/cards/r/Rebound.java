@@ -21,6 +21,6 @@ public class Rebound extends Card {
                         new StackEntryTargetsAnyPlayerPredicate()
                 )),
                 "Target spell must have a single player target."
-        )).addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
+        )).addEffect(EffectSlot.SPELL, ChangeTargetOfTargetSpellWithSingleTargetEffect.playersOnly());
     }
 }

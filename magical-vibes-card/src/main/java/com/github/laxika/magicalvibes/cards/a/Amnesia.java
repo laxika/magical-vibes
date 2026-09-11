@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "DRK", collectorNumber = "20")
+@CardRegistration(set = "ME1", collectorNumber = "29")
 public class Amnesia extends Card {
 
     public Amnesia() {

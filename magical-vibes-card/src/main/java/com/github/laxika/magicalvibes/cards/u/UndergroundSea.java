@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "SUM", collectorNumber = "290")
+@CardRegistration(set = "3ED", collectorNumber = "290")
+@CardRegistration(set = "ME2", collectorNumber = "240")
 public class UndergroundSea extends Card {
 
     public UndergroundSea() {

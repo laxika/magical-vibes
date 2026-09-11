@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FatalBlow.class, GrizzlyBears.class})
+@CardUsed({AirElemental.class, FatalBlow.class, Forest.class, GrizzlyBears.class, Shock.class})
 class FatalBlowTest extends BaseCardTest {
 
     @Test
@@ -32,6 +34,25 @@ class FatalBlowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy a creature dealt damage by a spell this turn")
+    void destroysCreatureDealtDamageBySpell() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        harness.setHand(player1, List.of(new Shock(), new FatalBlow()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, elemental.getId());
+        harness.passBothPriorities();
+
+        harness.castInstant(player1, 0, elemental.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
     @DisplayName("Cannot target a creature that was not dealt damage this turn")
     void cannotTargetUndamagedCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -40,6 +61,19 @@ class FatalBlowTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent even if it was dealt damage this turn")
+    void cannotTargetDamagedNoncreaturePermanent() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        gd.permanentsDealtDamageThisTurn.add(forest.getId());
+
+        harness.setHand(player1, List.of(new FatalBlow()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

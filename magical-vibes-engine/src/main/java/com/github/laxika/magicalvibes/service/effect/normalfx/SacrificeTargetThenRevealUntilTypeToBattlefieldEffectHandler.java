@@ -66,7 +66,7 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
         boolean permanentCardsOnly = e.cardTypes().isEmpty();
 
         // Sacrifice the targeted permanent
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
         String sacrificeLog = targetControllerName + " sacrifices " + targetName + ".";
         gameLogService.append(gameData, GameLog.text(sacrificeLog));
 

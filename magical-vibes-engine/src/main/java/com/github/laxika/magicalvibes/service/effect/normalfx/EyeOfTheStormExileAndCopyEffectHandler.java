@@ -37,7 +37,7 @@ public class EyeOfTheStormExileAndCopyEffectHandler implements NormalEffectHandl
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EyeOfTheStormExileAndCopyEffect eyeEffect = (EyeOfTheStormExileAndCopyEffect) effect;
         StackEntry originalSpell = gameData.stack.stream()
-                .filter(stackEntry -> eyeEffect.originalSpellCardId().equals(stackEntry.getCard().getId()))
+                .filter(stackEntry -> eyeEffect.originalSpellCardId().equals(stackEntry.getTargetableId()))
                 .findFirst()
                 .orElse(null);
 

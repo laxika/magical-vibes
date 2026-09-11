@@ -57,6 +57,13 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
                 manaValueCapAmount, false);
     }
 
+    public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter, CounterType manaValueCapCounter,
+                                          boolean oncePerTurn, boolean fromHandOnly, boolean appliesToAllPlayers,
+                                          boolean genericEqualToManaValue, boolean controllerTurnOnly) {
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
+                genericEqualToManaValue, controllerTurnOnly, null, null, null);
+    }
+
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter) {
         this(manaCost, filter, null, false, false, false, false, false, null, null, null);
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenDrawAndLoseLifePerCounterEffect;
 
 @CardRegistration(set = "TMT", collectorNumber = "72")
+@CardRegistration(set = "TMT", collectorNumber = "267")
 public class SavantiRomeroTimesExile extends Card {
 
     public SavantiRomeroTimesExile() {

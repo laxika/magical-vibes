@@ -1,25 +1,21 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeaMonster.class, Island.class})
+@CardUsed({AvianChangeling.class, Island.class, SeaMonster.class})
 class SeaMonsterTest extends BaseCardTest {
 
     @Test
@@ -30,6 +26,7 @@ class SeaMonsterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(entry.getCard()).isInstanceOf(SeaMonster.class);
     }
 
     @Test
@@ -87,14 +84,9 @@ class SeaMonsterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sea Monster cannot attack if defender controls only a changeling creature")
+    @CardUsed(AvianChangeling.class)
     void cannotAttackWhenDefenderOnlyControlsChangelingCreature() {
-        Card changeling = new Card();
-        changeling.setName("Test Changeling");
-        changeling.setType(CardType.CREATURE);
-        changeling.setSubtypes(List.of(CardSubtype.SHAPESHIFTER));
-        changeling.setKeywords(Set.of(Keyword.CHANGELING));
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(changeling));
-
+        harness.addToBattlefield(player2, new AvianChangeling());
         addCreatureReady(player1, new SeaMonster());
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))

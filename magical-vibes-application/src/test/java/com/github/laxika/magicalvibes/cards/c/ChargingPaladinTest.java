@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ChargingPaladin.class)
 class ChargingPaladinTest extends BaseCardTest {
 
     @Test
@@ -38,6 +40,25 @@ class ChargingPaladinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the attacking creature is boosted after its trigger resolves")
+    void boostsOnlyAttackingCreatureAfterResolution() {
+        Permanent paladin = addCreatureReady(player1, new ChargingPaladin());
+        Permanent nonattackingPaladin = addCreatureReady(player1, new ChargingPaladin());
+
+        declareAttackers(player1, List.of(0));
+        assertThat(paladin.getToughnessModifier()).isZero();
+        assertThat(nonattackingPaladin.getPowerModifier()).isEqualTo(0);
+        assertThat(nonattackingPaladin.getToughnessModifier()).isEqualTo(0);
+
+        resolveAllTriggers();
+
+        assertThat(paladin.getPowerModifier()).isEqualTo(0);
+        assertThat(paladin.getToughnessModifier()).isEqualTo(3);
+        assertThat(nonattackingPaladin.getPowerModifier()).isEqualTo(0);
+        assertThat(nonattackingPaladin.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
     @DisplayName("+0/+3 modifier resets at end of turn cleanup")
     void modifierResetsAtEndOfTurn() {
         Permanent paladin = addCreatureReady(player1, new ChargingPaladin());
@@ -48,8 +69,7 @@ class ChargingPaladinTest extends BaseCardTest {
         assertThat(paladin.getToughnessModifier()).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(paladin.getPowerModifier()).isEqualTo(0);
         assertThat(paladin.getToughnessModifier()).isEqualTo(0);

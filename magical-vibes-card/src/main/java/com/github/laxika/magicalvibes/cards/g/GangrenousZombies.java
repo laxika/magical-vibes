@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import java.util.List;
 
 @CardRegistration(set = "ICE", collectorNumber = "127")
+@CardRegistration(set = "CST", collectorNumber = "26")
+@CardRegistration(set = "ME2", collectorNumber = "92")
 public class GangrenousZombies extends Card {
 
     public GangrenousZombies() {

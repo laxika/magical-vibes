@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ARB", collectorNumber = "140")
+@CardRegistration(set = "DDH", collectorNumber = "17")
 public class MarisisTwinclaws extends Card {
 
     public MarisisTwinclaws() {

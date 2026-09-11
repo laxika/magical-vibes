@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "50")
+@CardRegistration(set = "3ED", collectorNumber = "30")
 @CardRegistration(set = "4ED", collectorNumber = "39")
 @CardRegistration(set = "ITP", collectorNumber = "6")
 @CardRegistration(set = "RQS", collectorNumber = "6")

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "312")
+@CardRegistration(set = "ATQ", collectorNumber = "48")
+@CardRegistration(set = "ME1", collectorNumber = "155")
 public class CursedRack extends Card {
 
     public CursedRack() {

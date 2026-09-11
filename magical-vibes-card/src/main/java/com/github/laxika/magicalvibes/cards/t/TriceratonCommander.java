@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TMT", collectorNumber = "25")
+@CardRegistration(set = "TMT", collectorNumber = "226")
 public class TriceratonCommander extends Card {
 
     public TriceratonCommander() {

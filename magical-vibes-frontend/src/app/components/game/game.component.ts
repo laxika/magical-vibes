@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, NgZone, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
+import { PlanarPanelComponent } from './planar-panel/planar-panel.component';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -25,7 +26,7 @@ export interface PermanentStackContext {
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent],
+  imports: [PlanarPanelComponent, CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent],
   templateUrl: './game.component.html',
   styleUrls: ['./shared-game-styles.css', './game.component.css', './game-phone.css']
 })
@@ -489,6 +490,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const updated = {
       ...g,
       status: state.status,
+      planechase: state.planechase ?? null,
       activePlayerId: state.activePlayerId,
       turnNumber: state.turnNumber,
       currentStep: state.currentStep,
@@ -1385,6 +1387,12 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.targeting.choosingAdditionalSacrifice) {
+      if (perm && isPermanentCreature(perm)) {
+        this.choice.targeting.toggleAdditionalSacrifice(perm.id);
+      }
+      return;
+    }
     if (this.choice.targeting.choosingBuybackSacrifice) {
       if (perm && isPermanentLand(perm)) {
         this.choice.targeting.toggleBuybackSacrifice(perm.id);
@@ -1513,7 +1521,7 @@ export class GameComponent implements OnInit, OnDestroy {
       }
     }
     for (const se of g.stack) {
-      if (se.cardId === entry.targetId) return se.card.name;
+      if (se.cardId === entry.targetId) return se.card?.name ?? se.description;
     }
     for (const graveyard of g.graveyards) {
       for (const card of graveyard) {
@@ -1678,6 +1686,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingAbility) { t.cancelAbilityChoice(); return true; }
     if (t.choosingMode) { t.cancelModes(); return true; }
     if (t.choosingKickerPermanent) { t.cancelKickerPermanent(); return true; }
+    if (t.choosingAdditionalSacrifice) { t.cancelAdditionalSacrifice(); return true; }
     if (t.choosingKicker) { t.cancelKicker(); return true; }
     if (t.choosingBuybackSacrifice) { t.cancelBuybackSacrifice(); return true; }
     if (t.choosingBuybackDiscard) { t.cancelBuybackDiscard(); return true; }
@@ -1717,6 +1726,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent
       || t.choosingBuyback || t.choosingBuybackSacrifice || t.choosingBuybackDiscard
+      || t.choosingAdditionalSacrifice
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.selectingAlternateCostHandCard || t.selectingAlternateCostGraveyardCards
       || t.selectingGraveyardCastDiscard || t.selectingGraveyardCastExile || t.selectingExileCounterCost

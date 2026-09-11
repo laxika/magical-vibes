@@ -19,7 +19,11 @@ public class TragicPoet extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardTypePredicate(CardType.ENCHANTMENT)).build()),
+                List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(new CardTypePredicate(CardType.ENCHANTMENT))
+                        .targetGraveyard(true)
+                        .build()),
                 "{T}, Sacrifice Tragic Poet: Return target enchantment card from your graveyard to your hand."
         ));
     }

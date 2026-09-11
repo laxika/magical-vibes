@@ -906,6 +906,7 @@ class AiTargetSelector {
                         .getOrDefault(other.getId(), Set.of())
                         .contains(candidate.getId());
                 case DIFFERENT_NAMES -> !other.getCard().getName().equals(candidate.getCard().getName());
+                case DIFFERENT_MANA_VALUES -> other.getCard().getManaValue() != candidate.getCard().getManaValue();
                 case AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_CONTROLLER,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,

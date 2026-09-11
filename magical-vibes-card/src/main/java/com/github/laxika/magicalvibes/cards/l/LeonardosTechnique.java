@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "18")
+@CardRegistration(set = "TMT", collectorNumber = "224")
 public class LeonardosTechnique extends Card {
 
     public LeonardosTechnique() {

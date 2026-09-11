@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "182")
+@CardRegistration(set = "CP3", collectorNumber = "1")
 public class HonoredHierarch extends Card {
 
     public HonoredHierarch() {

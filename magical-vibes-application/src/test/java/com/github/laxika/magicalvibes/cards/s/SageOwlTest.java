@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,10 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SageOwl.class, GrizzlyBears.class})
+@CardUsed({BenalishInfantry.class, GrizzlyBears.class, SageOwl.class})
 class SageOwlTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Sage Owl puts it on the stack")
@@ -36,18 +35,18 @@ class SageOwlTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Sage Owl enters battlefield and triggers ETB reorder")
     void resolvingEntersBattlefieldAndTriggersEtb() {
-        harness.castFromHand(player1, new SageOwl(), "{1}{U}");
+        SageOwl sageOwl = new SageOwl();
+        harness.castFromHand(player1, sageOwl, "{1}{U}");
+
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard())
-                .isInstanceOf(SageOwl.class);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == sageOwl);
 
-        // ETB triggered ability should be on stack
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard()).isInstanceOf(SageOwl.class);
+        assertThat(trigger.getCard()).isSameAs(sageOwl);
     }
 
     @Test
@@ -56,7 +55,6 @@ class SageOwlTest extends BaseCardTest {
         harness.castFromHand(player1, new SageOwl(), "{1}{U}");
         // Resolve creature spell
         harness.passBothPriorities();
-        // Resolve ETB triggered ability
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -78,7 +76,6 @@ class SageOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        // Reverse the top 4 cards
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
 
         assertThat(deck.get(0)).isSameAs(originalTop3);
@@ -99,10 +96,8 @@ class SageOwlTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
-
-    // ===== Library edge cases =====
 
     @Test
     @DisplayName("Library with fewer than 4 cards reorders available cards")
@@ -153,9 +148,9 @@ class SageOwlTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a nonflying creature from blocking Sage Owl")
-    void flyingPreventsNonflyingCreatureFromBlocking() {
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new SageOwl());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new BenalishInfantry());
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();

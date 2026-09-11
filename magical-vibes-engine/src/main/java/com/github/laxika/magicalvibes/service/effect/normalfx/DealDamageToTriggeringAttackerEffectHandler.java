@@ -40,7 +40,8 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
             return;
         }
 
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + e.damage() + " damage to ").card(attacker.getCard()).text(".").build());
-        damageSupport.dealCreatureDamage(gameData, entry, attacker, e.damage());
+        int damage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + damage + " damage to ").card(attacker.getCard()).text(".").build());
+        damageSupport.dealCreatureDamage(gameData, entry, attacker, damage);
     }
 }

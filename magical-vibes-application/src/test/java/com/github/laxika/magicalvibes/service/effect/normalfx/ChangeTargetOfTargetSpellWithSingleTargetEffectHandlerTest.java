@@ -83,7 +83,8 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
         lenient().when(targetLegalityService.checkSpellTargetOnStack(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
         changeTargetWithSingleTargetHandler = new ChangeTargetOfTargetSpellWithSingleTargetEffectHandler(
-                gameQueryService, gameLogService, playerInputService, targetRedirectionSupport);
+                gameQueryService, gameLogService, playerInputService, targetRedirectionSupport,
+                new PsychicBattleSupport(targetLegalityService, playerInputService));
 
     }
 

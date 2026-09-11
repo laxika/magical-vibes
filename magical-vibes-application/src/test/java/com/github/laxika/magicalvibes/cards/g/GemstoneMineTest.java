@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(GemstoneMine.class)
 class GemstoneMineTest extends BaseCardTest {
 
     @Test
@@ -22,7 +24,7 @@ class GemstoneMineTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findPermanent(player1, "Gemstone Mine").getCounterCount(CounterType.MINING))
                 .isEqualTo(3);
@@ -43,8 +45,8 @@ class GemstoneMineTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sacrifices after its last mining counter is removed")
-    void sacrificesAfterLastCounterIsRemoved() {
+    @DisplayName("Sacrifices immediately when its ability removes the last mining counter")
+    void sacrificesImmediatelyAfterLastCounterIsRemoved() {
         Permanent mine = addReadyMine(player1);
         mine.setCounterCount(CounterType.MINING, 1);
 
@@ -52,19 +54,29 @@ class GemstoneMineTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.stack).hasSize(1);
-
-        harness.passBothPriorities();
-
         harness.assertNotOnBattlefield(player1, "Gemstone Mine");
         harness.assertInGraveyard(player1, "Gemstone Mine");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice when another effect removes the last mining counter")
+    void doesNotSacrificeWhenAnotherEffectRemovesLastCounter() {
+        Permanent mine = addReadyMine(player1);
+        mine.setCounterCount(CounterType.MINING, 1);
+        mine.setCounterCount(CounterType.MINING, 0);
+
+        harness.runStateBasedActions();
+
+        assertThat(mine.getCounterCount(CounterType.MINING)).isZero();
+        harness.assertOnBattlefield(player1, "Gemstone Mine");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyMine(Player player) {
-        Permanent mine = new Permanent(new GemstoneMine());
+        Permanent mine = harness.addToBattlefieldAndReturn(player, new GemstoneMine());
         mine.setSummoningSick(false);
         mine.setCounterCount(CounterType.MINING, 3);
-        gd.playerBattlefields.get(player.getId()).add(mine);
         return mine;
     }
 }

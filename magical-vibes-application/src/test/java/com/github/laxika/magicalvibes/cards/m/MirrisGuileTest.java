@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,12 +13,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(MirrisGuile.class)
 class MirrisGuileTest extends BaseCardTest {
 
-    private void advanceToUpkeepTrigger() {
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+    private void resolveUpkeepTrigger(Player activePlayer) {
+        advanceToUpkeep(activePlayer);
         harness.passBothPriorities(); // resolve triggered ability → MayEffect prompts
     }
 
@@ -25,9 +25,8 @@ class MirrisGuileTest extends BaseCardTest {
     @DisplayName("Accepting the upkeep trigger offers the top three cards for reorder")
     void acceptingOffersTopThreeForReorder() {
         harness.addToBattlefield(player1, new MirrisGuile());
-        harness.forceActivePlayer(player1);
 
-        advanceToUpkeepTrigger();
+        resolveUpkeepTrigger(player1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -40,14 +39,13 @@ class MirrisGuileTest extends BaseCardTest {
     @DisplayName("Chosen order is applied to the top of the library")
     void chosenOrderIsAppliedToLibrary() {
         harness.addToBattlefield(player1, new MirrisGuile());
-        harness.forceActivePlayer(player1);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top0 = deck.get(0);
         Card top1 = deck.get(1);
         Card top2 = deck.get(2);
 
-        advanceToUpkeepTrigger();
+        resolveUpkeepTrigger(player1);
         harness.handleMayAbilityChosen(player1, true);
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 1, 0)));
 
@@ -61,12 +59,11 @@ class MirrisGuileTest extends BaseCardTest {
     @DisplayName("Declining the upkeep trigger leaves the library untouched")
     void decliningLeavesLibraryUntouched() {
         harness.addToBattlefield(player1, new MirrisGuile());
-        harness.forceActivePlayer(player1);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top0 = deck.get(0);
 
-        advanceToUpkeepTrigger();
+        resolveUpkeepTrigger(player1);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -77,9 +74,8 @@ class MirrisGuileTest extends BaseCardTest {
     @DisplayName("Does not trigger on the opponent's upkeep")
     void doesNotTriggerOnOpponentUpkeep() {
         harness.addToBattlefield(player1, new MirrisGuile());
-        harness.forceActivePlayer(player2);
 
-        advanceToUpkeepTrigger();
+        resolveUpkeepTrigger(player2);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -88,7 +84,6 @@ class MirrisGuileTest extends BaseCardTest {
     @DisplayName("A library with fewer than three cards only offers what is there")
     void shortLibraryOffersFewerCards() {
         harness.addToBattlefield(player1, new MirrisGuile());
-        harness.forceActivePlayer(player1);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card cardA = deck.get(0);
@@ -97,7 +92,7 @@ class MirrisGuileTest extends BaseCardTest {
         deck.add(cardA);
         deck.add(cardB);
 
-        advanceToUpkeepTrigger();
+        resolveUpkeepTrigger(player1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
@@ -106,5 +101,20 @@ class MirrisGuileTest extends BaseCardTest {
 
         assertThat(deck.get(0)).isSameAs(cardB);
         assertThat(deck.get(1)).isSameAs(cardA);
+    }
+
+    @Test
+    @DisplayName("Accepting with an empty library does not create a reorder prompt")
+    void emptyLibraryDoesNotPrompt() {
+        harness.addToBattlefield(player1, new MirrisGuile());
+
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        deck.clear();
+
+        resolveUpkeepTrigger(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(deck).isEmpty();
     }
 }

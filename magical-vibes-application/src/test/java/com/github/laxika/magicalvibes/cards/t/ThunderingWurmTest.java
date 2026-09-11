@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,15 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThunderingWurm.class, Forest.class, GrizzlyBears.class})
 class ThunderingWurmTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving puts Thundering Wurm on battlefield with ETB trigger on stack")
     void resolvingPutsOnBattlefieldWithEtbOnStack() {
-        harness.setHand(player1, List.of(new ThunderingWurm()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ThunderingWurm(), "{2}{G}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Thundering Wurm");
@@ -63,10 +61,7 @@ class ThunderingWurmTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices when controller has no land cards in hand")
     void autoSacrificesWithNoLandInHand() {
-        harness.setHand(player1, List.of(new ThunderingWurm()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ThunderingWurm(), "{2}{G}");
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
@@ -82,10 +77,7 @@ class ThunderingWurmTest extends BaseCardTest {
     @Test
     @DisplayName("Discard choice only shows land card indices when hand has mixed types")
     void discardChoiceOnlyShowsLandIndices() {
-        harness.setHand(player1, List.of(new ThunderingWurm()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ThunderingWurm(), "{2}{G}");
         // Hand: [GrizzlyBears, Forest, GrizzlyBears, Forest]
         harness.setHand(player1, List.of(new GrizzlyBears(), new Forest(), new GrizzlyBears(), new Forest()));
         harness.passBothPriorities(); // resolve creature spell
@@ -101,10 +93,7 @@ class ThunderingWurmTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void castWurmWithLandInHand() {
-        harness.setHand(player1, List.of(new ThunderingWurm()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ThunderingWurm(), "{2}{G}");
         harness.setHand(player1, List.of(new Forest()));
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → may ability prompt

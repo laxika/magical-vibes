@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromGraveyardAttachedToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -27,6 +28,7 @@ public class ReturnSourceFromGraveyardAttachedToEnteringCreatureEffectHandler im
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
+    private final AuraAttachmentService auraAttachmentService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,14 +46,23 @@ public class ReturnSourceFromGraveyardAttachedToEnteringCreatureEffectHandler im
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, sourceCardId);
-        Permanent equipment = new Permanent(sourceCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), equipment);
+        Permanent attachment = new Permanent(sourceCard);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), attachment);
 
         Permanent enteringCreature = entry.getTargetId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (enteringCreature != null && equipSupport.canAttachEquipment(gameData, equipment, enteringCreature)) {
-            equipSupport.attachEquipment(gameData, equipment, enteringCreature);
+        boolean canAttach = enteringCreature != null && (sourceCard.isAura()
+                ? auraAttachmentService.canEnchant(gameData, sourceCard, entry.getControllerId(), enteringCreature)
+                : equipSupport.canAttachEquipment(gameData, attachment, enteringCreature));
+        if (canAttach) {
+            if (sourceCard.isAura()) {
+                gameData.expireFloatingEffectsForUnattachedSource(attachment.getId());
+                attachment.setAttachedTo(enteringCreature.getId());
+                attachment.setTimestamp(gameData.nextTimestamp());
+            } else {
+                equipSupport.attachEquipment(gameData, attachment, enteringCreature);
+            }
             gameLogService.append(gameData, GameLog.builder()
                     .card(sourceCard)
                     .text(" returns to the battlefield attached to ")

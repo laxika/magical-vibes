@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ChargingBandits.class)
 class ChargingBanditsTest extends BaseCardTest {
 
     @Test
@@ -31,10 +33,24 @@ class ChargingBanditsTest extends BaseCardTest {
         Permanent bandits = addCreatureReady(player1, new ChargingBandits());
 
         declareAttackers(player1, List.of(0));
+        assertThat(bandits.getPowerModifier()).isZero();
         resolveAllTriggers();
 
         assertThat(bandits.getPowerModifier()).isEqualTo(2);
         assertThat(bandits.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Only the attacking Bandits gets its own boost")
+    void onlyAttackingBanditsGetsBoost() {
+        Permanent attackingBandits = addCreatureReady(player1, new ChargingBandits());
+        Permanent restingBandits = addCreatureReady(player1, new ChargingBandits());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attackingBandits.getPowerModifier()).isEqualTo(2);
+        assertThat(restingBandits.getPowerModifier()).isZero();
     }
 
     @Test
@@ -48,8 +64,7 @@ class ChargingBanditsTest extends BaseCardTest {
         assertThat(bandits.getPowerModifier()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(bandits.getPowerModifier()).isEqualTo(0);
         assertThat(bandits.getToughnessModifier()).isEqualTo(0);

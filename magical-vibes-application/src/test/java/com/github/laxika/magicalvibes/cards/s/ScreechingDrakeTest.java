@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +12,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScreechingDrake.class, Forest.class})
 class ScreechingDrakeTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB draws a card, then discards a card (net hand size unchanged)")
     void etbDrawThenDiscard() {
-        setDeck(player1, List.of(new Forest()));
-        castScreechingDrake();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.castFromHand(player1, new ScreechingDrake(), "{3}{U}");
 
         harness.passBothPriorities(); // resolve creature spell
 
@@ -41,15 +40,24 @@ class ScreechingDrakeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private void castScreechingDrake() {
-        harness.setHand(player1, List.of(new ScreechingDrake()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
-    }
+    @Test
+    @DisplayName("ETB draws before asking which card to discard")
+    void etbDrawsBeforeDiscarding() {
+        Forest cardToKeep = new Forest();
+        Forest cardToDraw = new Forest();
+        harness.setLibrary(player1, List.of(cardToDraw));
+        harness.castFromHand(player1, new ScreechingDrake(), "{3}{U}");
+        harness.setHand(player1, List.of(cardToKeep));
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve ETB trigger through the draw
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardToKeep, cardToDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardToDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(cardToKeep);
     }
 }

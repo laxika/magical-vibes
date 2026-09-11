@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "129")
+@CardRegistration(set = "FDN", collectorNumber = "353")
+@CardRegistration(set = "FDN", collectorNumber = "414")
+@CardRegistration(set = "FDN", collectorNumber = "485")
 public class LeylineAxe extends Card {
 
     public LeylineAxe() {

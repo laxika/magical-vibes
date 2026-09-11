@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SamiteBlessing.class, GrizzlyBears.class, ProdigalPyromancer.class})
 class SamiteBlessingTest extends BaseCardTest {
 
     @Test
@@ -19,7 +22,7 @@ class SamiteBlessingTest extends BaseCardTest {
     void enchantedCreatureActivatesPreventionAbility() {
         Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
         attachBlessing(enchanted);
-        Permanent protectedCreature = addReadyStats(player1, 4, 4);
+        Permanent protectedCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent source = addCreatureReady(player2, new ProdigalPyromancer());
 
         harness.activateAbility(player1, indexOf(player1, enchanted), null, protectedCreature.getId());
@@ -40,8 +43,8 @@ class SamiteBlessingTest extends BaseCardTest {
     void damageToAnotherCreatureDoesNotConsumeShield() {
         Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
         attachBlessing(enchanted);
-        Permanent protectedCreature = addReadyStats(player1, 4, 4);
-        Permanent otherCreature = addReadyStats(player1, 4, 4);
+        Permanent protectedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent source = addCreatureReady(player2, new ProdigalPyromancer());
 
         harness.activateAbility(player1, indexOf(player1, enchanted), null, protectedCreature.getId());
@@ -67,7 +70,7 @@ class SamiteBlessingTest extends BaseCardTest {
     void damageFromAnotherSourceIsNotPrevented() {
         Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
         attachBlessing(enchanted);
-        Permanent protectedCreature = addReadyStats(player1, 4, 4);
+        Permanent protectedCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent chosenSource = addCreatureReady(player2, new ProdigalPyromancer());
         Permanent otherSource = addCreatureReady(player2, new ProdigalPyromancer());
 
@@ -92,21 +95,31 @@ class SamiteBlessingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent attachBlessing(Permanent enchanted) {
-        Permanent aura = new Permanent(new SamiteBlessing());
-        aura.setAttachedTo(enchanted.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
-        return aura;
+    @Test
+    @DisplayName("Samite Blessing's prevention shield expires at the end of the turn")
+    void shieldExpiresAtEndOfTurn() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        attachBlessing(enchanted);
+        Permanent protectedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent source = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, indexOf(player1, enchanted), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 
-    private Permanent addReadyStats(Player player, int power, int toughness) {
-        GrizzlyBears card = new GrizzlyBears();
-        card.setPower(power);
-        card.setToughness(toughness);
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    private void attachBlessing(Permanent enchanted) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SamiteBlessing());
+        aura.setAttachedTo(enchanted.getId());
     }
 
     private int indexOf(Player player, Permanent permanent) {

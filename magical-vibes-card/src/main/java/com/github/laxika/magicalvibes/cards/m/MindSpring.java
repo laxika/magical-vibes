@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "64")
 @CardRegistration(set = "MOR", collectorNumber = "41")
+@CardRegistration(set = "DPA", collectorNumber = "12")
 public class MindSpring extends Card {
 
     public MindSpring() {

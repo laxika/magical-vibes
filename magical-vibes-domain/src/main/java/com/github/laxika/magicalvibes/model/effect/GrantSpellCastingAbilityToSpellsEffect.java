@@ -17,8 +17,13 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * inert, so widening this set means wiring a new gate at the same time.
  */
 public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter,
-                                                     Zone sourceZone)
+                                                     Zone sourceZone, int abilityValue)
         implements SpellCastingAbilityGrantingEffect {
+    public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter,
+                                                     Zone sourceZone) {
+        this(grantedAbility, filter, sourceZone, 0);
+    }
+
 
     public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, CardPredicate filter) {
         this(grantedAbility, filter, null);
@@ -37,10 +42,14 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
                 && grantedAbility != Keyword.REBOUND
                 && grantedAbility != Keyword.DELVE
                 && grantedAbility != Keyword.JUMP_START
+                && grantedAbility != Keyword.CASUALTY
                 && grantedAbility != Keyword.REPLICATE) {
             throw new IllegalArgumentException(
                     "No cast flow consults a granted " + grantedAbility
                             + "; only CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, and REPLICATE do");
         }
+    }
+    public GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, int abilityValue, CardPredicate filter) {
+        this(grantedAbility, filter, null, abilityValue);
     }
 }

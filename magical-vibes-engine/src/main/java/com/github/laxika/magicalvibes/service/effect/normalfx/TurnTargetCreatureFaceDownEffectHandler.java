@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -27,13 +28,17 @@ public class TurnTargetCreatureFaceDownEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         TurnTargetCreatureFaceDownEffect turnFaceDown = (TurnTargetCreatureFaceDownEffect) effect;
-        UUID targetId = entry.targetsForEffect(turnFaceDown).stream().findFirst()
-                .orElse(entry.getTargetId());
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || target.isFaceDown()) {
-            return;
+        List<UUID> targetIds = entry.targetsForEffect(turnFaceDown);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
         }
-        target.setCard(target.getOriginalCard());
-        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null || target.isFaceDown()) {
+                continue;
+            }
+            target.setCard(target.getOriginalCard());
+            target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        }
     }
 }

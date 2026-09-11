@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
  * Capability interface for static effects that impose an additional mana cost to declare the
@@ -23,4 +24,12 @@ public interface BlockCostEffect extends CardEffect {
      * @param attackerPower the attacker's effective power
      */
     int blockCost(Permanent blocker, int attackerPower);
+
+    /**
+     * Optional dynamic amount for effects whose tax is evaluated from the live game state when
+     * the block is declared. A {@code null} result keeps the fixed-cost path above.
+     */
+    default DynamicAmount dynamicBlockCost() {
+        return null;
+    }
 }

@@ -1,31 +1,30 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.v.VampireAristocrat;
+import com.github.laxika.magicalvibes.cards.r.RegalUnicorn;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SacredKnight.class, FeralShadow.class, HillGiant.class, RegalUnicorn.class})
 class SacredKnightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacred Knight can't be blocked by a black creature")
     void cannotBeBlockedByBlackCreature() {
-        attackWithKnight();
-
-        Permanent vampire = new Permanent(new VampireAristocrat()); // black
-        vampire.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(vampire);
+        attackWithKnight(new FeralShadow());
 
         prepareDeclareBlockers();
 
@@ -37,11 +36,21 @@ class SacredKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Sacred Knight can't be blocked by a red creature")
     void cannotBeBlockedByRedCreature() {
-        attackWithKnight();
+        attackWithKnight(new HillGiant());
 
-        Permanent giant = new Permanent(new HillGiant()); // red
-        giant.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(giant);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by");
+    }
+
+    @Test
+    @DisplayName("Sacred Knight can't be blocked by a creature that is both black and red")
+    void cannotBeBlockedByBlackAndRedCreature() {
+        Permanent blackAndRedCreature = attackWithKnight(new FeralShadow());
+        blackAndRedCreature.setColorOverridden(true);
+        blackAndRedCreature.getTransientColors().addAll(Set.of(CardColor.BLACK, CardColor.RED));
 
         prepareDeclareBlockers();
 
@@ -53,24 +62,18 @@ class SacredKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Sacred Knight can be blocked by a creature that is neither black nor red")
     void canBeBlockedByNonBlackNonRedCreature() {
-        attackWithKnight();
-
-        Permanent bears = new Permanent(new GrizzlyBears()); // green
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent unicorn = attackWithKnight(new RegalUnicorn());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(unicorn.isBlocking()).isTrue();
     }
 
-    // ===== Helpers =====
-
-    private void attackWithKnight() {
-        Permanent knight = new Permanent(new SacredKnight());
-        knight.setSummoningSick(false);
-        knight.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(knight);
+    private Permanent attackWithKnight(Card blockerCard) {
+        addCreatureReady(player1, new SacredKnight());
+        Permanent blocker = addCreatureReady(player2, blockerCard);
+        declareAttackers(List.of(0));
+        return blocker;
     }
 }

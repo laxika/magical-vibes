@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.a.AngelicCurator;
+import com.github.laxika.magicalvibes.cards.m.Miscalculation;
+import com.github.laxika.magicalvibes.cards.t.ThranLens;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OpalChampion.class, AngelicCurator.class, Miscalculation.class, ThranLens.class})
 class OpalChampionTest extends BaseCardTest {
 
     private Permanent addOpalChampion() {
@@ -28,9 +31,7 @@ class OpalChampionTest extends BaseCardTest {
     }
 
     private void castOpponentCreature() {
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new AngelicCurator(), "{1}{W}");
     }
 
     @Test
@@ -57,8 +58,7 @@ class OpalChampionTest extends BaseCardTest {
         prepareOpponentCast();
 
         castOpponentCreature();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         castOpponentCreature();
 
         assertThat(gd.stack).hasSize(1);
@@ -72,11 +72,44 @@ class OpalChampionTest extends BaseCardTest {
         Permanent opal = addOpalChampion();
         prepareOpponentCast();
 
-        harness.setHand(player2, List.of(new Spellbook()));
-        harness.castArtifact(player2, 0);
-
+        harness.castFromHand(player2, new ThranLens(), "{2}");
         assertThat(gd.stack).hasSize(1);
+
         assertThat(gqs.isEnchantment(gd, opal)).isTrue();
         assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
+    void doesNotTriggerForControllerCreatureSpell() {
+        Permanent opal = addOpalChampion();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new AngelicCurator(), "{1}{W}");
+        resolveAllTriggers();
+
+        assertThat(gqs.isEnchantment(gd, opal)).isTrue();
+        assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
+    void transformsWhenOpponentCreatureSpellIsCountered() {
+        Permanent opal = addOpalChampion();
+        prepareOpponentCast();
+
+        AngelicCurator creature = new AngelicCurator();
+        harness.castFromHand(player2, creature, "{1}{W}");
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new Miscalculation()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+        harness.assertInGraveyard(player2, creature.getName());
     }
 }

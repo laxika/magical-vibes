@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SerrasBlessing.class, Warthog.class})
+@CardUsed({Serenity.class, SerrasBlessing.class, Warthog.class})
 class SerrasBlessingTest extends BaseCardTest {
 
     @Test
@@ -40,6 +40,15 @@ class SerrasBlessingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SerrasBlessing());
 
         assertThat(gqs.hasKeyword(gd, opponentWarthog, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Noncreature permanents do not gain vigilance")
+    void noncreaturePermanentsDoNotGainVigilance() {
+        Permanent serenity = harness.addToBattlefieldAndReturn(player1, new Serenity());
+        harness.addToBattlefield(player1, new SerrasBlessing());
+
+        assertThat(gqs.hasKeyword(gd, serenity, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test

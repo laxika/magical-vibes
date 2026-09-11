@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "97")
+@CardRegistration(set = "FDN", collectorNumber = "333")
+@CardRegistration(set = "FDN", collectorNumber = "395")
+@CardRegistration(set = "FDN", collectorNumber = "427")
+@CardRegistration(set = "FDN", collectorNumber = "437")
+@CardRegistration(set = "FDN", collectorNumber = "469")
 public class TwinflameTyrant extends Card {
 
     public TwinflameTyrant() {

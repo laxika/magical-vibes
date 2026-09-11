@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "MMQ", collectorNumber = "269")
+@CardRegistration(set = "HOP", collectorNumber = "78")
 public class SilvergladeElemental extends Card {
 
     public SilvergladeElemental() {

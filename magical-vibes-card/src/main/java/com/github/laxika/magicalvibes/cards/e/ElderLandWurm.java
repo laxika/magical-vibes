@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "24")
 @CardRegistration(set = "LEG", collectorNumber = "11")
+@CardRegistration(set = "ME1", collectorNumber = "11")
 public class ElderLandWurm extends Card {
 
     public ElderLandWurm() {

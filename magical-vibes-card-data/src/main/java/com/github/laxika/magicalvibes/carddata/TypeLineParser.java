@@ -22,17 +22,8 @@ public class TypeLineParser {
             "World", CardSupertype.WORLD
     );
 
-    private static final Map<String, CardType> TYPE_MAP = Map.of(
-            "Creature", CardType.CREATURE,
-            "Enchantment", CardType.ENCHANTMENT,
-            "Instant", CardType.INSTANT,
-            "Sorcery", CardType.SORCERY,
-            "Artifact", CardType.ARTIFACT,
-            "Land", CardType.LAND,
-            "Planeswalker", CardType.PLANESWALKER,
-            "Battle", CardType.BATTLE,
-            "Kindred", CardType.KINDRED
-    );
+    private static final Map<String, CardType> TYPE_MAP = java.util.Arrays.stream(CardType.values())
+            .collect(java.util.stream.Collectors.toUnmodifiableMap(CardType::getDisplayName, type -> type));
 
     private static final Map<String, CardSubtype> SUBTYPE_MAP;
 
@@ -99,7 +90,8 @@ public class TypeLineParser {
 
         // Parse subtypes
         if (subtypesPart != null && !subtypesPart.isBlank()) {
-            String[] subtypeWords = subtypesPart.split("\\s+");
+            String[] subtypeWords = type != null && type.isPlanar()
+                    ? new String[] {subtypesPart} : subtypesPart.split("\\s+");
             for (String word : subtypeWords) {
                 if (word.isEmpty()) continue;
                 CardSubtype subtype = SUBTYPE_MAP.get(word);

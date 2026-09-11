@@ -104,7 +104,7 @@ class TenthDistrictHeroTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("collect evidence");
+                .hasMessageContaining("evidence cost");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(hero);
     }

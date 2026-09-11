@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "LRW", collectorNumber = "166")
+@CardRegistration(set = "DD2", collectorNumber = "35")
 public class FlamekinBrawler extends Card {
 
     public FlamekinBrawler() {

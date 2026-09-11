@@ -32,15 +32,15 @@ class StaunchDefendersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The entering creature's controller gains the life")
-    void controllerGainsLife() {
-        harness.setLife(player1, 7);
-        harness.setLife(player2, 13);
+    @DisplayName("ETB life gain affects only the creature's controller")
+    void entryGainsLifeForControllerOnly() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 17);
 
-        harness.castFromHand(player2, new StaunchDefenders(), "{3}{W}{W}");
+        harness.castFromHand(player1, new StaunchDefenders(), "{3}{W}{W}");
         resolveAllTriggers();
 
-        harness.assertLife(player1, 7);
+        harness.assertLife(player1, 14);
         harness.assertLife(player2, 17);
     }
 }

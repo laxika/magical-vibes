@@ -6,21 +6,21 @@ import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Cataclysm.class, Millstone.class, IronStar.class, GrizzlyBears.class,
+        HillGiant.class, Crusade.class, Plains.class, Juggernaut.class})
 class CataclysmTest extends BaseCardTest {
 
     private void cast() {
-        harness.setHand(player1, List.of(new Cataclysm()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Cataclysm(), "{2}{W}{W}");
         harness.passBothPriorities();
     }
 
@@ -47,6 +47,23 @@ class CataclysmTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Iron Star");
         harness.assertInGraveyard(player1, "Hill Giant");
         harness.assertInGraveyard(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("A missing permanent type is skipped without requiring a choice")
+    void skipsTypesWithNoCandidates() {
+        Permanent keptCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent sacrificedCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent keptLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        cast();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(keptCreature.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(keptCreature, keptLand)
+                .doesNotContain(sacrificedCreature);
+        harness.assertInGraveyard(player1, "Hill Giant");
     }
 
     @Test

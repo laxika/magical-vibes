@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ALA", collectorNumber = "194")
+@CardRegistration(set = "V11", collectorNumber = "11")
 public class SharuumTheHegemon extends Card {
 
     public SharuumTheHegemon() {

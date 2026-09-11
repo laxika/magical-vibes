@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.cards.j.JolraelsCentaur;
+import com.github.laxika.magicalvibes.cards.w.Witchstalker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AetherFlash.class, GrizzlyBears.class, HornedTurtle.class})
+@CardUsed({AetherFlash.class, GrizzlyBears.class, HornedTurtle.class, JolraelsCentaur.class, Witchstalker.class})
 class AetherFlashTest extends BaseCardTest {
 
     @Test
@@ -87,5 +88,17 @@ class AetherFlashTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger → 2 damage is dealt despite shroud
 
         harness.assertInGraveyard(player2, "Jolrael's Centaur");
+    }
+
+    @Test
+    @CardUsed(Witchstalker.class)
+    @DisplayName("Deals damage to an entering creature with hexproof")
+    void damagesHexproofEnteringCreature() {
+        harness.addToBattlefield(player1, new AetherFlash());
+
+        Permanent witchstalker = harness.enterBattlefieldAndReturn(player2, new Witchstalker());
+        harness.passBothPriorities();
+
+        assertThat(witchstalker.getMarkedDamage()).isEqualTo(2);
     }
 }

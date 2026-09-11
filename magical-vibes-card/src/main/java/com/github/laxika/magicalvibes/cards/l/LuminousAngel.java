@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "15")
+@CardRegistration(set = "DDC", collectorNumber = "12")
 public class LuminousAngel extends Card {
 
     public LuminousAngel() {

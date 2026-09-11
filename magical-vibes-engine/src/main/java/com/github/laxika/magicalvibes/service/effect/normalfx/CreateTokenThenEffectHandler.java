@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -46,7 +47,12 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect());
+        if (createThen.thenEffect() instanceof AttachCreatedEquipmentToTargetCreatureEffect) {
+            queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect(),
+                    entry.getCreatedPermanentIds().get(createdBefore), false);
+        } else {
+            queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect());
+        }
     }
 
     void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {

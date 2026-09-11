@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrayOgre;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.c.CanopySpider;
+import com.github.laxika.magicalvibes.cards.d.DesecratedTomb;
+import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,8 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LivingDeath.class, GrayOgre.class, GrizzlyBears.class, HillGiant.class,
-        Mountain.class, SavannahLions.class})
+@CardUsed({LivingDeath.class, CanopySpider.class, DesecratedTomb.class, LowlandGiant.class,
+        Mountain.class, TrainedArmodon.class, WindDrake.class})
 class LivingDeathTest extends BaseCardTest {
 
     @Test
@@ -27,20 +28,20 @@ class LivingDeathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LivingDeath()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new SavannahLions());
-        harness.setGraveyard(player1, List.of(new HillGiant()));
-        harness.setGraveyard(player2, List.of(new GrayOgre()));
+        addCreatureReady(player1, new TrainedArmodon());
+        addCreatureReady(player2, new WindDrake());
+        harness.setGraveyard(player1, List.of(new LowlandGiant()));
+        harness.setGraveyard(player2, List.of(new CanopySpider()));
 
         harness.castSorcery(player1, 0, (UUID) null);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Hill Giant");
-        harness.assertOnBattlefield(player2, "Gray Ogre");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Savannah Lions");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Savannah Lions");
+        harness.assertOnBattlefield(player1, "Lowland Giant");
+        harness.assertOnBattlefield(player2, "Canopy Spider");
+        harness.assertNotOnBattlefield(player1, "Trained Armodon");
+        harness.assertNotOnBattlefield(player2, "Wind Drake");
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertInGraveyard(player2, "Wind Drake");
         assertThat(gd.exiledCards).isEmpty();
     }
 
@@ -50,15 +51,15 @@ class LivingDeathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LivingDeath()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent armodon = addCreatureReady(player1, new TrainedArmodon());
 
         harness.castSorcery(player1, 0, (UUID) null);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+                .noneMatch(permanent -> permanent.getId().equals(armodon.getId()));
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertNotOnBattlefield(player1, "Trained Armodon");
     }
 
     @Test
@@ -67,12 +68,12 @@ class LivingDeathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LivingDeath()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.setGraveyard(player1, List.of(new Mountain(), new HillGiant()));
+        harness.setGraveyard(player1, List.of(new Mountain(), new LowlandGiant()));
 
         harness.castSorcery(player1, 0, (UUID) null);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Lowland Giant");
         harness.assertInGraveyard(player1, "Mountain");
         harness.assertNotOnBattlefield(player1, "Mountain");
     }
@@ -90,5 +91,21 @@ class LivingDeathTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.exiledCards).isEmpty();
         harness.assertInGraveyard(player1, "Living Death");
+    }
+
+    @Test
+    @DisplayName("Several creature cards leaving together cause one graveyard-leave trigger")
+    void batchesCreatureCardsLeavingGraveyardTriggers() {
+        harness.addToBattlefield(player1, new DesecratedTomb());
+        harness.setHand(player1, List.of(new LivingDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setGraveyard(player1, List.of(new TrainedArmodon(), new LowlandGiant()));
+
+        harness.castSorcery(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bat")).hasSize(1);
     }
 }

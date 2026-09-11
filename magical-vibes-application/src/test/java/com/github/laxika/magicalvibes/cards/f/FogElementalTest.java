@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.testutil.CardUsed;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArdentMilitia;
+import com.github.laxika.magicalvibes.cards.a.Avizoa;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FogElemental.class, GrizzlyBears.class})
+@CardUsed({ArdentMilitia.class, Avizoa.class, FogElemental.class})
 class FogElementalTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -87,11 +88,9 @@ class FogElementalTest extends BaseCardTest {
     @DisplayName("Declaring Fog Elemental as blocker pushes a triggered ability onto the stack")
     void blockTriggerPushesOntoStack() {
         Permanent fogPerm = addCreatureReady(player2, new FogElemental());
-
-        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new Avizoa());
         atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -111,7 +110,7 @@ class FogElementalTest extends BaseCardTest {
 
         addCreatureReady(player1, new FogElemental());
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() instanceof FogElemental);
@@ -126,7 +125,7 @@ class FogElementalTest extends BaseCardTest {
 
         addCreatureReady(player1, new FogElemental());
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -140,21 +139,19 @@ class FogElementalTest extends BaseCardTest {
     void sacrificedAtEndOfCombatWhenBlocking() {
         addCreatureReady(player2, new FogElemental());
 
-        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
+        // Use a small creature so Fog Elemental survives combat damage
+        Permanent atkPerm = addCreatureReady(player1, new Avizoa());
         atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof FogElemental);
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card instanceof FogElemental);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof GrizzlyBears);
+        // Fog Elemental should be in graveyard (sacrificed at end of combat)
+        harness.assertNotOnBattlefield(player2, "Fog Elemental");
+        harness.assertInGraveyard(player2, "Fog Elemental");
+        // Avizoa should also be dead from combat damage (4 power vs 2 toughness)
+        harness.assertInGraveyard(player1, "Avizoa");
     }
 
     // ===== Not sacrificed if removed before end of combat =====
@@ -168,7 +165,7 @@ class FogElementalTest extends BaseCardTest {
         harness.inMutationScope(() -> assertThat(
                 harness.getPermanentRemovalService().removePermanentToHand(gd, fogPerm)).isTrue());
 
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(fogPerm.getCard());
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -180,10 +177,55 @@ class FogElementalTest extends BaseCardTest {
     @Test
     @DisplayName("Normal creature attacking does not push any trigger onto the stack")
     void normalCreatureDoesNotTriggerOnAttack() {
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new Avizoa());
         declareAttackers(List.of(0));
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Fog Elemental's flying prevents a nonflying creature from blocking it")
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        Permanent fogPerm = addCreatureReady(player1, new FogElemental());
+        Permanent blocker = addCreatureReady(player2, new ArdentMilitia());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(fogPerm);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Fog Elemental can be blocked by a creature with flying")
+    void flyingCreatureCanBlockFogElemental() {
+        Permanent fogPerm = addCreatureReady(player1, new FogElemental());
+        Permanent blocker = addCreatureReady(player2, new Avizoa());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(fogPerm);
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fog Elemental that neither attacks nor blocks is not sacrificed")
+    void notSacrificedWhenNotInCombat() {
+        addCreatureReady(player1, new FogElemental());
+
+        declareAttackers(List.of());
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Fog Elemental");
     }
 
     // ===== Game log =====

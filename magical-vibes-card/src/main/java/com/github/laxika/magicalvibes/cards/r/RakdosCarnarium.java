@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "178")
+@CardRegistration(set = "DDK", collectorNumber = "74")
 public class RakdosCarnarium extends Card {
 
     public RakdosCarnarium() {

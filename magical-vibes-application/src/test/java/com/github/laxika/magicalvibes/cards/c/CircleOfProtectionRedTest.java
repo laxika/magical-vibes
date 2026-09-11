@@ -17,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -250,6 +251,33 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A permanent spell remains the chosen source after it resolves")
+    void preventsDamageFromPermanentSpellAfterItResolves() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        OrcishCannoneers cannoneersSpell = new OrcishCannoneers();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, cannoneersSpell, "{1}{R}{R}");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, cannoneersSpell.getId());
+        harness.passBothPriorities();
+
+        Permanent cannoneers = findPermanent(player2, "Orcish Cannoneers");
+        cannoneers.setSummoningSick(false);
+        int cannoneersIndex = gd.playerBattlefields.get(player2.getId()).indexOf(cannoneers);
+        harness.activateAbility(player2, cannoneersIndex, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 

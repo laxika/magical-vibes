@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
@@ -95,6 +96,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -180,6 +182,24 @@ class SpellCastingServiceTest {
 
     private SpellCastingService svc;
 
+    @Test
+    void preparingRoomDoorPreservesTheUnlockAbilityTargetGroup() {
+        Card room = new Card();
+        room.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
+        var counter = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
+        room.target(TargetFilters.creature(), 0, 2).addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+                new com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect(1, counter));
+        List<CardEffect> spellEffects = new ArrayList<>(List.of(new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("First door", List.of()).withManaCost("{1}{W}"),
+                new ChooseOneEffect.ChooseOneOption("Second door", List.of()).withManaCost("{2}{W}")))));
+
+        svc.prepareModalSpellCast(room, spellEffects, 0);
+
+        assertThat(spellEffects).isEmpty();
+        assertThat(room.getSelectedRoomDoor()).isZero();
+        assertThat(room.getSpellTargets().get(room.getEffectTargetIndex(counter)).getMaxTargets()).isEqualTo(2);
+    }
+
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -189,6 +209,8 @@ class SpellCastingServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
+        lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
         svc = new SpellCastingService(cardRevealService, battlefieldEntryService, cloneService, graveyardTargetingService,
@@ -295,7 +317,7 @@ class SpellCastingServiceTest {
         when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
                 .thenReturn(true);
-        when(permanentRemovalService.removePermanentToGraveyard(gd, artifact)).thenReturn(true);
+        when(permanentRemovalService.sacrificePermanentToGraveyard(gd, artifact)).thenReturn(true);
 
         svc.playCard(gd, player1, 0, null, target.getId(), null, null, null, false, artifact.getId());
 
@@ -324,13 +346,76 @@ class SpellCastingServiceTest {
         when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
                 .thenReturn(true);
-        when(permanentRemovalService.removePermanentToGraveyard(gd, artifact)).thenReturn(true);
+        when(permanentRemovalService.sacrificePermanentToGraveyard(gd, artifact)).thenReturn(true);
 
         svc.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
                 List.of(), null, artifact.getId());
 
-        verify(permanentRemovalService).removePermanentToGraveyard(gd, artifact);
+        verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, artifact);
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void paysDiscardCostWhenCastingFromGraveyard() {
+        Card spell = prepareFlashbackDiscardSpell();
+        Card discarded = createCreature("Discarded Creature", "{1}{G}");
+        setHand(player1Id, List.of(discarded));
+
+        svc.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
+                List.of(), null, null, List.of(), Map.of(), List.of(), List.of(), List.of(0));
+
+        assertThat(gd.playerHands.get(player1Id)).isEmpty();
+        verify(permanentRemovalService).removeCardFromGraveyardById(gd, spell.getId());
+        verify(graveyardService).addCardToGraveyard(gd, player1Id, discarded);
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isSameAs(spell);
+            assertThat(entry.isCastWithFlashback()).isTrue();
+        });
+    }
+
+    @Test
+    void invalidGraveyardDiscardSelectionDoesNotSpendManaOrMoveSpell() {
+        Card spell = prepareFlashbackDiscardSpell();
+        setHand(player1Id, List.of());
+        int manaBefore = gd.playerManaPools.get(player1Id).getTotal();
+
+        assertThatThrownBy(() -> svc.playFlashbackSpell(gd, player1, 0, null, null,
+                List.of(), null, null, List.of(), null, null, List.of(), Map.of(),
+                List.of(), List.of(), List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(manaBefore);
+        assertThat(gd.playerGraveyards.get(player1Id)).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Card prepareFlashbackDiscardSpell() {
+        Card spell = createInstant("Discard Flashback Spell", "{2}{R}");
+        spell.addEffect(EffectSlot.SPELL,
+                new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null));
+        spell.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        spell.addCastingOption(new FlashbackCast("{3}{R}"));
+        gd.playerGraveyards.get(player1Id).add(spell);
+        addMana(player1Id, ManaColor.RED, 1);
+        addMana(player1Id, ManaColor.COLORLESS, 3);
+        when(castingPermissionService.canUseFlashback(eq(gd), eq(player1Id), any(FlashbackCast.class)))
+                .thenReturn(true);
+        when(castingPermissionService.isSpellCastingAllowed(gd, player1Id, spell)).thenReturn(true);
+        return spell;
+    }
+
+    @Test
+    void recastingCreatureClearsCountersGrantedToItsPreviousCast() {
+        Card creature = createCreature("Recast creature", "{1}{G}");
+        setHand(player1Id, List.of(creature));
+        addMana(player1Id, ManaColor.GREEN, 2);
+        gd.spellAdditionalEnterCounters.put(creature.getId(), 2);
+        when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+        svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.spellAdditionalEnterCounters).doesNotContainKey(creature.getId());
     }
 
     @Test
@@ -773,7 +858,7 @@ class SpellCastingServiceTest {
             // validateSpellTargeting is called with needsTarget=false (ETB-only),
             // so hexproof won't be enforced at cast time
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(creature), anyList(), eq(player2Id), any(), eq(player1Id), eq(false), anyInt(), eq(false), eq(false));
+                    eq(gd), eq(creature), anyList(), eq(player2Id), any(), eq(player1Id), eq(false), anyInt(), eq(false), eq(false), eq(false));
         }
 
         @Test
@@ -789,7 +874,7 @@ class SpellCastingServiceTest {
 
             // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(sorcery), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false), eq(false));
+                    eq(gd), eq(sorcery), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false), eq(false), eq(false));
         }
 
         @Test
@@ -883,7 +968,7 @@ class SpellCastingServiceTest {
 
             // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false), eq(false));
+                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false), eq(false), eq(false));
         }
     }
 
@@ -909,7 +994,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt(), eq(false), eq(false));
+                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt(), eq(false), eq(false), eq(false));
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(instant), eq(player1Id), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
@@ -1166,6 +1251,34 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
             DrawCardEffect effect = (DrawCardEffect) gd.stack.getLast().getEffectsToResolve().get(0);
             assertThat(effect.amount()).isEqualTo(new Fixed(2));
+        }
+
+        @Test
+        @DisplayName("Pays the additional cost from the chosen modal mode")
+        void paysAdditionalCostFromChosenMode() {
+            Card modal = createInstant("Test Modal Sacrifice", "{2}{R}");
+            modal.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Sacrifice and draw", List.of(
+                            new SacrificeCreatureCost(false, true), new DrawCardEffect(1))),
+                    new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1))
+            )));
+            Permanent creature = new Permanent(createCreature("Sacrifice Creature", "{1}"));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            setHand(player1Id, List.of(modal));
+            addMana(player1Id, ManaColor.RED, 1);
+            addMana(player1Id, ManaColor.COLORLESS, 2);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player1Id);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, creature)).thenReturn(2);
+            when(permanentRemovalService.sacrificePermanentToGraveyard(gd, creature)).thenReturn(true);
+
+            svc.playCard(gd, player1, 0, 0, null, null, null, null, false, creature.getId());
+
+            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, creature);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getXValue()).isEqualTo(2);
         }
 
         @Test
@@ -1527,9 +1640,31 @@ class SpellCastingServiceTest {
             verify(turnProgressionService).resolveAutoPass(gd);
             // Land-play special action from exile fires land-play triggers, not spell-cast ones
             verify(triggerCollectionService).checkControllerPlaysLandTriggers(
-                    eq(gd), eq(player1Id), any(), eq(true));
+                    eq(gd), eq(player1Id), eq(land), eq(Zone.EXILE), isNull());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
+        }
+
+        @Test
+        @DisplayName("Outside-game permission still requires the card to exist in the sideboard")
+        void rejectsMissingSideboardCardWithOutsideGamePermission() {
+            UUID missingCardId = UUID.randomUUID();
+            gd.outsideGamePlayPermissions.add(missingCardId);
+
+            assertThatThrownBy(() -> svc.playCardFromExile(gd, player1, missingCardId, 0, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Card not found outside the game");
+        }
+
+        @Test
+        @DisplayName("A sideboard card without permission cannot be played")
+        void rejectsSideboardCardWithoutPermission() {
+            Card card = createCreature("Sideboard Bear", "{1}{G}");
+            gd.playerSideboards.put(player1Id, List.of(card));
+
+            assertThatThrownBy(() -> svc.playCardFromExile(gd, player1, card.getId(), 0, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("No permission to play this card from outside the game");
         }
 
         @Test
@@ -1551,7 +1686,7 @@ class SpellCastingServiceTest {
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(
-                    eq(gd), eq(creature), eq(player1Id), eq(Zone.EXILE));
+                    eq(gd), eq(creature), eq(player1Id), eq(Zone.EXILE), isNull());
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
         }

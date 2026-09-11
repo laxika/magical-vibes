@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Hurricane.class, WindSpirit.class, GrizzlyBears.class})
+@CardUsed({ArmoredPegasus.class, GrizzlyBears.class, Hurricane.class, WindSpirit.class})
 class HurricaneTest extends BaseCardTest {
 
     @Test
@@ -40,7 +42,7 @@ class HurricaneTest extends BaseCardTest {
         // Hand is now empty
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        // Mana was spent ({X}{G} with X=3 → 4G total)
+        // Mana was spent ({X}{G} with X=3 â†’ 4G total)
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
 
@@ -56,7 +58,7 @@ class HurricaneTest extends BaseCardTest {
         // Stack is empty after resolution
         assertThat(gd.stack).isEmpty();
 
-        // Both players lost 3 life (20 → 17)
+        // Both players lost 3 life (20 â†’ 17)
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 17);
     }
@@ -149,8 +151,21 @@ class HurricaneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        // Caster took 3 damage (3 → 0), game should be over
+        // Caster took 3 damage (3 â†’ 0), game should be over
         harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Hurricane deals damage without destroying a flying creature with greater toughness")
+    void hurricaneDealsNonlethalDamageToFlyingCreature() {
+        Permanent flyingCreature = harness.addToBattlefieldAndReturn(player2, new ArmoredPegasus());
+
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        harness.assertOnBattlefield(player2, "Armored Pegasus");
+        assertThat(flyingCreature.getMarkedDamage()).isEqualTo(1);
     }
 }

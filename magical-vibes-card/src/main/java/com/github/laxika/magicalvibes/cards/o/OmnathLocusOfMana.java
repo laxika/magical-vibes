@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 
 @CardRegistration(set = "WWK", collectorNumber = "109")
+@CardRegistration(set = "V11", collectorNumber = "7")
 public class OmnathLocusOfMana extends Card {
 
     public OmnathLocusOfMana() {

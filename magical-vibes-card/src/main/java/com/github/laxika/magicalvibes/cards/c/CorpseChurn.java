@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
+@CardRegistration(set = "OGW", collectorNumber = "83")
 @CardRegistration(set = "IKO", collectorNumber = "81")
 public class CorpseChurn extends Card {
 

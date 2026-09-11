@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class GoblinGrenadiers extends Card {
 
     public GoblinGrenadiers() {
+        setAllowSharedTargets(true);
         // Two positional target groups, both chosen as the trigger goes on the stack.
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "315")
+@CardRegistration(set = "DDF", collectorNumber = "32")
 public class DaruEncampment extends Card {
 
     private static final PermanentAllOfPredicate SOLDIER_CREATURE = new PermanentAllOfPredicate(List.of(

@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Chill.class, Shock.class, GrizzlyBears.class, RagingGoblin.class})
+@CardUsed({Chill.class, GrizzlyBears.class, RagingGoblin.class, Shock.class})
 class ChillTest extends BaseCardTest {
 
     @Nested

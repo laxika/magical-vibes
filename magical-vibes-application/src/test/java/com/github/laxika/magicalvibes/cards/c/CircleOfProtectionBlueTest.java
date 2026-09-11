@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
-import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.s.Stasis;
 import com.github.laxika.magicalvibes.cards.v.VolcanicEruption;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,20 +19,25 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionBlue.class, GrizzlyBears.class, ProdigalSorcerer.class})
+@CardUsed({CircleOfProtectionBlue.class, GrizzlyBears.class, Mountain.class, ProdigalSorcerer.class, Stasis.class, VolcanicEruption.class})
 class CircleOfProtectionBlueTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability prompts for a blue source choice")
     void resolvingAbilityPromptsForBlueSource() {
         addReadyCircle(player1);
-        addReadyBlueCreature(player2);
+        Permanent blueSource = addReadyBlueCreature(player2);
+        Permanent greenSource = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(blueSource.getId());
+        assertThat(choice.validPermanentIds()).doesNotContain(greenSource.getId());
     }
 
     @Test
@@ -104,19 +108,21 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("No permanents on the battlefield"));
+        assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
     @Test
     @DisplayName("A blue spell on the stack is a legal source choice")
-    @CardUsed(Unsummon.class)
     void blueSpellOnStackIsLegalSourceChoice() {
         addReadyCircle(player1);
-        Permanent target = addReadyBlueCreature(player2);
-        Unsummon unsummon = new Unsummon();
-        harness.setHand(player2, List.of(unsummon));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, target.getId());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        VolcanicEruption spell = new VolcanicEruption();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castSorcery(player2, 0, 1, List.of(mountain.getId()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -125,7 +131,23 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).contains(unsummon.getId());
+        assertThat(choice.validPermanentIds()).contains(spell.getId());
+    }
+
+    @Test
+    @DisplayName("A blue permanent is a valid source even when it cannot deal damage")
+    void bluePermanentNeedNotDealDamage() {
+        addReadyCircle(player1);
+        Permanent stasis = harness.addToBattlefieldAndReturn(player2, new Stasis());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(stasis.getId());
     }
 
     @Test
@@ -181,7 +203,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     void chosenSourceDamageToControlledCreatureIsNotPrevented() {
         addReadyCircle(player1);
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
-        Permanent wizard = addReadyBlueDamageSource(player2);
+        Permanent wizard = addReadyBlueCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -230,7 +252,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     void preventsNextNoncombatDamageAndConsumesShield() {
         harness.setLife(player1, 20);
         addReadyCircle(player1);
-        Permanent wizard = addReadyBlueDamageSource(player2);
+        Permanent wizard = addReadyBlueCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -242,9 +264,5 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
-    }
-
-    private Permanent addReadyBlueDamageSource(Player player) {
-        return addCreatureReady(player, new ProdigalSorcerer());
     }
 }

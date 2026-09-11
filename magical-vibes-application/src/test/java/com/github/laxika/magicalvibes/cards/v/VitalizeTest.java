@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,15 +11,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Vitalize.class, GrizzlyBears.class, Island.class})
+@CardUsed({BenalishInfantry.class, MindStone.class, Vitalize.class})
 class VitalizeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Untaps all tapped creatures you control")
     void untapsAllTappedCreaturesYouControl() {
-        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new BenalishInfantry());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new BenalishInfantry());
         bear1.tap();
-        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bear2.tap();
 
         harness.castFromHand(player1, new Vitalize(), "{G}");
@@ -30,10 +30,25 @@ class VitalizeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Leaves already untapped creatures untapped")
+    void leavesAlreadyUntappedCreaturesUntapped() {
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player1, new BenalishInfantry());
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player1, new BenalishInfantry());
+        tappedCreature.tap();
+
+        harness.castFromHand(player1, new Vitalize(), "{G}");
+        harness.passBothPriorities();
+
+        assertThat(tappedCreature.isTapped()).isFalse();
+        assertThat(untappedCreature.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Untaps every creature without prompting for a choice")
     void untapsWithoutPromptingForAChoice() {
-        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).tap();
-        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).tap();
+        harness.addToBattlefield(player1, new BenalishInfantry());
+        harness.addToBattlefield(player1, new BenalishInfantry());
+        gd.playerBattlefields.get(player1.getId()).forEach(Permanent::tap);
 
         harness.castFromHand(player1, new Vitalize(), "{G}");
         harness.passBothPriorities();
@@ -47,7 +62,7 @@ class VitalizeTest extends BaseCardTest {
     @Test
     @DisplayName("Does not untap opponent's creatures")
     void doesNotUntapOpponentCreatures() {
-        Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new BenalishInfantry());
         opponentBear.tap();
 
         harness.castFromHand(player1, new Vitalize(), "{G}");
@@ -59,12 +74,12 @@ class VitalizeTest extends BaseCardTest {
     @Test
     @DisplayName("Does not untap non-creature permanents you control")
     void doesNotUntapNonCreaturePermanents() {
-        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.tap();
+        Permanent mindStone = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        mindStone.tap();
 
         harness.castFromHand(player1, new Vitalize(), "{G}");
         harness.passBothPriorities();
 
-        assertThat(island.isTapped()).isTrue();
+        assertThat(mindStone.isTapped()).isTrue();
     }
 }

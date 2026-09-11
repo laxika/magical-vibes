@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.g.GoldenBear;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.w.WildGriffin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,122 +18,117 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlluringScent.class, GoldenBear.class, Plains.class, WildGriffin.class})
 class AlluringScentTest extends BaseCardTest {
-
-    // ===== Casting / resolving =====
 
     @Test
     @DisplayName("Resolving sets the must-be-blocked-by-all flag on the target")
     void resolvingSetsFlag() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldenBear());
+        castAlluringScent(target.getId());
 
-        harness.setHand(player1, List.of(new AlluringScent()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
-
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bears.isMustBeBlockedByAllThisTurn()).isTrue();
+        assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
     }
 
     @Test
     @DisplayName("Resolving sets only the by-all flag, not the weaker must-be-blocked-if-able one")
     void resolvingDoesNotSetTheIfAbleFlag() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldenBear());
+        castAlluringScent(target.getId());
 
-        harness.setHand(player1, List.of(new AlluringScent()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
-
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bears.isMustBeBlockedThisTurn()).isFalse();
-        assertThat(bears.isMustAttackThisTurn()).isFalse();
-        assertThat(bears.isMustBlockThisTurnIfAble()).isFalse();
+        assertThat(target.isMustBeBlockedThisTurn()).isFalse();
+        assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(target.isMustBlockThisTurnIfAble()).isFalse();
     }
 
     @Test
     @DisplayName("Flag wears off at end of turn")
     void flagWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-
-        harness.setHand(player1, List.of(new AlluringScent()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldenBear());
+        castAlluringScent(target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bears.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
     }
-
-    // ===== Combat enforcement =====
 
     @Test
     @DisplayName("All able creatures must block the affected attacker")
     void allAbleCreaturesMustBlock() {
-        Permanent attacker = attackingCreature(new GrizzlyBears());
-        attacker.setMustBeBlockedByAllThisTurn(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        Permanent attacker = addCreatureReady(player2, new GoldenBear());
+        attacker.setAttacking(true);
+        Permanent blocker1 = addCreatureReady(player1, new GoldenBear());
+        Permanent blocker2 = addCreatureReady(player1, new GoldenBear());
+        castAlluringScent(attacker.getId());
 
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        prepareDeclareBlockers(player2);
 
-        prepareDeclareBlockers();
-
-        // Only one blocker assigned — illegal, both must block
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+        // Only one blocker assigned â€” illegal, both must block
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block");
 
-        gs.declareBlockers(gd, player2, List.of(
+        gs.declareBlockers(gd, player1, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
         ));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(1).isBlocking()).isTrue();
+        assertThat(blocker1.isBlocking()).isTrue();
+        assertThat(blocker2.isBlocking()).isTrue();
     }
 
     @Test
     @DisplayName("Tapped creatures are not forced to block")
     void tappedCreaturesNotForcedToBlock() {
-        Permanent attacker = attackingCreature(new GrizzlyBears());
-        attacker.setMustBeBlockedByAllThisTurn(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        Permanent untapped = readyCreature(new GrizzlyBears());
-        Permanent tapped = readyCreature(new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GoldenBear());
+        attacker.setAttacking(true);
+        Permanent untapped = addCreatureReady(player1, new GoldenBear());
+        Permanent tapped = addCreatureReady(player1, new GoldenBear());
         tapped.tap();
-        gd.playerBattlefields.get(player2.getId()).add(untapped);
-        gd.playerBattlefields.get(player2.getId()).add(tapped);
+        castAlluringScent(attacker.getId());
 
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(untapped.isBlocking()).isTrue();
         assertThat(tapped.isBlocking()).isFalse();
     }
 
-    private Permanent attackingCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(true);
-        return permanent;
+    @Test
+    @DisplayName("A creature unable to block the target is not forced to block")
+    void unableCreatureIsNotForcedToBlock() {
+        Permanent attacker = addCreatureReady(player2, new WildGriffin());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player1, new GoldenBear());
+        castAlluringScent(attacker.getId());
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
     }
 
-    private Permanent readyCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        prepareAlluringScent();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, plains.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void castAlluringScent(UUID targetId) {
+        prepareAlluringScent();
+        harness.castSorcery(player1, 0, targetId);
+        harness.passBothPriorities();
+    }
+
+    private void prepareAlluringScent() {
+        harness.setHand(player1, List.of(new AlluringScent()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
     }
 }

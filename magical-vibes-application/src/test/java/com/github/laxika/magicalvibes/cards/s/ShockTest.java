@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Shock.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({ChandraNalaar.class, GrizzlyBears.class, Mountain.class, Shock.class})
 class ShockTest extends BaseCardTest {
 
     @Test
@@ -115,6 +115,29 @@ class ShockTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Shock does not deal damage when its target leaves before resolution")
+    void doesNotDealDamageWhenTargetLeavesBeforeResolution() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, targetId);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player2, "Shock");
     }
 
     @Test

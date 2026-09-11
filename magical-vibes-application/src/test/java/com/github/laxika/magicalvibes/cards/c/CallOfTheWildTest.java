@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CallOfTheWild.class, GrizzlyBears.class})
+@CardUsed({CallOfTheWild.class, GrizzlyBears.class, MindStone.class, RedwoodTreefolk.class})
 class CallOfTheWildTest extends BaseCardTest {
 
     @Test
     @DisplayName("Revealed creature card is put onto the battlefield")
     void creatureCardPutOntoBattlefield() {
         harness.addToBattlefield(player1, new CallOfTheWild());
-        Card creature = new GrizzlyBears();
+        Card creature = new RedwoodTreefolk();
         harness.setLibrary(player1, List.of(creature));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
@@ -38,7 +40,7 @@ class CallOfTheWildTest extends BaseCardTest {
     @DisplayName("Revealed non-creature card is put into the graveyard")
     void nonCreatureCardPutIntoGraveyard() {
         harness.addToBattlefield(player1, new CallOfTheWild());
-        Card nonCreature = new CallOfTheWild();
+        Card nonCreature = new MindStone();
         harness.setLibrary(player1, List.of(nonCreature));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
@@ -56,14 +58,19 @@ class CallOfTheWildTest extends BaseCardTest {
     @Test
     @DisplayName("Does nothing when the library is empty")
     void doesNothingWhenLibraryEmpty() {
-        harness.addToBattlefield(player1, new CallOfTheWild());
+        Card source = new CallOfTheWild();
+        harness.addToBattlefield(player1, source);
         harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(p -> p.getCard().getId())
+                .containsExactly(source.getId());
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "42")
+@CardRegistration(set = "TD2", collectorNumber = "58")
 public class FleshEaterImp extends Card {
 
     public FleshEaterImp() {

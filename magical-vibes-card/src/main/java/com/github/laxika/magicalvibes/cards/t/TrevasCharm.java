@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "129")
+@CardRegistration(set = "DDE", collectorNumber = "61")
 public class TrevasCharm extends Card {
 
     public TrevasCharm() {

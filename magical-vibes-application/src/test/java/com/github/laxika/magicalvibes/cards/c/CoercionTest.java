@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Coercion.class, ElvenCache.class, Disenchant.class, Island.class})
+@CardUsed({Coercion.class, Disenchant.class, ElvenCache.class, Island.class})
 class CoercionTest extends BaseCardTest {
 
     @Test
@@ -28,8 +28,7 @@ class CoercionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         PendingInteraction.RevealedHandChoice choice =
@@ -56,8 +55,7 @@ class CoercionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Coercion()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
                 .containsExactly(0, 1);
@@ -78,6 +76,8 @@ class CoercionTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Coercion");
     }
 
     @Test

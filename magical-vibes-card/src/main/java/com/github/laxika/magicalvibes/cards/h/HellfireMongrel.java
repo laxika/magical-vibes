@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "130")
+@CardRegistration(set = "DDH", collectorNumber = "48")
 public class HellfireMongrel extends Card {
 
     public HellfireMongrel() {

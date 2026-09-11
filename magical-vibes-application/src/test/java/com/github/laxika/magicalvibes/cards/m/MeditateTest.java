@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,22 +13,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Meditate.class, Forest.class})
 class MeditateTest extends BaseCardTest {
 
     private List<Card> castMeditate() {
         List<Card> library = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
-            library.add(new GrizzlyBears());
+            library.add(new Forest());
         }
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(library);
+        harness.setLibrary(player1, library);
 
-        harness.setHand(player1, List.of(new Meditate()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Meditate(), "{2}{U}");
         harness.passBothPriorities();
         return library;
     }
@@ -79,7 +74,6 @@ class MeditateTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UNTAP);
     }
 }

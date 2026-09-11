@@ -12,8 +12,14 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param count        the exact number of cards that must be exiled
  * @param requiredType the card type required (null = any)
  * @param predicate an additional card predicate (null = no additional filter)
+ * @param onlyFromGraveyard whether this cost applies only when the spell is cast from a graveyard
  */
-public record ExileNCardsFromGraveyardCost(int count, CardType requiredType, CardPredicate predicate) implements CostEffect {
+public record ExileNCardsFromGraveyardCost(int count, CardType requiredType, CardPredicate predicate,
+                                           boolean onlyFromGraveyard) implements CostEffect {
+
+    public ExileNCardsFromGraveyardCost(int count, CardType requiredType, CardPredicate predicate) {
+        this(count, requiredType, predicate, false);
+    }
 
     public ExileNCardsFromGraveyardCost(int count, CardType requiredType) {
         this(count, requiredType, null);
