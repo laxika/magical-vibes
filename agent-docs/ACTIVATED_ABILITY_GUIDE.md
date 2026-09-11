@@ -822,6 +822,11 @@ baked into the `NinjutsuEffect(attackTargetId)` snapshot, because the returned a
 resolution (CR 702.49c). The ninja was never declared as an attacker, so no attack triggers or attack
 legality checks run.
 
+`Card.ninjutsuAbility(cost)` builds the same flagged ability for static grants to creature cards in
+hand. A battlefield trigger watching those grants can use
+`TriggeringNinjutsuAbilityConditionalEffect` in `ON_CONTROLLER_ACTIVATES_ABILITY`; the hand-ninjutsu
+activation path collects that trigger after the activation costs are paid.
+
 Only a creature matching `PermanentIsUnblockedAttackingPredicate` **on the activating player's own
 battlefield** is a legal cost; that predicate already refuses steps before declare blockers.
 

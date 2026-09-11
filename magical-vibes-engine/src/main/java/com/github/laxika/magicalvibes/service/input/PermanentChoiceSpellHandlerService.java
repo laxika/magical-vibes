@@ -553,8 +553,15 @@ public class PermanentChoiceSpellHandlerService {
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
             UUID ownerId = gct.ownerId() != null ? gct.ownerId() : gct.controllerId();
-            graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());
-            gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(), "'s target is no longer valid. It is put into the graveyard."));
+            if (gct.exileInsteadOfGraveyard()) {
+                gameData.addToExile(ownerId, gct.cardToCast());
+            } else {
+                graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());
+            }
+            String destination = gct.exileInsteadOfGraveyard()
+                    ? "'s target is no longer valid. It is exiled."
+                    : "'s target is no longer valid. It is put into the graveyard.";
+            gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(), destination));
             log.info("Game {} - {} cast-from-graveyard target no longer exists", gameData.id, gct.cardToCast().getName());
         }
 
@@ -607,6 +614,7 @@ public class PermanentChoiceSpellHandlerService {
                     null
             );
             entry.setMadness(hct.castForMadnessCost());
+            entry.setExileInsteadOfGraveyard(hct.exileInsteadOfGraveyard());
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(hct.controllerId(), hct.cardToCast());
@@ -623,8 +631,17 @@ public class PermanentChoiceSpellHandlerService {
                     hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
-            graveyardService.addCardToGraveyard(gameData, hct.controllerId(), hct.cardToCast());
-            gameLogService.append(gameData, GameLog.cardThen(hct.cardToCast(), "'s target is no longer valid. It is put into the graveyard."));
+            UUID ownerId = hct.cardToCast().getOwnerId() != null
+                    ? hct.cardToCast().getOwnerId() : hct.controllerId();
+            if (hct.exileInsteadOfGraveyard()) {
+                gameData.addToExile(ownerId, hct.cardToCast());
+            } else {
+                graveyardService.addCardToGraveyard(gameData, ownerId, hct.cardToCast());
+            }
+            String destination = hct.exileInsteadOfGraveyard()
+                    ? "'s target is no longer valid. It is exiled."
+                    : "'s target is no longer valid. It is put into the graveyard.";
+            gameLogService.append(gameData, GameLog.cardThen(hct.cardToCast(), destination));
             log.info("Game {} - {} cast-from-hand target no longer exists", gameData.id, hct.cardToCast().getName());
         }
 

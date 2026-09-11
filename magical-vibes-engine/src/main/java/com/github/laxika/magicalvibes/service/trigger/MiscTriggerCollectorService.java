@@ -1809,6 +1809,72 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = OncePerTurnTriggerEffect.class,
+            slot = EffectSlot.ON_SELF_BECOMES_CREWED)
+    private boolean handleBecomesCrewedOncePerTurn(TriggerMatchContext match,
+            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
+        GameData gameData = match.gameData();
+        Permanent source = match.permanent();
+        if (source == null || gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
+            return false;
+        }
+
+        CardEffect wrapped = effect.wrapped();
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : source.getCard();
+        boolean needsTarget = wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || wrapped.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
+        if (needsTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(wrapped)),
+                    "becomes crewed", source.getId(), new Permanent(source), null));
+        } else {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(wrapped)),
+                    null,
+                    source.getId()));
+        }
+        gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on becoming crewed (once per turn)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_CREWED)
+    private boolean handleBecomesCrewedDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        GameData gameData = match.gameData();
+        Permanent source = match.permanent();
+        if (source == null) return false;
+
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : source.getCard();
+        boolean needsTarget = effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
+        if (needsTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                    "becomes crewed", source.getId(), new Permanent(source), null));
+        } else {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    source.getId()));
+        }
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on becoming crewed", gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_MUTATES)
     private boolean handleSelfMutatesDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {

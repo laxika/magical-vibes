@@ -241,6 +241,7 @@ public class BattlefieldPlacementService {
             applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
             applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyAdditionalEnterCountersThisTurn(gameData, controllerId, permanent);
+            applyNextEnchantmentCreatureEntryCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledCreaturesEnterWithSourcePowerCounters(gameData, controllerId, permanent);
             if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
                 becomeDayAsEntersEffectHandler.applyIfPresent(gameData, permanent);
@@ -1596,6 +1597,36 @@ public class BattlefieldPlacementService {
         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                 permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
         log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from a turn-long effect",
+                gameData.id, permanent.getCard().getName(), additionalCounters);
+    }
+
+    private void applyNextEnchantmentCreatureEntryCounters(GameData gameData, UUID controllerId,
+                                                            Permanent permanent,
+                                                            List<Permanent> simultaneouslyEntered) {
+        if (simultaneouslyEntered.isEmpty()) {
+            gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.clear();
+        }
+        if (!gameQueryService.isCreature(gameData, permanent)
+                || !gameQueryService.isEnchantment(gameData, permanent)) {
+            return;
+        }
+
+        Integer additionalCounters = gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch
+                .get(controllerId);
+        if (additionalCounters == null) {
+            additionalCounters = gameData.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn
+                    .remove(controllerId);
+            if (additionalCounters == null) return;
+            gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.put(controllerId,
+                    additionalCounters);
+        }
+        if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
+
+        additionalCounters = gameQueryService.doublePlusOnePlusOneCounters(
+                gameData, permanent, controllerId, additionalCounters);
+        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
+        log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from a one-shot enchantment creature entry effect",
                 gameData.id, permanent.getCard().getName(), additionalCounters);
     }
 

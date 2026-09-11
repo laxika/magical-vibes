@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDefendingPlay
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -387,6 +388,7 @@ public class TriggerTargetCollector {
             case MayEffect may -> effectiveTargetEffect(may.wrapped(), may.elseEffect(), effect);
             case MayPayManaEffect mayPay -> effectiveTargetEffect(
                     mayPay.wrapped(), mayPay.elseEffect(), effect);
+            case OncePerTurnTriggerEffect once -> once.wrapped();
             default -> effect;
         };
         return options.unwrapConditional() && unwrapped instanceof ConditionalEffect ce ? ce.wrapped() : unwrapped;

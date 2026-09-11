@@ -165,6 +165,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X (returns true when xValue is null) | `xValue` |
 | `PermanentMaxManaValueXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null). Displacement Wave | `xValue` |
 | `PermanentManaValueAtMostXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null) | `xValue` |
+| `PermanentManaValueLessThanXPredicate` | `()` | permanents with mana value strictly < X (returns true when xValue is null) | `xValue` |
 | `PermanentMaxManaValueXPredicate` | `()` | permanents with mana value <= X (returns true when xValue is null). Used by Displacement Wave and Quillmane Baku, where X is the remove-X-counters activation cost | `xValue` |
 | `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power | `gameData` + `sourceCardId` |
 | `PermanentPowerAtMostSourcePowerPredicate` | `()` | creatures with power <= source permanent's effective power (Earthshaker Khenra's ETB "target creature with power less than or equal to this creature's power" — source-relative so a 4/4 Eternalize token can target up to power 4) | `gameData` + `sourceCardId` |
@@ -201,6 +202,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentNameInPredicate` | `(Set<String> cardNames)` | permanents whose name is one of a fixed roster of names (exact `Card.getName()` equality). For "a name originally printed in the Homelands expansion" (Apocalypse Chime) — the card class owns the name list, so a later reprint of a listed name still matches | none |
 
 | `PermanentSharesCardTypeWithSourcePermanentPredicate` | `()` | permanents that share a permanent card type with the source permanent snapshot; used for source-relative type comparisons | `FilterContext.sourcePermanentSnapshot` |
+| `PermanentSharesCardTypeWithTargetCardPredicate` | `()` | permanents that share a permanent card type with the selected graveyard card; used when a sacrifice filter depends on a card targeted by the same ability | `FilterContext.gameData` + `targetCardId` |
 
 ### Source-relative predicates
 
@@ -384,6 +386,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is at most the source permanent's effective power; needs `GameData` and `sourceCardId` (Arcane Proxy) |
 | `CardMaxManaValuePredicate` | `(int maxManaValue)` | a card with mana value ≤ N (e.g. Teshar's "mana value 3 or less" graveyard filter) |
 | `CardMaxManaValueXPredicate` | `()` | a card with mana value ≤ the resolving spell's X; before X is chosen, it matches permissively |
+| `CardManaValueLessThanXPredicate` | `()` | a card with mana value strictly less than the resolving spell or ability's X; useful when a prior cost snapshots a comparison value into X |
 | `CardSharesCardTypeWithImprintedCardPredicate` | `()` | a card sharing at least one card type with the card imprinted on the source; without game state it matches broadly so target selection can occur before an activation cost imprints the exiled card, while resolution with game state performs the comparison (Holistic Wisdom) |
 | `CardSharesNameWithAPermanentPredicate` | `()` | a card with the same name as any permanent on any battlefield (Mitotic Manipulation via `LookAtTopCardsEffect.mayPutMatchingOntoBattlefield`). Needs the `GameData` overload of `matchesCardPredicate`; matches nothing without game state |
 | `CardNameInControllerGraveyardPredicate` | `()` | a card with the same name as a card in the perspective player's graveyard; the perspective player is `cardOwnerId` during predicate evaluation (Pyromancer Ascension) |

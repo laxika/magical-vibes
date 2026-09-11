@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "MRD", collectorNumber = "53")
+@CardRegistration(set = "NEO", collectorNumber = "85")
 public class ThirstForKnowledge extends Card {
 
     public ThirstForKnowledge() {

@@ -192,6 +192,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWithNoMaximumHandSize.clear();
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.clear();
         gameData.additionalEnterCountersUntilNextTurn.clear();
+        gameData.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn.clear();
+        gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.clear();
         gameData.cardTypeFlashGrantsUntilNextTurn.clear();
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.clear();
         gameData.playersWithProtectionFromEverythingUntilNextTurn.clear();
@@ -221,6 +223,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersCantCastSpellsForRestOfGame.clear();
         gameData.clearDelayedActions(EpicDelayedTrigger.class);
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
+        gameData.opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.clear();
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.clear();
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.clear();
         gameData.playersCantPlayCardsFromHandUntilControllerNextTurn.clear();
@@ -247,6 +250,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.noncombatDamageToPlayersThisTurn.clear();
         gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
+        gameData.damageDealtToPlayersBySourceThisTurn.clear();
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.permanentsThatHaveDealtDamage.clear();
         gameData.damageRecipientsBySource.clear();
@@ -355,6 +359,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
         gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;
         gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = false;
+        gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.clear();
 
         gameData.interaction.clearAwaitingInput();
         gameData.turnNumber = 1;

@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
@@ -57,10 +60,30 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean returnExiledSourceIfSacrificed,
                                          boolean returnToHandAtEndStep,
                                          CardPredicate enterTappedAndAttackingIf,
-                                         boolean enterBlocking) implements CardEffect, CombatOpponentReferencingEffect {
+                                         boolean enterBlocking,
+                                         boolean maxManaValueBoundedByEventValue)
+        implements CardEffect, CombatDamageAmountAwareEffect, CombatOpponentReferencingEffect {
 
     public PutCardToBattlefieldEffect {
         faceDownCardTypes = Set.copyOf(faceDownCardTypes);
+    }
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
+                                      boolean enterTapped, boolean maxManaValueBoundedByX,
+                                      boolean grantHaste, boolean sacrificeAtEndStep,
+                                      boolean attachSourceEquipment, boolean enterAttacking,
+                                      boolean drawAndRepeat, boolean putAnyNumber,
+                                      boolean faceDown, int faceDownPower, int faceDownToughness,
+                                      Set<CardType> faceDownCardTypes, boolean cloaked,
+                                      boolean returnExiledSourceIfSacrificed,
+                                      boolean returnToHandAtEndStep,
+                                      CardPredicate enterTappedAndAttackingIf,
+                                      boolean enterBlocking) {
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep,
+                attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber,
+                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked,
+                returnExiledSourceIfSacrificed, returnToHandAtEndStep, enterTappedAndAttackingIf,
+                enterBlocking, false);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
@@ -184,12 +207,21 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 true, 2, 2, Set.of(CardType.CREATURE), true, false, false, null, false);
     }
 
+    /** Puts an optional card from hand onto the battlefield, limited by the triggering damage amount. */
+    public PutCardToBattlefieldEffect boundedByEventValue() {
+        return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
+                grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked,
+                returnExiledSourceIfSacrificed, returnToHandAtEndStep, enterTappedAndAttackingIf,
+                enterBlocking, true);
+    }
+
     /** Shifty Doppelganger: return its exiled source card if the entered creature is sacrificed. */
     public PutCardToBattlefieldEffect returningExiledSourceIfSacrificed() {
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked, true,
-                returnToHandAtEndStep, enterTappedAndAttackingIf, enterBlocking);
+                returnToHandAtEndStep, enterTappedAndAttackingIf, enterBlocking, maxManaValueBoundedByEventValue);
     }
 
     /** Surprise Deployment: return the chosen permanent to its owner's hand at the next end step. */
@@ -197,14 +229,21 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                cloaked, returnExiledSourceIfSacrificed, true, enterTappedAndAttackingIf, enterBlocking);
+                cloaked, returnExiledSourceIfSacrificed, true, enterTappedAndAttackingIf, enterBlocking,
+                maxManaValueBoundedByEventValue);
     }
 
     public PutCardToBattlefieldEffect withEnterTappedAndAttackingIf(CardPredicate predicate) {
         return new PutCardToBattlefieldEffect(this.predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep, predicate, enterBlocking);
+                cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep, predicate, enterBlocking,
+                maxManaValueBoundedByEventValue);
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return maxManaValueBoundedByEventValue ? new EventValue() : new Fixed(0);
     }
 
     @Override

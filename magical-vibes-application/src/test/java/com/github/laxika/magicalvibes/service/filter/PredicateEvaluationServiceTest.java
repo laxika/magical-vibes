@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -369,6 +370,23 @@ class PredicateEvaluationServiceTest {
                     .isTrue();
             assertThat(evaluator.matchesCardPredicate(equalToPower, predicate, sourceCard.getId(), gd, player1Id))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("CardManaValueLessThanXPredicate is strict")
+        void cardManaValueLessThanXPredicateIsStrict() {
+            Card belowX = createCreature("Below X", 2, 2, CardColor.BLUE);
+            belowX.setManaCost("{2}");
+            Card equalToX = createCreature("Equal to X", 3, 3, CardColor.BLUE);
+            equalToX.setManaCost("{3}");
+            CardManaValueLessThanXPredicate predicate = new CardManaValueLessThanXPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(belowX, predicate, null, gd, player1Id,
+                    null, null, 3)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(equalToX, predicate, null, gd, player1Id,
+                    null, null, 3)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(belowX, predicate, null, gd, player1Id,
+                    null, null, null)).isFalse();
         }
 
         @Test

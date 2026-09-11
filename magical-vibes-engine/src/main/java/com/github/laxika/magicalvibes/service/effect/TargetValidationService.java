@@ -314,6 +314,7 @@ public class TargetValidationService {
         if (ctx.defendingPlayerId() != null) {
             filterContext = filterContext.withDefendingPlayerId(ctx.defendingPlayerId());
         }
+        filterContext = filterContext.withXValue(ctx.xValue());
         return filterContext;
     }
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -813,6 +814,13 @@ public class GraveyardService {
 
     private boolean tryReplaceDestruction(GameData gameData, Permanent perm, boolean allowRegeneration,
                                           boolean allowShieldCounter) {
+        Permanent cracklingEmergence = findDestructionReplacementSource(
+                gameData, perm, DestructionReplacement.SACRIFICE_AURA_AND_GRANT_INDESTRUCTIBLE);
+        if (cracklingEmergence != null && !gameQueryService.cantBeSacrificed(gameData, cracklingEmergence)) {
+            if (performSacrificeAuraAndGrantIndestructibleReplacement(gameData, perm, cracklingEmergence)) {
+                return true;
+            }
+        }
         Permanent umbraArmor = findDestructionReplacementSource(gameData, perm, DestructionReplacement.UMBRA_ARMOR);
         if (umbraArmor != null) {
             performUmbraArmorReplacement(gameData, perm, umbraArmor);
@@ -874,6 +882,23 @@ public class GraveyardService {
         protectedPermanent.setMarkedDamage(0);
         protectedPermanent.setDamagedByDeathtouch(false);
         permanentRemovalService.tryDestroyPermanent(gameData, aura);
+    }
+
+    private boolean performSacrificeAuraAndGrantIndestructibleReplacement(
+            GameData gameData, Permanent protectedPermanent, Permanent aura) {
+        protectedPermanent.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        UUID controllerId = gameQueryService.findPermanentController(gameData, aura.getId());
+        boolean sacrificed = permanentRemovalService.removePermanentToGraveyard(gameData, aura);
+        if (!sacrificed) {
+            return false;
+        }
+        if (controllerId != null) {
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                    gameData, controllerId, aura.getCard());
+        }
+        gameLogService.append(gameData, GameLog.cardThen(aura.getCard(), " is sacrificed."));
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        return true;
     }
 
     /**
@@ -1247,6 +1272,9 @@ public class GraveyardService {
                                                               boolean creatureDeathTriggersSuppressed) {
         if (sourceZone == Zone.BATTLEFIELD) {
             gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn = true;
+            if (card.hasType(CardType.ENCHANTMENT)) {
+                gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.add(ownerId);
+            }
         }
         if (sourceZone == Zone.BATTLEFIELD
                 && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE))) {
@@ -1554,6 +1582,7 @@ public class GraveyardService {
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
         if (leavingCard != null) {
             gameData.oncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
+            gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
         }
         notifyCardsLeftGraveyard(gameData, ownerId, 1);
         if (leavingCard != null && !leavingCard.isToken() && leavingCard.hasType(CardType.CREATURE)) {
@@ -1570,6 +1599,7 @@ public class GraveyardService {
         }
         leavingCards.forEach(card -> gameData.graveyardAdventureCastPermissions.remove(card.getId()));
         leavingCards.forEach(card -> gameData.oncePerTurnTriggersFiredThisTurn.remove(card.getId()));
+        leavingCards.forEach(card -> gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size());
         int creatureCardCount = (int) leavingCards.stream()
                 .filter(card -> !card.isToken() && card.hasType(CardType.CREATURE))

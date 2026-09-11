@@ -84,6 +84,13 @@ public class PlayerInteractionSupport {
         applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, null);
     }
 
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
+                                          int xValue, Integer eventValue, UUID sourceEquipmentCardId,
+                                          UUID sourceCardId, UUID blockingAttackerId) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, eventValue, sourceEquipmentCardId,
+                sourceCardId, null, null, blockingAttackerId, ignored -> true);
+    }
+
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId, UUID sourceCardId) {
         applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
@@ -114,6 +121,14 @@ public class PlayerInteractionSupport {
                                            int xValue, UUID sourceEquipmentCardId, UUID sourceCardId,
                                            CardEffect thenEffect, CardPredicate thenCondition,
                                            UUID blockingAttackerId, Predicate<Card> additionalFilter) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, null, sourceEquipmentCardId, sourceCardId,
+                thenEffect, thenCondition, blockingAttackerId, additionalFilter);
+    }
+
+    private void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
+                                           int xValue, Integer eventValue, UUID sourceEquipmentCardId,
+                                           UUID sourceCardId, CardEffect thenEffect, CardPredicate thenCondition,
+                                           UUID blockingAttackerId, Predicate<Card> additionalFilter) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
@@ -129,6 +144,10 @@ public class PlayerInteractionSupport {
                 }
                 // Mind into Matter: "mana value X or less".
                 if (effect.maxManaValueBoundedByX() && handCard.getManaValue() > xValue) {
+                    continue;
+                }
+                if (effect.maxManaValueBoundedByEventValue()
+                        && (eventValue == null || handCard.getManaValue() > eventValue)) {
                     continue;
                 }
                 validIndices.add(i);

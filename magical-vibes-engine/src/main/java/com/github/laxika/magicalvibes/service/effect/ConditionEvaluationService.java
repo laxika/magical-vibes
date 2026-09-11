@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ArtifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.condition.EnchantmentPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredLastTurn;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
@@ -82,6 +83,7 @@ import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlledMountAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlledFaerieAsCast;
+import com.github.laxika.magicalvibes.model.condition.ControlledModifiedCreatureAsCast;
 import com.github.laxika.magicalvibes.model.condition.NoManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatureSpellCounteredByOpponentThisTurn;
@@ -287,6 +289,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceBlockedOrWasBlockedB
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttackingOrBlocking;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
+import com.github.laxika.magicalvibes.model.condition.SourceIsAttached;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
@@ -459,6 +462,10 @@ public class ConditionEvaluationService {
                     gameQueryService.isMorbidMet(gameData);
             case ArtifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn ignored ->
                     gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
+            case EnchantmentPutIntoGraveyardFromBattlefieldThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn
+                            .contains(ctx.controllerId());
             case PermanentPutIntoGraveyardFromBattlefieldThisTurn ignored ->
                     gameData.permanentPutIntoGraveyardFromBattlefieldThisTurn;
             case CreaturesDiedThisTurnAtLeast c ->
@@ -572,6 +579,7 @@ public class ConditionEvaluationService {
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
             case ControlledDragonAsCast ignored -> ctx.controlledDragonAsCast();
             case ControlledFaerieAsCast ignored -> ctx.controlledFaerieAsCast();
+            case ControlledModifiedCreatureAsCast ignored -> ctx.controlledModifiedCreatureAsCast();
             case GiantWizardOrSpellDealtDamageToTargetThisTurn ignored ->
                     ctx.controllerId() != null
                             && ctx.targetId() != null
@@ -1281,6 +1289,10 @@ public class ConditionEvaluationService {
             case SourceIsTapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isTapped();
+            }
+            case SourceIsAttached ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isAttached();
             }
             case SourceIsToken ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);

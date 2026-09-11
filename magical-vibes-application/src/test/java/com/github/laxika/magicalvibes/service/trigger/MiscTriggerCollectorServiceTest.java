@@ -288,6 +288,33 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("crewed trigger queues a targeted effect for target selection")
+    void crewedTargetedTriggerQueuesTargetSelection() {
+        Card sourceCard = createCard("Mobilizer Mech");
+        var effect = new com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect(
+                null, null, List.of(), java.util.Set.of(), null, java.util.Set.of(),
+                com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
+                com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, null);
+        sourceCard.addEffect(EffectSlot.ON_SELF_BECOMES_CREWED, effect);
+        Permanent perm = new Permanent(sourceCard);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_SELF_BECOMES_CREWED,
+                effect,
+                new TriggerContext.SelfBecomesCrewed(player1Id));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).isEmpty();
+        PermanentChoiceContext.SelfTriggeredAbilityTarget pending =
+                gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+        assertThat(pending).isNotNull();
+        assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(pending.sourcePermanentSnapshot()).isNotNull();
+        assertThat(pending.effects()).containsExactly(effect);
+    }
+
+    @Test
     @DisplayName("surveil mark-on-acceptance trigger keeps its marker on the stack entry")
     void surveilMarkOnAcceptanceTriggerKeepsMarker() {
         Permanent perm = createPermanent("Planetarium of Wan Shi Tong");

@@ -1391,6 +1391,25 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Invoke the Ancients: choose a keyword counter for the next created Spirit token. */
+    record CreateTokenCounterChoice(Card sourceCard, UUID controllerId, UUID tokenId,
+                                   List<UUID> remainingTokenIds, List<CounterType> counterTypes)
+            implements ChoiceContext {
+
+        public CreateTokenCounterChoice {
+            remainingTokenIds = List.copyOf(remainingTokenIds);
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            return counterTypes.stream().map(CreateTokenCounterChoice::counterLabel).toList();
+        }
+
+        public static String counterLabel(CounterType counterType) {
+            return counterType.name().toLowerCase().replace('_', ' ');
+        }
+    }
+
     record RemoveChosenCountersChoice(UUID targetId, UUID controllerId, String sourceCardName,
                                       int remainingSelections, List<CounterType> counterTypes)
             implements ChoiceContext {

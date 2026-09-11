@@ -2262,8 +2262,13 @@ public class MultiPermanentChoiceHandlerService {
                     }
                     gameData.recordDamageToPlayer(defendingPlayerId, damage,
                             gameQueryService.isArtifact(gameData, sourcePermanent) ? damage : 0);
+                    gameData.recordDamageDealtBySourceToPlayer(sourcePermanentId, defendingPlayerId, damage);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(
                             gameData, defendingPlayerId, sourcePermanentId, damage);
+                    if (sourcePermanent != null) {
+                        triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
+                                gameData, sourcePermanent, playerId, defendingPlayerId, damage);
+                    }
                 }
             }
         }

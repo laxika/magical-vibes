@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -50,7 +51,7 @@ public class NinjutsuEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = new Permanent(card, Zone.HAND);
         permanent.tap();
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
         permanent.setAttacking(true);

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -276,7 +277,8 @@ public class StaticEffectSupport {
                 accumulator.addGrantedSubtype(subtype);
             }
             accumulator.addKeywords(animate.grantedKeywords());
-        } else if (wrapped instanceof SetCardTypesEffect set && set.scope() == GrantScope.SELF) {
+        } else if (wrapped instanceof SetCardTypesEffect set && set.scope() == GrantScope.SELF
+                && (set.duration() != EffectDuration.WHILE_ATTACHED || context.source().isAttached())) {
             accumulator.setCardTypeOverriding(true);
             accumulator.setGrantedCardTypes(set.cardTypes());
         }

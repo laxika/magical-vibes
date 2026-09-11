@@ -20,27 +20,39 @@ import java.util.Set;
  * @param turnFaceUp when {@code true}, turn every card exiled with the source face up before
  *        returning the matching cards (Pyxis of Pandemonium)
  * @param grantedKeywords keywords granted indefinitely to each card returned to the battlefield
+ * @param enterTapped when {@code true}, each returned permanent enters tapped
+ * @param useLinkedSource when {@code true}, use the leaving permanent's linked source as the
+ *        source of the return effect
  */
 public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                    CardPredicate filter,
                                                    boolean turnFaceUp,
-                                                   Set<Keyword> grantedKeywords) implements CardEffect {
+                                                   Set<Keyword> grantedKeywords,
+                                                   boolean enterTapped,
+                                                   boolean useLinkedSource) implements CardEffect {
 
     public ReturnAllCardsExiledWithSourceEffect() {
-        this(false, null, false, Set.of());
+        this(false, null, false, Set.of(), false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl) {
-        this(underControllerControl, null, false, Set.of());
+        this(underControllerControl, null, false, Set.of(), false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(CardPredicate filter) {
-        this(false, filter, false, Set.of());
+        this(false, filter, false, Set.of(), false, false);
     }
 
     public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
                                                 CardPredicate filter,
                                                 boolean turnFaceUp) {
-        this(underControllerControl, filter, turnFaceUp, Set.of());
+        this(underControllerControl, filter, turnFaceUp, Set.of(), false, false);
+    }
+
+    public ReturnAllCardsExiledWithSourceEffect(boolean underControllerControl,
+                                                CardPredicate filter,
+                                                boolean turnFaceUp,
+                                                Set<Keyword> grantedKeywords) {
+        this(underControllerControl, filter, turnFaceUp, grantedKeywords, false, false);
     }
 }

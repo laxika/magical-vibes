@@ -250,6 +250,8 @@ public class TurnCleanupService {
         gameData.combatDamageExemptControllerId = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.additionalEnterCountersThisTurn.clear();
+        gameData.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn.clear();
+        gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.clear();
         gameData.skippedStepOrPhasesThisTurn.clear();
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
@@ -432,6 +434,7 @@ public class TurnCleanupService {
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.clearExilePlayPermissionGroup(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayWithoutPayingManaCost.remove(cardId);
         }
@@ -446,6 +449,7 @@ public class TurnCleanupService {
         gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().removeIf(entry -> {
             if (entry.getValue() <= currentTurn) {
                 gameData.exilePlayPermissions.remove(entry.getKey());
+                gameData.clearExilePlayPermissionGroup(entry.getKey());
                 gameData.exilePlayCostModifiers.remove(entry.getKey());
                 gameData.exilePlayWithoutPayingManaCost.remove(entry.getKey());
                 return true;

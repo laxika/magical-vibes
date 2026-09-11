@@ -1061,6 +1061,34 @@ class AbilityActivationServiceTest {
     }
 
     @Nested
+    @DisplayName("activateHandAbility — graveyard targets")
+    class ActivateHandAbilityGraveyardTargets {
+
+        @Test
+        @DisplayName("Applies dynamic cost reductions before paying a graveyard-targeted hand ability")
+        void appliesDynamicCostReduction() {
+            Card source = new Card();
+            source.setName("Graveyard Target Hand Ability");
+            source.addHandActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{3}{B}",
+                    List.of(new ReduceActivationCostEffect(new Fixed(2)), new DrawCardEffect()),
+                    "{3}{B}: Draw a card."));
+            gameData.playerHands.get(player1Id).add(source);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+            when(amountEvaluationService.evaluate(eq(gameData), any(), any())).thenReturn(2);
+
+            service.activateHandAbilityWithGraveyardTargets(
+                    gameData, player1, 0, 0, List.of(UUID.randomUUID()));
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
+            assertThat(gameData.stack).hasSize(1);
+        }
+    }
+
+    @Nested
     @DisplayName("activateHandAbility — timing restrictions")
     class ActivateHandAbilityTimingRestrictions {
 

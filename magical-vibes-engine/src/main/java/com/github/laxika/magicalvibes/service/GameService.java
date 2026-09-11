@@ -1745,28 +1745,42 @@ public class GameService {
     }
 
     public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, UUID targetId, Integer xValue) {
+        activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, xValue, null);
+    }
+
+    public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex,
+                                    UUID targetId, Integer xValue, List<UUID> targetIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> activateHandAbility(gameData, actionPlayer, handCardIndex, abilityIndex, targetId,
-                        xValue))) return;
+                        xValue, targetIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             requireCanActivateAbilities(gameData, player);
-            abilityActivationService.activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, xValue);
+            abilityActivationService.activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId,
+                    xValue, targetIds);
         }
     }
 
     public void activateHandAbilityWithGraveyardTargets(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, List<UUID> graveyardCardIds) {
+        activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, abilityIndex, null,
+                graveyardCardIds);
+    }
+
+    public void activateHandAbilityWithGraveyardTargets(GameData gameData, Player player, int handCardIndex,
+                                                        Integer abilityIndex, Integer xValue,
+                                                        List<UUID> graveyardCardIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> activateHandAbilityWithGraveyardTargets(gameData, actionPlayer, handCardIndex,
-                        abilityIndex, graveyardCardIds))) return;
+                        abilityIndex, xValue, graveyardCardIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             requireCanActivateAbilities(gameData, player);
-            abilityActivationService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, abilityIndex, graveyardCardIds);
+            abilityActivationService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex,
+                    abilityIndex, xValue, graveyardCardIds);
         }
     }
 

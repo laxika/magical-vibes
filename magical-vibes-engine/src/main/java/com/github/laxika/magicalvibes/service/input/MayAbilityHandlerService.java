@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraOrEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -47,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -167,7 +169,6 @@ public class MayAbilityHandlerService {
 
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
-
         // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley, Brilliant Ultimatum,
         // Unesh, Curator of Destinies)
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
@@ -1000,7 +1001,21 @@ public class MayAbilityHandlerService {
             if (scope == null) {
                 continue;
             }
-            CardPredicate filter = switch (targetEffect) {
+            CardPredicate filter = graveyardFilterOf(targetEffect);
+            return new GraveyardTarget(filter, scope);
+        }
+        return new GraveyardTarget(null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+    }
+
+    private CardPredicate graveyardFilterOf(CardEffect effect) {
+        if (effect instanceof MayEffect may) {
+            return graveyardFilterOf(may.wrapped());
+        }
+        if (effect instanceof SacrificePermanentThenEffect sacrifice) {
+            return graveyardFilterOf(sacrifice.thenEffect());
+        }
+        return switch (effect) {
+                case AllowCastTargetCardFromGraveyardThisTurnEffect allowCast -> allowCast.filter();
                 case ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint -> imprint.filter();
                 case ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy -> exileCopy.filter();
                 case ExileGraveyardCardsEffect exile -> exile.filter();
@@ -1009,9 +1024,6 @@ public class MayAbilityHandlerService {
                 case ReturnCardFromGraveyardEffect ret -> ret.filter();
                 default -> null;
             };
-            return new GraveyardTarget(filter, scope);
-        }
-        return new GraveyardTarget(null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
     }
 
     private record GraveyardTarget(CardPredicate filter, GraveyardSearchScope scope) {

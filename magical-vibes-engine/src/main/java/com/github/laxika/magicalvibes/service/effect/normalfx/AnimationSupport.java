@@ -254,6 +254,10 @@ public class AnimationSupport {
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(),
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
+        if (effect.equals(AnimatePermanentsEffect.crew())) {
+            triggerCollectionService.checkBecomesCrewedTriggers(gameData, self, entry.getControllerId());
+        }
+
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
     }
 
@@ -527,8 +531,12 @@ public class AnimationSupport {
             }
 
             AmountContext ctx = AmountContext.forStackEntry(entry, target);
-            int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
-            int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+            int power = effect.power() == null
+                    ? (target.getCard().getPower() != null ? target.getCard().getPower() : 0)
+                    : amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+            int toughness = effect.toughness() == null
+                    ? (target.getCard().getToughness() != null ? target.getCard().getToughness() : 0)
+                    : amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
             animatePermanently(gameData, target, effect, power, toughness,
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());

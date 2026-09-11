@@ -72,6 +72,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.InvokeCalamityCastChoice.class,
+                this::projectInvokeCalamityCastChoice);
         register(PendingInteraction.PlarggAndNassariOpponentChoice.class,
                 this::projectPlarggAndNassariOpponentChoice);
         register(PendingInteraction.PlarggAndNassariCardChoice.class,
@@ -358,6 +360,24 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 interaction.maxCount(),
                 interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectInvokeCalamityCastChoice(
+            GameData gameData, PendingInteraction.InvokeCalamityCastChoice interaction) {
+        Map<UUID, Card> cardsById = new LinkedHashMap<>();
+        for (Card card : gameData.playerHands.getOrDefault(interaction.playerId(), List.of())) {
+            cardsById.put(card.getId(), card);
+        }
+        for (Card card : gameData.playerGraveyards.getOrDefault(interaction.playerId(), List.of())) {
+            cardsById.put(card.getId(), card);
+        }
+        List<Card> cards = interaction.validCardIds().stream()
+                .map(cardsById::get)
+                .filter(card -> card != null)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(cards), 2,
+                "You may cast up to two instant and/or sorcery spells with total mana value 6 or less.");
     }
 
     private InteractionPromptMessage projectPlarggAndNassariOpponentChoice(

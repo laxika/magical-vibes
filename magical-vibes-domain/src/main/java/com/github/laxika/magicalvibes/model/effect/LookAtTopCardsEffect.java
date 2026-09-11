@@ -382,6 +382,15 @@ public record LookAtTopCardsEffect(
                 LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, false);
     }
 
+    /** Look at five cards, exile one face down, and offer an eligible instant for a free cast. */
+    public static LookAtTopCardsEffect chooseOneToExileFaceDownRestToBottomRandomAndMayCast(
+            int lookCount, int maxManaValue) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND,
+                false, false, new Fixed(maxManaValue));
+    }
+
     /** Up to {@code chooseCount} cards to hand, the rest into the graveyard. */
     public static LookAtTopCardsEffect chooseNToHandRestToGraveyard(int lookCount, int chooseCount) {
         return chooseNToHandRestToGraveyard(lookCount, chooseCount, null, false);

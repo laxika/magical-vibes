@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
+import com.github.laxika.magicalvibes.model.amount.TimesSourceAbilityResolvedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesAttackedThisTurn;
@@ -393,6 +394,17 @@ public class AmountEvaluationService {
                     source = ctx.stackEntry().getSourcePermanentSnapshot();
                 }
                 yield source == null ? 0 : source.getTimesMutated();
+            }
+            case TimesSourceAbilityResolvedThisTurn ignored -> {
+                UUID sourceId = ctx.stackEntry() != null
+                        ? ctx.stackEntry().getSourcePermanentId()
+                        : ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId();
+                if (sourceId == null && ctx.stackEntry() != null
+                        && ctx.stackEntry().getSourcePermanentSnapshot() != null) {
+                    sourceId = ctx.stackEntry().getSourcePermanentSnapshot().getId();
+                }
+                yield sourceId == null
+                        ? 0 : gameData.permanentAbilityResolutionsThisTurn.getOrDefault(sourceId, 0);
             }
             case CreaturesDevoured ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getDevouredCreatures().size();

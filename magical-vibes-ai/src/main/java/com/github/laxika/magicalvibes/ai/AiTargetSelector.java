@@ -1124,7 +1124,7 @@ class AiTargetSelector {
                 }
                 if (rge.requiresManaValueAtMostX() && maxAffordableX < Integer.MAX_VALUE) {
                     candidates = candidates.stream()
-                            .filter(c -> c.getManaValue() <= maxAffordableX)
+                            .filter(c -> c.getManaValue() <= maxAffordableX + rge.manaValueXOffset())
                             .toList();
                 }
             } else {

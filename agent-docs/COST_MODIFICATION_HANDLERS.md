@@ -117,6 +117,11 @@ permanent target matches; the spell-self form continues to inspect its first tar
 graveyard card. Its `CardPredicate` is evaluated against the chosen first graveyard target in the
 same `CastingCostService.computeTargetBasedCostReduction` path.
 
+`ReduceOwnCastCostForEachTargetEffect` and `IncreaseOpponentCastCostPerTargetEffect` are the
+target-count forms. The reduction applies to spells cast by the controller of the permanent
+carrying it; the increase applies to opponents' spells. Both are evaluated inline from the full
+chosen-target list because the ordinary cost-modifier context does not carry targets.
+
 Target-gated increases use the parallel `TargetBasedCastCostIncreaseEffect` interface and
 `IncreaseOwnCastCostIfTargetingPermanentEffect` record. Their surcharge is evaluated against the
 chosen first permanent target by `CastingCostService.getTargetBasedCostIncrease`, rather than by a

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -668,6 +669,7 @@ public class Card {
                 if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
                 if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
             }
+            case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             // SequenceEffect splices its steps into the resolution list; each step must keep the
             // sequence's target group (fuse halves that bundle multi-step one-target instructions).
             case SequenceEffect e -> {
@@ -1232,11 +1234,16 @@ public class Card {
      * same defender the returned creature was attacking (CR 702.49c).
      */
     public void addNinjutsu(String cost) {
-        addHandActivatedAbility(new ActivatedAbility(false, cost,
+        addHandActivatedAbility(ninjutsuAbility(cost));
+    }
+
+    /** Builds a ninjutsu ability for a card in hand, including the engine's special activation flag. */
+    public static ActivatedAbility ninjutsuAbility(String cost) {
+        return new ActivatedAbility(false, cost,
                 List.of(new NinjutsuEffect()),
                 "Ninjutsu " + cost + " (" + cost + ", Return an unblocked attacker you control to hand: "
                         + "Put this card onto the battlefield from your hand tapped and attacking.)")
-                .withNinjutsu());
+                .withNinjutsu();
     }
 
     /** Adds Sneak for {@code cost}. */

@@ -30,10 +30,12 @@ public class ExileSelfAndReturnTransformedEffectHandler implements NormalEffectH
         if (entry.getSourcePermanentId() == null) {
             return;
         }
-        boolean transformed =
-                exileAndReturnTransformedService.exileAndReturnTransformed(gameData, entry.getSourcePermanentId());
+        ExileSelfAndReturnTransformedEffect transformEffect =
+                (ExileSelfAndReturnTransformedEffect) effect;
+        boolean transformed = exileAndReturnTransformedService.exileAndReturnTransformed(
+                gameData, entry.getSourcePermanentId(), transformEffect.underControllerControl());
 
-        CardEffect thenEffect = ((ExileSelfAndReturnTransformedEffect) effect).thenEffect();
+        CardEffect thenEffect = transformEffect.thenEffect();
         if (transformed && thenEffect != null) {
             dispatch(gameData, entry, thenEffect);
         }

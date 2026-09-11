@@ -194,6 +194,8 @@ public class StackEntry {
     @Setter private boolean controlledDragonAsCast;
     /** Whether the spell's controller controlled a Faerie when the spell was finished being cast. */
     @Setter private boolean controlledFaerieAsCast;
+    /** Whether the spell's controller controlled a modified creature when the spell was finished being cast. */
+    @Setter private boolean controlledModifiedCreatureAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
@@ -676,6 +678,7 @@ public class StackEntry {
         this.controlledMountAsCast = source.controlledMountAsCast;
         this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.controlledFaerieAsCast = source.controlledFaerieAsCast;
+        this.controlledModifiedCreatureAsCast = source.controlledModifiedCreatureAsCast;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;

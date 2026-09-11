@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
@@ -379,6 +380,8 @@ public final class LayerClassifier {
         map.put(GrantKeywordToOwnCreaturesFromGraveyardEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GainKeywordsOfCardsExiledWithSourceEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect.class,
+                fixed(Layer.L6_ABILITIES));
         map.put(RemoveKeywordEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(RemoveProtectionFromColorUntilEndOfTurnEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(LosesAllAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));

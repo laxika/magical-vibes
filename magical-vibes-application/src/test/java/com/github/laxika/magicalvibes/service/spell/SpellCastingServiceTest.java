@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
@@ -1117,6 +1118,30 @@ class SpellCastingServiceTest {
             assertThatThrownBy(() -> svc.playCard(gd, player1, 0, 3, player2Id, null, null, null, false, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Not enough mana");
+        }
+
+        @Test
+        @DisplayName("Applies an optional hand-exile reduction to an X spell")
+        void appliesHandExileReductionToXSpell() {
+            Card xSpell = createInstant("Test X Spell", "{X}{U}");
+            xSpell.addEffect(EffectSlot.SPELL,
+                    new ExileAnyNumberOfCardsFromHandCost(
+                            new CardColorPredicate(CardColor.BLUE), 2));
+            Card blueCard = createInstant("Blue Card", "{U}");
+            blueCard.setColor(CardColor.BLUE);
+            setHand(player1Id, List.of(xSpell, blueCard));
+            addMana(player1Id, ManaColor.BLUE, 1);
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(), any())).thenReturn(true);
+
+            svc.playCard(gd, player1, 0, 2, null, null, null, List.of(), false, null,
+                    null, List.of(), null, List.of(), false, null, List.of(1));
+
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+            assertThat(gd.playerHands.get(player1Id)).isEmpty();
+            assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getName())
+                    .containsExactly("Blue Card");
+            assertThat(gd.stack).hasSize(1);
         }
     }
 

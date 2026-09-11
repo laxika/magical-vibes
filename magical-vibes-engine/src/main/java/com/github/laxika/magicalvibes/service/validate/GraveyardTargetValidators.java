@@ -133,8 +133,7 @@ public class GraveyardTargetValidators {
                 throw new IllegalStateException("Target can't have been put into a graveyard during this combat");
             }
         }
-        int requiredManaValue = ctx.xValue()
-                + (effect.requiresManaValueEqualsX() ? effect.manaValueXOffset() : 0);
+        int requiredManaValue = effect.requiredManaValue(ctx.xValue());
         if (effect.requiresManaValueEqualsX()
                 && !ctx.deferCostDerivedXValueChecks()
                 && graveyardCard.getManaValue() != requiredManaValue) {

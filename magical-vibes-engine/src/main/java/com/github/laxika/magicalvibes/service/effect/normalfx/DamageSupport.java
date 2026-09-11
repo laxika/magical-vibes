@@ -1558,7 +1558,8 @@ public class DamageSupport {
                 recordSorcerySpellDamage(gameData, entry, effectiveDamage);
                 gameData.recordDamageDealtBySource(entry.getSourcePermanentId(), effectiveDamage);
                 gameData.recordDamageSourceControlledBy(damageSourceId, sourceControllerId);
-                gameData.recordDamageRecipientBySource(entry.getSourcePermanentId(), playerId);
+                gameData.recordDamageDealtBySourceToPlayer(
+                        entry.getSourcePermanentId(), playerId, effectiveDamage);
                 entry.recordPlayerDealtDamage(playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
                 if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
@@ -1716,7 +1717,8 @@ public class DamageSupport {
                         ? gameQueryService.isArtifact(gameData, sourcePermanent)
                         : redirect.sourceCard() != null && redirect.sourceCard().hasType(CardType.ARTIFACT);
                 gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
-                gameData.recordDamageRecipientBySource(redirect.sourcePermanentId(), targetId);
+                gameData.recordDamageDealtBySourceToPlayer(
+                        redirect.sourcePermanentId(), targetId, redirectEffective);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, targetId, redirect.sourcePermanentId(), redirectEffective);
             }
@@ -1796,7 +1798,8 @@ public class DamageSupport {
                     boolean artifactSource = sourcePermanent != null
                             && gameQueryService.isArtifact(gameData, sourcePermanent);
                     gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
-                    gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
+                    gameData.recordDamageDealtBySourceToPlayer(
+                            redirect.damageSourceId(), targetId, redirectEffective);
                     triggerCollectionService.checkOpponentDealtDamageTriggers(
                             gameData, targetId, redirect.damageSourceId(), redirectEffective);
                 }

@@ -1457,10 +1457,13 @@ public class ActivatedAbilityExecutionService {
                         gameData.recordDamageToPlayer(playerId, effectiveDamage,
                                 gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
                         gameData.recordDamageSourceControlledBy(permanent.getId(), playerId);
-                        gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
+                        gameData.recordDamageDealtBySourceToPlayer(
+                                permanent.getId(), playerId, effectiveDamage);
                         gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                         triggerCollectionService.checkOpponentDealtDamageTriggers(
                                 gameData, playerId, permanent.getId(), effectiveDamage);
+                        triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
+                                gameData, permanent, playerId, playerId, effectiveDamage);
                         if (gameQueryService.isCreature(gameData, permanent)) {
                             gameData.recordCreatureDamageSourceToPlayer(permanent.getId(), playerId);
                         }
@@ -1642,10 +1645,13 @@ public class ActivatedAbilityExecutionService {
                 gameData.recordDamageToPlayer(playerId, effectiveDamage,
                         gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
                 gameData.recordDamageSourceControlledBy(permanent.getId(), playerId);
-                gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
+                gameData.recordDamageDealtBySourceToPlayer(
+                        permanent.getId(), playerId, effectiveDamage);
                 gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, playerId, permanent.getId(), effectiveDamage);
+                triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
+                        gameData, permanent, playerId, playerId, effectiveDamage);
                 if (gameQueryService.isCreature(gameData, permanent)) {
                     gameData.recordCreatureDamageSourceToPlayer(permanent.getId(), playerId);
                 }

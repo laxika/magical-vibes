@@ -258,8 +258,12 @@ public class DiscardTriggerCollectorService {
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage,
                         gameQueryService.isArtifact(gameData, match.permanent()) ? effectiveDamage : 0);
+                gameData.recordDamageDealtBySourceToPlayer(
+                        match.permanent().getId(), discardingPlayerId, effectiveDamage);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, discardingPlayerId, match.permanent().getId(), effectiveDamage);
+                triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
+                        gameData, match.permanent(), match.controllerId(), discardingPlayerId, effectiveDamage);
             }
         }
 

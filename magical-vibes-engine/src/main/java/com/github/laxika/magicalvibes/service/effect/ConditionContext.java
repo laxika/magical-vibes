@@ -44,12 +44,34 @@ public record ConditionContext(
         boolean waterbendCostPaid,
         boolean giftPromised,
         boolean revealCardFromHandCostPaid,
-        boolean controlledDragonAsCast
+        boolean controlledDragonAsCast,
+        boolean controlledModifiedCreatureAsCast
 ) {
     public ConditionContext {
         repeatedAdditionalCosts = repeatedAdditionalCosts == null
                 ? List.of()
                 : List.copyOf(repeatedAdditionalCosts);
+    }
+
+    public ConditionContext(
+            UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent, Card sourceCard,
+            boolean kicked, boolean buyback, boolean prowl, boolean madness,
+            boolean castForForetell, boolean overloaded, Zone sourceZone, int xValue,
+            UUID targetId, Card triggeringCard, boolean staticEvaluation,
+            boolean putCounterCostPaid, boolean beholdCostPaid, UUID triggeringPermanentId,
+            Integer triggeringPermanentPowerAtTrigger, Card sacrificedCard,
+            List<String> repeatedAdditionalCosts, boolean alternateCost, boolean spectacle,
+            boolean controlledMountAsCast, boolean controlledFaerieAsCast,
+            boolean collectEvidenceCostPaid, boolean castDuringMainPhase, int eventValue,
+            boolean waterbendCostPaid, boolean giftPromised, boolean revealCardFromHandCostPaid,
+            boolean controlledDragonAsCast) {
+        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl,
+                madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
+                staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
+                triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
+                alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast,
+                collectEvidenceCostPaid, castDuringMainPhase, eventValue, waterbendCostPaid,
+                giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast, false);
     }
 
     public ConditionContext(
@@ -68,7 +90,7 @@ public record ConditionContext(
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
                 alternateCost, spectacle, controlledMountAsCast, false, collectEvidenceCostPaid,
                 castDuringMainPhase, eventValue, waterbendCostPaid, false,
-                false, false);
+                false, false, false);
     }
 
     public ConditionContext(
@@ -86,7 +108,7 @@ public record ConditionContext(
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
                 alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast, false,
-                castDuringMainPhase, eventValue, false, false, false, false);
+                castDuringMainPhase, eventValue, false, false, false, false, false);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -251,7 +273,7 @@ public record ConditionContext(
                 entry.isCollectEvidenceCostPaid(),
                 entry.isCastDuringMainPhase(), entry.getEventValue(), entry.isWaterbendCostPaid(),
                 entry.isGiftPromised(), entry.isRevealCardFromHandCostPaid(),
-                entry.isControlledDragonAsCast());
+                entry.isControlledDragonAsCast(), entry.isControlledModifiedCreatureAsCast());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
@@ -335,7 +357,7 @@ public record ConditionContext(
                 copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost,
                 spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid,
                 castDuringMainPhase, copiedEventValue, waterbendCostPaid, giftPromised,
-                revealCardFromHandCostPaid, controlledDragonAsCast);
+                revealCardFromHandCostPaid, controlledDragonAsCast, controlledModifiedCreatureAsCast);
     }
 
     public ConditionContext withEventValue(int newEventValue) {

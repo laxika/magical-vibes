@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.Set;
 
@@ -11,16 +14,41 @@ import java.util.Set;
  */
 public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
         String nameOverride,
-        Set<CardSupertype> additionalSupertypesOverride
+        Set<CardSupertype> additionalSupertypesOverride,
+        Integer powerOverride,
+        Integer toughnessOverride,
+        Set<CardType> additionalTypesOverride,
+        Set<CardSubtype> additionalSubtypesOverride,
+        Set<Keyword> additionalKeywordsOverride
 ) implements CardEffect {
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect {
         additionalSupertypesOverride = additionalSupertypesOverride == null
                 ? Set.of() : Set.copyOf(additionalSupertypesOverride);
+        additionalTypesOverride = additionalTypesOverride == null
+                ? Set.of() : Set.copyOf(additionalTypesOverride);
+        additionalSubtypesOverride = additionalSubtypesOverride == null
+                ? Set.of() : Set.copyOf(additionalSubtypesOverride);
+        additionalKeywordsOverride = additionalKeywordsOverride == null
+                ? Set.of() : Set.copyOf(additionalKeywordsOverride);
+    }
+
+    public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
+            String nameOverride, Set<CardSupertype> additionalSupertypesOverride) {
+        this(nameOverride, additionalSupertypesOverride, null, null,
+                Set.of(), Set.of(), Set.of());
+    }
+
+    public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
+            Integer powerOverride, Integer toughnessOverride,
+            Set<CardType> additionalTypesOverride, Set<CardSubtype> additionalSubtypesOverride,
+            Set<Keyword> additionalKeywordsOverride) {
+        this(null, Set.of(), powerOverride, toughnessOverride, additionalTypesOverride,
+                additionalSubtypesOverride, additionalKeywordsOverride);
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect() {
-        this(null, Set.of());
+        this(null, Set.of(), null, null, Set.of(), Set.of(), Set.of());
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -107,6 +109,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             resolveOneToGraveyardRestOnTop(gameData, entry, lookCount);
         } else if (e.chosenDestination() == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
             resolveOneToExilePlayableRestOnBottomRandom(gameData, entry, lookCount);
+        } else if (e.chosenDestination()
+                == LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND) {
+            resolveOneToExileFaceDownRestToBottomRandomAndMayCast(
+                    gameData, entry, lookCount, chooseManaValueAtMost);
         } else if (e.optional()) {
             resolveMayRevealToHand(gameData, entry, e, lookCount, chooseCount, chooseManaValueAtMost);
         } else if (e.restDestination() == LookDestination.GRAVEYARD) {
@@ -368,6 +374,29 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .shuffleAfterSelection(false)
                         .prompt(prompt)
                         .destination(LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM)
+                        .build(),
+                prompt,
+                false));
+    }
+
+    private void resolveOneToExileFaceDownRestToBottomRandomAndMayCast(
+            GameData gameData, StackEntry entry, int lookCount, int maxManaValue) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+
+        String prompt = "Exile one card face down. You may cast it without paying its mana cost "
+                + "if it's an instant spell with mana value " + maxManaValue
+                + " or less. Put the rest on the bottom of your library in a random order.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(result.controllerId(), result.topCards())
+                        .sourceCards(new ArrayList<>(result.topCards()))
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND)
+                        .filterCardTypes(Set.of(CardType.INSTANT))
+                        .mayCastManaValueAtMost(maxManaValue)
                         .build(),
                 prompt,
                 false));

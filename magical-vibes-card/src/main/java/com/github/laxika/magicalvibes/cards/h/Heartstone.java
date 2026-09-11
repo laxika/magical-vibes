@@ -11,6 +11,6 @@ public class Heartstone extends Card {
 
     public Heartstone() {
         addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
-                new PermanentIsCreaturePredicate(), 1));
+                new PermanentIsCreaturePredicate(), 1, true, true));
     }
 }

@@ -46,6 +46,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.InvokeCalamityCastChoice,
         PendingInteraction.PortentOfCalamityState,
         PendingInteraction.PlarggAndNassariOpponentChoice,
         PendingInteraction.PlarggAndNassariCardChoice,
@@ -583,6 +584,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /** Invoke Calamity: choose up to two eligible spells with total mana value at most six. */
+    record InvokeCalamityCastChoice(UUID playerId, java.util.List<UUID> validCardIds)
+            implements PendingInteraction {
+
+        public InvokeCalamityCastChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 2);
         }
     }
 
@@ -1583,19 +1603,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                 UUID targetPlayerId, UUID controllerId, String cardName,
                                 boolean drawForHandExiled,
                                 com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                                String sourceSetCode)
+                                String sourceSetCode,
+                                UUID sourcePermanentId)
             implements PendingInteraction {
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName) {
-            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName, false, null, null);
+            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
+                    false, null, null, null);
         }
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName,
                                     boolean drawForHandExiled) {
             this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
-                    drawForHandExiled, null, null);
+                    drawForHandExiled, null, null, null);
         }
 
         @Override

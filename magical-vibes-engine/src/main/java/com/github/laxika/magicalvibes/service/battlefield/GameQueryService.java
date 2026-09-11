@@ -467,6 +467,21 @@ public class GameQueryService {
         return false;
     }
 
+    private boolean playerBattlefieldHasGrantedStaticEffect(GameData gameData, UUID playerId,
+                                                            Class<? extends CardEffect> effectType) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        for (Permanent perm : bf) {
+            if (!perm.isFaceDown()
+                    && !perm.isLosesAllAbilitiesUntilEndOfTurn()
+                    && computeStaticBonus(gameData, perm).grantedEffects().stream()
+                    .anyMatch(effectType::isInstance)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String findAlternativeEchoCost(GameData gameData, UUID playerId) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
@@ -942,6 +957,7 @@ public class GameQueryService {
                 if (permanent.isFaceDown()) continue;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof HandAbilityGrantingEffect grant
+                            && (!grant.controllerHandOnly() || controllerId.equals(ownerId))
                             && predicateEvaluationService.matchesCardPredicate(
                             card, grant.filter(), null, gameData, ownerId)) {
                         result.add(grant.grantedAbility().withGrantSource(permanent.getId()));
@@ -1697,6 +1713,7 @@ public class GameQueryService {
      */
     public boolean canPlayerLoseGame(GameData gameData, UUID playerId) {
         if (playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class)
+                || playerBattlefieldHasGrantedStaticEffect(gameData, playerId, CantLoseGameEffect.class)
                 || playerHasTemporaryStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
             return false;
         }
@@ -1717,6 +1734,7 @@ public class GameQueryService {
      */
     public boolean playerHasCantWinGameEffect(GameData gameData, UUID playerId) {
         if (playerBattlefieldHasStaticEffect(gameData, playerId, CantWinGameEffect.class)
+                || playerBattlefieldHasGrantedStaticEffect(gameData, playerId, CantWinGameEffect.class)
                 || playerHasTemporaryStaticEffect(gameData, playerId, CantWinGameEffect.class)) {
             return true;
         }
@@ -6065,8 +6083,14 @@ public class GameQueryService {
                 .anyMatch(PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect.class::isInstance));
     }
 
-    public boolean allowsInstantSpeedLoyaltyActivation(Permanent permanent) {
+    public boolean allowsInstantSpeedLoyaltyActivation(GameData gameData, Permanent permanent) {
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (controllerId == null) {
+            return false;
+        }
         return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .map(effect -> staticEffectConditionResolver.resolve(
+                        gameData, permanent, controllerId, effect))
                 .anyMatch(AllowLoyaltyActivationAtInstantSpeedEffect.class::isInstance);
     }
 

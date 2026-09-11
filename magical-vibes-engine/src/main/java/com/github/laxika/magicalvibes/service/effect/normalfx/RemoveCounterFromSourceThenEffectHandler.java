@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -95,6 +96,14 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
     }
 
     private void beginReflexiveTrigger(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        if (thenEffect instanceof CombatDamageTriggerContextEffect contextEffect
+                && contextEffect.combatDamageTriggerContext()
+                == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
+                && entry.getTargetId() != null) {
+            putPlayerTargetedReflexiveTriggerOnStack(gameData, entry, thenEffect, entry.getTargetId());
+            return;
+        }
+
         GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(thenEffect));
         if (target != null) {
             beginGraveyardReflexiveTrigger(gameData, entry, thenEffect, target);
@@ -196,7 +205,8 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
         }
 
         if (matchingCards.size() == 1) {
-            putTargetedReflexiveTriggerOnStack(gameData, entry, thenEffect, matchingCards.getFirst().getId());
+            putGraveyardTargetedReflexiveTriggerOnStack(
+                    gameData, entry, thenEffect, matchingCards.getFirst().getId());
             return;
         }
 
@@ -209,8 +219,8 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 .build());
     }
 
-    private void putTargetedReflexiveTriggerOnStack(GameData gameData, StackEntry entry,
-                                                     CardEffect thenEffect, UUID targetCardId) {
+    private void putGraveyardTargetedReflexiveTriggerOnStack(GameData gameData, StackEntry entry,
+                                                              CardEffect thenEffect, UUID targetCardId) {
         gameData.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 entry.getCard(),
@@ -224,6 +234,18 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 Zone.GRAVEYARD,
                 null,
                 null));
+    }
+
+    private void putPlayerTargetedReflexiveTriggerOnStack(GameData gameData, StackEntry entry,
+                                                           CardEffect thenEffect, UUID targetPlayerId) {
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                entry.getCard(),
+                entry.getControllerId(),
+                entry.getCard().getName() + "'s ability",
+                List.of(thenEffect),
+                targetPlayerId,
+                entry.getSourcePermanentId()));
     }
 
     private CounterType findCounterType(Permanent source, CounterType requestedType) {
