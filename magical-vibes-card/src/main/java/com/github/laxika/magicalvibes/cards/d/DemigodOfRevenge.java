@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "SHM", collectorNumber = "183")
+@CardRegistration(set = "MMA", collectorNumber = "187")
 public class DemigodOfRevenge extends Card {
 
     public DemigodOfRevenge() {

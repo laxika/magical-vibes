@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 
 @CardRegistration(set = "BOK", collectorNumber = "40")
+@CardRegistration(set = "MMA", collectorNumber = "49")
 public class KiraGreatGlassSpinner extends Card {
 
     public KiraGreatGlassSpinner() {

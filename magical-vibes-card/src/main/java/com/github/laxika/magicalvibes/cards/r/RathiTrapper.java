@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "90")
+@CardRegistration(set = "MMA", collectorNumber = "94")
 public class RathiTrapper extends Card {
 
     public RathiTrapper() {

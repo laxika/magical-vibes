@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "163")
+@CardRegistration(set = "MMA", collectorNumber = "110")
 public class DesperateRitual extends Card {
 
     public DesperateRitual() {

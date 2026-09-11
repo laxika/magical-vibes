@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "73")
+@CardRegistration(set = "MMA", collectorNumber = "69")
 public class VedalkenDismisser extends Card {
 
     public VedalkenDismisser() {

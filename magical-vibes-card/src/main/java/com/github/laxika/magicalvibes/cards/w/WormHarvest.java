@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "131")
+@CardRegistration(set = "MMA", collectorNumber = "195")
 public class WormHarvest extends Card {
 
     public WormHarvest() {
