@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "26")
+@CardRegistration(set = "MMA", collectorNumber = "32")
 public class TerashisGrasp extends Card {
 
     public TerashisGrasp() {

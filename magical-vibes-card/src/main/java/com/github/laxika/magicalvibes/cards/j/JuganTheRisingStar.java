@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "217")
+@CardRegistration(set = "MMA", collectorNumber = "150")
 public class JuganTheRisingStar extends Card {
 
     public JuganTheRisingStar() {

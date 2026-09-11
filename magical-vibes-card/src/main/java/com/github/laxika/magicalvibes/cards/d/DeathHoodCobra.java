@@ -10,6 +10,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "NPH", collectorNumber = "108")
+@CardRegistration(set = "DDM", collectorNumber = "47")
 public class DeathHoodCobra extends Card {
 
     public DeathHoodCobra() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ISD", collectorNumber = "48")
 @CardRegistration(set = "M14", collectorNumber = "46")
 @CardRegistration(set = "ORI", collectorNumber = "50")
+@CardRegistration(set = "DDM", collectorNumber = "27")
 public class Claustrophobia extends Card {
 
     public Claustrophobia() {

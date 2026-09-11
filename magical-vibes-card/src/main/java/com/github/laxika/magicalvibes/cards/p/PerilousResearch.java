@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "CSP", collectorNumber = "41")
+@CardRegistration(set = "MMA", collectorNumber = "58")
 public class PerilousResearch extends Card {
 
     public PerilousResearch() {
