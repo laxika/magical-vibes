@@ -10,49 +10,49 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SulfurousSprings.class)
+@CardUsed({SulfurousSprings.class, SamiteHealer.class})
 class SulfurousSpringsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping for colorless mana adds {C} and deals no damage")
     void tapForColorlessMana() {
+        harness.setLife(player1, 20);
         Permanent springs = harness.addToBattlefieldAndReturn(player1, new SulfurousSprings());
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(springs.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertLife(player1, 20);
     }
 
     @Test
     @DisplayName("Tapping for black mana adds {B} and deals 1 damage to controller")
     void tapForBlackMana() {
+        harness.setLife(player1, 20);
         Permanent springs = harness.addToBattlefieldAndReturn(player1, new SulfurousSprings());
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(springs.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        harness.assertLife(player1, 19);
     }
 
     @Test
     @DisplayName("Tapping for red mana adds {R} and deals 1 damage to controller")
     void tapForRedMana() {
+        harness.setLife(player1, 20);
         Permanent springs = harness.addToBattlefieldAndReturn(player1, new SulfurousSprings());
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 2, null, null);
 
         assertThat(springs.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+        harness.assertLife(player1, 19);
     }
 
     @Test
@@ -87,7 +87,25 @@ class SulfurousSpringsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Pain-land damage can be prevented while mana is still added")
+    void painLandDamageCanBePrevented() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new SamiteHealer());
+        harness.addToBattlefield(player1, new SulfurousSprings());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

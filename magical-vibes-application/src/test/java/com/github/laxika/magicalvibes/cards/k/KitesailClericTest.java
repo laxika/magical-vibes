@@ -38,13 +38,46 @@ class KitesailClericTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, first.getId(), null,
-                List.of(second.getId()), List.of(), false, null, null, null, null, null, true);
+        harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        resolveAllTriggers();
 
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
+    }
+
+    @Test
+    void kickedMayChooseOnlyOneTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new KitesailCleric()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    void kickedMayChooseNoTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new KitesailCleric()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

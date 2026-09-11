@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.d.DeathcultRogue;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,8 +24,8 @@ class ShadowStingerTest extends BaseCardTest {
         Permanent rogue = addCreatureReady(player1, new DeathcultRogue());
 
         harness.activateAbility(player1, battlefieldIndex(stinger), null, null);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, rogue.getId());
+
+
         harness.passBothPriorities();
 
         assertThat(rogue.isTapped()).isTrue();

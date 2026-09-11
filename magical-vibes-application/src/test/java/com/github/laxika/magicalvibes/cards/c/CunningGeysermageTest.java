@@ -24,6 +24,7 @@ class CunningGeysermageTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target).isIn(gd.playerBattlefields.get(player2.getId()));
         harness.assertOnBattlefield(player1, "Cunning Geysermage");
@@ -37,7 +38,7 @@ class CunningGeysermageTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0, target.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -51,9 +52,12 @@ class CunningGeysermageTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Cunning Geysermage");
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

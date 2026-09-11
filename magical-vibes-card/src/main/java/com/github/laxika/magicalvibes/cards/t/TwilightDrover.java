@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "33")
+@CardRegistration(set = "DDK", collectorNumber = "9")
 public class TwilightDrover extends Card {
 
     public TwilightDrover() {

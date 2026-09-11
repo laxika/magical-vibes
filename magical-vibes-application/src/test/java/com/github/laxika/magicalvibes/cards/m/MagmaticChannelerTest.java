@@ -52,6 +52,7 @@ class MagmaticChannelerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(chosen, notChosen));
 
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

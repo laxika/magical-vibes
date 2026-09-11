@@ -52,7 +52,7 @@ class AncientGreenwardenTest extends BaseCardTest {
     }
 
     @Test
-    void doublesTriggerOfPermanentYouControlWhenOpponentPlaysLand() {
+    void doesNotDoubleLandPlayTriggers() {
         harness.addToBattlefield(player1, new AncientGreenwarden());
         harness.addToBattlefield(player1, new HornOfGreed());
         harness.setHand(player2, List.of(new Forest()));
@@ -63,10 +63,10 @@ class AncientGreenwardenTest extends BaseCardTest {
 
         harness.playLand(player2, 0);
 
-        assertThat(gd.stack).hasSize(2);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        // Horn of Greed triggers on playing a land, rather than a land entering.
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
 
-        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
     }
 }

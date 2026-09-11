@@ -126,6 +126,21 @@ class JayemdaeTomeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activated ability still resolves if Jayemdae Tome leaves the battlefield")
+    void abilityResolvesAfterTomeLeavesBattlefield() {
+        Forest drawn = new Forest();
+        addReadyTome(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
     @DisplayName("Resolving ability does not affect opponent's hand")
     void doesNotAffectOpponent() {
         addReadyTome(player1);

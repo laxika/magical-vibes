@@ -311,6 +311,7 @@ public class TurnProgressionService {
                     p.setBlockedThisCombat(false);
                 });
                 gameData.combatBlockOpponentIdsThisCombat.clear();
+                gameData.combatDamageToPlayersThisCombat.clear();
                 processTargetCreatureMustAttackNextCombat(gameData);
                 if (additionalCombatPhase) {
                     processAdditionalCombatBeginningEffects(gameData);

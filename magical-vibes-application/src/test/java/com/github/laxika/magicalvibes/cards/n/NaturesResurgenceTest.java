@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NaturesResurgence.class, RedwoodTreefolk.class, GaeasBlessing.class})
+@CardUsed({GaeasBlessing.class, NaturesResurgence.class, RedwoodTreefolk.class})
 class NaturesResurgenceTest extends BaseCardTest {
 
     @Test

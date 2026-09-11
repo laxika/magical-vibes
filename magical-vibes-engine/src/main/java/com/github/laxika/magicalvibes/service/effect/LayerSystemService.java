@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -1498,6 +1499,15 @@ public class LayerSystemService {
                             grant.subtype(), grant.overriding() && !landSubtypeOverride,
                             landSubtypeOverride, null, null));
                 }
+            }
+            case GrantSubtypesToSelfEffect grant -> {
+                manage(board, instance);
+                PermanentSlot source = instance.source();
+                if (source == null) return;
+                CharacteristicState state = states.get(source.permanent().getId());
+                grant.grantedSubtypes().forEach(state::addSubtype);
+                record(board, instance, source,
+                        new L4Contribution(grant.grantedSubtypes(), false, false));
             }
             case GrantAllCreatureTypesToOwnCreaturesEffect grant -> {
                 manage(board, instance);

@@ -116,6 +116,28 @@ class HammerOfBogardanTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Returns only the activated Hammer when two copies share the graveyard")
+        void returnsOnlyTheActivatedHammerWhenTwoCopiesShareGraveyard() {
+            HammerOfBogardan activatedHammer = new HammerOfBogardan();
+            HammerOfBogardan otherHammer = new HammerOfBogardan();
+            harness.setGraveyard(player1, List.of(activatedHammer, otherHammer));
+            harness.addMana(player1, ManaColor.RED, 3);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.UPKEEP);
+
+            harness.activateGraveyardAbility(player1, 0);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .anyMatch(card -> card.getId().equals(activatedHammer.getId()));
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .noneMatch(card -> card.getId().equals(otherHammer.getId()));
+            assertThat(gd.playerGraveyards.get(player1.getId()))
+                    .anyMatch(card -> card.getId().equals(otherHammer.getId()));
+        }
+
+        @Test
         @DisplayName("Cannot activate outside your upkeep")
         void cannotActivateOutsideUpkeep() {
             HammerOfBogardan hammer = new HammerOfBogardan();
@@ -144,11 +166,39 @@ class HammerOfBogardanTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Cannot activate without three red mana")
+        void cannotActivateWithoutThreeRedMana() {
+            HammerOfBogardan hammer = new HammerOfBogardan();
+            harness.setGraveyard(player1, List.of(hammer));
+            harness.addMana(player1, ManaColor.RED, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.UPKEEP);
+
+            assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
         @DisplayName("Cannot activate without enough mana")
         void cannotActivateWithoutEnoughMana() {
             HammerOfBogardan hammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(hammer));
             harness.addMana(player1, ManaColor.RED, 2);
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.UPKEEP);
+
+            assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Cannot activate without two generic mana")
+        void cannotActivateWithoutTwoGenericMana() {
+            HammerOfBogardan hammer = new HammerOfBogardan();
+            harness.setGraveyard(player1, List.of(hammer));
+            harness.addMana(player1, ManaColor.RED, 3);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.UPKEEP);
 

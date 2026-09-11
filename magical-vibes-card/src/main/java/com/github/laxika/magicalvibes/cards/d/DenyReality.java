@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "19")
+@CardRegistration(set = "PC2", collectorNumber = "85")
 public class DenyReality extends Card {
 
     public DenyReality() {

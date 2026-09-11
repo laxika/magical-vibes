@@ -57,6 +57,11 @@ public class EachPlayerMayPutCardFromHandChoiceInteractionHandler
                         gameData, player.getId(), chosen.getFirst(), interaction.cardName())
                         || cardPutThisRound;
             }
+        } else if (interaction.startingPlayerId() != null) {
+            if (!chosen.isEmpty()) {
+                support.putCardOntoBattlefield(gameData, player.getId(), chosen.getFirst(),
+                        interaction.cardName());
+            }
         } else {
             accumulated.addAll(chosen);
         }

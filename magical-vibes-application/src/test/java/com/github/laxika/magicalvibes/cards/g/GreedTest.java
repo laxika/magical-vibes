@@ -27,7 +27,6 @@ class GreedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

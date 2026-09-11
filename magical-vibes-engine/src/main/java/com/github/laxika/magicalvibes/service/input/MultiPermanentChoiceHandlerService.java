@@ -553,6 +553,8 @@ public class MultiPermanentChoiceHandlerService {
                     gameData, player, exileArtifactsContext, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup ctx) {
             triggerHandler.handleEtbPlayerTargetGroup(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup ctx) {
+            triggerHandler.handleEtbGraveyardCardTargetGroup(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets ctx) {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {
@@ -2568,7 +2570,9 @@ public class MultiPermanentChoiceHandlerService {
 
         if (entering != null && devoured > 0) {
             if (!gameQueryService.cantHaveCounters(gameData, entering)) {
-                int added = context.multiplier() * devoured;
+                int multiplier = amountEvaluationService.evaluate(gameData, context.multiplier(),
+                        new AmountContext(playerId, entering, null, 0, 0));
+                int added = multiplier * devoured;
                 added = gameQueryService.doublePlusOnePlusOneCounters(gameData, entering, playerId, added);
                 entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);

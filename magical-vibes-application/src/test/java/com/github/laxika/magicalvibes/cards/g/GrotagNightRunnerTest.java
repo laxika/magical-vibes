@@ -26,7 +26,7 @@ class GrotagNightRunnerTest extends BaseCardTest {
         runner.setAttacking(true);
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(topCard.getId()));
@@ -44,7 +44,7 @@ class GrotagNightRunnerTest extends BaseCardTest {
         runner.setAttacking(true);
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
 
         harness.inMutationScope(

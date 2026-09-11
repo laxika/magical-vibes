@@ -20,7 +20,7 @@ class RelicRobberTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Goblin Construct")).isEmpty();
         assertThat(findPermanents(player2, "Goblin Construct")).hasSize(1);
@@ -52,7 +52,7 @@ class RelicRobberTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         return findPermanents(player2, "Goblin Construct").getFirst();
     }

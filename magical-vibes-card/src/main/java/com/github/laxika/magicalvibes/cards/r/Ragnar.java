@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "250")
+@CardRegistration(set = "ME3", collectorNumber = "167")
 public class Ragnar extends Card {
 
     public Ragnar() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveScreamCounterFromExiled
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LEG", collectorNumber = "88")
+@CardRegistration(set = "ME3", collectorNumber = "57")
 public class AllHallowsEve extends Card {
 
     public AllHallowsEve() {

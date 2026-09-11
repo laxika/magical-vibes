@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "68")
+@CardRegistration(set = "PC2", collectorNumber = "90")
 public class EnlistedWurm extends Card {
 
     public EnlistedWurm() {

@@ -1804,12 +1804,17 @@ public class AmountEvaluationService {
 
         List<Set<CardSubtype>> creatureTypes = new ArrayList<>();
         for (Permanent permanent : battlefield) {
-            if (!gameQueryService.isCreature(gameData, permanent)) {
+            // Party can define power in layer 7. Read the already applied type and
+            // ability layers instead of recursively assembling that power again.
+            var state = LayerSystemService.activeStateFor(permanent.getId());
+            if (!(state != null ? state.getCardTypes().contains(CardType.CREATURE)
+                    : gameQueryService.isCreature(gameData, permanent))) {
                 continue;
             }
-            Set<CardSubtype> types = new HashSet<>(
-                    gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
-            if (gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
+            Set<CardSubtype> types = new HashSet<>(state != null ? state.getSubtypes()
+                    : gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
+            if (state != null ? state.getKeywords().contains(Keyword.CHANGELING)
+                    : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
                 types.addAll(PARTY_ROLES);
             }
             creatureTypes.add(types);
