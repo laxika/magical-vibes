@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "CHK", collectorNumber = "37")
 @CardRegistration(set = "DDC", collectorNumber = "16")
+@CardRegistration(set = "DVD", collectorNumber = "16")
 @CardRegistration(set = "MMA", collectorNumber = "23")
 public class OtherworldlyJourney extends Card {
 

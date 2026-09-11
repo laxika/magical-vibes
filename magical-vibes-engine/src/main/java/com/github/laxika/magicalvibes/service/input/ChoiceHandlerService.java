@@ -679,6 +679,10 @@ public class ChoiceHandlerService {
             handleAddAnotherCounterTypeChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.CreateTokenCounterChoice ctx) {
+            handleCreateTokenCounterChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.RemoveChosenCountersChoice ctx) {
             handleRemoveChosenCountersChoice(gameData, colorName, ctx);
             return;
@@ -2351,6 +2355,36 @@ public class ChoiceHandlerService {
                 permanentCounterSupport.placeCounterOnPermanent(
                         gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1);
             }
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleCreateTokenCounterChoice(GameData gameData, String choice,
+            ChoiceContext.CreateTokenCounterChoice ctx) {
+        if (!ctx.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid token counter type: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        CounterType counterType = ctx.counterTypes().stream()
+                .filter(type -> ChoiceContext.CreateTokenCounterChoice.counterLabel(type).equals(choice))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown token counter type: " + choice));
+        Permanent token = gameQueryService.findPermanentById(gameData, ctx.tokenId());
+        if (token != null) {
+            StackEntry entry = gameData.pendingEffectResolutionEntry;
+            if (entry == null) {
+                entry = new StackEntry(ctx.sourceCard(), ctx.controllerId());
+            }
+            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, token, counterType, 1);
+        }
+
+        if (!ctx.remainingTokenIds().isEmpty()) {
+            playerInputService.beginCreateTokenCounterChoice(
+                    gameData, ctx.controllerId(), ctx.sourceCard(), ctx.remainingTokenIds(), ctx.counterTypes());
+            return;
         }
 
         stateBasedActionService.performStateBasedActions(gameData);
@@ -5860,7 +5894,7 @@ public class ChoiceHandlerService {
             List<Card> toExile = hand.stream().filter(c -> selectedIds.contains(c.getId())).toList();
             hand.removeAll(toExile);
             for (Card card : toExile) {
-                gameData.addToExile(targetPlayerId, card);
+                addSelectedMultiZoneExileCard(gameData, ctx, targetPlayerId, card);
             }
             exiledCount += toExile.size();
             handExiledCount = toExile.size();
@@ -5872,7 +5906,7 @@ public class ChoiceHandlerService {
             List<Card> toExile = graveyard.stream().filter(c -> selectedIds.contains(c.getId())).toList();
             graveyard.removeAll(toExile);
             for (Card card : toExile) {
-                gameData.addToExile(targetPlayerId, card);
+                addSelectedMultiZoneExileCard(gameData, ctx, targetPlayerId, card);
             }
             if (!toExile.isEmpty()) {
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
@@ -5886,7 +5920,7 @@ public class ChoiceHandlerService {
             List<Card> toExile = library.stream().filter(c -> selectedIds.contains(c.getId())).toList();
             library.removeAll(toExile);
             for (Card card : toExile) {
-                gameData.addToExile(targetPlayerId, card);
+                addSelectedMultiZoneExileCard(gameData, ctx, targetPlayerId, card);
             }
             exiledCount += toExile.size();
         }
@@ -5915,6 +5949,16 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void addSelectedMultiZoneExileCard(GameData gameData,
+                                                PendingInteraction.MultiZoneExileChoice ctx,
+                                                UUID ownerId, Card card) {
+        if (ctx.sourcePermanentId() == null) {
+            gameData.addToExile(ownerId, card);
+        } else {
+            gameData.addToExile(ownerId, card, ctx.sourcePermanentId());
+        }
     }
 
     private static GameLog.Builder appendCards(GameLog.Builder builder, List<Card> cards) {

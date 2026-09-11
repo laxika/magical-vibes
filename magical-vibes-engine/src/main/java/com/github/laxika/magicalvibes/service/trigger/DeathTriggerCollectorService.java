@@ -1002,6 +1002,17 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ExileTriggeringCreatureAndTrackWithSourceEffect.class,
+            slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
+    boolean handleEquippedCreatureDeathExileAndTrack(TriggerMatchContext match,
+            ExileTriggeringCreatureAndTrackWithSourceEffect effect, TriggerContext ctx) {
+        TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
+        CardEffect bound = ecd.dyingCard() == null
+                ? effect
+                : effect.boundToDyingCard(ecd.dyingCard().getId());
+        return handleEquippedCreatureDeathDefault(match, bound, ctx);
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -3386,13 +3397,19 @@ public class DeathTriggerCollectorService {
     boolean handleReturnAllCardsExiledWithSourceOnLeave(TriggerMatchContext match,
             ReturnAllCardsExiledWithSourceEffect effect, TriggerContext ctx) {
         TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        UUID sourcePermanentId = effect.useLinkedSource()
+                ? match.permanent().getChosenPermanentId()
+                : match.permanent().getId();
+        if (sourcePermanentId == null) {
+            return false;
+        }
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
-                match.permanent().getId(),
+                sourcePermanentId,
                 List.of()
         ));
         logSelfLeaves(match);

@@ -135,6 +135,15 @@ public class AsEntersInteractionService {
                                                  List<UUID> convokeCreatureIds) {
         controllerId = resolveTokenControllerForEntry(gameData, controllerId, card);
 
+        // Placement can be prevented by a replacement effect or deferred for an as-enters choice.
+        // In either case, do not run entry abilities or treat an existing permanent as the new one.
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+        if (controllerBattlefield == null || controllerBattlefield.stream().noneMatch(permanent ->
+                permanent.getCard().getId().equals(card.getId())
+                        || permanent.getOriginalCard().getId().equals(card.getId()))) {
+            return;
+        }
+
         boolean turnsOtherCreaturesFaceDown = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(TurnOtherNontokenCreaturesFaceDownOnEnterEffect.class::isInstance);
         if (turnsOtherCreaturesFaceDown) {

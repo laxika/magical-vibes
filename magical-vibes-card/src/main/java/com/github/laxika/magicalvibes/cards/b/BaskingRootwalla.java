@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "121")
 @CardRegistration(set = "DDD", collectorNumber = "2")
+@CardRegistration(set = "GVL", collectorNumber = "2")
 public class BaskingRootwalla extends Card {
 
     public BaskingRootwalla() {
