@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "227")
 @CardRegistration(set = "MM2", collectorNumber = "240")
+@CardRegistration(set = "DDP", collectorNumber = "68")
 public class EldraziTemple extends Card {
 
     public EldraziTemple() {

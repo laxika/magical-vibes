@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "128")
+@CardRegistration(set = "V15", collectorNumber = "11")
 public class JenaraAsuraOfWar extends Card {
 
     public JenaraAsuraOfWar() {

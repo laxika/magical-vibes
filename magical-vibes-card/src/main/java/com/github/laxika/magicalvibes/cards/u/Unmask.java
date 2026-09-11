@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "168")
+@CardRegistration(set = "V16", collectorNumber = "15")
 public class Unmask extends Card {
 
     public Unmask() {

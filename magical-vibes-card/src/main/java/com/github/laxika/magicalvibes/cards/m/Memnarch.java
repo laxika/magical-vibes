@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "129")
+@CardRegistration(set = "V16", collectorNumber = "7")
 public class Memnarch extends Card {
 
     public Memnarch() {

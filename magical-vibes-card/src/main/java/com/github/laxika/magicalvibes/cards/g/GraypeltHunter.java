@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "103")
+@CardRegistration(set = "DDP", collectorNumber = "13")
 public class GraypeltHunter extends Card {
 
     public GraypeltHunter() {
