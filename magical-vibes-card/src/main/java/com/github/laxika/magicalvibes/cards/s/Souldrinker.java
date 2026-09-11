@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "158")
 @CardRegistration(set = "DDC", collectorNumber = "39")
+@CardRegistration(set = "DVD", collectorNumber = "39")
 public class Souldrinker extends Card {
 
     public Souldrinker() {
