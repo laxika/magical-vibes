@@ -108,6 +108,7 @@ public enum CardSet {
     SET_ALA("ALA"),
     SET_CON("CON"),
     SET_AKH("AKH"),
+    SET_MP2("MP2"),
     SET_AKR("AKR"),
     SET_AFR("AFR"),
     SET_ARB("ARB"),
