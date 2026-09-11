@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "193")
 @CardRegistration(set = "DD1", collectorNumber = "53")
+@CardRegistration(set = "MMA", collectorNumber = "134")
 public class TarPitcher extends Card {
 
     public TarPitcher() {

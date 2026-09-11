@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "38")
 @CardRegistration(set = "THS", collectorNumber = "50")
+@CardRegistration(set = "DDM", collectorNumber = "28")
 public class Griptide extends Card {
 
     public Griptide() {

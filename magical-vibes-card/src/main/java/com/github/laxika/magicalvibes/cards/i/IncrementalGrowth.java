@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "LRW", collectorNumber = "221")
 @CardRegistration(set = "KTK", collectorNumber = "138")
+@CardRegistration(set = "MMA", collectorNumber = "149")
 public class IncrementalGrowth extends Card {
 
     public IncrementalGrowth() {
