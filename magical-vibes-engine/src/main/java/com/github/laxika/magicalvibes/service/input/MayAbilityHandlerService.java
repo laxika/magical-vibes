@@ -314,6 +314,9 @@ public class MayAbilityHandlerService {
                 entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
             }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
+            if (ability.xValue() != null) {
+                entry.setXValue(ability.xValue());
+            }
             gameData.stack.add(entry);
 
                 if (isPreTargetedPlayer) {
@@ -383,6 +386,9 @@ public class MayAbilityHandlerService {
             }
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
             entry.setTriggeringCardId(ability.triggeringCardId());
+            if (ability.xValue() != null) {
+                entry.setXValue(ability.xValue());
+            }
 
             // Self-targeting effects need the source permanent's ID to resolve
             boolean needsSelfTarget = ability.effects().stream().anyMatch(e ->

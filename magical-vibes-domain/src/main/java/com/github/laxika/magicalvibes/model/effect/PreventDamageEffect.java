@@ -274,6 +274,12 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, false, null, null, null);
     }
 
+    /** "Prevent all damage that would be dealt by target creature for as long as the source remains on the battlefield." */
+    public static PreventDamageEffect allByTargetCreatureWhileSourceRemains() {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_BY_TARGET_CREATURES_WHILE_SOURCE_REMAINS, null, false, null, null, null);
+    }
+
     /** "Prevent all combat damage target creature(s) would deal this turn" (Foxfire, Inquisitor's Snare). */
     public static PreventDamageEffect allCombatByTargetCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, true, null, null, null);
@@ -421,7 +427,8 @@ public record PreventDamageEffect(
                     ? TargetPredicates.creature()
                     : TargetPredicates.narrowPermanents(TargetPredicates.creature(), victimPredicate));
             case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());
-            case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES -> TargetSpec.benign(TargetPredicates.creature());
+            case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES,
+                 ALL_BY_TARGET_CREATURES_WHILE_SOURCE_REMAINS -> TargetSpec.benign(TargetPredicates.creature());
             case ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS -> TargetSpec.benign(
                     TargetPredicates.creature(), victimPredicate);
             case ALL_COMBAT_BY_TARGET_OPPONENT_CREATURES -> TargetSpec.benign(TargetPredicates.player());

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "MMQ", collectorNumber = "273")
+@CardRegistration(set = "DDG", collectorNumber = "32")
 public class SpidersilkArmor extends Card {
 
     public SpidersilkArmor() {

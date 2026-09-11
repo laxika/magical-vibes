@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "15")
+@CardRegistration(set = "DDG", collectorNumber = "2")
 public class CaravanEscort extends Card {
 
     public CaravanEscort() {

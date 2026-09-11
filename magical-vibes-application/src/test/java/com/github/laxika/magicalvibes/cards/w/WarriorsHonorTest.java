@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.j.JujuBubble;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WarriorsHonor.class, LongbowArcher.class, JujuBubble.class})
+@CardUsed({WarriorsHonor.class, LongbowArcher.class, FountainOfYouth.class})
 class WarriorsHonorTest extends BaseCardTest {
 
     @Test
@@ -85,7 +84,7 @@ class WarriorsHonorTest extends BaseCardTest {
     void affectsOnlyCreaturesPresentAtResolution() {
         castWarriorsHonor();
         Permanent presentCreature = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
-        Permanent noncreature = harness.addToBattlefieldAndReturn(player1, new JujuBubble());
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
 
         harness.passBothPriorities();
 

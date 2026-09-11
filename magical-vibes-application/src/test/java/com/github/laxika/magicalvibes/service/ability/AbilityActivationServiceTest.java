@@ -127,6 +127,16 @@ class AbilityActivationServiceTest {
     private UUID player1Id;
     private UUID player2Id;
 
+    @Test
+    void removedPrintedAbilitiesAreUnavailableForActivation() {
+        Card card = createArtifactWithOnceOnlyAbility();
+        Permanent permanent = new Permanent(card);
+        when(gameQueryService.computeStaticBonus(gameData, permanent)).thenReturn(EMPTY_BONUS);
+        when(gameQueryService.hasLostAllAbilities(gameData, permanent)).thenReturn(true);
+
+        assertThat(service.getEffectiveActivatedAbilities(gameData, permanent)).isEmpty();
+    }
+
     @BeforeEach
     void setUp() {
         player1Id = UUID.randomUUID();
@@ -274,7 +284,7 @@ class AbilityActivationServiceTest {
 
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(blueBefore + 1);
             assertThat(perm.isTapped()).isTrue();
-            verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId());
+            verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId(), Set.of(ManaColor.BLUE));
             verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
             verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
         }
@@ -1626,6 +1636,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gameData, husk)).thenReturn(true);
             when(gameQueryService.findPermanentById(gameData, husk.getId())).thenReturn(husk);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
@@ -1654,6 +1665,8 @@ class AbilityActivationServiceTest {
                     .thenReturn(false);
             when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
             when(gameQueryService.isCreature(gameData, bears)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gameData, husk)).thenReturn(true);
+            when(gameQueryService.canSacrificePermanentForCosts(gameData, bears)).thenReturn(true);
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 

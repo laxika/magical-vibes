@@ -15,8 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Disenchant.class, AltarOfDementia.class, BottleGnomes.class, Aluren.class,
-        SoltariFootSoldier.class})
+@CardUsed({AltarOfDementia.class, Aluren.class, BottleGnomes.class, Disenchant.class, SoltariFootSoldier.class})
 class DisenchantTest extends BaseCardTest {
 
     @Test

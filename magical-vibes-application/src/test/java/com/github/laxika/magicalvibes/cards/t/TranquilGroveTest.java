@@ -1,16 +1,18 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.f.Fervor;
 import com.github.laxika.magicalvibes.cards.s.SerrasBlessing;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({TranquilGrove.class, Fervor.class, SerrasBlessing.class, BenalishInfantry.class})
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({BenalishInfantry.class, Fervor.class, SerrasBlessing.class, TranquilGrove.class})
 class TranquilGroveTest extends BaseCardTest {
 
     private void payCost() {
@@ -70,5 +72,20 @@ class TranquilGroveTest extends BaseCardTest {
 
         Assertions.assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroys another Tranquil Grove but not the activating copy")
+    void destroysAnotherCopyButNotActivatingCopy() {
+        harness.addToBattlefield(player1, new TranquilGrove());
+        harness.addToBattlefield(player1, new TranquilGrove());
+        harness.addToBattlefield(player1, new Fervor());
+        payCost();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Assertions.assertThat(countPermanents(player1, "Tranquil Grove")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Tranquil Grove");
     }
 }

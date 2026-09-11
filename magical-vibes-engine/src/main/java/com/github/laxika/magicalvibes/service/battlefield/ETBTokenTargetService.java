@@ -504,9 +504,10 @@ public class ETBTokenTargetService {
     private int effectiveMaxTargets(GameData gameData,
                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
                                     SpellTarget group) {
-        int staticMax = group.isXScaled()
-                ? Math.min(pending.xValue(), group.getMaxTargets())
-                : group.getMaxTargets();
+        Permanent enteringSource = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        int maxTargets = enteringSource != null && enteringSource.isKicked()
+                ? group.getKickedMaxTargets() : group.getMaxTargets();
+        int staticMax = group.isXScaled() ? Math.min(pending.xValue(), maxTargets) : maxTargets;
         if (group.getDynamicMaxTargets() == null) {
             return staticMax;
         }
@@ -528,9 +529,10 @@ public class ETBTokenTargetService {
     private int effectiveMinTargets(GameData gameData,
                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
                                     SpellTarget group) {
-        int staticMin = group.isXScaled()
-                ? Math.min(pending.xValue(), group.getMinTargets())
-                : group.getMinTargets();
+        Permanent enteringSource = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        int minTargets = enteringSource != null && enteringSource.isKicked()
+                ? group.getKickedMinTargets() : group.getMinTargets();
+        int staticMin = group.isXScaled() ? Math.min(pending.xValue(), minTargets) : minTargets;
         if (group.getDynamicMinTargets() == null) {
             return staticMin;
         }

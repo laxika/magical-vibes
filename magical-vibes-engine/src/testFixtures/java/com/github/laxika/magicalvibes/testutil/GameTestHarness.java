@@ -653,6 +653,13 @@ public class GameTestHarness {
         gameService.playAdventureCard(gameData, player, cardIndex, 0, targetId, List.of());
     }
 
+    public void castAdventure(Player player, int cardIndex, UUID sacrificePermanentId,
+                               List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, 0, null,
+                targetIds != null ? targetIds : List.of(), null, sacrificePermanentId);
+    }
+
     public void castAdventureFromGraveyard(Player player, int graveyardCardIndex) {
         ensurePriority(player);
         gameService.playAdventureCardFromGraveyard(gameData, player, graveyardCardIndex, 0, null,
@@ -836,6 +843,10 @@ public class GameTestHarness {
     public void castSorcery(Player player, int cardIndex, int xValue) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, null, null);
+    }
+
+    public void castSorcery(Player player, int cardIndex) {
+        castSorcery(player, cardIndex, 0);
     }
 
     public void castSorceryWithBehold(Player player, int cardIndex, int xValue, CardSubtype chosenType,
@@ -1197,6 +1208,16 @@ public class GameTestHarness {
         gameService.playModalXCard(gameData, player, cardIndex,
                 ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
                 xValue, targetId, targetIds);
+    }
+
+    public void castModalSorceryWithModesForXAndDamageAssignments(Player player, int cardIndex,
+                                                                  int choicesRequired,
+                                                                  int[] modeIndices, int xValue,
+                                                                  Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playModalXCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
+                xValue, null, List.of(), damageAssignments);
     }
 
     /**

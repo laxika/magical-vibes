@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ARB", collectorNumber = "46")
 @CardRegistration(set = "PLS", collectorNumber = "128")
+@CardRegistration(set = "DDK", collectorNumber = "64")
 public class Terminate extends Card {
 
     public Terminate() {

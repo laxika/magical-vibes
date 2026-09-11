@@ -1,24 +1,62 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pariah;
+import com.github.laxika.magicalvibes.cards.u.UrzasArmor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SyphonSoul.class)
 class SyphonSoulTest extends BaseCardTest {
 
     private void castSyphonSoul() {
-        harness.setHand(player1, List.of(new SyphonSoul()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SyphonSoul(), "{2}{B}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed(UrzasArmor.class)
+    void gainsOnlyUnpreventedDamage() {
+        harness.addToBattlefield(player2, new UrzasArmor());
+
+        castSyphonSoul();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @CardUsed(FurnaceOfRath.class)
+    void gainsLifeForMultipliedDamage() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+
+        castSyphonSoul();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @CardUsed({Pariah.class, GrizzlyBears.class})
+    void gainsLifeWhenDamageIsRedirectedToCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
+        pariah.setAttachedTo(creature.getId());
+
+        castSyphonSoul();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 22);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -39,6 +77,27 @@ class SyphonSoulTest extends BaseCardTest {
         castSyphonSoul();
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @CardUsed(CircleOfProtectionBlack.class)
+    @DisplayName("Syphon Soul only gains life for damage that was actually dealt")
+    void onlyGainsLifeForDamageActuallyDealt() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent circle = harness.addToBattlefieldAndReturn(player2, new CircleOfProtectionBlack());
+        SyphonSoul syphonSoul = new SyphonSoul();
+
+        harness.castFromHand(player1, syphonSoul, "{2}{B}");
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int circleIndex = gd.playerBattlefields.get(player2.getId()).indexOf(circle);
+        harness.activateAbility(player2, circleIndex, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, syphonSoul.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
     }
 
     @Test

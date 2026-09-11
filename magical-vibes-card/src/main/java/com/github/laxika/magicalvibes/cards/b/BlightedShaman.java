@@ -23,7 +23,7 @@ public class BlightedShaman extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP),
-                                "Sacrifice a Swamp"
+                                "Sacrifice a Swamp", false
                         ),
                         new BoostTargetCreatureEffect(1, 1)
                 ),

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "117")
+@CardRegistration(set = "DDK", collectorNumber = "19")
 public class VampiresBite extends Card {
 
     public VampiresBite() {

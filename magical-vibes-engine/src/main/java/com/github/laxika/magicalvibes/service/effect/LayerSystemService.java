@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -151,11 +152,7 @@ public class LayerSystemService {
             CardSubtype.MOUNTAIN, CardSubtype.PLAINS);
 
     /** Land types represented in the {@code CardSubtype} enum. */
-    private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.of(
-            CardSubtype.SWAMP, CardSubtype.ISLAND, CardSubtype.FOREST,
-            CardSubtype.MOUNTAIN, CardSubtype.PLAINS, CardSubtype.DESERT,
-            CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.URZAS,
-            CardSubtype.MINE, CardSubtype.POWER_PLANT, CardSubtype.TOWER);
+    private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.copyOf(CardSubtype.landTypes());
 
     private static final ThreadLocal<Pass> ACTIVE_PASS = new ThreadLocal<>();
 
@@ -734,6 +731,7 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isAttacking() ? 1 : 0);
         flags = flags << 1 | (p.isBlocking() ? 1 : 0);
         h = mix(h, flags);
+        h = mix(h, p.getAttacksThisTurn());
         for (UUID blockingTargetId : p.getBlockingTargetIds()) {
             h = mix(h, blockingTargetId.hashCode());
         }
@@ -1501,6 +1499,15 @@ public class LayerSystemService {
                             grant.subtype(), grant.overriding() && !landSubtypeOverride,
                             landSubtypeOverride, null, null));
                 }
+            }
+            case GrantSubtypesToSelfEffect grant -> {
+                manage(board, instance);
+                PermanentSlot source = instance.source();
+                if (source == null) return;
+                CharacteristicState state = states.get(source.permanent().getId());
+                grant.grantedSubtypes().forEach(state::addSubtype);
+                record(board, instance, source,
+                        new L4Contribution(grant.grantedSubtypes(), false, false));
             }
             case GrantAllCreatureTypesToOwnCreaturesEffect grant -> {
                 manage(board, instance);

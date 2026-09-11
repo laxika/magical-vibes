@@ -182,6 +182,10 @@ export class TargetingChoiceService {
     this.additionalCostCardName = '';
     this.additionalCostLifePayment = 0;
     this.additionalCostManaCost = '';
+    this.choosingAdditionalSacrifice = false;
+    this.additionalSacrificeCardIndex = -1;
+    this.additionalSacrificeCardName = '';
+    this.additionalSacrificeSelectedId.set(null);
     this.pendingPayLifeForAdditionalCost = null;
     this.choosingBehold = false;
     this.selectingBeholdPermanent = false;
@@ -437,6 +441,12 @@ export class TargetingChoiceService {
   additionalCostLifePayment = 0;
   additionalCostManaCost = '';
   private pendingPayLifeForAdditionalCost: boolean | null = null;
+
+  choosingAdditionalSacrifice = false;
+  additionalSacrificeCardIndex = -1;
+  additionalSacrificeCardName = '';
+  additionalSacrificeSelectedId = signal<string | null>(null);
+  private pendingAdditionalSacrificePermanentId: string | null = null;
 
   choosingBehold = false;
   selectingBeholdPermanent = false;
@@ -1645,6 +1655,10 @@ export class TargetingChoiceService {
       msg.additionalCostSacrificePermanentIds = this.pendingBuybackSacrificePermanentIds;
       this.pendingBuybackSacrificePermanentIds = [];
     }
+    if (this.pendingAdditionalSacrificePermanentId != null) {
+      msg.sacrificePermanentId = this.pendingAdditionalSacrificePermanentId;
+      this.pendingAdditionalSacrificePermanentId = null;
+    }
     if (extra) {
       Object.assign(msg, extra);
     }
@@ -2812,6 +2826,38 @@ export class TargetingChoiceService {
     this.additionalCostManaCost = '';
   }
 
+  toggleAdditionalSacrifice(permanentId: string): void {
+    if (!this.choosingAdditionalSacrifice) return;
+    this.additionalSacrificeSelectedId.set(
+      this.additionalSacrificeSelectedId() === permanentId ? null : permanentId);
+  }
+
+  isAdditionalSacrificeSelected(permanentId: string): boolean {
+    return this.choosingAdditionalSacrifice && this.additionalSacrificeSelectedId() === permanentId;
+  }
+
+  confirmAdditionalSacrifice(): void {
+    const selectedId = this.additionalSacrificeSelectedId();
+    if (!this.choosingAdditionalSacrifice || selectedId == null) return;
+    const savedIndex = this.additionalSacrificeCardIndex;
+    this.pendingAdditionalSacrificePermanentId = selectedId;
+    this.choosingAdditionalSacrifice = false;
+    this.additionalSacrificeCardIndex = -1;
+    this.additionalSacrificeCardName = '';
+    this.additionalSacrificeSelectedId.set(null);
+    this.resetAlternateCostState();
+    this.sendPlayCardMessage(savedIndex, null, { alternateCost: true, morph: false });
+  }
+
+  cancelAdditionalSacrifice(): void {
+    this.choosingAdditionalSacrifice = false;
+    this.additionalSacrificeCardIndex = -1;
+    this.additionalSacrificeCardName = '';
+    this.additionalSacrificeSelectedId.set(null);
+    this.pendingAdditionalSacrificePermanentId = null;
+    this.resetAlternateCostState();
+  }
+
   choosePayAlternateCost(): void {
     this.choosingAlternateCost = false;
     if (this.alternateCostCollectEvidence) {
@@ -2823,6 +2869,15 @@ export class TargetingChoiceService {
     if (battlefieldNeeded > 0) {
       this.selectingAlternateCostCreatures = true;
       this.alternateCostSelectedIds.set([]);
+      return;
+    }
+    const savedIndex = this.alternateCostCardIndex;
+    const card = this.gameSignal()?.hand?.[savedIndex];
+    if (card?.additionalSacrificeCreature) {
+      this.choosingAdditionalSacrifice = true;
+      this.additionalSacrificeCardIndex = savedIndex;
+      this.additionalSacrificeCardName = card.name;
+      this.additionalSacrificeSelectedId.set(null);
       return;
     }
     if (this.alternateCostExileHandCount > 0) {

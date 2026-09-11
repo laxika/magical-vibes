@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "159")
 @CardRegistration(set = "USG", collectorNumber = "154")
+@CardRegistration(set = "TD2", collectorNumber = "77")
 public class Reprocess extends Card {
 
     public Reprocess() {

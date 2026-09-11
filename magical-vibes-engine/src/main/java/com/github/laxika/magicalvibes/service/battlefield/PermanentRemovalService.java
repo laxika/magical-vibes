@@ -1113,7 +1113,7 @@ public class PermanentRemovalService {
         if (target == null) return damage;
 
         return redirectDamageToPermanent(gameData, target, damage, sourceName, isCombatDamage,
-                sourcePermanentId, sourceRestrictedRedirect);
+                sourcePermanentId, sourceCard, sourceRestrictedRedirect);
     }
 
     public int redirectPlayerDamageFromMatchingSourceToSelf(GameData gameData, UUID playerId, int damage,
@@ -1125,14 +1125,16 @@ public class PermanentRemovalService {
         if (target == null) return damage;
 
         return redirectDamageToPermanent(gameData, target, damage, sourceName, isCombatDamage,
-                sourcePermanentId, false);
+                sourcePermanentId, sourceCard, false);
     }
 
     private int redirectDamageToPermanent(GameData gameData, Permanent target, int damage,
                                           String sourceName, boolean isCombatDamage,
-                                          UUID sourcePermanentId, boolean sourceRestrictedRedirect) {
+                                          UUID sourcePermanentId, Card sourceCard, boolean sourceRestrictedRedirect) {
 
         int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, isCombatDamage);
+        gameData.recordDamageDealtBySource(sourcePermanentId != null ? sourcePermanentId
+                : sourceCard == null ? null : sourceCard.getId(), effectiveDamage);
         gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " absorbs " + effectiveDamage + " redirected " + sourceName + " damage."));
 
@@ -1141,7 +1143,6 @@ public class PermanentRemovalService {
                 target.addMarkedDamage(sourcePermanentId, effectiveDamage);
                 recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage);
         triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, effectiveDamage);
-                gameData.recordDamageDealtBySource(sourcePermanentId, effectiveDamage);
                 if (sourcePermanentId != null) {
                     gameData.recordDamageRecipientBySource(sourcePermanentId, target.getId());
                     Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
@@ -1261,15 +1262,19 @@ public class PermanentRemovalService {
                         target, gameQueryService.getEffectivePower(gameData, target));
                 boolean wasLand = gameQueryService.isLand(gameData, target);
                 unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
-                for (StackEntry entry : gameData.stack) {
+                List<StackEntry> watchingEntries = new ArrayList<>(gameData.stack);
+                watchingEntries.addAll(gameData.pendingManaAbilityTriggers);
+                for (StackEntry entry : watchingEntries) {
                     if (target.getId().equals(entry.getSourcePermanentId())) {
                         entry.setSourcePermanentSnapshot(new Permanent(target));
                     }
-                    if (target.getId().equals(entry.getTriggeringPermanentId())
-                            && entry.getEffectsToResolve().stream().anyMatch(effect ->
-                            effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
-                                    && may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)) {
-                        entry.setTriggeringPermanentControllerId(playerId);
+                    if (target.getId().equals(entry.getTriggeringPermanentId())) {
+                        entry.getRemovedPermanentControllers().put(target.getId(), playerId);
+                        if (entry.getEffectsToResolve().stream().anyMatch(effect ->
+                                effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
+                                        && may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)) {
+                            entry.setTriggeringPermanentControllerId(playerId);
+                        }
                     }
                 }
                 battlefield.remove(target);

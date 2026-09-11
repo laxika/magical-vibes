@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "40")
+@CardRegistration(set = "DDG", collectorNumber = "24")
 public class Reciprocate extends Card {
 
     public Reciprocate() {
