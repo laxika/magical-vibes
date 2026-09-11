@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "84")
+@CardRegistration(set = "DDS", collectorNumber = "9")
 public class SiftThroughSands extends Card {
 
     public SiftThroughSands() {

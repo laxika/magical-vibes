@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "158")
+@CardRegistration(set = "DDS", collectorNumber = "54")
 public class RelentlessHunter extends Card {
 
     public RelentlessHunter() {

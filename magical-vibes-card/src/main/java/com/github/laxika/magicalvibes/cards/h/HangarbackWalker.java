@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "229")
+@CardRegistration(set = "MPS", collectorNumber = "13")
 public class HangarbackWalker extends Card {
 
     public HangarbackWalker() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SCG", collectorNumber = "53")
 @CardRegistration(set = "VMA", collectorNumber = "96")
+@CardRegistration(set = "DDS", collectorNumber = "12")
 public class TemporalFissure extends Card {
 
     public TemporalFissure() {
