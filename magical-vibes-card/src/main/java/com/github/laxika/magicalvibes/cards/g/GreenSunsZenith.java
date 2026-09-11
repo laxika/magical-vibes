@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "81")
+@CardRegistration(set = "V13", collectorNumber = "19")
 public class GreenSunsZenith extends Card {
 
     public GreenSunsZenith() {
