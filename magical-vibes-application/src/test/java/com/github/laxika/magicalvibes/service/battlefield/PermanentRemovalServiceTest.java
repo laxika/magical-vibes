@@ -624,6 +624,8 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, enchantment);
 
+            assertThat(gd.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn)
+                    .containsExactly(player1Id);
             verify(triggerCollectionService).checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
         }
 
@@ -877,7 +879,7 @@ class PermanentRemovalServiceTest {
 
             verify(triggerCollectionService).checkSelfLeavesTriggered(gd, token, player1Id);
             verify(triggerCollectionService).checkControllerPermanentReturnedToHandTriggers(gd, player1Id);
-            verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id);
+            verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id, token);
         }
     }
 

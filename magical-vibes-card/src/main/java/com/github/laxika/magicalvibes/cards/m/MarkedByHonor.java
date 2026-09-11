@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M15", collectorNumber = "17")
+@CardRegistration(set = "W16", collectorNumber = "2")
 public class MarkedByHonor extends Card {
 
     public MarkedByHonor() {

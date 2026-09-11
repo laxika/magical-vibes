@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "205")
 @CardRegistration(set = "DD1", collectorNumber = "3")
 @CardRegistration(set = "DPA", collectorNumber = "61")
+@CardRegistration(set = "EVG", collectorNumber = "3")
 public class ElvishEulogist extends Card {
 
     public ElvishEulogist() {

@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "MMQ", collectorNumber = "162")
 @CardRegistration(set = "DDD", collectorNumber = "53")
+@CardRegistration(set = "GVL", collectorNumber = "53")
 public class SnuffOut extends Card {
 
     public SnuffOut() {
