@@ -2062,6 +2062,19 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with reflexive MayPayManaEffect queues may ability")
+        void controllerEndStepReflexiveMayPayManaEffectQueuesMayAbility() {
+            Card card = createCardWithName("Controller Reflexive May Pay Card");
+            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                    MayPayManaEffect.reflexiveTarget("{1}", new GainLifeEffect(1), "Pay {1} to gain life?"));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+        }
+
+        @Test
         @DisplayName("ConditionalEffect triggers when creature did not attack this turn")
         void didntAttackTriggersWhenNotAttacked() {
             Card card = createCardWithName("Vigilant Creature");

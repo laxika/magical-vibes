@@ -11,18 +11,12 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VMA", collectorNumber = "150")
+@CardRegistration(set = "PC2", collectorNumber = "40")
+@CardRegistration(set = "DDN", collectorNumber = "14")
 public class BeetlebackChief extends Card {
 
     public BeetlebackChief() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
-                2,
-                "Goblin",
-                1,
-                1,
-                CardColor.RED,
-                List.of(CardSubtype.GOBLIN),
-                Set.of(),
-                Set.of()
-        ));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new CreateTokenEffect(2, "Goblin", 1, 1, CardColor.RED, List.of(CardSubtype.GOBLIN), Set.of(), Set.of()));
     }
 }

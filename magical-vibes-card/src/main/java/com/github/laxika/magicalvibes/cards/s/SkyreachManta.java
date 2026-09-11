@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "5DN", collectorNumber = "152")
+@CardRegistration(set = "MM2", collectorNumber = "229")
+@CardRegistration(set = "MMA", collectorNumber = "215")
 public class SkyreachManta extends Card {
 
     public SkyreachManta() {

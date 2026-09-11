@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThi
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "181")
+@CardRegistration(set = "DDO", collectorNumber = "50")
 public class TimeToFeed extends Card {
 
     public TimeToFeed() {

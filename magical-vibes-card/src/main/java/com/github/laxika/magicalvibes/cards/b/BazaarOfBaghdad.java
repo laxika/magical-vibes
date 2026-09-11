@@ -10,13 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "294")
+@CardRegistration(set = "ME3", collectorNumber = "205")
 public class BazaarOfBaghdad extends Card {
 
     public BazaarOfBaghdad() {
         // {T}: Draw two cards, then discard three cards.
         addActivatedAbility(new ActivatedAbility(
                 true,
-                null,
+                "{0}",
                 List.of(new DrawCardEffect(2), new DiscardEffect(3, DiscardRecipient.CONTROLLER)),
                 "{T}: Draw two cards, then discard three cards."
         ));

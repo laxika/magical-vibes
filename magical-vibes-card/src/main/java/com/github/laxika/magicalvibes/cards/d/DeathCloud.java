@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "40")
+@CardRegistration(set = "MMA", collectorNumber = "76")
 public class DeathCloud extends Card {
 
     public DeathCloud() {

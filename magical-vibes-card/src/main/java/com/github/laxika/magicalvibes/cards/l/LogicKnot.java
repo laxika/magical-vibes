@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 
 @CardRegistration(set = "FUT", collectorNumber = "52")
+@CardRegistration(set = "MMA", collectorNumber = "51")
 public class LogicKnot extends Card {
 
     public LogicKnot() {

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 
 @CardRegistration(set = "CON", collectorNumber = "124")
+@CardRegistration(set = "DDK", collectorNumber = "48")
+@CardRegistration(set = "DDN", collectorNumber = "12")
 public class ShamblingRemains extends Card {
 
     public ShamblingRemains() {

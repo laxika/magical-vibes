@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "SCG", collectorNumber = "84")
 @CardRegistration(set = "DDI", collectorNumber = "59")
 @CardRegistration(set = "VMA", collectorNumber = "155")
+@CardRegistration(set = "JVC", collectorNumber = "47")
 public class ChartoothCougar extends Card {
 
     public ChartoothCougar() {

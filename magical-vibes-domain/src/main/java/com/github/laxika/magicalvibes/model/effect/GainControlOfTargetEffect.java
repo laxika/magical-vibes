@@ -26,43 +26,53 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                           is gone (Merieke Ri Berit's "destroy that creature" on leave/untap).
  *                           Only meaningful for the {@code WHILE_SOURCE_*} durations.
  * @param targetPredicate optional additional restriction on the target permanent
+ * @param maintainTargetPredicate when true, the target predicate is also maintained for the
+ *                           duration of the control effect (e.g. Old Man of the Sea's power check)
  */
 public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
                                         boolean tapWhenControlLost, boolean linkStolenPermanentToSource,
-                                        PermanentPredicate targetPredicate, boolean opponentChoosesTarget)
+                                        PermanentPredicate targetPredicate, boolean opponentChoosesTarget,
+                                        boolean maintainTargetPredicate)
         implements ControlStealingEffect {
 
     public GainControlOfTargetEffect(ControlDuration duration) {
-        this(duration, null, false, false, null, false);
+        this(duration, null, false, false, null, false, false);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype) {
-        this(duration, grantedSubtype, false, false, null, false);
+        this(duration, grantedSubtype, false, false, null, false, false);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, boolean tapWhenControlLost) {
-        this(duration, null, tapWhenControlLost, false, null, false);
+        this(duration, null, tapWhenControlLost, false, null, false, false);
     }
 
     public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
                                      boolean tapWhenControlLost, boolean linkStolenPermanentToSource) {
-        this(duration, grantedSubtype, tapWhenControlLost, linkStolenPermanentToSource, null, false);
+        this(duration, grantedSubtype, tapWhenControlLost, linkStolenPermanentToSource, null, false, false);
     }
 
     /** Control for the given duration, recording the stolen permanent on the source (Merieke Ri Berit). */
     public static GainControlOfTargetEffect linkingToSource(ControlDuration duration) {
-        return new GainControlOfTargetEffect(duration, null, false, true, null, false);
+        return new GainControlOfTargetEffect(duration, null, false, true, null, false, false);
     }
 
     /** Control for the given duration, with an additional target restriction. */
     public static GainControlOfTargetEffect withTargetPredicate(ControlDuration duration,
                                                                 PermanentPredicate targetPredicate) {
-        return new GainControlOfTargetEffect(duration, null, false, false, targetPredicate, false);
+        return new GainControlOfTargetEffect(duration, null, false, false, targetPredicate, false, false);
+    }
+
+    /** Control while the source remains tapped and the target continues to match the predicate. */
+    public static GainControlOfTargetEffect whileSourceRemainsTappedAndTargetMatches(
+            PermanentPredicate targetPredicate) {
+        return new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS_TAPPED,
+                null, false, false, targetPredicate, false, true);
     }
 
     /** Control of a creature chosen by an opponent who was chosen by the spell's controller. */
     public static GainControlOfTargetEffect opponentChosenTarget(ControlDuration duration) {
-        return new GainControlOfTargetEffect(duration, null, false, false, null, true);
+        return new GainControlOfTargetEffect(duration, null, false, false, null, true, false);
     }
 
     @Override

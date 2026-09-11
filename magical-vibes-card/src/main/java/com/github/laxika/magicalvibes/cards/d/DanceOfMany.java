@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "78")
 @CardRegistration(set = "CHR", collectorNumber = "17")
 @CardRegistration(set = "DRK", collectorNumber = "22")
+@CardRegistration(set = "ME3", collectorNumber = "34")
 public class DanceOfMany extends Card {
 
     public DanceOfMany() {

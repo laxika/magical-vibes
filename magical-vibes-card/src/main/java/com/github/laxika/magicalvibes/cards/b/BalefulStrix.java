@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "VMA", collectorNumber = "243")
+@CardRegistration(set = "PC2", collectorNumber = "82")
 public class BalefulStrix extends Card {
 
     public BalefulStrix() {
-        // When this creature enters, draw a card.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
     }
 }

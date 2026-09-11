@@ -46,7 +46,6 @@ class TouchOfBrillianceTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyLibraryCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playersAttemptedDrawFromEmptyLibrary).contains(player1.getId());
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }

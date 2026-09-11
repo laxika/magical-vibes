@@ -797,6 +797,14 @@ public class GameActionAvailabilityService {
                         gameData, card, validTargets.validPermanentIds());
             }
         }
+        if (castingCostService.hasPerTargetCastCostIncrease(gameData, playerId)) {
+            ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
+                    gameData, card, playerId, List.of());
+            if (validTargets != null) {
+                additionalCost += castingCostService.getMinimumPerTargetCastCostIncrease(
+                        gameData, playerId, validTargets.minTargets());
+            }
+        }
         int delveReduction = castingCostService.maximumDelveReduction(
                 gameData, playerId, card, 0, additionalCost);
         int effectiveAdditionalCost = additionalCost - delveReduction;
@@ -1016,6 +1024,32 @@ public class GameActionAvailabilityService {
                         gameData, playerId, card, qualifyingTargets);
                 if (perTargetReduction > 0 && cost.canPay(paymentPool, additionalCost - perTargetReduction)) {
                     return true;
+                }
+            }
+        }
+
+        if (castingCostService.hasTargetCountCastCostReduction(gameData, playerId, card)) {
+            ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
+                    gameData, card, playerId, List.of());
+            if (validTargets != null) {
+                List<UUID> targetCandidates = new ArrayList<>(validTargets.validPermanentIds());
+                targetCandidates.addAll(validTargets.validPlayerIds());
+                targetCandidates.addAll(validTargets.validGraveyardCardIds());
+                targetCandidates.addAll(validTargets.validExiledCardIds());
+                int maximumTargetCount = targetCandidates.isEmpty() ? 0 : card.isAllowSharedTargets()
+                        ? validTargets.maxTargets()
+                        : Math.min(validTargets.maxTargets(), targetCandidates.size());
+                if (maximumTargetCount > 0) {
+                    List<UUID> reductionTargets = new ArrayList<>(maximumTargetCount);
+                    for (int i = 0; i < maximumTargetCount; i++) {
+                        reductionTargets.add(targetCandidates.get(card.isAllowSharedTargets()
+                                ? i % targetCandidates.size() : i));
+                    }
+                    int reduction = castingCostService.computeTargetBasedCostReduction(
+                            gameData, playerId, card, reductionTargets);
+                    if (reduction > 0 && cost.canPay(paymentPool, additionalCost - reduction)) {
+                        return true;
+                    }
                 }
             }
         }

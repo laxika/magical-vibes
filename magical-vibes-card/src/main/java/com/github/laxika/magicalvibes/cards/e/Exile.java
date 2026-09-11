@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -27,6 +28,7 @@ public class Exile extends Card {
     public Exile() {
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
                         new PermanentIsAttackingPredicate(),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE))))),
                 "Target must be a nonwhite attacking creature"

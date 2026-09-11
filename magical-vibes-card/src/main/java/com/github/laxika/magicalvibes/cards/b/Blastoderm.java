@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfE
 @CardRegistration(set = "NEM", collectorNumber = "102")
 @CardRegistration(set = "DDD", collectorNumber = "7")
 @CardRegistration(set = "VMA", collectorNumber = "198")
+@CardRegistration(set = "GVL", collectorNumber = "7")
 public class Blastoderm extends Card {
 
     public Blastoderm() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "RAV", collectorNumber = "172")
 @CardRegistration(set = "DDJ", collectorNumber = "69")
+@CardRegistration(set = "MMA", collectorNumber = "153")
 public class LifeFromTheLoam extends Card {
 
     public LifeFromTheLoam() {

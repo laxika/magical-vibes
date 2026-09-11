@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "115")
+@CardRegistration(set = "ME3", collectorNumber = "108")
 public class LuBuMasterAtArms extends Card {
 
     public LuBuMasterAtArms() {

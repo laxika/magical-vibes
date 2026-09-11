@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 
 @CardRegistration(set = "CHK", collectorNumber = "79")
+@CardRegistration(set = "MMA", collectorNumber = "60")
 public class PetalsOfInsight extends Card {
 
     public PetalsOfInsight() {

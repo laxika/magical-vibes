@@ -901,6 +901,10 @@ class AiTargetSelector {
                 case SHARE_CARD_TYPE -> gameQueryService.sharesCardType(gameData, other, candidate);
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
+                case CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT -> gameData
+                        .combatDamageToPlayersThisCombat
+                        .getOrDefault(other.getId(), Set.of())
+                        .contains(candidateControllerId);
                 case ATTACHED_TO_FIRST_TARGET -> java.util.Objects.equals(other.getId(), candidate.getAttachedTo());
                 case BLOCKED_BY_FIRST_TARGET -> gameData.combatOpponentIdsBlockedByThisTurn
                         .getOrDefault(other.getId(), Set.of())
@@ -1125,7 +1129,7 @@ class AiTargetSelector {
                 }
                 if (rge.requiresManaValueAtMostX() && maxAffordableX < Integer.MAX_VALUE) {
                     candidates = candidates.stream()
-                            .filter(c -> c.getManaValue() <= maxAffordableX)
+                            .filter(c -> c.getManaValue() <= maxAffordableX + rge.manaValueXOffset())
                             .toList();
                 }
             } else {

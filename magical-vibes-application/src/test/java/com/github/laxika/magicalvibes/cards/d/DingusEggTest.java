@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.a.Armageddon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +23,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DingusEgg.class, Armageddon.class, DemonicHordes.class, GrizzlyBears.class,
-        Mountain.class, StoneRain.class, WrathOfGod.class})
+        Mountain.class, Shatter.class, StoneRain.class, WrathOfGod.class})
 class DingusEggTest extends BaseCardTest {
 
     @Test
@@ -43,6 +44,31 @@ class DingusEggTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Dingus Egg");
 
         harness.passBothPriorities(); // Resolve trigger
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Trigger still resolves after Dingus Egg leaves the battlefield")
+    void triggerResolvesAfterEggLeavesBattlefield() {
+        Permanent egg = harness.addToBattlefieldAndReturn(player1, new DingusEgg());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setLife(player2, 20);
+
+        UUID mountainId = harness.getPermanentId(player2, "Mountain");
+        harness.setHand(player1, List.of(new StoneRain(), new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castSorcery(player1, 0, mountainId);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, egg.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Dingus Egg");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }

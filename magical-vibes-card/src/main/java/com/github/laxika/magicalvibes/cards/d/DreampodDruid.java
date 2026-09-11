@@ -13,12 +13,15 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VMA", collectorNumber = "204")
+@CardRegistration(set = "PC2", collectorNumber = "64")
 public class DreampodDruid extends Card {
 
     public DreampodDruid() {
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new ConditionalEffect(new Enchanted(),
-                        new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.SAPROLING), Set.of(), Set.of())));
+        // At the beginning of each upkeep, if this creature is enchanted, create a 1/1 green
+        // Saproling creature token.
+        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new ConditionalEffect(
+                new Enchanted(),
+                new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
+                        List.of(CardSubtype.SAPROLING), Set.of(), Set.of())));
     }
 }

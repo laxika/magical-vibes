@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "99")
+@CardRegistration(set = "PC2", collectorNumber = "31")
+@CardRegistration(set = "DDP", collectorNumber = "48")
 public class CadaverImp extends Card {
 
     public CadaverImp() {

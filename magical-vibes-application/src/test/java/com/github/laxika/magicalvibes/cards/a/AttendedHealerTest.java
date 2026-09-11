@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -19,6 +21,8 @@ class AttendedHealerTest extends BaseCardTest {
     @Test
     @DisplayName("Creates a Cat the first time its controller gains life each turn")
     void createsCatOnFirstLifeGainEachTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new AttendedHealer());
         harness.setLife(player1, 20);
 
@@ -50,7 +54,7 @@ class AttendedHealerTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, cleric, Keyword.LIFELINK)).isTrue();
 
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, cleric, Keyword.LIFELINK)).isFalse();
@@ -75,7 +79,7 @@ class AttendedHealerTest extends BaseCardTest {
     }
 
     private void advanceTurn() {
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }

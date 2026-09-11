@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "PTK", collectorNumber = "75")
 @CardRegistration(set = "VMA", collectorNumber = "120")
+@CardRegistration(set = "ME3", collectorNumber = "65")
 public class Famine extends Card {
 
     public Famine() {

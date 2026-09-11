@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "157")
+@CardRegistration(set = "NEO", collectorNumber = "182")
 public class FadeIntoAntiquity extends Card {
 
     public FadeIntoAntiquity() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "14")
+@CardRegistration(set = "DDO", collectorNumber = "9")
 public class GempalmAvenger extends Card {
 
     public GempalmAvenger() {

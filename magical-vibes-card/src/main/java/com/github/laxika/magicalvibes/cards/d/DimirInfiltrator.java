@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "203")
+@CardRegistration(set = "PC2", collectorNumber = "86")
 public class DimirInfiltrator extends Card {
 
     public DimirInfiltrator() {

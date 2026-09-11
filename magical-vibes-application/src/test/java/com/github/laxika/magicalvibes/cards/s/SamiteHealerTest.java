@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.Earthquake;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SamiteHealer.class, GrizzlyBears.class})
+@CardUsed({SamiteHealer.class, GrizzlyBears.class, Earthquake.class})
 class SamiteHealerTest extends BaseCardTest {
 
     @Test
@@ -57,6 +59,18 @@ class SamiteHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         assertThat(healer.isTapped()).isTrue();
+    }
+
+    @Test
+    void tappedHealerCannotActivateAgain() {
+        addReadyHealer(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -196,6 +210,23 @@ class SamiteHealerTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    void targetPlayerShieldPreventsNoncombatDamage() {
+        addReadyHealer(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
 

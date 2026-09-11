@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "EVE", collectorNumber = "112")
 @CardRegistration(set = "DDJ", collectorNumber = "8")
+@CardRegistration(set = "MM2", collectorNumber = "198")
 public class ShrewdHatchling extends Card {
 
     public ShrewdHatchling() {

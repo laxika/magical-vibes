@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "LEG", collectorNumber = "137")
 @CardRegistration(set = "PD2", collectorNumber = "16")
 @CardRegistration(set = "VMA", collectorNumber = "153")
+@CardRegistration(set = "ME3", collectorNumber = "90")
 public class ChainLightning extends Card {
 
     public ChainLightning() {

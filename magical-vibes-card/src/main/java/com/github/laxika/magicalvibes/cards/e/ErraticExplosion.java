@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandBottomThenDealManaValueDamageEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "201")
+@CardRegistration(set = "PC2", collectorNumber = "41")
 public class ErraticExplosion extends Card {
 
     public ErraticExplosion() {

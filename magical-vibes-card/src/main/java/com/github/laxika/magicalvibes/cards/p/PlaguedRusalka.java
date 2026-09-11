@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "56")
 @CardRegistration(set = "DDJ", collectorNumber = "46")
+@CardRegistration(set = "MM2", collectorNumber = "89")
 public class PlaguedRusalka extends Card {
 
     public PlaguedRusalka() {

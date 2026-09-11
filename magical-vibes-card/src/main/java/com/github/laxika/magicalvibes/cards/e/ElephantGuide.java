@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "JUD", collectorNumber = "111")
 @CardRegistration(set = "DDD", collectorNumber = "18")
 @CardRegistration(set = "VMA", collectorNumber = "205")
+@CardRegistration(set = "GVL", collectorNumber = "18")
 public class ElephantGuide extends Card {
 
     public ElephantGuide() {

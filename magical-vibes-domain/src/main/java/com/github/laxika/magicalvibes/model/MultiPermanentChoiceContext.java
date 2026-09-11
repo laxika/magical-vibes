@@ -26,6 +26,10 @@ public sealed interface MultiPermanentChoiceContext {
     record EtbPlayerTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
             implements MultiPermanentChoiceContext {}
 
+    /** Selects an optional graveyard-card target while walking an ETB or planar target group. */
+    record EtbGraveyardCardTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
+            implements MultiPermanentChoiceContext {}
+
     record RemoveCounterFromChosenPermanents(StackEntry resolvingEntry, CounterType counterType,
                                              PermanentPredicate permanentFilter)
             implements MultiPermanentChoiceContext {
@@ -750,7 +754,7 @@ public sealed interface MultiPermanentChoiceContext {
      * creature's ETB triggers proceed. Carries the entry context needed to resume
      * {@code processCreatureETBEffects} for the discard trigger.
      */
-    record DevourSacrifice(UUID enteringPermanentId, int multiplier, UUID controllerId, Card card,
+    record DevourSacrifice(UUID enteringPermanentId, DynamicAmount multiplier, UUID controllerId, Card card,
                            UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked)
             implements MultiPermanentChoiceContext {
     }

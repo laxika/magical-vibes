@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "139")
 @CardRegistration(set = "DD1", collectorNumber = "11")
+@CardRegistration(set = "EVG", collectorNumber = "11")
 public class StonewoodInvoker extends Card {
 
     public StonewoodInvoker() {

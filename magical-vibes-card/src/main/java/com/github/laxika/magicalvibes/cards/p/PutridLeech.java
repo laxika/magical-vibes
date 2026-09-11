@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "95")
 @CardRegistration(set = "DDJ", collectorNumber = "53")
+@CardRegistration(set = "DDM", collectorNumber = "51")
 public class PutridLeech extends Card {
 
     public PutridLeech() {

@@ -43,9 +43,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TurnFaceUpXValueChoice,
         PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.HandBottomExileChoice,
+        PendingInteraction.PlanarCardChoice,
+        PendingInteraction.SpatialMergingCardOrder,
         PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.InvokeCalamityCastChoice,
         PendingInteraction.PortentOfCalamityState,
         PendingInteraction.PlarggAndNassariOpponentChoice,
         PendingInteraction.PlarggAndNassariCardChoice,
@@ -123,6 +126,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ImprintFromHandChoice,
         PendingInteraction.ExileFromHandWithRefineCountersChoice,
         PendingInteraction.DiscardCostChoice,
+        PendingInteraction.PlanarAbilityHandCardChoice,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.VividCardChoice,
         PendingInteraction.NivMizzetColorPairChoice,
@@ -552,6 +556,48 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Choose one of the plane cards revealed by a planar effect. */
+    record PlanarCardChoice(UUID playerId, java.util.List<Card> revealedCards,
+                            java.util.List<UUID> validPlaneCardIds, String prompt)
+            implements PendingInteraction {
+
+        public PlanarCardChoice {
+            revealedCards = java.util.List.copyOf(revealedCards);
+            validPlaneCardIds = java.util.List.copyOf(validPlaneCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validPlaneCardIds, 1, 1);
+        }
+    }
+
+    /** Orders the non-plane cards revealed by Spatial Merging before they are bottomed. */
+    record SpatialMergingCardOrder(UUID playerId, java.util.List<Card> planes,
+                                   java.util.List<Card> cardsToBottom, String prompt)
+            implements PendingInteraction {
+
+        public SpatialMergingCardOrder {
+            planes = java.util.List.copyOf(planes);
+            cardsToBottom = java.util.List.copyOf(cardsToBottom);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
+    }
+
     /**
      * Accept/decline prompt for the head of {@link GameData#pendingMayAbilities}.
      * {@code description} and {@code manaCost} mirror that head entry; whether the player
@@ -626,6 +672,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /** Invoke Calamity: choose up to two eligible spells with total mana value at most six. */
+    record InvokeCalamityCastChoice(UUID playerId, java.util.List<UUID> validCardIds)
+            implements PendingInteraction {
+
+        public InvokeCalamityCastChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 2);
         }
     }
 
@@ -1717,19 +1782,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                 UUID targetPlayerId, UUID controllerId, String cardName,
                                 boolean drawForHandExiled,
                                 com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                                String sourceSetCode)
+                                String sourceSetCode,
+                                UUID sourcePermanentId)
             implements PendingInteraction {
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName) {
-            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName, false, null, null);
+            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
+                    false, null, null, null);
         }
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName,
                                     boolean drawForHandExiled) {
             this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
-                    drawForHandExiled, null, null);
+                    drawForHandExiled, null, null, null);
         }
 
         @Override
@@ -3548,6 +3615,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record DiscardCostChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
             implements PendingInteraction, HandChoice {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
+    /** Choose the nonland card to exile for a planar ability's activation cost. */
+    record PlanarAbilityHandCardChoice(UUID playerId, UUID sourceId, int abilityIndex, int xValue,
+                                       UUID targetId, Zone targetZone,
+                                       java.util.List<Integer> validIndices, String prompt)
+            implements PendingInteraction, HandChoice {
+
+        public PlanarAbilityHandCardChoice {
+            validIndices = validIndices != null ? java.util.List.copyOf(validIndices) : java.util.List.of();
+        }
 
         @Override
         public UUID decidingPlayerId() {

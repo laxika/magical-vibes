@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "FEM", collectorNumber = "12")
 @CardRegistration(set = "FEM", collectorNumber = "156")
 @CardRegistration(set = "DDC", collectorNumber = "2")
+@CardRegistration(set = "DVD", collectorNumber = "2")
 public class IcatianPriest extends Card {
 
     public IcatianPriest() {

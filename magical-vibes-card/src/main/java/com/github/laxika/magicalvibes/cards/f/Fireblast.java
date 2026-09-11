@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "DD2", collectorNumber = "55")
 @CardRegistration(set = "PD2", collectorNumber = "26")
 @CardRegistration(set = "VMA", collectorNumber = "159")
+@CardRegistration(set = "JVC", collectorNumber = "55")
 public class Fireblast extends Card {
 
     public Fireblast() {

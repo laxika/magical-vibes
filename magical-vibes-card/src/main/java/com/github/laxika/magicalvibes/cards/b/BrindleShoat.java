@@ -11,12 +11,14 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VMA", collectorNumber = "199")
+@CardRegistration(set = "PC2", collectorNumber = "60")
 public class BrindleShoat extends Card {
 
     public BrindleShoat() {
         // When this creature dies, create a 3/3 green Boar creature token.
         addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
-                1, "Boar", 3, 3, CardColor.GREEN,
-                List.of(CardSubtype.BOAR), Set.of(), Set.of()));
+                "Boar", 3, 3, CardColor.GREEN,
+                List.of(CardSubtype.BOAR), Set.of(), Set.of()
+        ));
     }
 }
