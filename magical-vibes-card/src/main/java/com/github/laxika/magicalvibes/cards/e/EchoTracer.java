@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LGN", collectorNumber = "37")
+@CardRegistration(set = "DDN", collectorNumber = "51")
 public class EchoTracer extends Card {
 
     public EchoTracer() {

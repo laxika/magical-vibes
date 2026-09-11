@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 
 @CardRegistration(set = "CHK", collectorNumber = "13")
+@CardRegistration(set = "DDN", collectorNumber = "66")
 public class HoldTheLine extends Card {
 
     public HoldTheLine() {
