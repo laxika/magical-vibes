@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
 @CardRegistration(set = "5DN", collectorNumber = "81")
+@CardRegistration(set = "MM2", collectorNumber = "138")
 public class AllSunsDawn extends Card {
 
     public AllSunsDawn() {

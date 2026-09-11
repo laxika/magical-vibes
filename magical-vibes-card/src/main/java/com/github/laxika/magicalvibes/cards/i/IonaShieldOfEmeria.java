@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "13")
+@CardRegistration(set = "MM2", collectorNumber = "20")
 public class IonaShieldOfEmeria extends Card {
 
     public IonaShieldOfEmeria() {

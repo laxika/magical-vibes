@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "77")
+@CardRegistration(set = "MM2", collectorNumber = "123")
 public class SkarrganFirebird extends Card {
 
     public SkarrganFirebird() {

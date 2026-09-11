@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "PLC", collectorNumber = "116")
+@CardRegistration(set = "MM2", collectorNumber = "108")
 public class BruteForce extends Card {
 
     public BruteForce() {

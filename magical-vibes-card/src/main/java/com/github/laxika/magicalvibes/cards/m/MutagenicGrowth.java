@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "116")
+@CardRegistration(set = "MM2", collectorNumber = "149")
 public class MutagenicGrowth extends Card {
 
     public MutagenicGrowth() {

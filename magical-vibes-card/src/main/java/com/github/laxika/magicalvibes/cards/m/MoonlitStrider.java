@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "16")
+@CardRegistration(set = "MM2", collectorNumber = "27")
 public class MoonlitStrider extends Card {
 
     public MoonlitStrider() {

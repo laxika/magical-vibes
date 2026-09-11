@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "130")
 @CardRegistration(set = "M12", collectorNumber = "128")
+@CardRegistration(set = "MM2", collectorNumber = "110")
 public class Combust extends Card {
 
     public Combust() {

@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DST", collectorNumber = "163")
 @CardRegistration(set = "TD2", collectorNumber = "37")
+@CardRegistration(set = "MM2", collectorNumber = "236")
 public class BlinkmothNexus extends Card {
 
     public BlinkmothNexus() {

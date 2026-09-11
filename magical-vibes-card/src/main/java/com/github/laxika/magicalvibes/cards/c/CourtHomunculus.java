@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "CON", collectorNumber = "6")
+@CardRegistration(set = "MM2", collectorNumber = "13")
 public class CourtHomunculus extends Card {
 
     public CourtHomunculus() {

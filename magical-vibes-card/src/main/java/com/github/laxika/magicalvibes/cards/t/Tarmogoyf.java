@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "153")
+@CardRegistration(set = "MM2", collectorNumber = "165")
 public class Tarmogoyf extends Card {
 
     public Tarmogoyf() {

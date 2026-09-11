@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "57")
+@CardRegistration(set = "MM2", collectorNumber = "79")
 public class Dismember extends Card {
 
     public Dismember() {

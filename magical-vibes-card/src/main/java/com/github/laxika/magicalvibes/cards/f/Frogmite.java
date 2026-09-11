@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "172")
 @CardRegistration(set = "DDF", collectorNumber = "51")
+@CardRegistration(set = "MM2", collectorNumber = "215")
 public class Frogmite extends Card {
 
     public Frogmite() {

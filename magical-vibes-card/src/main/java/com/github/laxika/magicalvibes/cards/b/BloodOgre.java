@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  * than an ETB trigger. First strike is a Scryfall-loaded keyword and needs no engine logic here.
  */
 @CardRegistration(set = "M12", collectorNumber = "122")
+@CardRegistration(set = "MM2", collectorNumber = "106")
 public class BloodOgre extends Card {
 
     public BloodOgre() {

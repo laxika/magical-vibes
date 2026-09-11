@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "84")
+@CardRegistration(set = "MM2", collectorNumber = "148")
 public class MatcaRioters extends Card {
 
     public MatcaRioters() {
