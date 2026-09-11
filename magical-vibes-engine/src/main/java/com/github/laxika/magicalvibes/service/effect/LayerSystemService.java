@@ -743,6 +743,13 @@ public class LayerSystemService {
         h = mix(h, enumOrdinal(p.getSecondChosenSubtype()));
         h = mix(h, enumOrdinal(p.getChosenManaValueParity()));
         h = mix(h, p.getChosenName() == null ? 0 : p.getChosenName().hashCode());
+        long chosenModeByPlayerSum = 0;
+        for (Map.Entry<UUID, String> choice : p.getChosenModeByPlayer().entrySet()) {
+            chosenModeByPlayerSum += mix64(choice.getKey().hashCode()
+                    ^ (31L * (choice.getValue() == null ? 0 : choice.getValue().hashCode())));
+        }
+        h = mix(h, chosenModeByPlayerSum);
+        h = mix(h, p.getChosenModeByPlayer().size());
         h = mix(h, p.getChosenPermanentId() == null ? 0 : p.getChosenPermanentId().hashCode());
         h = mix(h, p.getLastChosenExiledCard() == null
                 ? 0 : System.identityHashCode(p.getLastChosenExiledCard()));

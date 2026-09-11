@@ -295,7 +295,12 @@ public class AsEntersInteractionService {
         if (modeChoice != null) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
-            if (justEntered.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
+            if (modeChoice.eachPlayer()) {
+                if (playerInputService.beginChooseModeOnEnterChoiceForEachPlayer(
+                        gameData, card, justEntered.getId(), modeChoice.modes())) {
+                    return;
+                }
+            } else if (justEntered.getChosenModeLabels().stream().noneMatch(modeChoice.modes()::contains)) {
                 playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card,
                         justEntered.getId(), modeChoice.modes());
                 return;
