@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "173")
+@CardRegistration(set = "DDM", collectorNumber = "54")
 public class OranRiefRecluse extends Card {
 
     public OranRiefRecluse() {

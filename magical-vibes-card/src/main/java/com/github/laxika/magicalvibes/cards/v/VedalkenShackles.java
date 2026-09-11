@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "164")
+@CardRegistration(set = "MMA", collectorNumber = "218")
 public class VedalkenShackles extends Card {
 
     public VedalkenShackles() {

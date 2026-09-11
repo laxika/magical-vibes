@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndCh
 @CardRegistration(set = "FIN", collectorNumber = "94")
 @CardRegistration(set = "FIN", collectorNumber = "334")
 @CardRegistration(set = "RAV", collectorNumber = "81")
+@CardRegistration(set = "MMA", collectorNumber = "75")
 public class DarkConfidant extends Card {
 
     public DarkConfidant() {

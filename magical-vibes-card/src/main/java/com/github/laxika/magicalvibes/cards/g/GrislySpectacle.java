@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "66")
+@CardRegistration(set = "DDM", collectorNumber = "75")
 public class GrislySpectacle extends Card {
 
     public GrislySpectacle() {

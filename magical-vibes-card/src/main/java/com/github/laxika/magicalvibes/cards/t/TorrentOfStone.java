@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "119")
+@CardRegistration(set = "MMA", collectorNumber = "137")
 public class TorrentOfStone extends Card {
 
     public TorrentOfStone() {

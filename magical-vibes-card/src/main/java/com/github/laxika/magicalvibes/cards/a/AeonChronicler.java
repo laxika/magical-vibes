@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import java.util.List;
 
 @CardRegistration(set = "PLC", collectorNumber = "32")
+@CardRegistration(set = "DDM", collectorNumber = "17")
 public class AeonChronicler extends Card {
 
     public AeonChronicler() {

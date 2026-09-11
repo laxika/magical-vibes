@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "66")
 @CardRegistration(set = "DDD", collectorNumber = "42")
+@CardRegistration(set = "MMA", collectorNumber = "86")
 public class FaerieMacabre extends Card {
 
     public FaerieMacabre() {

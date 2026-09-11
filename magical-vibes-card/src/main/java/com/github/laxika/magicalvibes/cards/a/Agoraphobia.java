@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "30")
+@CardRegistration(set = "DDM", collectorNumber = "22")
 public class Agoraphobia extends Card {
 
     public Agoraphobia() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "229")
+@CardRegistration(set = "MMA", collectorNumber = "190")
 public class KitchenFinks extends Card {
 
     public KitchenFinks() {

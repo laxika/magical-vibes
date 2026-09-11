@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "90")
+@CardRegistration(set = "MMA", collectorNumber = "99")
 public class StreetWraith extends Card {
 
     public StreetWraith() {

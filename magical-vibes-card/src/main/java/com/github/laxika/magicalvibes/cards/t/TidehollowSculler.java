@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "202")
+@CardRegistration(set = "MMA", collectorNumber = "184")
 public class TidehollowSculler extends Card {
 
     public TidehollowSculler() {
