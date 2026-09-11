@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "EXO", collectorNumber = "35")
 @CardRegistration(set = "TPR", collectorNumber = "50")
+@CardRegistration(set = "MP2", collectorNumber = "33")
 public class Forbid extends Card {
 
     public Forbid() {

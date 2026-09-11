@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 @CardRegistration(set = "ODY", collectorNumber = "82")
+@CardRegistration(set = "MP2", collectorNumber = "13")
 public class Divert extends Card {
 
     public Divert() {

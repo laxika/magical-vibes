@@ -112,6 +112,7 @@ public enum CardSet {
     SET_ALA("ALA"),
     SET_CON("CON"),
     SET_AKH("AKH"),
+    SET_MP2("MP2"),
     SET_AKR("AKR"),
     SET_AFR("AFR"),
     SET_ARB("ARB"),
@@ -217,7 +218,8 @@ public enum CardSet {
     SET_PD2("PD2"),
     SET_PC2("PC2"),
     SET_PD3("PD3"),
-    SET_MD1("MD1");
+    SET_MD1("MD1"),
+    SET_G17("G17");
 
     @Getter
     private final String code;

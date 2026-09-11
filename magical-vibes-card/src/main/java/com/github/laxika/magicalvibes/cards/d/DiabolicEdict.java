@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "TMP", collectorNumber = "128")
 @CardRegistration(set = "TPR", collectorNumber = "102")
 @CardRegistration(set = "BTD", collectorNumber = "23")
+@CardRegistration(set = "MP2", collectorNumber = "41")
 public class DiabolicEdict extends Card {
 
     public DiabolicEdict() {
