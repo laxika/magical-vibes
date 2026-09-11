@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "25")
+@CardRegistration(set = "VMA", collectorNumber = "54")
 public class ZhalfirinCrusader extends Card {
 
     public ZhalfirinCrusader() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "47")
 @CardRegistration(set = "TPR", collectorNumber = "33")
+@CardRegistration(set = "VMA", collectorNumber = "47")
 public class SoltariTrooper extends Card {
 
     public SoltariTrooper() {

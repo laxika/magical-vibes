@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
 
 @CardRegistration(set = "SCG", collectorNumber = "41")
+@CardRegistration(set = "VMA", collectorNumber = "80")
 public class MindsDesire extends Card {
 
     public MindsDesire() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMP", collectorNumber = "159")
 @CardRegistration(set = "TPR", collectorNumber = "119")
+@CardRegistration(set = "VMA", collectorNumber = "141")
 public class SpinalGraft extends Card {
 
     public SpinalGraft() {

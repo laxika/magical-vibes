@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTopCreatureCardFromGrav
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WTH", collectorNumber = "21")
+@CardRegistration(set = "VMA", collectorNumber = "34")
 public class MistmoonGriffin extends Card {
 
     public MistmoonGriffin() {

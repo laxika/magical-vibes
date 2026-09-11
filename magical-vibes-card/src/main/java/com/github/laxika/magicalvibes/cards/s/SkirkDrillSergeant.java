@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "112")
 @CardRegistration(set = "DD1", collectorNumber = "49")
+@CardRegistration(set = "VMA", collectorNumber = "185")
 public class SkirkDrillSergeant extends Card {
 
     private static final MayPayManaEffect DRILL_SERGEANT_ABILITY = new MayPayManaEffect(

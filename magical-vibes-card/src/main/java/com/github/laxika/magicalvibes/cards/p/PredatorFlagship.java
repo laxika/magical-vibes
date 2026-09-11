@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "135")
+@CardRegistration(set = "VMA", collectorNumber = "279")
 public class PredatorFlagship extends Card {
 
     public PredatorFlagship() {

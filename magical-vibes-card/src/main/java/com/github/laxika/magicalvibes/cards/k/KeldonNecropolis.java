@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "INV", collectorNumber = "325")
+@CardRegistration(set = "VMA", collectorNumber = "300")
 public class KeldonNecropolis extends Card {
 
     public KeldonNecropolis() {

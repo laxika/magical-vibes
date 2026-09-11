@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 @CardRegistration(set = "TOR", collectorNumber = "51")
+@CardRegistration(set = "VMA", collectorNumber = "106")
 public class CabalRitual extends Card {
 
     public CabalRitual() {

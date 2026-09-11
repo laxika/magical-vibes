@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "SUM", collectorNumber = "291")
 @CardRegistration(set = "3ED", collectorNumber = "291")
+@CardRegistration(set = "VMA", collectorNumber = "324")
 public class VolcanicIsland extends Card {
 
     public VolcanicIsland() {

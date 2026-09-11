@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "USG", collectorNumber = "309")
+@CardRegistration(set = "VMA", collectorNumber = "282")
 public class Smokestack extends Card {
 
     public Smokestack() {

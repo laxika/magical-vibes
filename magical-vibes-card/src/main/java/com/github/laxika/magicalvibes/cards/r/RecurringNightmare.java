@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "72")
 @CardRegistration(set = "TPR", collectorNumber = "113")
+@CardRegistration(set = "VMA", collectorNumber = "137")
 public class RecurringNightmare extends Card {
 
     public RecurringNightmare() {

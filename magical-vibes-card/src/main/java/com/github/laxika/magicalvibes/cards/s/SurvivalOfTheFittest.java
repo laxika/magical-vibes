@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "129")
 @CardRegistration(set = "TPR", collectorNumber = "199")
+@CardRegistration(set = "VMA", collectorNumber = "234")
 public class SurvivalOfTheFittest extends Card {
 
     public SurvivalOfTheFittest() {

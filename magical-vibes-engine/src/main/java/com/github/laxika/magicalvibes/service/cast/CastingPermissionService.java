@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGra
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
@@ -310,6 +311,14 @@ public class CastingPermissionService {
         // Hand to Hand: during combat no player can cast instant spells.
         if (gameQueryService.isCombatActionLockActive(gameData)) {
             restricted.add(CardType.INSTANT);
+        }
+        // Basandra, Battle Seraph: during combat no player can cast spells. Lands are excluded
+        // because playing a land is not casting a spell; planar cards are not spells either.
+        if (gameQueryService.isSpellCastingCombatLockActive(gameData)) {
+            EnumSet<CardType> spellTypes = EnumSet.allOf(CardType.class);
+            spellTypes.remove(CardType.LAND);
+            spellTypes.removeIf(CardType::isPlanar);
+            restricted.addAll(spellTypes);
         }
         // Controller-only restrictions (Steel Golem) come from the player's own permanents;
         // symmetric restrictions (Aether Storm) apply no matter whose battlefield they sit on.
@@ -808,12 +817,16 @@ public class CastingPermissionService {
                                 || card.getName().equals(perm.getSecondChosenName()))) {
                         return true;
                     }
-                    if (effect instanceof CardNameRestrictionEffect restriction
-                            && !card.getSupertypes().contains(CardSupertype.BASIC)) {
+                    if (effect instanceof CardNameRestrictionEffect restriction) {
                         if (nontokenPermanentNames == null) {
                             nontokenPermanentNames = getNontokenPermanentNames(gameData);
                         }
-                        if (restriction.forbiddenNonbasicLandNames(nontokenPermanentNames).contains(card.getName())) {
+                        boolean nonbasicLandRestricted = !card.getSupertypes().contains(CardSupertype.BASIC)
+                                && restriction.forbiddenNonbasicLandNames(nontokenPermanentNames)
+                                .contains(card.getName());
+                        boolean landRestricted = restriction.forbiddenLandNames(nontokenPermanentNames)
+                                .contains(card.getName());
+                        if (nonbasicLandRestricted || landRestricted) {
                             return true;
                         }
                     }

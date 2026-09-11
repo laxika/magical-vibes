@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "17")
+@CardRegistration(set = "VMA", collectorNumber = "37")
 public class ParallaxWave extends Card {
 
     public ParallaxWave() {

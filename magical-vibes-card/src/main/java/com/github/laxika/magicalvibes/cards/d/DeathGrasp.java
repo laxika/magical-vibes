@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "APC", collectorNumber = "95")
+@CardRegistration(set = "VMA", collectorNumber = "249")
 public class DeathGrasp extends Card {
 
     public DeathGrasp() {

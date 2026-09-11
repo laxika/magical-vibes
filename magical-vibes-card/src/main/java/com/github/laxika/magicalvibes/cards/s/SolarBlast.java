@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "234")
+@CardRegistration(set = "VMA", collectorNumber = "187")
 public class SolarBlast extends Card {
 
     public SolarBlast() {

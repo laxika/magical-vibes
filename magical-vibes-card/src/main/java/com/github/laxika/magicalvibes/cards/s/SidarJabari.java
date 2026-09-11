@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MIR", collectorNumber = "39")
+@CardRegistration(set = "VMA", collectorNumber = "45")
 public class SidarJabari extends Card {
 
     public SidarJabari() {

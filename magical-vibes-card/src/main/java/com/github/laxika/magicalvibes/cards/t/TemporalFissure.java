@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SCG", collectorNumber = "53")
+@CardRegistration(set = "VMA", collectorNumber = "96")
 public class TemporalFissure extends Card {
 
     public TemporalFissure() {

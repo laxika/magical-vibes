@@ -181,6 +181,7 @@ All paths relative to `cards/`.
 | Opponents limited to one dungeon venture each turn | `k/KeenEaredSentry.java` | STATIC OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect + STATIC GrantControllerKeywordEffect(HEXPROOF) |
 | Cast/activate only on own turns | `c/CityOfSolitude.java` | STATIC PlayersCanCastAndActivateOnlyDuringOwnTurnEffect — symmetric; mana abilities included |
 | No instants / non-mana abilities in combat | `h/HandToHand.java` | STATIC PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect — symmetric; only during combat steps |
+| No spells in combat | `b/BasandraBattleSeraph.java` | STATIC PlayersCantCastSpellsDuringCombatEffect — symmetric; lands remain playable because land plays are not spells |
 | Aura: enchanted creature's controller can't cast creature spells | `b/BrandOfIllOmen.java` | STATIC EnchantedPermanentControllerCantCastSpellTypeEffect(Set.of(CREATURE)) + UPKEEP_TRIGGERED CumulativeUpkeepEffect("{R}") |
 | Opponents with more permanents of a type can't cast/play it | `w/WardOfBones.java` | STATIC WardOfBonesEffect |
 | Leader restriction with sacrifice-to-ignore action | `d/DampingEngine.java` | STATIC DampingEngineEffect + once-per-turn `SacrificePermanentCost` ability with `IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect` |

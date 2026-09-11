@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "APC", collectorNumber = "91")
+@CardRegistration(set = "VMA", collectorNumber = "241")
 public class AetherMutation extends Card {
 
     public AetherMutation() {

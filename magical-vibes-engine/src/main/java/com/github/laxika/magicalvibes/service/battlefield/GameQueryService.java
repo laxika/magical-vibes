@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
 import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastAndActivateOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCanCastSpellsOnlyDuringOwnTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentEffectsCantCauseDiscardEffect;
@@ -7986,6 +7987,15 @@ public class GameQueryService {
         return gameData.currentStep != null && gameData.currentStep.isCombatPhase()
                 && anyBattlefieldHasStaticEffect(gameData,
                 PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect.class);
+    }
+
+    /**
+     * True while a {@link PlayersCantCastSpellsDuringCombatEffect} (Basandra, Battle Seraph) is
+     * on the battlefield and the game is currently in a combat step.
+     */
+    public boolean isSpellCastingCombatLockActive(GameData gameData) {
+        return gameData.currentStep != null && gameData.currentStep.isCombatPhase()
+                && anyBattlefieldHasStaticEffect(gameData, PlayersCantCastSpellsDuringCombatEffect.class);
     }
 
     /**

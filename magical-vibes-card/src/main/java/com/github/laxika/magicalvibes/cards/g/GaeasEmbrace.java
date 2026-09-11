@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "255")
+@CardRegistration(set = "VMA", collectorNumber = "211")
 public class GaeasEmbrace extends Card {
 
     public GaeasEmbrace() {

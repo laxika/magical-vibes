@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "34")
+@CardRegistration(set = "VMA", collectorNumber = "30")
 public class GustcloakHarrier extends Card {
 
     public GustcloakHarrier() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STH", collectorNumber = "113")
 @CardRegistration(set = "TPR", collectorNumber = "186")
+@CardRegistration(set = "VMA", collectorNumber = "225")
 public class Provoke extends Card {
 
     public Provoke() {

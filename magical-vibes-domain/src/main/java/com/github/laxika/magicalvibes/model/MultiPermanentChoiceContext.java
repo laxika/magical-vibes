@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -437,6 +438,19 @@ public sealed interface MultiPermanentChoiceContext {
                                               int damageAmount,
                                               StackEntry damageEntry)
             implements MultiPermanentChoiceContext {
+    }
+
+    /** Each player chooses a creature; all chosen creatures are then sacrificed together. */
+    record EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower(
+            java.util.List<PendingForcedSacrifice> remainingChoosers,
+            java.util.List<UUID> accumulatedSacrificeIds,
+            CreateTokenEffect tokenTemplate,
+            StackEntry resolvingEntry)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower {
+            remainingChoosers = java.util.List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = java.util.List.copyOf(accumulatedSacrificeIds);
+        }
     }
 
     /**
@@ -957,6 +971,18 @@ public sealed interface MultiPermanentChoiceContext {
         public EachPlayerChoosesNonlandPermanentThenReturnRestChoice {
             playerIds = java.util.List.copyOf(playerIds);
             keptIds = java.util.List.copyOf(keptIds);
+        }
+    }
+
+    /** Will of the Council: the current player voted for a nonland permanent. */
+    record WillOfTheCouncilChoice(UUID effectControllerId,
+                                  java.util.List<UUID> remainingPlayerIds,
+                                  java.util.Map<UUID, Integer> votes,
+                                  String sourceName)
+            implements MultiPermanentChoiceContext {
+        public WillOfTheCouncilChoice {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            votes = java.util.Map.copyOf(votes);
         }
     }
 

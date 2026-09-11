@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALL", collectorNumber = "144")
 @CardRegistration(set = "ME1", collectorNumber = "180")
+@CardRegistration(set = "VMA", collectorNumber = "318")
 public class ThawingGlaciers extends Card {
 
     public ThawingGlaciers() {

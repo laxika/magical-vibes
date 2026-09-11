@@ -780,6 +780,34 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handleSelfDeathPermanentConditional(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null
+                || !predicateEvaluationService.matchesPermanentPredicate(
+                        match.gameData(), dyingPermanent, effect.predicate())) {
+            return false;
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect.wrapped())),
+                null,
+                match.permanent().getId()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setTriggeringCardId(sd.dyingCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(sd.dyingCard().getId()));
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_DEATH)
     boolean handleDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {

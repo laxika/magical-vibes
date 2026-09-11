@@ -148,6 +148,7 @@ public enum CounterType {
     SOOT,
     SOUL,
     STASH,
+    STRIFE,
     SUPPLY,
     STORAGE,
     STUDY,

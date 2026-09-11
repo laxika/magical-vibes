@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "118")
+@CardRegistration(set = "VMA", collectorNumber = "229")
 public class RofellosLlanowarEmissary extends Card {
 
     public RofellosLlanowarEmissary() {

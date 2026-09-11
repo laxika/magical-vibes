@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "ONS", collectorNumber = "317")
 @CardRegistration(set = "DD1", collectorNumber = "57")
 @CardRegistration(set = "DDJ", collectorNumber = "33")
+@CardRegistration(set = "VMA", collectorNumber = "297")
 public class ForgottenCave extends Card {
 
     public ForgottenCave() {

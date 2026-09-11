@@ -1608,6 +1608,58 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Plea for Power: the current player voted for time or knowledge. */
+    record PleaForPowerChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                              Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String TIME = "Time";
+        public static final String KNOWLEDGE = "Knowledge";
+        public static final List<String> OPTIONS = List.of(TIME, KNOWLEDGE);
+
+        public PleaForPowerChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Tyrant's Choice: the current player voted for death or torture. */
+    record TyrantsChoiceChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                               Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String DEATH = "Death";
+        public static final String TORTURE = "Torture";
+        public static final List<String> OPTIONS = List.of(DEATH, TORTURE);
+
+        public TyrantsChoiceChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Magister of Worth: the current player voted for grace or condemnation. */
+    record GraceOrCondemnationChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                     Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String GRACE = "Grace";
+        public static final String CONDEMNATION = "Condemnation";
+        public static final List<String> OPTIONS = List.of(GRACE, CONDEMNATION);
+
+        public GraceOrCondemnationChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
+    /** Coercive Portal: the current player voted for carnage or homage. */
+    record CoercivePortalChoice(UUID effectControllerId, List<UUID> remainingPlayerIds,
+                                Map<String, Integer> votes, String sourceName) implements ChoiceContext {
+        public static final String CARNAGE = "Carnage";
+        public static final String HOMAGE = "Homage";
+        public static final List<String> OPTIONS = List.of(CARNAGE, HOMAGE);
+
+        public CoercivePortalChoice {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            votes = Map.copyOf(votes);
+        }
+    }
+
     /** Choice of a specific locked door for an effect that unlocks a Room for free. */
     record UnlockRoomDoorChoice(Card sourceCard, UUID controllerId, List<RoomDoor> choices)
             implements ChoiceContext {

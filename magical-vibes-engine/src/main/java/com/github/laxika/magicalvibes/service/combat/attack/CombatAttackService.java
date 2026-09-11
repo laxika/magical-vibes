@@ -109,9 +109,11 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -876,14 +878,14 @@ public class CombatAttackService {
 
                 // "Whenever this creature attacks for the first time each turn" (Aurelia, the
                 // Warleader): drop the wrapped effects entirely once this permanent has already
-                // fired them this turn, otherwise unwrap and mark it after the trigger is queued.
+                // attacked this turn, otherwise consume the first-attack marker before any
+                // intervening-if or trigger-subject filters can remove the wrapped effect.
                 // The gate is per permanent, so an extra combat phase it grants can't loop.
-                boolean firesOnceEachTurn = false;
                 if (allEffects.stream().anyMatch(e -> e instanceof OncePerTurnTriggerEffect)) {
                     if (gameData.onceEachTurnAttackTriggersFiredThisTurn.contains(attacker.getId())) {
                         allEffects.removeIf(e -> e instanceof OncePerTurnTriggerEffect);
                     } else {
-                        firesOnceEachTurn = true;
+                        gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
                         allEffects.replaceAll(e -> e instanceof OncePerTurnTriggerEffect once ? once.wrapped() : e);
                     }
                 }
@@ -1026,10 +1028,6 @@ public class CombatAttackService {
                         && ce.interveningIf()
                         && !conditionEvaluationService.isMet(
                                 gameData, ce.condition(), ConditionContext.forPermanent(attacker, playerId)));
-
-                if (firesOnceEachTurn && !allEffects.isEmpty()) {
-                    gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
-                }
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
@@ -1187,6 +1185,38 @@ public class CombatAttackService {
                         GameLog.builder().card(attacker.getCard()).text("'s battle cry triggers.").build());
                 log.info("Game {} - {} battle cry trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             }
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+        }
+
+        // Engine-level dethrone triggers: attack the player with the most life (including ties)
+        // to put a +1/+1 counter on the attacking creature.
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.DETHRONE)
+                    || !predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, attacker, new PermanentAttacksPlayerWithMostLifePredicate())) {
+                continue;
+            }
+            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
+            try {
+                List<CardEffect> dethroneEffects = List.of(new PutCountersOnSourceEffect(1, 1, 1));
+                StackEntry dethroneTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        playerId,
+                        attacker.getCard().getName() + "'s dethrone",
+                        dethroneEffects,
+                        null,
+                        attacker.getId()
+                );
+                gameData.stack.add(dethroneTrigger);
+                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                        gameData, attacker, dethroneTrigger);
+                gameLogService.append(gameData,
+                        GameLog.builder().card(attacker.getCard()).text("'s dethrone triggers.").build());
+                log.info("Game {} - {} dethrone trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
             }

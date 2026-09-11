@@ -120,6 +120,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemLifeGainTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetChoiceTriggerEffect;
@@ -141,6 +143,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerCond
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.effect.ClashOutcomeConditionalEffect;
@@ -775,6 +778,44 @@ public class TriggerCollectionService {
                             emblem.controllerId(),
                             sourceCard.getName() + "'s emblem",
                             new ArrayList<>(List.of(resolutionEffect))));
+                } else if (effect instanceof SpellCastTriggerEffect trigger
+                        && trigger.castSpellTargetCondition() instanceof StackEntryTargetsPermanentPredicate
+                        && trigger.resolvedEffects().size() == 1
+                        && trigger.resolvedEffects().getFirst() instanceof GainControlOfTargetEffect controlEffect
+                        && controlEffect.duration() == ControlDuration.PERMANENT) {
+                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
+                    StackEntry spellEntry = gameData.stack.stream()
+                            .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
+                            .findFirst().orElse(null);
+                    if (spellEntry == null) continue;
+                    List<UUID> targetIds = new ArrayList<>();
+                    if (spellEntry.getTargetId() != null) {
+                        targetIds.add(spellEntry.getTargetId());
+                    }
+                    targetIds.addAll(spellEntry.getDeclaredTargetIds());
+                    targetIds = targetIds.stream()
+                            .distinct()
+                            .filter(targetId -> gameQueryService.findPermanentById(gameData, targetId) != null)
+                            .toList();
+                    if (targetIds.isEmpty()) continue;
+                    Card source = emblem.sourceCard();
+                    Card sourceCard = source != null ? source : spellCard;
+                    String desc = (source != null ? source.getName() : "Emblem") + "'s emblem";
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            sourceCard,
+                            emblem.controllerId(),
+                            desc,
+                            new ArrayList<>(List.of(controlEffect)),
+                            null,
+                            targetIds
+                    );
+                    entry.setTriggeringCardId(spellCard.getId());
+                    entry.setNonTargeting(true);
+                    gameData.stack.add(entry);
+                    gameLogService.append(gameData, GameLog.text(desc + " triggers."));
+                    log.info("Game {} - {} captured {} permanent spell targets for control",
+                            gameData.id, desc, targetIds.size());
                 } else if (effect instanceof SpellCastTriggerEffect trigger
                         && isNonTargetingEmblemSpellCastTrigger(trigger)) {
                     if (!trigger.triggersOnAnyPlayer()

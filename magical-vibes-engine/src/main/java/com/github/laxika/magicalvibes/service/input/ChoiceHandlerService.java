@@ -137,6 +137,14 @@ public class ChoiceHandlerService {
             unlockControlledRoomDoorEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LockOrUnlockTargetRoomDoorEffectHandler
             lockOrUnlockTargetRoomDoorEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PleaForPowerEffectHandler
+            pleaForPowerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TyrantsChoiceEffectHandler
+            tyrantsChoiceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.GraceOrCondemnationEffectHandler
+            graceOrCondemnationEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CoercivePortalEffectHandler
+            coercivePortalEffectHandler;
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -692,6 +700,50 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.TriggeredModalChoice ctx) {
             handleTriggeredModalChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.PleaForPowerChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Plea for Power vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            pleaForPowerEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.TyrantsChoiceChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Tyrant's Choice vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            tyrantsChoiceEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.GraceOrCondemnationChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid grace-or-condemnation vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            graceOrCondemnationEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.CoercivePortalChoice ctx) {
+            if (!ctx.OPTIONS.contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Coercive Portal vote: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            coercivePortalEffectHandler.completeVote(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.LibraryCastModeChoice ctx) {

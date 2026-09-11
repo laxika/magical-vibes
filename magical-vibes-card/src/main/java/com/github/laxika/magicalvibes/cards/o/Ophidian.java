@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WTH", collectorNumber = "45")
 @CardRegistration(set = "DD2", collectorNumber = "9")
+@CardRegistration(set = "VMA", collectorNumber = "84")
 public class Ophidian extends Card {
 
     public Ophidian() {

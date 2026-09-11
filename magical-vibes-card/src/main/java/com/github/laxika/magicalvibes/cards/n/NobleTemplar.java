@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "19")
+@CardRegistration(set = "VMA", collectorNumber = "36")
 public class NobleTemplar extends Card {
 
     public NobleTemplar() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "EXO", collectorNumber = "139")
+@CardRegistration(set = "VMA", collectorNumber = "284")
 public class SphereOfResistance extends Card {
 
     public SphereOfResistance() {
