@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "91")
+@CardRegistration(set = "DDR", collectorNumber = "51")
 public class GrimDiscovery extends Card {
 
     public GrimDiscovery() {

@@ -298,10 +298,13 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         String prompt = randomBottom
                 ? "You may reveal a matching card from among them and put it on top of your library. "
                 + "The rest go to the bottom of your library in a random order."
+                : e.optional() && e.choosePredicate() != null
+                ? "You may reveal a matching card from among them and put it on top of your library. "
+                + "The rest go to the bottom of your library in any order."
                 : "Put one card on top of your library. The rest go to the bottom of your library.";
         LibrarySearchParams.Builder params = LibrarySearchParams.builder(controllerId, matchingCards)
                 .canFailToFind(e.optional())
-                .reveals(randomBottom)
+                .reveals(randomBottom || (e.optional() && e.choosePredicate() != null))
                 .sourceCards(sourceCards)
                 .reorderRemainingToBottom(true)
                 .shuffleAfterSelection(false)

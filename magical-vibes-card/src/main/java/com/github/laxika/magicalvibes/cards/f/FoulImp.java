@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 @CardRegistration(set = "STH", collectorNumber = "59")
 @CardRegistration(set = "DDC", collectorNumber = "32")
 @CardRegistration(set = "DVD", collectorNumber = "32")
+@CardRegistration(set = "DDR", collectorNumber = "49")
 public class FoulImp extends Card {
 
     public FoulImp() {

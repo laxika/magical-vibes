@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "SOM", collectorNumber = "56")
+@CardRegistration(set = "DDR", collectorNumber = "40")
 public class Blistergrub extends Card {
 
     public Blistergrub() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubt
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "181")
+@CardRegistration(set = "DDR", collectorNumber = "16")
 public class OranRiefHydra extends Card {
 
     public OranRiefHydra() {

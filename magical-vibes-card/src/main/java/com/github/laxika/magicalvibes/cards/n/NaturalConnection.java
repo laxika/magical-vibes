@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "BFZ", collectorNumber = "179")
+@CardRegistration(set = "DDR", collectorNumber = "13")
 public class NaturalConnection extends Card {
 
     public NaturalConnection() {
