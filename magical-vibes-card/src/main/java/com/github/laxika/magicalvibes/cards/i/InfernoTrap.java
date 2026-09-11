@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "133")
+@CardRegistration(set = "DDN", collectorNumber = "67")
 public class InfernoTrap extends Card {
 
     public InfernoTrap() {

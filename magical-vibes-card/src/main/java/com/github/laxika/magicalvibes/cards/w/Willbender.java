@@ -14,6 +14,8 @@ import java.util.List;
 @CardRegistration(set = "TSB", collectorNumber = "36")
 @CardRegistration(set = "LGN", collectorNumber = "58")
 @CardRegistration(set = "DD2", collectorNumber = "6")
+@CardRegistration(set = "JVC", collectorNumber = "6")
+@CardRegistration(set = "DDN", collectorNumber = "47")
 public class Willbender extends Card {
 
     public Willbender() {

@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "113")
 @CardRegistration(set = "DDG", collectorNumber = "1")
+@CardRegistration(set = "MMA", collectorNumber = "178")
 public class KnightOfTheReliquary extends Card {
 
     public KnightOfTheReliquary() {

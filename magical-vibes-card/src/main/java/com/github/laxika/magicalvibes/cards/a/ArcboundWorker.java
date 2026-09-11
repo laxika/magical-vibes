@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "104")
 @CardRegistration(set = "DDF", collectorNumber = "40")
+@CardRegistration(set = "MMA", collectorNumber = "201")
 public class ArcboundWorker extends Card {
 
     public ArcboundWorker() {

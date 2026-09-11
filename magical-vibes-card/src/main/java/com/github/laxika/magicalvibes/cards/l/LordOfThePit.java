@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamag
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "154")
+@CardRegistration(set = "DVD", collectorNumber = "30")
 @CardRegistration(set = "5ED", collectorNumber = "174")
 @CardRegistration(set = "4ED", collectorNumber = "144")
 @CardRegistration(set = "3ED", collectorNumber = "116")

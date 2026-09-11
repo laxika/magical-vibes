@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 @CardRegistration(set = "DDE", collectorNumber = "18")
 @CardRegistration(set = "DDC", collectorNumber = "45")
 @CardRegistration(set = "HOP", collectorNumber = "24")
+@CardRegistration(set = "DVD", collectorNumber = "45")
+@CardRegistration(set = "V13", collectorNumber = "1")
 public class DarkRitual extends Card {
 
     public DarkRitual() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "89")
 @CardRegistration(set = "STH", collectorNumber = "36")
 @CardRegistration(set = "MM2", collectorNumber = "50")
+@CardRegistration(set = "DDN", collectorNumber = "64")
 public class ManaLeak extends Card {
 
     public ManaLeak() {

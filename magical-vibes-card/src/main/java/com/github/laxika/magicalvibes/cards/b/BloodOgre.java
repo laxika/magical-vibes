@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  */
 @CardRegistration(set = "M12", collectorNumber = "122")
 @CardRegistration(set = "MM2", collectorNumber = "106")
+@CardRegistration(set = "DDL", collectorNumber = "49")
 public class BloodOgre extends Card {
 
     public BloodOgre() {

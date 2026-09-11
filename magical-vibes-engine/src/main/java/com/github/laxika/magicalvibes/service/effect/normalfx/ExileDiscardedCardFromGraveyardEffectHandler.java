@@ -62,6 +62,10 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
         } else {
             gameData.addToExile(ownerId, discarded);
         }
+        if (exileEffect.grantPlayPermissionUntilEndOfTurn()) {
+            gameData.exilePlayPermissions.put(discarded.getId(), entry.getControllerId());
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(discarded.getId());
+        }
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " exiles ", discarded,
                 " from " + gameData.playerIdToName.get(ownerId) + "'s graveyard."));
         log.info("Game {} - {} exiles discarded card {} from graveyard{}",

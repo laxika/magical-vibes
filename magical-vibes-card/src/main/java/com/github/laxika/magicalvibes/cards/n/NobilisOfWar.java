@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 
 @CardRegistration(set = "EVE", collectorNumber = "144")
 @CardRegistration(set = "MM2", collectorNumber = "195")
+@CardRegistration(set = "DDL", collectorNumber = "15")
 public class NobilisOfWar extends Card {
 
     public NobilisOfWar() {

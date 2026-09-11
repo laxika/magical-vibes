@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "77")
 @CardRegistration(set = "MM2", collectorNumber = "123")
+@CardRegistration(set = "DDL", collectorNumber = "57")
 public class SkarrganFirebird extends Card {
 
     public SkarrganFirebird() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "100")
+@CardRegistration(set = "DDQ", collectorNumber = "57")
 public class FalkenrathNoble extends Card {
 
     public FalkenrathNoble() {

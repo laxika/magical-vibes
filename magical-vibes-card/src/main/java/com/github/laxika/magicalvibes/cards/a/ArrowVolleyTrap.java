@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "2")
+@CardRegistration(set = "DDN", collectorNumber = "71")
 public class ArrowVolleyTrap extends Card {
 
     public ArrowVolleyTrap() {

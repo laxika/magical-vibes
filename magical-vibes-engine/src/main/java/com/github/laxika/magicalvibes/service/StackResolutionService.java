@@ -1222,8 +1222,9 @@ public class StackResolutionService {
 
     /**
      * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
-     * entry is an activated or triggered ability whose effects branch on {@code NthAbilityResolutionThisTurn}
-     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
+     * entry is an activated or triggered ability whose effects branch on a resolution count
+     * (explicitly through {@code NthAbilityResolutionThisTurn} or through a dynamic amount such as
+     * Bronze Cudgels' "where X is the number of times this ability has resolved this turn").
      * Counted at resolution (not activation), so copies of the ability count but activations
      * countered on the stack do not; fizzled abilities never reach this point. Incremented before
      * effect dispatch so the condition sees the count including the current resolution, and only

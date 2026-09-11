@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "22")
+@CardRegistration(set = "MMA", collectorNumber = "26")
 public class Reveillark extends Card {
 
     public Reveillark() {

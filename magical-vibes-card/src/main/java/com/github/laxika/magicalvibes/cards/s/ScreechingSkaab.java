@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DKA", collectorNumber = "47")
 @CardRegistration(set = "ORI", collectorNumber = "70")
+@CardRegistration(set = "DDQ", collectorNumber = "48")
 public class ScreechingSkaab extends Card {
 
     public ScreechingSkaab() {

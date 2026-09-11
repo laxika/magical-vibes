@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "GPT", collectorNumber = "32")
 @CardRegistration(set = "MM2", collectorNumber = "56")
+@CardRegistration(set = "DDN", collectorNumber = "72")
 public class Repeal extends Card {
 
     public Repeal() {

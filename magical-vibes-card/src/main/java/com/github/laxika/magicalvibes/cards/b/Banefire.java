@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "M19", collectorNumber = "130")
 @CardRegistration(set = "DPA", collectorNumber = "38")
 @CardRegistration(set = "MM2", collectorNumber = "104")
+@CardRegistration(set = "DDN", collectorNumber = "31")
 public class Banefire extends Card {
 
     public Banefire() {

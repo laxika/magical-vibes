@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "116")
+@CardRegistration(set = "DDN", collectorNumber = "13")
 public class MarduHeartPiercer extends Card {
 
     public MarduHeartPiercer() {
