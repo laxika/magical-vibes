@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "96")
+@CardRegistration(set = "MPS", collectorNumber = "3")
 public class NoxiousGearhulk extends Card {
 
     public NoxiousGearhulk() {

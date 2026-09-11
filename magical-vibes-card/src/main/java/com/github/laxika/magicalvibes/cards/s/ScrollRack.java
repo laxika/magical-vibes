@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ScrollRackEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "308")
+@CardRegistration(set = "MPS", collectorNumber = "22")
 public class ScrollRack extends Card {
 
     public ScrollRack() {
