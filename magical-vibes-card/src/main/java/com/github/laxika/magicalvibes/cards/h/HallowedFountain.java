@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 @CardRegistration(set = "DIS", collectorNumber = "174")
 @CardRegistration(set = "ECL", collectorNumber = "265")
 @CardRegistration(set = "ECL", collectorNumber = "347")
+@CardRegistration(set = "EXP", collectorNumber = "6")
 public class HallowedFountain extends Card {
 
     public HallowedFountain() {

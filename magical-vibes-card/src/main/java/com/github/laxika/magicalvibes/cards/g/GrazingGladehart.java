@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "163")
 @CardRegistration(set = "DDH", collectorNumber = "11")
+@CardRegistration(set = "DDO", collectorNumber = "47")
 @CardRegistration(set = "DDP", collectorNumber = "14")
 public class GrazingGladehart extends Card {
 
