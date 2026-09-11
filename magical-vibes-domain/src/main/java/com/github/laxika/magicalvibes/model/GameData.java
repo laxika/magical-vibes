@@ -959,6 +959,8 @@ public class GameData {
     /** Players for whom damage from matching sources is prevented this turn to creatures they control. */
     public final Map<UUID, Set<PermanentPredicate>> playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented =
             new ConcurrentHashMap<>();
+    /** Players whose permanents are protected for the game from damage dealt by named planes. */
+    public final Map<UUID, Set<String>> playersWithDamageFromNamedPlanesPrevented = new ConcurrentHashMap<>();
     /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
     public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, gain control of tokens that would be created under an opponent's control (Crafty Cutpurse). */
@@ -1762,6 +1764,8 @@ public class GameData {
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
+    /** Tracks which players each permanent dealt combat damage to during the current combat. */
+    public final Map<UUID, Set<UUID>> combatDamageToPlayersThisCombat = new ConcurrentHashMap<>();
     /** Tracks how much combat damage each player was dealt this turn. */
     public final Map<UUID, Integer> combatDamageDealtToPlayersThisTurn = new ConcurrentHashMap<>();
     public final Set<UUID> playersDealtCombatDamageSinceTheirLastTurn = ConcurrentHashMap.newKeySet();
@@ -4697,6 +4701,8 @@ public class GameData {
                 copy.playerNextDamageFromMatchingSourcesPrevented.put(k, new CopyOnWriteArrayList<>(v)));
         this.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.forEach((k, v) ->
                 copy.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.put(k, new HashSet<>(v)));
+        this.playersWithDamageFromNamedPlanesPrevented.forEach((k, v) ->
+                copy.playersWithDamageFromNamedPlanesPrevented.put(k, new HashSet<>(v)));
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.playersGatheringTokensThisTurn.addAll(this.playersGatheringTokensThisTurn);
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
@@ -4933,6 +4939,8 @@ public class GameData {
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
+        this.combatDamageToPlayersThisCombat.forEach((k, v) ->
+                copy.combatDamageToPlayersThisCombat.put(k, new HashSet<>(v)));
         copy.combatDamageDealtToPlayersThisTurn.putAll(this.combatDamageDealtToPlayersThisTurn);
         copy.combatDamageSourcesThatDealtToCreaturesThisTurn
                 .addAll(this.combatDamageSourcesThatDealtToCreaturesThisTurn);

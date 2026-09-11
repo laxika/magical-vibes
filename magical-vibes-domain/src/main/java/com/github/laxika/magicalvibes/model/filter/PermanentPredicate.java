@@ -39,6 +39,7 @@ public sealed interface PermanentPredicate permits
         PermanentDealtDamageThisTurnPredicate,
         PermanentDealtNoncombatDamageThisTurnPredicate,
         PermanentDealtDamageToAnythingThisTurnPredicate,
+        PermanentDealtCombatDamageToPlayerThisCombatPredicate,
         PermanentDealtDamageToSourceControllerThisTurnPredicate,
         PermanentEnteredBattlefieldThisTurnPredicate,
         PermanentEnteredBattlefieldThisOrLastTurnPredicate,

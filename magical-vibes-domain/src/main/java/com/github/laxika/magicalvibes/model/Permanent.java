@@ -577,6 +577,8 @@ public class Permanent {
      *  (Bloodlord of Vaasgoth). Read as an as-enters replacement alongside the card's printed
      *  bloodthirst; per CR 702.54c each instance applies separately, so grants simply add up. */
     @Setter private int grantedBloodthirst;
+    /** Numeric devour grant carried from the spell that produced this permanent. */
+    @Setter private int grantedDevour;
     /** Cards of the creatures sacrificed to this permanent's devour ability as it entered (CR 702.82).
      *  Read by {@code CreaturesDevoured} ("for each creature it devoured" — Tar Fiend) via its size and by
      *  {@code DevouredCreaturesOfSubtype} ("twice the number of Goblins it devoured" — Voracious Dragon). */
@@ -893,6 +895,7 @@ public class Permanent {
         this.timesMutated = source.timesMutated;
         this.saddled = source.saddled;
         this.grantedBloodthirst = source.grantedBloodthirst;
+        this.grantedDevour = source.grantedDevour;
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);

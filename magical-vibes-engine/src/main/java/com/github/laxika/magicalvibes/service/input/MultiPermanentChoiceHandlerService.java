@@ -549,6 +549,8 @@ public class MultiPermanentChoiceHandlerService {
                     gameData, player, exileArtifactsContext, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup ctx) {
             triggerHandler.handleEtbPlayerTargetGroup(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup ctx) {
+            triggerHandler.handleEtbGraveyardCardTargetGroup(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets ctx) {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {

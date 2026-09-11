@@ -25,6 +25,10 @@ public sealed interface MultiPermanentChoiceContext {
     record EtbPlayerTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
             implements MultiPermanentChoiceContext {}
 
+    /** Selects an optional graveyard-card target while walking an ETB or planar target group. */
+    record EtbGraveyardCardTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
+            implements MultiPermanentChoiceContext {}
+
     record RemoveCounterFromChosenPermanents(StackEntry resolvingEntry, CounterType counterType,
                                              PermanentPredicate permanentFilter)
             implements MultiPermanentChoiceContext {

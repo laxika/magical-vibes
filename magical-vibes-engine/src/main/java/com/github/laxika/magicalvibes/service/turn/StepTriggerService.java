@@ -2924,6 +2924,9 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handlePrecombatMainTriggers(GameData gameData) {
+        if (gameData.planechase != null) planechaseService.step(gameData,
+                EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
+
         // Saga lore counters: add a lore counter to each Saga the active player controls (MTG Rule 714.3b)
         handleSagaLoreCounters(gameData);
 
@@ -3316,6 +3319,9 @@ public class StepTriggerService {
      */
     public void handleEndOfCombatTriggers(GameData gameData) {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_OF_FIRST_COMBAT);
+        if (gameData.planechase != null) {
+            planechaseService.step(gameData, EffectSlot.END_OF_COMBAT_TRIGGERED);
+        }
 
         List<DelayedEndOfCombatTrigger> delayedTriggers =
                 gameData.drainDelayedActions(DelayedEndOfCombatTrigger.class);
@@ -3365,6 +3371,9 @@ public class StepTriggerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
             triggerCollectionService.processNextEmblemTriggerTarget(gameData);
+        } else if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
         }
     }
 

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnImprintedCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class PutTimeCountersOnImprintedCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,8 +36,10 @@ public class PutTimeCountersOnImprintedCardEffectHandler implements NormalEffect
             return;
         }
 
-        gameData.exiledCardTimeCounters.merge(counters.cardId(), counters.amount(), Integer::sum);
+        int amount = amountEvaluationService.evaluate(gameData, counters.amount(),
+                AmountContext.forStackEntry(entry, null));
+        gameData.exiledCardTimeCounters.merge(counters.cardId(), amount, Integer::sum);
         gameLogService.append(gameData,
-                GameLog.cardThen(exiledEntry.card(), " gets " + counters.amount() + " time counters."));
+                GameLog.cardThen(exiledEntry.card(), " gets " + amount + " time counters."));
     }
 }

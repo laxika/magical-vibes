@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 public enum CardSet {
     SET_MOC("MOC"),
     SET_OHOP("OHOP"),
+    SET_OPC2("OPC2"),
 
     SET_3ED("3ED"),
     SET_4ED("4ED"),
